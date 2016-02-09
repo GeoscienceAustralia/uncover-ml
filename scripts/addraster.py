@@ -38,6 +38,22 @@ def main(output, verbose, geotiffs):
         logging.basicConfig(level=logging.INFO)
 
     hdf_exists = os.path.isfile(output)
+
+    # If hdf5 does NOT exist:
+    #   With the first geotiff in input:
+    #       transform lat lons to pixel centres
+    #       Add the first geotiff to a new hdf5 file
+    #       remove first geotiff from input list
+    #
+    # For each geotiff in input:
+    #   transform lat lons to pixel centres
+    #   Check geotiff is consistent with hdf5
+    #
+    # For each geotiff in input:
+    #   Add geotiff as new layer to hdf
+    #
+    # exit
+
     if hdf_exists:
         try:
             h5file = hdf.open_file(output, mode="r")
@@ -54,6 +70,7 @@ def main(output, verbose, geotiffs):
         yres = len(latitude)
         xbounds = (longitude[0], longitude[-1])
         ybounds = (latitude[0], latitude[-1])
+
         # validate every input
         for filename in geotiffs:
             with rasterio.open(filename) as f:
@@ -83,6 +100,8 @@ def main(output, verbose, geotiffs):
                 # get xres, yres, xbounds, ybounds
     else:
         h5file = hdf.open_file(output, mode='w')
+
+    # 
 
     # I = f.read()
     # nanvals = f.get_nodatavals()
