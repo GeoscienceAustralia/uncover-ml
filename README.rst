@@ -1,5 +1,5 @@
 =======
 uncover
 =======
-Inference engine and command line utilities for GA's uncover minerals project
------------------------------------------------------------------------------
+Inference engine and command line utilities for the GA uncover project
+----------------------------------------------------------------------
