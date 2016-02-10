@@ -1,0 +1,9 @@
+*.hdf5
+*.shp
+*.tif
+*.npy
+*.dbf
+*.shx
+*.sbx
+*.sbn
+*.prj

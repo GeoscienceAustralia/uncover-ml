@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option('--output', type=click.Path(exists=True), required=1)
+@click.option('--output', type=click.Path(exists=False), required=1)
 @click.option('--verbose', help="Log everything", default=False)
 @click.argument('geotiffs', nargs=-1)
 def main(output, verbose, geotiffs):
@@ -37,127 +37,78 @@ def main(output, verbose, geotiffs):
     else:
         logging.basicConfig(level=logging.INFO)
 
-    hdf_exists = os.path.isfile(output)
+    # validate every input with respect to the first file
+    with rasterio.open(geotiffs[0]) as raster:
+        longitudes, latitudes = lonlat_pixel_centres(raster)
+    
+    all_valid = True
+    for filename in geotiffs[1:]:
+        log.info("processing {}".format(filename))
+        valid = validate_file(filename, longitudes, latitudes)
+        all_valid = valid and all_valid
+    if not all_valid:
+        sys.exit(-1)
 
-    # If hdf5 does NOT exist:
-    #   With the first geotiff in input:
-    #       transform lat lons to pixel centres
-    #       Add the first geotiff to a new hdf5 file
-    #       remove first geotiff from input list
-    #
-    # For each geotiff in input:
-    #   transform lat lons to pixel centres
-    #   Check geotiff is consistent with hdf5
-    #
-    # For each geotiff in input:
-    #   Add geotiff as new layer to hdf
-    #
-    # exit
+    # Find out the total dimensionality of the new matrix
+    ndims = 0
+    for filename in geotiffs:
+        with rasterio.open(filename) as f:
+            #f.count is the number of bands of the image
+            ndims += f.count
 
-    if hdf_exists:
-        try:
-            h5file = hdf.open_file(output, mode="r")
-        except:
-            log.critical("could not open output file")
-            sys.exit(-1)
+    h5file = hdf.open_file(output, mode='w')
 
-        # import IPython; IPython.embed()
+    # Now that we know the images are all the same size/shape, we use the first
+    # one to calculate the appropriate latitudes/longitudes
+    with rasterio.open(geotiffs[0]) as raster:
+        longs, lats = lonlat_pixel_centres(raster)
+        h5file.create_array("/", "Longitude", obj=longs)
+        h5file.create_array("/", "Latitude", obj=lats)
+        raster_shape = (longs.shape[0], lats.shape[0], ndims)
+        h5file.create_carray("/", "Raster", atom=hdf.Float64Atom(),
+                shape=raster_shape)
+        h5file.create_array("/", "Labels", atom=hdf.StringAtom(itemsize=100),
+                shape=(ndims,))
 
-        longitude = h5file.get_node("/Longitude")
-        latitude = h5file.get_node("/Latitude")
+    #Write the actual data into the hdf5 file
+    # note we keep note of the current band index we're writing into
+    idx = 0
+    for f in geotiffs:
+        idx = write_to_hdf5(f, h5file, idx)
 
-        xres = len(longitude)
-        yres = len(latitude)
-        xbounds = (longitude[0], longitude[-1])
-        ybounds = (latitude[0], latitude[-1])
+def write_to_hdf5(raster, h5file, idx):
+    log.info("Writing {} into hdf5 array".format(raster))
+    with rasterio.open(raster) as f:
+        I = f.read()
+        nanvals = f.get_nodatavals()
+        ndims = f.count
 
-        # validate every input
-        for filename in geotiffs:
-            with rasterio.open(filename) as f:
+    # Permute layers to be less like a standard image and more like a
+    # matrix i.e. (band, lon, lat) -> (lon, lat, band)
+    I = (I.transpose([2, 1, 0]))[:, ::-1]
 
-                if not f.width == xres:
-                    log.critical("input image width does not match hdf5")
-                    sys.exit(-1)
-                if not f.height == yres:
-                    log.critical("input image height does not match hdf5")
-                    sys.exit(-1)
+    # build channel labels
+    basename = os.path.basename(raster).split(".")[-2]
+    print("basename: " + basename)
+    channel_labels = np.array([basename + "_band_" + str(i+1) 
+            for i in range(I.shape[2])], dtype='S')
 
-                f_lats, f_lons = align_latlon_pix(f)
+    # Mask out NaN vals if they exist
+    if nanvals is not None:
+        for v in nanvals:
+            if v is not None:
+                I[I == v] = np.nan
 
-                if not xbounds == (f_lons[0], f_lons[-1]):
-                    log.critical("image x-bounds do not match hdf5")
-                    sys.exit(-1)
-                if not ybounds == (f_lats[0], f_lats[-1]):
-                    log.critical("image y-bounds do not match hdf5")
-                    sys.exit(-1)
-                if not np.all(longitude, f_lons):
-                    log.critical("longitude pixel values do not match hdf5")
-                    sys.exit(-1)
-                if not np.all(latitude, f_lats):
-                    log.critical("latitude pixel values do not match hdf5")
-                    sys.exit(-1)
+    # Now write the hdf5
+    h5file.root.Raster[:,:,idx:idx+ndims] = I
+    h5file.root.Labels[idx:idx+ndims] = channel_labels
+    return idx + ndims
 
-                # get xres, yres, xbounds, ybounds
-    else:
-        h5file = hdf.open_file(output, mode='w')
-
-    # 
-
-    # I = f.read()
-    # nanvals = f.get_nodatavals()
-
-    # # Permute layers to be more like a standard image, i.e. (band, lon, lat) ->
-    # #   (lon, lat, band)
-    # I = (I.transpose([2, 1, 0]))[:, ::-1]
-    # lats = lats[::-1]
-
-    # # build channel labels
-    # basename = os.path.basename(raster).split(".")[-2]
-    # print("basename: " + basename)
-    # channel_labels = np.array([basename + "_band_" + str(i+1) 
-    #         for i in range(I.shape[2])], dtype='S')
-
-    # # Mask out NaN vals if they exist
-    # if nanvals is not None:
-    #     for v in nanvals:
-    #         if v is not None:
-    #             if verbose:
-    #                 print("Writing missing values")
-    #             I[I == v] = np.nan
-
-    # # Now write the hdf5
-    # if verbose:
-    #     print("Writing HDF5 file ...")
-
-    # file_stump = os.path.basename(raster).split('.')[-2]
-    # hdf5name = os.path.join(outputdir, file_stump + ".hdf5")
-    # with h5py.File(hdf5name, 'w') as f:
-    #     drast = f.create_dataset("Raster", I.shape, dtype=I.dtype, data=I)
-    #     drast.attrs['affine'] = T1
-    #     for k, v in crs.items():
-    #         drast.attrs['k'] = v
-    #     f.create_dataset("Latitude", lats.shape, dtype=float, data=lats)
-    #     f.create_dataset("Longitude", lons.shape, dtype=float, data=lons)
-    #     f.create_dataset("Labels", data=channel_labels)
-
-    # if verbose:
-    #     print("Done!")
-
-
-# def read_raster(filename):
-#     with rasterio.open(filename) as f:
-#         data = rasterio_file.read()
-#         nanvals = rasterio_file.get_nodatavals()
-#         # must be 3d
-#         assert(data.ndim == 3)
-#         return data, nanvals
-
-
-def align_latlon_pix(f):
+def lonlat_pixel_centres(raster):
 
     # Get affine transform for pixel centres
     # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
-    T1 = f.affine * Affine.translation(0.5, 0.5)
+    T1 = raster.affine * Affine.translation(0.5, 0.5)
 
     # No shearing or rotation allowed!!
     if not ((T1[1] == 0) and (T1[3] == 0)):
@@ -166,9 +117,41 @@ def align_latlon_pix(f):
         sys.exit(-1)
 
     # compute the tiffs lat/lons
-    f_lons = T1[2] + np.arange(f.width) * T1[0]
-    f_lats = T1[5] + np.arange(f.height) * T1[4]
+    f_lons = T1[2] + np.arange(raster.width) * T1[0]
+    f_lats = T1[5] + np.arange(raster.height) * T1[4]
     return f_lons, f_lats
+
+
+def validate_file(filename, longitudes, latitudes):
+    xres = longitudes.shape[0]
+    yres = latitudes.shape[0]
+    xbounds = (longitudes[0], longitudes[-1])
+    ybounds = (latitudes[0], latitudes[-1])
+    all_valid = True
+    with rasterio.open(filename) as f:
+
+        if not f.width == xres:
+            log.critical("input image width does not match hdf5")
+            all_valid = False
+        if not f.height == yres:
+            log.critical("input image height does not match hdf5")
+            all_valid = False
+
+        f_lons, f_lats = lonlat_pixel_centres(f)
+
+        if not xbounds == (f_lons[0], f_lons[-1]):
+            log.critical("image x-bounds do not match hdf5")
+            all_valid = False
+        if not ybounds == (f_lats[0], f_lats[-1]):
+            log.critical("image y-bounds do not match hdf5")
+            all_valid = False
+        if not np.all(longitudes == f_lons):
+            log.critical("longitudes pixel values do not match hdf5")
+            all_valid = False
+        if not np.all(latitudes == f_lats):
+            log.critical("latitudes pixel values do not match hdf5")
+            all_valid = False
+    return all_valid
 
 
 if __name__ == "__main__":

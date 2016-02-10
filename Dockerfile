@@ -37,7 +37,10 @@ RUN apt-get update && apt-get install -y \
 # Install revrand
 RUN pip3 install git+https://github.com/nicta/revrand.git@master
 
-#ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.4/site-packages LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-ENV PYTHONPATH=$PYTHONPATH:/usr/src/python/statbadger:/usr/local/lib/python3.4/site-packages LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-#ENV PYTHONPATH=$PYTHONPATH:/usr/src/python/statbadger:/usr/local/lib/python3.4/site-packages LC_ALL=C.UTF-8 LANG=C.UTF-8 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+# Make sure click knows what planet its on
+ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
+
+# Make sure nlopt python library is found by the interpreter
+ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.4/site-packages 
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
