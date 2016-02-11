@@ -18,6 +18,8 @@ for i in range(nlabels):
     yidx = int((label_coords[i,1] - lats[0])/float(pixsize_y) + 0.5)
     assert (xidx >= 0 and xidx < lons.shape[0])
     assert (yidx >= 0 and yidx < lats.shape[0])
+    label_idx[i, 0] = xidx
+    label_idx[i, 1] = yidx
 
 ndims = cube.shape[2]
 features = np.zeros((nlabels, ndims), dtype=float)
