@@ -10,7 +10,7 @@ from revrand import regression as reg
 from revrand.basis_functions import LinearBasis, RandomRBF_ARD, RandomRBF
 from yavanna.unsupervised.transforms import whiten, whiten_apply, standardise,\
     standardise_apply
-from sklearn import linear_model
+from sklearn import linear_model, svm
 
 
 def main():
@@ -18,20 +18,21 @@ def main():
     logging.basicConfig(level=logging.INFO)
     # log = logging.getLogger(__name__)
 
-
     # Settings
-    truncate = 50
-    label = 'Al_ppm_imp'
-    nfeatures = 200
+    truncate = 20
+    label = 'Cu_ppm_imp'
+    nfeatures = 100
 
     y = np.load("y.npy")
-    X = np.load("X.npy")
-    Xs = np.load("Xstar.npy")
+    X = np.load("X.npy")[:, 3:]
+    Xs = np.load("Xstar.npy")[:, 3:]
     label_names = np.load("label_names.npy")
     lons = np.load("lons.npy")
     lats = np.load("lats.npy")
     label_coords = np.load("label_coords.npy")
+    x_bands = np.load("x_bands.npy")
     # cube = np.load("cube.npy")
+    # import IPython; IPython.embed()
 
     labinds = {v: k for k, v in enumerate(label_names)}
 
@@ -49,17 +50,23 @@ def main():
     # Xs_w = Xsf
     # X_w = Xf
 
-    # Xs_scale, Xmean, Xstd = standardise(Xsf)
-    # Xs_w, U, l, Xs_w_mean = whiten(Xs_scale, reducedims=truncate)
-    # X_w = whiten_apply(standardise_apply(Xf, Xmean, Xstd), U, l, Xs_w_mean)
+    # Xs_w, U, l, Xs_w_mean = whiten(Xsf, reducedims=truncate)
+    # X_w = whiten_apply(Xf, U, l, Xs_w_mean)
+
+    Xs_scale, Xmean, Xstd = standardise(Xsf)
+    Xs_w, U, l, Xs_w_mean = whiten(Xs_scale, reducedims=truncate)
+    X_w = whiten_apply(standardise_apply(Xf, Xmean, Xstd), U, l, Xs_w_mean)
+
+    # Xs_w, Xmean, Xstd = standardise(Xsf)
+    # X_w = standardise_apply(Xf, Xmean, Xstd)
 
     # X_scale, Xmean, Xstd = standardise(Xf)
     # X_w = X_scale
     # Xs_w = standardise_apply(Xsf, Xmean, Xstd)
 
-    X_scale, Xmean, Xstd = standardise(Xf)
-    X_w, U, l, X_w_mean = whiten(X_scale, reducedims=truncate)
-    Xs_w = whiten_apply(standardise_apply(Xsf, Xmean, Xstd), U, l, X_w_mean)
+    # X_scale, Xmean, Xstd = standardise(Xf)
+    # X_w, U, l, X_w_mean = whiten(X_scale, reducedims=truncate)
+    # Xs_w = whiten_apply(standardise_apply(Xsf, Xmean, Xstd), U, l, X_w_mean)
 
     # Train
     # lenscale = 1.
@@ -95,12 +102,16 @@ def main():
     # hypers = np.ones(X_w.shape[1])
     # basis = RandomRBF(Xdim=X_w.shape[1], nbases=nfeatures)
     # hypers = [1.]
-    # params = reg.learn(X_w, yf[:, labinds[label]], basis, hypers, verbose=True)
+    # params = reg.learn(X_w, yf[:, labinds[label]], basis, hypers, verbose=True,
+    #                    regulariser=1e-1, var=1e-4)
     # Ey, Vf, Vy = reg.predict(Xs_w, basis, *params)
 
-    lm = linear_model.BayesianRidge()
-    lm.fit(X_w, yf[:, labinds[label]])
-    Ey = lm.predict(Xs_w)
+    # lm = linear_model.BayesianRidge()
+    # lm.fit(X_w, yf[:, labinds[label]])
+    # Ey = lm.predict(Xs_w)
+    svr = svm.SVR()
+    svr.fit(X_w, yf[:, labinds[label]])
+    Ey = svr.predict(Xs_w)
 
 
     # Plotting
