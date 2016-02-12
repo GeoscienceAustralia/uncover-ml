@@ -11,6 +11,8 @@ from revrand.basis_functions import LinearBasis, RandomRBF_ARD, RandomRBF
 from yavanna.unsupervised.transforms import whiten, whiten_apply, standardise,\
     standardise_apply
 from sklearn import linear_model, svm
+from scipy.misc import imsave
+import simplekml
 
 
 def main():
@@ -24,27 +26,45 @@ def main():
     nfeatures = 100
 
     y = np.load("y.npy")
-    X = np.load("X.npy")[:, 3:]
-    Xs = np.load("Xstar.npy")[:, 3:]
+    X = np.load("X.npy")
+    Xs = np.load("Xstar.npy")
     label_names = np.load("label_names.npy")
     lons = np.load("lons.npy")
     lats = np.load("lats.npy")
     label_coords = np.load("label_coords.npy")
     x_bands = np.load("x_bands.npy")
-    # cube = np.load("cube.npy")
-    # import IPython; IPython.embed()
+    cube = np.load("cube.npy")
 
     labinds = {v: k for k, v in enumerate(label_names)}
+    bandinds = {v: k for k, v in enumerate(x_bands)}
+
+    # import IPython; IPython.embed(); exit()
+
+    # Remove Lat-Lons and other layers from data
+    bandmask = np.ones(X.shape[1], dtype=bool)
+    bandmask[1] = False
+    bandmask[2] = False
+
+    X = X[:, bandmask]
+    Xs = Xs[:, bandmask]
+    d = X.shape[1]
 
     # Remove NaNs in training data
     nanmask = np.sum(np.isnan(X), axis=1) >= 1
     Xf = X[~nanmask]
     yf = y[~nanmask]
+    y_demo = yf[:, labinds[label]]
+    # y_demo = Xf[:, bandinds[b'PM_Aster_ferrousIron_band_1']]
+    # y_demo = Xf[:, bandinds[b'LOC_longs_band_1']]
+    y_demo -= y_demo.mean()
     label_coordsf = label_coords[~nanmask]
+    N = Xf.shape[0]
 
     # Remove NaNs in testing data
     nanmask_s = np.sum(np.isnan(Xs), axis=1) >= 1
     Xsf = Xs[~nanmask_s]
+    Ns = Xsf.shape[0]
+    Ns_nan = Xs.shape[0]
 
     # Whiten
     # Xs_w = Xsf
@@ -68,56 +88,67 @@ def main():
     # X_w, U, l, X_w_mean = whiten(X_scale, reducedims=truncate)
     # Xs_w = whiten_apply(standardise_apply(Xsf, Xmean, Xstd), U, l, X_w_mean)
 
+    D = Xs_w.shape[1]
+
     # Train
-    # lenscale = 1.
+    lenscale = 1
+    lenlower = 1e-1
+    lenupper = 1e2
 
     # def kdef(h, k):
-    #     return (h(1e-5, 1e2, 0.5) * k(kern.gaussian, h(1e-1, 1e2, lenscale)) +
-    #             k(kern.lognoise, h(-4, 1, -3)))
+    #     return (h(1e-5, 1e2, 0.5)
+    #             * k(kern.gaussian, [h(lenlower, lenupper, lenscale) for _ in
+    #                                 range(D)])
+    #             + k(kern.lognoise, h(-4, 1, -3)))
 
-    # hyper_params = gp.learn(X_w, yf[:, labinds[label]], kdef, verbose=True,
+    # hyper_params = gp.learn(X_w, y_demo, kdef, verbose=True,
     #                         ftol=1e-15, maxiter=1000)
 
-    # regressor = gp.condition(X_w, yf[:, labinds[label]], kdef, hyper_params)
-    # query = gp.query(regressor, Xs_w)
-    # Ey = gp.mean(query)
-    # Vf = gp.variance(query)
-    # Vy = gp.variance(query, noise=True)
-    # Sy = np.sqrt(Vy)
+    # regressor = gp.condition(X_w, y_demo, kdef, hyper_params)
 
     # like = Gaussian()
     # lparams = [1.]
     # basis = RandomRBF_ARD(Xdim=X_w.shape[1], nbases=nfeatures)
     # hypers = np.ones(X_w.shape[1])
-    # params = reg.learn(X_w, yf[:, labinds[label]], like, lparams, basis,
+    # params = reg.learn(X_w, y_demo, like, lparams, basis,
     #                    hypers, verbose=True)
     # Ey, Vf, _, _ = reg.predict_meanvar(Xs_w, like, basis, *params)
     # Vy_g = Vf + params[2][0]
     # Sy_g = np.sqrt(Vy_g)
     # import IPython; IPython.embed()
 
-    # basis = LinearBasis(onescol=False)
+    # basis = LinearBasis(onescol=True)
     # hypers = []
     # basis = RandomRBF_ARD(Xdim=X_w.shape[1], nbases=nfeatures)
-    # hypers = np.ones(X_w.shape[1])
+    # hypers = np.ones(D) * lenscale
     # basis = RandomRBF(Xdim=X_w.shape[1], nbases=nfeatures)
-    # hypers = [1.]
-    # params = reg.learn(X_w, yf[:, labinds[label]], basis, hypers, verbose=True,
-    #                    regulariser=1e-1, var=1e-4)
-    # Ey, Vf, Vy = reg.predict(Xs_w, basis, *params)
+    # hypers = [lenscale]
+    # params = reg.learn(X_w, y_demo, basis, hypers, verbose=True, ftol=1e-6)
 
     # lm = linear_model.BayesianRidge()
-    # lm.fit(X_w, yf[:, labinds[label]])
+    # lm.fit(X_w, y_demo)
     # Ey = lm.predict(Xs_w)
-    svr = svm.SVR()
-    svr.fit(X_w, yf[:, labinds[label]])
-    Ey = svr.predict(Xs_w)
-
+    # svr = svm.SVR()
+    # svr.fit(X_w, y_demo)
+    # Ey = svr.predict(Xs_w)
 
     # Plotting
     # pl.bar(range(len(l)), l)
 
-    Xs_w_nan = np.zeros((Xs.shape[0], Xs_w.shape[1])) * np.NaN
+    # Prediction
+    # Ey = np.zeros(Ns)
+    # Vf = np.zeros(Ns)
+    # Vy = np.zeros(Ns)
+    # for inds in np.array_split(range(Ns), 10000):
+        # query = gp.query(regressor, Xs_w[inds])
+        # Ey[inds] = gp.mean(query)
+        # Vy[inds] = gp.variance(query, noise=True)
+
+        # Ey[inds], Vf[inds], Vy[inds] = reg.predict(Xs_w[inds], basis, *params)
+
+    # Sy = np.sqrt(Vy)
+
+    Xs_w_nan = np.zeros((Ns_nan, D)) * np.NaN
     Xs_w_nan[~nanmask_s, :] = Xs_w
     px_lons = (lons[-1] - lons[0]) / float(lons.shape[0])
     px_lats = (lats[-1] - lats[0]) / float(lats.shape[0])
@@ -125,17 +156,18 @@ def main():
               lats[0] - .5 * px_lats, lats[-1] + .5 * px_lats)
 
     # pl.figure()
-    eigs = slice(1, 4)
+    eigs = slice(2, 5)
     Xs_w_first3 = Xs_w[:, eigs] - Xs_w[:, eigs].min(axis=0)
     Xs_w_first3 /= (Xs_w[:, eigs].max(axis=0) - Xs_w[:, eigs].min(axis=0))
-    Xs_w_first3_nan = np.zeros((Xs.shape[0], 4))
+    Xs_w_first3_nan = np.zeros((Ns_nan, 4))
     Xs_w_first3_nan[~nanmask_s, 0:3] = Xs_w_first3
     Xs_w_first3_nan[~nanmask_s, 3] = 1.
     imshape = (lons.shape[0], lats.shape[0], -1)
-    Im = np.reshape(Xs_w_first3_nan, imshape)
+    Im = np.flipud(np.transpose(np.reshape(Xs_w_first3_nan, imshape),
+                                axes=[1, 0, 2]))
+    imsave('PCAcomponents.png', Im)
 
-    pl.imshow(np.transpose(Im, axes=[1, 0, 2]), origin='lower', extent=extent,
-              interpolation='none')
+    pl.imshow(Im, extent=extent, interpolation='none')
 
     # pl.imshow(Im[:, :, 0].T, origin='lower', extent=extent,
     #           interpolation='none')
@@ -143,17 +175,26 @@ def main():
     #           interpolation='none')
     # pl.scatter(lons[0] * np.ones_like(lats), lats)
 
-    pl.figure()
-
-    Ey_nan = np.zeros(Xs.shape[0]) * np.NaN
-    Ey_nan[~nanmask_s] = Ey
-    EyIm = np.reshape(Ey_nan, imshape[0:2])
-    # import IPython; IPython.embed()
-    pl.imshow(EyIm.T, origin='lower', extent=extent, interpolation='none')
-    pl.scatter(label_coordsf[:, 0], label_coordsf[:, 1],
-               c=yf[:, labinds[label]])
+    # pl.figure()
+    # Ey_nan = np.zeros(Ns_nan) * np.NaN
+    # Ey_nan[~nanmask_s] = Ey
+    # EyIm = np.reshape(Ey_nan, imshape[0:2])
+    # # import IPython; IPython.embed()
+    # pl.imshow(EyIm.T, origin='lower', extent=extent, interpolation='none')
+    # pl.scatter(label_coordsf[:, 0], label_coordsf[:, 1],
+    #            c=y_demo)
     pl.show()
 
+    # Make KML files
+    kml = simplekml.Kml()
+    ground = kml.newgroundoverlay(name='PCAcomponents')
+    ground.icon.href = 'files/PCAcomponents.png'
+    ground.latlonbox.north = lats[0]
+    ground.latlonbox.south = lats[-1]
+    ground.latlonbox.east = lons[-1]
+    ground.latlonbox.west = lons[0]
+    kml.addfile("PCAcomponents.png")
+    kml.savekmz("PCAcomponents.kmz", format=False)
 
 if __name__ == "__main__":
     main()
