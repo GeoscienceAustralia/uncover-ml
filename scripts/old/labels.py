@@ -12,8 +12,8 @@ for shape, record in zip(sf.iterShapes(), sf.iterRecords()):
     # process_poly expects this format (geojson)
     coords.append(list(shape.__geo_interface__['coordinates']))
     properties.append([float(record[i]) for i in usable_fields])
-
 label_coords = np.array(coords)
+
 labels = np.array(properties)
 field_names = np.array([fields[i] for i in usable_fields])
 

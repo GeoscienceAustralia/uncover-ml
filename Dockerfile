@@ -3,7 +3,6 @@
 FROM terriajs/tie-ml-base
 MAINTAINER Lachlan McCalman <lachlan.mccalman@nicta.com.au>
 
-# so nlopt lib is found and click works (weird I know
 RUN apt-get update && apt-get install -y \
     git \
     #gdal requirement
