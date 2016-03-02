@@ -1,9 +1,58 @@
-*.hdf5
-*.shp
-*.tif
-*.npy
-*.dbf
-*.shx
-*.sbx
-*.sbn
-*.prj
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+docs/generated/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+# Translations
+*.mo
+
+# Mr Developer
+.DS_Store
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+docs/_build
+
+### IPythonNotebook ###
+.ipynb_checkpoints/
+
+# Cookiecutter
+output/

@@ -21,9 +21,10 @@ def main():
     # log = logging.getLogger(__name__)
 
     # Settings
-    truncate = 20
+    truncate = 10
     label = 'Cu_ppm_imp'
     nfeatures = 100
+    makekml = True
 
     y = np.load("y.npy")
     X = np.load("X.npy")
@@ -42,8 +43,27 @@ def main():
 
     # Remove Lat-Lons and other layers from data
     bandmask = np.ones(X.shape[1], dtype=bool)
-    bandmask[1] = False
-    bandmask[2] = False
+    bandmask[1] = False  # Lat/lon
+    bandmask[2] = False  # Lat/lon
+    bandmask[6] = False  # A lot of NaNs
+    bandmask[13] = False  # Super low res
+    bandmask[33] = False  # Super outlier
+    bandmask[43] = False  # Super outlier
+    bandmask[44] = False  # Super outlier
+    bandmask[45] = False  # Super outlier
+    bandmask[46] = False  # Super outlier
+    bandmask[47] = False  # Super outlier
+    bandmask[48] = False  # Super outlier and noisy
+
+
+    # NOTES on the x_bands
+    # Layer 9 may be categorical
+    # Layer 10 may be categorical
+    # Layer 11 may be categorical
+    # Layer 15 is binary
+    # Layer 18 may be categorical
+    # Layer 42 may be categorical
+    # Layer 51 may be categorical
 
     X = X[:, bandmask]
     Xs = Xs[:, bandmask]
@@ -91,9 +111,9 @@ def main():
     D = Xs_w.shape[1]
 
     # Train
-    lenscale = 1
-    lenlower = 1e-1
-    lenupper = 1e2
+    # lenscale = 1
+    # lenlower = 1e-1
+    # lenupper = 1e2
 
     # def kdef(h, k):
     #     return (h(1e-5, 1e2, 0.5)
@@ -119,11 +139,14 @@ def main():
 
     # basis = LinearBasis(onescol=True)
     # hypers = []
-    # basis = RandomRBF_ARD(Xdim=X_w.shape[1], nbases=nfeatures)
+    basis = LinearBasis(onescol=True) + RandomRBF(Xdim=D, nbases=nfeatures)
+    hypers = [1.]
+    # basis = RandomRBF_ARD(Xdim=D, nbases=nfeatures)
     # hypers = np.ones(D) * lenscale
-    # basis = RandomRBF(Xdim=X_w.shape[1], nbases=nfeatures)
+    # basis = RandomRBF(Xdim=D, nbases=nfeatures)
     # hypers = [lenscale]
-    # params = reg.learn(X_w, y_demo, basis, hypers, verbose=True, ftol=1e-6)
+    params = reg.learn(X_w, y_demo, basis, hypers, verbose=True, ftol=1e-6,
+                       var=1e-5)
 
     # lm = linear_model.BayesianRidge()
     # lm.fit(X_w, y_demo)
@@ -136,15 +159,15 @@ def main():
     # pl.bar(range(len(l)), l)
 
     # Prediction
-    # Ey = np.zeros(Ns)
-    # Vf = np.zeros(Ns)
-    # Vy = np.zeros(Ns)
-    # for inds in np.array_split(range(Ns), 10000):
+    Ey = np.zeros(Ns)
+    Vf = np.zeros(Ns)
+    Vy = np.zeros(Ns)
+    for inds in np.array_split(range(Ns), 10000):
         # query = gp.query(regressor, Xs_w[inds])
         # Ey[inds] = gp.mean(query)
         # Vy[inds] = gp.variance(query, noise=True)
 
-        # Ey[inds], Vf[inds], Vy[inds] = reg.predict(Xs_w[inds], basis, *params)
+        Ey[inds], Vf[inds], Vy[inds] = reg.predict(Xs_w[inds], basis, *params)
 
     # Sy = np.sqrt(Vy)
 
@@ -156,7 +179,7 @@ def main():
               lats[0] - .5 * px_lats, lats[-1] + .5 * px_lats)
 
     # pl.figure()
-    eigs = slice(2, 5)
+    eigs = slice(0, 3)
     Xs_w_first3 = Xs_w[:, eigs] - Xs_w[:, eigs].min(axis=0)
     Xs_w_first3 /= (Xs_w[:, eigs].max(axis=0) - Xs_w[:, eigs].min(axis=0))
     Xs_w_first3_nan = np.zeros((Ns_nan, 4))
@@ -165,36 +188,32 @@ def main():
     imshape = (lons.shape[0], lats.shape[0], -1)
     Im = np.flipud(np.transpose(np.reshape(Xs_w_first3_nan, imshape),
                                 axes=[1, 0, 2]))
-    imsave('PCAcomponents.png', Im)
+    if makekml:
+        imsave('PCAcomponents.png', Im)
 
     pl.imshow(Im, extent=extent, interpolation='none')
 
-    # pl.imshow(Im[:, :, 0].T, origin='lower', extent=extent,
-    #           interpolation='none')
-    # pl.imshow(Im[:, :, 8].T, origin='upper', extent=extent,
-    #           interpolation='none')
-    # pl.scatter(lons[0] * np.ones_like(lats), lats)
-
-    # pl.figure()
-    # Ey_nan = np.zeros(Ns_nan) * np.NaN
-    # Ey_nan[~nanmask_s] = Ey
-    # EyIm = np.reshape(Ey_nan, imshape[0:2])
-    # # import IPython; IPython.embed()
-    # pl.imshow(EyIm.T, origin='lower', extent=extent, interpolation='none')
-    # pl.scatter(label_coordsf[:, 0], label_coordsf[:, 1],
-    #            c=y_demo)
+    pl.figure()
+    Ey_nan = np.zeros(Ns_nan) * np.NaN
+    Ey_nan[~nanmask_s] = Ey
+    EyIm = np.reshape(Ey_nan, imshape[0:2])
+    # import IPython; IPython.embed()
+    pl.imshow(EyIm.T, origin='lower', extent=extent, interpolation='none')
+    pl.scatter(label_coordsf[:, 0], label_coordsf[:, 1],
+               c=y_demo)
     pl.show()
 
     # Make KML files
-    kml = simplekml.Kml()
-    ground = kml.newgroundoverlay(name='PCAcomponents')
-    ground.icon.href = 'files/PCAcomponents.png'
-    ground.latlonbox.north = lats[0]
-    ground.latlonbox.south = lats[-1]
-    ground.latlonbox.east = lons[-1]
-    ground.latlonbox.west = lons[0]
-    kml.addfile("PCAcomponents.png")
-    kml.savekmz("PCAcomponents.kmz", format=False)
+    if makekml:
+        kml = simplekml.Kml()
+        ground = kml.newgroundoverlay(name='PCAcomponents')
+        ground.icon.href = 'files/PCAcomponents.png'
+        ground.latlonbox.north = lats[0]
+        ground.latlonbox.south = lats[-1]
+        ground.latlonbox.east = lons[-1]
+        ground.latlonbox.west = lons[0]
+        kml.addfile("PCAcomponents.png")
+        kml.savekmz("PCAcomponents.kmz", format=False)
 
 if __name__ == "__main__":
     main()
