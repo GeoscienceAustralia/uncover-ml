@@ -39,14 +39,15 @@ setup(
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/dsteinberg/uncover-ml',
     packages=find_packages(),
-    package_dir={'uncover-ml': 'uncover-ml'},
+    package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'uncover-ml_cli_script = scripts.uncover-ml_cli_script:cli'
+            'pointspec = scripts.pointspec:main'
+            'cvindexer = scripts.cvindexer:main'
         ],
         'gui_scripts': [
-            'uncover-ml_gui_script = scripts.uncover-ml_gui_script:gui'
+            # 'uncover-ml_gui_script = scripts.uncover-ml_gui_script:gui'
         ]
     },
     install_requires=[

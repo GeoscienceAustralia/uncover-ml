@@ -21,9 +21,9 @@ def main():
     # log = logging.getLogger(__name__)
 
     # Settings
-    truncate = 10
-    label = 'Cu_ppm_imp'
-    nfeatures = 100
+    truncate = 15
+    label = 'Na_ppm_i_1'
+    nfeatures = 400
     makekml = True
 
     y = np.load("y.npy")
@@ -111,7 +111,7 @@ def main():
     D = Xs_w.shape[1]
 
     # Train
-    # lenscale = 1
+    lenscale = 1
     # lenlower = 1e-1
     # lenupper = 1e2
 
@@ -139,14 +139,14 @@ def main():
 
     # basis = LinearBasis(onescol=True)
     # hypers = []
-    basis = LinearBasis(onescol=True) + RandomRBF(Xdim=D, nbases=nfeatures)
-    hypers = [1.]
-    # basis = RandomRBF_ARD(Xdim=D, nbases=nfeatures)
-    # hypers = np.ones(D) * lenscale
+    # basis = LinearBasis(onescol=True) + RandomRBF(Xdim=D, nbases=nfeatures)
+    # hypers = [lenscale]
+    basis = RandomRBF_ARD(Xdim=D, nbases=nfeatures)
+    hypers = np.ones(D) * lenscale
     # basis = RandomRBF(Xdim=D, nbases=nfeatures)
     # hypers = [lenscale]
     params = reg.learn(X_w, y_demo, basis, hypers, verbose=True, ftol=1e-6,
-                       var=1e-5)
+                       var=1)
 
     # lm = linear_model.BayesianRidge()
     # lm.fit(X_w, y_demo)
