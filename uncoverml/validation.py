@@ -3,29 +3,35 @@
 import numpy as np
 
 
-def k_fold_CV(X, Y, k=5):
-    """ Generator to divide a dataset k non-overlapping folds.
+def gen_cfold_data(X, Y, k=5):
+    """
+    Generator to divide a dataset k non-overlapping folds.
 
-        Parameters
-        ----------
-            X: ndarray
-                (D, N) array where D is the dimensionality, and N is the number
-                of samples (X can also be a 1-d vector).
-            Y: ndarray
-                (N,) training target data vector of length N.
-            k: int, optional
-                the number of folds for testing and training.
+    Parameters
+    ----------
+        X: ndarray
+            (D, N) array where D is the dimensionality, and N is the number
+            of samples (X can also be a 1-d vector).
+        Y: ndarray
+            (N,) training target data vector of length N.
+        k: int, optional
+            the number of folds for testing and training.
 
-        Yeilds
-        ------
-            Xr: ndarray
-                (D, ((k-1) * N / k)) array of training input data
-            Yr: ndarray
-                ((k-1) * N / k,) array of training target data
-            Xs: [D x (N / k)] testing input data
-            Ys: [N / k] testing output data
+    Yeilds
+    ------
+        Xr: ndarray
+            (D, ((k-1) * N / k)) array of training input data
+        Yr: ndarray
+            ((k-1) * N / k,) array of training target data
+        Xs: ndarray
+            (D, N / k) array of testing input data
+        Ys: ndarray
+            (N / k,) array of testing target data
 
-            All of these are randomly split (but non-overlapping per call)
+    Note
+    ----
+        All of these are randomly split (but non-overlapping per call)
+
     """
 
     X = np.atleast_2d(X)
@@ -43,26 +49,69 @@ def k_fold_CV(X, Y, k=5):
         yield (X_r, Y_r, X_s, Y_s)
 
 
-def k_fold_CV_ind(nsamples, k=5):
-    """ Generator to return random test and training indices for cross fold
-        validation.
+def gen_cfold_ind(nsamples, k=5):
+    """
+    Generator to return random test and training indices for cross fold
+    validation.
 
-        Arguments:
-            nsamples: the number of samples in the dataset
-            k: [optional] the number of folds
+    Parameters
+    ----------
+        nsamples: int
+            the number of samples in the dataset
+        k: int, optional
+            the number of folds
 
-        Returns:
-            rind: training indices of length nsamples * (k-1)/k
-            sind: testing indices of length nsamples * 1/k
+    Yeilds
+    ------
+        rind: ndarray
+            training indices of shape (nsamples * (k-1)/k,)
+        sind: ndarray
+            testing indices of shape (nsamples * 1/k,)
 
-            Each call to this generator returns a random but non-overlapping
-            split of data.
+    Note
+    ----
+        Each call to this generator returns a random but non-overlapping
+        split of data.
+
+    """
+
+    cvinds, _ = split_cfold(nsamples, k)
+
+    for i in range(k):
+        sind = cvinds[i]
+        rind = np.concatenate(cvinds[0:i] + cvinds[i + 1:])
+        yield (rind, sind)
+
+
+def split_cfold(nsamples, k=5):
+    """
+    Function that returns indices for splitting data into random folds.
+
+    Parameters
+    ----------
+        nsamples: int
+            the number of samples in the dataset
+        k: int, optional
+            the number of folds
+
+    Returns
+    -------
+        cvinds: list
+            list of arrays of length k, each with approximate shape (nsamples /
+            k,) of indices. These indices are randomly permuted (without
+            replacement) of assignments to each fold.
+        cvassigns: ndarray
+            array of shape (nsamples,) with each element in [0, k), that can be
+            used to assign data to a fold. This corresponds to the indices of
+            cvinds.
+
     """
 
     pindeces = np.random.permutation(nsamples)
-    pgroups = np.array_split(pindeces, k)
+    cvinds = np.array_split(pindeces, k)
 
-    for i in range(k):
-        sind = pgroups[i]
-        rind = np.concatenate(pgroups[0:i] + pgroups[i + 1:])
-        yield (rind, sind)
+    cvassigns = np.zeros(nsamples, dtype=int)
+    for n, inds in enumerate(cvinds):
+        cvassigns[inds] = n
+
+    return cvinds, cvassigns
