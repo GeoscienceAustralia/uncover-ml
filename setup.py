@@ -43,7 +43,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'pointspec = scripts.pointspec:main'
+            'pointspec = scripts.pointspec:main',
             'cvindexer = scripts.cvindexer:main'
         ],
         'gui_scripts': [

@@ -44,7 +44,3 @@ def main(pointspec, outfile, folds, grid, verbose):
         f.create_array("/", "Longitude", obj=pointobj.xcoords)
         f.create_array("/", "Latitude", obj=pointobj.ycoords)
         f.create_array("/", "FoldIndices", obj=cvassigns)
-
-
-if __name__ == "__main__":
-    main()
