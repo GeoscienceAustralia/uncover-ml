@@ -8,6 +8,7 @@ lats = np.load('lats.npy')
 lons = np.load('lons.npy')
 x_bands = np.load('x_bands.npy')
 
+# Lat lons to pixels
 pixsize_x = (lons[-1] - lons[0])/float(lons.shape[0])
 pixsize_y = (lats[-1] - lats[0])/float(lats.shape[0])
 

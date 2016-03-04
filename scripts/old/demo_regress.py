@@ -22,7 +22,8 @@ def main():
 
     # Settings
     truncate = 15
-    label = 'Na_ppm_i_1'
+    # label = 'Na_ppm_i_1'
+    label = 'Cr_ppm_i_1'
     nfeatures = 400
     makekml = True
 
@@ -39,7 +40,7 @@ def main():
     labinds = {v: k for k, v in enumerate(label_names)}
     bandinds = {v: k for k, v in enumerate(x_bands)}
 
-    import IPython; IPython.embed(); exit()
+    # import IPython; IPython.embed(); exit()
 
     # Remove Lat-Lons and other layers from data
     bandmask = np.ones(X.shape[1], dtype=bool)

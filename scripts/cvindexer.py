@@ -12,32 +12,38 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl.option('--folds', required=False, help="Number of folds for cross"
            "validation", type=int, default=5)
-@cl.option('--grid', is_flag=True, help="Using grid pointspec input data")
-@cl.option('--verbose', is_flag=True, help="Log verbose output", default=False)
+@cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.argument('pointspec', type=cl.Path(exists=True), required=True)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
-def main(pointspec, outfile, folds, grid, verbose):
+def main(pointspec, outfile, folds, quiet):
+    """
+    Create a cross validation fold index file from a pointspec. This outputs an
+    HDF5 file with "Latitude", "Longitude", and "FoldIndices arrays. If the
+    pointspec is a grid, then "FoldIndices" is a 2D array.
+    """
 
     # setup logging
-    if verbose is True:
+    if quiet is True:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if grid:
-        # TODO: implement this
-        log.fatal("Grid cross validation not implemented yet, sorry!")
-        sys.exit(-1)
-
     # Read in the poinspec file and create the relevant object
     with open(pointspec, 'r') as f:
         jdict = json.load(f)
+
+    if jdict["type"] == "GridPointSpec":
+        # TODO: implement this
+        log.fatal("Grid cross validation not implemented yet, sorry!")
+        sys.exit(-1)
 
     pointobj = geom.ListPointSpec._from_json_dict(jdict)
 
     # Make fold indices associated with the coordinates/grid
     N = pointobj.coords.shape[0]
     _, cvassigns = validation.split_cfold(N, folds)
+
+    # TODO: make sure outfile has an hdf extension
 
     # Write out an HDF5
     with tables.open_file(outfile, 'w') as f:

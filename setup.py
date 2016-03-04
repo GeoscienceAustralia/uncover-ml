@@ -44,7 +44,8 @@ setup(
     entry_points={
         'console_scripts': [
             'pointspec = scripts.pointspec:main',
-            'cvindexer = scripts.cvindexer:main'
+            'cvindexer = scripts.cvindexer:main',
+            'extractfeats = scripts.extractfeats:main'
         ],
         'gui_scripts': [
             # 'uncover-ml_gui_script = scripts.uncover-ml_gui_script:gui'

@@ -51,7 +51,7 @@ class BoundingBox:
         assert(len(x_range) == len(y_range))
         assert(x_range[0] < x_range[1])
         assert(y_range[0] < y_range[1])
-        self.bbox = (x_range, y_range)
+        self.bbox = (tuple(x_range), tuple(y_range))
 
     @property
     def x_range(self):
@@ -77,8 +77,20 @@ class BoundingBox:
     def ymax(self):
         return self.bbox[1][1]
 
+    def contains(self, otherbbox):
+        """ Fully contains another BoundingBox object? """
+
+        if (self.xmin <= otherbbox.xmin) \
+                and (self.xmax >= otherbbox.xmax) \
+                and (self.ymin <= otherbbox.ymin) \
+                and (self.ymax >= otherbbox.ymax):
+            return True
+
+        return False
+
     def _to_json_dict(self):
-        return {"bounding_box": {"min": [self.bbox[0][0], self.bbox[1][0]],
+        return {"type": self.__class__.__name__,
+                "bounding_box": {"min": [self.bbox[0][0], self.bbox[1][0]],
                                  "max": [self.bbox[0][1], self.bbox[1][1]]}}
 
     @classmethod
@@ -94,7 +106,7 @@ class GridPointSpec(BoundingBox):
         assert(len(resolution) == 2)
         assert((resolution[0] > 0) and (resolution[1] > 0))
         super(GridPointSpec, self).__init__(x_range, y_range)
-        self.resolution = resolution
+        self.resolution = tuple(resolution)
 
     @property
     def xres(self):

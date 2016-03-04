@@ -25,17 +25,17 @@ log = logging.getLogger(__name__)
 @cl.option('--geotiff', type=cl.Path(exists=True), required=False,
            help="a geotiff to extract the specification from. Can be used "
            "with --resolution. If given --bbox is ignored")
-@cl.option('--verbose', is_flag=True, help="Log verbose output", default=False)
+@cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
 def main(outfile, resolution=None, bbox=None, pointlist=None, geotiff=None,
-         verbose=False):
+         quiet=False):
     """
     Builds a JSON file that encodes the latitude/longitude points being used
     for an ML problem. This resulting PointSpec file is used to ensure machine
     learning outputs can be placed back into an image or onto a map.
     """
     # setup logging
-    if verbose is True:
+    if quiet is True:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
