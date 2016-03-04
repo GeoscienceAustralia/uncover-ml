@@ -31,8 +31,10 @@ def main(geotiff, pointspec, outfile, patchsize, chunks, quiet):
 
     if jdict["type"] == "ListPointSpec":
         pspec = geom.ListPointSpec._from_json_dict(jdict)
+        # TODO get length
     elif jdict["type"] == "GridPointSpec":
         pspec = geom.GridPointSpec._from_json_dict(jdict)
+        # TODO get size in pixels
     else:
         log.fatal("Invalid pointspec object input")
         sys.exit(-1)
@@ -48,17 +50,16 @@ def main(geotiff, pointspec, outfile, patchsize, chunks, quiet):
         log.fatal("The input geotiff does not contain the pointspec data!")
         sys.exit(-1)
 
-    # TODO: figure out if we need to rescale geotiff?
+    # TODO: figure out if we need to rescale geotiff accoding to pspec if grid?
 
     print(tifgrid.x_range, tifgrid.y_range)
     print(pspec.x_range, pspec.y_range)
 
     # Compute lists of pixels to calculate features on per task, i.e. chunk
     # work (should this be an input option with defaults?)
-    #   ListPointSpec -- divide up list
-    #   GridPointSpec -- split work into windows, create pixels lists from
-    #       these windows
-    #   In both cases need to tell workers region of raster files to load
+    #   ListPointSpec -- divide up list, send to workers
+    #   GridPointSpec -- split work into windows, send windows to workers
+    #       NOTE: These windows need to account for patch/stride overlaps!
 
     # Start workers (celery)
 
