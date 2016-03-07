@@ -52,7 +52,24 @@ def grid_patches(image, psize, pstride):
             yield (patch, centrex, centrey)
 
 
+def point_patches(points, psize):
+
+    pass
+
+
 def image_windows(imshape, nchunks, psize, pstride):
+
+    # Get nearest number of chunks that preserves aspect ratio
+    npside = int(round(np.sqrt(nchunks))**2)
+    nchuncks = npside**2
+
+    # Figure out size of windows, taking into account patch size and stride
+    #  overlaps.
+    spacex = np.array_split(_spacing(imshape[1], psize, pstride), npside)
+    spacey = np.array_split(_spacing(imshape[0], psize, pstride), npside)
+
+    # Make sure _spacing when called again in the windows has consistent
+    # offsets etc (i.e. offset 0 since this function will take care of it)
 
     # TODO
 
@@ -61,5 +78,10 @@ def image_windows(imshape, nchunks, psize, pstride):
 
 def _spacing(dimension, psize, pstride):
 
-    offset = int(np.floor(float((dimension - psize) % pstride) / 2))
+    offset = _strideoffset(dimension, psize, pstride)
     return range(offset, dimension - psize + 1, pstride)
+
+
+def _strideoffset(dimension, psize, pstride):
+
+    return int(np.floor(float((dimension - psize) % pstride) / 2))
