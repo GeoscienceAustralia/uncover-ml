@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def grid_patches(image, psize, pstride):
+def grid_patches(image, psize, pstride, centreoffset=None):
     """
     Generate (overlapping) patches from an image. This function extracts square
     patches from an image in an overlapping, dense grid.
@@ -16,14 +16,17 @@ def grid_patches(image, psize, pstride):
             the size of the square patches to extract, in pixels.
         pstride: int
             the stride (in pixels) between successive patches.
+        window: tuple, optional
+            a tuple of (row, col) offsets to add to the patch centres (centrey
+            and centrex)
 
     yeilds
     ------
         patches: np.array
             A flattened image patch of shape (psize**2 * channels,).
-        centrex: float
+        centrecol: float
             the centre (column coords) of the patch.
-        centrey: float
+        centrerow: float
             the centre (row coords) of the patch.
     """
 
@@ -46,10 +49,14 @@ def grid_patches(image, psize, pstride):
             patchx = slice(x, x + psize)
 
             patch = np.reshape(image[patchy, patchx], rsize)
-            centrey = y + float(psize) / 2 - 0.5
-            centrex = x + float(psize) / 2 - 0.5
+            centrerow = y + float(psize) / 2 - 0.5
+            centrecol = x + float(psize) / 2 - 0.5
 
-            yield (patch, centrex, centrey)
+            if centreoffset is not None:
+                centrerow += centreoffset[0]
+                centrecol += centreoffset[1]
+
+            yield (patch, centrecol, centrerow)
 
 
 def point_patches(points, psize):
@@ -60,20 +67,18 @@ def point_patches(points, psize):
 def image_windows(imshape, nchunks, psize, pstride):
 
     # Get nearest number of chunks that preserves aspect ratio
-    npside = int(round(np.sqrt(nchunks))**2)
-    nchuncks = npside**2
+    npside = int(round(np.sqrt(nchunks)))
 
-    # Figure out size of windows, taking into account patch size and stride
-    #  overlaps.
+    # If we split into windows using spacing calculated over the whole image,
+    # all the patches etc should be extracted as if they were extracted from on
+    # window
     spacex = np.array_split(_spacing(imshape[1], psize, pstride), npside)
     spacey = np.array_split(_spacing(imshape[0], psize, pstride), npside)
 
-    # Make sure _spacing when called again in the windows has consistent
-    # offsets etc (i.e. offset 0 since this function will take care of it)
+    slices = [(slice(sx[0], sx[-1] + psize), slice(sy[0], sy[-1] + psize))
+              for sx in spacex for sy in spacey]
 
-    # TODO
-
-    pass
+    return slices
 
 
 def _spacing(dimension, psize, pstride):
