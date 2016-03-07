@@ -16,7 +16,7 @@ def grid_patches(image, psize, pstride, centreoffset=None):
             the size of the square patches to extract, in pixels.
         pstride: int
             the stride (in pixels) between successive patches.
-        window: tuple, optional
+        centreoffset: tuple, optional
             a tuple of (row, col) offsets to add to the patch centres (centrey
             and centrex)
 
@@ -61,13 +61,35 @@ def grid_patches(image, psize, pstride, centreoffset=None):
 
 def point_patches(points, psize):
 
+    # TODO
     pass
 
 
-def image_windows(imshape, nchunks, psize, pstride):
+def image_windows(imshape, nwindows, psize, pstride):
+    """
+    Create sub-windows of an image.
 
-    # Get nearest number of chunks that preserves aspect ratio
-    npside = int(round(np.sqrt(nchunks)))
+    Parameters
+    ----------
+        imshape: tuple
+            a tuple representing the image shape; (rows, cols, ...).
+        nwindows: int
+            the number of windows to divide the image into. The nearest square
+            will actually be used (to preserve aspect ratio).
+        psize: int
+            the size of the square patches to extract, in pixels.
+        pstride: int
+            the stride (in pixels) between successive patches.
+
+    Returns
+    -------
+        slices: list
+            a list of length round(sqrt(nwindows))**2 of tuples. Each tuple has
+            two slices (slice_rows, slice_cols) that represents a subwindow.
+    """
+
+    # Get nearest number of windows that preserves aspect ratio
+    npside = int(round(np.sqrt(nwindows)))
 
     # If we split into windows using spacing calculated over the whole image,
     # all the patches etc should be extracted as if they were extracted from on
@@ -82,11 +104,9 @@ def image_windows(imshape, nchunks, psize, pstride):
 
 
 def _spacing(dimension, psize, pstride):
+    """
+    Calculate the patch spacings along a dimension of an image.
+    """
 
-    offset = _strideoffset(dimension, psize, pstride)
+    offset = int(np.floor(float((dimension - psize) % pstride) / 2))
     return range(offset, dimension - psize + 1, pstride)
-
-
-def _strideoffset(dimension, psize, pstride):
-
-    return int(np.floor(float((dimension - psize) % pstride) / 2))

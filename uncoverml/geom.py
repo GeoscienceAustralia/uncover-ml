@@ -116,6 +116,16 @@ class GridPointSpec(BoundingBox):
     def yres(self):
         return self.resolution[1]
 
+    def latlon2pix(self, lat, lon):
+
+        # TODO
+        pass
+
+    def pix2latlon(self, x, y):
+
+        # TODO
+        pass
+
     def _to_json_dict(self):
         ds = super(GridPointSpec, self)._to_json_dict()
         full_dict = {"resolution": [self.resolution[0], self.resolution[1]]}
