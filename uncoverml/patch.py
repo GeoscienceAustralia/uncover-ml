@@ -59,7 +59,7 @@ def grid_patches(image, psize, pstride, centreoffset=None):
             yield (patch, centrecol, centrerow)
 
 
-def point_patches(points, psize):
+def point_patches(image, points, psize):
 
     # TODO
     pass
