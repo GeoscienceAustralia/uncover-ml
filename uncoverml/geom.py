@@ -172,3 +172,19 @@ class ListPointSpec(BoundingBox):
         bbox = BoundingBox._from_json_dict(json_dict)
         coords = np.array(json_dict["coordinates"])
         return cls(coords, x_range=bbox.x_range, y_range=bbox.y_range)
+
+
+def unserialise(json_dict):
+    """
+    returns a PointSpec object corresponding to the type of the json dict
+    """
+
+    if "coordinates" in json_dict:
+        pspec = geom.ListPointSpec._from_json_dict(jdict)
+    elif "resolution" in json_dict:
+        pspec = geom.GridPointSpec._from_json_dict(jdict)
+    else:
+        except RuntimeError("Invalid pointspec object input")
+
+    return pspec
+

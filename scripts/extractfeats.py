@@ -29,15 +29,7 @@ def main(geotiff, pointspec, outfile, patchsize, chunks, quiet):
     with open(pointspec, 'r') as f:
         jdict = json.load(f)
 
-    if jdict["type"] == "ListPointSpec":
-        pspec = geom.ListPointSpec._from_json_dict(jdict)
-        # TODO get length
-    elif jdict["type"] == "GridPointSpec":
-        pspec = geom.GridPointSpec._from_json_dict(jdict)
-        # TODO get size in pixels
-    else:
-        log.fatal("Invalid pointspec object input")
-        sys.exit(-1)
+    pspec = geom.unserialise(jdict)
 
     # Get geotiff properties
     with rasterio.open(geotiff) as raster:
