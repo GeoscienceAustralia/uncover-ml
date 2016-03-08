@@ -37,3 +37,12 @@ def test_image_windows(make_multi_patch):
     assert np.all(np.array(ps) == tpatch)
     assert np.all(np.array(cxs) == tx)
     assert np.all(np.array(cys) == ty)
+
+
+def test_point_patches(make_points):
+
+    timg, pwidth, points, tpatch = make_points
+
+    patches = [p for p in patch.point_patches(timg, points, pwidth)]
+
+    assert np.all(np.array(patches) == tpatch)

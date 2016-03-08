@@ -12,7 +12,7 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
 
     Parameters
     ----------
-        image: np.array,
+        image: ndarray,
             an array of shape (rows, cols) or (rows, cols, channels)
         pwidth: int
             the half-width of the square patches to extract, in pixels. E.g.
@@ -25,9 +25,9 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
             a tuple of (row, col) offsets to add to the patch centres (centrey
             and centrex)
 
-    yeilds
+    Yields
     ------
-        patches: np.array
+        patches: ndarray
             A flattened image patch of shape (psize**2 * channels,), where
             psize = pwidth * 2 + 1
         centrerow: float
@@ -50,8 +50,8 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
             patchx = slice(x, x + psize)
 
             patch = np.reshape(image[patchy, patchx], rsize)
-            centrerow = y + float(psize) / 2 - 0.5
-            centrecol = x + float(psize) / 2 - 0.5
+            centrerow = y + pwidth
+            centrecol = x + pwidth
 
             if centreoffset is not None:
                 centrerow += centreoffset[0]
@@ -62,33 +62,43 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
 
 def point_patches(image, points, pwidth):
     """
-    
-    """
+    Extract patches from an image at specified points.
 
-    raise NotImplementedError("Sorry")
+    Parameters
+    ----------
+        image: ndarray
+            an array of shape (rows, cols) or (rows, cols, channels)
+        points: ndarray
+           of shape (N, 2) where there are N points, each with a row and col
+           coordinate of the patch centre within the image.
+        pwidth: int
+            the half-width of the square patches to extract, in pixels. E.g.
+            pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
+            = 2 gives a 5x5 patch etc. The formula for calculating the full
+            patch width is pwidth * 2 + 1.
+
+    Yields
+    ------
+        ndarray
+            A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
+
+    """
 
     # Check and get image dimensions
     Ih, Iw, Ic = _checkim(image)
 
-    # Calculate patch width and offsets
-    psize = pwidth * 2 + 1
-
     # Make sure points are within bounds of image taking into account psize
-    pwidth = psize / 2
     left = top = pwidth
     bottom = Ih - pwidth
     right = Iw - pwidth
-    print(left, top, right, bottom)
+
     if any(top > points[:, 0]) or any(bottom < points[:, 0]) \
             or any(left > points[:, 1]) or any(right < points[:, 1]):
         raise ValueError("Points are outside of image bounds")
 
-    return
-
-    # for p in points:
-    #     l = int(np.floor(p[1] - ptl))
-    #     r = int(np.floor(p[1] + pbr))
-    #     yield image[slice(np.floor(
+    return (image[slice(p[0] - pwidth, p[0] + pwidth + 1),
+                  slice(p[1] - pwidth, p[1] + pwidth + 1)].flatten()
+            for p in points)
 
 
 def image_windows(imshape, nwindows, pwidth, pstride):

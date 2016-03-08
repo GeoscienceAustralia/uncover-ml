@@ -35,6 +35,18 @@ def make_patch_32():
     return timg, pwidth, pstride, tpatch, ty, tx
 
 
+@pytest.fixture
+def make_points():
+    pwidth = 1
+    points = np.array([[1, 1], [2, 1], [2, 2]])
+
+    tpatch = np.array([[1, 2, 3, 5, 6, 7, 9, 10, 11],
+                       [5, 6, 7, 9, 10, 11, 13, 14, 15],
+                       [6, 7, 8, 10, 11, 12, 14, 15, 16]])
+
+    return timg, pwidth, points, tpatch
+
+
 @pytest.fixture(params=[make_patch_31, make_patch_32])
 def make_multi_patch(request):
     return request.param()
