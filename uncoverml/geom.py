@@ -1,3 +1,5 @@
+from __future__ import division
+
 from affine import Affine
 import numpy as np
 import shapefile
@@ -89,8 +91,7 @@ class BoundingBox:
         return False
 
     def _to_json_dict(self):
-        return {"type": self.__class__.__name__,
-                "bounding_box": {"min": [self.bbox[0][0], self.bbox[1][0]],
+        return {"bounding_box": {"min": [self.bbox[0][0], self.bbox[1][0]],
                                  "max": [self.bbox[0][1], self.bbox[1][1]]}}
 
     @classmethod
@@ -116,7 +117,7 @@ class GridPointSpec(BoundingBox):
     def yres(self):
         return self.resolution[1]
 
-    def latlon2pix(self, lat, lon):
+    def lonlat2pix(self, lon, lat):
 
         # TODO
         pass
@@ -131,6 +132,12 @@ class GridPointSpec(BoundingBox):
         full_dict = {"resolution": [self.resolution[0], self.resolution[1]]}
         full_dict.update(ds)
         return full_dict
+
+    def __pixres(self):
+
+        pixsize_x = (self.x_range[1] - self.x_range[0]) / self.resolution[0]
+        pixsize_y = (self.y_range[1] - self.y_range[0]) / self.resolution[1]
+        return pixsize_x, pixsize_y
 
     @classmethod
     def _from_json_dict(cls, json_dict):
@@ -180,11 +187,10 @@ def unserialise(json_dict):
     """
 
     if "coordinates" in json_dict:
-        pspec = geom.ListPointSpec._from_json_dict(jdict)
+        pspec = ListPointSpec._from_json_dict(json_dict)
     elif "resolution" in json_dict:
-        pspec = geom.GridPointSpec._from_json_dict(jdict)
+        pspec = GridPointSpec._from_json_dict(json_dict)
     else:
-        except RuntimeError("Invalid pointspec object input")
+        raise RuntimeError("Invalid pointspec object input")
 
     return pspec
-
