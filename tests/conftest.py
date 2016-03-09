@@ -50,3 +50,17 @@ def make_points():
 @pytest.fixture(params=[make_patch_31, make_patch_32])
 def make_multi_patch(request):
     return request.param()
+
+
+@pytest.fixture
+def make_raster():
+
+    res_x = 100
+    res_y = 50
+    x_range = (50, 80)
+    y_range = (-40, -30)
+
+    lons = np.linspace(*x_range, res_x)
+    lats = np.linspace(*y_range, res_y)
+
+    return (res_x, res_y), x_range, y_range, lons, lats
