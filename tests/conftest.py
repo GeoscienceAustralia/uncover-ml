@@ -15,10 +15,10 @@ def make_patch_31():
                        [5, 6, 7, 9, 10, 11, 13, 14, 15],
                        [6, 7, 8, 10, 11, 12, 14, 15, 16]])
 
-    tx = np.array([1, 2, 1, 2])
-    ty = np.array([1, 1, 2, 2])
+    tx = np.array([1, 1, 2, 2])
+    ty = np.array([1, 2, 1, 2])
 
-    return timg, pwidth, pstride, tpatch, ty, tx
+    return timg, pwidth, pstride, tpatch, tx, ty
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def make_patch_32():
     tx = np.array([1])
     ty = np.array([1])
 
-    return timg, pwidth, pstride, tpatch, ty, tx
+    return timg, pwidth, pstride, tpatch, tx, ty
 
 
 @pytest.fixture

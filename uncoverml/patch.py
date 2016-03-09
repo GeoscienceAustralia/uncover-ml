@@ -12,8 +12,8 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
 
     Parameters
     ----------
-        image: ndarray,
-            an array of shape (rows, cols) or (rows, cols, channels)
+        image: ndarray
+            an array of shape (x, y) or (x, y, channels).
         pwidth: int
             the half-width of the square patches to extract, in pixels. E.g.
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
@@ -22,18 +22,18 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
         pstride: int
             the stride (in pixels) between successive patches.
         centreoffset: tuple, optional
-            a tuple of (row, col) offsets to add to the patch centres (centrey
-            and centrex)
+            a tuple of (x, y) offsets to add to the patch centres (centrex
+            and centrey)
 
     Yields
     ------
         patches: ndarray
             A flattened image patch of shape (psize**2 * channels,), where
             psize = pwidth * 2 + 1
-        centrerow: float
-            the centre (row coords) of the patch.
-        centrecol: float
-            the centre (column coords) of the patch.
+        centrex: float
+            the centre (x coords) of the patch.
+        centrey: float
+            the centre (y coords) of the patch.
     """
 
     # Check and get image dimensions
@@ -43,21 +43,21 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
     pstride = max(1, pstride)
 
     # Extract the patches and get the patch centres
-    for y in _spacing(Ih, psize, pstride):           # Rows
-        patchy = slice(y, y + psize)
+    for x in _spacing(Ih, psize, pstride):           # Rows
+        patchx = slice(x, x + psize)
 
-        for x in _spacing(Iw, psize, pstride):       # Cols
-            patchx = slice(x, x + psize)
+        for y in _spacing(Iw, psize, pstride):       # Cols
+            patchy = slice(y, y + psize)
 
-            patch = np.reshape(image[patchy, patchx], rsize)
-            centrerow = y + pwidth
-            centrecol = x + pwidth
+            patch = np.reshape(image[patchx, patchy], rsize)
+            centrex = x + pwidth
+            centrey = y + pwidth
 
             if centreoffset is not None:
-                centrerow += centreoffset[0]
-                centrecol += centreoffset[1]
+                centrex += centreoffset[0]
+                centrey += centreoffset[1]
 
-            yield (patch, centrerow, centrecol)
+            yield (patch, centrex, centrey)
 
 
 def point_patches(image, points, pwidth):
@@ -67,9 +67,9 @@ def point_patches(image, points, pwidth):
     Parameters
     ----------
         image: ndarray
-            an array of shape (rows, cols) or (rows, cols, channels)
+            an array of shape (x, y) or (x, y, channels).
         points: ndarray
-           of shape (N, 2) where there are N points, each with a row and col
+           of shape (N, 2) where there are N points, each with an x and y
            coordinate of the patch centre within the image.
         pwidth: int
             the half-width of the square patches to extract, in pixels. E.g.
@@ -108,7 +108,7 @@ def image_windows(imshape, nwindows, pwidth, pstride):
     Parameters
     ----------
         imshape: tuple
-            a tuple representing the image shape; (rows, cols, ...).
+            a tuple representing the image shape; (x, y, ...).
         nwindows: int
             the number of windows to divide the image into. The nearest square
             will actually be used (to preserve aspect ratio).
@@ -124,7 +124,7 @@ def image_windows(imshape, nwindows, pwidth, pstride):
     -------
         slices: list
             a list of length round(sqrt(nwindows))**2 of tuples. Each tuple has
-            two slices (slice_rows, slice_cols) that represents a subwindow.
+            two slices (slice_x, slice_y) that represents a subwindow.
     """
 
     # Get nearest number of windows that preserves aspect ratio
@@ -135,11 +135,12 @@ def image_windows(imshape, nwindows, pwidth, pstride):
     # If we split into windows using spacing calculated over the whole image,
     # all the patches etc should be extracted as if they were extracted from
     # one window
-    spacex = np.array_split(_spacing(imshape[1], psize, pstride), npside)
-    spacey = np.array_split(_spacing(imshape[0], psize, pstride), npside)
+    spacex = np.array_split(_spacing(imshape[0], psize, pstride), npside)
+    spacey = np.array_split(_spacing(imshape[1], psize, pstride), npside)
 
-    slices = [(slice(sy[0], sy[-1] + psize), slice(sx[0], sx[-1] + psize))
-              for sy in spacey if len(sy) > 0 for sx in spacex if len(sx) > 0]
+    slices = [(slice(sx[0], sx[-1] + psize), slice(sy[0], sy[-1] + psize))
+              for sx in spacex if len(sx) > 0
+              for sy in spacey if len(sy) > 0]
 
     return slices
 
