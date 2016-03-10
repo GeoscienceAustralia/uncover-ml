@@ -44,17 +44,17 @@ def main():
 
     # Remove Lat-Lons and other layers from data
     bandmask = np.ones(X.shape[1], dtype=bool)
-    bandmask[1] = False  # Lat/lon
-    bandmask[2] = False  # Lat/lon
-    bandmask[6] = False  # A lot of NaNs
-    bandmask[13] = False  # Super low res
-    bandmask[33] = False  # Super outlier
-    bandmask[43] = False  # Super outlier
-    bandmask[44] = False  # Super outlier
-    bandmask[45] = False  # Super outlier
-    bandmask[46] = False  # Super outlier
-    bandmask[47] = False  # Super outlier
-    bandmask[48] = False  # Super outlier and noisy
+    # bandmask[1] = False  # Lat/lon
+    # bandmask[2] = False  # Lat/lon
+    # bandmask[6] = False  # A lot of NaNs
+    # bandmask[13] = False  # Super low res
+    # bandmask[33] = False  # Super outlier
+    # bandmask[43] = False  # Super outlier
+    # bandmask[44] = False  # Super outlier
+    # bandmask[45] = False  # Super outlier
+    # bandmask[46] = False  # Super outlier
+    # bandmask[47] = False  # Super outlier
+    # bandmask[48] = False  # Super outlier and noisy
 
 
     # NOTES on the x_bands

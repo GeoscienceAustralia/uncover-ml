@@ -1,7 +1,13 @@
 """ Scripts for validation """
 
+from __future__ import division
+
 import numpy as np
 
+
+#
+# Data Partitioning
+#
 
 def gen_cfold_data(X, Y, k=5):
     """
@@ -115,3 +121,16 @@ def split_cfold(nsamples, k=5):
         cvassigns[inds] = n
 
     return cvinds, cvassigns
+
+
+#
+# Validation Metrics
+#
+
+def rsquare(y_predict, y_true):
+
+    SSres = ((y_true - y_predict)**2).sum()
+    SStot = ((y_true - y_true.mean())**2).sum()
+    R2 = 1 - (SSres / SStot)
+
+    return R2
