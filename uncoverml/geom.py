@@ -120,7 +120,7 @@ class GridPointSpec(BoundingBox):
 
     def lonlat2pix(self, lonlat):
 
-        xy = np.zeros_like(lonlat)
+        xy = np.zeros_like(lonlat, dtype=int)
 
         for i, (lon, lat) in enumerate(lonlat):
             x = int((lon - self.xmin) / float(self.pixsize_x) + 0.5)
@@ -134,18 +134,17 @@ class GridPointSpec(BoundingBox):
 
     def pix2latlon(self, xy):
 
-        latlon = np.zeros_like(xy)
+        lonlat = np.zeros_like(xy, dtype=float)
 
-        for i, (x, y) in enumerate(x, y):
-            pass
-            # lon = 
-            # lat = 
-            # assert (lon >= self.xmin and  lon < self.xmax)
-            # assert (lat >= self.ymin and  lat < self.ymax)
-            # xy[i, 0] = x
-            # xy[i, 1] = y
-        # TODO
-        return np.array([[None, None]])
+        for i, (x, y) in enumerate(xy):
+            lon = self.xmin + (x + 0.5) * self.pixsize_x
+            lat = self.ymin + (y + 0.5) * self.pixsize_y
+            assert (lon >= self.xmin and lon < self.xmax)
+            assert (lat >= self.ymin and lat < self.ymax)
+            lonlat[i, 0] = lon
+            lonlat[i, 1] = lat
+
+        return lonlat
 
     def _to_json_dict(self):
         ds = super(GridPointSpec, self)._to_json_dict()
@@ -155,10 +154,8 @@ class GridPointSpec(BoundingBox):
 
     def __pixres(self):
 
-        self.pixsize_x = (self.x_range[1] - self.x_range[0]) \
-            / self.resolution[0]
-        self.pixsize_y = (self.y_range[1] - self.y_range[0]) \
-            / self.resolution[1]
+        self.pixsize_x = (self.xmax - self.xmin) / self.resolution[0]
+        self.pixsize_y = (self.ymax - self.ymin) / self.resolution[1]
 
     @classmethod
     def _from_json_dict(cls, json_dict):

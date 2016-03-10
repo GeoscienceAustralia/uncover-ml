@@ -60,7 +60,10 @@ def make_raster():
     x_range = (50, 80)
     y_range = (-40, -30)
 
-    lons = np.linspace(*x_range, res_x)
-    lats = np.linspace(*y_range, res_y)
+    pix_x = (x_range[1] - x_range[0]) / res_x
+    pix_y = (y_range[1] - y_range[0]) / res_y
+
+    lons = np.arange(x_range[0] + pix_x / 2, x_range[1] - pix_x / 2, pix_x)
+    lats = np.arange(y_range[0] + pix_y / 2, y_range[1] - pix_y / 2, pix_y)
 
     return (res_x, res_y), x_range, y_range, lons, lats
