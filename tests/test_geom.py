@@ -33,3 +33,11 @@ def test_pix2latlon(make_raster):
 
     latlon_true = np.array([lons[xq], lats[yq]]).T
     assert(np.allclose(latlon, latlon_true))
+
+
+def test_shp(make_shp_gtiff):
+
+    fn = make_shp_gtiff
+    print(fn)
+
+    assert 0
