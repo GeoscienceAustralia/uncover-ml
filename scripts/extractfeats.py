@@ -53,7 +53,7 @@ def main(geotiff, pointspec, outfile, patchsize, chunks, quiet):
     #   GridPointSpec -- split work into windows, send windows to workers
     #       NOTE: These windows need to account for patch/stride overlaps!
 
-    # Start workers (celery)
+    #send job to celery
 
     # Report status
 

@@ -52,8 +52,14 @@ setup(
         ]
     },
     install_requires=[
+        'wheel',
         'scipy',
         'numpy',
+        'tables',
+        'affine',
+        'rasterio',
+        'pyshp',
+        'celery'
     ],
     extras_require={
         'demos': [
