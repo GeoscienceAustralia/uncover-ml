@@ -53,8 +53,8 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
 
     Yields
     ------
-        patches: ndarray
-            A flattened image patch of shape (psize**2 * channels,), where
+        patch: ndarray
+            An image patch of shape (psize, psize, channels,), where
             psize = pwidth * 2 + 1
         centrex: float
             the centre (x coords) of the patch.
@@ -65,7 +65,6 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
     # Check and get image dimensions
     Ih, Iw, Ic = _checkim(image)
     psize = pwidth * 2 + 1
-    rsize = (psize**2) * Ic
     pstride = max(1, pstride)
 
     # Extract the patches and get the patch centres
@@ -75,7 +74,7 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
         for y in _spacing(Iw, psize, pstride):       # Cols
             patchy = slice(y, y + psize)
 
-            patch = np.reshape(image[patchx, patchy], rsize)
+            patch = image[patchx, patchy]
             centrex = x + pwidth
             centrey = y + pwidth
 
@@ -106,7 +105,8 @@ def point_patches(image, points, pwidth):
     Yields
     ------
         ndarray
-            A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
+            An image patch of shape (psize, psize, channels,), where
+            psize = pwidth * 2 + 1
 
     """
 
@@ -123,7 +123,7 @@ def point_patches(image, points, pwidth):
         raise ValueError("Points are outside of image bounds")
 
     return (image[slice(p[0] - pwidth, p[0] + pwidth + 1),
-                  slice(p[1] - pwidth, p[1] + pwidth + 1)].flatten()
+                  slice(p[1] - pwidth, p[1] + pwidth + 1)]
             for p in points)
 
 

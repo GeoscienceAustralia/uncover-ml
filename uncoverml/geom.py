@@ -48,6 +48,20 @@ def points_from_shp(filename):
     return label_coords
 
 
+def values_from_shp(filename, field):
+
+    sf = shapefile.Reader(filename)
+    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
+
+    if field not in fdict:
+        raise ValueError("Requested field is not in records!")
+
+    vind = fdict[field]
+    vals = [r[vind] for r in sf.records()]
+
+    return np.array(vals)
+
+
 class BoundingBox:
     def __init__(self, x_range, y_range):
         assert(len(x_range) == len(y_range))
