@@ -118,6 +118,10 @@ class GridPointSpec(BoundingBox):
     def yres(self):
         return self.resolution[1]
 
+    @property
+    def npoints(self):
+        return self.resolution[0]*self.resolution[1]
+
     def lonlat2pix(self, lonlat):
 
         xy = np.zeros_like(lonlat, dtype=int)
@@ -185,6 +189,10 @@ class ListPointSpec(BoundingBox):
     @property
     def ycoords(self):
         return self.coords[:, 1]
+
+    @property
+    def npoints(self):
+        return self.coords.shape[0]
 
     def _to_json_dict(self):
         ds = super(ListPointSpec, self)._to_json_dict()

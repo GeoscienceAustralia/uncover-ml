@@ -3,6 +3,32 @@
 from __future__ import division
 
 import numpy as np
+    
+def patches(image, pointspec, patch_width):
+    """
+    High-level function abstracting over what sort of patches we're getting.
+
+    Parameters
+    ----------
+        image: ndarray
+            an array of shape (x,y or (x,y,channels)
+        pointspec: GridPointSpec or ListPointSpec
+            a pointspec object describing the required patch locations
+        patch_width: int
+            the half-width of the square patches to extract
+
+    Returns
+    -------
+        ndarray
+            A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
+    """
+    if hasattr(pointspec, 'coords'):
+        p = point_patches(images, pointspec.coords, patch_width)
+    else:
+        raw_gen = grid_patches(image, patch_width, 1) #stride = 1
+        p = (k[0] for k in raw_gen) # throw away pixel centres
+    return p
+
 
 
 def grid_patches(image, pwidth, pstride, centreoffset=None):
@@ -108,7 +134,7 @@ def image_windows(imshape, nwindows, pwidth, pstride):
     Parameters
     ----------
         imshape: tuple
-            a tuple representing the image shape; (x, y, ...).
+            a tuple representing the image shape; (x, y).
         nwindows: int
             the number of windows to divide the image into. The nearest square
             will actually be used (to preserve aspect ratio).
