@@ -46,6 +46,7 @@ setup(
             'pointspec = scripts.pointspec:main',
             'cvindexer = scripts.cvindexer:main',
             'extractfeats = scripts.extractfeats:main',
+            'composefeats = scripts.composefeats:main',
             'uncoverml-worker = scripts.worker:main'
         ],
         'gui_scripts': [

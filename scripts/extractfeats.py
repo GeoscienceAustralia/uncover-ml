@@ -8,12 +8,13 @@ import json
 import uncoverml.geom as geom
 import uncoverml.patch as patch
 import uncoverml.feature as feat
-from celery import Celery
+from uncoverml.celerybase import celery
 import time
 import pyprind
 
 log = logging.getLogger(__name__)
 
+#TODO make these defaults come from uncoverml.defaults
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.option('--patchsize', type=int, default=0, help="window size of patches")
@@ -22,11 +23,12 @@ log = logging.getLogger(__name__)
 @cl.option('--redisdb', type=int, default=0)
 @cl.option('--redishost', type=str, default='localhost')
 @cl.option('--redisport', type=int, default=6379)
+@cl.option('--standalone', is_flag=True, default=False)
 @cl.argument('pointspec', type=cl.Path(exists=True), required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
 def main(geotiff, pointspec, outfile, patchsize, chunks, quiet, 
-         redisdb, redishost, redisport):
+         redisdb, redishost, redisport, standalone):
 
     # setup logging
     if quiet is True:
@@ -35,11 +37,10 @@ def main(geotiff, pointspec, outfile, patchsize, chunks, quiet,
         logging.basicConfig(level=logging.INFO)
 
     # initialise celery
-    celery = Celery('uncoverml.tasks')
+    celery.conf.CELERY_ALWAYS_EAGER = standalone
     celery_redis='redis://{}:{}/{}'.format(redishost, redisport, redisdb)
     celery.conf.BROKER_URL = celery_redis
     celery.conf.CELERY_RESULT_BACKEND = celery_redis
-
 
     # Read in the poinspec file and create the relevant object
     with open(pointspec, 'r') as f:
