@@ -1,5 +1,6 @@
 import rasterio
 import numpy as np
+import shapefile as shp
 from affine import Affine
 
 from uncoverml import geom
@@ -77,9 +78,23 @@ def test_pix2latlon(make_raster):
     assert(np.allclose(latlon, latlon_true))
 
 
-def test_shp(make_shp_gtiff):
+def test_points_from_shp(make_shp_gtiff):
 
-    fn = make_shp_gtiff
-    print(fn)
+    fshp, _ = make_shp_gtiff
 
-    assert 0  # TODO
+    coords = geom.points_from_shp(fshp)
+
+    f = shp.Reader(fshp)
+    fdict = {fname[0]: i for i, fname in enumerate(f.fields[1:])}
+    lonlat = np.array(f.records())[:, [fdict['lon'], fdict['lat']]]
+
+    assert np.allclose(coords, lonlat)
+
+
+def test_values_from_shp(make_shp_gtiff):
+
+    fshp, _ = make_shp_gtiff
+
+    for i in range(10):
+        vals = geom.values_from_shp(fshp, str(i))
+        assert all(vals == i)

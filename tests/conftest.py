@@ -113,8 +113,9 @@ def make_shp_gtiff(tmpdir_factory):
     ntargets = 10
     dlon = x_bound[0] + np.random.rand(nsamples) * (x_bound[1] - x_bound[0])
     dlat = y_bound[0] + np.random.rand(nsamples) * (y_bound[1] - y_bound[0])
-    fields = [str(i) for i in range(ntargets)]
+    fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
+    vals = np.hstack((vals, np.array([dlon, dlat]).T))
 
     # write shapefile
     w = shp.Writer(shp.POINT)
