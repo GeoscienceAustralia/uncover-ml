@@ -24,6 +24,7 @@ def lonlat_pixel_centres(raster):
 
 def bounding_box(raster):
     T1 = raster.affine
+
     # No shearing or rotation allowed!!
     if not ((T1[1] == 0) and (T1[3] == 0)):
         raise RuntimeError("Transform to pixel coordinates has rotation "
@@ -122,7 +123,7 @@ class GridPointSpec(BoundingBox):
         assert((resolution[0] > 0) and (resolution[1] > 0))
         super(GridPointSpec, self).__init__(x_range, y_range)
         self.resolution = tuple(resolution)
-        self.__pixres()
+        self.__Affine()
 
     @property
     def xres(self):
@@ -138,29 +139,21 @@ class GridPointSpec(BoundingBox):
 
     def lonlat2pix(self, lonlat):
 
-        xy = np.zeros_like(lonlat, dtype=int)
-
-        for i, (lon, lat) in enumerate(lonlat):
-            x = int((lon - self.xmin) / float(self.pixsize_x) + 0.5)
-            y = int((lat - self.ymin) / float(self.pixsize_y) + 0.5)
-            assert (x >= 0 and x < self.resolution[0])
-            assert (y >= 0 and y < self.resolution[1])
-            xy[i, 0] = x
-            xy[i, 1] = y
+        xy = np.floor([self.iA * ll for ll in lonlat]).astype(int)
+        assert any(np.logical_and(xy[:, 0] >= 0,
+                                  xy[:, 0] < self.resolution[0]))
+        assert any(np.logical_and(xy[:, 1] >= 0,
+                                  xy[:, 1] < self.resolution[1]))
 
         return xy
 
     def pix2latlon(self, xy):
 
-        lonlat = np.zeros_like(xy, dtype=float)
-
-        for i, (x, y) in enumerate(xy):
-            lon = self.xmin + (x + 0.5) * self.pixsize_x
-            lat = self.ymin + (y + 0.5) * self.pixsize_y
-            assert (lon >= self.xmin and lon < self.xmax)
-            assert (lat >= self.ymin and lat < self.ymax)
-            lonlat[i, 0] = lon
-            lonlat[i, 1] = lat
+        lonlat = np.array([self.A * pix for pix in xy])
+        assert any(np.logical_and(lonlat[:, 0] >= self.xmin,
+                                  lonlat[:, 0] < self.xmax))
+        assert any(np.logical_and(lonlat[:, 1] >= self.ymin,
+                                  lonlat[:, 1] < self.ymax))
 
         return lonlat
 
@@ -170,10 +163,14 @@ class GridPointSpec(BoundingBox):
         full_dict.update(ds)
         return full_dict
 
-    def __pixres(self):
+    def __Affine(self):
 
-        self.pixsize_x = (self.xmax - self.xmin) / self.resolution[0]
-        self.pixsize_y = (self.ymax - self.ymin) / self.resolution[1]
+        self.pixsize_x = (self.xmax - self.xmin) / (self.resolution[0] + 1)
+        self.pixsize_y = (self.ymax - self.ymin) / (self.resolution[1] + 1)
+        self.A = Affine(self.pixsize_x, 0, self.xmin,
+                        0, -self.pixsize_y, self.ymax)
+        self.A *= Affine.translation(0.5, 0.5)
+        self.iA = _invert_affine(self.A)
 
     @classmethod
     def _from_json_dict(cls, json_dict):
@@ -234,3 +231,15 @@ def unserialise(json_dict):
         raise RuntimeError("Invalid pointspec object input")
 
     return pspec
+
+
+def _invert_affine(A):
+
+    R = np.array([A[0:2], A[3:5]])
+    T = np.array([[A[2], A[5]]]).T
+
+    iR = np.linalg.pinv(R)
+    iT = -iR.dot(T)
+    iA = np.hstack((iR, iT))
+
+    return Affine(*iA.flatten())
