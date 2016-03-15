@@ -20,7 +20,11 @@ def test_image_windows(make_multi_patch):
 
     timg, pwidth, pstride, tpatch, tx, ty = make_multi_patch
 
-    slices = patch.image_windows(timg.shape, 4, pwidth, pstride)
+    #
+    split = 2
+    indices = [(x,y) for x in range(split) for y in range(split)]
+    slices = [patch.image_window(i,j, split, timg.shape, pwidth, pstride)
+              for i, j in indices]
 
     patches = []
     for sl in slices:

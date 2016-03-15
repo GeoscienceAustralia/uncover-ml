@@ -165,6 +165,9 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
     assert x_idx >= 0 and x_idx < axis_splits
     assert y_idx >= 0 and y_idx < axis_splits
 
+    # Image big enough?
+    assert imshape[0] >= axis_splits
+
     # Full size and correct stride
     psize = pwidth * 2 + 1
     pstride = max(1, pstride)
@@ -172,8 +175,14 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
     # If we split into windows using spacing calculated over the whole image,
     # all the patches etc should be extracted as if they were extracted from
     # one window
-    spacex = np.array_split(_spacing(imshape[0], psize, pstride), axis_splits)
-    spacey = np.array_split(_spacing(imshape[1], psize, pstride), axis_splits)
+    x_patch_corners = _spacing(imshape[0], psize, pstride)
+    y_patch_corners = _spacing(imshape[1], psize, pstride)
+
+    assert len(x_patch_corners) >= axis_splits # need at least 1 patch per chunk
+    assert len(y_patch_corners) >= axis_splits # need at least 1 patch per chunk
+
+    spacex = np.array_split(x_patch_corners, axis_splits)
+    spacey = np.array_split(y_patch_corners, axis_splits)
 
     sx = spacex[x_idx]
     sy = spacey[y_idx]
@@ -184,8 +193,13 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
 
 def _spacing(dimension, psize, pstride):
     """
-    Calculate the patch spacings along a dimension of an image.
+    Calculate the patch spacings along a dimension of an image. 
+    Returns the lowest-index corner of the patches for a given 
+    dimension,  size and stride. Always returns at least 1 patch index
     """
+    assert dimension >= psize # otherwise a single patch won't fit
+    assert psize > 0
+    assert pstride > 0 # otherwise we'll never move along the image
 
     offset = int(np.floor(float((dimension - psize) % pstride) / 2))
     return range(offset, dimension - psize + 1, pstride)
