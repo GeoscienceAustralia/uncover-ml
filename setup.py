@@ -33,7 +33,8 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='uncover-ml',
     version='0.1.0',
-    description='Machine learning tools for the Geoscience Australia uncover project',
+    description='Machine learning tools for the Geoscience Australia uncover '
+                'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='NICTA Spatial Inference Systems Team',
     author_email='daniel.steinberg@nicta.com.au',
@@ -47,7 +48,8 @@ setup(
             'cvindexer = scripts.cvindexer:main',
             'extractfeats = scripts.extractfeats:main',
             'composefeats = scripts.composefeats:main',
-            'uncoverml-worker = scripts.worker:main'
+            'uncoverml-worker = scripts.worker:main',
+            'maketargets = scripts.maketargets:main'
         ],
         'gui_scripts': [
             # 'uncover-ml_gui_script = scripts.uncover-ml_gui_script:gui'
