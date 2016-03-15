@@ -6,6 +6,9 @@ import shapefile
 
 
 def lonlat_pixel_centres(raster):
+    """
+    TODO
+    """
 
     # Get affine transform for pixel centres
     # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
@@ -23,6 +26,9 @@ def lonlat_pixel_centres(raster):
 
 
 def bounding_box(raster):
+    """
+    TODO
+    """
     T1 = raster.affine
 
     # No shearing or rotation allowed!!
@@ -40,6 +46,9 @@ def bounding_box(raster):
 
 
 def points_from_shp(filename):
+    """
+    TODO
+    """
     # TODO check the shapefile only contains points
     coords = []
     sf = shapefile.Reader(filename)
@@ -50,6 +59,9 @@ def points_from_shp(filename):
 
 
 def values_from_shp(filename, field):
+    """
+    TODO
+    """
 
     sf = shapefile.Reader(filename)
     fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
@@ -64,7 +76,11 @@ def values_from_shp(filename, field):
 
 
 class BoundingBox:
+
     def __init__(self, x_range, y_range):
+        """
+        TODO
+        """
         assert(len(x_range) == len(y_range))
         assert(x_range[0] < x_range[1])
         assert(y_range[0] < y_range[1])
@@ -118,7 +134,11 @@ class BoundingBox:
 
 
 class GridPointSpec(BoundingBox):
+
     def __init__(self, x_range, y_range, resolution):
+        """
+        TODO
+        """
         assert(len(resolution) == 2)
         assert((resolution[0] > 0) and (resolution[1] > 0))
         super(GridPointSpec, self).__init__(x_range, y_range)
@@ -135,7 +155,7 @@ class GridPointSpec(BoundingBox):
 
     @property
     def npoints(self):
-        return self.resolution[0]*self.resolution[1]
+        return self.resolution[0] * self.resolution[1]
 
     def lonlat2pix(self, lonlat):
 
@@ -180,7 +200,11 @@ class GridPointSpec(BoundingBox):
 
 
 class ListPointSpec(BoundingBox):
+
     def __init__(self, coords, x_range=None, y_range=None):
+        """
+        TODO
+        """
         assert(coords.ndim == 2)
         assert(coords.shape[1] == 2)
 
