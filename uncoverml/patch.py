@@ -127,17 +127,26 @@ def point_patches(image, points, pwidth):
             for p in points)
 
 
-def image_windows(imshape, nwindows, pwidth, pstride):
+def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
     """
-    Create sub-windows of an image.
+    Create sub-windows of an image. given specifications for a chunking scheme
+    and an index, returns the pixel slices of the image for the chunk at that
+    index.
 
     Parameters
     ----------
-        imshape: tuple
-            a tuple representing the image shape; (x, y).
-        nwindows: int
+        x_idx: int
+            the x-index of the chunk. 0 <= x_idx < axis_splits
+        y_idx: int
+            the y-index of the chunk. 0 <= y_idx < axis_splits
+        axis_splits: int
+            the number of splits per axis used to create chunks of data.
+            The total number of chunks is the square of this value. Aspect
+            ratio of the chunks is approximately equal to original image.
             the number of windows to divide the image into. The nearest square
             will actually be used (to preserve aspect ratio).
+        imshape: tuple
+            a tuple representing the image shape; (x, y).
         pwidth: int
             the half-width of the square patches to extract, in pixels. E.g.
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
@@ -152,22 +161,24 @@ def image_windows(imshape, nwindows, pwidth, pstride):
             a list of length round(sqrt(nwindows))**2 of tuples. Each tuple has
             two slices (slice_x, slice_y) that represents a subwindow.
     """
+    # Sane indices?
+    assert x_idx >= 0 and x_idx < axis_splits
+    assert y_idx >= 0 and y_idx < axis_splits
 
-    # Get nearest number of windows that preserves aspect ratio
-    npside = int(round(np.sqrt(nwindows)))
+    # Full size and correct stride
     psize = pwidth * 2 + 1
     pstride = max(1, pstride)
 
     # If we split into windows using spacing calculated over the whole image,
     # all the patches etc should be extracted as if they were extracted from
     # one window
-    spacex = np.array_split(_spacing(imshape[0], psize, pstride), npside)
-    spacey = np.array_split(_spacing(imshape[1], psize, pstride), npside)
+    spacex = np.array_split(_spacing(imshape[0], psize, pstride), axis_splits)
+    spacey = np.array_split(_spacing(imshape[1], psize, pstride), axis_splits)
 
-    slices = [(slice(sx[0], sx[-1] + psize), slice(sy[0], sy[-1] + psize))
-              for sx in spacex if len(sx) > 0
-              for sy in spacey if len(sy) > 0]
+    sx = spacex[x_idx]
+    sy = spacey[y_idx]
 
+    slices = (slice(sx[0], sx[-1] + psize), slice(sy[0], sy[-1] + psize))
     return slices
 
 
