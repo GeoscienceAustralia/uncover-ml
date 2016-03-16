@@ -12,23 +12,22 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl.option('--resolution', required=False,
            help="the output resolution. "
-           "Has the form --resolution <width>x<height>")
+           "Has the form --resolution <width>x<height>", default=None)
 @cl.option('--bbox', required=False,
            help="a bounding box of a subset of the image."
            "takes the form --bbox <xmin>:<xmax>,<ymin>:<ymax> and if used"
            "in conjunction with --resolution,"
-           " the resolution is of the subset.")
+           " the resolution is of the subset.", default=None)
 @cl.option('--pointlist', type=cl.Path(exists=True), required=False,
            help="a shapefile containing a list of positions. Doesn't "
            "work with --resolution. If used with --bbox, only those points "
-           "lying inside (and on) the bbox will be used")
+           "lying inside (and on) the bbox will be used", default=None)
 @cl.option('--geotiff', type=cl.Path(exists=True), required=False,
            help="a geotiff to extract the specification from. Can be used "
-           "with --resolution. If given --bbox is ignored")
+           "with --resolution. If given --bbox is ignored", default=None)
 @cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
-def main(outfile, resolution=None, bbox=None, pointlist=None, geotiff=None,
-         quiet=False):
+def main(outfile, resolution, bbox, pointlist, geotiff, quiet):
     """
     Builds a JSON file that encodes the latitude/longitude points being used
     for an ML problem. This resulting PointSpec file is used to ensure machine

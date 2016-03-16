@@ -157,6 +157,6 @@ def make_shp_gtiff(tmpdir_factory):
                }
 
     with rasterio.open(ftif, 'w', **profile) as f:
-        f.write(np.array([Lats, Lons]))
+        f.write(np.array([Lons, Lats]))
 
     return fshp, ftif
