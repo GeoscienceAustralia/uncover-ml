@@ -114,3 +114,4 @@ def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
     # Output the feature to an hdf5 file
     output_features(features, x_idx, y_idx, outfile)
 
+
