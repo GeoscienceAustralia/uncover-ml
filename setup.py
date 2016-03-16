@@ -44,15 +44,12 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'pointspec = scripts.pointspec:main',
-            'cvindexer = scripts.cvindexer:main',
-            'extractfeats = scripts.extractfeats:main',
-            'composefeats = scripts.composefeats:main',
-            'uncoverml-worker = scripts.worker:main',
-            'maketargets = scripts.maketargets:main'
-        ],
-        'gui_scripts': [
-            # 'uncover-ml_gui_script = scripts.uncover-ml_gui_script:gui'
+            'pointspec = uncoverml.scripts.pointspec:main',
+            'cvindexer = uncoverml.scripts.cvindexer:main',
+            'extractfeats = uncoverml.scripts.extractfeats:main',
+            'composefeats = uncoverml.scripts.composefeats:main',
+            'uncoverml-worker = uncoverml.scripts.worker:main',
+            'maketargets = uncoverml.scripts.maketargets:main'
         ]
     },
     install_requires=[
