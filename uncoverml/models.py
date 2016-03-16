@@ -44,9 +44,18 @@ class ModelSpec:
     @classmethod
     def from_dict(cls, mod_dict):
 
-        return cls(ModelSpec.__set_details(mod_dict['training']),
-                   ModelSpec.__set_details(mod_dict['prediction']),
-                   **mod_dict['parameters'])
+        # dummy construct
+        def dummy():
+            pass
+
+        retcls = cls(dummy, dummy, **{})
+
+        # overwrite real properties
+        retcls.train_details = mod_dict['training']
+        retcls.pred_details = mod_dict['prediction']
+        retcls.params = mod_dict['parameters']
+
+        return retcls
 
     @staticmethod
     def __get_details(func):
@@ -55,19 +64,6 @@ class ModelSpec:
                         }
 
         if '__self__' in dir(func):
-            details_dict['class'] = func.__self__.__class__
+            details_dict['class'] = func.__self__.__class__.__name__
 
         return details_dict
-
-    @staticmethod
-    def __set_details(fdict):
-
-        class fun:
-            pass
-
-        fun.__name__ = fdict['name']
-        fun.__module__ = fdict['module']
-        if 'class' in fdict:
-            fun.__class__ = fdict['class']
-
-        return fun
