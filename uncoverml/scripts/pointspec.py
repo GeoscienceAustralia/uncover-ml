@@ -2,9 +2,9 @@ import logging
 import sys
 import click as cl
 import numpy as np
-import rasterio
 import json
 import uncoverml.geom as geom
+from uncoverml import io
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def main(outfile, resolution, bbox, pointlist, geotiff, quiet):
         x_range, y_range = tuple([np.array([float(k) for k in j.split(":")])
                                   for j in bbox.split(",")])
     if geotiff is not None:
-        with rasterio.open(geotiff) as raster:
+        with io.open_raster(geotiff) as raster:
             x_range, y_range = geom.bounding_box(raster)
             log.info("extracted bbox from raster: {} x {}"
                      .format(x_range, y_range))

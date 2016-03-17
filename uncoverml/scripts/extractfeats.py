@@ -1,10 +1,10 @@
 import logging
 import sys
 import click as cl
-import rasterio
 import json
 import uncoverml.geom as geom
 import uncoverml.feature as feat
+from uncoverml import io
 import time
 import pyprind
 
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def check_is_subset(geotiff, pointspec):
-    with rasterio.open(geotiff) as raster:
+    with io.open_raster(geotiff) as raster:
         x_range, y_range = geom.bounding_box(raster)
         res = (raster.width, raster.height)
         tifgrid = geom.GridPointSpec(x_range, y_range, res)

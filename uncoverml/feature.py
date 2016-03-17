@@ -1,45 +1,10 @@
 import os.path
 import numpy as np
-import rasterio
 import tables as hdf
 from uncoverml.celerybase import celery
+from uncoverml import io
 from uncoverml import patch
 
-
-def read_window(geotiff, img_slices):
-    """
-    Reads a window of data from a geotiff in a region defined by a pair
-    of slices
-
-    Parameters
-    ----------
-        geotiff: rasterio raster
-            the geotiff file opened by rasterio
-        img_slices: tuple
-            A tuple of two numpy slice objects of the form (x_slice, y_slice)
-            specifying the pixel index ranges in the geotiff.
-
-    Returns
-    -------
-        window: array
-            a 3D numpy array of shape (size_x, size_y, nbands). The type is
-            the same as the input data.
-
-    NOTE
-    ----
-        x - corresponds to image COLS (Lons)
-        y - corresponds to image ROWS (Lats)
-    """
-
-    x_slice, y_slice = img_slices
-
-    # tanspose the slices since we are reading the original geotiff
-    window = ((y_slice.start, y_slice.stop), (x_slice.start, x_slice.stop))
-
-    w = geotiff.read(window=window)
-    w = w[np.newaxis, :, :] if w.ndim == 2 else w
-    w = np.transpose(w, [2, 1, 0])  # Transpose and channels at back
-    return w
 
 
 def output_features(feature_vector, centres, x_idx, y_idx, outfile):
@@ -116,12 +81,12 @@ def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
     # fix stride at 1 for now
     stride = 1
     # open the geotiff
-    with rasterio.open(geotiff) as raster:
+    with io.open_raster(geotiff) as raster:
         res = (raster.width, raster.height)
         slices = patch.image_window(x_idx, y_idx, axis_splits, res,
                                     patchsize, stride)
 
-        img = read_window(raster, slices)
+        img = io.read_raster(raster, slices)
 
     # Operate on the patches
     offset = (slices[0].start, slices[1].start)

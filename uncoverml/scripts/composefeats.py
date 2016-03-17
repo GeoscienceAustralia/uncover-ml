@@ -3,7 +3,6 @@ import sys
 import os.path
 import click as cl
 import numpy as np
-import rasterio
 import json
 from uncoverml.celerybase import celery
 import time
