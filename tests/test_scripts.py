@@ -170,7 +170,7 @@ def test_extractfeats_worker(make_shp_gtiff):
     _, ftif = make_shp_gtiff
     split = 2
 
-    return
+    # return
     # TODO: The following just hangs!
 
     # Make pointspec
@@ -184,13 +184,12 @@ def test_extractfeats_worker(make_shp_gtiff):
     # Start redis
     try:
         redisargs = ["redis-server", "--port", "6379"]
-        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
-                                  universal_newlines=True)
+        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE)
+
         _proc_ready(predis)
 
         # Start the worker
-        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
-                                   universal_newlines=True)
+        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE)
         _proc_ready(pworker)
 
         # Extract features from gtiff
@@ -215,19 +214,17 @@ def test_extractfeats_worker(make_shp_gtiff):
 
 def _proc_ready(proc, waitime=10):
 
-    success = False
     for i in range(waitime):
         try:
-            out, err = proc.communicate(timeout=1)
-            # print(out, err, "!!!!!!!!!!")
-            if "ready" in out:
-                success = True
-                break
+            # Issue!! This is a blocking read!!!
+            for line in iter(proc.stdout.readline, b"\n"):
+                if "ready" in line.decode():
+                    return
+            proc.wait(timeout=1)
         except subprocess.TimeoutExpired:
             pass
         except Exception:
             proc.terminate()
             raise
 
-    if not success:
-        raise RuntimeError("Process {} never ready!".format(proc.args))
+    raise RuntimeError("Process {} never ready!".format(proc.args))
