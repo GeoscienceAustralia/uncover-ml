@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import logging
@@ -31,8 +32,9 @@ def main(pointspec, outfile, folds, quiet):
     # Read in the poinspec file and create the relevant object
     with open(pointspec, 'r') as f:
         jdict = json.load(f)
+    pspec = geom.unserialise(jdict)
 
-    if jdict["type"] == "GridPointSpec":
+    if isinstance(pspec, geom.GridPointSpec):
         # TODO: implement this
         log.fatal("Grid cross validation not implemented yet, sorry!")
         sys.exit(-1)
@@ -43,7 +45,9 @@ def main(pointspec, outfile, folds, quiet):
     N = pointobj.coords.shape[0]
     _, cvassigns = validation.split_cfold(N, folds)
 
-    # TODO: make sure outfile has an hdf extension
+    # make sure outfile has an hdf extension
+    outsplit = os.path.splitext(outfile)
+    outfile = outsplit[0] + ".hdf5" if outsplit[1] != ".hdf5" else outfile
 
     # Write out an HDF5
     with tables.open_file(outfile, 'w') as f:

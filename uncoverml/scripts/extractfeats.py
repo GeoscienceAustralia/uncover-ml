@@ -1,27 +1,27 @@
 import logging
 import sys
-import os.path
 import click as cl
-import numpy as np
 import rasterio
 import json
 import uncoverml.geom as geom
-import uncoverml.patch as patch
 import uncoverml.feature as feat
 import time
 import pyprind
 
 log = logging.getLogger(__name__)
 
+
 def check_is_subset(geotiff, pointspec):
     with rasterio.open(geotiff) as raster:
         x_range, y_range = geom.bounding_box(raster)
         res = (raster.width, raster.height)
         tifgrid = geom.GridPointSpec(x_range, y_range, res)
+
     # Check we have valid bounding boxes
-    if not tifgrid.contains(pspec):
+    if not tifgrid.contains(pointspec):
         log.fatal("The input geotiff does not contain the pointspec data!")
         sys.exit(-1)
+
 
 def print_celery_progress(async_results, title):
     total_jobs = len(async_results)
@@ -38,7 +38,7 @@ def print_celery_progress(async_results, title):
         time.sleep(0.1)
 
 
-#TODO make these defaults come from uncoverml.defaults
+# TODO make these defaults come from uncoverml.defaults
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.option('--patchsize', type=int, default=0, help="window size of patches")
@@ -51,8 +51,8 @@ def print_celery_progress(async_results, title):
 @cl.argument('pointspec', type=cl.Path(exists=True), required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
-def main(geotiff, pointspec, outfile, patchsize, splits, quiet, 
-         redisdb, redishost, redisport, standalone):
+def main(geotiff, pointspec, outfile, patchsize, splits, quiet, redisdb,
+         redishost, redisport, standalone):
 
     # setup logging
     if quiet is True:
@@ -64,7 +64,7 @@ def main(geotiff, pointspec, outfile, patchsize, splits, quiet,
     if not standalone:
         from uncoverml import celerybase
         celerybase.configure(redishost, redisport, redisdb)
-    
+
     # Read in the poinspec file and create the relevant object
     with open(pointspec, 'r') as f:
         jdict = json.load(f)
@@ -76,7 +76,7 @@ def main(geotiff, pointspec, outfile, patchsize, splits, quiet,
 
     # Define the transform function to build the features
     transform = feat.transform
-    
+
     # Build the chunk indices for creating jobs
     chunk_indices = [(x, y) for x in range(splits) for y in range(splits)]
 
@@ -85,16 +85,14 @@ def main(geotiff, pointspec, outfile, patchsize, splits, quiet,
     if not standalone:
         async_results = []
         for x, y in chunk_indices:
-            r = feat.process_window.delay(x,y, splits, geotiff, pspec, 
-                    patchsize, transform, outfile)
+            r = feat.process_window.delay(x, y, splits, geotiff, pspec,
+                                          patchsize, transform, outfile)
             async_results.append(r)
         print_celery_progress(async_results, progress_title)
     else:
-        bar = pyprind.ProgBar(len(chunk_indices), width=60, title=progress_title)
+        bar = pyprind.ProgBar(len(chunk_indices), width=60,
+                              title=progress_title)
         for x, y in chunk_indices:
-            r = feat.process_window(x,y, splits, geotiff, pspec, 
-                    patchsize, transform, outfile)
+            r = feat.process_window(x, y, splits, geotiff, pspec, patchsize,
+                                    transform, outfile)
             bar.update(force_flush=True)
-
-    sys.exit(0)
-

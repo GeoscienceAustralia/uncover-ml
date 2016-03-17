@@ -3,19 +3,23 @@
 from __future__ import division
 
 import numpy as np
-    
-def patches(image, pointspec, patch_width):
+
+
+def patches(image, pointspec, patch_width, centreoffset=None):
     """
     High-level function abstracting over what sort of patches we're getting.
 
     Parameters
     ----------
         image: ndarray
-            an array of shape (x,y or (x,y,channels)
+            an array of shape (x, y) or (x, y, channels)
         pointspec: GridPointSpec or ListPointSpec
             a pointspec object describing the required patch locations
         patch_width: int
             the half-width of the square patches to extract
+        centreoffset: tuple, optional
+            a tuple of (x, y) offsets to add to the patch centres (centrex
+            and centrey)
 
     Returns
     -------
@@ -23,12 +27,10 @@ def patches(image, pointspec, patch_width):
             A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
     """
     if hasattr(pointspec, 'coords'):
-        p = point_patches(images, pointspec.coords, patch_width)
+        p = point_patches(image, pointspec.coords, patch_width, centreoffset)
     else:
-        raw_gen = grid_patches(image, patch_width, 1) #stride = 1
-        p = (k[0] for k in raw_gen) # throw away pixel centres
+        p = grid_patches(image, patch_width, 1, centreoffset)  # stride = 1
     return p
-
 
 
 def grid_patches(image, pwidth, pstride, centreoffset=None):
@@ -67,6 +69,9 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
     psize = pwidth * 2 + 1
     pstride = max(1, pstride)
 
+    if centreoffset is None:
+        centreoffset = (0, 0)
+
     # Extract the patches and get the patch centres
     for x in _spacing(Ih, psize, pstride):           # Rows
         patchx = slice(x, x + psize)
@@ -75,17 +80,13 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
             patchy = slice(y, y + psize)
 
             patch = image[patchx, patchy]
-            centrex = x + pwidth
-            centrey = y + pwidth
-
-            if centreoffset is not None:
-                centrex += centreoffset[0]
-                centrey += centreoffset[1]
+            centrex = x + pwidth + centreoffset[0]
+            centrey = y + pwidth + centreoffset[1]
 
             yield (patch, centrex, centrey)
 
 
-def point_patches(image, points, pwidth):
+def point_patches(image, points, pwidth, centreoffset=None):
     """
     Extract patches from an image at specified points.
 
@@ -101,12 +102,19 @@ def point_patches(image, points, pwidth):
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
             = 2 gives a 5x5 patch etc. The formula for calculating the full
             patch width is pwidth * 2 + 1.
+        centreoffset: tuple, optional
+            a tuple of (x, y) offsets to add to the patch centres (centrex
+            and centrey)
 
     Yields
     ------
-        ndarray
+        patch: ndarray
             An image patch of shape (psize, psize, channels,), where
             psize = pwidth * 2 + 1
+        centrex: float
+            the centre (x coords) of the patch.
+        centrey: float
+            the centre (y coords) of the patch.
 
     """
 
@@ -118,12 +126,16 @@ def point_patches(image, points, pwidth):
     bottom = Ih - pwidth
     right = Iw - pwidth
 
+    if centreoffset is None:
+        centreoffset = (0, 0)
+
     if any(top > points[:, 0]) or any(bottom < points[:, 0]) \
             or any(left > points[:, 1]) or any(right < points[:, 1]):
         raise ValueError("Points are outside of image bounds")
 
-    return (image[slice(p[0] - pwidth, p[0] + pwidth + 1),
-                  slice(p[1] - pwidth, p[1] + pwidth + 1)]
+    return ((image[slice(p[0] - pwidth, p[0] + pwidth + 1),
+                   slice(p[1] - pwidth, p[1] + pwidth + 1)],
+             p[0] + centreoffset[0], p[1] + centreoffset[1])
             for p in points)
 
 
@@ -178,8 +190,8 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
     x_patch_corners = _spacing(imshape[0], psize, pstride)
     y_patch_corners = _spacing(imshape[1], psize, pstride)
 
-    assert len(x_patch_corners) >= axis_splits # need at least 1 patch per chunk
-    assert len(y_patch_corners) >= axis_splits # need at least 1 patch per chunk
+    assert len(x_patch_corners) >= axis_splits  # at least 1 patch per chunk
+    assert len(y_patch_corners) >= axis_splits  # at least 1 patch per chunk
 
     spacex = np.array_split(x_patch_corners, axis_splits)
     spacey = np.array_split(y_patch_corners, axis_splits)
@@ -193,13 +205,13 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
 
 def _spacing(dimension, psize, pstride):
     """
-    Calculate the patch spacings along a dimension of an image. 
-    Returns the lowest-index corner of the patches for a given 
+    Calculate the patch spacings along a dimension of an image.
+    Returns the lowest-index corner of the patches for a given
     dimension,  size and stride. Always returns at least 1 patch index
     """
-    assert dimension >= psize # otherwise a single patch won't fit
+    assert dimension >= psize  # otherwise a single patch won't fit
     assert psize > 0
-    assert pstride > 0 # otherwise we'll never move along the image
+    assert pstride > 0  # otherwise we'll never move along the image
 
     offset = int(np.floor(float((dimension - psize) % pstride) / 2))
     return range(offset, dimension - psize + 1, pstride)
@@ -212,6 +224,9 @@ def _checkim(image):
         (Ih, Iw) = image.shape
         Ic = 1
     else:
+        raise ValueError('image must be a 2D or 3D array')
+
+    if (Ih < 1) or (Iw < 1):
         raise ValueError('image must be a 2D or 3D array')
 
     return Ih, Iw, Ic
