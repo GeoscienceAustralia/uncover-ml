@@ -4,6 +4,8 @@ import json
 import numpy as np
 import shapefile
 import rasterio
+import subprocess
+import time
 from affine import Affine
 
 from uncoverml import geom, patch
@@ -161,3 +163,71 @@ def test_extractfeats(make_shp_gtiff):
 
     assert len(dfeats) == len(efeats)
     assert np.all(feats == efeats)
+
+
+def test_extractfeats_worker(make_shp_gtiff):
+
+    _, ftif = make_shp_gtiff
+    split = 2
+
+    return
+    # TODO: The following just hangs!
+
+    # Make pointspec
+    ftif_json = os.path.splitext(ftif)[0] + ".json"
+    pointspec.callback(ftif_json, geotiff=ftif, resolution=None, bbox=None,
+                       pointlist=None, quiet=False)
+
+    predis = None
+    pworker = None
+
+    # Start redis
+    try:
+        redisargs = ["redis-server", "--port", "6379"]
+        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
+                                  universal_newlines=True)
+        _proc_ready(predis)
+
+        # Start the worker
+        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
+                                   universal_newlines=True)
+        _proc_ready(pworker)
+
+        # Extract features from gtiff
+        ffeats = os.path.splitext(ftif)[0] + "_worker"
+        extractfeats.callback(geotiff=ftif, pointspec=ftif_json,
+                              outfile=ffeats, patchsize=0, splits=split,
+                              quiet=True, redisdb=0, redishost='localhost',
+                              redisport=6379, standalone=False)
+    finally:
+        # Kill worker
+        if predis is not None:
+            predis.terminate()
+        if pworker is not None:
+            pworker.terminate()
+
+    # Check all files created successfully
+    for i in range(split):
+        for j in range(split):
+            fname = "{}_{}_{}.hdf5".format(ffeats, j, i)
+            assert os.path.exists(fname)
+
+
+def _proc_ready(proc, waitime=10):
+
+    success = False
+    for i in range(waitime):
+        try:
+            out, err = proc.communicate(timeout=1)
+            # print(out, err, "!!!!!!!!!!")
+            if "ready" in out:
+                success = True
+                break
+        except subprocess.TimeoutExpired:
+            pass
+        except Exception:
+            proc.terminate()
+            raise
+
+    if not success:
+        raise RuntimeError("Process {} never ready!".format(proc.args))

@@ -53,6 +53,8 @@ def print_celery_progress(async_results, title):
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
 def main(geotiff, pointspec, outfile, patchsize, splits, quiet, redisdb,
          redishost, redisport, standalone):
+    """ TODO
+    """
 
     # setup logging
     if quiet is True:
