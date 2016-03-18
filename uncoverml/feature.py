@@ -1,9 +1,10 @@
 import os.path
 import numpy as np
 import tables as hdf
+
 from uncoverml.celerybase import celery
 from uncoverml import io
-from uncoverml import patch
+from uncoverml import patch, geom
 
 
 
@@ -47,8 +48,8 @@ def transform(x):
 
 
 @celery.task(name='process_window')
-def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
-                   transform, outfile):
+def transform_points(transform, outputspec, chunk_id, nchunks, geotiff,
+                     patchwidth, transform, outfile):
     """
     Applies a transform function to a window of a geotiff and writes the output
     as a feature vector to and HDF5 file.
@@ -66,7 +67,7 @@ def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
             this number.
         geotiff: path
             The path to the geotiff input file
-        pointspec: PointSpec
+        outputspec: PointSpec
             The specification defining any subsetting or point extraction
             of the geotiff file
         transform: function
@@ -84,13 +85,22 @@ def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
     with io.open_raster(geotiff) as raster:
         res = (raster.width, raster.height)
         slices = patch.image_window(x_idx, y_idx, axis_splits, res,
-                                    patchsize, stride)
+                                    patchwidth, stride)
 
         img = io.read_raster(raster, slices)
+        rasterspec = geom.GridPointSpec(*geom.bounding_box(raster), res)
 
     # Operate on the patches
     offset = (slices[0].start, slices[1].start)
-    patches, x, y = zip(*patch.patches(img, pointspec, patchsize, offset))
+
+    if isinstance(outputspec, geom.ListPointSpec):
+        pixcoords = rasterspec.lonlat2pix(outputspec.coords)
+        pgen = patch.point_patches(img, pixcoords, patchwidth, offset)
+    else:
+        pgen = patch.grid_patches(img, patchwidth, 1, offset)  # stride = 1
+    
+    patches, x, y = zip(*pgen)
+
     processed_patches = map(transform, patches)
     features = np.array(list(processed_patches), dtype=float)
     centres = np.array((x, y)).T
