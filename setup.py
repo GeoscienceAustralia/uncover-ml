@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 
@@ -39,7 +39,7 @@ setup(
     author='NICTA Spatial Inference Systems Team',
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/dsteinberg/uncover-ml',
-    packages=find_packages(),
+    packages=['uncoverml', 'uncoverml.scripts'],
     package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={

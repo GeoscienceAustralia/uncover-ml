@@ -5,7 +5,6 @@ import numpy as np
 import shapefile
 import rasterio
 import subprocess
-import time
 from affine import Affine
 
 from uncoverml import geom, patch, io
