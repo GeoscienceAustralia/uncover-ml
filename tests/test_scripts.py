@@ -144,6 +144,9 @@ def test_extractfeats_grid(make_shp_gtiff):
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
 
+    assert False  # Should we have to make this dict (below) in order to keep track
+                  # of patches, should they not be in order??
+
     dfeats = {(x, y): p.flatten() for p, x, y in
               patch.grid_patches(I, pwidth=0, pstride=1)}
 
@@ -180,6 +183,8 @@ def test_extractfeats_point(make_shp_gtiff):
                           patchsize=0, splits=split, quiet=True, redisdb=0,
                           redishost='localhost', redisport=6379,
                           standalone=True)
+
+    assert False  # TODO finish this!
 
 
 def test_extractfeats_worker(make_shp_gtiff):
