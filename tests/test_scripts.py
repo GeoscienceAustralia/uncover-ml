@@ -141,11 +141,16 @@ def test_extractfeats_grid(make_shp_gtiff):
                           standalone=True)
 
     # Now compare extracted features to geotiff
+
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
+        lonlat = np.array([I[:, :, 0].flatten(), I[:, :, 1].flatten()]).T
 
-    assert False  # Should we have to make this dict (below) in order to keep track
-                  # of patches, should they not be in order??
+    # Should we have to make this dict (below) in order to keep track of
+    # patches, should they not be in order??
+    #
+    # We should probably compare to lonlat above, or lonlat derived from I =
+    # np.transpose(f.read(), [1, 2, 0])
 
     dfeats = {(x, y): p.flatten() for p, x, y in
               patch.grid_patches(I, pwidth=0, pstride=1)}
