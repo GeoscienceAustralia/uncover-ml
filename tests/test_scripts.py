@@ -8,7 +8,7 @@ import subprocess
 import time
 from affine import Affine
 
-from uncoverml import geom, patch
+from uncoverml import geom, patch, io
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.pointspec import main as pointspec
 from uncoverml.scripts.cvindexer import main as cvindexer
@@ -184,12 +184,14 @@ def test_extractfeats_worker(make_shp_gtiff):
     # Start redis
     try:
         redisargs = ["redis-server", "--port", "6379"]
-        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE)
+        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT)
 
         _proc_ready(predis)
 
         # Start the worker
-        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE)
+        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
         _proc_ready(pworker)
 
         # Extract features from gtiff
@@ -214,10 +216,11 @@ def test_extractfeats_worker(make_shp_gtiff):
 
 def _proc_ready(proc, waitime=10):
 
+    nbsr = io.NonBlockingStreamReader(proc.stdout)
+
     for i in range(waitime):
         try:
-            # Issue!! This is a blocking read!!!
-            for line in iter(proc.stdout.readline, b"\n"):
+            for line in iter(nbsr.readline, None):
                 if "ready" in line.decode():
                     return
             proc.wait(timeout=1)
