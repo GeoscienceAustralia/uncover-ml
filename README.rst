@@ -15,11 +15,44 @@ uncover ML
 ..     :target: https://pypi.python.org/pypi/uncover-ml
 
 
-Machine learning tools for the Geoscience Australia uncover project
+Machine learning tools for the Geoscience Australia uncover project.
+
+Quickstart
+----------
+
+To install, simply run ``setup.py``:
+
+.. code:: console
+
+   $ python setup.py install
+
+or install with ``pip``:
+
+.. code:: console
+
+   $ pip install git+https://github.com/nicta/uncover-ml.git@release
+
+Refer to `docs/installation.rst <docs/installation.rst>`_ for advanced 
+installation instructions.
+
+Have a look at some of the `demos <demos/>`_ for how to use these tools.
 
 
-Features
---------
+Useful Links
+------------
 
-* TODO
+Home Page
+    http://github.com/nicta/uncover-ml
 
+Documentation
+    http://nicta.github.io/uncover-ml
+
+Issue tracking
+    https://github.com/nicta/uncover-ml/issues
+
+
+Bugs & Feedback
+---------------
+
+For bugs, questions and discussions, please use 
+`Github Issues <https://github.com/NICTA/uncover/issues>`_.
