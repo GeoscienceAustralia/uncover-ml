@@ -143,9 +143,12 @@ def test_extractfeats(make_shp_gtiff):
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
+        # lonlat = np.array([I[:, :, 0].flatten(), I[:, :, 1].flatten()]).T
 
-    dfeats = {(x, y): p.flatten() for p, x, y in
-              patch.grid_patches(I, pwidth=0, pstride=1)}
+    dfeats = {(x, y): I[x, y, :]
+              for x in range(I.shape[0])
+              for y in range(I.shape[1])
+              }
 
     efeats = []
     ecentres = []
