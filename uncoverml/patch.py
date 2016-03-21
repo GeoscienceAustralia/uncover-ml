@@ -5,34 +5,6 @@ from __future__ import division
 import numpy as np
 
 
-def patches(image, pointspec, patch_width, centreoffset=None):
-    """
-    High-level function abstracting over what sort of patches we're getting.
-
-    Parameters
-    ----------
-        image: ndarray
-            an array of shape (x, y) or (x, y, channels)
-        pointspec: GridPointSpec or ListPointSpec
-            a pointspec object describing the required patch locations
-        patch_width: int
-            the half-width of the square patches to extract
-        centreoffset: tuple, optional
-            a tuple of (x, y) offsets to add to the patch centres (centrex
-            and centrey)
-
-    Returns
-    -------
-        ndarray
-            A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
-    """
-    if hasattr(pointspec, 'coords'):
-        p = point_patches(image, pointspec.coords, patch_width, centreoffset)
-    else:
-        p = grid_patches(image, patch_width, 1, centreoffset)  # stride = 1
-    return p
-
-
 def grid_patches(image, pwidth, pstride, centreoffset=None):
     """
     Generate (overlapping) patches from an image. This function extracts square
@@ -173,6 +145,7 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
             a list of length round(sqrt(nwindows))**2 of tuples. Each tuple has
             two slices (slice_x, slice_y) that represents a subwindow.
     """
+
     # Sane indices?
     assert x_idx >= 0 and x_idx < axis_splits
     assert y_idx >= 0 and y_idx < axis_splits
@@ -193,11 +166,8 @@ def image_window(x_idx, y_idx, axis_splits, imshape, pwidth, pstride):
     assert len(x_patch_corners) >= axis_splits  # at least 1 patch per chunk
     assert len(y_patch_corners) >= axis_splits  # at least 1 patch per chunk
 
-    spacex = np.array_split(x_patch_corners, axis_splits)
-    spacey = np.array_split(y_patch_corners, axis_splits)
-
-    sx = spacex[x_idx]
-    sy = spacey[y_idx]
+    sx = np.array_split(x_patch_corners, axis_splits)[x_idx]
+    sy = np.array_split(y_patch_corners, axis_splits)[y_idx]
 
     slices = (slice(sx[0], sx[-1] + psize), slice(sy[0], sy[-1] + psize))
     return slices

@@ -143,7 +143,6 @@ def test_extractfeats(make_shp_gtiff):
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
-        # lonlat = np.array([I[:, :, 0].flatten(), I[:, :, 1].flatten()]).T
 
     dfeats = {(x, y): I[x, y, :]
               for x in range(I.shape[0])
@@ -154,7 +153,7 @@ def test_extractfeats(make_shp_gtiff):
     ecentres = []
     for i in range(split):
         for j in range(split):
-            fname = "{}_{}_{}.hdf5".format(ffeats, j, i)
+            fname = "{}_{}_{}.hdf5".format(ffeats, i, j)
             with tables.open_file(fname, 'r') as f:
                 efeats.extend([fts for fts in f.root.features])
                 ecentres.extend([cen for cen in f.root.centres])

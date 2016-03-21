@@ -90,7 +90,7 @@ def process_window(x_idx, y_idx, axis_splits, geotiff, pointspec, patchsize,
 
     # Operate on the patches
     offset = (slices[0].start, slices[1].start)
-    patches, x, y = zip(*patch.patches(img, pointspec, patchsize, offset))
+    patches, x, y = zip(*patch.grid_patches(img, patchsize, stride, offset))
     processed_patches = map(transform, patches)
     features = np.array(list(processed_patches), dtype=float)
     centres = np.array((x, y)).T
