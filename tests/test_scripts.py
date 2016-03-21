@@ -123,7 +123,7 @@ def test_cvindexer(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats_grid(make_shp_gtiff):
+def test_extractfeats(make_shp_gtiff):
 
     _, ftif = make_shp_gtiff
     split = 2
@@ -141,16 +141,8 @@ def test_extractfeats_grid(make_shp_gtiff):
                           standalone=True)
 
     # Now compare extracted features to geotiff
-
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
-        lonlat = np.array([I[:, :, 0].flatten(), I[:, :, 1].flatten()]).T
-
-    # Should we have to make this dict (below) in order to keep track of
-    # patches, should they not be in order??
-    #
-    # We should probably compare to lonlat above, or lonlat derived from I =
-    # np.transpose(f.read(), [1, 2, 0])
 
     dfeats = {(x, y): p.flatten() for p, x, y in
               patch.grid_patches(I, pwidth=0, pstride=1)}
@@ -170,26 +162,6 @@ def test_extractfeats_grid(make_shp_gtiff):
 
     assert len(dfeats) == len(efeats)
     assert np.all(feats == efeats)
-
-
-def test_extractfeats_point(make_shp_gtiff):
-
-    fshp, ftif = make_shp_gtiff
-    split = 2
-
-    # Make pointspec
-    fshp_json = os.path.splitext(fshp)[0] + ".json"
-    pointspec.callback(fshp_json, pointlist=fshp, resolution=None, bbox=None,
-                       geotiff=None, quiet=False)
-
-    # Extract features from gtiff
-    ffeats = os.path.splitext(ftif)[0]
-    extractfeats.callback(geotiff=ftif, pointspec=fshp_json, outfile=ffeats,
-                          patchsize=0, splits=split, quiet=True, redisdb=0,
-                          redishost='localhost', redisport=6379,
-                          standalone=True)
-
-    assert False  # TODO finish this!
 
 
 def test_extractfeats_worker(make_shp_gtiff):

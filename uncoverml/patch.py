@@ -5,6 +5,34 @@ from __future__ import division
 import numpy as np
 
 
+def patches(image, pointspec, patch_width, centreoffset=None):
+    """
+    High-level function abstracting over what sort of patches we're getting.
+
+    Parameters
+    ----------
+        image: ndarray
+            an array of shape (x, y) or (x, y, channels)
+        pointspec: GridPointSpec or ListPointSpec
+            a pointspec object describing the required patch locations
+        patch_width: int
+            the half-width of the square patches to extract
+        centreoffset: tuple, optional
+            a tuple of (x, y) offsets to add to the patch centres (centrex
+            and centrey)
+
+    Returns
+    -------
+        ndarray
+            A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)
+    """
+    if hasattr(pointspec, 'coords'):
+        p = point_patches(image, pointspec.coords, patch_width, centreoffset)
+    else:
+        p = grid_patches(image, patch_width, 1, centreoffset)  # stride = 1
+    return p
+
+
 def grid_patches(image, pwidth, pstride, centreoffset=None):
     """
     Generate (overlapping) patches from an image. This function extracts square
@@ -37,7 +65,7 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
     """
 
     # Check and get image dimensions
-    Ix, Iy, Ic = _checkim(image)
+    Ih, Iw, Ic = _checkim(image)
     psize = pwidth * 2 + 1
     pstride = max(1, pstride)
 
@@ -45,10 +73,10 @@ def grid_patches(image, pwidth, pstride, centreoffset=None):
         centreoffset = (0, 0)
 
     # Extract the patches and get the patch centres
-    for x in _spacing(Ix, psize, pstride):           # Rows
+    for x in _spacing(Ih, psize, pstride):           # Rows
         patchx = slice(x, x + psize)
 
-        for y in _spacing(Iy, psize, pstride):       # Cols
+        for y in _spacing(Iw, psize, pstride):       # Cols
             patchy = slice(y, y + psize)
 
             patch = image[patchx, patchy]
@@ -91,19 +119,19 @@ def point_patches(image, points, pwidth, centreoffset=None):
     """
 
     # Check and get image dimensions
-    Ix, Iy, Ic = _checkim(image)
-
-    import IPython; IPython.embed(); exit()
+    Ih, Iw, Ic = _checkim(image)
 
     # Make sure points are within bounds of image taking into account psize
-    if any(points[:, 1] < pwidth) \
-            or any(points[:, 1] >= Iy - pwidth) \
-            or any(points[:, 0] < pwidth) \
-            or any(points[:, 0] >= Ix - pwidth):
-        raise ValueError("Points are outside of image bounds!")
+    left = top = pwidth
+    bottom = Ih - pwidth
+    right = Iw - pwidth
 
     if centreoffset is None:
         centreoffset = (0, 0)
+
+    if any(top > points[:, 0]) or any(bottom < points[:, 0]) \
+            or any(left > points[:, 1]) or any(right < points[:, 1]):
+        raise ValueError("Points are outside of image bounds")
 
     return ((image[slice(p[0] - pwidth, p[0] + pwidth + 1),
                    slice(p[1] - pwidth, p[1] + pwidth + 1)],
@@ -191,14 +219,14 @@ def _spacing(dimension, psize, pstride):
 
 def _checkim(image):
     if image.ndim == 3:
-        (Ix, Iy, Ic) = image.shape
+        (Ih, Iw, Ic) = image.shape
     elif image.ndim == 2:
-        (Ix, Iy) = image.shape
+        (Ih, Iw) = image.shape
         Ic = 1
     else:
         raise ValueError('image must be a 2D or 3D array')
 
-    if (Ix < 1) or (Iy < 1):
+    if (Ih < 1) or (Iw < 1):
         raise ValueError('image must be a 2D or 3D array')
 
-    return Ix, Iy, Ic
+    return Ih, Iw, Ic
