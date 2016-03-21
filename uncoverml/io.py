@@ -47,9 +47,23 @@ def values_from_shp(filename, field):
 
     return np.array(vals)
 
+def construct_splits(npixels, nchunks, overlap=0):
+    # Build the equivalent windowed image
+    y_arrays = np.array_split(np.arange(npixels), nchunks) 
+    y_bounds = []
+    # construct the overlap
+    for s in y_arrays:
+        old_min = s[0]
+        old_max = s[-1]
+        new_min = max(0, old_min - overlap)
+        new_max = min(npixels, old_max + overlap)
+        y_bounds.append((new_min, new_max))
+    return y_bounds
+
+
 
 class Image:
-    def __init__(self, filename, chunk_idx=0, nchunks=1):
+    def __init__(self, filename, chunk_idx=0, nchunks=1, overlap=0):
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
         self.filename = filename
@@ -61,13 +75,10 @@ class Image:
         # Build the affine transformation for the FULL image
         self.__Affine()
 
-        # Build the equivalent windowed image
-        y_splits = np.array_split(np.arange(self._full_res[1]), 
-                                 nchunks)[chunk_idx]
-        xmin = 0
-        xmax = self._full_res[0]
-        ymin = y_splits[0]
-        ymax = y_splits[-1]
+        # Get bounds of window
+        xmin, xmax = (0, self._full_res[0])
+        ymin, ymax = construct_splits(self._full_res[1], 
+                                      nchunks, overlap)[chunk_idx]
 
         # Calculate the new values for resolution and bounding box
         self._offset = np.array([xmin, ymin])

@@ -48,10 +48,11 @@ def features_from_image(name, image, transform, patchsize, targets=None):
         valid = np.logical_and(inx, iny)
         valid_lonlats = lonlats[valid]
         pixels = image.lonlat2pix(lonlats, centres=True)
+        patches = patch.point_patches(image,patchsize, pixels)
+    else:
+        patches = patche.grid_patches(image, patch_width, 1) #stride=1
 
-    data = image.data()
-    patches = patch.patches(data, patchsize, pixels)
     processed_patches = map(transform, patches)
     features = np.array(list(processed_patches), dtype=float)
-    output_features(features, centres, x_idx, y_idx, name)
+    output_features(features, name)
 
