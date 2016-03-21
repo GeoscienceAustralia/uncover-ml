@@ -1,3 +1,8 @@
+"""
+Create a "point-spec" file from a shapefile, geotiff, etc
+
+.. program-output:: pointspec --help
+"""
 import logging
 import sys
 import click as cl

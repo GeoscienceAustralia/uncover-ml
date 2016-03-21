@@ -24,6 +24,8 @@ Contents:
    io
    validation
 
+   scripts
+
 
 Feedback
 --------

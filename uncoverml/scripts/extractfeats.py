@@ -1,3 +1,8 @@
+"""
+Extract patch features from a single geotiff.
+
+.. program-output:: extractfeats --help
+"""
 import logging
 import sys
 import click as cl
