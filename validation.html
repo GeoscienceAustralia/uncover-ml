@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Validation Module &mdash; uncover ML 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="prev" title="I/O Module" href="io.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="I/O Module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-uncoverml.validation">
+<span id="validation-module"></span><h1>Validation Module<a class="headerlink" href="#module-uncoverml.validation" title="Permalink to this headline">¶</a></h1>
+<p>Scripts for validation</p>
+<dl class="function">
+<dt id="uncoverml.validation.gen_cfold_data">
+<code class="descclassname">uncoverml.validation.</code><code class="descname">gen_cfold_data</code><span class="sig-paren">(</span><em>X</em>, <em>Y</em>, <em>k=5</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.gen_cfold_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator to divide a dataset k non-overlapping folds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (D, N) array where D is the dimensionality, and N is the number
+of samples (X can also be a 1-d vector).</li>
+<li><strong>Y</strong> (<em>ndarray</em>) &#8211; (N,) training target data vector of length N.</li>
+<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds for testing and training.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Xr</strong> (<em>ndarray</em>) &#8211;
+(D, ((k-1) * N / k)) array of training input data</li>
+<li><strong>Yr</strong> (<em>ndarray</em>) &#8211;
+((k-1) * N / k,) array of training target data</li>
+<li><strong>Xs</strong> (<em>ndarray</em>) &#8211;
+(D, N / k) array of testing input data</li>
+<li><strong>Ys</strong> (<em>ndarray</em>) &#8211;
+(N / k,) array of testing target data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All of these are randomly split (but non-overlapping per call)</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validation.gen_cfold_ind">
+<code class="descclassname">uncoverml.validation.</code><code class="descname">gen_cfold_ind</code><span class="sig-paren">(</span><em>nsamples</em>, <em>k=5</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.gen_cfold_ind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator to return random test and training indices for cross fold
+validation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nsamples</strong> (<em>int</em>) &#8211; the number of samples in the dataset</li>
+<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rind</strong> (<em>ndarray</em>) &#8211;
+training indices of shape (nsamples * (k-1)/k,)</li>
+<li><strong>sind</strong> (<em>ndarray</em>) &#8211;
+testing indices of shape (nsamples * 1/k,)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Each call to this generator returns a random but non-overlapping
+split of data.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validation.rsquare">
+<code class="descclassname">uncoverml.validation.</code><code class="descname">rsquare</code><span class="sig-paren">(</span><em>y_predict</em>, <em>y_true</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.rsquare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the coefficient of determination (R-square).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_predict</strong> (<em>ndarray</em>) &#8211; an array of shape (N,) of the predicted target values.</li>
+<li><strong>y_true</strong> (<em>ndarray</em>) &#8211; an array of shape (N,) of the true target values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">R-square which is in the range (-inf, 1] where 1.0 is perfect
+prediction of the target values, and -inf is arbitrarily bad (depending
+on scale).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validation.split_cfold">
+<code class="descclassname">uncoverml.validation.</code><code class="descname">split_cfold</code><span class="sig-paren">(</span><em>nsamples</em>, <em>k=5</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.split_cfold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that returns indices for splitting data into random folds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nsamples</strong> (<em>int</em>) &#8211; the number of samples in the dataset</li>
+<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>cvinds</strong> (<em>list</em>) &#8211;
+list of arrays of length k, each with approximate shape (nsamples /
+k,) of indices. These indices are randomly permuted (without
+replacement) of assignments to each fold.</li>
+<li><strong>cvassigns</strong> (<em>ndarray</em>) &#8211;
+array of shape (nsamples,) with each element in [0, k), that can be
+used to assign data to a fold. This corresponds to the indices of
+cvinds.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="io.html"
+                        title="previous chapter">I/O Module</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="I/O Module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>
