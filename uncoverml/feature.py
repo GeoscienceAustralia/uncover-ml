@@ -34,12 +34,14 @@ def transform(x):
     return x.flatten()
 
 @celery.task(name='features_from_image')
-def features_from_image(name, image, transform, patchsize, targets=None):
+def features_from_image(image, name, transform, patchsize, output_dir,
+                        targets=None):
     """
     Applies a transform function to a geotiff and writes the output
     as a feature vector to and HDF5 file.
     """
     # Get the target points if they exist:
+    data = image.data()
     pixels = None
     if targets is not None:
         lonlats = geom.points_from_shp(shapefile)
@@ -48,11 +50,13 @@ def features_from_image(name, image, transform, patchsize, targets=None):
         valid = np.logical_and(inx, iny)
         valid_lonlats = lonlats[valid]
         pixels = image.lonlat2pix(lonlats, centres=True)
-        patches = patch.point_patches(image,patchsize, pixels)
+        patches = patch.point_patches(data,patchsize, pixels)
     else:
-        patches = patche.grid_patches(image, patch_width, 1) #stride=1
+        patches = patch.grid_patches(data, patchsize)
 
     processed_patches = map(transform, patches)
     features = np.array(list(processed_patches), dtype=float)
-    output_features(features, name)
+    filename = os.path.join(output_dir, 
+                            name + "_{}.hdf5".format(image.chunk_idx))
+    output_features(features, filename)
 

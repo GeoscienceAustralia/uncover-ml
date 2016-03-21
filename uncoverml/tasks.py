@@ -1,1 +1,1 @@
-from uncoverml.feature import process_window
+from uncoverml.feature import features_from_image
