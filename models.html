@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>I/O Module &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Models Module &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="Validation Module" href="validation.html" />
-    <link rel="prev" title="Models Module" href="models.html" />
+    <link rel="next" title="I/O Module" href="io.html" />
+    <link rel="prev" title="Image Patch Module" href="patch.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,10 +46,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="io.html" title="I/O Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="patch.html" title="Image Patch Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -60,42 +60,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.io">
-<span id="i-o-module"></span><h1>I/O Module<a class="headerlink" href="#module-uncoverml.io" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="uncoverml.io.read_raster">
-<code class="descclassname">uncoverml.io.</code><code class="descname">read_raster</code><span class="sig-paren">(</span><em>geotiff</em>, <em>window_slices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.io.read_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads data from a geotiff out outputs in (x,y,band) format. Optionally
-takes a window for getting data in a region defined by a pair
-of slices</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>geotiff</strong> (<em>rasterio raster</em>) &#8211; the geotiff file opened by rasterio</li>
-<li><strong>window_slices</strong> (<em>tuple</em>) &#8211; A tuple of two numpy slice objects of the form (x_slice, y_slice)
-specifying the pixel index ranges in the geotiff.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>image</strong> &#8211;
-a 3D numpy array of shape (size_x, size_y, nbands). The type is
-the same as the input data.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array</p>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">x - corresponds to image COLS (Lons)
-y - corresponds to image ROWS (Lats)</p>
-</div>
-</dd></dl>
-
+  <div class="section" id="module-uncoverml.models">
+<span id="models-module"></span><h1>Models Module<a class="headerlink" href="#module-uncoverml.models" title="Permalink to this headline">¶</a></h1>
+<p>Model Spec Objects and ML algorithm serialisation.</p>
 </div>
 
 
@@ -105,11 +72,11 @@ y - corresponds to image ROWS (Lats)</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="models.html"
-                        title="previous chapter">Models Module</a></p>
+  <p class="topless"><a href="patch.html"
+                        title="previous chapter">Image Patch Module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="validation.html"
-                        title="next chapter">Validation Module</a></p>
+  <p class="topless"><a href="io.html"
+                        title="next chapter">I/O Module</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -137,10 +104,10 @@ y - corresponds to image ROWS (Lats)</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="io.html" title="I/O Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="patch.html" title="Image Patch Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>

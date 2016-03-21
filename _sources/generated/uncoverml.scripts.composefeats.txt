@@ -1,0 +1,22 @@
+uncoverml.scripts.composefeats
+==============================
+
+.. automodule:: uncoverml.scripts.composefeats
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      file_indices_okay
+   
+   
+
+   
+   
+   
+
+   
+   
+   

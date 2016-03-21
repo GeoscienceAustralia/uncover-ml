@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>I/O Module &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Command Line Scripts &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="Validation Module" href="validation.html" />
-    <link rel="prev" title="Models Module" href="models.html" />
+    <link rel="next" title="uncoverml.scripts.maketargets" href="generated/uncoverml.scripts.maketargets.html" />
+    <link rel="prev" title="Validation Module" href="validation.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,10 +46,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="generated/uncoverml.scripts.maketargets.html" title="uncoverml.scripts.maketargets"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="validation.html" title="Validation Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -60,42 +60,34 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.io">
-<span id="i-o-module"></span><h1>I/O Module<a class="headerlink" href="#module-uncoverml.io" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="uncoverml.io.read_raster">
-<code class="descclassname">uncoverml.io.</code><code class="descname">read_raster</code><span class="sig-paren">(</span><em>geotiff</em>, <em>window_slices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.io.read_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads data from a geotiff out outputs in (x,y,band) format. Optionally
-takes a window for getting data in a region defined by a pair
-of slices</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
+  <div class="section" id="command-line-scripts">
+<h1>Command Line Scripts<a class="headerlink" href="#command-line-scripts" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>geotiff</strong> (<em>rasterio raster</em>) &#8211; the geotiff file opened by rasterio</li>
-<li><strong>window_slices</strong> (<em>tuple</em>) &#8211; A tuple of two numpy slice objects of the form (x_slice, y_slice)
-specifying the pixel index ranges in the geotiff.</li>
-</ul>
-</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.maketargets.html#module-uncoverml.scripts.maketargets" title="uncoverml.scripts.maketargets"><code class="xref py py-obj docutils literal"><span class="pre">maketargets</span></code></a></td>
+<td>Make output target files.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>image</strong> &#8211;
-a 3D numpy array of shape (size_x, size_y, nbands). The type is
-the same as the input data.</p>
-</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.cvindexer.html#module-uncoverml.scripts.cvindexer" title="uncoverml.scripts.cvindexer"><code class="xref py py-obj docutils literal"><span class="pre">cvindexer</span></code></a></td>
+<td>Create a cross validation fold index.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array</p>
-</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.extractfeats.html#module-uncoverml.scripts.extractfeats" title="uncoverml.scripts.extractfeats"><code class="xref py py-obj docutils literal"><span class="pre">extractfeats</span></code></a></td>
+<td>Extract patch features from a single geotiff.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.pointspec.html#module-uncoverml.scripts.pointspec" title="uncoverml.scripts.pointspec"><code class="xref py py-obj docutils literal"><span class="pre">pointspec</span></code></a></td>
+<td>Create a &#8220;point-spec&#8221; file from a shapefile, geotiff, etc</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.worker.html#module-uncoverml.scripts.worker" title="uncoverml.scripts.worker"><code class="xref py py-obj docutils literal"><span class="pre">worker</span></code></a></td>
+<td>Start a Celery image worker.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.composefeats.html#module-uncoverml.scripts.composefeats" title="uncoverml.scripts.composefeats"><code class="xref py py-obj docutils literal"><span class="pre">composefeats</span></code></a></td>
+<td>Compose multiple image features into a single feature vector.</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">x - corresponds to image COLS (Lons)
-y - corresponds to image ROWS (Lats)</p>
-</div>
-</dd></dl>
-
 </div>
 
 
@@ -105,11 +97,11 @@ y - corresponds to image ROWS (Lats)</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="models.html"
-                        title="previous chapter">Models Module</a></p>
-  <h4>Next topic</h4>
   <p class="topless"><a href="validation.html"
-                        title="next chapter">Validation Module</a></p>
+                        title="previous chapter">Validation Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/uncoverml.scripts.maketargets.html"
+                        title="next chapter">uncoverml.scripts.maketargets</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -137,10 +129,10 @@ y - corresponds to image ROWS (Lats)</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="generated/uncoverml.scripts.maketargets.html" title="uncoverml.scripts.maketargets"
              >next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="validation.html" title="Validation Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
