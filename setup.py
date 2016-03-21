@@ -31,7 +31,7 @@ The full documentation is at http://nicta.github.io/uncover-ml/."""
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
-    name='uncover-ml',
+    name='uncoverml',
     version='0.1.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
@@ -40,7 +40,7 @@ setup(
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/dsteinberg/uncover-ml',
     packages=['uncoverml', 'uncoverml.scripts'],
-    package_dir={'uncover-ml': 'uncoverml'},
+    package_dir={'uncoverml': 'uncoverml'},
     include_package_data=True,
     entry_points={
         'console_scripts': [

@@ -17,6 +17,11 @@ Contents:
    authors
    history
 
+   geom
+   patch
+   models
+
+
 Feedback
 ========
 

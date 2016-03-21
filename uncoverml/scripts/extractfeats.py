@@ -62,4 +62,3 @@ def main(geotiff, pointspec, outfile, patchsize, splits, quiet, redisdb,
 
     # Define the transform function to build the features
     transform = feat.transform
-

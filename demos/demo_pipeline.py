@@ -20,6 +20,9 @@ target_var = "Na_ppm_i_1"
 target_json = path.join(proc_dir, "{}_{}"
                         .format(path.splitext(target_file)[0], target_var))
 
+whiten = True  # whiten all of the extracted features?
+pca_dims = 20  # if whitening, how many PCA dimensions to keep?
+
 
 def main():
 
@@ -41,11 +44,26 @@ def main():
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
     for tif in tifs:
-        outfile = path.join(proc_dir, path.splitext(path.basename(tif))[0])
-        cmd = ["extractfeats", target_json + ".json", tif, outfile,
-               "--splits", "1", "--standalone"]
-        if try_run_checkfile(cmd, outfile + ".hdf5"):
-            print("Made features for {}.".format(path.basename(tif)))
+        print(tif)
+        # outfile = path.join(proc_dir, path.splitext(path.basename(tif))[0])
+        # cmd = ["extractfeats", target_json + ".json", tif, outfile,
+        #        "--splits", "1", "--standalone"]
+        # if try_run_checkfile(cmd, outfile + ".hdf5"):
+        #     print("Made features for {}.".format(path.basename(tif)))
+
+    # Compose individual image features into single feature vector
+
+    # Whiten the features (?)
+
+    # Save whitening parameters to model spec
+
+    # Divide the features into cross-val folds
+
+    # Train the model
+
+    # Test the model
+
+    # Report score
 
     print("Done!")
 
