@@ -17,7 +17,7 @@ Contents:
    authors
    history
 
-   geom
+   geoio
    patch
    models
 
