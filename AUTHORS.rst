@@ -5,9 +5,10 @@ Credits
 Development Lead
 ----------------
 
-* NICTA Spatial Inference Systems Team <daniel.steinberg@nicta.com.au>
+* NICTA Spatial Inference Systems Team 
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Daniel Steinberg <daniel.steinberg@nicta.com.au>
+* Lachlan McCalman <lachlan.mccalman@nicta.com.au>

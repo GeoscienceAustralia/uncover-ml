@@ -31,16 +31,16 @@ The full documentation is at http://nicta.github.io/uncover-ml/."""
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
-    name='uncoverml',
+    name='uncover-ml',
     version='0.1.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='NICTA Spatial Inference Systems Team',
     author_email='daniel.steinberg@nicta.com.au',
-    url='https://github.com/dsteinberg/uncover-ml',
+    url='https://github.com/NICTA/uncover-ml',
     packages=['uncoverml', 'uncoverml.scripts'],
-    package_dir={'uncoverml': 'uncoverml'},
+    package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={
         'console_scripts': [

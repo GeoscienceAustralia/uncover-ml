@@ -23,7 +23,7 @@ def gen_cfold_data(X, Y, k=5):
         k: int, optional
             the number of folds for testing and training.
 
-    Yeilds
+    Yields
     ------
         Xr: ndarray
             (D, ((k-1) * N / k)) array of training input data
@@ -67,7 +67,7 @@ def gen_cfold_ind(nsamples, k=5):
         k: int, optional
             the number of folds
 
-    Yeilds
+    Yields
     ------
         rind: ndarray
             training indices of shape (nsamples * (k-1)/k,)
@@ -128,6 +128,22 @@ def split_cfold(nsamples, k=5):
 #
 
 def rsquare(y_predict, y_true):
+    """ Compute the coefficient of determination (R-square).
+
+    Parameters
+    ----------
+    y_predict: ndarray
+        an array of shape (N,) of the predicted target values.
+    y_true: ndarray
+        an array of shape (N,) of the true target values.
+
+    Returns
+    -------
+    float:
+        R-square which is in the range (-inf, 1] where 1.0 is perfect
+        prediction of the target values, and -inf is arbitrarily bad (depending
+        on scale).
+    """
 
     SSres = ((y_true - y_predict)**2).sum()
     SStot = ((y_true - y_true.mean())**2).sum()
