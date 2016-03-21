@@ -1,3 +1,8 @@
+"""
+Create a cross validation fold index.
+
+.. program-output:: cvindexer --help
+"""
 import os
 import sys
 import logging

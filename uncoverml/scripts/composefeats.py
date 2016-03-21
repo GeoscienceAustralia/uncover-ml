@@ -1,3 +1,8 @@
+"""
+Compose multiple image features into a single feature vector.
+
+.. program-output:: composefeats --help
+"""
 import logging
 import sys
 import os.path

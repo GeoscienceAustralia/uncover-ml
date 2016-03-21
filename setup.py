@@ -70,7 +70,8 @@ setup(
         ],
         'dev': [
             'sphinx',
-            'ghp-import'
+            'ghp-import',
+            'sphinxcontrib-programoutput'
         ]
     },
     cmdclass={
