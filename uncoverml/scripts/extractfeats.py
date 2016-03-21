@@ -2,7 +2,6 @@ import logging
 import sys
 import click as cl
 import json
-import uncoverml.geom as geom
 import uncoverml.feature as feat
 from uncoverml import io
 import time
@@ -22,37 +21,23 @@ def check_is_subset(geotiff, pointspec):
         log.fatal("The input geotiff does not contain the pointspec data!")
         sys.exit(-1)
 
-
-def print_celery_progress(async_results, title):
-    total_jobs = len(async_results)
-    bar = pyprind.ProgBar(total_jobs, width=60, title=title)
-    last_jobs_done = 0
-    jobs_done = 0
-    while jobs_done < total_jobs:
-        jobs_done = 0
-        for r in async_results:
-            jobs_done += int(r.ready())
-        if jobs_done > last_jobs_done:
-            bar.update(jobs_done - last_jobs_done, force_flush=True)
-            last_jobs_done = jobs_done
-        time.sleep(0.1)
-
-
 # TODO make these defaults come from uncoverml.defaults
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.option('--patchsize', type=int, default=0, help="window size of patches")
-@cl.option('--splits', type=int, default=3,
-           help="Per-axis splits for chunking. Total chunks is square of this")
+@cl.option('--chunks', type=int, default=10,
+           help="Number of chunks in which to split the computation and output")
 @cl.option('--redisdb', type=int, default=0)
 @cl.option('--redishost', type=str, default='localhost')
 @cl.option('--redisport', type=int, default=6379)
 @cl.option('--standalone', is_flag=True, default=False)
-@cl.argument('pointspec', type=cl.Path(exists=True), required=True)
+@cl.option('--targets', type=cl.Path(exists=True), help="Optional shapefile "
+           "for providing target points at which to evaluate feature")
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-@cl.argument('outfile', type=cl.Path(exists=False), required=True)
-def main(geotiff, pointspec, outfile, patchsize, splits, quiet, redisdb,
-         redishost, redisport, standalone):
+@cl.argument('name', type=str, required=True, help="The name of the feature "
+             "used for file output")
+def main(geotiff, name, targets, redisdb, redishost, redisport, standalone,
+        chunks, patchsize, quiet):
     """ TODO
     """
 
@@ -63,38 +48,13 @@ def main(geotiff, pointspec, outfile, patchsize, splits, quiet, redisdb,
         logging.basicConfig(level=logging.INFO)
 
     # initialise celery
-    if not standalone:
-        from uncoverml import celerybase
-        celerybase.configure(redishost, redisport, redisdb)
+    celerybase.configure(redishost, redisport, redisdb, standalone)
 
-    # Read in the poinspec file and create the relevant object
-    with open(pointspec, 'r') as f:
-        jdict = json.load(f)
-    pspec = geom.unserialise(jdict)
+    #build the images
+    image_chunks = [io.Image(geotiff, i, chunks) for i in range(chunks)]
 
-    # TODO: figure out if we need to rescale geotiff accoding to pspec if grid?
-    # This will also affect the pstride value, though for the moment keep as 1
-    # at the moment I'm totally ignoring resizing
-
+    
+        
     # Define the transform function to build the features
     transform = feat.transform
 
-    # Build the chunk indices for creating jobs
-    chunk_indices = [(x, y) for x in range(splits) for y in range(splits)]
-
-    # Send off the jobs
-    progress_title = "Processing Image Chunks"
-    if not standalone:
-        async_results = []
-        for x, y in chunk_indices:
-            r = feat.process_window.delay(x, y, splits, geotiff, pspec,
-                                          patchsize, transform, outfile)
-            async_results.append(r)
-        print_celery_progress(async_results, progress_title)
-    else:
-        bar = pyprind.ProgBar(len(chunk_indices), width=60,
-                              title=progress_title)
-        for x, y in chunk_indices:
-            r = feat.process_window(x, y, splits, geotiff, pspec, patchsize,
-                                    transform, outfile)
-            bar.update(force_flush=True)

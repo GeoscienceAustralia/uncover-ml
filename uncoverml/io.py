@@ -1,49 +1,179 @@
 import rasterio
 import numpy as np
+from affine import Affine
+import shapefile
+
 
 from threading import Thread
 from queue import Queue, Empty
 
-# re-badge rasterio open so all we need is io
-open_raster = rasterio.open
+def _invert_affine(A):
 
+    R = np.array([A[0:2], A[3:5]])
+    T = np.array([[A[2], A[5]]]).T
 
-def read_raster(geotiff, window_slices=None):
+    iR = np.linalg.pinv(R)
+    iT = -iR.dot(T)
+    iA = np.hstack((iR, iT))
+
+    return Affine(*iA.flatten())
+
+def points_from_shp(filename):
     """
-    Reads data from a geotiff out outputs in (x,y,band) format. Optionally
-    takes a window for getting data in a region defined by a pair
-    of slices
-
-    Parameters
-    ----------
-        geotiff: rasterio raster
-            the geotiff file opened by rasterio
-        window_slices: tuple
-            A tuple of two numpy slice objects of the form (x_slice, y_slice)
-            specifying the pixel index ranges in the geotiff.
-
-    Returns
-    -------
-        image: array
-            a 3D numpy array of shape (size_x, size_y, nbands). The type is
-            the same as the input data.
-
-    NOTE
-    ----
-        x - corresponds to image COLS (Lons)
-        y - corresponds to image ROWS (Lats)
+    TODO
     """
-    if window_slices is not None:
-        x_slice, y_slice = window_slices
-        # tanspose the slices since we are reading the original geotiff
-        window = ((y_slice.start, y_slice.stop), (x_slice.start, x_slice.stop))
-    else:
-        window = None
+    # TODO check the shapefile only contains points
+    coords = []
+    sf = shapefile.Reader(filename)
+    for shape in sf.iterShapes():
+        coords.append(list(shape.__geo_interface__['coordinates']))
+    label_coords = np.array(coords)
+    return label_coords
 
-    d = geotiff.read(window=window)
-    d = d[np.newaxis, :, :] if d.ndim == 2 else d
-    d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
-    return d
+
+def values_from_shp(filename, field):
+    """
+    TODO
+    """
+
+    sf = shapefile.Reader(filename)
+    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
+
+    if field not in fdict:
+        raise ValueError("Requested field is not in records!")
+
+    vind = fdict[field]
+    vals = [r[vind] for r in sf.records()]
+
+    return np.array(vals)
+
+
+class Image:
+    def __init__(self, filename, chunk_idx=0, nchunks=1):
+        assert chunk_idx >= 0 and chunk_idx < nchunks
+
+        self.filename = filename
+        # Get the full image details
+        with rasterio.open(self.filename,'r') as geotiff:
+            self._full_xrange, self._full_yrange = geom.bounding_box(geotiff)
+            self._full_res = (raster.width, raster.height)
+        
+        # Build the affine transformation for the FULL image
+        self.__Affine()
+
+        # Build the equivalent windowed image
+        y_splits = np.array_split(np.arange(self._full_res[1]), 
+                                 nchunks)[chunk_idx]
+        xmin = 0
+        xmax = self._full_res[0]
+        ymin = y_splits[0]
+        ymax = y_splits[-1]
+
+        # Calculate the new values for resolution and bounding box
+        self._offset = np.array([xmin, ymin])
+        self.resolution = (xmax - xmin, ymax - ymin)
+        chunk_xy = np.array([[xmin, ymin],[xmax+1, ymax+1]])
+        bbox_T = self.pix2latlon(chunk_xy, centres=False)
+        # ((xmin, xmax),(ymin, ymax))
+        self.bbox = bbox_T.T
+
+
+    def data():
+        # ((ymin, ymax),(xmin, xmax))
+        window = ((self._offset[1], self._offset[1] + self.resolution[1]), 
+                   (self._offset[0], self._offset[0] + self.resolution[0]))
+        with rasterio.open(self.filename,'r') as geotiff:
+            d = geotiff.read(window=window)
+        d = d[np.newaxis, :, :] if d.ndim == 2 else d
+        d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
+        return d
+    
+    @property
+    def xres(self):
+        return self.resolution[0]
+
+    @property
+    def yres(self):
+        return self.resolution[1]
+
+    @property
+    def npoints(self):
+        return self.resolution[0] * self.resolution[1]
+    
+    @property
+    def x_range(self):
+        return self.bbox[0]
+
+    @property
+    def y_range(self):
+        return self.bbox[1]
+
+    @property
+    def xmin(self):
+        return self.bbox[0][0]
+
+    @property
+    def xmax(self):
+        return self.bbox[0][1]
+
+    @property
+    def ymin(self):
+        return self.bbox[1][0]
+
+    @property
+    def ymax(self):
+        return self.bbox[1][1]
+
+
+    def lonlat2pix(self, lonlat, centres=True):
+        
+        iA = self.icA if centres else self.iA
+        xy = np.floor([iA * ll for ll in lonlat]).astype(int)
+        
+        #subtract the offset because iA is for full image
+        xy -= self._offset[np.newaxis,:]
+
+        assert any(np.logical_and(xy[:, 0] >= 0,
+                                  xy[:, 0] < self.resolution[0]))
+        assert any(np.logical_and(xy[:, 1] >= 0,
+                                  xy[:, 1] < self.resolution[1]))
+
+        return xy
+
+    def pix2latlon(self, xy, centres=True):
+
+        A = self.cA if centres else self.A
+
+        #add the offset because A is for full image
+        off_xy = xy + self._offest[np.newaxis,:]
+        lonlat = np.array([A * pix for pix in off_xy])
+
+        assert any(np.logical_and(lonlat[:, 0] >= self.xmin,
+                                  lonlat[:, 0] < self.xmax))
+        assert any(np.logical_and(lonlat[:, 1] >= self.ymin,
+                                  lonlat[:, 1] < self.ymax))
+
+        return lonlat
+
+    def __Affine(self):
+
+        xmax = self._full_xrange[1]
+        xmin = self._full_xrange[0]
+        ymax = self._full_yrange[1]
+        ymin = self._full_yrange[0]
+        xres = self._full_res[0]
+        yres = self._full_res[1]
+
+        self.pixsize_x = (xmax - xmin) / (xres + 1)
+        self.pixsize_y = (ymax - ymin) / (yres + 1)
+        #TODO is this right? xmin ymax?
+        self.A = Affine(pixsize_x, 0, xmin,
+                        0, pixsize_y, ymax)
+        # centered pixels
+        self.cA = self.A * Affine.translation(0.5, 0.5)
+        self.iA = _invert_affine(self.A)
+        self.icA = _invert_affine(self.cA)
+
 
 
 # Adapted from gist: https://gist.github.com/EyalAr/7915597
