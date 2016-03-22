@@ -111,9 +111,9 @@ class Image:
         self.bbox = bbox_T.T
 
     def data(self):
-        # ((ymin, ymax),(xmin, xmax))
-        window = ((self._offset[1], self._offset[1] + self.resolution[1]),
-                  (self._offset[0], self._offset[0] + self.resolution[0]))
+        # ((ymin, ymax),(xmin, xmax)) plus one for exlusive upper index
+        window = ((self._offset[1], self._offset[1] + self.resolution[1] + 1),
+                  (self._offset[0], self._offset[0] + self.resolution[0] + 1))
         with rasterio.open(self.filename, 'r') as geotiff:
             d = geotiff.read(window=window)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d

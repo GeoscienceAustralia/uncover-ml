@@ -4,12 +4,12 @@ import numpy as np
 import shapefile
 import rasterio
 import subprocess
-from affine import Affine
+from glob import glob
 
 from uncoverml import geoio, patch, streams
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.cvindexer import main as cvindexer
-# from uncoverml.scripts.extractfeats import main as extractfeats
+from uncoverml.scripts.extractfeats import main as extractfeats
 
 
 def test_make_targets(make_shp_gtiff):
@@ -93,45 +93,36 @@ def test_cvindexer_hdf(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-# def test_extractfeats(make_shp_gtiff):
+def test_extractfeats(make_shp_gtiff):
 
-#     _, ftif = make_shp_gtiff
-#     split = 2
+    fshp, ftif = make_shp_gtiff
+    chunks = 4
+    outdir = os.path.dirname(fshp)
+    name = "fchunk"
 
-#     # Make pointspec
-#     ftif_json = os.path.splitext(ftif)[0] + ".json"
-#     pointspec.callback(ftif_json, geotiff=ftif, resolution=None, bbox=None,
-#                        pointlist=None, quiet=False)
+    # Extract features from gtiff
+    extractfeats.callback(geotiff=ftif, name=name, targets=None, redisdb=0,
+                          redishost='localhost', redisport=6379,
+                          standalone=True, chunks=chunks, patchsize=0,
+                          quiet=False, outputdir=outdir)
 
-#     # Extract features from gtiff
-#     ffeats = os.path.splitext(ftif)[0]
-#     extractfeats.callback(geotiff=ftif, pointspec=ftif_json, outfile=ffeats,
-#                           patchsize=0, splits=split, quiet=True, redisdb=0,
-#                           redishost='localhost', redisport=6379,
-#                           standalone=True)
+    # Now compare extracted features to geotiff
+    with rasterio.open(ftif, 'r') as f:
+        I = np.transpose(f.read(), [2, 1, 0])
+        Iflat = np.array((I[:, :, 0].flatten(), I[:, :, 1].flatten())).T
 
-#     # Now compare extracted features to geotiff
-#     with rasterio.open(ftif, 'r') as f:
-#         I = np.transpose(f.read(), [2, 1, 0])
+    ffiles = glob(os.path.join(outdir, name + "*"))
+    ffiles.reverse()
+    efeats = []
+    for fname in ffiles:
+        print(fname)
+        with tables.open_file(fname, 'r') as f:
+            efeats.extend([fts for fts in f.root.features])
 
-#     dfeats = {(x, y): p.flatten() for p, x, y in
-#               patch.grid_patches(I, pwidth=0, pstride=1)}
+    efeats = np.array(efeats)
 
-#     efeats = []
-#     ecentres = []
-#     for i in range(split):
-#         for j in range(split):
-#             fname = "{}_{}_{}.hdf5".format(ffeats, j, i)
-#             with tables.open_file(fname, 'r') as f:
-#                 efeats.extend([fts for fts in f.root.features])
-#                 ecentres.extend([cen for cen in f.root.centres])
-
-#     efeats = np.array(efeats)
-#     ecentres = np.array(ecentres)
-#     feats = np.array([dfeats[tuple(cen)] for cen in ecentres])
-
-#     assert len(dfeats) == len(efeats)
-#     assert np.all(feats == efeats)
+    assert len(Iflat) == len(efeats)
+    assert np.allclose(Iflat, efeats)
 
 
 # def test_extractfeats_worker(make_shp_gtiff):

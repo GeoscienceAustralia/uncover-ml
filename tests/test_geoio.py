@@ -100,3 +100,28 @@ def test_values_from_shp(make_shp_gtiff):
     for i in range(10):
         vals = geoio.values_from_shp(fshp, str(i))
         assert all(vals == i)
+
+
+def test_Image_split(make_shp_gtiff):
+
+    _, ftif = make_shp_gtiff
+
+    nchunks = 4
+
+    with rasterio.open(ftif, 'r') as f:
+        Iorig = np.transpose(f.read(), [2, 1, 0])
+
+    I = geoio.Image(ftif).data()
+
+    assert Iorig.shape == I.shape
+    assert np.all(Iorig == I)
+
+    Ichunks = []
+    for i in range(nchunks):
+        chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks).data()
+        Ichunks.append(chunk)
+
+    Irecon = np.hstack(Ichunks)
+
+    assert I.shape == Irecon.shape
+    assert np.all(I == Irecon)
