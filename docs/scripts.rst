@@ -9,6 +9,4 @@ Command Line Scripts
    maketargets
    cvindexer
    extractfeats
-   pointspec
    worker
-   composefeats

@@ -21,8 +21,8 @@ Contents:
    geoio
    patch
    models
-   io
    validation
+   streams
 
    scripts
 

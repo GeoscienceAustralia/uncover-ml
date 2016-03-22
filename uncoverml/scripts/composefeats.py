@@ -16,6 +16,8 @@ import pyprind
 log = logging.getLogger(__name__)
 
 
+df = "tmp"
+
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 
