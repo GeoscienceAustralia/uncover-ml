@@ -1,11 +1,10 @@
 import os
 import sys
-import json
 import logging
 import tables
 import click as cl
 
-from uncoverml import geom
+from uncoverml import geoio
 
 log = logging.getLogger(__name__)
 
@@ -18,9 +17,8 @@ log = logging.getLogger(__name__)
 @cl.argument('fieldname', type=str, required=True)
 def main(shapefile, fieldname, outfile, quiet):
     """
-    Turn a shapefile of target variables into a point-spec file and HDF5 file.
-    These files can subsequently be used by cross validation and machine
-    learning routines.
+    Turn a shapefile of target variables into an HDF5 file. This file can
+    subsequently be used by cross validation and machine learning routines.
     """
 
     # setup logging
@@ -31,8 +29,8 @@ def main(shapefile, fieldname, outfile, quiet):
 
     # Extract data from shapefile
     try:
-        lonlats = geom.points_from_shp(shapefile)
-        vals = geom.values_from_shp(shapefile, fieldname)
+        lonlats = geoio.points_from_shp(shapefile)
+        vals = geoio.values_from_shp(shapefile, fieldname)
     except Exception as e:
         log.fatal("Error parsing shapefile: {}".format(e))
         sys.exit(-1)
@@ -41,11 +39,8 @@ def main(shapefile, fieldname, outfile, quiet):
     if outfile is None:
         outfile = os.path.splitext(shapefile)[0] + "_" + fieldname
 
-    # Make pointspec json
-    lspec = (geom.ListPointSpec(lonlats))._to_json_dict()
-    with open(outfile + ".json", 'w') as f:
-        json.dump(lspec, f)
-
     # Make hdf5 array
     with tables.open_file(outfile + ".hdf5", 'w') as f:
         f.create_array("/", fieldname, obj=vals)
+        f.create_array("/", "Longitude", obj=lonlats[:, 0])
+        f.create_array("/", "Latitude", obj=lonlats[:, 1])

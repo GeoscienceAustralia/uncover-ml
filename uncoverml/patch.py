@@ -5,7 +5,7 @@ from __future__ import division
 import numpy as np
 
 
-def grid_patches(image, pwidth):
+def grid_patches(image, pwidth, pstride=1):
     """
     Generate (overlapping) patches from an image. This function extracts square
     patches from an image in an overlapping, dense grid.
@@ -19,14 +19,14 @@ def grid_patches(image, pwidth):
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
             = 2 gives a 5x5 patch etc. The formula for calculating the full
             patch width is pwidth * 2 + 1.
+        pstride: int, optional
+            the stride (in pixels) between successive patches.
     Yields
     ------
         patch: ndarray
             An image patch of shape (psize, psize, channels,), where
             psize = pwidth * 2 + 1
     """
-    # TODO this could be a function input
-    pstride = 1
     # Check and get image dimensions
     Ih, Iw, Ic = _checkim(image)
     psize = pwidth * 2 + 1

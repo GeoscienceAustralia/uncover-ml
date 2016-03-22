@@ -48,6 +48,23 @@ def make_patch_11():
 
 
 @pytest.fixture
+def make_patch_12():
+    pwidth = 0
+    pstride = 2
+
+    # Test output patches, patch centres
+    tpatch = np.array([[[1]],
+                       [[3]],
+                       [[9]],
+                       [[11]]])
+
+    tx = np.array([0, 0, 2, 2])
+    ty = np.array([0, 2, 0, 2])
+
+    return timg, pwidth, pstride, tpatch, tx, ty
+
+
+@pytest.fixture
 def make_points():
     pwidth = 1
     points = np.array([[1, 1], [2, 1], [2, 2]])
@@ -65,7 +82,7 @@ def make_points():
     return timg, pwidth, points, tpatch
 
 
-@pytest.fixture(params=[make_patch_31, make_patch_11])
+@pytest.fixture(params=[make_patch_31, make_patch_11, make_patch_12])
 def make_multi_patch(request):
     return request.param()
 
@@ -101,7 +118,7 @@ def make_raster():
 def make_shp_gtiff(tmpdir_factory):
 
     # File names for test shapefile and test geotiff
-    fshp = str(tmpdir_factory.mktemp('shapes').join('test').realpath())
+    fshp = str(tmpdir_factory.mktemp('shapes').join('test.shp').realpath())
     ftif = str(tmpdir_factory.mktemp('tif').join('test.tif').realpath())
 
     # Create grid
