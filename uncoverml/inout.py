@@ -60,17 +60,39 @@ def construct_splits(npixels, nchunks, overlap=0):
         y_bounds.append((new_min, new_max))
     return y_bounds
 
+def bounding_box(raster):
+    """
+    TODO
+    """
+    T1 = raster.affine
+
+    # No shearing or rotation allowed!!
+    if not ((T1[1] == 0) and (T1[3] == 0)):
+        raise RuntimeError("Transform to pixel coordinates has rotation "
+                           "or shear")
+
+    # the +1 because we want pixel corner 1 beyond the last pixel
+    lon_range = T1[2] + np.array([0, raster.width + 1]) * T1[0]
+    lat_range = T1[5] + np.array([0, raster.height + 1]) * T1[4]
+
+    lon_range = np.sort(lon_range)
+    lat_range = np.sort(lat_range)
+    return lon_range, lat_range
+
+
 
 
 class Image:
     def __init__(self, filename, chunk_idx=0, nchunks=1, overlap=0):
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
+        self.chunk_idx = chunk_idx
+        self.nchunks = nchunks
         self.filename = filename
         # Get the full image details
         with rasterio.open(self.filename,'r') as geotiff:
-            self._full_xrange, self._full_yrange = geom.bounding_box(geotiff)
-            self._full_res = (raster.width, raster.height)
+            self._full_xrange, self._full_yrange = bounding_box(geotiff)
+            self._full_res = (geotiff.width, geotiff.height)
         
         # Build the affine transformation for the FULL image
         self.__Affine()
@@ -89,7 +111,7 @@ class Image:
         self.bbox = bbox_T.T
 
 
-    def data():
+    def data(self):
         # ((ymin, ymax),(xmin, xmax))
         window = ((self._offset[1], self._offset[1] + self.resolution[1]), 
                    (self._offset[0], self._offset[0] + self.resolution[0]))
@@ -156,13 +178,13 @@ class Image:
         A = self.cA if centres else self.A
 
         #add the offset because A is for full image
-        off_xy = xy + self._offest[np.newaxis,:]
+        off_xy = xy + self._offset[np.newaxis,:]
         lonlat = np.array([A * pix for pix in off_xy])
 
-        assert any(np.logical_and(lonlat[:, 0] >= self.xmin,
-                                  lonlat[:, 0] < self.xmax))
-        assert any(np.logical_and(lonlat[:, 1] >= self.ymin,
-                                  lonlat[:, 1] < self.ymax))
+        # assert any(np.logical_and(lonlat[:, 0] >= self.xmin,
+        #                           lonlat[:, 0] < self.xmax))
+        # assert any(np.logical_and(lonlat[:, 1] >= self.ymin,
+        #                           lonlat[:, 1] < self.ymax))
 
         return lonlat
 
@@ -178,8 +200,8 @@ class Image:
         self.pixsize_x = (xmax - xmin) / (xres + 1)
         self.pixsize_y = (ymax - ymin) / (yres + 1)
         #TODO is this right? xmin ymax?
-        self.A = Affine(pixsize_x, 0, xmin,
-                        0, pixsize_y, ymax)
+        self.A = Affine(self.pixsize_x, 0, xmin,
+                        0, self.pixsize_y, ymax)
         # centered pixels
         self.cA = self.A * Affine.translation(0.5, 0.5)
         self.iA = _invert_affine(self.A)

@@ -1,3 +1,4 @@
+import time
 import click
 from celery import Celery
 import uncoverml.defaults
@@ -13,7 +14,7 @@ def configure(host, port, db, standalone=False):
 
 def print_celery_progress(async_results, title):
     total_jobs = len(async_results)
-    with click.progressbar(length=size) as bar:
+    with click.progressbar(length=total_jobs) as bar:
         last_jobs_done = 0
         jobs_done = 0
         while jobs_done < total_jobs:

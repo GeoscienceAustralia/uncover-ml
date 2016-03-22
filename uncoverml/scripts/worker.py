@@ -1,6 +1,6 @@
 import logging
 import click as cl
-from uncoverml.celerybase import celery
+from uncoverml import celerybase
 import uncoverml.tasks
 
 log = logging.getLogger(__name__)
@@ -11,17 +11,17 @@ log = logging.getLogger(__name__)
 @cl.option('--redishost', type=str, default='localhost')
 @cl.option('--redisport', type=int, default=6379)
 def main(quiet, redisdb, redishost, redisport): 
+    
 
     # setup logging
     if quiet is True:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
+    
+        # initialise celery
+    celerybase.configure(redishost, redisport, redisdb, standalone=False)
 
-    # initialise celery
-    celery_redis='redis://{}:{}/{}'.format(redishost, redisport, redisdb)
-    celery.conf.BROKER_URL = celery_redis
-    celery.conf.CELERY_RESULT_BACKEND = celery_redis
     
     # run the worker
-    celery.worker_main()
+    celerybase.celery.worker_main()
