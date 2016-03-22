@@ -125,53 +125,46 @@ def test_extractfeats(make_shp_gtiff):
     assert np.allclose(I, efeats)
 
 
-# def test_extractfeats_worker(make_shp_gtiff):
+def test_extractfeats_worker(make_shp_gtiff):
 
-#     _, ftif = make_shp_gtiff
-#     split = 2
+    fshp, ftif = make_shp_gtiff
+    chunks = 4
+    outdir = os.path.dirname(fshp)
+    name = "fchunk_worker"
 
-#     # return
-#     # TODO: The following just hangs!
+    predis = None
+    pworker = None
 
-#     # Make pointspec
-#     ftif_json = os.path.splitext(ftif)[0] + ".json"
-#     pointspec.callback(ftif_json, geotiff=ftif, resolution=None, bbox=None,
-#                        pointlist=None, quiet=False)
+    # Start redis
+    try:
+        redisargs = ["redis-server", "--port", "6379"]
+        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT)
 
-#     predis = None
-#     pworker = None
+        _proc_ready(predis)
 
-#     # Start redis
-#     try:
-#         redisargs = ["redis-server", "--port", "6379"]
-#         predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
-#                                   stderr=subprocess.STDOUT)
+        # Start the worker
+        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        _proc_ready(pworker)
 
-#         _proc_ready(predis)
+        # Extract features from gtiff
+        extractfeats.callback(geotiff=ftif, name=name, targets=None, redisdb=0,
+                              redishost='localhost', redisport=6379,
+                              standalone=True, chunks=chunks, patchsize=0,
+                              quiet=False, outputdir=outdir)
 
-#         # Start the worker
-#         pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
-#                                    stderr=subprocess.STDOUT)
-#         _proc_ready(pworker)
+    finally:
+        # Kill worker
+        if predis is not None:
+            predis.terminate()
+        if pworker is not None:
+            pworker.terminate()
 
-#         # Extract features from gtiff
-#         ffeats = os.path.splitext(ftif)[0] + "_worker"
-#         extractfeats.callback(geotiff=ftif, pointspec=ftif_json,
-#                               outfile=ffeats, patchsize=0, splits=split,
-#                               quiet=True, redisdb=0, redishost='localhost',
-#                               redisport=6379, standalone=False)
-#     finally:
-#         # Kill worker
-#         if predis is not None:
-#             predis.terminate()
-#         if pworker is not None:
-#             pworker.terminate()
-
-#     # Check all files created successfully
-#     for i in range(split):
-#         for j in range(split):
-#             fname = "{}_{}_{}.hdf5".format(ffeats, j, i)
-#             assert os.path.exists(fname)
+    # ffiles = glob(os.path.join(outdir, name + "*"))
+    for i in range(chunks):
+        fname = os.path.join(outdir, "{}_{}.hdf5".format(name, i))
+        assert os.path.exists(fname)
 
 
 def _proc_ready(proc, waitime=10):
