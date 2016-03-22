@@ -3,6 +3,9 @@ import os.path
 import numpy as np
 from affine import Affine
 import shapefile
+import logging
+
+log = logging.getLogger(__name__)
 
 def file_indices_okay(filenames):
     #get just the name eg /path/to/file_0.hdf5 -> file_0
@@ -14,23 +17,28 @@ def file_indices_okay(filenames):
     
     # check every base has the right indices
     # "[[file,0], [file,1]] -> {file:[0,1]}
-    base_ids = {k:set([int(j[1]) 
-                       for j in base_and_idx if j[0] == k]) for k in bases}
+    try:
+        base_ids = {k:set([int(j[1]) 
+                           for j in base_and_idx if j[0] == k]) for k in bases}
+    except:
+        log.error("One or more filenames are not in <name>_<idx>.hdf5 format")
+        # either there are no ints at the end or no underscore
+        return False
 
     # determine the 'correct' number of indices (highest index we see)
-    num_ids = np.amax(np.array([k for j,k in base_ids.items()])) + 1
+    num_ids = np.amax(np.array([max(k) for j,k in base_ids.items()])) + 1
     true_set = set(range(num_ids))
     files_ok = True
     for b, nums in base_ids.items():
         if not nums == true_set:
             files_ok = False
-            log.fatal("feature {} has wrong files. ".format(b))
+            log.error("feature {} has wrong files. ".format(b))
             missing = true_set.difference(nums)
             if len(missing) > 0:
-                log.fatal("Missing Index: {}".format(missing))
+                log.error("Missing Index: {}".format(missing))
             extra = nums.difference(true_set)
             if len(extra) > 0:
-                log.fatal("Extra Index: {}".format(extra))
+                log.error("Extra Index: {}".format(extra))
     return files_ok
 
 def _invert_affine(A):

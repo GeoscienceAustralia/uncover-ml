@@ -21,7 +21,7 @@ def test_file_indices_okay():
 
     # wierd paths
     t3 = t2 + ["/my/name_0.hdf5",
-               "/oh/dear/name_1.hdf5"
+               "/oh/dear/name_1.hdf5",
                "name_2.hdf5"]
     assert geoio.file_indices_okay(t3)
 
@@ -29,7 +29,7 @@ def test_file_indices_okay():
     t4 = t3[:-1]
     assert not geoio.file_indices_okay(t4)
 
-    # extra data
+    # craaazy data
     t5 = t3 + ["extra_file.hdf5"]
     assert not geoio.file_indices_okay(t5)
 
