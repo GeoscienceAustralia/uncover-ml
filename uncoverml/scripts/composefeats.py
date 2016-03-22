@@ -40,6 +40,17 @@ def main(files, name, redisdb, redishost, redisport,
     files_ok = file_indices_okay(files)
     if not files_ok:
         sys.exit(-1)
+    
+        
+    # build the images
+    image_chunks = [geoio.Image(geotiff, i, chunks) for i in range(chunks)]
+
+    # Define the transform function to build the features
+    transform = feat.transform
+
+    celerybase.map_over(feat.features_from_image, image_chunks, standalone,
+                        name=name, transform=transform, patchsize=patchsize,
+                        output_dir=outputdir, targets=targets)
 
     sys.exit(0)
 

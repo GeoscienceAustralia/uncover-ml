@@ -33,6 +33,22 @@ def test_file_indices_okay():
     t5 = t3 + ["extra_file.hdf5"]
     assert not geoio.file_indices_okay(t5)
 
+def test_files_by_chunk():
+    t1 = ["/path/to/file_1.hdf5", 
+          "/path/to/file_0.hdf5", 
+          "/path/to/file_2.hdf5",
+          "/some/to/zile_0.hdf5", 
+          "/other/to/zile_1.hdf5", 
+          "/path/to/zile_2.hdf5"]
+
+    r = geoio.files_by_chunk(t1)
+
+    answer = {0:["/path/to/file_0.hdf5", "/some/to/zile_0.hdf5"],
+              1:["/path/to/file_1.hdf5", "/other/to/zile_1.hdf5"],
+              2:["/path/to/file_2.hdf5", "/path/to/zile_2.hdf5"]}
+
+    assert r == answer
+
 
 def test_grid_affine(make_shp_gtiff):
 

@@ -41,6 +41,23 @@ def file_indices_okay(filenames):
                 log.error("Extra Index: {}".format(extra))
     return files_ok
 
+def files_by_chunk(filenames):
+    """
+    returns a dictionary per-chunk of a *sorted* list of features
+    Note: assumes files_indices_ok returned true 
+    """
+    #get just the name eg /path/to/file_0.hdf5 -> file_0
+    transform = lambda x : os.path.splitext(os.path.basename(x))[0]
+    sorted_filenames = sorted(filenames, key=transform)
+    basenames = [transform(k) for k in sorted_filenames]
+    indices = [int(k.rsplit('_', maxsplit=1)[1]) for k in basenames]
+    d = {i:[] for i in set(indices)}
+    for i, f in zip(indices, sorted_filenames):
+        d[i].append(f)
+    return d
+
+
+
 def _invert_affine(A):
 
     R = np.array([A[0:2], A[3:5]])
