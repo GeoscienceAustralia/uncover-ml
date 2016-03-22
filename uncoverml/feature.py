@@ -2,9 +2,8 @@ import os.path
 import numpy as np
 import tables as hdf
 from uncoverml.celerybase import celery
-from uncoverml import io
+from uncoverml import inout
 from uncoverml import patch
-
 
 
 def output_features(feature_vector, outfile):
@@ -33,6 +32,7 @@ def output_features(feature_vector, outfile):
 def transform(x):
     return x.flatten()
 
+
 @celery.task(name='features_from_image')
 def features_from_image(name, image, transform, patchsize, targets=None):
     """
@@ -55,4 +55,3 @@ def features_from_image(name, image, transform, patchsize, targets=None):
     processed_patches = map(transform, patches)
     features = np.array(list(processed_patches), dtype=float)
     output_features(features, name)
-

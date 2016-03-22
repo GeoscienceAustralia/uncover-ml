@@ -4,6 +4,7 @@ from __future__ import division
 
 import numpy as np
 
+
 def grid_patches(image, pwidth):
     """
     Generate (overlapping) patches from an image. This function extracts square
@@ -77,8 +78,9 @@ def point_patches(image, pwidth, points):
         raise ValueError("Points are outside of image bounds")
 
     return (image[slice(p[0] - pwidth, p[0] + pwidth + 1),
-                   slice(p[1] - pwidth, p[1] + pwidth + 1)]
+                  slice(p[1] - pwidth, p[1] + pwidth + 1)]
             for p in points)
+
 
 def _spacing(dimension, psize, pstride):
     """
@@ -92,6 +94,7 @@ def _spacing(dimension, psize, pstride):
 
     offset = int(np.floor(float((dimension - psize) % pstride) / 2))
     return range(offset, dimension - psize + 1, pstride)
+
 
 def _checkim(image):
     if image.ndim == 3:
