@@ -65,11 +65,11 @@
   <div class="section" id="module-uncoverml.scripts.cvindexer">
 <span id="uncoverml-scripts-cvindexer"></span><h1>uncoverml.scripts.cvindexer<a class="headerlink" href="#module-uncoverml.scripts.cvindexer" title="Permalink to this headline">¶</a></h1>
 <p>Create a cross validation fold index.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: cvindexer [OPTIONS] POINTSPEC OUTFILE
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: cvindexer [OPTIONS] TARGETFILE OUTFILE
 
-  Create a cross validation fold index file from a pointspec. This outputs
-  an HDF5 file with &quot;Latitude&quot;, &quot;Longitude&quot;, and &quot;FoldIndices arrays. If the
-  pointspec is a grid, then &quot;FoldIndices&quot; is a 2D array.
+  Create a cross validation fold index file from a shapefile or HDF5 of
+  appropriate formats. This outputs an HDF5 file with &quot;Latitude&quot;,
+  &quot;Longitude&quot;, and &quot;FoldIndices arrays.
 
 Options:
   --folds INTEGER  Number of folds for crossvalidation

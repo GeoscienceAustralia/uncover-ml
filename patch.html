@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
     <link rel="next" title="Models Module" href="models.html" />
-    <link rel="prev" title="Geometry Module" href="geom.html" />
+    <link rel="prev" title="Geometry file I/O Module" href="geoio.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -49,7 +49,7 @@
           <a href="models.html" title="Models Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="geom.html" title="Geometry Module"
+          <a href="geoio.html" title="Geometry file I/O Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
 <p>Image patch extraction and windowing utilities.</p>
 <dl class="function">
 <dt id="uncoverml.patch.grid_patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">grid_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em>, <em>pstride</em>, <em>centreoffset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.grid_patches" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncoverml.patch.</code><code class="descname">grid_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em>, <em>pstride=1</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.grid_patches" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate (overlapping) patches from an image. This function extracts square
 patches from an image in an overlapping, dense grid.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -78,87 +78,13 @@ patches from an image in an overlapping, dense grid.</p>
 pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
 = 2 gives a 5x5 patch etc. The formula for calculating the full
 patch width is pwidth * 2 + 1.</li>
-<li><strong>pstride</strong> (<em>int</em>) &#8211; the stride (in pixels) between successive patches.</li>
-<li><strong>centreoffset</strong> (<em>tuple, optional</em>) &#8211; a tuple of (x, y) offsets to add to the patch centres (centrex
-and centrey)</li>
+<li><strong>pstride</strong> (<em>int, optional</em>) &#8211; the stride (in pixels) between successive patches.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
-<li><strong>patch</strong> (<em>ndarray</em>) &#8211;
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><strong>patch</strong> (<em>ndarray</em>) &#8211;
 An image patch of shape (psize, psize, channels,), where
-psize = pwidth * 2 + 1</li>
-<li><strong>centrex</strong> (<em>float</em>) &#8211;
-the centre (x coords) of the patch.</li>
-<li><strong>centrey</strong> (<em>float</em>) &#8211;
-the centre (y coords) of the patch.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.patch.image_window">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">image_window</code><span class="sig-paren">(</span><em>x_idx</em>, <em>y_idx</em>, <em>axis_splits</em>, <em>imshape</em>, <em>pwidth</em>, <em>pstride</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.image_window" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create sub-windows of an image. given specifications for a chunking scheme
-and an index, returns the pixel slices of the image for the chunk at that
-index.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x_idx</strong> (<em>int</em>) &#8211; the x-index of the chunk. 0 &lt;= x_idx &lt; axis_splits</li>
-<li><strong>y_idx</strong> (<em>int</em>) &#8211; the y-index of the chunk. 0 &lt;= y_idx &lt; axis_splits</li>
-<li><strong>axis_splits</strong> (<em>int</em>) &#8211; the number of splits per axis used to create chunks of data.
-The total number of chunks is the square of this value. Aspect
-ratio of the chunks is approximately equal to original image.
-the number of windows to divide the image into. The nearest square
-will actually be used (to preserve aspect ratio).</li>
-<li><strong>imshape</strong> (<em>tuple</em>) &#8211; a tuple representing the image shape; (x, y).</li>
-<li><strong>pwidth</strong> (<em>int</em>) &#8211; the half-width of the square patches to extract, in pixels. E.g.
-pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
-= 2 gives a 5x5 patch etc. The formula for calculating the full
-patch width is pwidth * 2 + 1.</li>
-<li><strong>pstride</strong> (<em>int</em>) &#8211; the stride (in pixels) between successive patches.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>slices</strong> &#8211;
-a list of length round(sqrt(nwindows))**2 of tuples. Each tuple has
-two slices (slice_x, slice_y) that represents a subwindow.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.patch.patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">patches</code><span class="sig-paren">(</span><em>image</em>, <em>pointspec</em>, <em>patch_width</em>, <em>centreoffset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.patches" title="Permalink to this definition">¶</a></dt>
-<dd><p>High-level function abstracting over what sort of patches we&#8217;re getting.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>image</strong> (<em>ndarray</em>) &#8211; an array of shape (x, y) or (x, y, channels)</li>
-<li><strong>pointspec</strong> (<em>GridPointSpec or ListPointSpec</em>) &#8211; a pointspec object describing the required patch locations</li>
-<li><strong>patch_width</strong> (<em>int</em>) &#8211; the half-width of the square patches to extract</li>
-<li><strong>centreoffset</strong> (<em>tuple, optional</em>) &#8211; a tuple of (x, y) offsets to add to the patch centres (centrex
-and centrey)</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A flattened patch of shape ((pwidth * 2 + 1)**2 * channels,)</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+psize = pwidth * 2 + 1</p>
 </td>
 </tr>
 </tbody>
@@ -167,7 +93,7 @@ and centrey)</li>
 
 <dl class="function">
 <dt id="uncoverml.patch.point_patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">point_patches</code><span class="sig-paren">(</span><em>image</em>, <em>points</em>, <em>pwidth</em>, <em>centreoffset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.point_patches" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncoverml.patch.</code><code class="descname">point_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em>, <em>points</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.point_patches" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract patches from an image at specified points.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -181,20 +107,12 @@ coordinate of the patch centre within the image.</li>
 pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
 = 2 gives a 5x5 patch etc. The formula for calculating the full
 patch width is pwidth * 2 + 1.</li>
-<li><strong>centreoffset</strong> (<em>tuple, optional</em>) &#8211; a tuple of (x, y) offsets to add to the patch centres (centrex
-and centrey)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
-<li><strong>patch</strong> (<em>ndarray</em>) &#8211;
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><strong>patch</strong> (<em>ndarray</em>) &#8211;
 An image patch of shape (psize, psize, channels,), where
-psize = pwidth * 2 + 1</li>
-<li><strong>centrex</strong> (<em>float</em>) &#8211;
-the centre (x coords) of the patch.</li>
-<li><strong>centrey</strong> (<em>float</em>) &#8211;
-the centre (y coords) of the patch.</li>
-</ul>
+psize = pwidth * 2 + 1</p>
 </td>
 </tr>
 </tbody>
@@ -210,8 +128,8 @@ the centre (y coords) of the patch.</li>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="geom.html"
-                        title="previous chapter">Geometry Module</a></p>
+  <p class="topless"><a href="geoio.html"
+                        title="previous chapter">Geometry file I/O Module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="models.html"
                         title="next chapter">Models Module</a></p>
@@ -245,7 +163,7 @@ the centre (y coords) of the patch.</li>
           <a href="models.html" title="Models Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="geom.html" title="Geometry Module"
+          <a href="geoio.html" title="Geometry file I/O Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>

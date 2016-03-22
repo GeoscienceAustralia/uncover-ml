@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="next" title="uncoverml.scripts.pointspec" href="uncoverml.scripts.pointspec.html" />
+    <link rel="next" title="uncoverml.scripts.worker" href="uncoverml.scripts.worker.html" />
     <link rel="prev" title="uncoverml.scripts.cvindexer" href="uncoverml.scripts.cvindexer.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
@@ -47,7 +47,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.pointspec.html" title="uncoverml.scripts.pointspec"
+          <a href="uncoverml.scripts.worker.html" title="uncoverml.scripts.worker"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
@@ -65,37 +65,25 @@
   <div class="section" id="module-uncoverml.scripts.extractfeats">
 <span id="uncoverml-scripts-extractfeats"></span><h1>uncoverml.scripts.extractfeats<a class="headerlink" href="#module-uncoverml.scripts.extractfeats" title="Permalink to this headline">¶</a></h1>
 <p>Extract patch features from a single geotiff.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: extractfeats [OPTIONS] POINTSPEC GEOTIFF OUTFILE
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: extractfeats [OPTIONS] GEOTIFF NAME
 
   TODO
 
 Options:
   --quiet              Log verbose output
   --patchsize INTEGER  window size of patches
-  --splits INTEGER     Per-axis splits for chunking. Total chunks is square of
-                       this
+  --chunks INTEGER     Number of chunks in which to split the computation and
+                       output
   --redisdb INTEGER
   --redishost TEXT
   --redisport INTEGER
   --standalone
+  --targets PATH       Optional shapefile for providing target points at which
+                       to evaluate feature
+  --outputdir PATH
   --help               Show this message and exit.
 </pre></div>
 </div>
-<p class="rubric">Functions</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">check_is_subset</span></code>(geotiff,&nbsp;pointspec)</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">print_celery_progress</span></code>(async_results,&nbsp;title)</td>
-<td></td>
-</tr>
-</tbody>
-</table>
 </div>
 
 
@@ -108,8 +96,8 @@ Options:
   <p class="topless"><a href="uncoverml.scripts.cvindexer.html"
                         title="previous chapter">uncoverml.scripts.cvindexer</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.pointspec.html"
-                        title="next chapter">uncoverml.scripts.pointspec</a></p>
+  <p class="topless"><a href="uncoverml.scripts.worker.html"
+                        title="next chapter">uncoverml.scripts.worker</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -137,7 +125,7 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.pointspec.html" title="uncoverml.scripts.pointspec"
+          <a href="uncoverml.scripts.worker.html" title="uncoverml.scripts.worker"
              >next</a> |</li>
         <li class="right" >
           <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
