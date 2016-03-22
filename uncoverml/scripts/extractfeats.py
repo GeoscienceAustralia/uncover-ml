@@ -23,7 +23,6 @@ def check_is_subset(geotiff, pointspec):
         log.fatal("The input geotiff does not contain the pointspec data!")
         sys.exit(-1)
 
-# TODO make these defaults come from uncoverml.defaults
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 
            default=df.quiet_logging)

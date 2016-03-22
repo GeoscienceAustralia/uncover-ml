@@ -1,8 +1,37 @@
 import rasterio
+import os.path
 import numpy as np
 from affine import Affine
 import shapefile
 
+def file_indices_okay(filenames):
+    #get just the name eg /path/to/file_0.hdf5 -> file_0
+    basenames = [os.path.splitext(os.path.basename(k))[0] for k in filenames]
+    # file_0 -> [file,0]
+    base_and_idx = [k.rsplit('_', maxsplit=1) for k in basenames]
+    bases = set([k[0] for k in base_and_idx])
+    log.info("Input file sets: {}".format(set(bases)))
+    
+    # check every base has the right indices
+    # "[[file,0], [file,1]] -> {file:[0,1]}
+    base_ids = {k:set([int(j[1]) 
+                       for j in base_and_idx if j[0] == k]) for k in bases}
+
+    # determine the 'correct' number of indices (highest index we see)
+    num_ids = np.amax(np.array([k for j,k in base_ids.items()])) + 1
+    true_set = set(range(num_ids))
+    files_ok = True
+    for b, nums in base_ids.items():
+        if not nums == true_set:
+            files_ok = False
+            log.fatal("feature {} has wrong files. ".format(b))
+            missing = true_set.difference(nums)
+            if len(missing) > 0:
+                log.fatal("Missing Index: {}".format(missing))
+            extra = nums.difference(true_set)
+            if len(extra) > 0:
+                log.fatal("Extra Index: {}".format(extra))
+    return files_ok
 
 def _invert_affine(A):
 
