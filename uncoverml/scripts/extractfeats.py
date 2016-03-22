@@ -9,12 +9,12 @@ log = logging.getLogger(__name__)
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output", 
+@cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
-@cl.option('--patchsize', type=int, 
+@cl.option('--patchsize', type=int,
            default=df.feature_patch_size, help="window size of patches")
-@cl.option('--chunks', type=int, default=df.work_chunks,
-           help="Number of chunks in which to split the computation and output")
+@cl.option('--chunks', type=int, default=df.work_chunks, help="Number of "
+           "chunks in which to split the computation and output")
 @cl.option('--redisdb', type=int, default=df.redis_db)
 @cl.option('--redishost', type=str, default=df.redis_address)
 @cl.option('--redisport', type=int, default=df.redis_port)

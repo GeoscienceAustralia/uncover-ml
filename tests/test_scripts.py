@@ -109,7 +109,6 @@ def test_extractfeats(make_shp_gtiff):
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
-        Iflat = np.array((I[:, :, 0].flatten(), I[:, :, 1].flatten())).T
 
     ffiles = glob(os.path.join(outdir, name + "*"))
     ffiles.reverse()
@@ -117,12 +116,13 @@ def test_extractfeats(make_shp_gtiff):
     for fname in ffiles:
         print(fname)
         with tables.open_file(fname, 'r') as f:
-            efeats.extend([fts for fts in f.root.features])
+            strip = [fts for fts in f.root.features]
+            efeats.append(np.reshape(strip, (I.shape[0], -1, I.shape[2])))
 
-    efeats = np.array(efeats)
+    efeats = np.concatenate(efeats, axis=1)
 
-    assert len(Iflat) == len(efeats)
-    assert np.allclose(Iflat, efeats)
+    assert I.shape == efeats.shape
+    assert np.allclose(I, efeats)
 
 
 # def test_extractfeats_worker(make_shp_gtiff):

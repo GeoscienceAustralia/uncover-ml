@@ -135,6 +135,7 @@ def test_Image_split(make_shp_gtiff):
     _, ftif = make_shp_gtiff
 
     nchunks = 4
+    overlap = 3
 
     with rasterio.open(ftif, 'r') as f:
         Iorig = np.transpose(f.read(), [2, 1, 0])
@@ -148,6 +149,22 @@ def test_Image_split(make_shp_gtiff):
     for i in range(nchunks):
         chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks).data()
         Ichunks.append(chunk)
+
+    Irecon = np.hstack(Ichunks)
+
+    assert I.shape == Irecon.shape
+    assert np.all(I == Irecon)
+
+    Ichunks = []
+    for i in range(nchunks):
+        chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks,
+                            overlap=overlap).data()
+        if i == 0:
+            Ichunks.append(chunk[:, 0:-overlap])
+        elif i == (nchunks - 1):
+            Ichunks.append(chunk[:, overlap:])
+        else:
+            Ichunks.append(chunk[:, overlap:-overlap])
 
     Irecon = np.hstack(Ichunks)
 
