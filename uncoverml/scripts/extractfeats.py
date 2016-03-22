@@ -3,31 +3,22 @@ import os
 import click as cl
 import uncoverml.feature as feat
 from uncoverml import geoio
+import uncoverml.defaults as df
 from uncoverml import celerybase
 log = logging.getLogger(__name__)
 
 
-# def check_is_subset(geotiff, pointspec):
-#     with io.open_raster(geotiff) as raster:
-#         x_range, y_range = geoio.bounding_box(raster)
-#         res = (raster.width, raster.height)
-#         tifgrid = geom.GridPointSpec(x_range, y_range, res)
-
-#     # Check we have valid bounding boxes
-#     if not tifgrid.contains(pointspec):
-#         log.fatal("The input geotiff does not contain the pointspec data!")
-#         sys.exit(-1)
-
-# TODO make these defaults come from uncoverml.defaults
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
-@cl.option('--patchsize', type=int, default=0, help="window size of patches")
-@cl.option('--chunks', type=int, default=10, help="Number of chunks in which "
-           "to split the computation and output")
-@cl.option('--redisdb', type=int, default=0)
-@cl.option('--redishost', type=str, default='localhost')
-@cl.option('--redisport', type=int, default=6379)
-@cl.option('--standalone', is_flag=True, default=False)
+@cl.option('--quiet', is_flag=True, help="Log verbose output", 
+           default=df.quiet_logging)
+@cl.option('--patchsize', type=int, 
+           default=df.feature_patch_size, help="window size of patches")
+@cl.option('--chunks', type=int, default=df.work_chunks,
+           help="Number of chunks in which to split the computation and output")
+@cl.option('--redisdb', type=int, default=df.redis_db)
+@cl.option('--redishost', type=str, default=df.redis_address)
+@cl.option('--redisport', type=int, default=df.redis_port)
+@cl.option('--standalone', is_flag=True, default=df.standalone)
 @cl.option('--targets', type=cl.Path(exists=True), help="Optional shapefile "
            "for providing target points at which to evaluate feature")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
