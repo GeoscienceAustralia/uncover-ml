@@ -5,6 +5,7 @@ import click as cl
 import json
 import uncoverml.feature as feat
 from uncoverml import io
+import uncoverml.defaults as df
 import time
 import pyprind
 from uncoverml import celerybase
@@ -24,14 +25,16 @@ def check_is_subset(geotiff, pointspec):
 
 # TODO make these defaults come from uncoverml.defaults
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
-@cl.option('--patchsize', type=int, default=0, help="window size of patches")
-@cl.option('--chunks', type=int, default=10,
+@cl.option('--quiet', is_flag=True, help="Log verbose output", 
+           default=df.quiet_logging)
+@cl.option('--patchsize', type=int, 
+           default=df.feature_patch_size, help="window size of patches")
+@cl.option('--chunks', type=int, default=df.work_chunks,
            help="Number of chunks in which to split the computation and output")
-@cl.option('--redisdb', type=int, default=0)
-@cl.option('--redishost', type=str, default='localhost')
-@cl.option('--redisport', type=int, default=6379)
-@cl.option('--standalone', is_flag=True, default=False)
+@cl.option('--redisdb', type=int, default=df.redis_db)
+@cl.option('--redishost', type=str, default=df.redis_address)
+@cl.option('--redisport', type=int, default=df.redis_port)
+@cl.option('--standalone', is_flag=True, default=df.standalone)
 @cl.option('--targets', type=cl.Path(exists=True), help="Optional shapefile "
            "for providing target points at which to evaluate feature")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
