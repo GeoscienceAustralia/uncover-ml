@@ -1,3 +1,8 @@
+"""
+Compose multiple image features into a single feature vector.
+
+.. program-output:: composefeats --help
+"""
 import logging
 import sys
 import os.path
@@ -10,6 +15,8 @@ import pyprind
 
 log = logging.getLogger(__name__)
 
+
+df = "tmp"
 
 
 @cl.command()

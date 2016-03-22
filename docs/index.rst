@@ -3,10 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. include:: ../README.rst
+Welcome to the documentation of uncover-ml!
+===========================================
 
 Contents:
-=========
+---------
 
 .. toctree::
    :maxdepth: 2
@@ -17,16 +18,21 @@ Contents:
    authors
    history
 
-   geom
+   geoio
    patch
    models
+   validation
+   streams
+
+   scripts
 
 
 Feedback
-========
+--------
 
-If you have any suggestions or questions about **uncover ML** feel free to email me
-at daniel.steinberg@nicta.com.au.
+If you have any suggestions or questions about **uncover ML** feel free to
+email me at daniel.steinberg@nicta.com.au.
 
-If you encounter any errors or problems with **uncover ML**, please let me know!
-Open an Issue at the GitHub http://github.com/dsteinberg/uncover-ml main repository.
+If you encounter any errors or problems with **uncover ML**, please let me
+know!  Open an Issue at the GitHub http://github.com/NICTA/uncover-ml main
+repository.

@@ -1,3 +1,8 @@
+"""
+Start a Celery image worker.
+
+.. program-output:: uncoverml-worker --help
+"""
 import logging
 import click as cl
 from uncoverml import celerybase

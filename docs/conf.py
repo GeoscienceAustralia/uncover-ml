@@ -46,7 +46,8 @@ extensions.extend(
      'sphinx.ext.autosummary',
      'matplotlib.sphinxext.plot_directive',
      'IPython.sphinxext.ipython_console_highlighting',
-     'IPython.sphinxext.ipython_directive']
+     'IPython.sphinxext.ipython_directive',
+     'sphinxcontrib.programoutput']
 )
 
 napoleon_numpy_docstring = True

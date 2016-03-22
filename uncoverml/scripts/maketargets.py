@@ -1,3 +1,8 @@
+"""
+Make output target files.
+
+.. program-output:: maketargets --help
+"""
 import os
 import sys
 import logging
