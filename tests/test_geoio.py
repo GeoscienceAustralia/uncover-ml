@@ -11,27 +11,28 @@ def test_file_indices_okay():
     t1 = ["/path/to/file_1.hdf5", 
           "/path/to/file_0.hdf5", 
           "/path/to/file_2.hdf5"]
-    assert file_indices_okay(t1)
+    assert geoio.file_indices_okay(t1)
     
     # multiple features
     t2 = t1 + ["/some/other/path_0.hdf5", 
                "/some/other/path_1.hdf5",
                "/some/other/path_2.hdf5"]
-    assert file_indices_okay(t2)
+    assert geoio.file_indices_okay(t2)
 
     # wierd paths
     t3 = t2 + ["/my/name_0.hdf5",
                "/oh/dear/name_1.hdf5"
                "name_2.hdf5"]
-    assert file_indices_okay(t3)
+    assert geoio.file_indices_okay(t3)
 
     # missing data
     t4 = t3[:-1]
-    assert not file_indices_okay(t4)
+    assert not geoio.file_indices_okay(t4)
 
     # extra data
     t5 = t3 + ["extra_file.hdf5"]
-    assert not file_indices_okay(t5)
+    assert not geoio.file_indices_okay(t5)
+
 
 def test_grid_affine(make_shp_gtiff):
 
