@@ -33,6 +33,7 @@ def test_file_indices_okay():
     t5 = t3 + ["extra_file.hdf5"]
     assert not geoio.file_indices_okay(t5)
 
+
 def test_files_by_chunk():
     t1 = ["/path/to/file_1.hdf5", 
           "/path/to/file_0.hdf5", 

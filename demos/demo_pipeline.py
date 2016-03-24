@@ -8,7 +8,7 @@ TODO: Replicate this with luigi or joblib
 
 from os import path, mkdir
 from glob import glob
-from subprocess import run, Popen, PIPE, CalledProcessError
+from subprocess import run, CalledProcessError
 
 
 # Settings
@@ -17,8 +17,8 @@ proc_dir = path.join(data_dir, "processed")
 
 target_file = "geochem_sites.shp"
 target_var = "Na_ppm_i_1"
-target_json = path.join(proc_dir, "{}_{}"
-                        .format(path.splitext(target_file)[0], target_var))
+target_hdf = path.join(proc_dir, "{}_{}"
+                       .format(path.splitext(target_file)[0], target_var))
 
 whiten = True  # whiten all of the extracted features?
 pca_dims = 20  # if whitening, how many PCA dimensions to keep?
@@ -33,9 +33,9 @@ def main():
 
     # Make pointspec and hdf5 for targets
     cmd = ["maketargets", path.join(data_dir, target_file), target_var,
-           "--outfile", target_json]
+           "--outfile", target_hdf]
 
-    if try_run_checkfile(cmd, target_json + ".json"):
+    if try_run_checkfile(cmd, target_hdf + ".hdf5"):
         print("Made targets")
 
     # Extract feats for training
@@ -44,12 +44,11 @@ def main():
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
     for tif in tifs:
-        print(tif)
-        # outfile = path.join(proc_dir, path.splitext(path.basename(tif))[0])
-        # cmd = ["extractfeats", target_json + ".json", tif, outfile,
-        #        "--splits", "1", "--standalone"]
-        # if try_run_checkfile(cmd, outfile + ".hdf5"):
-        #     print("Made features for {}.".format(path.basename(tif)))
+        outfile = path.join(proc_dir, path.splitext(path.basename(tif))[0])
+        cmd = ["extractfeats", target_hdf + ".hdf5", tif, outfile,
+               "--splits", "1", "--standalone"]
+        if try_run_checkfile(cmd, outfile + ".hdf5"):
+            print("Made features for {}.".format(path.basename(tif)))
 
     # Compose individual image features into single feature vector
 

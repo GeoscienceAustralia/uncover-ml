@@ -45,7 +45,7 @@ def features_from_image(image, name, transform, patchsize, output_dir,
     data = image.data()
     pixels = None
     if targets is not None:
-        lonlats = geoio.points_from_shp(targets)
+        lonlats = geoio.points_from_hdf(targets)
         inx = lonlats[:, 0] >= image.xmin and lonlats[:, 0] < image.xmax
         iny = lonlats[:, 1] >= image.ymin and lonlats[:, 1] < image.ymax
         valid = np.logical_and(inx, iny)

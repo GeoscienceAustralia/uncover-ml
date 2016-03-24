@@ -3,22 +3,26 @@ import os.path
 import numpy as np
 from affine import Affine
 import shapefile
+import tables
 import logging
 
 log = logging.getLogger(__name__)
 
+
 def file_indices_okay(filenames):
-    #get just the name eg /path/to/file_0.hdf5 -> file_0
+
+    # get just the name eg /path/to/file_0.hdf5 -> file_0
     basenames = [os.path.splitext(os.path.basename(k))[0] for k in filenames]
+
     # file_0 -> [file,0]
     base_and_idx = [k.rsplit('_', maxsplit=1) for k in basenames]
     bases = set([k[0] for k in base_and_idx])
     log.info("Input file sets: {}".format(set(bases)))
-    
+
     # check every base has the right indices
     # "[[file,0], [file,1]] -> {file:[0,1]}
     try:
-        base_ids = {k:set([int(j[1]) 
+        base_ids = {k: set([int(j[1])
                            for j in base_and_idx if j[0] == k]) for k in bases}
     except:
         log.error("One or more filenames are not in <name>_<idx>.hdf5 format")
@@ -26,7 +30,7 @@ def file_indices_okay(filenames):
         return False
 
     # determine the 'correct' number of indices (highest index we see)
-    num_ids = np.amax(np.array([max(k) for j,k in base_ids.items()])) + 1
+    num_ids = np.amax(np.array([max(k) for j, k in base_ids.items()])) + 1
     true_set = set(range(num_ids))
     files_ok = True
     for b, nums in base_ids.items():
@@ -41,21 +45,22 @@ def file_indices_okay(filenames):
                 log.error("Extra Index: {}".format(extra))
     return files_ok
 
+
 def files_by_chunk(filenames):
     """
     returns a dictionary per-chunk of a *sorted* list of features
-    Note: assumes files_indices_ok returned true 
+    Note: assumes files_indices_ok returned true
     """
-    #get just the name eg /path/to/file_0.hdf5 -> file_0
-    transform = lambda x : os.path.splitext(os.path.basename(x))[0]
+
+    # get just the name eg /path/to/file_0.hdf5 -> file_0
+    transform = lambda x: os.path.splitext(os.path.basename(x))[0]
     sorted_filenames = sorted(filenames, key=transform)
     basenames = [transform(k) for k in sorted_filenames]
     indices = [int(k.rsplit('_', maxsplit=1)[1]) for k in basenames]
-    d = {i:[] for i in set(indices)}
+    d = {i: [] for i in set(indices)}
     for i, f in zip(indices, sorted_filenames):
         d[i].append(f)
     return d
-
 
 
 def _invert_affine(A):
@@ -83,6 +88,18 @@ def points_from_shp(filename):
     return label_coords
 
 
+def points_from_hdf(filename):
+    """
+    TODO
+    """
+
+    with tables.open_file(filename, mode='r') as f:
+        lons = [l for l in f.root.Longitude]
+        lats = [l for l in f.root.Latitude]
+
+    return np.array((lons, lats)).T
+
+
 def values_from_shp(filename, field):
     """
     TODO
@@ -96,6 +113,14 @@ def values_from_shp(filename, field):
 
     vind = fdict[field]
     vals = [r[vind] for r in sf.records()]
+
+    return np.array(vals)
+
+
+def values_from_hdf(filename, field):
+
+    with tables.open_file(filename, mode='r') as f:
+        vals = [v for v in f.root.field]
 
     return np.array(vals)
 
