@@ -184,10 +184,10 @@ class Image:
         self._offset = np.array([xmin, ymin])
         self.resolution = (xmax - xmin, ymax - ymin)
         chunk_xy = np.array([[xmin, ymin], [xmax + 1, ymax + 1]])
-        bbox_T = self.pix2latlon(chunk_xy, centres=False)
-
-        # ((xmin, xmax),(ymin, ymax))
-        self.bbox = bbox_T.T
+        ((lonmin, lat0), (lonmax, lat1)) = self.pix2latlon(chunk_xy,
+                                                           centres=False)
+        self.bbox = np.array([[lonmin, lonmax],
+                              [min(lat0, lat1), max(lat0, lat1)]])
 
     def data(self):
         # ((ymin, ymax),(xmin, xmax)) plus one for exlusive upper index
