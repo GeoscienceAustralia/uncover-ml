@@ -164,6 +164,11 @@ class Image:
         # ((xmin, xmax),(ymin, ymax))
         self.bbox = bbox_T.T
 
+    def __repr__(self):
+        return "<geo.Image({}), chunk {} of {})>".format(self.filename,
+                                                      self.chunk_idx,
+                                                      self.nchunks)
+
     def data(self):
         # ((ymin, ymax),(xmin, xmax)) plus one for exlusive upper index
         window = ((self._offset[1], self._offset[1] + self.resolution[1] + 1),

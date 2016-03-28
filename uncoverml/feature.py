@@ -34,7 +34,7 @@ def transform(x):
     return x.flatten()
 
 
-@celery.task(name='features_from_image')
+@celery.task(name='features_from_image', ignore_result=True)
 def features_from_image(image, name, transform, patchsize, output_dir,
                         targets=None):
     """

@@ -9,14 +9,14 @@ import os.path
 import click as cl
 import numpy as np
 import json
-from uncoverml.celerybase import celery
 import time
 import pyprind
+import uncoverml.defaults as df
+from uncoverml import celerybase
+from uncoverml import geoio
 
 log = logging.getLogger(__name__)
 
-
-df = "tmp"
 
 
 @cl.command()
@@ -44,16 +44,19 @@ def main(files, name, redisdb, redishost, redisport,
     celerybase.configure(redishost, redisport, redisdb, standalone)
 
     # verify the files are all present
-    files_ok = file_indices_okay(files)
+    files_ok = geoio.file_indices_okay(files)
     if not files_ok:
         sys.exit(-1)
     
         
     # build the images
-    image_chunks = [geoio.Image(geotiff, i, chunks) for i in range(chunks)]
-
+    filename_chunks = geoio.files_by_chunk(files)
+    nchunks = len(filename_chunks)
+    images = [[geoio.Image(f, i, nchunks) for f in filename_chunks[i]]
+              for i in range(nchunks)]
+    
     # Define the transform function to build the features
-    transform = feat.transform
+    
 
     celerybase.map_over(feat.features_from_image, image_chunks, standalone,
                         name=name, transform=transform, patchsize=patchsize,
