@@ -125,6 +125,11 @@ def test_extractfeats(make_shp_gtiff):
     assert np.allclose(I, efeats)
 
 
+def test_extractfeats_path(make_shp_gtiff):
+
+    assert False  # TODO
+
+
 def test_extractfeats_worker(make_shp_gtiff):
 
     fshp, ftif = make_shp_gtiff

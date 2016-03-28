@@ -43,6 +43,9 @@ def main(shapefile, fieldname, outfile, quiet):
     # Get output file name
     if outfile is None:
         outfile = os.path.splitext(shapefile)[0] + "_" + fieldname
+    else:
+        # Strip output file ext always
+        outfile = os.path.splitext(outfile)[0]
 
     # Make hdf5 array
     with tables.open_file(outfile + ".hdf5", 'w') as f:
