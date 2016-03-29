@@ -60,8 +60,7 @@ setup(
         'affine',
         'rasterio',
         'pyshp',
-        'celery',
-        'pyprind'
+        'ipyparallel'
     ],
     extras_require={
         'demos': [

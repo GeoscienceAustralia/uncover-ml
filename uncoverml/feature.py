@@ -3,7 +3,6 @@ import numpy as np
 import tables as hdf
 
 from uncoverml import geoio
-from uncoverml.celerybase import celery
 from uncoverml import patch
 
 
@@ -34,7 +33,6 @@ def transform(x):
     return x.flatten()
 
 
-@celery.task(name='features_from_image', ignore_result=True)
 def features_from_image(image, name, transform, patchsize, output_dir,
                         targets=None):
     """
