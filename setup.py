@@ -60,11 +60,11 @@ setup(
         'affine',
         'rasterio',
         'pyshp',
-        'ipyparallel'
+        'ipyparallel',
+        'click'
     ],
     extras_require={
         'demos': [
-            'click',
             'matplotlib'
         ],
         'dev': [

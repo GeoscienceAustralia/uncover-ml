@@ -101,10 +101,9 @@ def test_extractfeats(make_shp_gtiff):
     name = "fchunk"
 
     # Extract features from gtiff
-    extractfeats.callback(geotiff=ftif, name=name, targets=None, redisdb=0,
-                          redishost='localhost', redisport=6379,
+    extractfeats.callback(geotiff=ftif, name=name, targets=None,
                           standalone=True, chunks=chunks, patchsize=0,
-                          quiet=False, outputdir=outdir)
+                          quiet=False, outputdir=outdir, ipyprofile=None)
 
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
@@ -137,49 +136,38 @@ def test_extractfeats_worker(make_shp_gtiff):
     outdir = os.path.dirname(fshp)
     name = "fchunk_worker"
 
-    predis = None
     pworker = None
 
     # Start redis
     try:
-        redisargs = ["redis-server", "--port", "6379"]
-        predis = subprocess.Popen(redisargs, stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT)
-
-        _proc_ready(predis)
-
         # Start the worker
-        pworker = subprocess.Popen("uncoverml-worker", stdout=subprocess.PIPE,
+        cmd = ["ipcluster", "start", "--n=2"]
+        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
-        _proc_ready(pworker)
+        _proc_ready(pworker, msg="LocalEngineSetLauncher")
 
         # Extract features from gtiff
-        extractfeats.callback(geotiff=ftif, name=name, targets=None, redisdb=0,
-                              redishost='localhost', redisport=6379,
+        extractfeats.callback(geotiff=ftif, name=name, targets=None,
                               standalone=True, chunks=chunks, patchsize=0,
-                              quiet=False, outputdir=outdir)
+                              quiet=False, outputdir=outdir, ipyprofile=None)
 
     finally:
-        # Kill worker
-        if predis is not None:
-            predis.terminate()
         if pworker is not None:
             pworker.terminate()
 
-    # ffiles = glob(os.path.join(outdir, name + "*"))
     for i in range(chunks):
         fname = os.path.join(outdir, "{}_{}.hdf5".format(name, i))
         assert os.path.exists(fname)
 
 
-def _proc_ready(proc, waitime=10):
+def _proc_ready(proc, msg, waitime=30):
 
     nbsr = streams.NonBlockingStreamReader(proc.stdout)
 
     for i in range(waitime):
         try:
             for line in iter(nbsr.readline, None):
-                if "ready" in line.decode():
+                if msg in line.decode():
                     return
             proc.wait(timeout=1)
         except subprocess.TimeoutExpired:
