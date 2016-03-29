@@ -66,20 +66,6 @@ def test_grid_affine(make_shp_gtiff):
     assert np.allclose(geoio._invert_affine(cA), ispec.icA)
 
 
-# def test_latlon_pixel_centres(make_raster):
-
-#     res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
-
-#     class f:
-#         affine = Ao
-#         width = res[0]
-#         height = res[1]
-
-#     lns, lts = geoio.lonlat_pixel_centres(f)
-#     assert np.allclose(lats, lts)
-#     assert np.allclose(lons, lns)
-
-
 def test_bounding_box(make_raster):
 
     res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
@@ -123,6 +109,21 @@ def test_pix2latlon(make_raster, make_shp_gtiff):
 
     latlon_true = np.array([lons[xq], lats[yq]]).T
     assert(np.allclose(latlon, latlon_true))
+
+
+def test_pix2latlon2latlon2pix(make_raster, make_shp_gtiff):
+
+    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
+    _, ftif = make_shp_gtiff
+    ispec = geoio.Image(ftif)
+
+    xq = [0, 10, 15]
+    yq = [0, 22, 3]
+    xy = np.array([xq, yq]).T
+
+    xy2 = ispec.lonlat2pix(ispec.pix2latlon(xy))
+
+    assert np.allclose(xy, xy2)
 
 
 def test_points_from_shp(make_shp_gtiff):

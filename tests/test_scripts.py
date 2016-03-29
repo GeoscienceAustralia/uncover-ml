@@ -6,7 +6,7 @@ import rasterio
 import subprocess
 from glob import glob
 
-from uncoverml import geoio, patch, streams
+from uncoverml import streams
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
@@ -42,6 +42,7 @@ def test_cvindexer_shp(make_shp_gtiff):
     # Make crossval with shapefile
     cvindexer.callback(targetfile=fshp, outfile=fshp_hdf5, folds=6,
                        quiet=True)
+
     # Make target file
     maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
                          quiet=False)
@@ -98,7 +99,7 @@ def test_extractfeats(make_shp_gtiff):
     fshp, ftif = make_shp_gtiff
     chunks = 4
     outdir = os.path.dirname(fshp)
-    name = "fchunk"
+    name = "fgrid"
 
     # Extract features from gtiff
     extractfeats.callback(geotiff=ftif, name=name, targets=None,
@@ -124,9 +125,36 @@ def test_extractfeats(make_shp_gtiff):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_path(make_shp_gtiff):
+def test_extractfeats_patch(make_shp_gtiff):
 
-    assert False  # TODO
+    fshp, ftif = make_shp_gtiff
+
+    # Make target file
+    field = "lat"
+    fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
+    maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
+                         quiet=False)
+
+    # Extract features from gtiff
+    name = "fpatch"
+    chunks = 1
+    outdir = os.path.dirname(fshp)
+    extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
+                          standalone=True, chunks=chunks, patchsize=0,
+                          quiet=False, outputdir=outdir, ipyprofile=None)
+
+    with tables.open_file(os.path.join(outdir, name + "_0.hdf5"), 'r') as f:
+        feats = np.array([fts for fts in f.root.features])
+
+    # Read lats and lons from targets
+    with tables.open_file(fshp_targets, mode='r') as f:
+        Longitude = [l for l in f.root.Longitude]
+        Latitude = [l for l in f.root.Latitude]
+        lonlat = np.array((Longitude, Latitude)).T
+
+    import IPython; IPython.embed()
+
+    assert np.allclose(feats, lonlat)
 
 
 def test_extractfeats_worker(make_shp_gtiff):
