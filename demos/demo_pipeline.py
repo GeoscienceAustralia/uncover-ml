@@ -35,7 +35,7 @@ cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
 
 # input_file = "inputs.npz"
 # feature_file = "features.npz"
-whiten = True  # whiten all of the extracted features?
+whiten = False  # whiten all of the extracted features?
 standardise = True  # standardise all of the extracted features?
 pca_dims = 15  # if whitening, how many PCA dimensions to keep?
 
@@ -103,6 +103,7 @@ def main():
     # Divide the features into cross-val folds
     with tables.open_file(cv_file, mode='r') as f:
         cv_ind = f.root.FoldIndices.read().flatten()
+
     Xs = X[cv_ind == 0]
     Xt = X[cv_ind != 0]
 
@@ -114,13 +115,11 @@ def main():
 
     # Train the model
     log.info("Training model.")
-    basis = RandomRBF(nbases=300, Xdim=D)
-    hypers = np.ones(1)
+    basis = RandomRBF(nbases=700, Xdim=D) + LinearBasis(onescol=True)
+    hypers = 10 * np.ones(1)
     params = learn(Xt, Yt, basis, hypers)
     # rfr = RandomForestRegressor()
     # rfr.fit(Xt, Yt)
-
-    # import IPython; IPython.embed(); exit()
 
     # Test the model
     log.info("Testing model.")
