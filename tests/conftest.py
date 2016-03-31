@@ -102,9 +102,6 @@ def make_raster():
                    0, -pix_y, y_range[1])
     Apix = Aorig * Affine.translation(0.5, 0.5)
 
-    # lons_ = x_range[0] + (np.arange(res_x) + 0.5) * pix_x
-    # lats_ = y_range[1] - (np.arange(res_y) + 0.5) * pix_y
-
     lons = np.array([(x, x) * Apix for x in np.arange(res_x)])[:, 0]
     lats = np.array([(y, y) * Apix for y in np.arange(res_y)])[:, 1]
 
@@ -129,8 +126,6 @@ def make_shp_gtiff(tmpdir_factory):
     ntargets = 10
     dlon = lons[np.random.randint(0, high=len(lons), size=nsamples)]
     dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
-    # dlon = x_bound[0] + np.random.rand(nsamples) * (x_bound[1] - x_bound[0])
-    # dlat = y_bound[0] + np.random.rand(nsamples) * (y_bound[1] - y_bound[0])
     fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
     vals = np.hstack((vals, np.array([dlon, dlat]).T))
@@ -155,8 +150,6 @@ def make_shp_gtiff(tmpdir_factory):
     w.save(fshp)
 
     # Generate data for geotiff
-    # lons -= (lons[1] - lons[0]) / 2.  # Undo pixel centring
-    # lats += (lats[1] - lats[0]) / 2.
     Lons, Lats = np.meshgrid(lons, lats)
 
     # Write geotiff

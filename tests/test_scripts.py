@@ -152,8 +152,6 @@ def test_extractfeats_patch(make_shp_gtiff):
         Latitude = [l for l in f.root.Latitude]
         lonlat = np.array((Longitude, Latitude)).T
 
-    import IPython; IPython.embed()
-
     assert np.allclose(feats, lonlat)
 
 

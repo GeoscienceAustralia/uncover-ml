@@ -191,8 +191,8 @@ class Image:
 
     def __repr__(self):
         return "<geo.Image({}), chunk {} of {})>".format(self.filename,
-                                                      self.chunk_idx,
-                                                      self.nchunks)
+                                                         self.chunk_idx,
+                                                         self.nchunks)
 
     def data(self):
         # ((ymin, ymax),(xmin, xmax)) plus one for exlusive upper index
@@ -243,7 +243,7 @@ class Image:
     def lonlat2pix(self, lonlat, centres=True):
 
         iA = self.icA if centres else self.iA
-        xy = np.floor([iA * ll for ll in lonlat]).astype(int)
+        xy = np.floor([np.array(iA * ll) + 0.5 for ll in lonlat]).astype(int)
 
         # subtract the offset because iA is for full image
         xy -= self._offset[np.newaxis, :]
