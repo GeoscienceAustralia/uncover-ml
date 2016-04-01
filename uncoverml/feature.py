@@ -28,6 +28,25 @@ def output_features(feature_vector, outfile):
     h5file.root.features[:] = feature_vector
     h5file.close()
 
+def input_features(infile):
+    """
+    Reads a vector of features out from a standard HDF5 format. The function
+    assumes the file it is reading was written by output_features
+
+    Parameters
+    ----------
+        feature_vector: array
+            A 2D numpy array of shape (nPoints, nDims) of type float.
+        infile: path
+            The name of the input file
+    Returns
+    -------
+        data: array
+            A 2D numpy array of shape (nPoints, nDims) of type float
+    """
+    with hdf.open_file(infile, mode='r') as f:
+        data = f.root.features[:]
+    return data
 
 def transform(x):
     return x.flatten()
@@ -60,3 +79,4 @@ def features_from_image(image, name, transform, patchsize, output_dir,
     filename = os.path.join(output_dir,
                             name + "_{}.hdf5".format(image.chunk_idx))
     output_features(features, filename)
+
