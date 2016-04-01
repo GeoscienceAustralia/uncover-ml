@@ -1,69 +1,97 @@
 """ Model Spec Objects and ML algorithm serialisation. """
 
+import importlib
+
+from revrand import regression
+from revrand.basis_functions import LinearBasis
+
+
+modelmaps = {'randomforest': 'sklearn.ensemble.RandomForestRegressor',
+             'bayesreg': 'uncoverml.models.RevReg',
+             'svr': 'sklearn.svm.SVR'
+             }
+
+
+class RevReg:
+
+    def __init__(self, basis=LinearBasis(onescol=True), bparams=[], var=1.,
+                 regulariser=1., diagcov=False, ftol=1e-6, maxit=1000,
+                 verbose=True):
+
+        self.params = {'basis': basis,
+                       'bparams': bparams,
+                       'var': var,
+                       'regulariser': regulariser,
+                       'diagcov': diagcov,
+                       'ftol': ftol,
+                       'maxit': maxit,
+                       'verbose': verbose,
+                       'm': None,
+                       'C': None
+                       }
+
+    def fit(self, X, y):
+
+        m, C, bparams, var = regression.learn(X, y, **self.params)
+        self.params['m'] = m
+        self.params['C'] = C
+        self.params['bparams'] = bparams
+        self.params['var'] = var
+
+        return self
+
+    def predict(self, X):
+
+        return regression.predict(X,
+                                  self.params['basis'],
+                                  self.params['m'],
+                                  self.params['C'],
+                                  self.params['bparams'],
+                                  self.params['var']
+                                  )
+
+    def get_params(self):
+        return self.params
+
+    def set_params(self, **params):
+        self.params.update(params)
+        return self
+
 
 class ModelSpec:
 
-    def __init__(self, train_func, pred_func, **params):
+    def __init__(self, importpath, modelname, **params):
 
-        self.train_details = ModelSpec.__get_details(train_func)
-        self.pred_details = ModelSpec.__get_details(pred_func)
+        self.importpath = importpath
+        self.modelname = modelname
         self.params = params
 
-    @property
-    def train_func(self):
-        return self.train_details['name']
-
-    @property
-    def train_module(self):
-        return self.train_details['module']
-
-    @property
-    def train_class(self):
-        return self.train_details['class'] \
-            if 'class' in self.train_details else None
-
-    @property
-    def predict_func(self):
-        return self.pred_details['name']
-
-    @property
-    def predict_module(self):
-        return self.pred_details['module']
-
-    @property
-    def predict_class(self):
-        return self.pred_details['class'] \
-            if 'class' in self.pred_details else None
-
     def to_dict(self):
-        return {'training': self.train_details,
-                'prediction': self.pred_details,
+
+        return {'importpath': self.importpath,
+                'modelname': self.modelname,
                 'parameters': self.params
                 }
 
     @classmethod
     def from_dict(cls, mod_dict):
 
-        # dummy construct
-        def dummy():
-            pass
+        return cls(mod_dict['importpath'], mod_dict['modelname'],
+                   **mod_dict['params'])
 
-        retcls = cls(dummy, dummy, **{})
 
-        # overwrite real properties
-        retcls.train_details = mod_dict['training']
-        retcls.pred_details = mod_dict['prediction']
-        retcls.params = mod_dict['parameters']
+def learn_model(X, y, modelspec, *args, **kwargs):
 
-        return retcls
+    mod = importlib.import_module(modelspec.importpath)
+    mlobj = getattr(mod, modelspec.modelname)(*args, **kwargs)
+    mlobj.fit(X, y)
+    modelspec.params = mlobj.get_params()
+    return modelspec
 
-    @staticmethod
-    def __get_details(func):
-        details_dict = {'name': func.__name__,
-                        'module': func.__module__
-                        }
 
-        if '__self__' in dir(func):
-            details_dict['class'] = func.__self__.__class__.__name__
+def predict_model(X, modelspec):
 
-        return details_dict
+    mod = importlib.import_module(modelspec.importpath)
+    mlobj = getattr(mod, modelspec.modelname)()
+    mlobj = mlobj.set_params(**modelspec.params)
+    return mlobj.predict(X)

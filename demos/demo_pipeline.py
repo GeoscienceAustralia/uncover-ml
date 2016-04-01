@@ -14,6 +14,7 @@ from glob import glob
 from subprocess import run, CalledProcessError
 
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import robust_scale, scale
 from sklearn.ensemble import RandomForestRegressor
 
 from revrand.regression import learn, predict
@@ -36,8 +37,11 @@ cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
 # input_file = "inputs.npz"
 # feature_file = "features.npz"
 whiten = False  # whiten all of the extracted features?
-standardise = True  # standardise all of the extracted features?
+standardise = False  # standardise all of the extracted features?
 pca_dims = 15  # if whitening, how many PCA dimensions to keep?
+
+# removedims = [6, 7] + list(range(37, 47))
+removedims = []
 
 
 def main():
@@ -80,19 +84,21 @@ def main():
             feats.append(feat)
 
     X = np.hstack(feats)
+    keepind = np.ones(X.shape[1], dtype=bool)
+    keepind[removedims] = False
+    X = X[:, keepind]
 
     # Int to one-hot TODO
 
     # Standardise features
     if standardise:
         log.info("Standartising the features.")
-        X -= X.mean(axis=0)
-        X /= X.std(axis=0)
+        X = robust_scale(X, with_centering=True, with_scaling=True)
 
     # Whiten the features
     if whiten:
         log.info("Whitening the features.")
-        pca = PCA(n_components=pca_dims, whiten=False)
+        pca = PCA(n_components=pca_dims, whiten=True)
         X = pca.fit_transform(X)
 
     D = X.shape[1]
@@ -115,7 +121,7 @@ def main():
 
     # Train the model
     log.info("Training model.")
-    basis = RandomRBF(nbases=700, Xdim=D) + LinearBasis(onescol=True)
+    basis = RandomRBF(nbases=1000, Xdim=D) + LinearBasis(onescol=True)
     hypers = 10 * np.ones(1)
     params = learn(Xt, Yt, basis, hypers)
     # rfr = RandomForestRegressor()
@@ -123,8 +129,8 @@ def main():
 
     # Test the model
     log.info("Testing model.")
-    # EYs = rfr.predict(Xs)
     EYs, Vfs, VYs = predict(Xs, basis, *params)
+    # EYs = rfr.predict(Xs)
 
     # Report score
     Rsquare = validation.rsquare(EYs, Ys)

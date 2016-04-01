@@ -170,3 +170,13 @@ def make_shp_gtiff(tmpdir_factory):
         f.write(np.array([Lons, Lats]))
 
     return fshp, ftif
+
+
+@pytest.fixture
+def make_fakedata():
+
+    w = [1., 2., 3.]
+    X = np.atleast_2d(np.arange(100)).T
+    y = w[0] + w[1] * X - w[2] * X**2
+
+    return X, y.flatten(), w
