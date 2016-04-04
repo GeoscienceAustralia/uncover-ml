@@ -172,11 +172,14 @@ def make_shp_gtiff(tmpdir_factory):
     return fshp, ftif
 
 
-@pytest.fixture
-def make_fakedata():
+@pytest.fixture(scope='session')
+def make_fakedata(tmpdir_factory):
 
-    w = [1., 2., 3.]
-    X = np.atleast_2d(np.arange(100)).T
-    y = w[0] + w[1] * X - w[2] * X**2
+    mod_dir = str(tmpdir_factory.mktemp('models').realpath())
 
-    return X, y.flatten(), w
+    w = np.array([1., 2.])
+    x = np.atleast_2d(np.arange(-50, 50)).T
+    X = np.hstack((np.ones((100, 1)), x))
+    y = X.dot(w) + np.random.randn(100) / 1000
+
+    return X, y, w, mod_dir

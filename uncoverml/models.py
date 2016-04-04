@@ -1,20 +1,17 @@
 """ Model Spec Objects and ML algorithm serialisation. """
 
-import importlib
+# import importlib
 
 from revrand import regression
 from revrand.basis_functions import LinearBasis
 
-
-modelmaps = {'randomforest': 'sklearn.ensemble.RandomForestRegressor',
-             'bayesreg': 'uncoverml.models.RevReg',
-             'svr': 'sklearn.svm.SVR'
-             }
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
 
 
-class RevReg:
+class RevrandReg:
 
-    def __init__(self, basis=LinearBasis(onescol=True), bparams=[], var=1.,
+    def __init__(self, basis=LinearBasis(onescol=False), bparams=[], var=1.,
                  regulariser=1., diagcov=False, ftol=1e-6, maxit=1000,
                  verbose=True):
 
@@ -26,8 +23,6 @@ class RevReg:
                        'ftol': ftol,
                        'maxit': maxit,
                        'verbose': verbose,
-                       'm': None,
-                       'C': None
                        }
 
     def fit(self, X, y):
@@ -58,40 +53,7 @@ class RevReg:
         return self
 
 
-class ModelSpec:
-
-    def __init__(self, importpath, modelname, **params):
-
-        self.importpath = importpath
-        self.modelname = modelname
-        self.params = params
-
-    def to_dict(self):
-
-        return {'importpath': self.importpath,
-                'modelname': self.modelname,
-                'parameters': self.params
-                }
-
-    @classmethod
-    def from_dict(cls, mod_dict):
-
-        return cls(mod_dict['importpath'], mod_dict['modelname'],
-                   **mod_dict['params'])
-
-
-def learn_model(X, y, modelspec, *args, **kwargs):
-
-    mod = importlib.import_module(modelspec.importpath)
-    mlobj = getattr(mod, modelspec.modelname)(*args, **kwargs)
-    mlobj.fit(X, y)
-    modelspec.params = mlobj.get_params()
-    return modelspec
-
-
-def predict_model(X, modelspec):
-
-    mod = importlib.import_module(modelspec.importpath)
-    mlobj = getattr(mod, modelspec.modelname)()
-    mlobj = mlobj.set_params(**modelspec.params)
-    return mlobj.predict(X)
+modelmaps = {'randomforest': RandomForestRegressor,
+             'bayesreg': RevrandReg,
+             'svr': SVR
+             }

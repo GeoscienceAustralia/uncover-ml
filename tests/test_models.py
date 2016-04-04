@@ -1,15 +1,43 @@
-import numpy as np
+import pickle
+from os import path
 
 from uncoverml import models
+from uncoverml import validation
 
 
-def test_ModelSpec(make_fakedata):
+def test_modelmap(make_fakedata):
 
-    X, y, w = make_fakedata
+    X, y, _, _ = make_fakedata
 
-    mspec = models.ModelSpec('sklearn.ensemble', 'RandomForestRegressor')
-    # import IPython; IPython.embed(); exit()
-    mspec = models.learn_model(X, y, mspec)
-    Ey = models.predict_model(X, mspec)
+    for model in models.modelmaps.keys():
+        mod = models.modelmaps[model]()
+        mod.fit(X, y)
 
-    assert np.allclose(Ey, y)
+        if model != 'bayesreg':
+            Ey = mod.predict(X)
+        else:
+            Ey, _, _ = mod.predict(X)
+
+        assert validation.rsquare(Ey, y) > 0
+
+
+def test_modelpersistance(make_fakedata):
+
+    X, y, _, mod_dir = make_fakedata
+
+    for model in models.modelmaps.keys():
+        mod = models.modelmaps[model]()
+        mod.fit(X, y)
+
+        with open(path.join(mod_dir, model + ".pk"), 'wb') as f:
+            pickle.dump(mod, f)
+
+        with open(path.join(mod_dir, model + ".pk"), 'rb') as f:
+            pmod = pickle.load(f)
+
+        if model != 'bayesreg':
+            Ey = pmod.predict(X)
+        else:
+            Ey, _, _ = pmod.predict(X)
+
+        assert Ey.shape == y.shape
