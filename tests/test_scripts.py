@@ -25,7 +25,7 @@ def test_make_targets(make_shp_gtiff):
     assert os.path.exists(fhdf5)
 
     with tables.open_file(fhdf5, mode='r') as f:
-        lon = np.array([i for i in f.root.lon])
+        lon = np.array([i for i in f.root.targets])
         Longitude = np.array([l for l in f.root.Longitude])
 
     assert np.allclose(lon, Longitude)

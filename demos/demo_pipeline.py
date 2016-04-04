@@ -114,7 +114,8 @@ def main():
     Xt = X[cv_ind != 0]
 
     with tables.open_file(target_hdf, mode='r') as f:
-        Y = f.get_node('/' + target_var).read()
+        # Y = f.get_node('/' + target_var).read()
+        Y = f.root.targets.read()
 
     Ys = Y[cv_ind == 0]
     Yt = Y[cv_ind != 0]

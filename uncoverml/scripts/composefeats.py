@@ -8,17 +8,16 @@ import sys
 import os.path
 import click as cl
 import numpy as np
-import json
-import time
 import uncoverml.defaults as df
 from uncoverml import parallel
 from uncoverml import geoio
-from uncoverml import feature as feat
 
 log = logging.getLogger(__name__)
 
+
 def transform(array_list):
     return np.concatenate(array_list, axis=1)
+
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 

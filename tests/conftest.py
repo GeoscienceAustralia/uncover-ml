@@ -41,8 +41,6 @@ def make_patch_11():
     tpatch = np.array([[timg.flatten()]]).T
 
     tx, ty = [g.flatten() for g in np.meshgrid(np.arange(3), np.arange(3))]
-    # tx = np.array([0,0,2,2])
-    # ty = np.array([0,2,0,2])
 
     return timg, pwidth, pstride, tpatch, tx, ty
 
