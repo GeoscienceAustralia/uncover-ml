@@ -8,6 +8,7 @@ import logging
 import sys
 import os.path
 import tables
+import pickle
 import click as cl
 import numpy as np
 
@@ -17,14 +18,17 @@ from uncoverml import geoio, models
 log = logging.getLogger(__name__)
 
 
+@cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
+@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=None,
+           help="Optional cross validation index file and index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.argument('alg_opts', type=str, nargs=-1)
-@cl.argument('algorithm', type=str, default='bayesreg')
-@cl.argument('features', type=cl.Path(exists=True), nargs=-1)
-@cl.argument('targets', type=cl.Path(exists=True), nargs=-1)
-def main(targets, files, algorithm, algopts, outputdir, quiet):
+@cl.option('--algopts', type=str, default=None)
+@cl.option('--algorithm', type=str, default='bayesreg')
+@cl.argument('files', type=cl.Path(exists=True), nargs=-1)
+@cl.argument('targets', type=cl.Path(exists=True))
+def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
 
     # setup logging
     if quiet is True:
@@ -63,6 +67,19 @@ def main(targets, files, algorithm, algopts, outputdir, quiet):
 
     X = np.vstack(feats)
 
+    # Optionally subset the data for cross validation
+    if cvindex:
+        with tables.open_file(cvindex[0], mode='r') as f:
+            cv_ind = f.root.FoldIndices.read().flatten()
+
+        y = y[cv_ind != cvindex[1]]
+        X = X[cv_ind != cvindex[1]]
+
     # Train the model
+    mod = models.modelmaps[algorithm]()  # TODO: input params
+    mod.fit(X, y)
 
     # Pickle the model
+    outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
+    with open(outfile, 'wb') as f:
+        pickle.dump(mod, f)

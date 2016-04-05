@@ -8,17 +8,15 @@ TODO: Replicate this with luigi or joblib
 
 import logging
 import tables
+import pickle
 import numpy as np
 from os import path, mkdir
 from glob import glob
 from subprocess import run, CalledProcessError
 
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import robust_scale, scale
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import robust_scale, Imputer
 
-from revrand.regression import learn, predict
-from revrand.basis_functions import LinearBasis, RandomRBF, RandomRBF_ARD
 from uncoverml import validation
 
 log = logging.getLogger(__name__)
@@ -33,14 +31,14 @@ target_var = "Na_ppm_i_1"
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
                        .format(path.splitext(target_file)[0], target_var))
 cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
+feat_file = path.join(proc_dir, "features_0.hdf5")
 
-# input_file = "inputs.npz"
-# feature_file = "features.npz"
+algorithm = "randomforest"
+# algorithm = "bayesreg"
 whiten = False  # whiten all of the extracted features?
 standardise = False  # standardise all of the extracted features?
-pca_dims = 15  # if whitening, how many PCA dimensions to keep?
+pca_dims = 25  # if whitening, how many PCA dimensions to keep?
 
-# removedims = [6, 7] + list(range(37, 47))
 removedims = []
 
 
@@ -76,7 +74,7 @@ def main():
         ffiles.append(ffile)
 
     # Compose individual image features into single feature vector
-    # TODO use a script for this
+    # TODO use a script for this ----------------------------------------------
     feats = []
     for ffile in ffiles:
         with tables.open_file(ffile, mode='r') as f:
@@ -87,6 +85,10 @@ def main():
     keepind = np.ones(X.shape[1], dtype=bool)
     keepind[removedims] = False
     X = X[:, keepind]
+
+    # Remove NaNs TODO remove NaNs properly!
+    imp = Imputer(missing_values=X.min(), strategy="median")
+    X = imp.fit_transform(X)
 
     # Int to one-hot TODO
 
@@ -101,37 +103,50 @@ def main():
         pca = PCA(n_components=pca_dims, whiten=True)
         X = pca.fit_transform(X)
 
-    D = X.shape[1]
+    # D = X.shape[1]
 
     # Save whitening parameters to model spec
     # TODO
+
+    # Save features to feature file
+    with tables.open_file(feat_file, mode='w') as f:
+        f.create_array("/", "features", obj=X)
+    # -------------------------------------------------------------------------
+
+    # Train the model
+    cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
+           "--algorithm", algorithm, feat_file, target_hdf]
+
+    log.info("Training model.")
+    alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
+    run(cmd)
+
+    # Test the model
+    # TODO this will be in the predict script ---------------------------------
 
     # Divide the features into cross-val folds
     with tables.open_file(cv_file, mode='r') as f:
         cv_ind = f.root.FoldIndices.read().flatten()
 
     Xs = X[cv_ind == 0]
-    Xt = X[cv_ind != 0]
 
     with tables.open_file(target_hdf, mode='r') as f:
-        # Y = f.get_node('/' + target_var).read()
         Y = f.root.targets.read()
 
     Ys = Y[cv_ind == 0]
-    Yt = Y[cv_ind != 0]
 
-    # Train the model
-    log.info("Training model.")
-    basis = RandomRBF(nbases=1000, Xdim=D) + LinearBasis(onescol=True)
-    hypers = 10 * np.ones(1)
-    params = learn(Xt, Yt, basis, hypers)
-    # rfr = RandomForestRegressor()
-    # rfr.fit(Xt, Yt)
-
-    # Test the model
     log.info("Testing model.")
-    EYs, Vfs, VYs = predict(Xs, basis, *params)
+    with open(alg_file, 'rb') as f:
+        mod = pickle.load(f)
+
+    if algorithm == 'bayesreg':
+        EYs, Vfs, VYs = mod.predict(Xs)
+    else:
+        EYs = mod.predict(Xs)
+
     # EYs = rfr.predict(Xs)
+
+    # -------------------------------------------------------------------------
 
     # Report score
     Rsquare = validation.rsquare(EYs, Ys)
