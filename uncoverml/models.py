@@ -3,20 +3,19 @@
 # import importlib
 
 from revrand import regression
-from revrand.basis_functions import LinearBasis
+from revrand.basis_functions import LinearBasis, RandomRBF
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 
 
-class RevrandReg:
+class LinearReg:
 
-    def __init__(self, basis=LinearBasis(onescol=False), bparams=[], var=1.,
-                 regulariser=1., diagcov=False, ftol=1e-6, maxit=1000,
-                 verbose=True):
+    def __init__(self, var=1., regulariser=1., diagcov=False, ftol=1e-6,
+                 maxit=1000, verbose=True):
 
-        self.params = {'basis': basis,
-                       'bparams': bparams,
+        self.params = {'basis': None,
+                       'bparams': [],
                        'var': var,
                        'regulariser': regulariser,
                        'diagcov': diagcov,
@@ -27,6 +26,7 @@ class RevrandReg:
 
     def fit(self, X, y):
 
+        self._make_basis(X)
         m, C, bparams, var = regression.learn(X, y, **self.params)
         self.params['m'] = m
         self.params['C'] = C
@@ -52,8 +52,27 @@ class RevrandReg:
         self.params.update(params)
         return self
 
+    def _make_basis(self, X):
+
+        self.params['basis'] = LinearBasis(onescol=True)
+
+
+class GaussianProcess(LinearReg):
+
+    def __init__(self, nbases=500, lenscale=1., *args, **kwargs):
+
+        super(GaussianProcess, self).__init__(*args, **kwargs)
+
+        self.nbases = nbases
+        self.params['bparams'] = [lenscale]
+
+    def _make_basis(self, X):
+
+        self.params['basis'] = RandomRBF(nbases=self.nbases, Xdim=X.shape[1])
+
 
 modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': RevrandReg,
+             'bayesreg': LinearReg,
+             'gp': GaussianProcess,
              'svr': SVR
              }

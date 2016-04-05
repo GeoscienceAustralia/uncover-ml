@@ -13,7 +13,7 @@ import click as cl
 import numpy as np
 
 import uncoverml.defaults as df
-from uncoverml import geoio, models
+from uncoverml import geoio, models, feature
 
 log = logging.getLogger(__name__)
 
@@ -60,10 +60,13 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
 
     # Read ALL the features in here, and learn on a single machine
     # FIXME?
+    filename_chunks = geoio.files_by_chunk(full_filenames)
     feats = []
-    for f in full_filenames:
-        with tables.open_file(f, mode='r') as tab:
-            feats.append(tab.root.features.read())
+    for i, flist in filename_chunks.items():
+        feat = []
+        for f in flist:
+            feat.append(feature.input_features(f))
+        feats.append(np.hstack(feat))
 
     X = np.vstack(feats)
 
