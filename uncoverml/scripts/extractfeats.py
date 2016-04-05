@@ -58,4 +58,3 @@ def main(geotiff, name, targets, standalone, chunks, patchsize,
 
     cluster = parallel.task_view(ipyprofile) if not standalone else None
     parallel.map(f, image_chunks, cluster)
-    

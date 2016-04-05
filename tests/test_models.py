@@ -1,48 +1,43 @@
-import numpy as np
+import pickle
+from os import path
 
 from uncoverml import models
+from uncoverml import validation
 
 
-class MLclass:
+def test_modelmap(make_fakedata):
 
-    def __init__(self):
-        self.params = {'p1': 1,
-                       'p2': 2,
-                       'p3': np.random.randn(1000, 1000)
-                       }
+    X, y, _, _ = make_fakedata
 
-    def learn(self):
-        pass
+    for model in models.modelmaps.keys():
+        mod = models.modelmaps[model]()
+        mod.fit(X, y)
 
-    def predict(self):
-        pass
+        if model != 'bayesreg':
+            Ey = mod.predict(X)
+        else:
+            Ey, _, _ = mod.predict(X)
+
+        assert validation.rsquare(Ey, y) > 0
 
 
-def test_ModelSpec():
+def test_modelpersistance(make_fakedata):
 
-    def ml_flearn():
-        pass
+    X, y, _, mod_dir = make_fakedata
 
-    def ml_fpredict():
-        pass
+    for model in models.modelmaps.keys():
+        mod = models.modelmaps[model]()
+        mod.fit(X, y)
 
-    mcls = MLclass()
-    ms_class = models.ModelSpec(mcls.learn, mcls.predict, **mcls.params)
-    assert ms_class.train_func == 'learn'
-    assert ms_class.predict_func == 'predict'
-    assert ms_class.train_module == 'tests.test_models'
-    assert ms_class.predict_module == 'tests.test_models'
-    assert ms_class.train_class == 'MLclass'
-    assert ms_class.predict_class == 'MLclass'
-    assert ms_class.params == mcls.params
-    assert ms_class.to_dict() == \
-        models.ModelSpec.from_dict(ms_class.to_dict()).to_dict()
+        with open(path.join(mod_dir, model + ".pk"), 'wb') as f:
+            pickle.dump(mod, f)
 
-    ms_func = models.ModelSpec(ml_flearn, ml_fpredict, **mcls.params)
-    assert ms_func.train_func == 'ml_flearn'
-    assert ms_func.predict_func == 'ml_fpredict'
-    assert ms_func.train_module == 'tests.test_models'
-    assert ms_func.predict_module == 'tests.test_models'
-    assert ms_func.params == mcls.params
-    assert ms_func.to_dict() == \
-        models.ModelSpec.from_dict(ms_func.to_dict()).to_dict()
+        with open(path.join(mod_dir, model + ".pk"), 'rb') as f:
+            pmod = pickle.load(f)
+
+        if model != 'bayesreg':
+            Ey = pmod.predict(X)
+        else:
+            Ey, _, _ = pmod.predict(X)
+
+        assert Ey.shape == y.shape

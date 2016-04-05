@@ -24,6 +24,9 @@ def main(shapefile, fieldname, outfile, quiet):
     """
     Turn a shapefile of target variables into an HDF5 file. This file can
     subsequently be used by cross validation and machine learning routines.
+
+    The output hdf5 will have three arrays, "targets", "Longitude" and
+    "Latitude".
     """
 
     # setup logging
@@ -49,6 +52,6 @@ def main(shapefile, fieldname, outfile, quiet):
 
     # Make hdf5 array
     with tables.open_file(outfile + ".hdf5", 'w') as f:
-        f.create_array("/", fieldname, obj=vals)
+        f.create_array("/", "targets", obj=vals)
         f.create_array("/", "Longitude", obj=lonlats[:, 0])
         f.create_array("/", "Latitude", obj=lonlats[:, 1])

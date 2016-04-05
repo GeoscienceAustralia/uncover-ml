@@ -25,7 +25,7 @@ def main(targetfile, outfile, folds, quiet):
     """
     Create a cross validation fold index file from a shapefile or HDF5 of
     appropriate formats. This outputs an HDF5 file with "Latitude",
-    "Longitude", and "FoldIndices arrays.
+    "Longitude", and "FoldIndices" arrays.
     """
 
     # setup logging

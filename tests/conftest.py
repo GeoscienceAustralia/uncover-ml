@@ -41,8 +41,6 @@ def make_patch_11():
     tpatch = np.array([[timg.flatten()]]).T
 
     tx, ty = [g.flatten() for g in np.meshgrid(np.arange(3), np.arange(3))]
-    # tx = np.array([0,0,2,2])
-    # ty = np.array([0,2,0,2])
 
     return timg, pwidth, pstride, tpatch, tx, ty
 
@@ -170,3 +168,16 @@ def make_shp_gtiff(tmpdir_factory):
         f.write(np.array([Lons, Lats]))
 
     return fshp, ftif
+
+
+@pytest.fixture(scope='session')
+def make_fakedata(tmpdir_factory):
+
+    mod_dir = str(tmpdir_factory.mktemp('models').realpath())
+
+    w = np.array([1., 2.])
+    x = np.atleast_2d(np.arange(-50, 50)).T
+    X = np.hstack((np.ones((100, 1)), x))
+    y = X.dot(w) + np.random.randn(100) / 1000
+
+    return X, y, w, mod_dir
