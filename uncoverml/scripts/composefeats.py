@@ -11,14 +11,17 @@ import numpy as np
 import json
 import time
 import uncoverml.defaults as df
+from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
 from uncoverml import feature as feat
 
 log = logging.getLogger(__name__)
 
-def transform(array_list):
-    return np.concatenate(array_list, axis=1)
+def whiten(x, mean, mat):
+    x_0 = x - mean
+    x_w = np.dot(x_0, mat)
+    return x_w
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 
@@ -55,16 +58,32 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile):
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks) \
         if not standalone else None
+
+    cluster.clear()
     
     # Load the data
     cluster.apply(parallel.load_data, filename_chunks)
 
-    # Apply the transformation function
-    print("writing output...")
-    filenames = cluster.apply(parallel.write_data, transform, featurename, 
-                              outputdir)
-    print(filenames)
-    print('Complete')
+    #get the mean and cov
+    sums_and_counts = parallel.map_over_data(parallel.mean, cluster)
+    sums, ns = zip(*sums_and_counts)
+    full_sum = np.sum(np.array(sums),axis=0)
+    n = np.sum(np.array(ns), dtype=float)
+    mean = full_sum / n
+    f_demean = partial(parallel.cov, mean=mean)
+    outers = parallel.map_over_data(f_demean, cluster) 
+    full_outer = np.sum(np.array(outers),axis=0)
+    cov = full_outer / n
+    # whitening transform
+    w, v = np.linalg.eigh(cov)
+    ndims = 2
+    mat = v[:,-ndims:]
+        
+    # build the whitening transform
+    transform = partial(whiten, mean=mean, mat=mat)
 
+    # Apply the transformation function
+    cluster.apply(parallel.write_data, transform, featurename, 
+                              outputdir)
     sys.exit(0)
 

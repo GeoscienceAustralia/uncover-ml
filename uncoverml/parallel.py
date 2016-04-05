@@ -82,7 +82,8 @@ def load_data(chunk_dict):
 
     """
     for k in __chunk_indices:
-        data[k] = [feature.input_features(f) for f in chunk_dict[k]]
+        data[k] = np.concatenate([feature.input_features(f) for f in chunk_dict[k]],
+                                 axis=1)
 
 
 def write_data(transform, feature_name, output_dir):
@@ -94,6 +95,35 @@ def write_data(transform, feature_name, output_dir):
         feature.output_features(feature_vector, full_path)
         filenames.append(full_path)
     return filenames
+
+
+def _engine_map(f):
+    results = {k:f(d) for k,d in data.items()}
+    return results
+
+
+def mean(x):
+    x_sum = np.sum(x, axis=0)
+    x_n = x.shape[0]
+    return x_sum, x_n
+
+def cov(x, mean):
+    """
+    outer product (unnormalized covariance) and number of data points
+    in x used for computing a whitening transform
+    """
+    x_outer = np.cov(x - mean,rowvar=0,bias=0) * float(x.shape[0])
+    return x_outer
+
+def map_over_data(f, cluster_view):
+    all_results = {}
+    results = cluster_view.apply(_engine_map, f)
+    for r in results:
+        all_results.update(r)
+    # build the list
+    n_chunks = len(results) #LOL hopefully
+    result_list = [all_results[k] for k in range(n_chunks)]
+    return result_list
 
 def get_data():
     return data
