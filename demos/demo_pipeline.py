@@ -103,8 +103,6 @@ def main():
         pca = PCA(n_components=pca_dims, whiten=True)
         X = pca.fit_transform(X)
 
-    # D = X.shape[1]
-
     # Save whitening parameters to model spec
     # TODO
 
@@ -144,22 +142,16 @@ def main():
     else:
         EYs = mod.predict(Xs)
 
-    # EYs = rfr.predict(Xs)
-
     # -------------------------------------------------------------------------
 
     # Report score
+    # TODO this will be in the validate script --------------------------------
     Rsquare = validation.rsquare(EYs, Ys)
 
     log.info("Done! R-square = {}".format(Rsquare))
 
 
 class PipeLineFailure(Exception):
-    pass
-
-
-def combinefeats(tifs):
-
     pass
 
 

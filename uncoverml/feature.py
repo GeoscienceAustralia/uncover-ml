@@ -35,8 +35,6 @@ def input_features(infile):
 
     Parameters
     ----------
-        feature_vector: array
-            A 2D numpy array of shape (nPoints, nDims) of type float.
         infile: path
             The name of the input file
     Returns
