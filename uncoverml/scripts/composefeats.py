@@ -77,8 +77,10 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
     cluster = parallel.direct_view(ipyprofile, nchunks) \
         if not standalone else None
 
-    #Places the data as a global variable "data" on the clients
-    parallel.load_and_concatenate(filename_chunks, "data", cluster)
+    # Load the data into a dict on each client
+    # Note chunk_indices is a global with different value on each node
+    cluster.push({"chunk_dict":filename_chunks})
+    cluster.execute("data = parallel.load_and_cat(chunk_indices, chunk_dict)")
     
     #create a simple per-node vector for easy statistics
     cluster.execute("x = parallel.merge_clusters(data, chunk_indices)")

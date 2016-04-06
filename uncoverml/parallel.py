@@ -31,30 +31,20 @@ def direct_view(profile, nchunks):
         c.execute(cmd, targets=i)
     return c
 
-@ipp.interactive
-def _client_load_and_concatenate(chunk_dict):
+def load_and_cat(chunk_indices, chunk_dict):
     """
-    Loads data into the module-level cache (respecting the index on the 
-    current engine) into a global variable on the client given by 
-    the name parameter
+    loads the data and concatenates it by dimension
 
     Parameters 
     ==========
+        chunk_indices: the chunks to load
         chunk_dict: dictionary of index keys and filename values
-        name: the name of the global variable
-
     """
     data = {}
     for k in chunk_indices:
-        data[k] = np.concatenate([feature.input_features(f) for f in chunk_dict[k]],
-                                 axis=1)
+        data[k] = np.concatenate([feature.input_features(f) 
+                                  for f in chunk_dict[k]], axis=1)
     return data
-
-def load_and_concatenate(chunk_dict, name, cluster_view):
-    cluster_view.push({"chunk_dict":chunk_dict})
-    cmd = "{} = parallel._client_load_and_concatenate(chunk_dict)".format(name)
-    cluster_view.execute(cmd)
-    return name
 
 def merge_clusters(data_dict, chunk_indices):
     """
