@@ -18,21 +18,39 @@ from uncoverml import feature as feat
 
 log = logging.getLogger(__name__)
 
-def whiten(x, mean, mat):
-    x_0 = x - mean
-    x_w = np.dot(x_0, mat)
-    return x_w
+def transform(x, mean, var, eigs, fraction):
+    
+    x_m = x - mean if mean is not None else x
+    x_v = x_m/var if var is not None else x_m
+    if eigs is not None:
+        ndims = x.shape[1]
+        #make sure 1 <= keepdims <= ndims
+        keepdims = min(max(1,int(ndims * fraction)), ndims)
+        mat = eigs[:, -keepdims:]
+        x_t = np.dot(x_v, mat)
+    else:
+        x_t = x_v
+    return x_t
+
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 
            default=df.quiet_logging)
+@cl.option('--centre', is_flag=True, help="Make data have mean zero")
+@cl.option('--standardise', is_flag=True, help="Make all dimensions "
+           "have unit variance")
+@cl.option('--whiten', is_flag=True, help="Data is a unit ball")
+@cl.option('--featurefraction', type=float, default=df.whiten_feature_fraction,
+           help="The fraction of dimensions to keep for PCA transformed"
+           " (whitened) data. Between 0 and 1. Only applies if --whiten given")
 @cl.option('--standalone', is_flag=True, default=df.standalone)
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use", 
            default=None)
 @cl.argument('featurename', type=str, required=True) 
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(files, featurename, standalone, quiet, outputdir, ipyprofile):
+def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
+         centre, standardise, whiten, featurefraction):
     """ TODO
     """
 
@@ -59,31 +77,43 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile):
     cluster = parallel.direct_view(ipyprofile, nchunks) \
         if not standalone else None
 
-    cluster.clear()
+    #Places the data as a global variable "data" on the clients
+    parallel.load_and_concatenate(filename_chunks, "data", cluster)
     
-    # Load the data
-    cluster.apply(parallel.load_data, filename_chunks)
+    #create a simple per-node vector for easy statistics
+    cluster.execute("x = parallel.merge_clusters(data, chunk_indices)")
+    cluster.execute("x_n = parallel.node_count(x)")
+    x_n = np.sum(np.array(cluster.pull('x_n'),dtype=float))
 
-    #get the mean and cov
-    sums_and_counts = parallel.map_over_data(parallel.mean, cluster)
-    sums, ns = zip(*sums_and_counts)
-    full_sum = np.sum(np.array(sums),axis=0)
-    n = np.sum(np.array(ns), dtype=float)
-    mean = full_sum / n
-    f_demean = partial(parallel.cov, mean=mean)
-    outers = parallel.map_over_data(f_demean, cluster) 
-    full_outer = np.sum(np.array(outers),axis=0)
-    cov = full_outer / n
-    # whitening transform
-    w, v = np.linalg.eigh(cov)
-    ndims = 2
-    mat = v[:,-ndims:]
-        
-    # build the whitening transform
-    transform = partial(whiten, mean=mean, mat=mat)
+    mean = None
+    if centre is True:
+        cluster.execute("x_sum = parallel.node_sum(x)")
+        x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
+        mean = x_sum / x_n
+        cluster.push({"mean":mean})
+        cluster.execute("x = parallel.centre(x, mean)")
+
+    var = None
+    if standardise is True:
+        cluster.execute("x_var = parallel.node_var(x)")
+        x_var = np.sum(np.array(cluster.pull('x_var')),axis=0)
+        var = x_var/x_n
+        cluster.push({"variance":var})
+        cluster.execute("x = parallel.standardise(x, variance)")
+
+    eigvecs = None
+    if whiten is True:
+        cluster.execute("x_outer = parallel.node_outer(x)")
+        outer = np.sum(np.array(cluster.pull('x_outer')),axis=0)
+        cov = outer/x_n
+        eigvals, eigvecs = np.linalg.eigh(cov)
+
+    #We have all the information we need, now build the transform
+    f = partial(transform, mean=mean, var=var, eigs=eigvecs,
+                        fraction=featurefraction)
 
     # Apply the transformation function
-    cluster.apply(parallel.write_data, transform, featurename, 
-                              outputdir)
+    cluster.push({"f":f, "featurename":featurename, "outputdir":outputdir})
+    cluster.execute("parallel.write_data(data, f, featurename, outputdir)")
     sys.exit(0)
 

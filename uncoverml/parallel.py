@@ -8,18 +8,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-# Very basic memoisation of the data to prevent us reloading it every time
-# we call a function on the workers
-data = {}
-
-# Module-level constant set at initialisation that
-# assigns chunks per worker
-__chunk_indices = []
-
-def chunk_indices():
-    return __chunk_indices
-
-
 def task_view(profile):
     c = ipp.Client(profile=profile) if profile is not None else ipp.Client()
     return c.load_balanced_view()
@@ -33,14 +21,49 @@ def direct_view(profile, nchunks):
     # Ensure this module's requirments are imported externally
     c.execute('from uncoverml import feature')
     c.execute('from uncoverml import parallel')
+    c.execute('import numpy as np')
     
     # Assign the chunks to workers
     nworkers = len(c)
     for i, indices in enumerate(np.array_split(np.arange(nchunks),nworkers)):
-        cmd = "parallel.__chunk_indices = {}".format(indices.tolist())
+        cmd = "chunk_indices = {}".format(indices.tolist())
         log.info("assigning engine {} chunks {}".format(i, indices))
         c.execute(cmd, targets=i)
     return c
+
+@ipp.interactive
+def _client_load_and_concatenate(chunk_dict):
+    """
+    Loads data into the module-level cache (respecting the index on the 
+    current engine) into a global variable on the client given by 
+    the name parameter
+
+    Parameters 
+    ==========
+        chunk_dict: dictionary of index keys and filename values
+        name: the name of the global variable
+
+    """
+    data = {}
+    for k in chunk_indices:
+        data[k] = np.concatenate([feature.input_features(f) for f in chunk_dict[k]],
+                                 axis=1)
+    return data
+
+def load_and_concatenate(chunk_dict, name, cluster_view):
+    cluster_view.push({"chunk_dict":chunk_dict})
+    cmd = "{} = parallel._client_load_and_concatenate(chunk_dict)".format(name)
+    cluster_view.execute(cmd)
+    return name
+
+def merge_clusters(data_dict, chunk_indices):
+    """
+    simplifies a lot of processes by concatenating the multiple chunks
+    into a single vector per-node
+    """
+    x = np.concatenate([data_dict[i] for i in chunk_indices],axis=0)
+    return x
+
 
 def print_async_progress(async_result, title):
     total_jobs = len(async_result)
@@ -71,22 +94,8 @@ def map(f, iterable, cluster_view=None):
                 bar.update(1)
     return results
 
-def load_data(chunk_dict):
-    """
-    Loads data into the module-level cache (respecting the index on the 
-    current engine)
 
-    Parameters 
-    ==========
-        chunk_dict: dictionary of index keys and filename values
-
-    """
-    for k in __chunk_indices:
-        data[k] = np.concatenate([feature.input_features(f) for f in chunk_dict[k]],
-                                 axis=1)
-
-
-def write_data(transform, feature_name, output_dir):
+def write_data(data, transform, feature_name, output_dir):
     filenames = []
     for i,d in data.items():
         feature_vector = transform(d)
@@ -96,24 +105,23 @@ def write_data(transform, feature_name, output_dir):
         filenames.append(full_path)
     return filenames
 
+def node_count(x):
+    return x.shape[0]
 
-def _engine_map(f):
-    results = {k:f(d) for k,d in data.items()}
-    return results
+def node_sum(x):
+    return np.sum(x,axis=0)
 
+def node_var(x):
+    return np.var(x,axis=0) * float(x.shape[0])
 
-def mean(x):
-    x_sum = np.sum(x, axis=0)
-    x_n = x.shape[0]
-    return x_sum, x_n
+def node_outer(x):
+    return np.cov(x,rowvar=0,bias=0) * float(x.shape[0])
 
-def cov(x, mean):
-    """
-    outer product (unnormalized covariance) and number of data points
-    in x used for computing a whitening transform
-    """
-    x_outer = np.cov(x - mean,rowvar=0,bias=0) * float(x.shape[0])
-    return x_outer
+def centre(x, x_mean):
+    return x - x_mean
+
+def standardise(x, x_variance):
+    return x / x_variance[np.newaxis, :]
 
 def map_over_data(f, cluster_view):
     all_results = {}
