@@ -9,6 +9,7 @@ import sys
 import os.path
 import tables
 import pickle
+import json
 import click as cl
 import numpy as np
 
@@ -52,7 +53,10 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         sys.exit(-1)
 
     # Parse all algorithm options
-    # TODO: what format do we accept? JSON?
+    if algopts is not None:
+        args = json.loads(algopts)
+    else:
+        args = {}
 
     # Load targets file
     with tables.open_file(targets, mode='r') as f:
@@ -79,7 +83,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         X = X[cv_ind != cvindex[1]]
 
     # Train the model
-    mod = models.modelmaps[algorithm]()  # TODO: input params
+    mod = models.modelmaps[algorithm](**args)
     mod.fit(X, y)
 
     # Pickle the model

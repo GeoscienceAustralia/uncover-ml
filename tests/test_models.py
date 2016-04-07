@@ -13,10 +13,7 @@ def test_modelmap(make_fakedata):
         mod = models.modelmaps[model]()
         mod.fit(X, y)
 
-        if any(model == m for m in ['bayesreg', 'gp']):
-            Ey, _, _ = mod.predict(X)
-        else:
-            Ey = mod.predict(X)
+        Ey = mod.predict(X)
 
         assert validation.rsquare(Ey, y) > 0
 
@@ -35,9 +32,6 @@ def test_modelpersistance(make_fakedata):
         with open(path.join(mod_dir, model + ".pk"), 'rb') as f:
             pmod = pickle.load(f)
 
-        if any(model == m for m in ['bayesreg', 'gp']):
-            Ey, _, _ = pmod.predict(X)
-        else:
-            Ey = pmod.predict(X)
+        Ey = pmod.predict(X)
 
         assert Ey.shape == y.shape
