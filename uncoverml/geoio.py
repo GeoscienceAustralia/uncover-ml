@@ -199,7 +199,7 @@ class Image:
         window = ((self._offset[1], self._offset[1] + self.resolution[1] + 1),
                   (self._offset[0], self._offset[0] + self.resolution[0] + 1))
         with rasterio.open(self.filename, 'r') as geotiff:
-            d = geotiff.read(window=window)
+            d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
         return d

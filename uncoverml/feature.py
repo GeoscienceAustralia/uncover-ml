@@ -6,7 +6,7 @@ from uncoverml import geoio
 from uncoverml import patch
 
 
-def output_features(feature_vector, outfile):
+def output_features(feature_vector, mask_vector, outfile):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -16,6 +16,8 @@ def output_features(feature_vector, outfile):
     ----------
         feature_vector: array
             A 2D numpy array of shape (nPoints, nDims) of type float.
+        mask_vector: array
+            A 2D numpy mask array of shape (nPoints, nDims) of type bool
         outfile: path
             The name of the output file
     """
@@ -26,6 +28,9 @@ def output_features(feature_vector, outfile):
     h5file.create_carray("/", "features", filters=filters,
                          atom=hdf.Float64Atom(), shape=array_shape)
     h5file.root.features[:] = feature_vector
+    h5file.create_carray("/","mask",filters=filters,
+                         atom=hdf.BoolAtom(), shape=array_shape)
+    h5file.root.mask[:] = mask_vector
     h5file.close()
 
 def input_features(infile):
@@ -46,8 +51,8 @@ def input_features(infile):
         data = f.root.features[:]
     return data
 
-def transform(x):
-    return x.flatten()
+def transform(x, x_mask):
+    return x.flatten(), x_mask.flatten()
 
 
 def features_from_image(image, name, transform, patchsize, output_dir,
@@ -57,7 +62,9 @@ def features_from_image(image, name, transform, patchsize, output_dir,
     as a feature vector to and HDF5 file.
     """
     # Get the target points if they exist:
-    data = image.data()
+    data_and_mask = image.data()
+    data = data_and_mask.data
+    mask = data_and_mask.mask
     pixels = None
     if targets is not None:
         lonlats = geoio.points_from_hdf(targets)
@@ -69,12 +76,16 @@ def features_from_image(image, name, transform, patchsize, output_dir,
         valid_lonlats = lonlats[valid]
         pixels = image.lonlat2pix(valid_lonlats, centres=True)
         patches = patch.point_patches(data, patchsize, pixels)
+        patch_mask = patch.point_patches(mask, patchsize, pixels)
     else:
         patches = patch.grid_patches(data, patchsize)
+        patch_mask = patch.grid_patches(mask, patchsize)
 
-    processed_patches = map(transform, patches)
-    features = np.array(list(processed_patches), dtype=float)
+    transformed_data = [transform(x,m) for x,m in zip(patches, patch_mask)]
+    t_patches, t_mask = zip(*transformed_data)
+    features = np.array(t_patches, dtype=float)
+    feature_mask = np.array(t_mask, dtype=bool)
     filename = os.path.join(output_dir,
                             name + "_{}.hdf5".format(image.chunk_idx))
-    output_features(features, filename)
+    output_features(features, feature_mask, filename)
 
