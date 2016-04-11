@@ -1,8 +1,8 @@
 import pickle
 from os import path
+from sklearn.metrics import r2_score
 
 from uncoverml import models
-from uncoverml import validation
 
 
 def test_modelmap(make_fakedata):
@@ -15,7 +15,7 @@ def test_modelmap(make_fakedata):
 
         Ey = mod.predict(X)
 
-        assert validation.rsquare(Ey, y) > 0
+        assert r2_score(y, Ey) > 0
 
 
 def test_modelpersistance(make_fakedata):

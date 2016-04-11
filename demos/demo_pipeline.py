@@ -13,12 +13,11 @@ import json
 import numpy as np
 from os import path, mkdir
 from glob import glob
-from subprocess import run, CalledProcessError
+from subprocess import check_call, CalledProcessError
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import robust_scale, Imputer
-
-from uncoverml import validation
+from sklearn.metrics import r2_score
 
 log = logging.getLogger(__name__)
 
@@ -37,13 +36,16 @@ cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
 feat_file = path.join(proc_dir, "features_0.hdf5")
 
 # algorithm = "glm"
-# args = {'lenscale': 10., 'ard': False, 'nbases': 200}
+# args = {'lenscale': 10., 'ard': False, 'nbases': 500, 'use_sgd': False}
 
 # algorithm = "gp"
-# args = {'lenscale': 10., 'ard': False, 'nbases': 500}
+# args = {'lenscale': 10., 'ard': False, 'nbases': 1000}
 
 algorithm = "svr"
 args = {'gamma': 1. / 100, 'epsilon': 0.05}
+
+# algorithm = "randomforest"
+# args = {'n_estimators': 500}
 
 whiten = True  # whiten all of the extracted features?
 standardise = False  # standardise all of the extracted features?
@@ -128,7 +130,7 @@ def main():
 
     log.info("Training model.")
     alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
-    run(cmd)
+    check_call(cmd)
 
     # Test the model
     # TODO this will be in the predict script ---------------------------------
@@ -148,16 +150,13 @@ def main():
     with open(alg_file, 'rb') as f:
         mod = pickle.load(f)
 
-    if any(algorithm == m for m in ['bayesreg', 'gp']):
-        EYs, Vfs, VYs = mod.predict(Xs)
-    else:
-        EYs = mod.predict(Xs)
+    EYs = mod.predict(Xs)
 
     # -------------------------------------------------------------------------
 
     # Report score
     # TODO this will be in the validate script --------------------------------
-    Rsquare = validation.rsquare(EYs, Ys)
+    Rsquare = r2_score(Ys, EYs)
 
     log.info("Done! R-square = {}".format(Rsquare))
 
@@ -180,7 +179,7 @@ def try_run_checkfile(cmd, checkfile, premsg=None):
 def try_run(cmd):
 
     try:
-        run(cmd, check=True)
+        check_call(cmd, check=True)
     except CalledProcessError:
         log.info("\n--------------------\n")
         raise

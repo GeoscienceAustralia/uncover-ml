@@ -62,7 +62,8 @@ setup(
         'rasterio',
         'pyshp',
         'ipyparallel',
-        'click'
+        'click',
+        'scikit-learn'
     ],
     extras_require={
         'demos': [

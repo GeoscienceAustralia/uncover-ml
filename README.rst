@@ -20,6 +20,9 @@ Machine learning tools for the Geoscience Australia uncover project.
 Quickstart
 ----------
 
+Before you start, make sure your system has the following packages installed:
+- gdal (libgdal-dev)
+
 To install, simply run ``setup.py``:
 
 .. code:: console

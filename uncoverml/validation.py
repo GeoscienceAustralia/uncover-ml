@@ -121,32 +121,3 @@ def split_cfold(nsamples, k=5):
         cvassigns[inds] = n
 
     return cvinds, cvassigns
-
-
-#
-# Validation Metrics
-#
-
-def rsquare(y_predict, y_true):
-    """ Compute the coefficient of determination (R-square).
-
-    Parameters
-    ----------
-    y_predict: ndarray
-        an array of shape (N,) of the predicted target values.
-    y_true: ndarray
-        an array of shape (N,) of the true target values.
-
-    Returns
-    -------
-    float:
-        R-square which is in the range (-inf, 1] where 1.0 is perfect
-        prediction of the target values, and -inf is arbitrarily bad (depending
-        on scale).
-    """
-
-    SSres = ((y_true - y_predict)**2).sum()
-    SStot = ((y_true - y_true.mean())**2).sum()
-    R2 = 1 - (SSres / SStot)
-
-    return R2
