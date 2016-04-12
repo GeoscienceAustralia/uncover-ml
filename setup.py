@@ -50,7 +50,8 @@ setup(
             'composefeats = uncoverml.scripts.composefeats:main',
             'uncoverml-worker = uncoverml.scripts.worker:main',
             'maketargets = uncoverml.scripts.maketargets:main',
-            'learnmodel = uncoverml.scripts.learnmodel:main'
+            'learnmodel = uncoverml.scripts.learnmodel:main',
+            'predict = uncoverml.scripts.predict:main'
         ]
     },
     install_requires=[

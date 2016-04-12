@@ -65,14 +65,10 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
     # Read ALL the features in here, and learn on a single machine
     # FIXME?
     filename_chunks = geoio.files_by_chunk(full_filenames)
-    feats = []
-    for i, flist in filename_chunks.items():
-        feat = []
-        for f in flist:
-            feat.append(feature.input_features(f))
-        feats.append(np.hstack(feat))
+    X, mask = feature.cat_chunks(filename_chunks)
 
-    X = np.vstack(feats)
+    if np.any(mask):
+        raise RuntimeError("Cannot learn with missing data!")
 
     # Optionally subset the data for cross validation
     if cvindex:

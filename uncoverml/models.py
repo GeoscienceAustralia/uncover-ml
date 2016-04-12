@@ -10,8 +10,11 @@ from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 
+from GPy.kern import RBF, White
+from GPy.models import GPRegression
 
-class LinearReg:
+
+class LinearReg(object):
 
     def __init__(self, var=1., regulariser=1., diagcov=False, tol=1e-6,
                  maxit=500, verbose=True):
@@ -61,11 +64,11 @@ class LinearReg:
         self.params['basis'] = LinearBasis(onescol=True)
 
 
-class GaussianProcess(LinearReg):
+class ApproxGP(LinearReg):
 
-    def __init__(self, nbases=500, lenscale=1., ard=False, *args, **kwargs):
+    def __init__(self, nbases=200, lenscale=1., ard=False, *args, **kwargs):
 
-        super(GaussianProcess, self).__init__(*args, **kwargs)
+        super(ApproxGP, self).__init__(*args, **kwargs)
 
         self.nbases = nbases
         self.lenscale = lenscale
@@ -83,10 +86,10 @@ class GaussianProcess(LinearReg):
             self.params['bparams'] = [self.lenscale]
 
 
-class GenLinMod(GaussianProcess):
+class GenLinMod(ApproxGP):
 
     def __init__(self, likelihood="Gaussian", lparams=[1.], postcomp=10,
-                 use_sgd=True, batchsize=100, *args, **kwargs):
+                 use_sgd=True, batchsize=100, maxit=1000, *args, **kwargs):
 
         super(GenLinMod, self).__init__(*args, **kwargs)
 
@@ -95,6 +98,7 @@ class GenLinMod(GaussianProcess):
         self.params['lparams'] = lparams
         self.params['postcomp'] = postcomp
         self.params['batchsize'] = batchsize
+        self.params['maxit'] = maxit
         self.params['use_sgd'] = use_sgd
 
         # translate the parameters
@@ -135,6 +139,41 @@ class GenLinMod(GaussianProcess):
         return (Ey, Vy if interval is None else l, u) if uncertainty else Ey
 
 
+class GaussianProcess(LinearReg):
+
+    def __init__(self, kfunc=RBF, verbose=False, **kernparams):
+
+        self.params = {'kfunc': kfunc,
+                       'kernparams': kernparams
+                       }
+        self.verbose = verbose
+
+    def fit(self, X, y):
+
+        if y.ndim == 1:
+            y = np.atleast_2d(y).T
+
+        d = X.shape[1]
+        self.params['kernel'] = \
+            self.params['kfunc'](input_dim=d, **self.params['kernparams']) \
+            + White(input_dim=d)
+        self.params['model'] = GPRegression(X, y, self.params['kernel'])
+        self.params['model'].optimize(messages=self.verbose)
+
+        return self
+
+    def predict(self, X, uncertainty=False):
+
+        Ey, Vy = self.params['model'].predict(X)
+        Ey = Ey.flatten()
+        Vy = Vy.flatten()
+
+        return Ey if not uncertainty else (Ey, Vy)
+
+    def _make_basis(self, X):
+        pass
+
+
 lhoodmaps = {'Gaussian': Gaussian,
              'Bernoulli': Bernoulli,
              'Poisson': Poisson
@@ -143,6 +182,7 @@ lhoodmaps = {'Gaussian': Gaussian,
 modelmaps = {'randomforest': RandomForestRegressor,
              'bayesreg': LinearReg,
              'gp': GaussianProcess,
+             'approxgp': ApproxGP,
              'svr': SVR,
              'glm': GenLinMod
              }

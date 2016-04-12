@@ -1,12 +1,13 @@
 import os.path
 import numpy as np
+import numpy.ma as ma
 import tables as hdf
 
 from uncoverml import geoio
 from uncoverml import patch
 
 
-def output_features(feature_vector, mask_vector, outfile):
+def output_features(feature_vector, outfile, featname="features"):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -15,25 +16,41 @@ def output_features(feature_vector, mask_vector, outfile):
     Parameters
     ----------
         feature_vector: array
-            A 2D numpy array of shape (nPoints, nDims) of type float.
-        mask_vector: array
-            A 2D numpy mask array of shape (nPoints, nDims) of type bool
+            A 2D numpy array of shape (nPoints, nDims) of type float. This can
+            be a masked array.
         outfile: path
             The name of the output file
+        featname: str, optional
+            The name of the features.
     """
     h5file = hdf.open_file(outfile, mode='w')
     array_shape = feature_vector.shape
 
     filters = hdf.Filters(complevel=5, complib='zlib')
-    h5file.create_carray("/", "features", filters=filters,
-                         atom=hdf.Float64Atom(), shape=array_shape)
-    h5file.root.features[:] = feature_vector
-    h5file.create_carray("/","mask",filters=filters,
-                         atom=hdf.BoolAtom(), shape=array_shape)
-    h5file.root.mask[:] = mask_vector
+
+    if ma.isMaskedArray(feature_vector):
+        fobj = feature_vector.data
+        fmask = feature_vector.mask
+    else:
+        fobj = feature_vector
+        fmask = np.zeros(array_shape, dtype=bool)
+
+    h5file.create_carray("/", featname, filters=filters,
+                         atom=hdf.Float64Atom(), shape=array_shape, obj=fobj)
+    h5file.create_carray("/", "mask", filters=filters,
+                         atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
+
+    # if ma.isMaskedArray(feature_vector):
+    #     h5file.root.[:] = feature_vector.data
+    #     h5file.root.mask[:] = feature_vector.mask
+    # else:
+    #     h5file.root.features[:] = feature_vector
+    #     h5file.root.mask[:] = np.zeros(array_shape, dtype=bool)
+
     h5file.close()
 
-def input_features(infile):
+
+def input_features(infile, featname="features"):
     """
     Reads a vector of features out from a standard HDF5 format. The function
     assumes the file it is reading was written by output_features
@@ -42,14 +59,21 @@ def input_features(infile):
     ----------
         infile: path
             The name of the input file
+        featname: str, optional
+            The name of the features.
     Returns
     -------
         data: array
-            A 2D numpy array of shape (nPoints, nDims) of type float
+            a 2d numpy array of shape (npoints, ndims) of type float
+        mask: array
+            a 2d numpy array of shape (npoints, ndims) of type bool (True for
+            missing data)
     """
     with hdf.open_file(infile, mode='r') as f:
-        data = f.root.features[:]
-    return data
+        data = f.get_node('/' + featname).read()
+        mask = f.root.mask.read()
+    return data, mask
+
 
 def transform(x, x_mask):
     return x.flatten(), x_mask.flatten()
@@ -82,10 +106,28 @@ def features_from_image(image, name, transform, patchsize, output_dir,
         patch_mask = patch.grid_patches(mask, patchsize)
 
     transformed_data = [transform(x,m) for x,m in zip(patches, patch_mask)]
-    t_patches, t_mask = zip(*transformed_data)
+    t_patches, t_mask = tuple(zip(*transformed_data))
     features = np.array(t_patches, dtype=float)
     feature_mask = np.array(t_mask, dtype=bool)
     filename = os.path.join(output_dir,
                             name + "_{}.hdf5".format(image.chunk_idx))
     output_features(features, feature_mask, filename)
 
+
+def cat_chunks(filename_chunks):
+
+    feats = []
+    masks = []
+    for i, flist in filename_chunks.items():
+        feat = []
+        mask = []
+        for f in flist:
+            f, m = input_features(f)
+            feat.append(f)
+            mask.append(m)
+        feats.append(np.hstack(feat))
+        masks.append(np.hstack(mask))
+
+    X = np.vstack(feats)
+    M = np.vstack(masks)
+    return X, M

@@ -8,7 +8,7 @@ TODO: Replicate this with luigi or joblib
 
 import logging
 import tables
-import pickle
+# import pickle
 import json
 import numpy as np
 from os import path, mkdir
@@ -18,6 +18,8 @@ from subprocess import check_call, CalledProcessError
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import robust_scale, Imputer
 from sklearn.metrics import r2_score
+
+from uncoverml.feature import output_features
 
 log = logging.getLogger(__name__)
 
@@ -36,10 +38,14 @@ cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
 feat_file = path.join(proc_dir, "features_0.hdf5")
 
 # algorithm = "glm"
-# args = {'lenscale': 10., 'ard': False, 'nbases': 500, 'use_sgd': False}
+# args = {'lenscale': 10., 'lparams': [100.], 'ard': False, 'nbases': 300,
+#         'use_sgd': True}
+
+# algorithm = "approxgp"
+# args = {'lenscale': 10., 'ard': False, 'nbases': 1000}
 
 # algorithm = "gp"
-# args = {'lenscale': 10., 'ard': False, 'nbases': 1000}
+# args = {'lengthscale': 1., 'ARD': True, 'verbose': True}
 
 algorithm = "svr"
 args = {'gamma': 1. / 100, 'epsilon': 0.05}
@@ -119,8 +125,9 @@ def main():
     # TODO
 
     # Save features to feature file
-    with tables.open_file(feat_file, mode='w') as f:
-        f.create_array("/", "features", obj=X)
+    output_features(X, feat_file)
+    # with tables.open_file(feat_file, mode='w') as f:
+    #     f.create_array("/", "features", obj=X)
     # -------------------------------------------------------------------------
 
     # Train the model
@@ -129,8 +136,7 @@ def main():
            target_hdf]
 
     log.info("Training model.")
-    alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
-    check_call(cmd)
+    try_run(cmd)
 
     # Test the model
     # TODO this will be in the predict script ---------------------------------
@@ -139,20 +145,24 @@ def main():
     with tables.open_file(cv_file, mode='r') as f:
         cv_ind = f.root.FoldIndices.read().flatten()
 
-    Xs = X[cv_ind == 0]
-
     with tables.open_file(target_hdf, mode='r') as f:
         Y = f.root.targets.read()
 
     Ys = Y[cv_ind == 0]
 
-    log.info("Testing model.")
-    with open(alg_file, 'rb') as f:
-        mod = pickle.load(f)
-
-    EYs = mod.predict(Xs)
-
     # -------------------------------------------------------------------------
+
+    alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
+    cmd = ["predict", "--outputdir", proc_dir, alg_file, feat_file]
+
+    log.info("Predicting targets.")
+    try_run(cmd)
+
+    # TODO Make this part of predict
+    pred_file = path.join(proc_dir, "predicted_0.hdf5")
+    with tables.open_file(pred_file, mode='r') as f:
+        EY = f.root.predictions.read()
+    EYs = EY[cv_ind == 0]
 
     # Report score
     # TODO this will be in the validate script --------------------------------
@@ -179,7 +189,7 @@ def try_run_checkfile(cmd, checkfile, premsg=None):
 def try_run(cmd):
 
     try:
-        check_call(cmd, check=True)
+        check_call(cmd)
     except CalledProcessError:
         log.info("\n--------------------\n")
         raise

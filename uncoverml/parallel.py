@@ -42,8 +42,10 @@ def load_and_cat(chunk_indices, chunk_dict):
     """
     data = {}
     for k in chunk_indices:
-        data[k] = np.concatenate([feature.input_features(f) 
-                                  for f in chunk_dict[k]], axis=1)
+        feats = tuple(zip(*[feature.input_features(f) for f in chunk_dict[k]]))
+        data[k] = (np.concatenate(feats[0], axis=1),
+                   np.concatenate(feats[1], axis=1)
+                   )
     return data
 
 def merge_clusters(data_dict, chunk_indices):
@@ -67,6 +69,7 @@ def print_async_progress(async_result, title):
                 last_jobs_done = jobs_done
             time.sleep(0.1)
 
+
 def map(f, iterable, cluster_view=None):
     # Send off the jobs
     progress_title = "Processing Image Chunks"
@@ -77,7 +80,7 @@ def map(f, iterable, cluster_view=None):
     else:
         results = []
         with click.progressbar(length=len(iterable),
-                               label=progress_title) as bar: 
+                               label=progress_title) as bar:
             for i in iterable:
                 r = f(i)
                 results.append(r)
@@ -87,13 +90,29 @@ def map(f, iterable, cluster_view=None):
 
 def write_data(data, transform, feature_name, output_dir):
     filenames = []
-    for i,d in data.items():
+    for i, d in data.items():
         feature_vector = transform(d)
         filename = feature_name + "_{}.hdf5".format(i)
         full_path = os.path.join(output_dir, filename)
         feature.output_features(feature_vector, full_path)
         filenames.append(full_path)
     return filenames
+
+
+# this is primarily because we cant pickle closures to use with above func.
+def write_predict(data, model, target_name, output_dir):
+    filenames = []
+
+    for i, d in data.items():
+        # FIXME deal with missing data in d[1]
+        target_vector = model.predict(d[0])
+        filename = target_name + "_{}.hdf5".format(i)
+        full_path = os.path.join(output_dir, filename)
+        feature.output_features(target_vector, full_path,
+                                featname="predictions")
+        filenames.append(full_path)
+    return filenames
+
 
 def node_count(x):
     return x.shape[0]
