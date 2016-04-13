@@ -1,8 +1,8 @@
 import pickle
 from os import path
+from sklearn.metrics import r2_score
 
 from uncoverml import models
-from uncoverml import validation
 
 
 def test_modelmap(make_fakedata):
@@ -13,12 +13,9 @@ def test_modelmap(make_fakedata):
         mod = models.modelmaps[model]()
         mod.fit(X, y)
 
-        if model != 'bayesreg':
-            Ey = mod.predict(X)
-        else:
-            Ey, _, _ = mod.predict(X)
+        Ey = mod.predict(X)
 
-        assert validation.rsquare(Ey, y) > 0
+        assert r2_score(y, Ey) > 0
 
 
 def test_modelpersistance(make_fakedata):
@@ -35,9 +32,6 @@ def test_modelpersistance(make_fakedata):
         with open(path.join(mod_dir, model + ".pk"), 'rb') as f:
             pmod = pickle.load(f)
 
-        if model != 'bayesreg':
-            Ey = pmod.predict(X)
-        else:
-            Ey, _, _ = pmod.predict(X)
+        Ey = pmod.predict(X)
 
         assert Ey.shape == y.shape

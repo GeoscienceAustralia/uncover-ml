@@ -6,7 +6,7 @@ from uncoverml import geoio
 from uncoverml import patch
 
 
-def output_features(feature_vector, mask_vector, outfile):
+def output_features(feature_vector, outfile, featname="features"):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -15,22 +15,37 @@ def output_features(feature_vector, mask_vector, outfile):
     Parameters
     ----------
         feature_vector: array
-            A 2D numpy array of shape (nPoints, nDims) of type float.
-        mask_vector: array
-            A 2D numpy mask array of shape (nPoints, nDims) of type bool
+            A 2D numpy array of shape (nPoints, nDims) of type float. This can
+            be a masked array.
         outfile: path
             The name of the output file
+        featname: str, optional
+            The name of the features.
     """
     h5file = hdf.open_file(outfile, mode='w')
     array_shape = feature_vector.shape
 
     filters = hdf.Filters(complevel=5, complib='zlib')
-    h5file.create_carray("/", "features", filters=filters,
-                         atom=hdf.Float64Atom(), shape=array_shape)
-    h5file.root.features[:] = feature_vector
-    h5file.create_carray("/","mask",filters=filters,
-                         atom=hdf.BoolAtom(), shape=array_shape)
-    h5file.root.mask[:] = mask_vector
+
+    if ma.isMaskedArray(feature_vector):
+        fobj = feature_vector.data
+        fmask = feature_vector.mask
+    else:
+        fobj = feature_vector
+        fmask = np.zeros(array_shape, dtype=bool)
+
+    h5file.create_carray("/", featname, filters=filters,
+                         atom=hdf.Float64Atom(), shape=array_shape, obj=fobj)
+    h5file.create_carray("/", "mask", filters=filters,
+                         atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
+
+    # if ma.isMaskedArray(feature_vector):
+    #     h5file.root.[:] = feature_vector.data
+    #     h5file.root.mask[:] = feature_vector.mask
+    # else:
+    #     h5file.root.features[:] = feature_vector
+    #     h5file.root.mask[:] = np.zeros(array_shape, dtype=bool)
+
     h5file.close()
 
 def patches_from_image(image, patchsize, targets=None):
@@ -64,3 +79,20 @@ def patches_from_image(image, patchsize, targets=None):
 
     return patch_data, mask_data
 
+def cat_chunks(filename_chunks):
+
+    feats = []
+    masks = []
+    for i, flist in filename_chunks.items():
+        feat = []
+        mask = []
+        for f in flist:
+            f, m = input_features(f)
+            feat.append(f)
+            mask.append(m)
+        feats.append(np.hstack(feat))
+        masks.append(np.hstack(mask))
+
+    X = np.vstack(feats)
+    M = np.vstack(masks)
+    return X, M

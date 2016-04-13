@@ -83,6 +83,22 @@ def write_data(data_dict, transform, feature_name, output_dir):
         filenames.append(full_path)
     return filenames
 
+
+# this is primarily because we cant pickle closures to use with above func.
+def write_predict(data, model, target_name, output_dir):
+    filenames = []
+
+    for i, d in data.items():
+        # FIXME deal with missing data in d[1]
+        target_vector = model.predict(d[0])
+        filename = target_name + "_{}.hdf5".format(i)
+        full_path = os.path.join(output_dir, filename)
+        feature.output_features(target_vector, full_path,
+                                featname="predictions")
+        filenames.append(full_path)
+    return filenames
+
+
 def node_count(x):
     """
     note that this is a vector per dimension because x is masked
