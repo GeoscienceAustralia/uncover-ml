@@ -44,9 +44,6 @@ feat_file = path.join(proc_dir, "features_0.hdf5")
 # algorithm = "approxgp"
 # args = {'lenscale': 10., 'ard': False, 'nbases': 1000}
 
-# algorithm = "gp"
-# args = {'lengthscale': 1., 'ARD': True, 'verbose': True}
-
 algorithm = "svr"
 args = {'gamma': 1. / 100, 'epsilon': 0.05}
 
@@ -85,7 +82,7 @@ def main():
     for tif in tifs:
         name = path.splitext(path.basename(tif))[0]
         cmd = ["extractfeats", tif, name, "--outputdir", proc_dir, "--chunks",
-               "1", "--targets", target_hdf, "--standalone"]
+               "1", "--targets", target_hdf]
         msg = "Processing {}.".format(path.basename(tif))
         ffile = path.join(proc_dir, name + "_0.hdf5")
         try_run_checkfile(cmd, ffile, msg)

@@ -56,7 +56,4 @@ def main(targetfile, outfile, folds, quiet):
     outfile = outsplit[0] + ".hdf5" if outsplit[1] != ".hdf5" else outfile
 
     # Write out an HDF5
-    with tables.open_file(outfile, 'w') as f:
-        f.create_array("/", "Longitude", obj=lonlat[:, 0])
-        f.create_array("/", "Latitude", obj=lonlat[:, 1])
-        f.create_array("/", "FoldIndices", obj=cvassigns)
+    validation.output_cvindex(cvassigns, lonlat, outfile)

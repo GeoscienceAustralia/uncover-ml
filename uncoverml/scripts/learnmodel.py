@@ -15,6 +15,7 @@ import numpy as np
 
 import uncoverml.defaults as df
 from uncoverml import geoio, models, feature
+from uncoverml.validation import input_cvindex
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
-@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=None,
+@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
            help="Optional cross validation index file and index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--algopts', type=str, default=None)
@@ -71,10 +72,8 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         raise RuntimeError("Cannot learn with missing data!")
 
     # Optionally subset the data for cross validation
-    if cvindex:
-        with tables.open_file(cvindex[0], mode='r') as f:
-            cv_ind = f.root.FoldIndices.read().flatten()
-
+    if cvindex[0] is not None:
+        cv_ind = input_cvindex(cvindex[0])
         y = y[cv_ind != cvindex[1]]
         X = X[cv_ind != cvindex[1]]
 

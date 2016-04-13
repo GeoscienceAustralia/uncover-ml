@@ -2,7 +2,32 @@
 
 from __future__ import division
 
+import tables
 import numpy as np
+
+
+#
+# Read and write validation files
+#
+
+
+def output_cvindex(index, lonlat, outfile):
+
+    with tables.open_file(outfile, 'w') as f:
+        f.create_array("/", "Longitude", obj=lonlat[:, 0])
+        f.create_array("/", "Latitude", obj=lonlat[:, 1])
+        f.create_array("/", "FoldIndices", obj=index)
+
+
+def input_cvindex(cvindex_file, return_lonlat=False):
+
+    with tables.open_file(cvindex_file, mode='r') as f:
+        cv_ind = f.root.FoldIndices.read().flatten()
+        if return_lonlat:
+            lonlat = np.hstack((f.root.Longitude.read(),
+                                f.root.Latitude.read()))
+
+    return (cv_ind, lonlat) if return_lonlat else cv_ind
 
 
 #

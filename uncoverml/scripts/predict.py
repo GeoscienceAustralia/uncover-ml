@@ -8,9 +8,11 @@ import sys
 import os.path
 import pickle
 import click as cl
+# import numpy as np
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel
+# from uncoverml.validation import input_cvindex
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
+@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
+           help="Optional cross validation index file and index to hold out.")
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
@@ -28,7 +32,7 @@ log = logging.getLogger(__name__)
            default=None)
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, quiet):
+def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
 
     # setup logging
     if quiet is True:
@@ -53,6 +57,11 @@ def main(model, files, outputdir, ipyprofile, predictname, quiet):
     # build the images
     filename_chunks = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_chunks)
+
+    # Optionally subset the data for cross validation
+    # TODO
+    # if cvindex[0] is not None:
+    #     cv_chunks = np.array_split(input_cvindex(cvindex[0]), nchunks)
 
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
