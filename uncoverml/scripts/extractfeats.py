@@ -14,11 +14,13 @@ from uncoverml import parallel
 import numpy as np 
 from sklearn.preprocessing import OneHotEncoder
 import sys
+from uncoverml import feature
 
 log = logging.getLogger(__name__)
 
 def extract_transform(data, patchsize, targets, x_set, mean, sd):
-    data = data.reshape((-1, data.shape[2]))
+    #Flatten patches
+    data = data.reshape((data.shape[0], -1))
     if x_set is not None: # one-hot activated!
         data = parallel.one_hot(data, x_set)
     else:
@@ -75,15 +77,16 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     image_dict = {i:geoio.Image(full_filename, i, chunks, patchsize) 
                     for i in range(chunks)}
 
-
     # Initialise the cluster
     cluster = parallel.direct_view(ipyprofile, chunks)
     
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"reference_dict":image_dict})
-    cluster.execute("data_dict = parallel.data_dict(reference_dict, chunk_indices)")
-    cluster.execute("x = parallel.data_vector(data_dict)")
+    cluster.push({"image_dict":image_dict, "patchsize":patchsize,
+                  "targets":targets})
+    cluster.execute("data_dict = feature.load_image_data( "
+                    "image_dict, chunk_indices, patchsize, targets)")
+    cluster.execute("x = feature.image_data_vector(data_dict)")
     # get number of points
     cluster.execute("x_count = parallel.node_count(x)")
     x_count = np.sum(np.array(cluster.pull('x_count')), axis=0)
@@ -101,13 +104,13 @@ def main(geotiff, name, targets, centre, standardise, onehot,
         all_x_sets = cluster.pull('x_set')
         per_dim = zip(*all_x_sets)
         x_sets = [np.unique(np.concatenate(k,axis=0)) for k in per_dim]
-        log.info("Detected {} distinct values for one-hot encoding".format(
-            [len(k) for k in x_sets]))
-        if len(x_sets) > df.max_onehot_dims:
+        total_dims = np.sum([len(k) for k in x_sets])
+        log.info("Total features from one-hot encoding: {}".format(
+            total_dims))
+        if total_dims > df.max_onehot_dims:
             log.fatal("Too many distinct values for one-hot encoding."
                       " If you're sure increase max value in default file.")
             sys.exit(-1)
-
     else:
         if centre is True:
             cluster.execute("x_sum = parallel.node_sum(x)")
@@ -126,9 +129,11 @@ def main(geotiff, name, targets, centre, standardise, onehot,
             cluster.execute("x = parallel.standardise(x, sd)")
     
     #We have all the information we need, now build the transform
+    log.info("Constructing feature transformation function")
     f = partial(extract_transform, patchsize=patchsize, targets=targets, 
                 x_set=x_sets, mean=mean, sd=sd)
 
+    log.info("Applying transform across nodes")
     # Apply the transformation function
     cluster.push({"f":f, "featurename":name, "outputdir":outputdir})
     cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")

@@ -127,7 +127,8 @@ def values_from_hdf(filename, field):
 
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
-    y_arrays = np.array_split(np.arange(npixels), nchunks)
+    # plus one for exclusive upper range
+    y_arrays = np.array_split(np.arange(npixels+1), nchunks)
     y_bounds = []
     # construct the overlap
     for s in y_arrays:

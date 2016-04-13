@@ -31,46 +31,6 @@ def direct_view(profile, nchunks):
         c.execute(cmd, targets=i)
     return c
 
-def __load_hdf5(infiles):
-    for filename in infiles:
-        data_list = []
-        with hdf.open_file(filename, mode='r') as f:
-            data = f.root.features[:]
-            mask = f.root.mask[:]
-            a = np.ma.masked_array(data=data, mask=mask)
-            data_list.append(a)
-        all_data = np.concatenate(data_list, axis=1)
-        return all_data
-
-def __load_image(image_object):
-    return image_object.data()
-
-def data_dict(reference_dict, chunk_indices):
-    """
-    we load references to the data into each node, this function runs
-    on the node to actually load the data itself.
-    """
-    multi_hdf5_type = [type(k) is list for k in reference_dict.values()]
-    is_hdf5 = np.all(np.array(multi_hdf5_type))
-    data_dict = {}
-    for i in chunk_indices:
-        inobj = reference_dict[i]
-        data_dict[i] = __load_hdf5(inobj) if is_hdf5 else __load_image(inobj) 
-    return data_dict
-
-
-def data_vector(data_dict):
-    indices = sorted(data_dict.keys())
-    in_d = []
-    for i in indices:
-        if data_dict[i].ndim == 3:
-            x = data_dict[i].reshape((-1, data_dict[i].shape[2]))
-            in_d.append(x)
-        else:
-            in_d.append(data_dict[i])
-    x = np.ma.concatenate(in_d, axis=0)
-    return x
-
 def write_data(data_dict, transform, feature_name, output_dir):
     filenames = []
     for i in data_dict:
@@ -78,8 +38,7 @@ def write_data(data_dict, transform, feature_name, output_dir):
         feature_vector = transform(data)
         filename = feature_name + "_{}.hdf5".format(i)
         full_path = os.path.join(output_dir, filename)
-        feature.output_features(feature_vector.data, feature_vector.mask,
-                                full_path)
+        feature.output_features(feature_vector, full_path)
         filenames.append(full_path)
     return filenames
 
