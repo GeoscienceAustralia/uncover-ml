@@ -188,7 +188,7 @@ class Image:
 
         # Calculate the new values for resolution and bounding box
         self._offset = np.array([xmin, ymin])
-        self.resolution = (xmax - xmin, ymax - ymin)
+        self.resolution = (xmax - xmin, ymax - ymin, self._full_res[2])
         chunk_xy = np.array([[xmin, ymin], [xmax + 1, ymax + 1]])
         ((lonmin, lat0), (lonmax, lat1)) = self.pix2latlon(chunk_xy,
                                                            centres=False)

@@ -33,34 +33,6 @@ def output_features(feature_vector, mask_vector, outfile):
     h5file.root.mask[:] = mask_vector
     h5file.close()
 
-def input_features(infile):
-    """
-    Reads a vector of features out from a standard HDF5 format. The function
-    assumes the file it is reading was written by output_features
-
-    Parameters
-    ----------
-        infile: path
-            The name of the input file
-    Returns
-    -------
-        data: array
-            A 2D numpy array of shape (nPoints, nDims) of type float
-    """
-    with hdf.open_file(infile, mode='r') as f:
-        data = f.root.features[:]
-    return data
-
-def transform(x, x_mask):
-    return x.flatten(), x_mask.flatten()
-
-def transform(img, img_mask, mean, var, onehot):
-    
-    x_m = x - mean if mean is not None else x
-    x_v = x_m/var if var is not None else x_m
-    return x_v
-
-
 def patches_from_image(image, patchsize, targets=None):
     """
     Pulls out masked patches from a geotiff, either everywhere or 
@@ -91,13 +63,4 @@ def patches_from_image(image, patchsize, targets=None):
     mask_data = np.array(list(patch_mask), dtype=bool)
 
     return patch_data, mask_data
-
-
-    # transformed_data = [transform(x,m) for x,m in zip(patches, patch_mask)]
-    # t_patches, t_mask = zip(*transformed_data)
-    # features = np.array(t_patches, dtype=float)
-    # feature_mask = np.array(t_mask, dtype=bool)
-    # filename = os.path.join(output_dir,
-    #                         name + "_{}.hdf5".format(image.chunk_idx))
-    # output_features(features, feature_mask, filename)
 

@@ -64,21 +64,23 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
         sys.exit(-1)
         
     # build the images
-    filename_chunks = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_chunks)
+    filename_dict = geoio.files_by_chunk(full_filenames)
+    nchunks = len(filename_dict)
     
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"chunk_dict":filename_chunks})
-    cluster.execute("data = parallel.load_and_cat(chunk_indices, chunk_dict)")
+    cluster.push({"reference_dict":filename_dict})
+    cluster.execute("data_dict = parallel.data_dict(reference_dict, chunk_indices)")
+    cluster.execute("x = parallel.data_vector(data_dict)")
     
-    #create a simple per-node vector for easy statistics
-    cluster.execute("x = parallel.merge_clusters(data, chunk_indices)")
+    # Get count data
     cluster.execute("x_n = parallel.node_count(x)")
-    x_n = np.sum(np.array(cluster.pull('x_n'),dtype=float))
+    x_n = np.sum(np.array(cluster.pull('x_n'),dtype=float), axis=0)
+    log.info("Total input dimensionality: {}".format(x_n.shape[0]))
+
 
     eigvecs = None
     if whiten is True:
@@ -86,12 +88,14 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
         outer = np.sum(np.array(cluster.pull('x_outer')),axis=0)
         cov = outer/x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
+        log.info("Whitening and keeping {} dimensions".format(
+            int(x_n.shape[0]*featurefraction)))
 
     #We have all the information we need, now build the transform
     f = partial(transform, eigs=eigvecs, fraction=featurefraction)
 
     # Apply the transformation function
     cluster.push({"f":f, "featurename":featurename, "outputdir":outputdir})
-    cluster.execute("parallel.write_data(data, f, featurename, outputdir)")
+    cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
     sys.exit(0)
 

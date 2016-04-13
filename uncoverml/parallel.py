@@ -6,6 +6,7 @@ import ipyparallel as ipp
 from uncoverml import feature
 import logging
 import signal
+import tables as hdf
 
 log = logging.getLogger(__name__)
 
@@ -30,59 +31,50 @@ def direct_view(profile, nchunks):
         c.execute(cmd, targets=i)
     return c
 
-# def load_and_cat(chunk_indices, chunk_dict):
-#     """
-#     loads the data and concatenates it by dimension
+def __load_hdf5(infiles):
+    for filename in infiles:
+        data_list = []
+        with hdf.open_file(filename, mode='r') as f:
+            data = f.root.features[:]
+            mask = f.root.mask[:]
+            a = np.ma.masked_array(data=data, mask=mask)
+            data_list.append(a)
+        all_data = np.concatenate(data_list, axis=1)
+        return all_data
 
-#     Parameters 
-#     ==========
-#         chunk_indices: the chunks to load
-#         chunk_dict: dictionary of index keys and filename values
-#     """
-#     data = {}
-#     for k in chunk_indices:
-#         data[k] = np.concatenate([feature.input_features(f) 
-#                                   for f in chunk_dict[k]], axis=1)
-#     return data
+def __load_image(image_object):
+    return image_object.data()
 
-# def merge_clusters(data_dict, chunk_indices):
-#     """
-#     simplifies a lot of processes by concatenating the multiple chunks
-#     into a single vector per-node
-#     """
-#     x = np.concatenate([data_dict[i] for i in chunk_indices],axis=0)
-#     return x
-
-def node_load_geotiff(filename, chunk_indices):
-    pass
-
-def node_load_hdf5(filenames, chunk_indices):
-    pass
-
-def all_image_data(image_dict, chunk_indices):
+def data_dict(reference_dict, chunk_indices):
     """
-    loads and concatenates a masked array containing all data
-    on a particular node. For the purposes of computing statistics only.
-    Not used in final output
+    we load references to the data into each node, this function runs
+    on the node to actually load the data itself.
     """
-    xs = []
-    ms = []
+    multi_hdf5_type = [type(k) is list for k in reference_dict.values()]
+    is_hdf5 = np.all(np.array(multi_hdf5_type))
+    data_dict = {}
     for i in chunk_indices:
-        img = image_dict[i].data()
-        xv = img.data.reshape((-1,img.data.shape[2]))
-        mv = img.mask.reshape((-1,img.mask.shape[2]))
-        xs.append(xv)
-        ms.append(mv)
-    x = np.concatenate(xs,axis=0)
-    m = np.concatenate(ms, axis=0)
-    xm = np.ma.masked_array(x, mask=m)
-    return xm
+        inobj = reference_dict[i]
+        data_dict[i] = __load_hdf5(inobj) if is_hdf5 else __load_image(inobj) 
+    return data_dict
 
 
-def write_data(chunk_dict, chunk_indices, transform, feature_name, output_dir):
+def data_vector(data_dict):
+    indices = sorted(data_dict.keys())
+    in_d = []
+    for i in indices:
+        if data_dict[i].ndim == 3:
+            x = data_dict[i].reshape((-1, data_dict[i].shape[2]))
+            in_d.append(x)
+        else:
+            in_d.append(data_dict[i])
+    x = np.ma.concatenate(in_d, axis=0)
+    return x
+
+def write_data(data_dict, transform, feature_name, output_dir):
     filenames = []
-    for i in chunk_indices:
-        data = chunk_dict[i].data()
+    for i in data_dict:
+        data = data_dict[i]
         feature_vector = transform(data)
         filename = feature_name + "_{}.hdf5".format(i)
         full_path = os.path.join(output_dir, filename)

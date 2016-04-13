@@ -72,7 +72,7 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     log.info("Image has datatype {}".format(full_image.dtype))
 
     # build the chunk->image dictionary for the input data
-    image_chunks = {i:geoio.Image(full_filename, i, chunks, patchsize) 
+    image_dict = {i:geoio.Image(full_filename, i, chunks, patchsize) 
                     for i in range(chunks)}
 
 
@@ -81,8 +81,9 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"chunk_dict":image_chunks})
-    cluster.execute("x = parallel.all_image_data(chunk_dict, chunk_indices)")
+    cluster.push({"reference_dict":image_dict})
+    cluster.execute("data_dict = parallel.data_dict(reference_dict, chunk_indices)")
+    cluster.execute("x = parallel.data_vector(data_dict)")
     # get number of points
     cluster.execute("x_count = parallel.node_count(x)")
     x_count = np.sum(np.array(cluster.pull('x_count')), axis=0)
@@ -92,7 +93,7 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     sd = None
     if onehot is True:
         #check data is okay
-        dtype = image_chunks[0].data().dtype
+        dtype = image_dict[0].data().dtype
         if dtype == np.dtype('float32') or dtype == np.dtype('float64'):
             log.fatal("Cannot use one-hot for floating point data!")
             sys.exit(-1)
@@ -130,6 +131,6 @@ def main(geotiff, name, targets, centre, standardise, onehot,
 
     # Apply the transformation function
     cluster.push({"f":f, "featurename":name, "outputdir":outputdir})
-    cluster.execute("parallel.write_data(chunk_dict, chunk_indices, f, featurename, outputdir)")
+    cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
 
     sys.exit(0)
