@@ -54,16 +54,22 @@ def input_features(infile):
 def transform(x, x_mask):
     return x.flatten(), x_mask.flatten()
 
+def transform(img, img_mask, mean, var, onehot):
+    
+    x_m = x - mean if mean is not None else x
+    x_v = x_m/var if var is not None else x_m
+    return x_v
 
-def features_from_image(image, name, transform, patchsize, output_dir,
-                        targets=None):
+
+def patches_from_image(image, patchsize, targets=None):
     """
-    Applies a transform function to a geotiff and writes the output
-    as a feature vector to and HDF5 file.
+    Pulls out masked patches from a geotiff, either everywhere or 
+    at locations specificed by a targets shapefile
     """
     # Get the target points if they exist:
     data_and_mask = image.data()
     data = data_and_mask.data
+    data_dtype = data.dtype
     mask = data_and_mask.mask
     pixels = None
     if targets is not None:
@@ -81,11 +87,17 @@ def features_from_image(image, name, transform, patchsize, output_dir,
         patches = patch.grid_patches(data, patchsize)
         patch_mask = patch.grid_patches(mask, patchsize)
 
-    transformed_data = [transform(x,m) for x,m in zip(patches, patch_mask)]
-    t_patches, t_mask = zip(*transformed_data)
-    features = np.array(t_patches, dtype=float)
-    feature_mask = np.array(t_mask, dtype=bool)
-    filename = os.path.join(output_dir,
-                            name + "_{}.hdf5".format(image.chunk_idx))
-    output_features(features, feature_mask, filename)
+    patch_data = np.array(list(patches), dtype=data_dtype)
+    mask_data = np.array(list(patch_mask), dtype=bool)
+
+    return patch_data, mask_data
+
+
+    # transformed_data = [transform(x,m) for x,m in zip(patches, patch_mask)]
+    # t_patches, t_mask = zip(*transformed_data)
+    # features = np.array(t_patches, dtype=float)
+    # feature_mask = np.array(t_mask, dtype=bool)
+    # filename = os.path.join(output_dir,
+    #                         name + "_{}.hdf5".format(image.chunk_idx))
+    # output_features(features, feature_mask, filename)
 

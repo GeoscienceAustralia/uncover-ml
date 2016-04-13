@@ -170,7 +170,13 @@ class Image:
         # Get the full image details
         with rasterio.open(self.filename, 'r') as geotiff:
             self._full_xrange, self._full_yrange = bounding_box(geotiff)
-            self._full_res = (geotiff.width, geotiff.height)
+            self._full_res = (geotiff.width, geotiff.height, geotiff.count)
+            # we don't support different channels with different dtypes
+            for d in geotiff.dtypes[1:]:
+                if geotiff.dtypes[0] != d:
+                    raise ValueError("No support for multichannel geotiffs "
+                                     "with differently typed channels")
+            self._dtype = np.dtype(geotiff.dtypes[0])
 
         # Build the affine transformation for the FULL image
         self.__Affine()
@@ -202,7 +208,16 @@ class Image:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
+
+        #uniform mask format
+        if d.mask == False:
+            d = np.ma.masked_array(data=d.data, 
+                mask=np.zeros_like(d.data, dtype=bool))
         return d
+
+    @property
+    def dtype(self):
+        return self._dtype
 
     @property
     def xres(self):
@@ -211,6 +226,10 @@ class Image:
     @property
     def yres(self):
         return self.resolution[1]
+
+    @property
+    def channels(self):
+        return self.resolution[2]
 
     @property
     def npoints(self):

@@ -18,39 +18,33 @@ from uncoverml import feature as feat
 
 log = logging.getLogger(__name__)
 
-def transform(x, mean, var, eigs, fraction):
+def transform(x, eigs, fraction):
     
-    x_m = x - mean if mean is not None else x
-    x_v = x_m/var if var is not None else x_m
     if eigs is not None:
         ndims = x.shape[1]
         #make sure 1 <= keepdims <= ndims
         keepdims = min(max(1,int(ndims * fraction)), ndims)
         mat = eigs[:, -keepdims:]
-        x_t = np.dot(x_v, mat)
+        x_t = np.dot(x, mat)
     else:
-        x_t = x_v
+        x_t = x
     return x_t
 
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output", 
            default=df.quiet_logging)
-@cl.option('--centre', is_flag=True, help="Make data have mean zero")
-@cl.option('--standardise', is_flag=True, help="Make all dimensions "
-           "have unit variance")
 @cl.option('--whiten', is_flag=True, help="Data is a unit ball")
 @cl.option('--featurefraction', type=float, default=df.whiten_feature_fraction,
            help="The fraction of dimensions to keep for PCA transformed"
            " (whitened) data. Between 0 and 1. Only applies if --whiten given")
-@cl.option('--standalone', is_flag=True, default=df.standalone)
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use", 
            default=None)
 @cl.argument('featurename', type=str, required=True) 
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
-         centre, standardise, whiten, featurefraction):
+def main(files, featurename, quiet, outputdir, ipyprofile,
+         whiten, featurefraction):
     """ TODO
     """
 
@@ -74,8 +68,7 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
     nchunks = len(filename_chunks)
     
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile, nchunks) \
-        if not standalone else None
+    cluster = parallel.direct_view(ipyprofile, nchunks)
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
@@ -87,22 +80,6 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
     cluster.execute("x_n = parallel.node_count(x)")
     x_n = np.sum(np.array(cluster.pull('x_n'),dtype=float))
 
-    mean = None
-    if centre is True:
-        cluster.execute("x_sum = parallel.node_sum(x)")
-        x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
-        mean = x_sum / x_n
-        cluster.push({"mean":mean})
-        cluster.execute("x = parallel.centre(x, mean)")
-
-    var = None
-    if standardise is True:
-        cluster.execute("x_var = parallel.node_var(x)")
-        x_var = np.sum(np.array(cluster.pull('x_var')),axis=0)
-        var = x_var/x_n
-        cluster.push({"variance":var})
-        cluster.execute("x = parallel.standardise(x, variance)")
-
     eigvecs = None
     if whiten is True:
         cluster.execute("x_outer = parallel.node_outer(x)")
@@ -111,8 +88,7 @@ def main(files, featurename, standalone, quiet, outputdir, ipyprofile,
         eigvals, eigvecs = np.linalg.eigh(cov)
 
     #We have all the information we need, now build the transform
-    f = partial(transform, mean=mean, var=var, eigs=eigvecs,
-                        fraction=featurefraction)
+    f = partial(transform, eigs=eigvecs, fraction=featurefraction)
 
     # Apply the transformation function
     cluster.push({"f":f, "featurename":featurename, "outputdir":outputdir})
