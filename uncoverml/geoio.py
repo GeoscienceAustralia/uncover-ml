@@ -211,7 +211,7 @@ class Image:
         d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
 
         #uniform mask format
-        if d.mask == False:
+        if np.ma.count_masked(d) == 0:
             d = np.ma.masked_array(data=d.data, 
                 mask=np.zeros_like(d.data, dtype=bool))
         return d

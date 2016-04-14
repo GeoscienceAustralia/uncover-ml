@@ -64,6 +64,12 @@ def node_count(x):
     """
     return x.count(axis=0)
 
+def node_full_count(x):
+    """
+    total number of points including missing
+    """
+    return x.shape[0]
+
 def node_sum(x):
     result = np.ma.sum(x,axis=0)
     if np.ma.count_masked(result) != 0:

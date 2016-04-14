@@ -18,7 +18,7 @@ from uncoverml import feature
 
 log = logging.getLogger(__name__)
 
-def extract_transform(data, patchsize, targets, x_set, mean, sd):
+def extract_transform(data, x_set, mean, sd):
     #Flatten patches
     data = data.reshape((data.shape[0], -1))
     if x_set is not None: # one-hot activated!
@@ -28,6 +28,7 @@ def extract_transform(data, patchsize, targets, x_set, mean, sd):
             data = parallel.centre(data, mean)
         if sd is not None:
             data = parallel.standardise(data, sd)
+    data = data.astype(float)
     return data
         
 
@@ -79,7 +80,7 @@ def main(geotiff, name, targets, centre, standardise, onehot,
 
     # Initialise the cluster
     cluster = parallel.direct_view(ipyprofile, chunks)
-    
+
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
     cluster.push({"image_dict":image_dict, "patchsize":patchsize,
@@ -89,11 +90,17 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     cluster.execute("x = feature.image_data_vector(data_dict)")
     # get number of points
     cluster.execute("x_count = parallel.node_count(x)")
+    cluster.execute("x_full = parallel.node_full_count(x)")
     x_count = np.sum(np.array(cluster.pull('x_count')), axis=0)
+    x_full = np.sum(np.array(cluster.pull('x_full')))
+    
+    fraction_missing =(1.0 - np.sum(x_count)/(x_full*x_count.shape[0]))*100.0
+    log.info("Input data is {}% missing".format(fraction_missing))
 
     x_sets = None
     mean = None
     sd = None
+    total_dims = x_count.shape[0]
     if onehot is True:
         #check data is okay
         dtype = image_dict[0].data().dtype
@@ -130,12 +137,14 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     
     #We have all the information we need, now build the transform
     log.info("Constructing feature transformation function")
-    f = partial(extract_transform, patchsize=patchsize, targets=targets, 
-                x_set=x_sets, mean=mean, sd=sd)
+    f = partial(extract_transform, x_set=x_sets, mean=mean, sd=sd)
 
     log.info("Applying transform across nodes")
     # Apply the transformation function
     cluster.push({"f":f, "featurename":name, "outputdir":outputdir})
     cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
+
+    log.info("Output vector has length {}, dimensionality {}".format(
+        full_image.resolution[0] * full_image.resolution[1], total_dims))
 
     sys.exit(0)

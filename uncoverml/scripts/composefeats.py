@@ -14,7 +14,7 @@ import uncoverml.defaults as df
 from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
-from uncoverml import feature as feat
+from uncoverml import feature
 
 log = logging.getLogger(__name__)
 
@@ -70,18 +70,31 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
+    #Local Mode!
+    # data_dict = feature.load_data(filename_dict, range(nchunks))
+    # x = feature.data_vector(data_dict)
+    # x_n = parallel.node_count(x)
+    # x_outer = parallel.node_outer(x)
+    # cov = x_outer/x_n
+    # eigvals, eigvecs = np.linalg.eigh(cov)
+    # f = partial(transform, eigs=eigvecs, fraction=featurefraction)
+    # parallel.write_data(data_dict, f, "localfeature", outputdir)
+
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"reference_dict":filename_dict})
-    cluster.execute("data_dict = parallel.data_dict(reference_dict, chunk_indices)")
-    cluster.execute("x = parallel.data_vector(data_dict)")
-    
+    cluster.push({"filename_dict":filename_dict})
+    cluster.execute("data_dict = feature.load_data(filename_dict, chunk_indices)")
+    cluster.execute("x = feature.data_vector(data_dict)")
+
     # Get count data
     cluster.execute("x_n = parallel.node_count(x)")
+    cluster.execute("x_full = parallel.node_full_count(x)")
     x_n = np.sum(np.array(cluster.pull('x_n'),dtype=float), axis=0)
+    x_full = np.sum(np.array(cluster.pull('x_full')))
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
-
-
+    fraction_missing =(1.0 - np.sum(x_n)/(x_full*x_n.shape[0]))*100.0
+    log.info("Input data is {}% missing".format(fraction_missing))
+    
     eigvecs = None
     if whiten is True:
         cluster.execute("x_outer = parallel.node_outer(x)")

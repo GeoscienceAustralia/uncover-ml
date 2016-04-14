@@ -29,7 +29,10 @@ def output_features(feature_vector, outfile, featname="features"):
 
     if np.ma.isMaskedArray(feature_vector):
         fobj = feature_vector.data
-        fmask = feature_vector.mask
+        if np.ma.count_masked(feature_vector) == 0:
+            fmask = np.zeros(array_shape, dtype=bool)
+        else:
+            fmask = feature_vector.mask
     else:
         fobj = feature_vector
         fmask = np.zeros(array_shape, dtype=bool)
@@ -72,27 +75,22 @@ def patches_from_image(image, patchsize, targets=None):
     return result
 
 def __load_hdf5(infiles):
+    data_list = []
     for filename in infiles:
-        data_list = []
         with hdf.open_file(filename, mode='r') as f:
             data = f.root.features[:]
             mask = f.root.mask[:]
             a = np.ma.masked_array(data=data, mask=mask)
             data_list.append(a)
-        all_data = np.concatenate(data_list, axis=1)
-        return all_data
+    all_data = np.ma.concatenate(data_list, axis=1)
+    return all_data
 
-def load_features(filename_dict, chunk_indices):
+def load_data(filename_dict, chunk_indices):
     """
     we load references to the data into each node, this function runs
     on the node to actually load the data itself.
     """
-    multi_hdf5_type = [type(k) is list for k in reference_dict.values()]
-    is_hdf5 = np.all(np.array(multi_hdf5_type))
-    data_dict = {}
-    for i in chunk_indices:
-        inobj = reference_dict[i]
-        data_dict[i] = __load_hdf5(inobj) if is_hdf5 else __load_image(inobj) 
+    data_dict = {i:__load_hdf5(filename_dict[i]) for i in chunk_indices}
     return data_dict
 
 def load_image_data(image_dict, chunk_indices, patchsize, targets):
@@ -116,15 +114,9 @@ def image_data_vector(image_data):
     x = np.ma.concatenate(data_list, axis=0)
     return x
 
-def data_vector(feature_dict):
+def data_vector(data_dict):
     indices = sorted(data_dict.keys())
-    in_d = []
-    for i in indices:
-        if data_dict[i].ndim == 3:
-            x = data_dict[i].reshape((-1, data_dict[i].shape[2]))
-            in_d.append(x)
-        else:
-            in_d.append(data_dict[i])
+    in_d = [data_dict[i] for i in indices]
     x = np.ma.concatenate(in_d, axis=0)
     return x
 
