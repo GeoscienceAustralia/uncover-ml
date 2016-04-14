@@ -26,6 +26,12 @@ def extract_transform(data, x_set, mean, sd):
     else:
         if mean is not None:
             data = parallel.centre(data, mean)
+
+            # FIXME make this optional and more fully featured
+            # data.data[data.mask] = np.broadcast_to(mean, data.shape)[data.mask]
+            data.data[data.mask] = 0.
+            data.mask = np.zeros_like(data, dtype=bool)
+
         if sd is not None:
             data = parallel.standardise(data, sd)
     data = data.astype(float)
@@ -73,6 +79,7 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     full_image = geoio.Image(full_filename)
     log.info("Image has resolution {}".format(full_image.resolution))
     log.info("Image has datatype {}".format(full_image.dtype))
+    log.info("Image missing value: {}".format(full_image.nodata_value))
 
     # build the chunk->image dictionary for the input data
     image_dict = {i:geoio.Image(full_filename, i, chunks, patchsize) 

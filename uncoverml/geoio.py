@@ -172,6 +172,7 @@ class Image:
         with rasterio.open(self.filename, 'r') as geotiff:
             self._full_xrange, self._full_yrange = bounding_box(geotiff)
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
+            self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
             for d in geotiff.dtypes[1:]:
                 if geotiff.dtypes[0] != d:
@@ -208,13 +209,17 @@ class Image:
         with rasterio.open(self.filename, 'r') as geotiff:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
-        d = np.transpose(d, [2, 1, 0])  # Transpose and channels at back
+        d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
 
         #uniform mask format
         if np.ma.count_masked(d) == 0:
             d = np.ma.masked_array(data=d.data, 
                 mask=np.zeros_like(d.data, dtype=bool))
         return d
+
+    @property
+    def nodata_value(self):
+        return self._nodata_value
 
     @property
     def dtype(self):

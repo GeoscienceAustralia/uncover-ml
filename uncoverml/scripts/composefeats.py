@@ -18,15 +18,15 @@ from uncoverml import feature
 
 log = logging.getLogger(__name__)
 
-def transform(x, eigs, fraction):
+def transform(x, eigvecs, eigvals, fraction):
     
-    if eigs is not None:
+    if eigvecs is not None:
         ndims = x.shape[1]
         #make sure 1 <= keepdims <= ndims
         keepdims = min(max(1,int(ndims * fraction)), ndims)
-        mat = eigs[:, -keepdims:]
-        #TODO this is shite
-        x_t = np.ma.dot(x, mat)
+        mat = eigvecs[:, -keepdims:]
+        vec = eigvals[-keepdims:]
+        x_t = np.ma.dot(x, mat) / np.sqrt(vec)
     else:
         x_t = x
     return x_t
@@ -97,6 +97,7 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     log.info("Input data is {}% missing".format(fraction_missing))
     
     eigvecs = None
+    eigvals = None
     if whiten is True:
         cluster.execute("x_outer = parallel.node_outer(x)")
         outer = np.sum(np.array(cluster.pull('x_outer')),axis=0)
@@ -106,7 +107,8 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
             int(x_n.shape[0]*featurefraction)))
 
     #We have all the information we need, now build the transform
-    f = partial(transform, eigs=eigvecs, fraction=featurefraction)
+    f = partial(transform, eigvecs=eigvecs, eigvals=eigvals,
+                fraction=featurefraction)
 
     # Apply the transformation function
     cluster.push({"f":f, "featurename":featurename, "outputdir":outputdir})

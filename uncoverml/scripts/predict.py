@@ -8,6 +8,7 @@ import sys
 import os.path
 import pickle
 import click as cl
+from functools import partial
 # import numpy as np
 
 import uncoverml.defaults as df
@@ -15,6 +16,12 @@ from uncoverml import geoio, parallel
 # from uncoverml.validation import input_cvindex
 
 log = logging.getLogger(__name__)
+
+
+# Apply the prediction to the data
+def predict(data, model):
+    # FIXME deal with missing values (mask)
+    return model.predict(data.data)
 
 
 # TODO: Get this working with a cvindex file
@@ -55,8 +62,8 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
         model = pickle.load(f)
 
     # build the images
-    filename_chunks = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_chunks)
+    filename_dict = geoio.files_by_chunk(full_filenames)
+    nchunks = len(filename_dict)
 
     # Optionally subset the data for cross validation
     # TODO
@@ -68,12 +75,17 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"chunk_dict": filename_chunks})
-    cluster.execute("data = parallel.load_and_cat(chunk_indices, "
-                    " chunk_dict)")
+    cluster.push({"filename_dict":filename_dict})
+    cluster.execute("data_dict = feature.load_data(filename_dict, chunk_indices)")
 
-    # Apply the prediction to the data
-    cluster.push({"model": model, "targetname": predictname,
-                  "outputdir": outputdir})
-    cluster.execute("parallel.write_predict(data, model, targetname, "
-                    "outputdir)")
+
+    f = partial(predict, model=model)
+
+    cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir})
+    cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
+    sys.exit(0)
+
+    # cluster.push({"model": model, "targetname": predictname,
+    #               "outputdir": outputdir})
+    # cluster.execute("parallel.write_predict(data, model, targetname, "
+    #                 "outputdir)")
