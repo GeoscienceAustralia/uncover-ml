@@ -47,6 +47,10 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
     if not files_ok:
         log.fatal("Input file indices invalid!")
         sys.exit(-1)
+    
+    # build the images
+    filename_dict = geoio.files_by_chunk(full_filenames)
+    nchunks = len(filename_dict)
 
     # Parse algorithm
     if algorithm not in models.modelmaps:
@@ -64,9 +68,10 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         y = f.root.targets.read()
 
     # Read ALL the features in here, and learn on a single machine
-    # FIXME?
-    filename_chunks = geoio.files_by_chunk(full_filenames)
-    X, mask = feature.cat_chunks(filename_chunks)
+    data_dict = feature.load_data(filename_dict, range(nchunks))
+    x = feature.data_vector(data_dict)
+    X = x.data
+    mask = x.mask
 
     if np.any(mask):
         raise RuntimeError("Cannot learn with missing data!")

@@ -121,20 +121,3 @@ def data_vector(data_dict):
     return x
 
 
-def cat_chunks(filename_chunks):
-
-    feats = []
-    masks = []
-    for i, flist in filename_chunks.items():
-        feat = []
-        mask = []
-        for f in flist:
-            f, m = input_features(f)
-            feat.append(f)
-            mask.append(m)
-        feats.append(np.hstack(feat))
-        masks.append(np.hstack(mask))
-
-    X = np.vstack(feats)
-    M = np.vstack(masks)
-    return X, M
