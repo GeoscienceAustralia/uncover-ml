@@ -25,7 +25,8 @@ def transform(x, eigs, fraction):
         #make sure 1 <= keepdims <= ndims
         keepdims = min(max(1,int(ndims * fraction)), ndims)
         mat = eigs[:, -keepdims:]
-        x_t = np.dot(x, mat)
+        #TODO this is shite
+        x_t = np.ma.dot(x, mat)
     else:
         x_t = x
     return x_t
