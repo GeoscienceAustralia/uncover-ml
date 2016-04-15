@@ -23,17 +23,10 @@ def extract_transform(data, x_set, mean, sd):
     data = data.reshape((data.shape[0], -1))
     if x_set is not None: # one-hot activated!
         data = parallel.one_hot(data, x_set)
-    else:
-        if mean is not None:
-            data = parallel.centre(data, mean)
-
-            # FIXME make this optional and more fully featured
-            # data.data[data.mask] = np.broadcast_to(mean, data.shape)[data.mask]
-            data.data[data.mask] = 0.
-            data.mask = np.zeros_like(data, dtype=bool)
-
-        if sd is not None:
-            data = parallel.standardise(data, sd)
+    if mean is not None:
+        data = parallel.centre(data, mean)
+    if sd is not None:
+        data = parallel.standardise(data, sd)
     data = data.astype(float)
     return data
         
@@ -53,8 +46,8 @@ def extract_transform(data, x_set, mean, sd):
 @cl.option('--standardise', is_flag=True, help="Make all dimensions "
            "have unit variance")
 @cl.option('--onehot', is_flag=True, help="Produce a one-hot encoding for "
-           "each channel in the data. Only works for non-float values. "
-           "Implies --centre and --standardise (ie uses -0.5 and 0.5)")
+           "each channel in the data. Ignored for float-valued data. "
+           "Uses -0.5 and 0.5)")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use", 
            default=None)
@@ -95,6 +88,34 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     cluster.execute("data_dict = feature.load_image_data( "
                     "image_dict, chunk_indices, patchsize, targets)")
     cluster.execute("x = feature.image_data_vector(data_dict)")
+
+    x_sets = None
+    if onehot is True:
+        #check data is okay
+        dtype = full_image.dtype
+        if dtype == np.dtype('float32') or dtype == np.dtype('float64'):
+            log.warn("Cannot use one-hot for floating point data -- ignoring")
+            onehot = False
+        else:
+            cluster.execute("x_set = parallel.node_sets(x)")
+            all_x_sets = cluster.pull('x_set')
+            per_dim = zip(*all_x_sets)
+            potential_x_sets = [np.unique(np.concatenate(k,axis=0)) for k in per_dim]
+            total_dims = np.sum([len(k) for k in potential_x_sets])
+            log.info("Total features from one-hot encoding: {}".format(
+                total_dims))
+            if total_dims > df.max_onehot_dims:
+                log.warn("Too many distinct values for one-hot encoding."
+                          " If you're sure increase max value in default file.")
+                onehot = False
+            else:
+                # We'll actually do the one-hot now
+                log.info("One-hot encoding data")
+                x_sets = potential_x_sets
+                cluster.push({"x_sets":x_sets})
+                cluster.execute("x = parallel.one_hot(x, x_sets)")
+                log.info("Data successfully one-hot encoded")
+
     # get number of points
     cluster.execute("x_count = parallel.node_count(x)")
     cluster.execute("x_full = parallel.node_full_count(x)")
@@ -103,44 +124,25 @@ def main(geotiff, name, targets, centre, standardise, onehot,
     
     fraction_missing =(1.0 - np.sum(x_count)/(x_full*x_count.shape[0]))*100.0
     log.info("Input data is {}% missing".format(fraction_missing))
-
-    x_sets = None
     mean = None
     sd = None
     total_dims = x_count.shape[0]
-    if onehot is True:
-        #check data is okay
-        dtype = image_dict[0].data().dtype
-        if dtype == np.dtype('float32') or dtype == np.dtype('float64'):
-            log.fatal("Cannot use one-hot for floating point data!")
-            sys.exit(-1)
-        cluster.execute("x_set = parallel.node_sets(x)")
-        all_x_sets = cluster.pull('x_set')
-        per_dim = zip(*all_x_sets)
-        x_sets = [np.unique(np.concatenate(k,axis=0)) for k in per_dim]
-        total_dims = np.sum([len(k) for k in x_sets])
-        log.info("Total features from one-hot encoding: {}".format(
-            total_dims))
-        if total_dims > df.max_onehot_dims:
-            log.fatal("Too many distinct values for one-hot encoding."
-                      " If you're sure increase max value in default file.")
-            sys.exit(-1)
-    else:
-        if centre is True:
-            cluster.execute("x_sum = parallel.node_sum(x)")
-            x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
-            mean = x_sum / x_count
-            log.info("Subtracting global mean {}".format(mean))
-            cluster.push({"mean":mean})
-            cluster.execute("x = parallel.centre(x, mean)")
+        
+    if centre is True:
+        cluster.execute("x_sum = parallel.node_sum(x)")
+        x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
+        mean = x_sum / x_count
+        log.info("Subtracting global mean {}".format(mean))
+        cluster.push({"mean":mean})
+        cluster.execute("x = parallel.centre(x, mean)")
 
-        if standardise is True:
-            cluster.execute("x_var = parallel.node_var(x)")
-            x_var = np.sum(np.array(cluster.pull('x_var')),axis=0)
-            sd = np.sqrt(x_var/x_count)
-            log.info("Dividing through global standard deviation {}".format(sd))
-            cluster.push({"sd":sd})
-            cluster.execute("x = parallel.standardise(x, sd)")
+    if standardise is True:
+        cluster.execute("x_var = parallel.node_var(x)")
+        x_var = np.sum(np.array(cluster.pull('x_var')),axis=0)
+        sd = np.sqrt(x_var/x_count)
+        log.info("Dividing through global standard deviation {}".format(sd))
+        cluster.push({"sd":sd})
+        cluster.execute("x = parallel.standardise(x, sd)")
     
     #We have all the information we need, now build the transform
     log.info("Constructing feature transformation function")

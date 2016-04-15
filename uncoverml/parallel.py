@@ -104,6 +104,7 @@ def standardise(x, x_sd):
     return x / x_sd[np.newaxis, :]
 
 def one_hot(x, x_set):
+    assert x.data.shape == x.mask.shape
     out_dim_sizes = np.array([k.shape[0] for k in x_set])
     #The index points in the output array for each input dimension
     indices = np.hstack((np.array([0]), np.cumsum(out_dim_sizes)))

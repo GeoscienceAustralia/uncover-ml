@@ -112,6 +112,9 @@ def image_data_vector(image_data):
         d = image_data[i]
         data_list.append(d.reshape((d.shape[0],-1)))
     x = np.ma.concatenate(data_list, axis=0)
+    if np.ma.count_masked(x) == 0 and np.isscalar(x.mask):
+        x.mask = np.zeros_like(x,dtype=bool)
+
     return x
 
 def data_vector(data_dict):
