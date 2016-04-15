@@ -18,15 +18,11 @@ from uncoverml import feature
 
 log = logging.getLogger(__name__)
 
-def extract_transform(data, x_set, mean, sd):
+def extract_transform(data, x_set):
     #Flatten patches
     data = data.reshape((data.shape[0], -1))
     if x_set is not None: # one-hot activated!
         data = parallel.one_hot(data, x_set)
-    if mean is not None:
-        data = parallel.centre(data, mean)
-    if sd is not None:
-        data = parallel.standardise(data, sd)
     data = data.astype(float)
     return data
         
@@ -42,18 +38,15 @@ def extract_transform(data, x_set, mean, sd):
 @cl.option('--targets', type=cl.Path(exists=True), help="Optional hdf5 file "
            "for providing target points at which to evaluate feature. See "
            "maketargets for creating an appropriate target files.")
-@cl.option('--centre', is_flag=True, help="Make data have mean zero")
-@cl.option('--standardise', is_flag=True, help="Make all dimensions "
-           "have unit variance")
 @cl.option('--onehot', is_flag=True, help="Produce a one-hot encoding for "
            "each channel in the data. Ignored for float-valued data. "
            "Uses -0.5 and 0.5)")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use", 
            default=None)
-@cl.argument('geotiff', type=cl.Path(exists=True), required=True)
 @cl.argument('name', type=str, required=True)
-def main(geotiff, name, targets, centre, standardise, onehot, 
+@cl.argument('geotiff', type=cl.Path(exists=True), required=True)
+def main(name, geotiff, targets, onehot, 
          chunks, patchsize, quiet, outputdir, ipyprofile):
     """ TODO
     """
@@ -70,6 +63,7 @@ def main(geotiff, name, targets, centre, standardise, onehot,
 
     # Print some helpful statistics about the full image
     full_image = geoio.Image(full_filename)
+    total_dims = full_image.resolution[2]
     log.info("Image has resolution {}".format(full_image.resolution))
     log.info("Image has datatype {}".format(full_image.dtype))
     log.info("Image missing value: {}".format(full_image.nodata_value))
@@ -116,41 +110,15 @@ def main(geotiff, name, targets, centre, standardise, onehot,
                 cluster.execute("x = parallel.one_hot(x, x_sets)")
                 log.info("Data successfully one-hot encoded")
 
-    # get number of points
-    cluster.execute("x_count = parallel.node_count(x)")
-    cluster.execute("x_full = parallel.node_full_count(x)")
-    x_count = np.sum(np.array(cluster.pull('x_count')), axis=0)
-    x_full = np.sum(np.array(cluster.pull('x_full')))
-    
-    fraction_missing =(1.0 - np.sum(x_count)/(x_full*x_count.shape[0]))*100.0
-    log.info("Input data is {}% missing".format(fraction_missing))
-    mean = None
-    sd = None
-    total_dims = x_count.shape[0]
-        
-    if centre is True:
-        cluster.execute("x_sum = parallel.node_sum(x)")
-        x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
-        mean = x_sum / x_count
-        log.info("Subtracting global mean {}".format(mean))
-        cluster.push({"mean":mean})
-        cluster.execute("x = parallel.centre(x, mean)")
-
-    if standardise is True:
-        cluster.execute("x_var = parallel.node_var(x)")
-        x_var = np.sum(np.array(cluster.pull('x_var')),axis=0)
-        sd = np.sqrt(x_var/x_count)
-        log.info("Dividing through global standard deviation {}".format(sd))
-        cluster.push({"sd":sd})
-        cluster.execute("x = parallel.standardise(x, sd)")
     
     #We have all the information we need, now build the transform
     log.info("Constructing feature transformation function")
-    f = partial(extract_transform, x_set=x_sets, mean=mean, sd=sd)
+    f = partial(extract_transform, x_set=x_sets)
 
     log.info("Applying transform across nodes")
     # Apply the transformation function
     cluster.push({"f":f, "featurename":name, "outputdir":outputdir})
+    log.info("Applying final transform and writing output files")
     cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
 
     log.info("Output vector has length {}, dimensionality {}".format(
