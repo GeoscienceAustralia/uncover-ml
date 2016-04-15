@@ -30,6 +30,16 @@ def input_cvindex(cvindex_file, return_lonlat=False):
     return (cv_ind, lonlat) if return_lonlat else cv_ind
 
 
+def chunk_cvindex(cvind, nchunks):
+
+    return np.array_split(cvind, nchunks)
+
+
+# def load_cvindex(cv_chunks, chunk_indices):
+
+#     return {i: cv_chunks[i] for i in chunk_indices}
+
+
 #
 # Data Partitioning
 #

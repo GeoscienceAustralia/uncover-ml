@@ -79,7 +79,6 @@ def main():
         name = path.splitext(path.basename(tif))[0]
         cmd = ["extractfeats", tif, name, "--outputdir", proc_dir, "--chunks",
                "1", "--patchsize", "1"]
-        cmd += ['--centre']
         if standardise:
             cmd += ['--centre', '--standardise']
         cmd += ["--targets", target_hdf]
@@ -97,8 +96,8 @@ def main():
 
     feat_file = path.join(proc_dir, compos_file + "_0.hdf5")
     try_run(cmd)
-    if try_run_checkfile(cmd, feat_file):
-        log.info("Made composite features")
+    # if try_run_checkfile(cmd, feat_file):
+    #     log.info("Made composite features")
 
     # Train the model
     cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
@@ -123,18 +122,16 @@ def main():
     # -------------------------------------------------------------------------
 
     alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
-    cmd = ["predict", "--outputdir", proc_dir, alg_file, feat_file]
+    cmd = ["predict", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
+           alg_file, feat_file]
 
     log.info("Predicting targets.")
     try_run(cmd)
 
-    # TODO Make this part of predict
+    # TODO make a cross val script run this
     pred_file = path.join(proc_dir, "predicted_0.hdf5")
     with tables.open_file(pred_file, mode='r') as f:
-        EY = f.root.features.read()
-    EYs = EY[cv_ind == 0]
-
-    # import IPython; IPython.embed()
+        EYs = f.root.features.read()
 
     # Report score
     # TODO this will be in the validate script --------------------------------
