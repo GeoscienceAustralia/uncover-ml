@@ -13,7 +13,7 @@ from functools import partial
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel
-# from uncoverml.validation import input_cvindex
+from uncoverml.validation import input_cvindex, chunk_cvindex
 
 log = logging.getLogger(__name__)
 
@@ -22,9 +22,6 @@ log = logging.getLogger(__name__)
 def predict(data, model):
     # FIXME deal with missing values (mask)
     return model.predict(data.data)
-
-
-# TODO: Get this working with a cvindex file
 
 
 @cl.command()
@@ -65,27 +62,27 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
     filename_dict = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_dict)
 
-    # Optionally subset the data for cross validation
-    # TODO
-    # if cvindex[0] is not None:
-    #     cv_chunks = np.array_split(input_cvindex(cvindex[0]), nchunks)
-
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"filename_dict":filename_dict})
-    cluster.execute("data_dict = feature.load_data(filename_dict, chunk_indices)")
+    cluster.push({"filename_dict": filename_dict})
 
+    # Optionally subset the data for cross validation
+    if cvindex[0] is not None:
+        cv_chunks = chunk_cvindex(input_cvindex(cvindex[0]) == cvindex[1],
+                                  nchunks)
+        cluster.push({"cv_chunks": cv_chunks})
+        cluster.execute("data_dict = feature.load_cvdata(filename_dict, "
+                        "cv_chunks, chunk_indices)")
+    else:
+        cluster.execute("data_dict = feature.load_data(filename_dict, "
+                        "chunk_indices)")
 
     f = partial(predict, model=model)
 
     cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir})
-    cluster.execute("parallel.write_data(data_dict, f, featurename, outputdir)")
+    cluster.execute("parallel.write_data(data_dict, f, featurename,"
+                    "outputdir)")
     sys.exit(0)
-
-    # cluster.push({"model": model, "targetname": predictname,
-    #               "outputdir": outputdir})
-    # cluster.execute("parallel.write_predict(data, model, targetname, "
-    #                 "outputdir)")

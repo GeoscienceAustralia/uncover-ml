@@ -1,12 +1,8 @@
 import numpy as np
 import os.path
-import time
-import click
 import ipyparallel as ipp
 from uncoverml import feature
 import logging
-import signal
-import tables as hdf
 
 log = logging.getLogger(__name__)
 
@@ -39,21 +35,6 @@ def write_data(data_dict, transform, feature_name, output_dir):
         filename = feature_name + "_{}.hdf5".format(i)
         full_path = os.path.join(output_dir, filename)
         feature.output_features(feature_vector, full_path)
-        filenames.append(full_path)
-    return filenames
-
-
-# this is primarily because we cant pickle closures to use with above func.
-def write_predict(data, model, target_name, output_dir):
-    filenames = []
-
-    for i, d in data.items():
-        # FIXME deal with missing data in d[1]
-        target_vector = model.predict(d[0])
-        filename = target_name + "_{}.hdf5".format(i)
-        full_path = os.path.join(output_dir, filename)
-        feature.output_features(target_vector, full_path,
-                                featname="predictions")
         filenames.append(full_path)
     return filenames
 

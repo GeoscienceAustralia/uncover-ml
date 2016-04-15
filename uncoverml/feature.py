@@ -90,8 +90,15 @@ def load_data(filename_dict, chunk_indices):
     we load references to the data into each node, this function runs
     on the node to actually load the data itself.
     """
-    data_dict = {i:__load_hdf5(filename_dict[i]) for i in chunk_indices}
+    data_dict = {i: __load_hdf5(filename_dict[i]) for i in chunk_indices}
     return data_dict
+
+
+def load_cvdata(filename_dict, cv_chunks, chunk_indices):
+
+    data_dict = load_data(filename_dict, chunk_indices)
+    return {i: d[cv_chunks[i]] for i, d in data_dict.items()}
+
 
 def load_image_data(image_dict, chunk_indices, patchsize, targets):
     """
