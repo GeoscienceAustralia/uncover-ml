@@ -25,6 +25,11 @@ proc_dir = path.join(data_dir, "processed")
 
 # target_var = "Cr_ppm_i_1"
 target_var = "Na_ppm_i_1"
+onehot = True
+patchsize = 0
+whiten = False  # whiten all of the extracted features?
+standardise = True  # standardise all of the extracted features?
+pca_frac = 0.5
 
 target_file = "geochem_sites.shp"
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
@@ -39,16 +44,12 @@ args = {'lenscale': 10., 'lparams': [100.], 'ard': False, 'nbases': 100,
 # algorithm = "approxgp"
 # args = {'lenscale': 10., 'ard': False, 'nbases': 100}
 
-algorithm = "svr"
-args = {'gamma': 1. / 100, 'epsilon': 0.05}
+# algorithm = "svr"
+# args = {'gamma': 1. / 100, 'epsilon': 0.05}
 # args = {'epsilon': 0.05}
 
-# algorithm = "randomforest"
-# args = {'n_estimators': 100}
-
-whiten = True  # whiten all of the extracted features?
-standardise = False  # standardise all of the extracted features?
-pca_frac = 0.1
+algorithm = "randomforest"
+args = {'n_estimators': 100}
 
 removedims = []
 
@@ -77,10 +78,10 @@ def main():
     ffiles = []
     for tif in tifs:
         name = path.splitext(path.basename(tif))[0]
-        cmd = ["extractfeats", tif, name, "--outputdir", proc_dir, "--chunks",
-               "1", "--patchsize", "1"]
-        if standardise:
-            cmd += ['--centre', '--standardise']
+        cmd = ["extractfeats", name, tif, "--outputdir", proc_dir, "--chunks",
+               "1", "--patchsize", str(patchsize)]
+        if onehot:
+            cmd += ['--onehot']
         cmd += ["--targets", target_hdf]
 
         msg = "Processing {}.".format(path.basename(tif))
@@ -89,15 +90,15 @@ def main():
         ffiles.append(ffile)
 
     # Compose individual image features into single feature vector
-    cmd = ["composefeats"]
+    cmd = ["composefeats", '--impute']
+    if standardise:
+        cmd += ['--centre', '--standardise']
     if whiten:
         cmd += ['--whiten', '--featurefraction', str(pca_frac)]
     cmd += ['--outputdir', proc_dir, compos_file] + ffiles
 
     feat_file = path.join(proc_dir, compos_file + "_0.hdf5")
     try_run(cmd)
-    # if try_run_checkfile(cmd, feat_file):
-    #     log.info("Made composite features")
 
     # Train the model
     cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
@@ -108,19 +109,6 @@ def main():
     try_run(cmd)
 
     # Test the model
-    # TODO this will be in the predict script ---------------------------------
-
-    # Divide the features into cross-val folds
-    with tables.open_file(cv_file, mode='r') as f:
-        cv_ind = f.root.FoldIndices.read().flatten()
-
-    with tables.open_file(target_hdf, mode='r') as f:
-        Y = f.root.targets.read()
-
-    Ys = Y[cv_ind == 0]
-
-    # -------------------------------------------------------------------------
-
     alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
     cmd = ["predict", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
            alg_file, feat_file]
@@ -135,6 +123,16 @@ def main():
 
     # Report score
     # TODO this will be in the validate script --------------------------------
+
+    # Divide the features into cross-val folds
+    with tables.open_file(cv_file, mode='r') as f:
+        cv_ind = f.root.FoldIndices.read().flatten()
+
+    with tables.open_file(target_hdf, mode='r') as f:
+        Y = f.root.targets.read()
+
+    Ys = Y[cv_ind == 0]
+
     Rsquare = r2_score(Ys, EYs)
 
     log.info("Done! R-square = {}".format(Rsquare))
@@ -145,6 +143,7 @@ class PipeLineFailure(Exception):
 
 
 def try_run_checkfile(cmd, checkfile, premsg=None):
+    # TODO make this a proper memoize function?
 
     if not path.exists(checkfile):
         if premsg:
