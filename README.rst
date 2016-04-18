@@ -21,8 +21,8 @@ Quickstart
 ----------
 
 Before you start, make sure your system has the following packages installed:
-- gdal (libgdal-dev)
-- zeromq (libzmq-dev)
+ * gdal (libgdal-dev)
+ * zeromq (libzmq-dev)
 
 To install, simply run ``setup.py``:
 
