@@ -60,5 +60,6 @@ output/
 # Data
 *.hdf5
 *.tif
+*.bin
 data/
 
