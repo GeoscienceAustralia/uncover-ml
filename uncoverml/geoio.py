@@ -15,7 +15,7 @@ def file_indices_okay(filenames):
     basenames = [os.path.splitext(os.path.basename(k))[0] for k in filenames]
 
     # file_0 -> [file,0]
-    base_and_idx = [k.rsplit('_', maxsplit=1) for k in basenames]
+    base_and_idx = [k.rsplit('_', 1) for k in basenames]
     bases = set([k[0] for k in base_and_idx])
     log.info("Input file sets: {}".format(set(bases)))
 
@@ -56,7 +56,7 @@ def files_by_chunk(filenames):
     transform = lambda x: os.path.splitext(os.path.basename(x))[0]
     sorted_filenames = sorted(filenames, key=transform)
     basenames = [transform(k) for k in sorted_filenames]
-    indices = [int(k.rsplit('_', maxsplit=1)[1]) for k in basenames]
+    indices = [int(k.rsplit('_', 1)[1]) for k in basenames]
     d = {i: [] for i in set(indices)}
     for i, f in zip(indices, sorted_filenames):
         d[i].append(f)
