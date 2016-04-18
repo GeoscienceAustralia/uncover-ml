@@ -12,7 +12,7 @@ from functools import partial
 # import numpy as np
 
 import uncoverml.defaults as df
-from uncoverml import geoio, parallel
+from uncoverml import geoio, parallel, feature
 from uncoverml.validation import input_cvindex, chunk_cvindex
 
 log = logging.getLogger(__name__)
@@ -62,6 +62,9 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
     filename_dict = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_dict)
 
+    # Get the extra hdf5 attributes
+    eff_shape, eff_bbox = feature.load_attributes(filename_dict)
+
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
@@ -82,7 +85,8 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
 
     f = partial(predict, model=model)
 
-    cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir})
+    cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir,
+                  "shape": eff_shape, "bbox": eff_bbox})
     cluster.execute("parallel.write_data(data_dict, f, featurename,"
-                    "outputdir)")
+                    "outputdir, shape, bbox)")
     sys.exit(0)

@@ -5,7 +5,8 @@ from uncoverml import geoio
 from uncoverml import patch
 
 
-def output_features(feature_vector, outfile, featname="features"):
+def output_features(feature_vector, outfile, featname="features",
+                    shape=None, bbox=None):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -20,6 +21,10 @@ def output_features(feature_vector, outfile, featname="features"):
             The name of the output file
         featname: str, optional
             The name of the features.
+        shape: tuple, optional
+            The original shape of the feature for reproducing an image
+        bbox: ndarray, optional
+            The bounding box of the original data for reproducing an image
     """
     h5file = hdf.open_file(outfile, mode='w')
 
@@ -44,6 +49,14 @@ def output_features(feature_vector, outfile, featname="features"):
                          atom=hdf.Float64Atom(), shape=array_shape, obj=fobj)
     h5file.create_carray("/", "mask", filters=filters,
                          atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
+
+    if shape is not None:
+        h5file.getNode('/'+featname).attrs.shape = shape
+        h5file.getNode('/'+featname).attrs.bbox = bbox
+    if bbox is not None:
+        h5file.root.mask.attrs.shape = shape
+        h5file.root.mask.attrs.bbox = bbox
+
     h5file.close()
 
 
@@ -89,6 +102,19 @@ def __load_hdf5(infiles):
             data_list.append(a)
     all_data = np.ma.concatenate(data_list, axis=1)
     return all_data
+
+
+def load_attributes(filename_dict):
+    # Only bother loading the first one as they're all the same for now
+    fname = filename_dict[0][0]
+    shape = None
+    bbox = None
+    with hdf.open_file(fname, mode='r') as f:
+        if 'shape' in f.root.features.attrs:
+            shape = f.root.features.attrs.shape
+        if 'bbox' in f.root.features.attrs:
+            bbox = f.root.features.attrs.bbox
+    return shape, bbox
 
 
 def load_data(filename_dict, chunk_indices):

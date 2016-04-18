@@ -12,6 +12,7 @@ import uncoverml.defaults as df
 from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
+from uncoverml import feature
 import pickle
 
 log = logging.getLogger(__name__)
@@ -137,6 +138,9 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     filename_dict = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_dict)
 
+    # Get attribs if they exist
+    eff_shape, eff_bbox = feature.load_attributes(filename_dict)
+
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
@@ -168,9 +172,10 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     f = partial(transform, **f_args)
 
     # Apply the transformation function
-    cluster.push({"f": f, "featurename": featurename, "outputdir": outputdir})
+    cluster.push({"f": f, "featurename": featurename, "outputdir": outputdir,
+                  "shape": eff_shape, "bbox": eff_bbox})
     log.info("Applying final transform and writing output files")
     cluster.execute("parallel.write_data(data_dict, f, "
-                    "featurename, outputdir)")
+                    "featurename, outputdir, shape, bbox)")
     sys.exit(0)
 

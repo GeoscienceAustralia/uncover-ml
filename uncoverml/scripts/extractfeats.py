@@ -11,6 +11,7 @@ import click as cl
 from uncoverml import geoio
 import uncoverml.defaults as df
 from uncoverml import parallel
+from uncoverml import feature
 import numpy as np
 import sys
 import pickle
@@ -89,10 +90,27 @@ def main(name, geotiff, targets, onehot,
 
     # Print some helpful statistics about the full image
     full_image = geoio.Image(full_filename)
+
     total_dims = full_image.resolution[2]
     log.info("Image has resolution {}".format(full_image.resolution))
     log.info("Image has datatype {}".format(full_image.dtype))
     log.info("Image missing value: {}".format(full_image.nodata_value))
+    
+    # Compute the effective sampled resolution accounting for patchsize
+    eff_shape = None
+    eff_bbox = None
+    if targets is None:
+        start = [patchsize, patchsize]
+        end_p1 = [full_image.xres - patchsize + 1,  # +1 because bbox
+                  full_image.yres - patchsize + 1]  # +1 because bbox
+        xy = np.array([start, end_p1])
+        eff_bbox = full_image.pix2latlon(xy, centres=False)
+        eff_shape = (full_image.xres - 2*patchsize,
+                     full_image.yres - 2*patchsize)
+        log.info("Effective input resolution "
+                 "after patch extraction: {}".format(eff_shape))
+        log.info("Effective bounding box after "
+                 "patch extraction: {}".format(eff_bbox))
 
     # build the chunk->image dictionary for the input data
     image_dict = {i: geoio.Image(full_filename, i, chunks, patchsize)
@@ -136,10 +154,11 @@ def main(name, geotiff, targets, onehot,
 
     log.info("Applying transform across nodes")
     # Apply the transformation function
-    cluster.push({"f": f, "featurename": name, "outputdir": outputdir})
+    cluster.push({"f": f, "featurename": name, "outputdir": outputdir,
+                  "shape": eff_shape, "bbox": eff_bbox})
     log.info("Applying final transform and writing output files")
     cluster.execute("parallel.write_data(data_dict, f, featurename, "
-                    "outputdir)")
+                    "outputdir, shape=shape, bbox=bbox)")
 
     log.info("Output vector has length {}, dimensionality {}".format(
         full_image.resolution[0] * full_image.resolution[1], total_dims))
