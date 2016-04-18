@@ -19,6 +19,8 @@ Contents:
    history
 
    geoio
+   feature
+   parallel
    patch
    models
    validation

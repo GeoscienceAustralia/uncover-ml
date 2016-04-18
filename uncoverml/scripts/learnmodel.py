@@ -42,6 +42,7 @@ modelmaps = {'randomforest': RandomForestRegressor,
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 @cl.argument('targets', type=cl.Path(exists=True))
 def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
+    """ Learn the Parameters of a machine learning model. """
 
     # setup logging
     if quiet is True:

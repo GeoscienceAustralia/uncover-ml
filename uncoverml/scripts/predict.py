@@ -37,6 +37,7 @@ def predict(data, model):
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
+    """ Predict the target values for query data. """
 
     # setup logging
     if quiet is True:

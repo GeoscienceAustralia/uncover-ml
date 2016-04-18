@@ -44,12 +44,10 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'pointspec = uncoverml.scripts.pointspec:main',
+            'maketargets = uncoverml.scripts.maketargets:main',
             'cvindexer = uncoverml.scripts.cvindexer:main',
             'extractfeats = uncoverml.scripts.extractfeats:main',
             'composefeats = uncoverml.scripts.composefeats:main',
-            'uncoverml-worker = uncoverml.scripts.worker:main',
-            'maketargets = uncoverml.scripts.maketargets:main',
             'learnmodel = uncoverml.scripts.learnmodel:main',
             'predict = uncoverml.scripts.predict:main',
             'validatemodel = uncoverml.scripts.validatemodel:main'
