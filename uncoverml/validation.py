@@ -30,14 +30,28 @@ def input_cvindex(cvindex_file, return_lonlat=False):
     return (cv_ind, lonlat) if return_lonlat else cv_ind
 
 
+def output_targets(target, lonlat, outfile):
+
+    with tables.open_file(outfile, 'w') as f:
+        f.create_array("/", "Longitude", obj=lonlat[:, 0])
+        f.create_array("/", "Latitude", obj=lonlat[:, 1])
+        f.create_array("/", "targets", obj=target)
+
+
+def input_targets(target_file, return_lonlat=False):
+
+    with tables.open_file(target_file, mode='r') as f:
+        targets = f.root.targets.read().flatten()
+        if return_lonlat:
+            lonlat = np.hstack((f.root.Longitude.read(),
+                                f.root.Latitude.read()))
+
+    return (targets, lonlat) if return_lonlat else targets
+
+
 def chunk_cvindex(cvind, nchunks):
 
     return np.array_split(cvind, nchunks)
-
-
-# def load_cvindex(cv_chunks, chunk_indices):
-
-#     return {i: cv_chunks[i] for i in chunk_indices}
 
 
 #

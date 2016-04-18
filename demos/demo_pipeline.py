@@ -7,14 +7,10 @@ TODO: Replicate this with luigi or joblib
 """
 
 import logging
-import tables
 import json
 from os import path, mkdir
 from glob import glob
 from subprocess import check_call, CalledProcessError
-
-from sklearn.metrics import r2_score
-
 
 log = logging.getLogger(__name__)
 
@@ -23,13 +19,13 @@ log = logging.getLogger(__name__)
 data_dir = path.join(path.expanduser("~"), "data/GA-cover")
 proc_dir = path.join(data_dir, "processed")
 
-# target_var = "Cr_ppm_i_1"
-target_var = "Na_ppm_i_1"
-onehot = True
+target_var = "Cr_ppm_i_1"
+# target_var = "Na_ppm_i_1"
+onehot = False
 patchsize = 0
-whiten = False  # whiten all of the extracted features?
-standardise = True  # standardise all of the extracted features?
-pca_frac = 0.5
+whiten = True  # whiten all of the extracted features?
+standardise = False  # standardise all of the extracted features?
+pca_frac = 0.7
 
 target_file = "geochem_sites.shp"
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
@@ -37,19 +33,21 @@ target_hdf = path.join(proc_dir, "{}_{}.hdf5"
 cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
 compos_file = "composite"
 
-algorithm = "glm"
-args = {'lenscale': 10., 'lparams': [100.], 'ard': False, 'nbases': 100,
-        'use_sgd': True}
+# algorithm = "bayesreg"
+# args = {}
+
+# algorithm = "glm"
+# args = {'lenscale': 10., 'lparams': [100.], 'ard': False, 'nbases': 100,
+#         'use_sgd': True}
 
 # algorithm = "approxgp"
 # args = {'lenscale': 10., 'ard': False, 'nbases': 100}
 
-# algorithm = "svr"
-# args = {'gamma': 1. / 100, 'epsilon': 0.05}
-# args = {'epsilon': 0.05}
+algorithm = "svr"
+args = {'gamma': 1. / 100, 'epsilon': 0.05}
 
-algorithm = "randomforest"
-args = {'n_estimators': 100}
+# algorithm = "randomforest"
+# args = {'n_estimators': 100}
 
 removedims = []
 
@@ -116,26 +114,11 @@ def main():
     log.info("Predicting targets.")
     try_run(cmd)
 
-    # TODO make a cross val script run this
-    pred_file = path.join(proc_dir, "predicted_0.hdf5")
-    with tables.open_file(pred_file, mode='r') as f:
-        EYs = f.root.features.read()
-
     # Report score
-    # TODO this will be in the validate script --------------------------------
+    cmd = ["validatemodel", "--metric", "r2_score", cv_file, "0", target_hdf,
+           path.join(proc_dir, "predicted_0.hdf5")]
 
-    # Divide the features into cross-val folds
-    with tables.open_file(cv_file, mode='r') as f:
-        cv_ind = f.root.FoldIndices.read().flatten()
-
-    with tables.open_file(target_hdf, mode='r') as f:
-        Y = f.root.targets.read()
-
-    Ys = Y[cv_ind == 0]
-
-    Rsquare = r2_score(Ys, EYs)
-
-    log.info("Done! R-square = {}".format(Rsquare))
+    try_run(cmd)
 
 
 class PipeLineFailure(Exception):

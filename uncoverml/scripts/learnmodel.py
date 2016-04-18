@@ -7,17 +7,27 @@ Learn the Parameters of a machine learning model
 import logging
 import sys
 import os.path
-import tables
 import pickle
 import json
 import click as cl
 import numpy as np
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
 import uncoverml.defaults as df
 from uncoverml import geoio, models, feature
-from uncoverml.validation import input_cvindex
+from uncoverml.validation import input_cvindex, input_targets
+
 
 log = logging.getLogger(__name__)
+
+modelmaps = {'randomforest': RandomForestRegressor,
+             'bayesreg': models.LinearReg,
+             'approxgp': models.ApproxGP,
+             'svr': SVR,
+             'glm': models.GenLinMod
+             }
 
 
 @cl.command()
@@ -27,7 +37,8 @@ log = logging.getLogger(__name__)
            help="Optional cross validation index file and index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--algopts', type=str, default=None)
-@cl.option('--algorithm', type=str, default='bayesreg')
+@cl.option('--algorithm', type=cl.Choice(list(modelmaps.keys())),
+           default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 @cl.argument('targets', type=cl.Path(exists=True))
 def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
@@ -47,13 +58,13 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
     if not files_ok:
         log.fatal("Input file indices invalid!")
         sys.exit(-1)
-    
+
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_dict)
 
     # Parse algorithm
-    if algorithm not in models.modelmaps:
+    if algorithm not in modelmaps:
         log.fatal("Invalid algorthm specified")
         sys.exit(-1)
 
@@ -64,8 +75,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         args = {}
 
     # Load targets file
-    with tables.open_file(targets, mode='r') as f:
-        y = f.root.targets.read()
+    y = input_targets(targets)
 
     # Read ALL the features in here, and learn on a single machine
     data_dict = feature.load_data(filename_dict, range(nchunks))
@@ -83,7 +93,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         X = X[cv_ind != cvindex[1]]
 
     # Train the model
-    mod = models.modelmaps[algorithm](**args)
+    mod = modelmaps[algorithm](**args)
     mod.fit(X, y)
 
     # Pickle the model

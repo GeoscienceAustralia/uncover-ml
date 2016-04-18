@@ -6,9 +6,7 @@ Create a cross validation fold index.
 import os
 import sys
 import logging
-import tables
 import click as cl
-import numpy as np
 
 from uncoverml import geoio, validation
 
@@ -39,10 +37,7 @@ def main(targetfile, outfile, folds, quiet):
     if ext == ".shp":
         lonlat = geoio.points_from_shp(targetfile)
     elif (ext == ".hdf5") or (ext == ".hdf"):
-        with tables.open_file(targetfile, mode='r') as f:
-            Longitude = [l for l in f.root.Longitude]
-            Latitude = [l for l in f.root.Latitude]
-        lonlat = np.array([Longitude, Latitude]).T
+        _, lonlat = validation.input_targets(targetfile, return_lonlats=True)
     else:
         log.fatal("Invalid file type, {}, need *.shp or *.hdf(5)".format(ext))
         sys.exit(-1)

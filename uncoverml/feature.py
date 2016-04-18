@@ -1,4 +1,3 @@
-import os.path
 import numpy as np
 import tables as hdf
 
@@ -43,9 +42,10 @@ def output_features(feature_vector, outfile, featname="features"):
                          atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
     h5file.close()
 
+
 def patches_from_image(image, patchsize, targets=None):
     """
-    Pulls out masked patches from a geotiff, either everywhere or 
+    Pulls out masked patches from a geotiff, either everywhere or
     at locations specificed by a targets shapefile
     """
     # Get the target points if they exist:
@@ -74,16 +74,22 @@ def patches_from_image(image, patchsize, targets=None):
     result = np.ma.masked_array(data=patch_data, mask=mask_data)
     return result
 
+
 def __load_hdf5(infiles):
     data_list = []
     for filename in infiles:
         with hdf.open_file(filename, mode='r') as f:
             data = f.root.features[:]
-            mask = f.root.mask[:]
+            if 'mask' in f.root:
+                mask = f.root.mask[:]
+            else:
+                mask = np.zeros_like(data, dtype=bool)
             a = np.ma.masked_array(data=data, mask=mask)
             data_list.append(a)
-    all_data = np.ma.concatenate(data_list, axis=1)
+    axis = 1 if data_list[0].ndim >= 2 else 0
+    all_data = np.ma.concatenate(data_list, axis=axis)
     return all_data
+
 
 def load_data(filename_dict, chunk_indices):
     """
@@ -129,5 +135,3 @@ def data_vector(data_dict):
     in_d = [data_dict[i] for i in indices]
     x = np.ma.concatenate(in_d, axis=0)
     return x
-
-

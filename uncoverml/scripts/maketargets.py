@@ -6,10 +6,10 @@ Make output target files.
 import os
 import sys
 import logging
-import tables
 import click as cl
 
 from uncoverml import geoio
+from uncoverml.validation import output_targets
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +51,4 @@ def main(shapefile, fieldname, outfile, quiet):
         outfile = os.path.splitext(outfile)[0]
 
     # Make hdf5 array
-    with tables.open_file(outfile + ".hdf5", 'w') as f:
-        f.create_array("/", "targets", obj=vals)
-        f.create_array("/", "Longitude", obj=lonlats[:, 0])
-        f.create_array("/", "Latitude", obj=lonlats[:, 1])
+    output_targets(vals, lonlats, outfile + ".hdf5")

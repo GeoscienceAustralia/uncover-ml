@@ -51,7 +51,8 @@ setup(
             'uncoverml-worker = uncoverml.scripts.worker:main',
             'maketargets = uncoverml.scripts.maketargets:main',
             'learnmodel = uncoverml.scripts.learnmodel:main',
-            'predict = uncoverml.scripts.predict:main'
+            'predict = uncoverml.scripts.predict:main',
+            'validatemodel = uncoverml.scripts.validatemodel:main'
         ]
     },
     install_requires=[

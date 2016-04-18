@@ -7,9 +7,6 @@ from revrand import glm
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomRBF_ARD
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-
 
 class LinearReg(object):
 
@@ -139,11 +136,4 @@ class GenLinMod(ApproxGP):
 lhoodmaps = {'Gaussian': Gaussian,
              'Bernoulli': Bernoulli,
              'Poisson': Poisson
-             }
-
-modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': LinearReg,
-             'approxgp': ApproxGP,
-             'svr': SVR,
-             'glm': GenLinMod
              }
