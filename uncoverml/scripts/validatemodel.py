@@ -59,4 +59,5 @@ def main(cvindex, targets, prediction_files, metric, quiet):
     EY = feature.data_vector(pred_dict).data  # TODO: deal with missing values
     EYs = EY[cv_mask] if len(EY) > len(Ys) else EY
 
-    log.info("{} score = {}".format(metric, metrics[metric](Ys, EYs)))
+    log.info("{} score = {}".format(metric, metrics[metric](Ys.flatten(),
+                                                            EYs.flatten())))

@@ -22,6 +22,10 @@ def output_features(feature_vector, outfile, featname="features"):
             The name of the features.
     """
     h5file = hdf.open_file(outfile, mode='w')
+
+    # Make sure we are writing "long" arrays
+    if feature_vector.ndim < 2:
+        feature_vector = feature_vector[:, np.newaxis]
     array_shape = feature_vector.shape
 
     filters = hdf.Filters(complevel=5, complib='zlib')
@@ -80,14 +84,10 @@ def __load_hdf5(infiles):
     for filename in infiles:
         with hdf.open_file(filename, mode='r') as f:
             data = f.root.features[:]
-            if 'mask' in f.root:
-                mask = f.root.mask[:]
-            else:
-                mask = np.zeros_like(data, dtype=bool)
+            mask = f.root.mask[:]
             a = np.ma.masked_array(data=data, mask=mask)
             data_list.append(a)
-    axis = 1 if data_list[0].ndim >= 2 else 0
-    all_data = np.ma.concatenate(data_list, axis=axis)
+    all_data = np.ma.concatenate(data_list, axis=1)
     return all_data
 
 
