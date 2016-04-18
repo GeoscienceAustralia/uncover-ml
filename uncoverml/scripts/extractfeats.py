@@ -64,7 +64,7 @@ def compute_unique_values(full_image, cluster):
 @cl.option('--onehot', is_flag=True, help="Produce a one-hot encoding for "
            "each channel in the data. Ignored for float-valued data. "
            "Uses -0.5 and 0.5)")
-@cl.option('--settings', type=cl.Path(exists=True), help="JSON file containing"
+@cl.option('--settings', type=cl.Path(exists=True), help="file containing"
            " previous setting used for evaluating testing data. If provided "
            "all other option flags are ignored")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
