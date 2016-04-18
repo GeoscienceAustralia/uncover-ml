@@ -20,9 +20,9 @@ Machine learning tools for the Geoscience Australia uncover project.
 Quickstart
 ----------
 
-Before you start, make sure your system has the following packages installed:
-* gdal (libgdal-dev)
-* zeromq (libzmq-dev)
+Before you start, make sure your system has the following packages installed,
+ - gdal (libgdal-dev)
+ - zeromq (libzmq-dev)
 
 To install, simply run ``setup.py``:
 
