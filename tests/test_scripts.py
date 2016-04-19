@@ -4,7 +4,6 @@ import numpy as np
 import shapefile
 import rasterio
 import subprocess
-from glob import glob
 
 from uncoverml import streams
 from uncoverml.scripts.maketargets import main as maketargets
@@ -25,8 +24,8 @@ def test_make_targets(make_shp_gtiff):
     assert os.path.exists(fhdf5)
 
     with tables.open_file(fhdf5, mode='r') as f:
-        lon = np.array([i for i in f.root.targets])
-        Longitude = np.array([l for l in f.root.Longitude])
+        lon = f.root.targets.read()
+        Longitude = f.root.Longitude.read().flatten()
 
     assert np.allclose(lon, Longitude)
 
@@ -49,9 +48,9 @@ def test_cvindexer_shp(make_shp_gtiff):
 
     # Read in resultant HDF5
     with tables.open_file(fshp_hdf5, mode='r') as f:
-        hdfcoords = np.array([(x, y) for x, y in zip(f.root.Longitude,
-                                                     f.root.Latitude)])
-        finds = np.array([i for i in f.root.FoldIndices])
+        hdfcoords = np.hstack((f.root.Longitude.read(),
+                               f.root.Latitude.read()))
+        finds = f.root.FoldIndices.read()
 
     # Validate order is consistent with shapefile
     f = shapefile.Reader(fshp)
@@ -99,19 +98,38 @@ def test_extractfeats(make_shp_gtiff):
     fshp, ftif = make_shp_gtiff
     chunks = 4
     outdir = os.path.dirname(fshp)
-    name = "fgrid"
+    name = "fchunk_worker"
 
-    # Extract features from gtiff
-    extractfeats.callback(geotiff=ftif, name=name, targets=None,
-                          standalone=True, chunks=chunks, patchsize=0,
-                          quiet=False, outputdir=outdir, ipyprofile=None)
+    pworker = None
+
+    # Start ipcluster
+    try:
+        # Start the worker
+        cmd = ["ipcluster", "start", "--n=2"]
+        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        _proc_ready(pworker, msg="started")
+
+        # Extract features from gtiff
+        extractfeats.callback(geotiff=ftif, name=name, targets=None,
+                              chunks=chunks, patchsize=0, quiet=False,
+                              outputdir=outdir, ipyprofile=None, onehot=False,
+                              settings=None)
+
+    finally:
+        if pworker is not None:
+            pworker.terminate()
+
+    ffiles = []
+    for i in range(chunks):
+        fname = os.path.join(outdir, "{}_{}.hdf5".format(name, i))
+        assert os.path.exists(fname)
+        ffiles.append(fname)
 
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
         I = np.transpose(f.read(), [2, 1, 0])
 
-    ffiles = glob(os.path.join(outdir, name + "*"))
-    ffiles.reverse()
     efeats = []
     for fname in ffiles:
         print(fname)
@@ -125,9 +143,12 @@ def test_extractfeats(make_shp_gtiff):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_patch(make_shp_gtiff):
+def test_extractfeats_targets(make_shp_gtiff):
 
     fshp, ftif = make_shp_gtiff
+    chunks = 1
+    outdir = os.path.dirname(fshp)
+    name = "fpatch"
 
     # Make target file
     field = "lat"
@@ -135,58 +156,38 @@ def test_extractfeats_patch(make_shp_gtiff):
     maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
                          quiet=False)
 
-    # Extract features from gtiff
-    name = "fpatch"
-    chunks = 1
-    outdir = os.path.dirname(fshp)
-    extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
-                          standalone=True, chunks=chunks, patchsize=0,
-                          quiet=False, outputdir=outdir, ipyprofile=None)
+    pworker = None
+
+    # Start ipcluster
+    try:
+        # Start the worker
+        cmd = ["ipcluster", "start", "--n=1"]
+        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        _proc_ready(pworker, msg="started")
+
+        # Extract features from gtiff
+        extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
+                              chunks=chunks, patchsize=0, quiet=False,
+                              outputdir=outdir, ipyprofile=None, onehot=False,
+                              settings=None)
+
+    finally:
+        if pworker is not None:
+            pworker.terminate()
 
     with tables.open_file(os.path.join(outdir, name + "_0.hdf5"), 'r') as f:
         feats = np.array([fts for fts in f.root.features])
 
     # Read lats and lons from targets
     with tables.open_file(fshp_targets, mode='r') as f:
-        Longitude = [l for l in f.root.Longitude]
-        Latitude = [l for l in f.root.Latitude]
-        lonlat = np.array((Longitude, Latitude)).T
+        lonlat = np.hstack((f.root.Longitude.read(),
+                            f.root.Latitude.read()))
 
     assert np.allclose(feats, lonlat)
 
 
-def test_extractfeats_worker(make_shp_gtiff):
-
-    fshp, ftif = make_shp_gtiff
-    chunks = 4
-    outdir = os.path.dirname(fshp)
-    name = "fchunk_worker"
-
-    pworker = None
-
-    # Start redis
-    try:
-        # Start the worker
-        cmd = ["ipcluster", "start", "--n=2"]
-        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        _proc_ready(pworker, msg="LocalEngineSetLauncher")
-
-        # Extract features from gtiff
-        extractfeats.callback(geotiff=ftif, name=name, targets=None,
-                              standalone=True, chunks=chunks, patchsize=0,
-                              quiet=False, outputdir=outdir, ipyprofile=None)
-
-    finally:
-        if pworker is not None:
-            pworker.terminate()
-
-    for i in range(chunks):
-        fname = os.path.join(outdir, "{}_{}.hdf5".format(name, i))
-        assert os.path.exists(fname)
-
-
-def _proc_ready(proc, msg, waitime=30):
+def _proc_ready(proc, msg, waitime=60):
 
     nbsr = streams.NonBlockingStreamReader(proc.stdout)
 

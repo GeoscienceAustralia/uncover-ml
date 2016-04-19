@@ -162,5 +162,3 @@ def main(name, geotiff, targets, onehot,
 
     log.info("Output vector has length {}, dimensionality {}".format(
         full_image.resolution[0] * full_image.resolution[1], total_dims))
-
-    sys.exit(0)

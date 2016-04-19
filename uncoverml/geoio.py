@@ -88,16 +88,28 @@ def points_from_shp(filename):
     return label_coords
 
 
-def points_from_hdf(filename):
+def points_from_hdf(filename, fieldname=None):
     """
     TODO
     """
 
     with tables.open_file(filename, mode='r') as f:
-        lons = [l for l in f.root.Longitude]
-        lats = [l for l in f.root.Latitude]
+        lons = f.root.Longitude.read()
+        lats = f.root.Latitude.read()
+        if fieldname is not None:
+            vals = f.get_node("/" + fieldname).read()
 
-    return np.array((lons, lats)).T
+    lonlat = np.hstack((lons, lats))
+    return lonlat if fieldname is None else (lonlat, vals)
+
+
+def points_to_hdf(lonlat, outfile, fieldname=None, fieldvals=None):
+
+    with tables.open_file(outfile, 'w') as f:
+        f.create_array("/", "Longitude", obj=lonlat[:, 0][:, np.newaxis])
+        f.create_array("/", "Latitude", obj=lonlat[:, 1][:, np.newaxis])
+        if fieldname is not None:
+            f.create_array("/", fieldname, obj=fieldvals)
 
 
 def values_from_shp(filename, field):

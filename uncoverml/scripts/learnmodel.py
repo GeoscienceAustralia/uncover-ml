@@ -12,22 +12,13 @@ import json
 import click as cl
 import numpy as np
 
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-
 import uncoverml.defaults as df
-from uncoverml import geoio, models, feature
+from uncoverml import geoio, feature
 from uncoverml.validation import input_cvindex, input_targets
+from uncoverml.models import modelmaps
 
 
 log = logging.getLogger(__name__)
-
-modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': models.LinearReg,
-             'approxgp': models.ApproxGP,
-             'svr': SVR,
-             'glm': models.GenLinMod
-             }
 
 
 @cl.command()

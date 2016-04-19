@@ -7,6 +7,9 @@ from revrand import glm
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomRBF_ARD
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
 
 class LinearReg(object):
 
@@ -83,7 +86,7 @@ class ApproxGP(LinearReg):
 class GenLinMod(ApproxGP):
 
     def __init__(self, likelihood="Gaussian", lparams=[1.], postcomp=10,
-                 use_sgd=True, batchsize=100, maxit=1000, *args, **kwargs):
+                 use_sgd=True, batchsize=100, maxit=100, *args, **kwargs):
 
         super(GenLinMod, self).__init__(*args, **kwargs)
 
@@ -131,6 +134,14 @@ class GenLinMod(ApproxGP):
             l, u = glm.predict_interval(interval, X, *args)
 
         return (Ey, Vy if interval is None else l, u) if uncertainty else Ey
+
+
+modelmaps = {'randomforest': RandomForestRegressor,
+             'bayesreg': LinearReg,
+             'approxgp': ApproxGP,
+             'svr': SVR,
+             'glm': GenLinMod
+             }
 
 
 lhoodmaps = {'Gaussian': Gaussian,
