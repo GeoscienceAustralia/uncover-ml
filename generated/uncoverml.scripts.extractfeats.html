@@ -26,10 +26,10 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="next" title="uncoverml.scripts.worker" href="uncoverml.scripts.worker.html" />
+    <link rel="next" title="uncoverml.scripts.composefeats" href="uncoverml.scripts.composefeats.html" />
     <link rel="prev" title="uncoverml.scripts.cvindexer" href="uncoverml.scripts.cvindexer.html" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
 <link rel="stylesheet" href="../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
 <![endif]-->
@@ -47,7 +47,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.worker.html" title="uncoverml.scripts.worker"
+          <a href="uncoverml.scripts.composefeats.html" title="uncoverml.scripts.composefeats"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
@@ -65,7 +65,7 @@
   <div class="section" id="module-uncoverml.scripts.extractfeats">
 <span id="uncoverml-scripts-extractfeats"></span><h1>uncoverml.scripts.extractfeats<a class="headerlink" href="#module-uncoverml.scripts.extractfeats" title="Permalink to this headline">¶</a></h1>
 <p>Extract patch features from a single geotiff.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: extractfeats [OPTIONS] GEOTIFF NAME
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: extractfeats [OPTIONS] NAME GEOTIFF
 
   TODO
 
@@ -74,16 +74,46 @@ Options:
   --patchsize INTEGER  window size of patches
   --chunks INTEGER     Number of chunks in which to split the computation and
                        output
-  --redisdb INTEGER
-  --redishost TEXT
-  --redisport INTEGER
-  --standalone
-  --targets PATH       Optional shapefile for providing target points at which
-                       to evaluate feature
+  --targets PATH       Optional hdf5 file for providing target points at which
+                       to evaluate feature. See maketargets for creating an
+                       appropriate target files.
+  --onehot             Produce a one-hot encoding for each channel in the
+                       data. Ignored for float-valued data. Uses -0.5 and 0.5)
+  --settings PATH      file containing previous setting used for evaluating
+                       testing data. If provided all other option flags are
+                       ignored
   --outputdir PATH
+  --ipyprofile TEXT    ipyparallel profile to use
   --help               Show this message and exit.
 </pre></div>
 </div>
+<p class="rubric">Functions</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">compute_unique_values</span></code>(full_image,&nbsp;cluster)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">extract_transform</span></code>(data,&nbsp;x_sets)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">partial</span></code></td>
+<td>partial(func, <a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>keywords) - new function with partial application</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
@@ -96,8 +126,8 @@ Options:
   <p class="topless"><a href="uncoverml.scripts.cvindexer.html"
                         title="previous chapter">uncoverml.scripts.cvindexer</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.worker.html"
-                        title="next chapter">uncoverml.scripts.worker</a></p>
+  <p class="topless"><a href="uncoverml.scripts.composefeats.html"
+                        title="next chapter">uncoverml.scripts.composefeats</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -106,9 +136,6 @@ Options:
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -125,7 +152,7 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.worker.html" title="uncoverml.scripts.worker"
+          <a href="uncoverml.scripts.composefeats.html" title="uncoverml.scripts.composefeats"
              >next</a> |</li>
         <li class="right" >
           <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
@@ -136,7 +163,7 @@ Options:
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uncoverml.scripts.worker &mdash; uncover ML 0.1.0 documentation</title>
+    <title>uncoverml.scripts.validatemodel &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,9 +26,9 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="prev" title="uncoverml.scripts.extractfeats" href="uncoverml.scripts.extractfeats.html" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+    <link rel="prev" title="uncoverml.scripts.predict" href="uncoverml.scripts.predict.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
 <link rel="stylesheet" href="../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
 <![endif]-->
@@ -46,7 +46,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
+          <a href="uncoverml.scripts.predict.html" title="uncoverml.scripts.predict"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" accesskey="U">Command Line Scripts</a> &raquo;</li> 
@@ -58,19 +58,40 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.scripts.worker">
-<span id="uncoverml-scripts-worker"></span><h1>uncoverml.scripts.worker<a class="headerlink" href="#module-uncoverml.scripts.worker" title="Permalink to this headline">¶</a></h1>
-<p>Start a Celery image worker.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: uncoverml-worker [OPTIONS]
+  <div class="section" id="module-uncoverml.scripts.validatemodel">
+<span id="uncoverml-scripts-validatemodel"></span><h1>uncoverml.scripts.validatemodel<a class="headerlink" href="#module-uncoverml.scripts.validatemodel" title="Permalink to this headline">¶</a></h1>
+<p>Run a cross-validation metric on a model prediction</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: validatemodel [OPTIONS] CVINDEX... TARGETS [PREDICTION_FILES]...
+
+  Run a cross-validation metric on a model prediction.
 
 Options:
-  --quiet              Log verbose output
-  --redisdb INTEGER
-  --redishost TEXT
-  --redisport INTEGER
-  --help               Show this message and exit.
+  --quiet                   Log verbose output
+  --metric [r2_score|smse]  Metrics for scoring prediction quality.
+  --help                    Show this message and exit.
 </pre></div>
 </div>
+<p class="rubric">Functions</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">input_cvindex</span></code>(cvindex_file[,&nbsp;return_lonlat])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">input_targets</span></code>(target_file[,&nbsp;return_lonlat])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">r2_score</span></code>(y_true,&nbsp;y_pred[,&nbsp;sample_weight,&nbsp;...])</td>
+<td>R^2 (coefficient of determination) regression score function.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">smse</span></code>(y_true,&nbsp;y_predict)</td>
+<td>Standardised mean squared error.</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
@@ -80,8 +101,8 @@ Options:
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.extractfeats.html"
-                        title="previous chapter">uncoverml.scripts.extractfeats</a></p>
+  <p class="topless"><a href="uncoverml.scripts.predict.html"
+                        title="previous chapter">uncoverml.scripts.predict</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -90,9 +111,6 @@ Options:
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -109,7 +127,7 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
+          <a href="uncoverml.scripts.predict.html" title="uncoverml.scripts.predict"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" >Command Line Scripts</a> &raquo;</li> 
@@ -117,7 +135,7 @@ Options:
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

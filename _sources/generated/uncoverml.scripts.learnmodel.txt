@@ -1,0 +1,30 @@
+uncoverml.scripts.learnmodel
+============================
+
+.. automodule:: uncoverml.scripts.learnmodel
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      input_cvindex
+      input_targets
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      RandomForestRegressor
+      SVR
+   
+   
+
+   
+   
+   

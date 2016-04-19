@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uncoverml.scripts.maketargets &mdash; uncover ML 0.1.0 documentation</title>
+    <title>uncoverml.scripts.predict &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="next" title="uncoverml.scripts.cvindexer" href="uncoverml.scripts.cvindexer.html" />
-    <link rel="prev" title="Command Line Scripts" href="../scripts.html" />
+    <link rel="next" title="uncoverml.scripts.validatemodel" href="uncoverml.scripts.validatemodel.html" />
+    <link rel="prev" title="uncoverml.scripts.learnmodel" href="uncoverml.scripts.learnmodel.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -47,10 +47,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.validatemodel.html" title="uncoverml.scripts.validatemodel"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../scripts.html" title="Command Line Scripts"
+          <a href="uncoverml.scripts.learnmodel.html" title="uncoverml.scripts.learnmodel"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" accesskey="U">Command Line Scripts</a> &raquo;</li> 
@@ -62,21 +62,21 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.scripts.maketargets">
-<span id="uncoverml-scripts-maketargets"></span><h1>uncoverml.scripts.maketargets<a class="headerlink" href="#module-uncoverml.scripts.maketargets" title="Permalink to this headline">¶</a></h1>
-<p>Make output target files.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: maketargets [OPTIONS] SHAPEFILE FIELDNAME
+  <div class="section" id="module-uncoverml.scripts.predict">
+<span id="uncoverml-scripts-predict"></span><h1>uncoverml.scripts.predict<a class="headerlink" href="#module-uncoverml.scripts.predict" title="Permalink to this headline">¶</a></h1>
+<p>Predict the target values for query data</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: predict [OPTIONS] MODEL [FILES]...
 
-  Turn a shapefile of target variables into an HDF5 file. This file can
-  subsequently be used by cross validation and machine learning routines.
-
-  The output hdf5 will have three arrays, &quot;targets&quot;, &quot;Longitude&quot; and
-  &quot;Latitude&quot;.
+  Predict the target values for query data.
 
 Options:
-  --quiet         Log verbose output
-  --outfile PATH  File name (minus extension) to give to the output files
-  --help          Show this message and exit.
+  --quiet                      Log verbose output
+  --cvindex &lt;PATH INTEGER&gt;...  Optional cross validation index file and index
+                               to hold out.
+  --predictname TEXT           The name to give the predicted target variable.
+  --outputdir PATH
+  --ipyprofile TEXT            ipyparallel profile to use
+  --help                       Show this message and exit.
 </pre></div>
 </div>
 <p class="rubric">Functions</p>
@@ -86,8 +86,26 @@ Options:
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">output_targets</span></code>(target,&nbsp;lonlat,&nbsp;outfile)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">chunk_cvindex</span></code>(cvind,&nbsp;nchunks)</td>
 <td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">input_cvindex</span></code>(cvindex_file[,&nbsp;return_lonlat])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">predict</span></code>(data,&nbsp;model)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">partial</span></code></td>
+<td>partial(func, <a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>keywords) - new function with partial application</td>
 </tr>
 </tbody>
 </table>
@@ -100,11 +118,11 @@ Options:
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../scripts.html"
-                        title="previous chapter">Command Line Scripts</a></p>
+  <p class="topless"><a href="uncoverml.scripts.learnmodel.html"
+                        title="previous chapter">uncoverml.scripts.learnmodel</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.cvindexer.html"
-                        title="next chapter">uncoverml.scripts.cvindexer</a></p>
+  <p class="topless"><a href="uncoverml.scripts.validatemodel.html"
+                        title="next chapter">uncoverml.scripts.validatemodel</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -129,10 +147,10 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.validatemodel.html" title="uncoverml.scripts.validatemodel"
              >next</a> |</li>
         <li class="right" >
-          <a href="../scripts.html" title="Command Line Scripts"
+          <a href="uncoverml.scripts.learnmodel.html" title="uncoverml.scripts.learnmodel"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" >Command Line Scripts</a> &raquo;</li> 

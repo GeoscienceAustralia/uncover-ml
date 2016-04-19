@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uncoverml.scripts.maketargets &mdash; uncover ML 0.1.0 documentation</title>
+    <title>uncoverml.scripts.composefeats &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="next" title="uncoverml.scripts.cvindexer" href="uncoverml.scripts.cvindexer.html" />
-    <link rel="prev" title="Command Line Scripts" href="../scripts.html" />
+    <link rel="next" title="uncoverml.scripts.learnmodel" href="uncoverml.scripts.learnmodel.html" />
+    <link rel="prev" title="uncoverml.scripts.extractfeats" href="uncoverml.scripts.extractfeats.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -47,10 +47,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.learnmodel.html" title="uncoverml.scripts.learnmodel"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../scripts.html" title="Command Line Scripts"
+          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" accesskey="U">Command Line Scripts</a> &raquo;</li> 
@@ -62,21 +62,28 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.scripts.maketargets">
-<span id="uncoverml-scripts-maketargets"></span><h1>uncoverml.scripts.maketargets<a class="headerlink" href="#module-uncoverml.scripts.maketargets" title="Permalink to this headline">¶</a></h1>
-<p>Make output target files.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: maketargets [OPTIONS] SHAPEFILE FIELDNAME
+  <div class="section" id="module-uncoverml.scripts.composefeats">
+<span id="uncoverml-scripts-composefeats"></span><h1>uncoverml.scripts.composefeats<a class="headerlink" href="#module-uncoverml.scripts.composefeats" title="Permalink to this headline">¶</a></h1>
+<p>Compose multiple image features into a single feature vector.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>Usage: composefeats [OPTIONS] FEATURENAME [FILES]...
 
-  Turn a shapefile of target variables into an HDF5 file. This file can
-  subsequently be used by cross validation and machine learning routines.
-
-  The output hdf5 will have three arrays, &quot;targets&quot;, &quot;Longitude&quot; and
-  &quot;Latitude&quot;.
+  TODO
 
 Options:
-  --quiet         Log verbose output
-  --outfile PATH  File name (minus extension) to give to the output files
-  --help          Show this message and exit.
+  --quiet                  Log verbose output
+  --settings PATH          file containing previous setting used for
+                           evaluating testing data. If provided all other
+                           option flags are ignored
+  --centre                 Make data have mean zero
+  --standardise            Make all dimensions have unit variance
+  --whiten                 Data is a unit ball
+  --impute                 Impute any missing data
+  --featurefraction FLOAT  The fraction of dimensions to keep for PCA
+                           transformed (whitened) data. Between 0 and 1. Only
+                           applies if --whiten given
+  --outputdir PATH
+  --ipyprofile TEXT        ipyparallel profile to use
+  --help                   Show this message and exit.
 </pre></div>
 </div>
 <p class="rubric">Functions</p>
@@ -86,8 +93,23 @@ Options:
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">output_targets</span></code>(target,&nbsp;lonlat,&nbsp;outfile)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">compute_statistics</span></code>(impute,&nbsp;centre,&nbsp;...)</td>
 <td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code>(x,&nbsp;impute_mean,&nbsp;mean,&nbsp;sd,&nbsp;eigvecs,&nbsp;...)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">partial</span></code></td>
+<td>partial(func, <a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>keywords) - new function with partial application</td>
 </tr>
 </tbody>
 </table>
@@ -100,11 +122,11 @@ Options:
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../scripts.html"
-                        title="previous chapter">Command Line Scripts</a></p>
+  <p class="topless"><a href="uncoverml.scripts.extractfeats.html"
+                        title="previous chapter">uncoverml.scripts.extractfeats</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.cvindexer.html"
-                        title="next chapter">uncoverml.scripts.cvindexer</a></p>
+  <p class="topless"><a href="uncoverml.scripts.learnmodel.html"
+                        title="next chapter">uncoverml.scripts.learnmodel</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -129,10 +151,10 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.learnmodel.html" title="uncoverml.scripts.learnmodel"
              >next</a> |</li>
         <li class="right" >
-          <a href="../scripts.html" title="Command Line Scripts"
+          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">uncover ML 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../scripts.html" >Command Line Scripts</a> &raquo;</li> 

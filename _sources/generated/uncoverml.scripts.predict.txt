@@ -1,0 +1,30 @@
+uncoverml.scripts.predict
+=========================
+
+.. automodule:: uncoverml.scripts.predict
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      chunk_cvindex
+      input_cvindex
+      predict
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      partial
+   
+   
+
+   
+   
+   

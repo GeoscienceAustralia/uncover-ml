@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Extracted Features Module &mdash; uncover ML 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Parallel Worker Module" href="parallel.html" />
+    <link rel="prev" title="Geometry file I/O Module" href="geoio.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel Worker Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="geoio.html" title="Geometry file I/O Module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-uncoverml.feature">
+<span id="extracted-features-module"></span><h1>Extracted Features Module<a class="headerlink" href="#module-uncoverml.feature" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="uncoverml.feature.image_data_vector">
+<code class="descclassname">uncoverml.feature.</code><code class="descname">image_data_vector</code><span class="sig-paren">(</span><em>image_data</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.feature.image_data_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>image_data : dictionary of ndarrays</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.feature.load_data">
+<code class="descclassname">uncoverml.feature.</code><code class="descname">load_data</code><span class="sig-paren">(</span><em>filename_dict</em>, <em>chunk_indices</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.feature.load_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>we load references to the data into each node, this function runs
+on the node to actually load the data itself.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.feature.load_image_data">
+<code class="descclassname">uncoverml.feature.</code><code class="descname">load_image_data</code><span class="sig-paren">(</span><em>image_dict</em>, <em>chunk_indices</em>, <em>patchsize</em>, <em>targets</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.feature.load_image_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>we load references to the data into each node, this function runs
+on the node to actually load the data itself.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.feature.output_features">
+<code class="descclassname">uncoverml.feature.</code><code class="descname">output_features</code><span class="sig-paren">(</span><em>feature_vector</em>, <em>outfile</em>, <em>featname='features'</em>, <em>shape=None</em>, <em>bbox=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.feature.output_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a vector of features out to a standard HDF5 format. The function
+assumes that it is only 1 chunk of a larger vector, so outputs a numerical
+suffix to the file as an index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>feature_vector</strong> (<em>array</em>) &#8211; A 2D numpy array of shape (nPoints, nDims) of type float. This can
+be a masked array.</li>
+<li><strong>outfile</strong> (<em>path</em>) &#8211; The name of the output file</li>
+<li><strong>featname</strong> (<em>str, optional</em>) &#8211; The name of the features.</li>
+<li><strong>shape</strong> (<em>tuple, optional</em>) &#8211; The original shape of the feature for reproducing an image</li>
+<li><strong>bbox</strong> (<em>ndarray, optional</em>) &#8211; The bounding box of the original data for reproducing an image</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.feature.patches_from_image">
+<code class="descclassname">uncoverml.feature.</code><code class="descname">patches_from_image</code><span class="sig-paren">(</span><em>image</em>, <em>patchsize</em>, <em>targets=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.feature.patches_from_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pulls out masked patches from a geotiff, either everywhere or
+at locations specificed by a targets shapefile</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="geoio.html"
+                        title="previous chapter">Geometry file I/O Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel.html"
+                        title="next chapter">Parallel Worker Module</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel Worker Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="geoio.html" title="Geometry file I/O Module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

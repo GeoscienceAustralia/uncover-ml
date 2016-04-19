@@ -27,8 +27,8 @@
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
     <link rel="next" title="Streams Module" href="streams.html" />
     <link rel="prev" title="Models Module" href="models.html" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
 <link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
 <![endif]-->
@@ -80,14 +80,10 @@ of samples (X can also be a 1-d vector).</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
-<li><strong>Xr</strong> (<em>ndarray</em>) &#8211;
-(D, ((k-1) * N / k)) array of training input data</li>
-<li><strong>Yr</strong> (<em>ndarray</em>) &#8211;
-((k-1) * N / k,) array of training target data</li>
-<li><strong>Xs</strong> (<em>ndarray</em>) &#8211;
-(D, N / k) array of testing input data</li>
-<li><strong>Ys</strong> (<em>ndarray</em>) &#8211;
-(N / k,) array of testing target data</li>
+<li><strong>Xr</strong> (<em>ndarray</em>) &#8211; (D, ((k-1) * N / k)) array of training input data</li>
+<li><strong>Yr</strong> (<em>ndarray</em>) &#8211; ((k-1) * N / k,) array of training target data</li>
+<li><strong>Xs</strong> (<em>ndarray</em>) &#8211; (D, N / k) array of testing input data</li>
+<li><strong>Ys</strong> (<em>ndarray</em>) &#8211; (N / k,) array of testing target data</li>
 </ul>
 </td>
 </tr>
@@ -115,10 +111,8 @@ validation.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rind</strong> (<em>ndarray</em>) &#8211;
-training indices of shape (nsamples * (k-1)/k,)</li>
-<li><strong>sind</strong> (<em>ndarray</em>) &#8211;
-testing indices of shape (nsamples * 1/k,)</li>
+<li><strong>rind</strong> (<em>ndarray</em>) &#8211; training indices of shape (nsamples * (k-1)/k,)</li>
+<li><strong>sind</strong> (<em>ndarray</em>) &#8211; testing indices of shape (nsamples * 1/k,)</li>
 </ul>
 </td>
 </tr>
@@ -129,32 +123,6 @@ testing indices of shape (nsamples * 1/k,)</li>
 <p class="last">Each call to this generator returns a random but non-overlapping
 split of data.</p>
 </div>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.validation.rsquare">
-<code class="descclassname">uncoverml.validation.</code><code class="descname">rsquare</code><span class="sig-paren">(</span><em>y_predict</em>, <em>y_true</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.rsquare" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the coefficient of determination (R-square).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_predict</strong> (<em>ndarray</em>) &#8211; an array of shape (N,) of the predicted target values.</li>
-<li><strong>y_true</strong> (<em>ndarray</em>) &#8211; an array of shape (N,) of the true target values.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">R-square which is in the range (-inf, 1] where 1.0 is perfect
-prediction of the target values, and -inf is arbitrarily bad (depending
-on scale).</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="function">
@@ -172,12 +140,10 @@ on scale).</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>cvinds</strong> (<em>list</em>) &#8211;
-list of arrays of length k, each with approximate shape (nsamples /
+<li><strong>cvinds</strong> (<em>list</em>) &#8211; list of arrays of length k, each with approximate shape (nsamples /
 k,) of indices. These indices are randomly permuted (without
 replacement) of assignments to each fold.</li>
-<li><strong>cvassigns</strong> (<em>ndarray</em>) &#8211;
-array of shape (nsamples,) with each element in [0, k), that can be
+<li><strong>cvassigns</strong> (<em>ndarray</em>) &#8211; array of shape (nsamples,) with each element in [0, k), that can be
 used to assign data to a fold. This corresponds to the indices of
 cvinds.</li>
 </ul>
@@ -210,9 +176,6 @@ cvinds.</li>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -239,7 +202,7 @@ cvinds.</li>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

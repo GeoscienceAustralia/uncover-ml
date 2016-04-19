@@ -1,7 +1,7 @@
-uncoverml.scripts.extractfeats
+uncoverml.scripts.composefeats
 ==============================
 
-.. automodule:: uncoverml.scripts.extractfeats
+.. automodule:: uncoverml.scripts.composefeats
 
    
    
@@ -9,8 +9,8 @@ uncoverml.scripts.extractfeats
 
    .. autosummary::
    
-      compute_unique_values
-      extract_transform
+      compute_statistics
+      transform
    
    
 

@@ -5,6 +5,12 @@ uncoverml.scripts.maketargets
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      output_targets
+   
    
 
    

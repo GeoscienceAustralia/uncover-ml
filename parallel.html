@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Usage &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Parallel Worker Module &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="Contributing" href="contributing.html" />
-    <link rel="prev" title="Installation" href="installation.html" />
+    <link rel="next" title="Image Patch Module" href="patch.html" />
+    <link rel="prev" title="Extracted Features Module" href="feature.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,10 +46,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="contributing.html" title="Contributing"
+          <a href="patch.html" title="Image Patch Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="installation.html" title="Installation"
+          <a href="feature.html" title="Extracted Features Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -60,12 +60,26 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
-<p>To use uncover ML in a project:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">uncover</span><span class="o">-</span><span class="n">ml</span>
-</pre></div>
-</div>
+  <div class="section" id="module-uncoverml.parallel">
+<span id="parallel-worker-module"></span><h1>Parallel Worker Module<a class="headerlink" href="#module-uncoverml.parallel" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="uncoverml.parallel.node_count">
+<code class="descclassname">uncoverml.parallel.</code><code class="descname">node_count</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.parallel.node_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>note that this is a vector per dimension because x is masked</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.parallel.node_full_count">
+<code class="descclassname">uncoverml.parallel.</code><code class="descname">node_full_count</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.parallel.node_full_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>total number of points including missing</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.parallel.node_sets">
+<code class="descclassname">uncoverml.parallel.</code><code class="descname">node_sets</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.parallel.node_sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>works on a masked x</p>
+</dd></dl>
+
 </div>
 
 
@@ -75,11 +89,11 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="installation.html"
-                        title="previous chapter">Installation</a></p>
+  <p class="topless"><a href="feature.html"
+                        title="previous chapter">Extracted Features Module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="contributing.html"
-                        title="next chapter">Contributing</a></p>
+  <p class="topless"><a href="patch.html"
+                        title="next chapter">Image Patch Module</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -104,10 +118,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="contributing.html" title="Contributing"
+          <a href="patch.html" title="Image Patch Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="installation.html" title="Installation"
+          <a href="feature.html" title="Extracted Features Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
