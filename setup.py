@@ -52,7 +52,8 @@ setup(
             'maketargets = uncoverml.scripts.maketargets:main',
             'learnmodel = uncoverml.scripts.learnmodel:main',
             'predict = uncoverml.scripts.predict:main',
-            'validatemodel = uncoverml.scripts.validatemodel:main'
+            'validatemodel = uncoverml.scripts.validatemodel:main',
+            'exportgeotiff = uncoverml.scripts.exportgeotiff:main'
         ]
     },
     install_requires=[
