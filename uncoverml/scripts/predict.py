@@ -75,6 +75,7 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
 
     # Optionally subset the data for cross validation
     if cvindex[0] is not None:
+        log.info("Subsetting data for cross validation")
         cv_chunks = chunk_cvindex(input_cvindex(cvindex[0]) == cvindex[1],
                                   nchunks)
         cluster.push({"cv_chunks": cv_chunks})
@@ -90,4 +91,3 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
                   "shape": eff_shape, "bbox": eff_bbox})
     cluster.execute("parallel.write_data(data_dict, f, featurename,"
                     "outputdir, shape, bbox)")
-    sys.exit(0)
