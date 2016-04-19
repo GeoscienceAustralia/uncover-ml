@@ -2,8 +2,9 @@
 
 from __future__ import division
 
-import tables
 import numpy as np
+
+from uncoverml.geoio import points_from_hdf, points_to_hdf
 
 
 #
@@ -13,40 +14,26 @@ import numpy as np
 
 def output_cvindex(index, lonlat, outfile):
 
-    with tables.open_file(outfile, 'w') as f:
-        f.create_array("/", "Longitude", obj=lonlat[:, 0])
-        f.create_array("/", "Latitude", obj=lonlat[:, 1])
-        f.create_array("/", "FoldIndices", obj=index)
+    points_to_hdf(lonlat, outfile, "FoldIndices", index)
 
 
 def input_cvindex(cvindex_file, return_lonlat=False):
 
-    with tables.open_file(cvindex_file, mode='r') as f:
-        cv_ind = f.root.FoldIndices.read().flatten()
-        if return_lonlat:
-            lonlat = np.hstack((f.root.Longitude.read(),
-                                f.root.Latitude.read()))
+    lonlat, cv_ind = points_from_hdf(cvindex_file, "FoldIndices")
 
-    return (cv_ind, lonlat) if return_lonlat else cv_ind
+    return (cv_ind.flatten(), lonlat) if return_lonlat else cv_ind.flatten()
 
 
 def output_targets(target, lonlat, outfile):
 
-    with tables.open_file(outfile, 'w') as f:
-        f.create_array("/", "Longitude", obj=lonlat[:, 0])
-        f.create_array("/", "Latitude", obj=lonlat[:, 1])
-        f.create_array("/", "targets", obj=target)
+    points_to_hdf(lonlat, outfile, "targets", target)
 
 
 def input_targets(target_file, return_lonlat=False):
 
-    with tables.open_file(target_file, mode='r') as f:
-        targets = f.root.targets.read().flatten()
-        if return_lonlat:
-            lonlat = np.hstack((f.root.Longitude.read(),
-                                f.root.Latitude.read()))
+    lonlat, targets = points_from_hdf(target_file, "targets")
 
-    return (targets, lonlat) if return_lonlat else targets
+    return (targets.flatten(), lonlat) if return_lonlat else targets.flatten()
 
 
 def chunk_cvindex(cvind, nchunks):

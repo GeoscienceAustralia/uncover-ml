@@ -1,1 +1,0 @@
-from uncoverml.feature import features_from_image

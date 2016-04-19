@@ -1,6 +1,6 @@
-=============================
+==========
 uncover ML
-=============================
+==========
 
 .. .. image:: https://badge.fury.io/py/uncover-ml.png
 ..     :target: http://badge.fury.io/py/uncover-ml
@@ -20,8 +20,10 @@ Machine learning tools for the Geoscience Australia uncover project.
 Quickstart
 ----------
 
-Before you start, make sure your system has the following packages installed:
+Before you start, make sure your system has the following packages installed,
+
 - gdal (libgdal-dev)
+- zeromq (libzmq-dev)
 
 To install, simply run ``setup.py``:
 

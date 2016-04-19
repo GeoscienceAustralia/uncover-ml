@@ -20,17 +20,6 @@ class FakeImage:
     def data(self):
         return self.img
 
-def test_all_image_data():
-    im1 = FakeImage(np.ones((10,2,3)), np.zeros((10,2,3)))
-    im2 = FakeImage(np.ones((8,2,3)), np.zeros((8,2,3)))
-    im3 = FakeImage(np.ones((4,2,3)), np.zeros((4,2,3)))
-    image_dict = {1:im1, 2:im2, 3:im3}
-    chunk_indices = [1,2,3]
-    x = parallel.all_image_data(image_dict, chunk_indices)
-    assert np.all(x.data == np.ones((10*2+8*2+4*2,3)))
-    assert np.all(x.mask == np.zeros((10*2+8*2+4*2,3)))
-
-
 def test_node_count(masked_array):
     r = parallel.node_count(masked_array)
     assert np.all(r == np.array([2,2],dtype=int))

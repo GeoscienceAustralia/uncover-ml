@@ -9,4 +9,7 @@ Command Line Scripts
    maketargets
    cvindexer
    extractfeats
-   worker
+   composefeats
+   learnmodel
+   predict
+   validatemodel

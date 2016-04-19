@@ -37,7 +37,7 @@ def main(targetfile, outfile, folds, quiet):
     if ext == ".shp":
         lonlat = geoio.points_from_shp(targetfile)
     elif (ext == ".hdf5") or (ext == ".hdf"):
-        _, lonlat = validation.input_targets(targetfile, return_lonlats=True)
+        _, lonlat = validation.input_targets(targetfile, return_lonlat=True)
     else:
         log.fatal("Invalid file type, {}, need *.shp or *.hdf(5)".format(ext))
         sys.exit(-1)

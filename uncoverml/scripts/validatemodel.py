@@ -1,7 +1,7 @@
 """
-Predict the target values for query data
+Run a cross-validation metric on a model prediction
 
-.. program-output:: predict --help
+.. program-output:: validatemodel --help
 """
 import logging
 import sys
@@ -9,7 +9,7 @@ import os.path
 import click as cl
 
 from sklearn.metrics import r2_score
-from revrand.validation import mll, msll, smse
+from revrand.validation import smse  # , mll, msll
 
 import uncoverml.defaults as df
 from uncoverml import geoio, feature
@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 metrics = {'r2_score': r2_score,
            'smse': smse,
-           'mll': mll
            }
 
 
@@ -32,6 +31,7 @@ metrics = {'r2_score': r2_score,
 @cl.argument('targets', type=cl.Path(exists=True))
 @cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
 def main(cvindex, targets, prediction_files, metric, quiet):
+    """ Run a cross-validation metric on a model prediction. """
 
     # setup logging
     if quiet is True:
