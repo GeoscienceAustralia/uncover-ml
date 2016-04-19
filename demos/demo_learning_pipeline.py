@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 A demo script that ties some of the command line utilities together in a
-pipeline
+pipeline for learning and validating models.
 """
 
 # TODO:
@@ -12,7 +12,7 @@ import logging
 import json
 from os import path, mkdir
 from glob import glob
-from subprocess import check_call, CalledProcessError
+from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 # Location of data
 data_dir = path.join(path.expanduser("~"), "data/GA-cover")
 
-# Location of processed file (features, predictions etc)
+# Location of processed files (features, predictions etc)
 proc_dir = path.join(data_dir, "processed")
 
 
@@ -137,17 +137,18 @@ def main():
     if len(tifs) == 0:
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
+    # Generic extract feats command
+    cmd = ["extractfeats", None, None, "--outputdir", proc_dir, "--chunks",
+           "1", "--patchsize", str(patchsize), "--targets", target_hdf]
+    if onehot:
+        cmd += ['--onehot']
+
     # Find all of the tifs and extract features
     ffiles = []
     for tif in tifs:
-        name = path.splitext(path.basename(tif))[0]
-        cmd = ["extractfeats", name, tif, "--outputdir", proc_dir, "--chunks",
-               "1", "--patchsize", str(patchsize)]
-        if onehot:
-            cmd += ['--onehot']
-        cmd += ["--targets", target_hdf]
-
         msg = "Processing {}.".format(path.basename(tif))
+        name = path.splitext(path.basename(tif))[0]
+        cmd[1], cmd[2] = name, tif
         ffile = path.join(proc_dir, name + "_0.hdf5")
         try_run_checkfile(cmd, ffile, msg)
         ffiles.append(ffile)
@@ -187,35 +188,6 @@ def main():
     try_run(cmd)
 
     log.info("Finished!")
-
-
-#
-# Script functions
-#
-
-class PipeLineFailure(Exception):
-    pass
-
-
-def try_run_checkfile(cmd, checkfile, premsg=None):
-    # TODO make this a proper memoize function?
-
-    if not path.exists(checkfile):
-        if premsg:
-            log.info(premsg)
-        try_run(cmd)
-        return True
-
-    return False
-
-
-def try_run(cmd):
-
-    try:
-        check_call(cmd)
-    except CalledProcessError:
-        log.info("\n--------------------\n")
-        raise
 
 
 if __name__ == "__main__":
