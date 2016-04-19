@@ -27,7 +27,7 @@ def transform(x, rows):
 def colormap(x, x_min, x_max):
     x = np.ma.asarray(x, dtype=float)
     x = ((x - x_min) / (x_max - x_min))
-    cmap = pl.cm.viridis
+    cmap = pl.cm.inferno
     cmap.set_bad(alpha=0)
     channel_data = []
     for i in range(x.shape[2]):
