@@ -312,13 +312,21 @@ class Image:
         xres = self._full_res[0]
         yres = self._full_res[1]
 
-        self.pixsize_x = (xmax - xmin) / (xres + 1)
-        self.pixsize_y = (ymax - ymin) / (yres + 1)
-
-        self.A = Affine(self.pixsize_x, 0, xmin,
-                        0, -self.pixsize_y, ymax)
+        self.A, self.pixsize_x, self.pixsize_y = bbox2affine(xmax, xmin, ymax,
+                                                             ymin, xres, yres)
 
         # centered pixels
         self.cA = self.A * Affine.translation(0.5, 0.5)
         self.iA = _invert_affine(self.A)
         self.icA = _invert_affine(self.cA)
+
+
+def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
+
+    pixsize_x = (xmax - xmin) / (xres + 1)
+    pixsize_y = (ymax - ymin) / (yres + 1)
+
+    A = Affine(pixsize_x, 0, xmin,
+               0, -pixsize_y, ymax)
+
+    return A, pixsize_x, pixsize_y

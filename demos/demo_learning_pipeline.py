@@ -77,10 +77,10 @@ patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 standardise = False  # standardise all of the extracted features?
 
 # Whiten all inputs?
-whiten = False  # whiten all of the extracted features?
+whiten = True  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.75
+pca_frac = 0.7
 
 # Composite feature names (prefixes)
 compos_file = "composite"
@@ -104,12 +104,12 @@ compos_file = "composite"
 #         'use_sgd': True}
 
 # Support vector machine (regressor)
-# algorithm = "svr"
-# args = {'gamma': 1. / 100, 'epsilon': 0.05}
+algorithm = "svr"
+args = {'gamma': 1. / 70, 'epsilon': 0.05}
 
 # Random forest regressor
-algorithm = "randomforest"
-args = {'n_estimators': 20}
+# algorithm = "randomforest"
+# args = {'n_estimators': 20}
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"

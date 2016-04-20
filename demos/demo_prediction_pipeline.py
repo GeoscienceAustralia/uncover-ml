@@ -57,7 +57,7 @@ compos_file = "composite"
 nchunks = 16
 
 # Name of the prediction algorithm
-algorithm = 'randomforest'
+algorithm = 'svr'
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
@@ -67,7 +67,11 @@ predict_file = "prediction_file"
 # Visualisation/Geotiff settings
 #
 
+# Name of the prediction output tif
 gtiffname = "prediction_image"
+
+# Make the image RGB?
+makergbtif = False
 
 
 # NOTE: Do not change the following unless you know what you are doing
@@ -140,8 +144,10 @@ def main():
 
     # Output a Geotiff of the predictions
     pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
-    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir, "--rgb"] \
-        + pfiles
+    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir]
+    if makergbtif:
+        cmd += ["--rgb"]
+    cmd += pfiles
 
     try_run(cmd)
 

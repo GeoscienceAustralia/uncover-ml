@@ -15,7 +15,6 @@ from uncoverml import feature
 import matplotlib.pyplot as pl
 import numpy as np
 import rasterio
-from affine import Affine
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ log = logging.getLogger(__name__)
 def transform(x, rows, x_min, x_max, band):
     x = x.reshape((rows, -1, x.shape[1]))
     if band is not None:
-        x = x[:, :, band:band+1]
+        x = x[:, :, band:band + 1]
         x_min = x_min[band]
         x_max = x_max[band]
 
@@ -40,6 +39,7 @@ def transform(x, rows, x_min, x_max, band):
     else:
         images.append(x)
     return images
+
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
@@ -79,10 +79,8 @@ def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
     eff_shape, eff_bbox = feature.load_attributes(filename_dict)
 
     # affine
-    pixsize_x = eff_bbox[1, 0] - eff_bbox[0, 0]/float(eff_shape[0])
-    pixsize_y = eff_bbox[1, 1] - eff_bbox[0, 1]/float(eff_shape[1])
-    A = Affine(pixsize_x, 0, eff_bbox[0, 0],
-               0, -pixsize_y, eff_bbox[1, 1])
+    A, _, _ = geoio.bbox2affine(eff_bbox[1, 0], eff_bbox[0, 0],
+                                eff_bbox[0, 1], eff_bbox[1, 1], *eff_shape)
 
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
@@ -136,7 +134,7 @@ def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     yend = ystart + data.shape[1]  # this is Y
                     window = ((ystart, yend), (0, eff_shape[0]))
-                    index_list = list(range(1, n_bands+1))
+                    index_list = list(range(1, n_bands + 1))
                     f.write(data, window=window, indexes=index_list)
                     ystart = yend
 
