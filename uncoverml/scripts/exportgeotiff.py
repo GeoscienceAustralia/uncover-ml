@@ -15,27 +15,31 @@ from uncoverml import feature
 import matplotlib.pyplot as pl
 import numpy as np
 import rasterio
+from affine import Affine
 
 log = logging.getLogger(__name__)
 
 
-def transform(x, rows):
+def transform(x, rows, x_min, x_max, band):
     x = x.reshape((rows, -1, x.shape[1]))
-    return x
+    if band is not None:
+        x = x[:, :, band:band+1]
+        x_min = x_min[band]
+        x_max = x_max[band]
 
-
-def colormap(x, x_min, x_max):
-    x = np.ma.asarray(x, dtype=float)
-    x = ((x - x_min) / (x_max - x_min))
-    cmap = pl.cm.viridis
-    cmap.set_bad(alpha=0)
-    channel_data = []
-    for i in range(x.shape[2]):
-        rgba = cmap(x[:, :, i])
-        rgba = (rgba * 255.0).astype(np.uint8)
-        channel_data.append(rgba)
-    return channel_data
-
+    images = []
+    if x_min is not None and x_max is not None:
+        x = np.ma.asarray(x, dtype=float)
+        x = ((x - x_min) / (x_max - x_min))
+        cmap = pl.cm.viridis
+        cmap.set_bad(alpha=0)
+        for i in range(x.shape[2]):
+            rgba = cmap(x[:, :, i])
+            rgba = (rgba * 255.0).astype(np.uint8)
+            images.append(rgba)
+    else:
+        images.append(x)
+    return images
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
@@ -74,6 +78,12 @@ def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
     # Get attribs if they exist
     eff_shape, eff_bbox = feature.load_attributes(filename_dict)
 
+    # affine
+    pixsize_x = eff_bbox[1, 0] - eff_bbox[0, 0]/float(eff_shape[0])
+    pixsize_y = eff_bbox[1, 1] - eff_bbox[0, 1]/float(eff_shape[1])
+    A = Affine(pixsize_x, 0, eff_bbox[0, 0],
+               0, -pixsize_y, eff_bbox[1, 1])
+
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
@@ -82,45 +92,52 @@ def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
     cluster.push({"filename_dict": filename_dict})
     cluster.execute("data_dict = feature.load_data("
                     "filename_dict, chunk_indices)")
-    cluster.execute("x = feature.data_vector(data_dict)")
 
     # Get the bounds for image output
     x_min = None
     x_max = None
-    cluster.execute("x_min = np.ma.min(x,axis=0)")
-    cluster.execute("x_max = np.ma.max(x,axis=0)")
-    x_min = np.amin(np.array(cluster['x_min']), axis=0)
-    x_max = np.amax(np.array(cluster['x_max']), axis=0)
-    g = partial(colormap, x_min=x_min, x_max=x_max)
+    if rgb is True:
+        cluster.execute("x = feature.data_vector(data_dict)")
+        cluster.execute("x_min = np.ma.min(x,axis=0)")
+        cluster.execute("x_max = np.ma.max(x,axis=0)")
+        x_min = np.amin(np.array(cluster['x_min']), axis=0)
+        x_max = np.amax(np.array(cluster['x_max']), axis=0)
 
-    f = partial(transform, rows=eff_shape[0])
+    f = partial(transform, rows=eff_shape[0], x_min=x_min,
+                x_max=x_max, band=band)
     cluster.push({"f": f})
-    cluster.execute("t_data_dict = {i: f(k) for i, k in data_dict.items()}")
-    cluster.push({"g": g})
-    cluster.execute("c_data_dict = {i: g(k) for i, k in t_data_dict.items()}")
-   
+    cluster.execute("image_dict = {i: f(k) for i, k in data_dict.items()}")
 
-    output_dtype = np.uint8
-    output_count = 4
-    output_filename = os.path.join(outputdir, name + ".tif")
-
+    # Couple of pieces of information we need here
+    firstnode = cluster.client[0]
+    firstnode.execute("n_images = len(image_dict[0])")
+    firstnode.execute("dtype = image_dict[0][0].dtype")
+    firstnode.execute("n_bands = [k.shape[2] for k in image_dict[0]]")
+    n_images = firstnode["n_images"]
+    dtype = firstnode["dtype"]
+    n_bands = firstnode["n_bands"][0]  # PER IMAGE
     nnodes = len(cluster)
     indices = np.array_split(np.arange(nchunks), nnodes)  # canonical
 
-    with rasterio.open(output_filename, 'w', driver='GTiff',
-                       width=eff_shape[0], height=eff_shape[1],
-                       dtype=output_dtype, count=output_count) as f:
-        ystart = 0
-        for node in range(nnodes):
-            engine = cluster.client[node]
-            data_dict = engine["c_data_dict"]
-            node_indices = indices[node]
-            for i in node_indices:
-                data = data_dict[i][0]
-                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                yend = ystart + data.shape[1]  # this is Y
-                window = ((ystart, yend), (0, eff_shape[0]))
-                f.write(data, window=window, indexes=[1, 2, 3, 4])
-                ystart = yend
+    for img_idx in range(n_images):
+        band_num = img_idx if band is None else band
+        output_filename = os.path.join(outputdir, name +
+                                       "_band{}.tif".format(band_num))
+
+        with rasterio.open(output_filename, 'w', driver='GTiff',
+                           width=eff_shape[0], height=eff_shape[1],
+                           dtype=dtype, count=n_bands, transform=A) as f:
+            ystart = 0
+            for node in range(nnodes):
+                engine = cluster.client[node]
+                node_indices = indices[node]
+                for i in node_indices:
+                    data = engine["image_dict[{}][{}]".format(i, img_idx)]
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, eff_shape[0]))
+                    index_list = list(range(1, n_bands+1))
+                    f.write(data, window=window, indexes=index_list)
+                    ystart = yend
 
     sys.exit(0)
