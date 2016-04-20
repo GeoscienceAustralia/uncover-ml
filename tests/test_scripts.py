@@ -122,7 +122,7 @@ def test_extractfeats(make_shp_gtiff):
 
     ffiles = []
     for i in range(chunks):
-        fname = os.path.join(outdir, "{}_{}.hdf5".format(name, i))
+        fname = os.path.join(outdir, "{}.part{}.hdf5".format(name, i))
         assert os.path.exists(fname)
         ffiles.append(fname)
 
@@ -176,7 +176,8 @@ def test_extractfeats_targets(make_shp_gtiff):
         if pworker is not None:
             pworker.terminate()
 
-    with tables.open_file(os.path.join(outdir, name + "_0.hdf5"), 'r') as f:
+    with tables.open_file(os.path.join(outdir,
+                                       name + ".part0.hdf5"), 'r') as f:
         feats = np.array([fts for fts in f.root.features])
 
     # Read lats and lons from targets

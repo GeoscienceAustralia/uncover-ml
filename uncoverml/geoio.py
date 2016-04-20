@@ -15,7 +15,7 @@ def file_indices_okay(filenames):
     basenames = [os.path.splitext(os.path.basename(k))[0] for k in filenames]
 
     # file_0 -> [file,0]
-    base_and_idx = [k.rsplit('_', 1) for k in basenames]
+    base_and_idx = [k.rsplit('.part', 1) for k in basenames]
     bases = set([k[0] for k in base_and_idx])
     log.info("Input file sets: {}".format(set(bases)))
 
@@ -25,7 +25,8 @@ def file_indices_okay(filenames):
         base_ids = {k: set([int(j[1])
                            for j in base_and_idx if j[0] == k]) for k in bases}
     except:
-        log.error("One or more filenames are not in <name>_<idx>.hdf5 format")
+        log.error("One or more filenames are not in <name>.part<idx>.hdf5"
+                  "format")
         # either there are no ints at the end or no underscore
         return False
 
@@ -52,11 +53,11 @@ def files_by_chunk(filenames):
     Note: assumes files_indices_ok returned true
     """
 
-    # get just the name eg /path/to/file_0.hdf5 -> file_0
+    # get just the name eg /path/to/file.part0.hdf5 -> file.part0
     transform = lambda x: os.path.splitext(os.path.basename(x))[0]
     sorted_filenames = sorted(filenames, key=transform)
     basenames = [transform(k) for k in sorted_filenames]
-    indices = [int(k.rsplit('_', 1)[1]) for k in basenames]
+    indices = [int(k.rsplit('.part', 1)[1]) for k in basenames]
     d = {i: [] for i in set(indices)}
     for i, f in zip(indices, sorted_filenames):
         d[i].append(f)

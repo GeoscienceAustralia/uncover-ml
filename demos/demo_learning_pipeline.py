@@ -77,7 +77,7 @@ patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 standardise = False  # standardise all of the extracted features?
 
 # Whiten all inputs?
-whiten = True  # whiten all of the extracted features?
+whiten = False  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.75
@@ -104,12 +104,12 @@ compos_file = "composite"
 #         'use_sgd': True}
 
 # Support vector machine (regressor)
-algorithm = "svr"
-args = {'gamma': 1. / 100, 'epsilon': 0.05}
+# algorithm = "svr"
+# args = {'gamma': 1. / 100, 'epsilon': 0.05}
 
 # Random forest regressor
-# algorithm = "randomforest"
-# args = {'n_estimators': 100}
+algorithm = "randomforest"
+args = {'n_estimators': 20}
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
@@ -149,7 +149,7 @@ def main():
         msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
         cmd[1], cmd[2] = name, tif
-        ffile = path.join(proc_dir, name + "_0.hdf5")
+        ffile = path.join(proc_dir, name + ".part0.hdf5")
         try_run_checkfile(cmd, ffile, msg)
         ffiles.append(ffile)
 
@@ -161,7 +161,7 @@ def main():
         cmd += ['--whiten', '--featurefraction', str(pca_frac)]
     cmd += ['--outputdir', proc_dir, compos_file] + ffiles
 
-    feat_file = path.join(proc_dir, compos_file + "_0.hdf5")
+    feat_file = path.join(proc_dir, compos_file + ".part0.hdf5")
     try_run(cmd)
 
     # Train the model
@@ -182,7 +182,7 @@ def main():
 
     # Report score
     cmd = ["validatemodel", "--metric", "r2_score", cv_file, "0", target_hdf,
-           path.join(proc_dir, predict_file + "_0.hdf5")]
+           path.join(proc_dir, predict_file + ".part0.hdf5")]
 
     log.info("Validating model.")
     try_run(cmd)

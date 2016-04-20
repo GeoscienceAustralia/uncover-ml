@@ -8,21 +8,21 @@ from uncoverml import geoio
 
 def test_file_indices_okay():
     # test the correct case
-    t1 = ["/path/to/file_1.hdf5", 
-          "/path/to/file_0.hdf5", 
-          "/path/to/file_2.hdf5"]
+    t1 = ["/path/to/file.part1.hdf5", 
+          "/path/to/file.part0.hdf5", 
+          "/path/to/file.part2.hdf5"]
     assert geoio.file_indices_okay(t1)
     
     # multiple features
-    t2 = t1 + ["/some/other/path_0.hdf5", 
-               "/some/other/path_1.hdf5",
-               "/some/other/path_2.hdf5"]
+    t2 = t1 + ["/some/other/path.part0.hdf5", 
+               "/some/other/path.part1.hdf5",
+               "/some/other/path.part2.hdf5"]
     assert geoio.file_indices_okay(t2)
 
     # wierd paths
-    t3 = t2 + ["/my/name_0.hdf5",
-               "/oh/dear/name_1.hdf5",
-               "name_2.hdf5"]
+    t3 = t2 + ["/my/name.part0.hdf5",
+               "/oh/dear/name.part1.hdf5",
+               "name.part2.hdf5"]
     assert geoio.file_indices_okay(t3)
 
     # missing data
@@ -35,18 +35,18 @@ def test_file_indices_okay():
 
 
 def test_files_by_chunk():
-    t1 = ["/path/to/file_1.hdf5", 
-          "/path/to/file_0.hdf5", 
-          "/path/to/file_2.hdf5",
-          "/some/to/zile_0.hdf5", 
-          "/other/to/zile_1.hdf5", 
-          "/path/to/zile_2.hdf5"]
+    t1 = ["/path/to/file.part1.hdf5", 
+          "/path/to/file.part0.hdf5", 
+          "/path/to/file.part2.hdf5",
+          "/some/to/zile.part0.hdf5", 
+          "/other/to/zile.part1.hdf5", 
+          "/path/to/zile.part2.hdf5"]
 
     r = geoio.files_by_chunk(t1)
 
-    answer = {0:["/path/to/file_0.hdf5", "/some/to/zile_0.hdf5"],
-              1:["/path/to/file_1.hdf5", "/other/to/zile_1.hdf5"],
-              2:["/path/to/file_2.hdf5", "/path/to/zile_2.hdf5"]}
+    answer = {0:["/path/to/file.part0.hdf5", "/some/to/zile.part0.hdf5"],
+              1:["/path/to/file.part1.hdf5", "/other/to/zile.part1.hdf5"],
+              2:["/path/to/file.part2.hdf5", "/path/to/zile.part2.hdf5"]}
 
     assert r == answer
 

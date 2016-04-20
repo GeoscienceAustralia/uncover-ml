@@ -57,7 +57,7 @@ compos_file = "composite"
 nchunks = 16
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
@@ -99,7 +99,7 @@ def main():
         settings.append(setting)
 
     # Get suffix of end processed file for checking completion of commands
-    endsuf = "_" + str(nchunks - 1) + ".hdf5"
+    endsuf = ".part" + str(nchunks - 1) + ".hdf5"
 
     # Now Extact features from each tif
     cmd = ["extractfeats", None, None, "--outputdir", pred_dir, "--chunks",
@@ -140,7 +140,8 @@ def main():
 
     # Output a Geotiff of the predictions
     pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
-    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir] + pfiles
+    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir, "--rgb"] \
+        + pfiles
 
     try_run(cmd)
 

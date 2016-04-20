@@ -89,9 +89,9 @@ def compute_statistics(impute, centre, standardise, whiten,
         out_dims = int(out_dims*featurefraction)
         log.info("Whitening and keeping {} dimensions".format(out_dims))
 
-        d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
-             "eigvecs": eigvecs, "eigvals": eigvals,
-             "featurefraction": featurefraction}
+    d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
+         "eigvecs": eigvecs, "eigvals": eigvals,
+         "featurefraction": featurefraction}
     return d
 
 
