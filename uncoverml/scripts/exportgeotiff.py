@@ -31,7 +31,7 @@ def transform(x, rows, x_min, x_max, band):
     if x_min is not None and x_max is not None:
         x = np.ma.asarray(x, dtype=float)
         x = ((x - x_min) / (x_max - x_min))
-        cmap = pl.cm.viridis
+        cmap = pl.cm.inferno
         cmap.set_bad(alpha=0)
         for i in range(x.shape[2]):
             rgba = cmap(x[:, :, i])

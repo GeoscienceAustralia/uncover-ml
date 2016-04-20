@@ -8,7 +8,7 @@ import sys
 import logging
 from os import path, mkdir
 from glob import glob
-from runcommands import try_run_checkfile, PipeLineFailure
+from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +61,13 @@ algorithm = 'svr'
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
+
+
+#
+# Visualisation/Geotiff settings
+#
+
+gtiffname = "prediction_image"
 
 
 # NOTE: Do not change the following unless you know what you are doing
@@ -132,7 +139,10 @@ def main():
     try_run_checkfile(cmd, pfile, "Predicting targets...")
 
     # Output a Geotiff of the predictions
-    # TODO
+    pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
+    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir] + pfiles
+
+    try_run(cmd)
 
 
 if __name__ == "__main__":
