@@ -8,9 +8,9 @@ RUN apt-get update && apt-get install -y \
   # Fast blas for numpy and scipy
   libopenblas-base \ 
   libopenblas-dev \
-  python3 \
-  python3-dev \
-  python3-pip \
+  python \
+  python-dev \
+  python-pip \
   # Needed for matplotlib
   libfreetype6-dev \
   libxft-dev \
@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
   && mkdir -p /usr/src/python/uncoverml
 
 # pip packages 
-RUN pip3 -v install \
+RUN pip -v install \
   ipython \
   Cython \
   numpy \
@@ -50,7 +50,7 @@ RUN pip3 -v install \
 COPY . /usr/src/python/uncoverml
 
 # install prereqs for caching reasons
-RUN pip3 -v install \ 
+RUN pip -v install \ 
   rasterio \ 
   affine \ 
   pytest \ 
@@ -61,6 +61,6 @@ RUN pip3 -v install \
 
 WORKDIR /usr/src/python/uncoverml
 
-RUN python3 setup.py develop
+RUN python setup.py develop
 
 
