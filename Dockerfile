@@ -1,45 +1,66 @@
-# ga docker file
+# Docker file for uncoverml project
 
-FROM terriajs/tie-ml-base
-MAINTAINER Lachlan McCalman <lachlan.mccalman@nicta.com.au>
-
+FROM ubuntu:16.04
+MAINTAINER Lachlan McCalman <lachlan.mccalman@data61.csiro.au>
 RUN apt-get update && apt-get install -y \
-    git \
-    #gdal requirement
-    libgeos-c1v5 \
-    libgeos-dev \
-    # Install gdal (yuk!)
-  && cd /tmp \
-  && wget http://download.osgeo.org/gdal/2.0.1/gdal-2.0.1.tar.gz \
-  && tar -xvf gdal-2.0.1.tar.gz \
-  && cd gdal-2.0.1 \
-  && ./configure --prefix=/usr \
-  && make -j8 \
-  && make install \
-  && export CPLUS_INCLUDE_PATH=/usr/include/gdal \
-  && export C_INCLUDE_PATH=/usr/include/gdal \
-  && pip3 -v install \ 
-    #cmdline
-    click \
-    #geospatial
-    GDAL \
-    rasterio \
-    pyshp \
-    affine \
-    # logging and celery worker support
-    celery \
-    redis \ 
-    pytest \
+  wget \
+  build-essential \
+  # Fast blas for numpy and scipy
+  libopenblas-base \ 
+  libopenblas-dev \
+  python3 \
+  python3-dev \
+  python3-pip \
+  # Needed for matplotlib
+  libfreetype6-dev \
+  libxft-dev \
+  # Needed for ipyparallel
+  libzmq3-dev \
+  # Needed for pytables
+  libhdf5-dev \
+  libbz2-dev \
+  liblzo2-dev \
+  zlib1g-dev \
+  gfortran \
+  # Needed for rasterio
+  libgdal-dev \
+  gdal-bin \
+  # confd for doing in-container configuration
+  && mkdir -p /webserver /usr/local/bin etc/confd/conf.d /etc/confd/templates \
+  && wget https://github.com/kelseyhightower/confd/releases/download/v0.11.0/confd-0.11.0-linux-amd64 -O /usr/local/bin/confd \
+  && chmod +x /usr/local/bin/confd \
+  # Clean up
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+  # Make folders
+  && mkdir -p /usr/src/python/uncoverml
 
-# Install revrand
-RUN pip3 install git+https://github.com/nicta/revrand.git@master
+# pip packages 
+RUN pip3 -v install \
+  ipython \
+  Cython \
+  numpy \
+  scipy \
+  numexpr \
+  tables \
+  matplotlib \
+  scikit-learn \
+  ipyparallel
 
-# Make sure click knows what planet its on
-ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
+COPY . /usr/src/python/uncoverml
 
-# Make sure nlopt python library is found by the interpreter
-ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.4/site-packages 
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+# install prereqs for caching reasons
+RUN pip3 -v install \ 
+  rasterio \ 
+  affine \ 
+  pytest \ 
+  pytest-cov \ 
+  pyshp \ 
+  click \
+  revrand
+
+WORKDIR /usr/src/python/uncoverml
+
+RUN python3 setup.py develop
+
 
