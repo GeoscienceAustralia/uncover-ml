@@ -64,7 +64,8 @@ setup(
         'pyshp',
         'ipyparallel',
         'click',
-        'scikit-learn'
+        'scikit-learn',
+        'revrand'
     ],
     extras_require={
         'demos': [
