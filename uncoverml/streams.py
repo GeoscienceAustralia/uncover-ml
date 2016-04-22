@@ -1,5 +1,10 @@
+import sys
 from threading import Thread
-from queue import Queue, Empty
+
+if sys.version_info[0] < 3:
+    from Queue import Queue, Empty
+else:
+    from queue import Queue, Empty
 
 
 # Adapted from gist: https://gist.github.com/EyalAr/7915597
