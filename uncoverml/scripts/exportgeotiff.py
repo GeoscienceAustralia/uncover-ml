@@ -3,6 +3,8 @@ Output a geotiff from a set of HDF5 chunked features
 
 .. program-output:: exportgeotiff --help
 """
+from __future__ import division
+
 import logging
 import sys
 import os.path

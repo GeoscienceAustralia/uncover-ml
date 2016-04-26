@@ -2,7 +2,7 @@ from uncoverml import parallel
 from collections import namedtuple
 import numpy as np
 
-def test_direct_view(make_ipcluster):
+def test_direct_view(make_ipcluster4):
     cluster = parallel.direct_view(profile=None,nchunks=10)
     cluster.execute("import sys; mods = set(sys.modules.keys())")
     for i in range(len(cluster)):
@@ -58,8 +58,3 @@ def test_one_hot(int_masked_array):
                    [False, False, False, False, False, False]], dtype=bool)
     assert np.all(r.data == ans)
     assert np.all(r.mask == ans_mask)
-
-
-
-
-

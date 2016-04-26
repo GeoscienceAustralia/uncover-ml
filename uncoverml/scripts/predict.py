@@ -9,7 +9,6 @@ import os.path
 import pickle
 import click as cl
 from functools import partial
-# import numpy as np
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel, feature

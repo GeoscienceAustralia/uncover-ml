@@ -1,27 +1,33 @@
+from __future__ import division
+
 import pytest
 import numpy as np
 import shapefile as shp
 import rasterio
 from affine import Affine
-import subprocess
 import time
 import signal
+import subprocess
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
+
 @pytest.fixture
 def masked_array():
-    x = np.ma.masked_array(data=[[0.,1.],[2.,3.],[4.,5.]],
-                           mask=[[True,False,],[False,True],[False,False]],
+    x = np.ma.masked_array(data=[[0., 1.], [2., 3.], [4., 5.]],
+                           mask=[[True, False], [False, True], [False, False]],
                            fill_value=1e23)
     return x
+
+
 @pytest.fixture
-def int_masked_array(): 
-    x = np.ma.masked_array(data=[[1,1],[2,3],[4,5], [3,3]],
-                           mask=[[True,False,],[False,True],[False,False],
-                                 [False,False]],
-                           fill_value=-9999,dtype=int)
+def int_masked_array():
+    x = np.ma.masked_array(data=[[1, 1], [2, 3], [4, 5], [3, 3]],
+                           mask=[[True, False], [False, True], [False, False],
+                                 [False, False]],
+                           fill_value=-9999, dtype=int)
     return x
+
 
 @pytest.fixture
 def make_patch_31():
@@ -100,15 +106,26 @@ def make_points():
 def make_multi_patch(request):
     return request.param()
 
+
 @pytest.fixture
-def make_ipcluster(request):
-    proc = subprocess.Popen(["ipcluster", "start", "--n=4"])
+def make_ipcluster4(request):
+    return make_ipcluster(request, 4)
+
+
+@pytest.fixture
+def make_ipcluster1(request):
+    return make_ipcluster(request, 1)
+
+
+def make_ipcluster(request, n):
+    proc = subprocess.Popen(["ipcluster", "start", "--n=" + str(n)])
     time.sleep(10)
-    
+
     def fin():
         # Shutdown engines
         proc.send_signal(signal.SIGINT)
         proc.wait()
+
     request.addfinalizer(fin)
     return proc
 

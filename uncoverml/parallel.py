@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 import os.path
 import ipyparallel as ipp

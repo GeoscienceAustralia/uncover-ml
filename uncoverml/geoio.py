@@ -1,3 +1,5 @@
+from __future__ import division
+
 import rasterio
 import os.path
 import numpy as np
@@ -141,7 +143,7 @@ def values_from_hdf(filename, field):
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
     # plus one for exclusive upper range
-    y_arrays = np.array_split(np.arange(npixels+1), nchunks)
+    y_arrays = np.array_split(np.arange(npixels + 1), nchunks)
     y_bounds = []
     # construct the overlap
     for s in y_arrays:
@@ -170,6 +172,9 @@ def bounding_box(raster):
 
     lon_range = np.sort(lon_range)
     lat_range = np.sort(lat_range)
+
+    # import IPython; IPython.embed()
+
     return lon_range, lat_range
 
 
@@ -224,10 +229,10 @@ class Image:
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
 
-        #uniform mask format
+        # uniform mask format
         if np.ma.count_masked(d) == 0:
-            d = np.ma.masked_array(data=d.data, 
-                mask=np.zeros_like(d.data, dtype=bool))
+            d = np.ma.masked_array(data=d.data,
+                                   mask=np.zeros_like(d.data, dtype=bool))
         return d
 
     @property

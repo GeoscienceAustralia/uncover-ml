@@ -3,9 +3,7 @@ import tables
 import numpy as np
 import shapefile
 import rasterio
-import subprocess
 
-from uncoverml import streams
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
@@ -93,32 +91,18 @@ def test_cvindexer_hdf(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_shp_gtiff):
+def test_extractfeats(make_shp_gtiff, make_ipcluster1):
 
     fshp, ftif = make_shp_gtiff
     chunks = 4
     outdir = os.path.dirname(fshp)
     name = "fchunk_worker"
 
-    pworker = None
-
-    # Start ipcluster
-    try:
-        # Start the worker
-        cmd = ["ipcluster", "start", "--n=2"]
-        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        _proc_ready(pworker, msg="started")
-
-        # Extract features from gtiff
-        extractfeats.callback(geotiff=ftif, name=name, targets=None,
-                              chunks=chunks, patchsize=0, quiet=False,
-                              outputdir=outdir, ipyprofile=None, onehot=False,
-                              settings=None)
-
-    finally:
-        if pworker is not None:
-            pworker.terminate()
+    # Extract features from gtiff
+    extractfeats.callback(geotiff=ftif, name=name, targets=None,
+                          chunks=chunks, patchsize=0, quiet=False,
+                          outputdir=outdir, ipyprofile=None, onehot=False,
+                          settings=None)
 
     ffiles = []
     for i in range(chunks):
@@ -143,7 +127,7 @@ def test_extractfeats(make_shp_gtiff):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp_gtiff):
+def test_extractfeats_targets(make_shp_gtiff, make_ipcluster1):
 
     fshp, ftif = make_shp_gtiff
     chunks = 1
@@ -156,25 +140,11 @@ def test_extractfeats_targets(make_shp_gtiff):
     maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
                          quiet=False)
 
-    pworker = None
-
-    # Start ipcluster
-    try:
-        # Start the worker
-        cmd = ["ipcluster", "start", "--n=1"]
-        pworker = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        _proc_ready(pworker, msg="started")
-
-        # Extract features from gtiff
-        extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
-                              chunks=chunks, patchsize=0, quiet=False,
-                              outputdir=outdir, ipyprofile=None, onehot=False,
-                              settings=None)
-
-    finally:
-        if pworker is not None:
-            pworker.terminate()
+    # Extract features from gtiff
+    extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
+                          chunks=chunks, patchsize=0, quiet=False,
+                          outputdir=outdir, ipyprofile=None, onehot=False,
+                          settings=None)
 
     with tables.open_file(os.path.join(outdir,
                                        name + ".part0.hdf5"), 'r') as f:
@@ -186,22 +156,3 @@ def test_extractfeats_targets(make_shp_gtiff):
                             f.root.Latitude.read()))
 
     assert np.allclose(feats, lonlat)
-
-
-def _proc_ready(proc, msg, waitime=60):
-
-    nbsr = streams.NonBlockingStreamReader(proc.stdout)
-
-    for i in range(waitime):
-        try:
-            for line in iter(nbsr.readline, None):
-                if msg in line.decode():
-                    return
-            proc.wait(timeout=1)
-        except subprocess.TimeoutExpired:
-            pass
-        except Exception:
-            proc.terminate()
-            raise
-
-    raise RuntimeError("Process {} never ready!".format(proc.args))

@@ -1,7 +1,14 @@
 #!/usr/bin/env python
-
+import os
+import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+
+# If testing in python 2, use subprocess32 instead of built in subprocess
+if os.name == 'posix' and sys.version_info[0] < 3:
+    exta_test_deps = ['subprocess32']
+else:
+    exta_test_deps = []
 
 
 class PyTest(TestCommand):
@@ -86,7 +93,7 @@ setup(
         'coverage',
         'codecov',
         'tox',
-    ],
+    ] + exta_test_deps,
     license="Apache Software License 2.0",
     zip_safe=False,
     keywords='uncover-ml',
