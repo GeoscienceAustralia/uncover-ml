@@ -21,7 +21,7 @@ import rasterio
 log = logging.getLogger(__name__)
 
 
-def transform(x, rows, x_min, x_max, band):
+def transform(x, rows, x_min, x_max, band, separatebands):
     x = x.reshape((rows, -1, x.shape[1]))
     if band is not None:
         x = x[:, :, band:band + 1]
@@ -39,7 +39,11 @@ def transform(x, rows, x_min, x_max, band):
             rgba = (rgba * 255.0).astype(np.uint8)
             images.append(rgba)
     else:
-        images.append(x)
+        if separatebands:
+            for i in range(x.shape[2]):
+                images.append(x[:, :, i:i + 1])
+        else:
+            images.append(x)
     return images
 
 
@@ -47,6 +51,8 @@ def transform(x, rows, x_min, x_max, band):
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
 @cl.option('--rgb', is_flag=True, help="Colormap data to rgb format")
+@cl.option('--separatebands', is_flag=True, help="Output each band in a"
+           "separate geotiff, --rgb flag automatically does this")
 @cl.option('--band', type=int, default=None,
            help="Output only a specific band")
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
@@ -54,7 +60,7 @@ def transform(x, rows, x_min, x_max, band):
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.argument('name', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
+def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
     """ TODO
     """
 
@@ -104,7 +110,7 @@ def main(name, files, rgb, band, quiet, ipyprofile, outputdir):
         x_max = np.amax(np.array(cluster['x_max']), axis=0)
 
     f = partial(transform, rows=eff_shape[0], x_min=x_min,
-                x_max=x_max, band=band)
+                x_max=x_max, band=band, separatebands=separatebands)
     cluster.push({"f": f})
     cluster.execute("image_dict = {i: f(k) for i, k in data_dict.items()}")
 
