@@ -6,6 +6,7 @@ from revrand import regression
 from revrand import glm
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomRBF_ARD
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
+from revrand.btypes import Parameter, Positive
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
@@ -13,14 +14,13 @@ from sklearn.svm import SVR
 
 class LinearReg(object):
 
-    def __init__(self, var=1., regulariser=1., diagcov=False, tol=1e-6,
-                 maxit=500, verbose=True):
+    def __init__(self, var=Parameter(1., Positive()),
+                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
+                 verbose=True):
 
         self.params = {'basis': None,
-                       'bparams': [],
                        'var': var,
                        'regulariser': regulariser,
-                       'diagcov': diagcov,
                        'tol': tol,
                        'maxit': maxit,
                        'verbose': verbose,
@@ -76,30 +76,32 @@ class ApproxGP(LinearReg):
         d = X.shape[1]
 
         if self.ard:
-            self.params['basis'] = RandomRBF_ARD(nbases=self.nbases, Xdim=d)
-            self.params['bparams'] = [self.lenscale * np.ones(d)]
+            lenard = self.lenscale * np.ones(d)
+            self.params['basis'] = \
+                RandomRBF_ARD(nbases=self.nbases, Xdim=d,
+                              lenscale_init=Parameter(lenard, Positive()))
         else:
-            self.params['basis'] = RandomRBF(nbases=self.nbases, Xdim=d)
-            self.params['bparams'] = [self.lenscale]
+            self.params['basis'] = \
+                RandomRBF(nbases=self.nbases, Xdim=d,
+                          lenscale_init=Parameter(self.lenscale, Positive()))
 
 
 class GenLinMod(ApproxGP):
 
-    def __init__(self, likelihood="Gaussian", lparams=[1.], postcomp=10,
-                 use_sgd=True, batchsize=100, maxit=100, *args, **kwargs):
+    def __init__(self, likelihood="Gaussian", lparams=Parameter(1, Positive()),
+                 postcomp=10, use_sgd=True, batchsize=100, maxit=100, *args,
+                 **kwargs):
 
         super(GenLinMod, self).__init__(*args, **kwargs)
 
         # Extra params
-        self.params['likelihood'] = lhoodmaps[likelihood]()
-        self.params['lparams'] = lparams
+        self.params['likelihood'] = lhoodmaps[likelihood](lparams)
         self.params['postcomp'] = postcomp
         self.params['batchsize'] = batchsize
         self.params['maxit'] = maxit
         self.params['use_sgd'] = use_sgd
 
         # translate the parameters
-        del self.params['diagcov']
         del self.params['var']
 
     def _make_basis(self, X):
@@ -128,7 +130,7 @@ class GenLinMod(ApproxGP):
                 self.params['bparams']
                 ]
 
-        Ey, Vy, Ey_min, Ey_max = glm.predict_meanvar(X, *args)
+        Ey, Vy, Ey_min, Ey_max = glm.predict_moments(X, *args)
 
         if uncertainty and (interval is not None):
             l, u = glm.predict_interval(interval, X, *args)
