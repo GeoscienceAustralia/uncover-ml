@@ -8,57 +8,56 @@ from revrand.basis_functions import LinearBasis, RandomRBF, RandomRBF_ARD
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 from revrand.btypes import Parameter, Positive
 
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 
 
-class LinearReg(object):
+class LinearReg(BaseEstimator):
 
     def __init__(self, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
                  verbose=True):
 
-        self.params = {'basis': None,
-                       'var': var,
-                       'regulariser': regulariser,
-                       'tol': tol,
-                       'maxit': maxit,
-                       'verbose': verbose,
-                       }
+        self.var = var
+        self.regulariser = regulariser
+        self.tol = tol
+        self.maxit = maxit
+        self.verbose = verbose
 
     def fit(self, X, y):
 
         self._make_basis(X)
-        m, C, bparams, var = regression.learn(X, y, **self.params)
-        self.params['m'] = m
-        self.params['C'] = C
-        self.params['bparams'] = bparams
-        self.params['var'] = var
+        m, C, bparams, var = regression.learn(X, y,
+                                              basis=self.basis,
+                                              var=self.var,
+                                              regulariser=self.regulariser,
+                                              tol=self.tol,
+                                              maxit=self.maxit,
+                                              verbose=self.verbose
+                                              )
+        self.m = m
+        self.C = C
+        self.bparams = bparams
+        self.optvar = var
 
         return self
 
     def predict(self, X, uncertainty=False):
 
         Ey, Vf, Vy = regression.predict(X,
-                                        self.params['basis'],
-                                        self.params['m'],
-                                        self.params['C'],
-                                        self.params['bparams'],
-                                        self.params['var']
+                                        self.basis,
+                                        self.m,
+                                        self.C,
+                                        self.bparams,
+                                        self.optvar
                                         )
 
         return (Ey, Vf, Vy) if uncertainty else Ey
 
-    def get_params(self):
-        return self.params
-
-    def set_params(self, **params):
-        self.params.update(params)
-        return self
-
     def _make_basis(self, X):
 
-        self.params['basis'] = LinearBasis(onescol=True)
+        self.basis = LinearBasis(onescol=True)
 
 
 class ApproxGP(LinearReg):
@@ -140,9 +139,9 @@ class GenLinMod(ApproxGP):
 
 modelmaps = {'randomforest': RandomForestRegressor,
              'bayesreg': LinearReg,
-             'approxgp': ApproxGP,
+             # 'approxgp': ApproxGP,
              'svr': SVR,
-             'glm': GenLinMod
+             # 'glm': GenLinMod
              }
 
 
