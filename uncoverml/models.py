@@ -2,7 +2,7 @@
 
 from revrand import regression
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomLaplace, \
-    RandomCauchy
+    RandomCauchy, RandomMatern32, RandomMatern52
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 from revrand.btypes import Parameter, Positive
 
@@ -105,7 +105,9 @@ lhoodmaps = {'Gaussian': Gaussian,
 
 basismap = {'rbf': RandomRBF,
             'laplace': RandomLaplace,
-            'cauchy': RandomCauchy
+            'cauchy': RandomCauchy,
+            'matern32': RandomMatern32,
+            'matern52': RandomMatern52
             }
 
 probmodels = (LinearReg, ApproxGP, LinearModel)

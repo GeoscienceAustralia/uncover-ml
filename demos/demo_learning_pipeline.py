@@ -96,7 +96,7 @@ compos_file = "composite"
 
 # Approximate Gaussian process, for large scale data
 algorithm = "approxgp"
-args = {'lenscale': 100., 'nbases': 200}
+args = {'kern': 'cauchy', 'lenscale': 1000., 'nbases': 200}
 
 # Support vector machine (regressor)
 # algorithm = "svr"
@@ -108,6 +108,14 @@ args = {'lenscale': 100., 'nbases': 200}
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
+
+
+#
+# Validation settings
+#
+
+metrics = ['msll', 'r2_score', 'smse', 'lins_ccc']
+# metrics = ['r2_score', 'smse', 'lins_ccc']
 
 
 # NOTE: Do not change the following unless you know what you are doing
@@ -176,11 +184,16 @@ def main():
     try_run(cmd)
 
     # Report score
-    cmd = ["validatemodel", "--metric", "r2_score", cv_file, "0", target_hdf,
-           path.join(proc_dir, predict_file + ".part0.hdf5")]
-
     log.info("Validating model.")
-    try_run(cmd)
+
+    for i, m in enumerate(metrics):
+        cmd = ["validatemodel", "--metric", m]
+        if i == (len(metrics) - 1):
+            cmd += ['--plotyy']
+        cmd += [cv_file, "0", target_hdf,
+                path.join(proc_dir, predict_file + ".part0.hdf5")]
+
+        try_run(cmd)
 
     log.info("Finished!")
 
