@@ -95,17 +95,12 @@ compos_file = "composite"
 # args = {}
 
 # Approximate Gaussian process, for large scale data
-# algorithm = "approxgp"
-# args = {'lenscale': 10., 'ard': False, 'nbases': 100}
-
-# Generalised linear model (Gaussian Likelihood), V. large scale Approximate GP
-# algorithm = "glm"
-# args = {'lenscale': 10., 'lparams': [100.], 'ard': False, 'nbases': 100,
-#         'use_sgd': True}
+algorithm = "approxgp"
+args = {'lenscale': 100., 'nbases': 200}
 
 # Support vector machine (regressor)
-algorithm = "svr"
-args = {'gamma': 1. / 70, 'epsilon': 0.05}
+# algorithm = "svr"
+# args = {'gamma': 1. / 70, 'epsilon': 0.05}
 
 # Random forest regressor
 # algorithm = "randomforest"

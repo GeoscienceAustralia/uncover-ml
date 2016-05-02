@@ -8,19 +8,39 @@ import sys
 import os.path
 import pickle
 import click as cl
+import numpy as np
 from functools import partial
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel, feature
 from uncoverml.validation import input_cvindex, chunk_cvindex
+from uncoverml.models import probmodels
 
 log = logging.getLogger(__name__)
 
 
 # Apply the prediction to the data
 def predict(data, model):
-    # FIXME deal with missing values (mask)
-    return model.predict(data.data)
+
+    # Ask for predictive outputs if predictive model
+    if isinstance(model, probmodels):
+        predwrap = lambda x: np.vstack(model.predict(x, uncertainty=True)).T
+    else:
+        predwrap = lambda x: model.predict(x)
+
+    # No masked data
+    if np.ma.count_masked(data) == 0:
+        return predwrap(data.data)
+
+    # Prediction with missing inputs
+    okdata = data.getmask().sum(axis=1) == 0
+    pred = predwrap(data.data[okdata])
+
+    mpred = np.empty(len(data)) if pred.ndim == 1 \
+        else np.empty((len(data), pred.shape[1]))
+    mpred[okdata] = pred
+
+    return np.ma.array(mpred, mask=~okdata)
 
 
 @cl.command()

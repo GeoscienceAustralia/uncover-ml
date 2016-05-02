@@ -17,8 +17,21 @@ from uncoverml.validation import input_cvindex, input_targets
 
 log = logging.getLogger(__name__)
 
-metrics = {'r2_score': r2_score,
-           'smse': smse,
+
+def score_first_dim(func):
+
+    def newscore(y_true, y_pred, *args, **kwargs):
+
+        if y_true.ndim > 1:
+            return func(y_true[:, 0], y_pred, *args, **kwargs)
+        else:
+            return func(y_true, y_pred, *args, **kwargs)
+
+    return newscore
+
+
+metrics = {'r2_score': score_first_dim(r2_score),
+           'smse': score_first_dim(smse),
            }
 
 

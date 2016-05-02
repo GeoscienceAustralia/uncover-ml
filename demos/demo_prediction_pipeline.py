@@ -57,7 +57,8 @@ compos_file = "composite"
 nchunks = 16
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
+algorithm = 'approxgp'
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
@@ -71,7 +72,7 @@ predict_file = "prediction_file"
 gtiffname = "prediction_image"
 
 # Make the image RGB?
-makergbtif = False
+makergbtif = True
 
 
 # NOTE: Do not change the following unless you know what you are doing
