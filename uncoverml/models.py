@@ -1,5 +1,7 @@
 """ Model Spec Objects and ML algorithm serialisation. """
 
+import numpy as np
+
 from revrand import regression
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomLaplace, \
     RandomCauchy, RandomMatern32, RandomMatern52
@@ -53,6 +55,13 @@ class LinearModel(BaseEstimator):
                                        )
 
         return (Ey, Vy) if uncertainty else Ey
+
+    def entropy_reduction(self, X):
+
+        Phi = self.base(X, *self.bparams)
+        pCp = [p.dot(self.C).dot(p.T) for p in Phi]
+        return 0.5 * (np.log(self.optvar + np.array(pCp))
+                      + np.log(self.optvar))
 
     def _make_basis(self, X):
 

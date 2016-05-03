@@ -96,7 +96,7 @@ compos_file = "composite"
 
 # Approximate Gaussian process, for large scale data
 algorithm = "approxgp"
-args = {'kern': 'cauchy', 'lenscale': 1000., 'nbases': 200}
+args = {'kern': 'matern32', 'lenscale': 1000., 'nbases': 200}
 
 # Support vector machine (regressor)
 # algorithm = "svr"
