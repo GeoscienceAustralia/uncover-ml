@@ -12,6 +12,8 @@ import logging
 import json
 from os import path, mkdir
 from glob import glob
+
+from uncoverml.models import probmodels_str
 from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
@@ -73,6 +75,9 @@ onehot = False  # NOTE: if you change this, make sure you delete all old feats
 # Patch size to extract around targets (0 = 1x1 pixel, 1 = 3x3 pixels etc)
 patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 
+# Impute missing values?
+impute = False
+
 # Starndardise each input dimension? (0 mean, 1 std)
 standardise = False  # standardise all of the extracted features?
 
@@ -114,8 +119,11 @@ predict_file = "prediction_file"
 # Validation settings
 #
 
-metrics = ['msll', 'r2_score', 'smse', 'lins_ccc']
-# metrics = ['r2_score', 'smse', 'lins_ccc']
+metrics = ['r2_score', 'smse', 'lins_ccc']
+
+# Extra settings if the model is probabilistic
+if algorithm in probmodels_str:
+    metrics.append('msll')
 
 
 # NOTE: Do not change the following unless you know what you are doing
@@ -144,7 +152,7 @@ def main():
     cmd = ["extractfeats", None, None, "--outputdir", proc_dir, "--chunks",
            "1", "--patchsize", str(patchsize), "--targets", target_hdf]
     if onehot:
-        cmd += ['--onehot']
+        cmd.append('--onehot')
 
     # Find all of the tifs and extract features
     ffiles = []
@@ -157,7 +165,9 @@ def main():
         ffiles.append(ffile)
 
     # Compose individual image features into single feature vector
-    cmd = ["composefeats", '--impute']
+    cmd = ["composefeats"]
+    if impute:
+        cmd.append('--impute')
     if standardise:
         cmd += ['--centre', '--standardise']
     if whiten:
@@ -189,7 +199,7 @@ def main():
     for i, m in enumerate(metrics):
         cmd = ["validatemodel", "--metric", m]
         if i == (len(metrics) - 1):
-            cmd += ['--plotyy']
+            cmd.append('--plotyy')
         cmd += [cv_file, "0", target_hdf,
                 path.join(proc_dir, predict_file + ".part0.hdf5")]
 

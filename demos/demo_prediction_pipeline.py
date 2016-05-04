@@ -8,6 +8,8 @@ import sys
 import logging
 from os import path, mkdir
 from glob import glob
+
+from uncoverml.models import probmodels_str
 from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
@@ -63,6 +65,12 @@ algorithm = 'approxgp'
 # Prediction file names (prefix)
 predict_file = "prediction_file"
 
+# Extra options for probabilistic regressors
+if algorithm in probmodels_str:
+    entropy_reduction = True
+else:
+    entropy_reduction = False
+
 
 #
 # Visualisation/Geotiff settings
@@ -70,6 +78,7 @@ predict_file = "prediction_file"
 
 # Name of the prediction output tif
 gtiffname = "prediction_image"
+gtiffname_ent = "entropy_reduction_image"
 
 # Make the image RGB?
 makergbtif = True
@@ -138,19 +147,31 @@ def main():
     cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
     cmd = ["predict", "--outputdir", pred_dir,
-           "--predictname", predict_file, alg_file] + cfiles
+           "--predictname", predict_file]
+    if entropy_reduction:
+        cmd.append('--entropred')
+    cmd += [alg_file] + cfiles
 
     pfile = path.join(pred_dir, predict_file + endsuf)
     try_run_checkfile(cmd, pfile, "Predicting targets...")
 
-    # Output a Geotiff of the predictions
-    pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
+    # General export command
     cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir]
     if makergbtif:
         cmd += ["--rgb"]
-    cmd += pfiles
 
-    try_run(cmd)
+    # Output a Geotiff of the predictions
+    pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
+    cmdp = cmd + pfiles
+    try_run(cmdp)
+
+    # Output a Geotiff of the expeded reduction in entropy
+    if entropy_reduction:
+        cmd[1] = gtiffname_ent
+        efiles = glob(path.join(pred_dir,
+                                "entropred_" + predict_file + "*.hdf5"))
+        cmde = cmd + efiles
+        try_run(cmde)
 
 
 if __name__ == "__main__":

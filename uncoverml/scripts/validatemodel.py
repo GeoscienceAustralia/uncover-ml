@@ -16,8 +16,14 @@ from revrand.validation import smse, mll, msll
 import uncoverml.defaults as df
 from uncoverml import geoio, feature
 from uncoverml.validation import input_cvindex, input_targets, lins_ccc
+from uncoverml.models import apply_multiple_masked
 
 log = logging.getLogger(__name__)
+
+
+def get_first_dim(Y):
+
+    return Y[:, 0] if Y.ndim > 1 else Y
 
 
 # Decorator to deal with probabilistic output for non-probabilistic scores
@@ -25,16 +31,13 @@ def score_first_dim(func):
 
     def newscore(y_true, y_pred, *args, **kwargs):
 
-        if y_pred.ndim > 1:
-            return func(y_true.flatten(), y_pred[:, 0], *args, **kwargs)
-        else:
-            return func(y_true.flatten(), y_pred.flatten(), *args, **kwargs)
+        return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
 
     return newscore
 
-metrics = {'r2_score': score_first_dim(r2_score),
-           'smse': score_first_dim(smse),
-           'lins_ccc': score_first_dim(lins_ccc),
+metrics = {'r2_score': r2_score,
+           'smse': smse,
+           'lins_ccc': lins_ccc,
            'mll': mll,
            'msll': msll
            }
@@ -85,20 +88,19 @@ def main(cvindex, targets, prediction_files, metric, quiet, plotyy):
     pred_dict = feature.load_data(filename_dict, range(len(filename_dict)))
 
     # Deal with missing data
-    pred = feature.data_vector(pred_dict)
-    okmask = ~ pred.mask if np.ma.count_masked(pred) != 0 \
-        else np.ones(Ns, dtype=bool)
+    EYs = feature.data_vector(pred_dict)
 
     # See if this data is already subset for xval
-    EYs = pred.data[s_ind[okmask]] if len(pred.data) > Ns \
-        else pred.data[okmask]
+    if len(EYs) > Ns:
+        EYs = EYs[s_ind]
 
     if metric in nonprob:
-        score = metrics[metric](Ys, EYs)
+        score = apply_multiple_masked(score_first_dim(metrics[metric]),
+                                      (Ys, EYs))
     elif metric == 'mll':
-        score = mll(Ys, EYs[:, 0], EYs[:, 1])
+        score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
     elif metric == 'msll':
-        score = msll(Ys, EYs[:, 0], EYs[:, 1], Yt)
+        score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]), (Yt,))
     else:
         log.fatal("Invalid metric input")
         sys.exit(-1)
@@ -106,9 +108,10 @@ def main(cvindex, targets, prediction_files, metric, quiet, plotyy):
     log.info("{} score = {}".format(metric, score))
 
     if plotyy:
-        maxy = max(Ys.max(), EYs.max())
-        pl.plot(Ys, EYs, 'k.')
-        pl.plot([0, maxy], [0, maxy], 'r')
+        maxy = max(Ys.max(), get_first_dim(EYs).max())
+        miny = min(Ys.min(), get_first_dim(EYs).min())
+        apply_multiple_masked(pl.plot, (Ys, get_first_dim(EYs)), ('k.',))
+        pl.plot([miny, maxy], [miny, maxy], 'r')
         pl.grid(True)
         pl.xlabel('True targets')
         pl.ylabel('Predicted targets')

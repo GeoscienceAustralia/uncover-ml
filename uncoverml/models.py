@@ -58,10 +58,10 @@ class LinearModel(BaseEstimator):
 
     def entropy_reduction(self, X):
 
-        Phi = self.base(X, *self.bparams)
+        Phi = self.basis(X, *self.bparams)
         pCp = [p.dot(self.C).dot(p.T) for p in Phi]
         return 0.5 * (np.log(self.optvar + np.array(pCp))
-                      + np.log(self.optvar))
+                      - np.log(self.optvar))
 
     def _make_basis(self, X):
 
@@ -100,6 +100,67 @@ class ApproxGP(LinearModel):
                                                                  Positive()))
 
 
+#
+# Helper functions
+#
+
+def apply_masked(func, data, args=()):
+
+    # No masked data
+    if np.ma.count_masked(data) == 0:
+        return func(data.data, *args)
+
+    # Prediction with missing inputs
+    okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
+    res = func(data.data[okdata], *args)
+
+    # For training/fitting that returns nothing
+    if not isinstance(res, np.ndarray):
+        return res
+
+    # Fill in a padded array the size of the original
+    mres = np.empty(len(data)) if res.ndim == 1 \
+        else np.empty((len(data), res.shape[1]))
+    mres[okdata] = res
+
+    # Make sure the mask is consistent with the original array
+    mask = ~okdata
+    if mres.ndim > 1:
+        mask = np.tile(mask, (mres.shape[1], 1)).T
+
+    return np.ma.array(mres, mask=mask)
+
+
+def apply_multiple_masked(func, data, args=()):
+
+    datastack = []
+    dims = []
+    flat = []
+    for d in data:
+        if d.ndim == 2:
+            datastack.append(d)
+            dims.append(d.shape[1])
+            flat.append(False)
+        elif d.ndim == 1:
+            datastack.append(d[:, np.newaxis])
+            dims.append(1)
+            flat.append(True)
+        else:
+            raise RuntimeError("data arrays have to be 1 or 2D arrays")
+
+    # Decorate functions to work on stacked data
+    dims = np.cumsum(dims[:-1])  # dont split by last dim
+    unstack = lambda catdata: [d.flatten() if f else d for d, f
+                               in zip(np.hsplit(catdata, dims), flat)]
+    unstackfunc = lambda catdata, *nargs: func(*unstack(catdata), *nargs)
+
+    return apply_masked(unstackfunc, np.ma.hstack(datastack), args)
+
+
+#
+# Static module properties
+#
+
 modelmaps = {'randomforest': RandomForestRegressor,
              'bayesreg': LinearReg,
              'approxgp': ApproxGP,
@@ -120,3 +181,4 @@ basismap = {'rbf': RandomRBF,
             }
 
 probmodels = (LinearReg, ApproxGP, LinearModel)
+probmodels_str = ['approxgp', 'bayesreg']

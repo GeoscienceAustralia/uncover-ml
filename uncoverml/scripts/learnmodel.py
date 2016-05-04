@@ -10,12 +10,11 @@ import os.path
 import pickle
 import json
 import click as cl
-import numpy as np
 
 import uncoverml.defaults as df
 from uncoverml import geoio, feature
 from uncoverml.validation import input_cvindex, input_targets
-from uncoverml.models import modelmaps
+from uncoverml.models import modelmaps, apply_multiple_masked
 
 
 log = logging.getLogger(__name__)
@@ -71,12 +70,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
 
     # Read ALL the features in here, and learn on a single machine
     data_dict = feature.load_data(filename_dict, range(nchunks))
-    x = feature.data_vector(data_dict)
-    X = x.data
-    mask = x.mask
-
-    if np.any(mask):
-        raise RuntimeError("Cannot learn with missing data!")
+    X = feature.data_vector(data_dict)
 
     # Optionally subset the data for cross validation
     if cvindex[0] is not None:
@@ -86,7 +80,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
 
     # Train the model
     mod = modelmaps[algorithm](**args)
-    mod.fit(X, y)
+    apply_multiple_masked(mod.fit, (X, y))
 
     # Pickle the model
     outfile = os.path.join(outputdir, "{}.pk".format(algorithm))

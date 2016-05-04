@@ -14,7 +14,7 @@ from functools import partial
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel, feature
 from uncoverml.validation import input_cvindex, chunk_cvindex
-from uncoverml.models import probmodels
+from uncoverml.models import probmodels, apply_masked
 
 log = logging.getLogger(__name__)
 
@@ -28,19 +28,13 @@ def predict(data, model):
     else:
         predwrap = lambda x: model.predict(x)
 
-    # No masked data
-    if np.ma.count_masked(data) == 0:
-        return predwrap(data.data)
+    return apply_masked(predwrap, data)
 
-    # Prediction with missing inputs
-    okdata = data.getmask().sum(axis=1) == 0
-    pred = predwrap(data.data[okdata])
 
-    mpred = np.empty(len(data)) if pred.ndim == 1 \
-        else np.empty((len(data), pred.shape[1]))
-    mpred[okdata] = pred
+# Apply expeded reduction in entropy to data
+def entropy_reduct(data, model):
 
-    return np.ma.array(mpred, mask=~okdata)
+    return apply_masked(model.entropy_reduction, data)
 
 
 @cl.command()
@@ -51,11 +45,15 @@ def predict(data, model):
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
+@cl.option('--entropred', is_flag=True, help="Calculate expected reduction in "
+           "entropy, for probabilistic regressors only. The generates another "
+           "set of files with 'entropred_' prepended to the output files")
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
            default=None)
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
+def main(model, files, outputdir, ipyprofile, predictname, cvindex, entropred,
+         quiet):
     """ Predict the target values for query data. """
 
     # setup logging
@@ -104,9 +102,25 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, quiet):
         cluster.execute("data_dict = feature.load_data(filename_dict, "
                         "chunk_indices)")
 
+    # Prediction
     f = partial(predict, model=model)
 
     cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir,
                   "shape": eff_shape, "bbox": eff_bbox})
     cluster.execute("parallel.write_data(data_dict, f, featurename,"
                     "outputdir, shape, bbox)")
+
+    # Expected entropy reduction
+    if entropred:
+        if not isinstance(model, probmodels):
+            log.fatal("Cannot calculate expected entropy reduction for"
+                      " non-probabilistic models!")
+            sys.exit(-1)
+
+        f = partial(entropy_reduct, model=model)
+
+        cluster.push({"f": f, "entropyname": "entropred_" + predictname,
+                      "outputdir": outputdir, "shape": eff_shape,
+                      "bbox": eff_bbox})
+        cluster.execute("parallel.write_data(data_dict, f, entropyname,"
+                        "outputdir, shape, bbox)")

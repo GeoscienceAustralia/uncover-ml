@@ -35,7 +35,7 @@ def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
         keepdims = min(max(1, int(ndims * featurefraction)), ndims)
         mat = eigvecs[:, -keepdims:]
         vec = eigvals[-keepdims:]
-        x = np.ma.dot(x, mat) / np.sqrt(vec)
+        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
 
     return x
 
@@ -161,8 +161,8 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
                     "filename_dict, chunk_indices)")
 
     if settings is None:
-        f_args.update(compute_statistics(impute,
-                      centre, standardise, whiten, featurefraction, cluster))
+        f_args.update(compute_statistics(impute, centre, standardise, whiten,
+                                         featurefraction, cluster))
         settings_dict = {}
         settings_filename = os.path.join(outputdir,
                                          featurename + "_settings.bin")
@@ -181,4 +181,3 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     cluster.execute("parallel.write_data(data_dict, f, "
                     "featurename, outputdir, shape, bbox)")
     sys.exit(0)
-
