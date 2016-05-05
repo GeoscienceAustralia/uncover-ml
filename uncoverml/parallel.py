@@ -89,9 +89,8 @@ def standardise(x, x_sd):
     return x / x_sd[np.newaxis, :]
 
 def impute_with_mean(x, mean):
-    xi = np.ma.masked_array(data=np.copy(x.data), 
-                            mask=np.zeros_like(x.data,dtype=bool))
-    xi.data[x.mask] = np.broadcast_to(mean,x.shape)[x.mask]
+    xi = np.ma.masked_array(data=np.copy(x.data), mask=False)
+    xi.data[x.mask] = np.broadcast_to(mean, x.shape)[x.mask]
     return xi
 
 def one_hot(x, x_set):

@@ -147,20 +147,19 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
-    # load settings
-    f_args = {}
-    if settings is not None:
-        with open(settings, 'rb') as f:
-            s = pickle.load(f)
-            f_args.update(s['f_args'])
-
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
     cluster.push({"filename_dict": filename_dict})
     cluster.execute("data_dict = feature.load_data("
                     "filename_dict, chunk_indices)")
 
-    if settings is None:
+    # load settings
+    f_args = {}
+    if settings is not None:
+        with open(settings, 'rb') as f:
+            s = pickle.load(f)
+            f_args.update(s['f_args'])
+    else:
         f_args.update(compute_statistics(impute, centre, standardise, whiten,
                                          featurefraction, cluster))
         settings_dict = {}

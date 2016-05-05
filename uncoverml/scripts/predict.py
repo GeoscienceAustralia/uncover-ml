@@ -54,7 +54,10 @@ def entropy_reduct(data, model):
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(model, files, outputdir, ipyprofile, predictname, cvindex, entropred,
          quiet):
-    """ Predict the target values for query data. """
+    """
+    Predict the target values for query data from a machine learning
+    algorithm.
+    """
 
     # setup logging
     if quiet is True:

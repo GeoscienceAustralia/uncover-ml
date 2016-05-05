@@ -1,21 +1,22 @@
 """
-Run a cross-validation metric on a model prediction
+Run cross-validation metrics on a model prediction
 
 .. program-output:: validatemodel --help
 """
 import logging
 import sys
+import json
 import os.path
 import click as cl
 import numpy as np
 import matplotlib.pyplot as pl
 
-from sklearn.metrics import r2_score
-from revrand.validation import smse, mll, msll
+from sklearn.metrics import r2_score, explained_variance_score
+from revrand.metrics import smse, mll, msll, lins_ccc
 
 import uncoverml.defaults as df
 from uncoverml import geoio, feature
-from uncoverml.validation import input_cvindex, input_targets, lins_ccc
+from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import apply_multiple_masked
 
 log = logging.getLogger(__name__)
@@ -36,26 +37,40 @@ def score_first_dim(func):
     return newscore
 
 metrics = {'r2_score': r2_score,
+           'expvar': explained_variance_score,
            'smse': smse,
            'lins_ccc': lins_ccc,
            'mll': mll,
            'msll': msll
            }
 
-nonprob = ['r2_score', 'smse', 'lins_ccc']
+probscores = ['msll', 'mll']
 
 
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
-@cl.option('--metric', type=cl.Choice(list(metrics.keys())),
-           default='r2_score', help="Metrics for scoring prediction quality")
-@cl.option('--plotyy', is_flag=True, help="plot the target vs. prediction")
+@cl.option('--outfile', type=cl.Path(exists=False), default=None,
+           help="File name (minus extension) to save output too")
+@cl.option('--plotyy', is_flag=True, help="Show plot of the target vs."
+           "prediction, otherwise just save")
 @cl.argument('cvindex', type=(cl.Path(exists=True), int))
 @cl.argument('targets', type=cl.Path(exists=True))
 @cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
-def main(cvindex, targets, prediction_files, metric, quiet, plotyy):
-    """ Run a cross-validation metric on a model prediction. """
+def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
+    """
+    Run cross-validation metrics on a model prediction.
+
+    The following metrics are evaluated:
+
+    - R-square
+    - Explained variance
+    - Standardised Mean Squared Error
+    - Lin's concordance correlation coefficient
+    - Mean Gaussian negative log likelihood (for probabilistic predictions)
+    - Standardised mean Gaussian negative log likelihood (for probabilistic
+      predictions)
+    """
 
     # setup logging
     if quiet is True:
@@ -94,20 +109,33 @@ def main(cvindex, targets, prediction_files, metric, quiet, plotyy):
     if len(EYs) > Ns:
         EYs = EYs[s_ind]
 
-    if metric in nonprob:
-        score = apply_multiple_masked(score_first_dim(metrics[metric]),
-                                      (Ys, EYs))
-    elif metric == 'mll':
-        score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
-    elif metric == 'msll':
-        score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]), (Yt,))
-    else:
-        log.fatal("Invalid metric input")
-        sys.exit(-1)
+    scores = {}
+    for m in metrics:
 
-    log.info("{} score = {}".format(metric, score))
+        if m not in probscores:
+            score = apply_multiple_masked(score_first_dim(metrics[m]),
+                                          (Ys, EYs))
+        elif EYs.ndim == 2:
+            if m == 'mll' and EYs.shape[1] > 1:
+                score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
+            elif m == 'msll' and EYs.shape[1] > 1:
+                score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
+                                              (Yt,))
+            else:
+                continue
+        else:
+            continue
 
-    if plotyy:
+        scores[m] = score
+        log.info("{} score = {}".format(m, score))
+
+    if outfile is not None:
+        with open(outfile + ".json", 'w') as f:
+            json.dump(scores, f, sort_keys=True, indent=4)
+
+    # Make figure
+    if plotyy or outfile is not None:
+        fig = pl.figure()
         maxy = max(Ys.max(), get_first_dim(EYs).max())
         miny = min(Ys.min(), get_first_dim(EYs).min())
         apply_multiple_masked(pl.plot, (Ys, get_first_dim(EYs)), ('k.',))
@@ -115,5 +143,8 @@ def main(cvindex, targets, prediction_files, metric, quiet, plotyy):
         pl.grid(True)
         pl.xlabel('True targets')
         pl.ylabel('Predicted targets')
-        pl.title("{} score = {}".format(metric, score))
-        pl.show()
+        pl.title('True vs. predicted target values.')
+        if outfile is not None:
+            fig.savefig(outfile + ".png")
+        if plotyy:
+            pl.show()

@@ -157,21 +157,3 @@ def split_cfold(nsamples, k=5):
         cvassigns[inds] = n
 
     return cvinds, cvassigns
-
-
-#
-# Metrics
-#
-
-def lins_ccc(y_true, y_pred):
-    """
-    Lin's Concordance Correlation Coefficient
-    """
-
-    t = y_true.mean()
-    p = y_pred.mean()
-    St = y_true.var()
-    Sp = y_pred.var()
-    Spt = np.mean((y_true - t) * (y_pred - p))
-
-    return 2 * Spt / (St + Sp + (t - p)**2)

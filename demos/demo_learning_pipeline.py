@@ -4,16 +4,11 @@ A demo script that ties some of the command line utilities together in a
 pipeline for learning and validating models.
 """
 
-# TODO:
-# - make sure this can run for multiple chunks
-# - include the ability to iterate through algorithms
-
 import logging
 import json
 from os import path, mkdir
 from glob import glob
 
-from uncoverml.models import probmodels_str
 from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
@@ -76,7 +71,7 @@ onehot = False  # NOTE: if you change this, make sure you delete all old feats
 patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 
 # Impute missing values?
-impute = False
+impute = True
 
 # Starndardise each input dimension? (0 mean, 1 std)
 standardise = False  # standardise all of the extracted features?
@@ -95,35 +90,39 @@ compos_file = "composite"
 # Algorithm settings
 #
 
-# Bayesian linear regression
-# algorithm = "bayesreg"
-# args = {}
+# Iterate through this dictionary of algorithm name and arguments:
+algdict = {
 
-# Approximate Gaussian process, for large scale data
-algorithm = "approxgp"
-args = {'kern': 'matern32', 'lenscale': 1000., 'nbases': 200}
+    # Bayesian linear regression
+    "bayesreg": {},
 
-# Support vector machine (regressor)
-# algorithm = "svr"
-# args = {'gamma': 1. / 70, 'epsilon': 0.05}
+    # Approximate Gaussian process, for large scale data
+    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 42, 'nbases': 200},
 
-# Random forest regressor
-# algorithm = "randomforest"
-# args = {'n_estimators': 20}
+    # Support vector machine (regressor)
+    "svr": {'gamma': 1. / 70, 'epsilon': 0.05},
+
+    # Random forest regressor
+    "randomforest": {'n_estimators': 20}
+
+    # ARD Linear regression
+    # "ardregression": {},
+
+    # Kernel ridge regression
+    # 'kernelridge': {'kernel': 'rbf'},
+
+    # Decision tree regressor
+    # 'deciciontree': {},
+
+    # Extra tree regressor
+    # 'extratree': {},
+}
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
 
-
-#
-# Validation settings
-#
-
-metrics = ['r2_score', 'smse', 'lins_ccc']
-
-# Extra settings if the model is probabilistic
-if algorithm in probmodels_str:
-    metrics.append('msll')
+# Output suffix files for validation metrics
+valoutput = "validation"
 
 
 # NOTE: Do not change the following unless you know what you are doing
@@ -177,32 +176,31 @@ def main():
     feat_file = path.join(proc_dir, compos_file + ".part0.hdf5")
     try_run(cmd)
 
-    # Train the model
-    cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
-           "--algorithm", algorithm, "--algopts", json.dumps(args), feat_file,
-           target_hdf]
+    for alg, args in algdict.items():
 
-    log.info("Training model.")
-    try_run(cmd)
+        # Train the model
+        cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
+               "0", "--algorithm", alg, "--algopts", json.dumps(args),
+               feat_file, target_hdf]
 
-    # Test the model
-    alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
-    cmd = ["predict", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
-           "--predictname", predict_file, alg_file, feat_file]
+        log.info("Training model {}.".format(alg))
+        try_run(cmd)
 
-    log.info("Predicting targets.")
-    try_run(cmd)
+        # Test the model
+        alg_file = path.join(proc_dir, "{}.pk".format(alg))
+        cmd = ["predict", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
+               "--predictname", predict_file + "_" + alg, alg_file, feat_file]
 
-    # Report score
-    log.info("Validating model.")
+        log.info("Predicting targets for {}.".format(alg))
+        try_run(cmd)
 
-    for i, m in enumerate(metrics):
-        cmd = ["validatemodel", "--metric", m]
-        if i == (len(metrics) - 1):
-            cmd.append('--plotyy')
-        cmd += [cv_file, "0", target_hdf,
-                path.join(proc_dir, predict_file + ".part0.hdf5")]
+        # Report score
+        cmd = ['validatemodel', '--outfile',
+               path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
+               target_hdf,
+               path.join(proc_dir, predict_file + "_" + alg + ".part0.hdf5")]
 
+        log.info("Validating {}.".format(alg))
         try_run(cmd)
 
     log.info("Finished!")

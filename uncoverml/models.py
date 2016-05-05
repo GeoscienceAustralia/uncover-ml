@@ -11,13 +11,16 @@ from revrand.btypes import Parameter, Positive
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+from sklearn.linear_model import ARDRegression
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 
 class LinearModel(BaseEstimator):
 
     def __init__(self, basis, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
-                 verbose=True):
+                 centretargets=True, verbose=True):
 
         self.basis = basis
         self.var = var
@@ -25,8 +28,13 @@ class LinearModel(BaseEstimator):
         self.tol = tol
         self.maxit = maxit
         self.verbose = verbose
+        self.centretargets = centretargets
 
     def fit(self, X, y):
+
+        if self.centretargets:
+            self.ymean = y.mean()
+            y -= self.ymean
 
         self._make_basis(X)
         m, C, bparams, var = regression.learn(X, y,
@@ -53,6 +61,8 @@ class LinearModel(BaseEstimator):
                                        self.bparams,
                                        self.optvar
                                        )
+        if self.centretargets:
+            Ey += self.ymean
 
         return (Ey, Vy) if uncertainty else Ey
 
@@ -90,7 +100,8 @@ class ApproxGP(LinearModel):
                                        maxit, verbose)
 
         self.nbases = nbases
-        self.lenscale = lenscale
+        self.lenscale = lenscale if np.isscalar(lenscale) \
+            else np.asarray(lenscale)
         self.kern = kern
 
     def _make_basis(self, X):
@@ -165,6 +176,10 @@ modelmaps = {'randomforest': RandomForestRegressor,
              'bayesreg': LinearReg,
              'approxgp': ApproxGP,
              'svr': SVR,
+             'kernelridge': KernelRidge,
+             'ardregression': ARDRegression,
+             'deciciontree': DecisionTreeRegressor,
+             'extratree': ExtraTreeRegressor
              }
 
 
@@ -173,12 +188,14 @@ lhoodmaps = {'Gaussian': Gaussian,
              'Poisson': Poisson
              }
 
+
 basismap = {'rbf': RandomRBF,
             'laplace': RandomLaplace,
             'cauchy': RandomCauchy,
             'matern32': RandomMatern32,
             'matern52': RandomMatern52
             }
+
 
 probmodels = (LinearReg, ApproxGP, LinearModel)
 probmodels_str = ['approxgp', 'bayesreg']
