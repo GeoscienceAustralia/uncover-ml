@@ -1,4 +1,3 @@
-
 """
 Extract patch features from a single geotiff.
 
@@ -11,9 +10,7 @@ import click as cl
 from uncoverml import geoio
 import uncoverml.defaults as df
 from uncoverml import parallel
-from uncoverml import feature
 import numpy as np
-import sys
 import pickle
 
 log = logging.getLogger(__name__)
@@ -95,7 +92,7 @@ def main(name, geotiff, targets, onehot,
     log.info("Image has resolution {}".format(full_image.resolution))
     log.info("Image has datatype {}".format(full_image.dtype))
     log.info("Image missing value: {}".format(full_image.nodata_value))
-    
+
     # Compute the effective sampled resolution accounting for patchsize
     eff_shape = None
     eff_bbox = None
@@ -105,8 +102,8 @@ def main(name, geotiff, targets, onehot,
                   full_image.yres - patchsize + 1]  # +1 because bbox
         xy = np.array([start, end_p1])
         eff_bbox = full_image.pix2latlon(xy, centres=False)
-        eff_shape = (full_image.xres - 2*patchsize,
-                     full_image.yres - 2*patchsize)
+        eff_shape = (full_image.xres - 2 * patchsize,
+                     full_image.yres - 2 * patchsize)
         log.info("Effective input resolution "
                  "after patch extraction: {}".format(eff_shape))
         log.info("Effective bounding box after "

@@ -61,7 +61,12 @@ def transform(x, rows, x_min, x_max, band, separatebands):
 @cl.argument('name', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
-    """ TODO
+    """
+    Output a geotiff from a set of HDF5 chunked features.
+
+    This can optionally be a floating point geotiff, or an RGB geotiff.
+    Multi-band geotiffs are also optionally output (RGB output has to be per
+    band however).
     """
 
     # setup logging

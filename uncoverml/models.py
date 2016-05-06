@@ -163,7 +163,8 @@ def apply_multiple_masked(func, data, args=()):
     dims = np.cumsum(dims[:-1])  # dont split by last dim
     unstack = lambda catdata: [d.flatten() if f else d for d, f
                                in zip(np.hsplit(catdata, dims), flat)]
-    unstackfunc = lambda catdata, *nargs: func(*unstack(catdata), *nargs)
+    unstackfunc = lambda catdata, *nargs: \
+        func(*(unstack(catdata) + list(nargs)))
 
     return apply_masked(unstackfunc, np.ma.hstack(datastack), args)
 
