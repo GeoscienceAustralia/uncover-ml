@@ -53,7 +53,9 @@ def compute_unique_values(full_image, cluster):
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
 @cl.option('--patchsize', type=int,
-           default=df.feature_patch_size, help="window size of patches")
+           default=df.feature_patch_size, help="window width of patches, i.e. "
+           "patchsize of 0 is a single pixel, patchsize of 1 is a 3x3 patch, "
+           "etc")
 @cl.option('--chunks', type=int, default=df.work_chunks, help="Number of "
            "chunks in which to split the computation and output")
 @cl.option('--targets', type=cl.Path(exists=True), help="Optional hdf5 file "
@@ -72,7 +74,17 @@ def compute_unique_values(full_image, cluster):
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
 def main(name, geotiff, targets, onehot,
          chunks, patchsize, quiet, outputdir, ipyprofile, settings):
-    """ TODO
+    """
+    Extract patch features from a single geotiff and output to HDF5 file chunks
+    for distribution to worker nodes.
+
+    Apart from extracting patches from images, this also has the following
+    functionality,
+
+    - chunk the original geotiff into many small HDF5 files for distributed
+      work
+    - One-hot encode intger-valued/categorical layers
+    - Only extract patches at specified locations given a target file
     """
 
     # setup logging

@@ -97,7 +97,7 @@ algdict = {
     "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 42, 'nbases': 400},
+    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 42, 'nbases': 200},
 
     # Support vector machine (regressor)
     "svr": {'gamma': 1. / 70, 'epsilon': 0.05},

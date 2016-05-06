@@ -26,13 +26,16 @@ log = logging.getLogger(__name__)
 @cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
            help="Optional cross validation index file and index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.option('--algopts', type=str, default=None)
+@cl.option('--algopts', type=str, default=None, help="JSON string of optional "
+           "parameters to pass to the learning algorithm.")
 @cl.option('--algorithm', type=cl.Choice(list(modelmaps.keys())),
            default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 @cl.argument('targets', type=cl.Path(exists=True))
 def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
-    """ Learn the Parameters of a machine learning model. """
+    """
+    Learn the Parameters of a machine learning model.
+    """
 
     # setup logging
     if quiet is True:

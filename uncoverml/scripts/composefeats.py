@@ -50,7 +50,7 @@ def compute_statistics(impute, centre, standardise, whiten,
     x_full = np.sum(np.array(cluster.pull('x_full')))
     out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
-    fraction_missing = (1.0 - np.sum(x_n)/(x_full*x_n.shape[0]))*100.0
+    fraction_missing = (1.0 - np.sum(x_n) /(x_full*x_n.shape[0]))*100.0
     log.info("Input data is {}% missing".format(fraction_missing))
 
     impute_mean = None
@@ -119,7 +119,18 @@ def compute_statistics(impute, centre, standardise, whiten,
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(files, featurename, quiet, outputdir, ipyprofile,
          centre, standardise, whiten, featurefraction, impute, settings):
-    """ TODO
+    """
+    Compose multiple image features into a single feature vector.
+
+    This tool also has the following functionality beyond combining image
+    features (from, e.g. the output of extractfeats):
+
+    - Impute missing features with the mean of the dimension
+    - Centre the features (zero-mean)
+    - Standardise the features (unit standard deviation)
+    - Whiten the features (decorrelated all of the features and scale to have
+        unit variance. This can be used to reduce the dimensionality of the
+        features too).
     """
 
     # setup logging
