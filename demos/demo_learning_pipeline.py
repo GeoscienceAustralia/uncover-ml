@@ -74,13 +74,13 @@ patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 impute = True
 
 # Starndardise each input dimension? (0 mean, 1 std)
-standardise = False  # standardise all of the extracted features?
+standardise = True  # standardise all of the extracted features?
 
 # Whiten all inputs?
 whiten = True  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.7
+pca_frac = 0.5
 
 # Composite feature names (prefixes)
 compos_file = "composite"
@@ -94,16 +94,16 @@ compos_file = "composite"
 algdict = {
 
     # Bayesian linear regression
-    "bayesreg": {},
+    # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 42, 'nbases': 200},
+    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 43, 'nbases': 200}
 
     # Support vector machine (regressor)
-    "svr": {'gamma': 1. / 70, 'epsilon': 0.05},
+    # "svr": {'gamma': 1. / 90, 'epsilon': 0.05}
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 20}
+    # "randomforest": {'n_estimators': 20}
 
     # ARD Linear regression
     # "ardregression": {},

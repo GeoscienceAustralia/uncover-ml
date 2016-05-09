@@ -13,3 +13,4 @@ Command Line Scripts
    learnmodel
    predict
    validatemodel
+   exportgeotiff
