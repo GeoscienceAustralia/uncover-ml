@@ -25,7 +25,7 @@ linear model represents :math:`f` as a linear combination of (non-linear)
     \mathbf{y} \sim \prod^N_{n=1} \mathcal{N}(\phi(\mathbf{x}_n)^\top 
         \mathbf{w}, \sigma^2),
 
-    \text{prior:}& \quad
+    \text{Prior:}& \quad
     \mathbf{w} \sim \mathcal{N}(\mathbf{0}, \lambda \mathbf{I}_D),
 
 We then maximise the *log marginal likelihood* of the model to learn the
@@ -64,6 +64,21 @@ matrix). However, the trick implemented in revrand is that by choosing special
 types of basis functions (:math:`\phi(\cdot)`) we can approximate the behaviour
 of Gaussian processes.  See [1]_ and [2]_ for more information.
 
+We can also use this model to estimate the expected reduction in entropy of the
+posterior distribution over the weights from incorporating a query point into
+the model,
+
+.. math::
+
+    H[\mathbf{w}] - H[\mathbf{w}|\mathbf{x}^*] = \frac{1}{2} \left[ 
+        \log \left( \sigma^2 
+        + \phi(\mathbf{x}^*)^\top \mathbf{C} \phi(\mathbf{x}^*) \right) 
+        - \log(\sigma^2) \right]
+
+This will tell us where to take future measurements to maximally reduce the
+model uncertainty. It is worth noting that this quantity is very similar to the
+predictive variance.
+
 
 Heterogeneous drill observations
 --------------------------------
@@ -71,7 +86,30 @@ Heterogeneous drill observations
 While we did not have time to implement an algorithm to use heterogeneous drill
 holes types, i.e. those that do and do not hit the basement, we did establish a
 model for incorporating these observations. The basis for this model is a
-conditional likelihood model,
+conditional likelihood model that changes the distribution used depending on
+the type of drill hole.
+
+The purpose of a likelihood model is to model the process arising from 
+measurement error, that is, what is the probability of a measurement given the
+true value? In this instance the true value is the depth of the basement,
+:math:`f_n`, at a point :math:`n`, we then acquire a noisy measurement of this
+basement from our drill-rig, :math:`y_n`. The likelihood model then describes
+the probability :math:`p(y_n | f_n)`.
+
+In this situation we have effectively two different methods of acquiring
+measurements, direct observations of the basement layer, and a depth that we
+know the basement must lie below. Hence, we need different likelihood models
+for each of these "sensors". For the first, where the drill has hit basement,
+we can simply use a Gaussian measurement error model. For the second, we know
+that there is non-zero probability of the drill encountering basement between
+the ground, and the basement. We may expect that we will drill deeper the
+deeper the basement is, and so we can use a Beta_ distribution to model this
+situation, as we have depicted in the following image
+
+.. image:: comp_likelihood.svg
+
+The formulation of the actual likelihood and prior is as follows, recall
+:math:`f(\mathbf{x}_n) = \phi(\mathbf{x}_n)^\top \mathbf{w}`,
 
 .. math::
     
@@ -81,7 +119,7 @@ conditional likelihood model,
             \mathcal{B}(\phi(\mathbf{x}_n)^\top \mathbf{w}, \alpha, \beta)
             ^{1 - z_n},
 
-    \text{prior:}& \quad
+    \text{Prior:}& \quad
     \mathbf{w} \sim \mathcal{N}(\mathbf{0}, \lambda \mathbf{I}_D).
 
 Here :math:`z_n` is an indicator variable that is 1 if an observation has hit
