@@ -1,0 +1,28 @@
+uncoverml.scripts.exportgeotiff
+===============================
+
+.. automodule:: uncoverml.scripts.exportgeotiff
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      transform
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      partial
+   
+   
+
+   
+   
+   

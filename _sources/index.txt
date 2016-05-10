@@ -18,13 +18,14 @@ Contents:
    authors
    history
 
+   projectreport
+
    geoio
    feature
    parallel
    patch
    models
    validation
-   streams
 
    scripts
 

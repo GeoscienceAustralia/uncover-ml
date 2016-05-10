@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Uncover-ML project report &mdash; uncover ML 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Geometry file I/O Module" href="geoio.html" />
+    <link rel="prev" title="History" href="history.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="geoio.html" title="Geometry file I/O Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="history.html" title="History"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="uncover-ml-project-report">
+<h1><a class="toc-backref" href="#id7">Uncover-ML project report</a><a class="headerlink" href="#uncover-ml-project-report" title="Permalink to this headline">¶</a></h1>
+<p>This page contains a brief report on some of the aspects of the uncover ml GA
+project not covered by the documentation.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#uncover-ml-project-report" id="id7">Uncover-ML project report</a><ul>
+<li><a class="reference internal" href="#revrand-large-scale-approximate-gaussian-processes" id="id8">Revrand - large-scale approximate Gaussian processes</a></li>
+<li><a class="reference internal" href="#heterogeneous-drill-observations" id="id9">Heterogeneous drill observations</a></li>
+<li><a class="reference internal" href="#references" id="id10">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="revrand-large-scale-approximate-gaussian-processes">
+<h2><a class="toc-backref" href="#id8">Revrand - large-scale approximate Gaussian processes</a><a class="headerlink" href="#revrand-large-scale-approximate-gaussian-processes" title="Permalink to this headline">¶</a></h2>
+<p>The main algorithm used from <a class="reference external" href="http://github.com/NICTA/revrand">revrand</a> is the standard linear model for
+regression. The aim is to learn a function that maps input covariate values,
+<span class="math">\(\mathbf{x}_n \in \mathbb{R}^d\)</span>, to target values, <span class="math">\(y_n \in
+\mathbb{R}\)</span>. That is, learn <span class="math">\(f\)</span> such that <span class="math">\(y_n = f(\mathbf{x}_n) +
+\epsilon\)</span>, where <span class="math">\(\epsilon\)</span> is random (Gaussian) noise. The standard
+linear model represents <span class="math">\(f\)</span> as a linear combination of (non-linear)
+<em>basis</em> functions, <span class="math">\(f(\mathbf{x}_n) = \phi(\mathbf{x}_n, \theta)^\top
+\mathbf{w}\)</span>, where <span class="math">\(\phi: d \to D\)</span>, with weights <span class="math">\(\mathbf{w} \in
+\mathbb{R}^D\)</span>. The exact form of the model implemented in revrand is,</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}\text{Likelihood:}&amp; \quad
+\mathbf{y} \sim \prod^N_{n=1} \mathcal{N}(\phi(\mathbf{x}_n)^\top
+    \mathbf{w}, \sigma^2),\\\text{Prior:}&amp; \quad
+\mathbf{w} \sim \mathcal{N}(\mathbf{0}, \lambda \mathbf{I}_D),\end{aligned}\end{align} \]</div>
+<p>We then maximise the <em>log marginal likelihood</em> of the model to learn the
+parameters <span class="math">\(\sigma^2, \lambda\)</span> and <span class="math">\(\theta\)</span> from the data (without
+over fitting). We can then solve for the posterior over the weights,</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}\mathbf{w} | \mathbf{y}, \mathbf{X} \sim&amp; \mathcal{N}(\mathbf{m},
+    \mathbf{C}),\\\mathbf{C} =&amp; [\lambda^{-1}\mathbf{I}_D + \sigma^{-2}\phi(\mathbf{X})^\top
+    \phi(\mathbf{X})]^{-1},\\\mathbf{m} =&amp; \frac{1}{\sigma^2} \mathbf{C} \phi(\mathbf{X})^\top
+    \mathbf{y}.\end{aligned}\end{align} \]</div>
+<p>The predictive distribution given a query point, <span class="math">\(\mathbf{x}^*\)</span> is,</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}p(y^*|\mathbf{x}^*, \mathbf{y}, \mathbf{X}) =&amp; \int
+    \mathcal{N}(y^* | \phi(\mathbf{x}^*)^\top \mathbf{w}, \sigma^2)
+    \mathcal{N}(\mathbf{w} | \mathbf{m}, \mathbf{C}) d\mathbf{w}\\    =&amp; \mathcal{N}\!\left(y^* | \phi(\mathbf{x}^*)^\top \mathbf{m},
+        \sigma^2 + \phi(\mathbf{x}^*)^\top \mathbf{C} \phi(\mathbf{x}^*)
+        \right).\end{aligned}\end{align} \]</div>
+<p>This model can learn from large datasets, unlike a Gaussian process, which
+needs to invert a matrix the dimension of the learning dataset. A Gaussian
+process is in general more flexible than the above model, as it specifies a
+prior directly over functions as opposed to weights (<span class="math">\(\mathbf{f} \sim
+\mathcal{N}(\mathbf{0}, \mathbf{K})\)</span>, where <span class="math">\(\mathbf{K}\)</span> is a kernel
+matrix). However, the trick implemented in revrand is that by choosing special
+types of basis functions (<span class="math">\(\phi(\cdot)\)</span>) we can approximate the behaviour
+of Gaussian processes.  See <a class="footnote-reference" href="#id3" id="id1">[1]</a> and <a class="footnote-reference" href="#id4" id="id2">[2]</a> for more information.</p>
+<p>We can also use this model to estimate the expected reduction in entropy of the
+posterior distribution over the weights from incorporating a query point into
+the model,</p>
+<div class="math">
+\[H[\mathbf{w}] - H[\mathbf{w}|\mathbf{x}^*] = \frac{1}{2} \left[
+    \log \left( \sigma^2
+    + \phi(\mathbf{x}^*)^\top \mathbf{C} \phi(\mathbf{x}^*) \right)
+    - \log(\sigma^2) \right]\]</div>
+<p>This will tell us where to take future measurements to maximally reduce the
+model uncertainty. It is worth noting that this quantity is very similar to the
+predictive variance.</p>
+</div>
+<div class="section" id="heterogeneous-drill-observations">
+<h2><a class="toc-backref" href="#id9">Heterogeneous drill observations</a><a class="headerlink" href="#heterogeneous-drill-observations" title="Permalink to this headline">¶</a></h2>
+<p>While we did not have time to implement an algorithm to use heterogeneous drill
+holes types, i.e. those that do and do not hit the basement, we did establish a
+model for incorporating these observations. The basis for this model is a
+conditional likelihood model that changes the distribution used depending on
+the type of drill hole.</p>
+<p>The purpose of a likelihood model is to model the process arising from
+measurement error, that is, what is the probability of a measurement given the
+true value? In this instance the true value is the depth of the basement,
+<span class="math">\(f_n\)</span>, at a point <span class="math">\(n\)</span>, we then acquire a noisy measurement of this
+basement from our drill-rig, <span class="math">\(y_n\)</span>. The likelihood model then describes
+the probability <span class="math">\(p(y_n | f_n)\)</span>.</p>
+<p>In this situation we have effectively two different methods of acquiring
+measurements, direct observations of the basement layer, and a depth that we
+know the basement must lie below. Hence, we need different likelihood models
+for each of these &#8220;sensors&#8221;. For the first, where the drill has hit basement,
+we can simply use a Gaussian measurement error model. For the second, we know
+that there is non-zero probability of the drill encountering basement between
+the ground, and the basement. We may expect that we will drill deeper the
+deeper the basement is, and so we can use a <a class="reference external" href="https://en.wikipedia.org/wiki/Beta_distribution#Four_parameters_2">Beta</a> distribution to model this
+situation, as we have depicted in the following image</p>
+<img src="_images/comp_likelihood.svg" /><p>The formulation of the actual likelihood and prior is as follows, recall
+<span class="math">\(f(\mathbf{x}_n) = \phi(\mathbf{x}_n)^\top \mathbf{w}\)</span>,</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}\text{Likelihood:}&amp; \quad
+\mathbf{y} | \mathbf{z} \sim \prod^N_{n=1}
+        \mathcal{N}(\phi(\mathbf{x}_n)^\top \mathbf{w}, \sigma^2)^{z_n}
+        \mathcal{B}(\phi(\mathbf{x}_n)^\top \mathbf{w}, \alpha, \beta)
+        ^{1 - z_n},\\\text{Prior:}&amp; \quad
+\mathbf{w} \sim \mathcal{N}(\mathbf{0}, \lambda \mathbf{I}_D).\end{aligned}\end{align} \]</div>
+<p>Here <span class="math">\(z_n\)</span> is an indicator variable that is 1 if an observation has hit
+the basement, and so uses a Gaussian measurement error model, or 0 if the
+basement was not hit, and so uses a <em>three parameter</em> <a class="reference external" href="https://en.wikipedia.org/wiki/Beta_distribution#Four_parameters_2">Beta</a> measurement model,</p>
+<div class="math">
+\[\mathcal{B}(y | f, \alpha, \beta) = \frac{1}{f^{\alpha + \beta - 1}
+    B(\alpha, \beta)} y^{\alpha - 1} (f - y)^{\beta - 1},\]</div>
+<p>where <span class="math">\(B(\cdot)\)</span> is a Beta function. This is a distribution between
+<span class="math">\((0, f)\)</span>, with the special case of <span class="math">\(\alpha = \beta = 1\)</span> being a
+uniform distribution. This essentially models the case where our measurement of
+depth has to occur between the basement depth <span class="math">\(f\)</span>, and the surface, 0
+with some non-zero probability. There is zero probability of measurement
+outside of these bounds.</p>
+<p>Inference in this model is more difficult than in the standard linear model,
+however there is an implementation of a <em>generalised</em> linear model in revrand,
+that can be easily extended to use this compound likelihood.</p>
+</div>
+<div class="section" id="references">
+<h2><a class="toc-backref" href="#id10">References</a><a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Yang, Z., Smola, A. J., Song, L., &amp; Wilson, A. G. &#8220;A la Carte &#8211;
+Learning Fast Kernels&#8221;. Proceedings of the Eighteenth International
+Conference on Artificial Intelligence and Statistics, pp. 1098-1106,
+2015.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>Rasmussen, C. E., &amp; Williams, C. K. I. &#8220;Gaussian Processes for Machine
+Learning&#8221;, MIT Press, 2006.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[3]</td><td>Rahimi, A., &amp; Recht, B. &#8220;Random features for large-scale kernel
+machines.&#8221; Advances in neural information processing systems. 2007.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[4]</td><td>Gershman, S., Hoffman, M., &amp; Blei, D. &#8220;Nonparametric variational
+inference&#8221;. arXiv preprint arXiv:1206.4665 (2012).</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Uncover-ML project report</a><ul>
+<li><a class="reference internal" href="#revrand-large-scale-approximate-gaussian-processes">Revrand - large-scale approximate Gaussian processes</a></li>
+<li><a class="reference internal" href="#heterogeneous-drill-observations">Heterogeneous drill observations</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="history.html"
+                        title="previous chapter">History</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="geoio.html"
+                        title="next chapter">Geometry file I/O Module</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="geoio.html" title="Geometry file I/O Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="history.html" title="History"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
