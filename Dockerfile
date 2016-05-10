@@ -2,6 +2,8 @@
 
 FROM ubuntu:16.04
 MAINTAINER Lachlan McCalman <lachlan.mccalman@data61.csiro.au>
+
+ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 RUN apt-get update && apt-get install -y \
   wget \
   build-essential \
