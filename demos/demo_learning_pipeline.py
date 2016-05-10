@@ -36,7 +36,8 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+# data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 
 # Location of processed files (features, predictions etc)
 proc_dir = path.join(data_dir, "processed")
@@ -47,17 +48,21 @@ proc_dir = path.join(data_dir, "processed")
 #
 
 # Shape file with target variable info
-target_file = "geochem_sites.shp"
+# target_file = "geochem_sites.shp"
+target_file = "drillhole_confid_3.shp"
 
 # Target variable name (in shape file)
-target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
+# target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
+target_var = "depth"
 
 # Where to save processed targets
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
                        .format(path.splitext(target_file)[0], target_var))
 
 # Location of cross val index file. NOTE: see cvindexer tool to make these
-cv_file = path.join(data_dir, "soilcrossvalindices.hdf5")
+# cv_file_name = "soilcrossvalindices.hdf5"
+cv_file_name = "drillhole_xvalindices.hdf5"
+cv_file = path.join(data_dir, cv_file_name)
 
 
 #
