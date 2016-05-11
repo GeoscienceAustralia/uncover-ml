@@ -85,7 +85,7 @@ standardise = True  # standardise all of the extracted features?
 whiten = True  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.5
+pca_frac = 0.7
 
 # Composite feature names (prefixes)
 compos_file = "composite"
@@ -102,13 +102,15 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 43, 'nbases': 200}
+    # "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 28, 'nbases': 200},
+    "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
 
     # Support vector machine (regressor)
-    # "svr": {'gamma': 1. / 90, 'epsilon': 0.05}
+    # "svr": {'gamma': 1. / 90, 'epsilon': 0.05},
+    # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 20}
+    # "randomforest": {'n_estimators': 20},
 
     # ARD Linear regression
     # "ardregression": {},

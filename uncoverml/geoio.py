@@ -198,8 +198,13 @@ class Image:
                                      "with differently typed channels")
             self._dtype = np.dtype(geotiff.dtypes[0])
 
-        # Build the affine transformation for the FULL image
-        self.__Affine()
+            # Build the affine transformation for the FULL image
+            self.A = geotiff.affine
+            self.pixsize_x = abs(self.A[0])
+            self.pixsize_y = abs(self.A[4])
+
+            # centered pixels
+            self.cA = self.A * Affine.translation(0.5, 0.5)
 
         # Get bounds of window
         xmin, xmax = (0, self._full_res[0])
@@ -285,15 +290,20 @@ class Image:
 
     def lonlat2pix(self, lonlat, centres=True):
 
-        iA = self.icA if centres else self.iA
-        xy = np.floor([np.array(iA * ll) + 0.5 for ll in lonlat]).astype(int)
+        iA = ~self.cA if centres else ~self.A
+        xy = np.floor([np.array(iA * ll) + 1e-5 for ll in lonlat]).astype(int)
+
+        # Allow 1-pixel slop around boundaries because of numerical inaccuracy
+        xy[xy == -1] = 0
+        xy[xy[:, 0] == self.resolution[0], 0] = self.resolution[0] - 1
+        xy[xy[:, 1] == self.resolution[1], 1] = self.resolution[1] - 1
 
         # subtract the offset because iA is for full image
         xy -= self._offset[np.newaxis, :]
 
-        assert any(np.logical_and(xy[:, 0] >= 0,
+        assert all(np.logical_and(xy[:, 0] >= 0,
                                   xy[:, 0] < self.resolution[0]))
-        assert any(np.logical_and(xy[:, 1] >= 0,
+        assert all(np.logical_and(xy[:, 1] >= 0,
                                   xy[:, 1] < self.resolution[1]))
 
         return xy
@@ -307,23 +317,6 @@ class Image:
         lonlat = np.array([A * pix for pix in off_xy])
 
         return lonlat
-
-    def __Affine(self):
-
-        xmax = self._full_xrange[1]
-        xmin = self._full_xrange[0]
-        ymax = self._full_yrange[1]
-        ymin = self._full_yrange[0]
-        xres = self._full_res[0]
-        yres = self._full_res[1]
-
-        self.A, self.pixsize_x, self.pixsize_y = bbox2affine(xmax, xmin, ymax,
-                                                             ymin, xres, yres)
-
-        # centered pixels
-        self.cA = self.A * Affine.translation(0.5, 0.5)
-        self.iA = _invert_affine(self.A)
-        self.icA = _invert_affine(self.cA)
 
 
 def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):

@@ -62,8 +62,8 @@ def test_grid_affine(make_shp_gtiff):
     ispec = geoio.Image(ftif)
     assert np.allclose(A, ispec.A)
     assert np.allclose(cA, ispec.cA)
-    assert np.allclose(geoio._invert_affine(A), ispec.iA)
-    assert np.allclose(geoio._invert_affine(cA), ispec.icA)
+    assert np.allclose(~A, ~ispec.A)
+    assert np.allclose(~cA, ~ispec.cA)
 
 
 def test_bounding_box(make_raster):

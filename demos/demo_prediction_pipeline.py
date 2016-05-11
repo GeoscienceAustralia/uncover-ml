@@ -39,7 +39,9 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+# data_dir_name = "data/GA-cover"
+data_dir_name = "data/GA-depth"
+data_dir = path.join(path.expanduser("~"), data_dir_name)
 
 # Location of processed file (features, predictions etc)
 proc_dir = path.join(data_dir, "processed")
@@ -56,7 +58,7 @@ compos_file = "composite"
 #
 
 # Number of jobs (must be >= number of workers)
-nchunks = 16
+nchunks = 48
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
