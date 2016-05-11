@@ -36,8 +36,8 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-# data_dir = path.join(path.expanduser("~"), "data/GA-cover")
-data_dir = path.join(path.expanduser("~"), "data/GA-depth")
+data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+# data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 
 # Location of processed files (features, predictions etc)
 proc_dir = path.join(data_dir, "processed")
@@ -48,20 +48,20 @@ proc_dir = path.join(data_dir, "processed")
 #
 
 # Shape file with target variable info
-# target_file = "geochem_sites.shp"
-target_file = "drillhole_confid_3.shp"
+target_file = "geochem_sites.shp"
+# target_file = "drillhole_confid_3.shp"
 
 # Target variable name (in shape file)
-# target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
-target_var = "depth"
+target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
+# target_var = "depth"
 
 # Where to save processed targets
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
                        .format(path.splitext(target_file)[0], target_var))
 
 # Location of cross val index file. NOTE: see cvindexer tool to make these
-# cv_file_name = "soilcrossvalindices.hdf5"
-cv_file_name = "drillhole_xvalindices.hdf5"
+cv_file_name = "soilcrossvalindices.hdf5"
+# cv_file_name = "drillhole_xvalindices.hdf5"
 cv_file = path.join(data_dir, cv_file_name)
 
 
@@ -79,13 +79,13 @@ patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 impute = True
 
 # Starndardise each input dimension? (0 mean, 1 std)
-standardise = True  # standardise all of the extracted features?
+standardise = False  # standardise all of the extracted features?
 
 # Whiten all inputs?
 whiten = True  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.7
+pca_frac = 0.5
 
 # Composite feature names (prefixes)
 compos_file = "composite"
@@ -102,8 +102,8 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 28, 'nbases': 200},
-    "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
+    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 43, 'nbases': 200},
+    # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 90, 'epsilon': 0.05},
