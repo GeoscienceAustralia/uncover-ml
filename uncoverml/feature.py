@@ -6,7 +6,7 @@ from uncoverml import patch
 
 
 def output_features(feature_vector, outfile, featname="features",
-                    shape=None, bbox=None, targind=None):
+                    shape=None, bbox=None):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -58,10 +58,6 @@ def output_features(feature_vector, outfile, featname="features",
     if bbox is not None:
         h5file.getNode('/' + featname).attrs.bbox = bbox
         h5file.root.mask.attrs.bbox = bbox
-    if targind is not None:
-        h5file.create_carray("/", "target_indices", filters=filters,
-                             atom=hdf.UIntAtom(), shape=targind.shape,
-                             obj=targind.astype(np.uint))
 
     h5file.close()
 
@@ -84,21 +80,19 @@ def patches_from_image(image, patchsize, targets=None):
         iny = np.logical_and(lonlats[:, 1] > image.ymin,
                              lonlats[:, 1] < image.ymax)
         valid = np.logical_and(inx, iny)
-        targind = np.where(valid)[0]
-        # FIXME What if targind is empty?
+        # FIXME what if we get an empty chunk??
         valid_lonlats = lonlats[valid]
         pixels = image.lonlat2pix(valid_lonlats)
         patches = patch.point_patches(data, patchsize, pixels)
         patch_mask = patch.point_patches(mask, patchsize, pixels)
     else:
-        targind = None
         patches = patch.grid_patches(data, patchsize)
         patch_mask = patch.grid_patches(mask, patchsize)
 
     patch_data = np.array(list(patches), dtype=data_dtype)
     mask_data = np.array(list(patch_mask), dtype=bool)
     result = np.ma.masked_array(data=patch_data, mask=mask_data)
-    return result, targind
+    return result
 
 
 def __load_hdf5(infiles):
@@ -107,7 +101,6 @@ def __load_hdf5(infiles):
         with hdf.open_file(filename, mode='r') as f:
             data = f.root.features[:]
             mask = f.root.mask[:]
-            # FIXME This now needs to load the target indices
             a = np.ma.masked_array(data=data, mask=mask)
             data_list.append(a)
     all_data = np.ma.concatenate(data_list, axis=1)
@@ -168,6 +161,6 @@ def image_data_vector(image_data):
 
 def data_vector(data_dict):
     indices = sorted(data_dict.keys())
-    in_d = [data_dict[i][0] for i in indices]
+    in_d = [data_dict[i] for i in indices]
     x = np.ma.concatenate(in_d, axis=0)
     return x

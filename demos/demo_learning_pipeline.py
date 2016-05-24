@@ -71,7 +71,7 @@ cv_file = path.join(data_dir, cv_file_name)
 
 # How many chunks to divide the work into -- this is all combined in the
 # learning stage, and so just here to test the pipeline
-nchunks = 12  # NOTE: if you change this, make sure you delete all old feats
+nchunks = 1  # NOTE: if you change this, make sure you delete all old feats
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False  # NOTE: if you change this, make sure you delete all old feats

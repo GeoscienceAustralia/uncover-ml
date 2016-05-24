@@ -13,7 +13,6 @@ from functools import partial
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel, feature
-from uncoverml.validation import input_cvindex, chunk_cvindex
 from uncoverml.models import probmodels, apply_masked
 
 log = logging.getLogger(__name__)
