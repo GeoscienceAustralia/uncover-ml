@@ -122,6 +122,7 @@ def main(name, geotiff, targets, onehot,
                  "patch extraction: {}".format(eff_bbox))
 
     # build the chunk->image dictionary for the input data
+    print(geotiff, chunks)
     image_dict = {i: geoio.Image(full_filename, i, chunks, patchsize)
                   for i in range(chunks)}
 

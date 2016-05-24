@@ -7,6 +7,7 @@ import os
 import sys
 import logging
 import click as cl
+import numpy as np
 
 from uncoverml import geoio
 from uncoverml.validation import output_targets

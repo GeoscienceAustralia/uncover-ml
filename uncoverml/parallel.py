@@ -33,12 +33,12 @@ def write_data(data_dict, transform, feature_name, output_dir, shape=None,
                bbox=None):
     filenames = []
     for i in data_dict:
-        data = data_dict[i]
+        data, targind = data_dict[i]
         feature_vector = transform(data)
         filename = feature_name + ".part{}.hdf5".format(i)
         full_path = os.path.join(output_dir, filename)
         feature.output_features(feature_vector, full_path, "features",
-                                shape, bbox)
+                                shape, bbox, targind)
         filenames.append(full_path)
     return filenames
 

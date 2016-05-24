@@ -6,7 +6,7 @@ from uncoverml import patch
 
 
 def output_features(feature_vector, outfile, featname="features",
-                    shape=None, bbox=None):
+                    shape=None, bbox=None, targind=None):
     """
     Writes a vector of features out to a standard HDF5 format. The function
     assumes that it is only 1 chunk of a larger vector, so outputs a numerical
@@ -25,6 +25,8 @@ def output_features(feature_vector, outfile, featname="features",
             The original shape of the feature for reproducing an image
         bbox: ndarray, optional
             The bounding box of the original data for reproducing an image
+        targind: ndarray, optional
+            The indices of the associated target variables
     """
     h5file = hdf.open_file(outfile, mode='w')
 
@@ -51,11 +53,15 @@ def output_features(feature_vector, outfile, featname="features",
                          atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
 
     if shape is not None:
-        h5file.getNode('/'+featname).attrs.shape = shape
-        h5file.getNode('/'+featname).attrs.bbox = bbox
-    if bbox is not None:
+        h5file.getNode('/' + featname).attrs.shape = shape
         h5file.root.mask.attrs.shape = shape
+    if bbox is not None:
+        h5file.getNode('/' + featname).attrs.bbox = bbox
         h5file.root.mask.attrs.bbox = bbox
+    if targind is not None:
+        h5file.create_carray("/", "target_indices", filters=filters,
+                             atom=hdf.UIntAtom(), shape=targind.shape,
+                             obj=targind.astype(np.uint))
 
     h5file.close()
 
@@ -73,23 +79,26 @@ def patches_from_image(image, patchsize, targets=None):
     pixels = None
     if targets is not None:
         lonlats = geoio.points_from_hdf(targets)
-        inx = np.logical_and(lonlats[:, 0] >= image.xmin,
+        inx = np.logical_and(lonlats[:, 0] > image.xmin,
                              lonlats[:, 0] < image.xmax)
-        iny = np.logical_and(lonlats[:, 1] >= image.ymin,
+        iny = np.logical_and(lonlats[:, 1] > image.ymin,
                              lonlats[:, 1] < image.ymax)
         valid = np.logical_and(inx, iny)
+        targind = np.where(valid)[0]
+        # FIXME What if targind is empty?
         valid_lonlats = lonlats[valid]
-        pixels = image.lonlat2pix(valid_lonlats, centres=True)
+        pixels = image.lonlat2pix(valid_lonlats)
         patches = patch.point_patches(data, patchsize, pixels)
         patch_mask = patch.point_patches(mask, patchsize, pixels)
     else:
+        targind = None
         patches = patch.grid_patches(data, patchsize)
         patch_mask = patch.grid_patches(mask, patchsize)
 
     patch_data = np.array(list(patches), dtype=data_dtype)
     mask_data = np.array(list(patch_mask), dtype=bool)
     result = np.ma.masked_array(data=patch_data, mask=mask_data)
-    return result
+    return result, targind
 
 
 def __load_hdf5(infiles):
@@ -98,6 +107,7 @@ def __load_hdf5(infiles):
         with hdf.open_file(filename, mode='r') as f:
             data = f.root.features[:]
             mask = f.root.mask[:]
+            # FIXME This now needs to load the target indices
             a = np.ma.masked_array(data=data, mask=mask)
             data_list.append(a)
     all_data = np.ma.concatenate(data_list, axis=1)
@@ -137,8 +147,8 @@ def load_image_data(image_dict, chunk_indices, patchsize, targets):
     we load references to the data into each node, this function runs
     on the node to actually load the data itself.
     """
-    data_dict = {i:patches_from_image(image_dict[i], patchsize, targets)
-        for i in chunk_indices}
+    data_dict = {i: patches_from_image(image_dict[i], patchsize, targets)
+                 for i in chunk_indices}
     return data_dict
 
 def image_data_vector(image_data):
@@ -158,6 +168,6 @@ def image_data_vector(image_data):
 
 def data_vector(data_dict):
     indices = sorted(data_dict.keys())
-    in_d = [data_dict[i] for i in indices]
+    in_d = [data_dict[i][0] for i in indices]
     x = np.ma.concatenate(in_d, axis=0)
     return x

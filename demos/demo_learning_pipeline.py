@@ -69,6 +69,10 @@ cv_file = path.join(data_dir, cv_file_name)
 # Feature settings
 #
 
+# How many chunks to divide the work into -- this is all combined in the
+# learning stage, and so just here to test the pipeline
+nchunks = 12  # NOTE: if you change this, make sure you delete all old feats
+
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False  # NOTE: if you change this, make sure you delete all old feats
 
@@ -102,12 +106,12 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 43, 'nbases': 200},
+    # "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 43, 'nbases': 200},
     # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 90, 'epsilon': 0.05},
-    # "svr": {},
+    "svr": {},
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 20},
@@ -156,7 +160,8 @@ def main():
 
     # Generic extract feats command
     cmd = ["extractfeats", None, None, "--outputdir", proc_dir, "--chunks",
-           "1", "--patchsize", str(patchsize), "--targets", target_hdf]
+           str(nchunks), "--patchsize", str(patchsize),
+           "--targets", target_hdf]
     if onehot:
         cmd.append('--onehot')
 
@@ -166,9 +171,10 @@ def main():
         msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
         cmd[1], cmd[2] = name, tif
-        ffile = path.join(proc_dir, name + ".part0.hdf5")
-        try_run_checkfile(cmd, ffile, msg)
-        ffiles.append(ffile)
+        ffile = [path.join(proc_dir, name + ".part{}.hdf5".format(n))
+                 for n in range(nchunks)]
+        try_run_checkfile(cmd, ffile[-1], msg)
+        ffiles.extend(ffile)
 
     # Compose individual image features into single feature vector
     cmd = ["composefeats"]
@@ -180,32 +186,36 @@ def main():
         cmd += ['--whiten', '--featurefraction', str(pca_frac)]
     cmd += ['--outputdir', proc_dir, compos_file] + ffiles
 
-    feat_file = path.join(proc_dir, compos_file + ".part0.hdf5")
+    feat_files = [path.join(proc_dir, compos_file + ".part{}.hdf5".format(n))
+                  for n in range(nchunks)]
     try_run(cmd)
 
     for alg, args in algdict.items():
 
         # Train the model
         cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
-               "0", "--algorithm", alg, "--algopts", json.dumps(args),
-               feat_file, target_hdf]
+               "0", "--algorithm", alg, "--algopts", json.dumps(args)] \
+            + feat_files + [target_hdf]
 
         log.info("Training model {}.".format(alg))
         try_run(cmd)
 
         # Test the model
         alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        cmd = ["predict", "--outputdir", proc_dir, "--cvindex", cv_file, "0",
-               "--predictname", predict_file + "_" + alg, alg_file, feat_file]
+        cmd = ["predict", "--outputdir", proc_dir, "--predictname",
+               predict_file + "_" + alg, alg_file] + feat_files
 
         log.info("Predicting targets for {}.".format(alg))
         try_run(cmd)
 
+        pred_files = [path.join(proc_dir, predict_file + "_" + alg
+                                + ".part{}.hdf5".format(n))
+                      for n in range(nchunks)]
+
         # Report score
         cmd = ['validatemodel', '--outfile',
                path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
-               target_hdf,
-               path.join(proc_dir, predict_file + "_" + alg + ".part0.hdf5")]
+               target_hdf] + pred_files
 
         log.info("Validating {}.".format(alg))
         try_run(cmd)

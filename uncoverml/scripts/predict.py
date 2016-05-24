@@ -40,8 +40,6 @@ def entropy_reduct(data, model):
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
-@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
-           help="Optional cross validation index file and index to hold out.")
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
@@ -52,8 +50,7 @@ def entropy_reduct(data, model):
            default=None)
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, cvindex, entropred,
-         quiet):
+def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
     """
     Predict the target values for query data from a machine learning
     algorithm.
@@ -92,18 +89,8 @@ def main(model, files, outputdir, ipyprofile, predictname, cvindex, entropred,
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
     cluster.push({"filename_dict": filename_dict})
-
-    # Optionally subset the data for cross validation
-    if cvindex[0] is not None:
-        log.info("Subsetting data for cross validation")
-        cv_chunks = chunk_cvindex(input_cvindex(cvindex[0]) == cvindex[1],
-                                  nchunks)
-        cluster.push({"cv_chunks": cv_chunks})
-        cluster.execute("data_dict = feature.load_cvdata(filename_dict, "
-                        "cv_chunks, chunk_indices)")
-    else:
-        cluster.execute("data_dict = feature.load_data(filename_dict, "
-                        "chunk_indices)")
+    cluster.execute("data_dict = feature.load_data(filename_dict, "
+                    "chunk_indices)")
 
     # Prediction
     f = partial(predict, model=model)

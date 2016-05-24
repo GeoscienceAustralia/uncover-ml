@@ -208,6 +208,9 @@ class Image:
 
         # Get bounds of window
         xmin, xmax = (0, self._full_res[0])
+        # splits = construct_splits(self._full_res[1],
+        #                           nchunks, overlap)
+        # ymin, ymax = splits[chunk_idx]
         ymin, ymax = construct_splits(self._full_res[1],
                                       nchunks, overlap)[chunk_idx]
 
@@ -216,7 +219,9 @@ class Image:
         self.resolution = (xmax - xmin, ymax - ymin, self._full_res[2])
         chunk_xy = np.array([[xmin, ymin], [xmax + 1, ymax + 1]])
         ((lonmin, lat0), (lonmax, lat1)) = self.pix2latlon(chunk_xy,
-                                                           centres=False)
+                                                           centres=False,
+                                                           addoffset=False)
+        # import IPython; IPython.embed()
         self.bbox = np.array([[lonmin, lonmax],
                               [min(lat0, lat1), max(lat0, lat1)]])
 
@@ -288,18 +293,19 @@ class Image:
     def ymax(self):
         return self.bbox[1][1]
 
-    def lonlat2pix(self, lonlat, centres=True):
+    # def lonlat2pix(self, lonlat, centres=True):
+    def lonlat2pix(self, lonlat):
 
-        iA = ~self.cA if centres else ~self.A
-        xy = np.floor([np.array(iA * ll) + 1e-5 for ll in lonlat]).astype(int)
+        iA = ~self.A
+        xy = np.floor([np.array(iA * ll) for ll in lonlat]).astype(int)
+
+        # subtract the offset because iA is for full image
+        xy -= self._offset[np.newaxis, :]
 
         # Allow 1-pixel slop around boundaries because of numerical inaccuracy
         xy[xy == -1] = 0
         xy[xy[:, 0] == self.resolution[0], 0] = self.resolution[0] - 1
         xy[xy[:, 1] == self.resolution[1], 1] = self.resolution[1] - 1
-
-        # subtract the offset because iA is for full image
-        xy -= self._offset[np.newaxis, :]
 
         assert all(np.logical_and(xy[:, 0] >= 0,
                                   xy[:, 0] < self.resolution[0]))
@@ -308,13 +314,14 @@ class Image:
 
         return xy
 
-    def pix2latlon(self, xy, centres=True):
+    def pix2latlon(self, xy, centres=True, addoffset=True):
 
         A = self.cA if centres else self.A
 
         # add the offset because A is for full image
-        off_xy = xy + self._offset[np.newaxis, :]
-        lonlat = np.array([A * pix for pix in off_xy])
+        if addoffset:
+            xy += self._offset[np.newaxis, :]
+        lonlat = np.array([A * pix for pix in xy])
 
         return lonlat
 
