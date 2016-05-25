@@ -151,13 +151,13 @@ def main(name, geotiff, targets, onehot,
                         " feature.load_target_image_data( "
                         "image_dict, chunk_indices, patchsize, targets)")
 
+        # collect the indices from each worker and write back to targets
         index_dict = {}
         for i in cluster['index_dict']:
             index_dict.update(i)
         all_indices = np.concatenate([index_dict[i] for i in range(chunks)],
                                      axis=0).astype(np.uint)
         geoio.writeback_target_indices(all_indices, targets)
-        import IPython; IPython.embed()
     else:
         cluster.execute("data_dict = "
                         " feature.load_all_image_data( "
