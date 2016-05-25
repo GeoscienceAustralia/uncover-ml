@@ -80,11 +80,15 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
 
     # Read cv index and targets
     cvind = input_cvindex(cvindex[0])
-    s_ind = np.where(cvind == cvindex[1])[0]
-    t_ind = np.where(cvind != cvindex[1])[0]
 
     Y, target_indices = input_targets(targets)
+
+    # Permute everything by target indices
     Y = Y[target_indices]
+    cvind = cvind[target_indices]
+
+    s_ind = np.where(cvind == cvindex[1])[0]
+    t_ind = np.where(cvind != cvindex[1])[0]
 
     Yt = Y[t_ind]
     Ys = Y[s_ind]
@@ -102,10 +106,9 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
 
     # Load all prediction files
     filename_dict = geoio.files_by_chunk(full_filenames)
-    pred_dict = feature.load_data(filename_dict, range(len(filename_dict)))
-
-    # Deal with missing data
-    EYs = feature.data_vector(pred_dict)
+    data_vectors = [geoio.load_and_cat(filename_dict[i])
+                    for i in len(filename_dict)]
+    EYs = np.ma.concatenate(data_vectors, axis=0)
 
     # See if this data is already subset for xval
     if len(EYs) > Ns:

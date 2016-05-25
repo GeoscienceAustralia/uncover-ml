@@ -100,15 +100,14 @@ def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"filename_dict": filename_dict})
-    cluster.execute("data_dict = feature.load_data("
-                    "filename_dict, chunk_indices)")
+    for i in range(len(cluster)):
+        cluster.push({"filenames": filename_dict[i]}, targets=i)
+    cluster.execute("x = geoio.load_and_cat(filenames)")
 
     # Get the bounds for image output
     x_min = None
     x_max = None
     if rgb is True:
-        cluster.execute("x = feature.data_vector(data_dict)")
         cluster.execute("x_min = np.ma.min(x,axis=0)")
         cluster.execute("x_max = np.ma.max(x,axis=0)")
         x_min = np.amin(np.array(cluster['x_min']), axis=0)
@@ -117,18 +116,17 @@ def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
     f = partial(transform, rows=eff_shape[0], x_min=x_min,
                 x_max=x_max, band=band, separatebands=separatebands)
     cluster.push({"f": f})
-    cluster.execute("image_dict = {i: f(k) for i, k in data_dict.items()}")
+    cluster.execute("images = f(x)")
 
     # Couple of pieces of information we need here
     firstnode = cluster.client[0]
-    firstnode.execute("n_images = len(image_dict[0])")
-    firstnode.execute("dtype = image_dict[0][0].dtype")
-    firstnode.execute("n_bands = [k.shape[2] for k in image_dict[0]]")
+    firstnode.execute("n_images = len(images)")
+    firstnode.execute("dtype = images[0].dtype")
+    firstnode.execute("n_bands = images[0].shape[2]")
     n_images = firstnode["n_images"]
     dtype = firstnode["dtype"]
-    n_bands = firstnode["n_bands"][0]  # PER IMAGE
+    n_bands = firstnode["n_bands"]  # for each image
     nnodes = len(cluster)
-    indices = np.array_split(np.arange(nchunks), nnodes)  # canonical
 
     for img_idx in range(n_images):
         band_num = img_idx if band is None else band
@@ -141,14 +139,12 @@ def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
             ystart = 0
             for node in range(nnodes):
                 engine = cluster.client[node]
-                node_indices = indices[node]
-                for i in node_indices:
-                    data = engine["image_dict[{}][{}]".format(i, img_idx)]
-                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                    yend = ystart + data.shape[1]  # this is Y
-                    window = ((ystart, yend), (0, eff_shape[0]))
-                    index_list = list(range(1, n_bands + 1))
-                    f.write(data, window=window, indexes=index_list)
-                    ystart = yend
+                data = engine["images[{}]".format(img_idx)]
+                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                yend = ystart + data.shape[1]  # this is Y
+                window = ((ystart, yend), (0, eff_shape[0]))
+                index_list = list(range(1, n_bands + 1))
+                f.write(data, window=window, indexes=index_list)
+                ystart = yend
 
     sys.exit(0)

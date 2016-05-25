@@ -85,19 +85,16 @@ def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)
 
-    # Load the data into a dict on each client
-    # Note chunk_indices is a global with different value on each node
-    cluster.push({"filename_dict": filename_dict})
-    cluster.execute("data_dict = feature.load_data(filename_dict, "
-                    "chunk_indices)")
+    # Load the data on each client
+    # Note chunk_index is a global with different value on each node
+    for i in range(len(cluster)):
+        cluster.push({"filenames": filename_dict[i]}, targets=i)
+    cluster.execute("x = geoio.load_and_cat(filenames)")
 
     # Prediction
     f = partial(predict, model=model)
-
-    cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir,
-                  "shape": eff_shape, "bbox": eff_bbox})
-    cluster.execute("parallel.write_data(data_dict, f, featurename,"
-                    "outputdir, shape, bbox)")
+    parallel.apply_and_write(cluster, f, "x", predictname, outputdir,
+                             eff_shape, eff_bbox)
 
     # Expected entropy reduction
     if entropred:
@@ -107,9 +104,5 @@ def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
             sys.exit(-1)
 
         f = partial(entropy_reduct, model=model)
-
-        cluster.push({"f": f, "entropyname": "entropred_" + predictname,
-                      "outputdir": outputdir, "shape": eff_shape,
-                      "bbox": eff_bbox})
-        cluster.execute("parallel.write_data(data_dict, f, entropyname,"
-                        "outputdir, shape, bbox)")
+        parallel.apply_and_write(cluster, f, "x", predictname, outputdir,
+                                 eff_shape, eff_bbox)

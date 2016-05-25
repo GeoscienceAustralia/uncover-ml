@@ -16,17 +16,14 @@ import pickle
 log = logging.getLogger(__name__)
 
 
-def extract_transform(data, x_sets):
-    # Flatten patches
-    data = data.reshape((data.shape[0], -1))
+def extract_transform(x, x_sets):
     if x_sets is not None:  # one-hot activated!
-        data = parallel.one_hot(data, x_sets)
-    data = data.astype(float)
-    return data
+        x = parallel.one_hot(x, x_sets)
+    x = x.astype(float)
+    return x
 
 
 def compute_unique_values(full_image, cluster):
-    cluster.execute("x = feature.image_data_vector(data_dict)")
     x_sets = None
     # check data is okay
     dtype = full_image.dtype
@@ -52,12 +49,12 @@ def compute_unique_values(full_image, cluster):
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
+@cl.option('--chunks', type=int, default=df.work_chunks, help="Number of "
+           "chunks in which to split the computation and output")
 @cl.option('--patchsize', type=int,
            default=df.feature_patch_size, help="window width of patches, i.e. "
            "patchsize of 0 is a single pixel, patchsize of 1 is a 3x3 patch, "
            "etc")
-@cl.option('--chunks', type=int, default=df.work_chunks, help="Number of "
-           "chunks in which to split the computation and output")
 @cl.option('--targets', type=cl.Path(exists=True), help="Optional hdf5 file "
            "for providing target points at which to evaluate feature. See "
            "maketargets for creating an appropriate target files.")
@@ -73,7 +70,7 @@ def compute_unique_values(full_image, cluster):
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
 def main(name, geotiff, targets, onehot,
-         chunks, patchsize, quiet, outputdir, ipyprofile, settings):
+         patchsize, quiet, outputdir, ipyprofile, settings):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.
@@ -121,10 +118,9 @@ def main(name, geotiff, targets, onehot,
         log.info("Effective bounding box after "
                  "patch extraction: {}".format(eff_bbox))
 
-    # build the chunk->image dictionary for the input data
-    print(geotiff, chunks)
-    image_dict = {i: geoio.Image(full_filename, i, chunks, patchsize)
-                  for i in range(chunks)}
+    # Initialise the cluster
+    cluster = parallel.direct_view(ipyprofile)
+    chunks = len(cluster)
 
     # load settings
     f_args = {}
@@ -136,32 +132,24 @@ def main(name, geotiff, targets, onehot,
                 patchsize))
             f_args.update(s['f_args'])
 
-    # Initialise the cluster
-    cluster = parallel.direct_view(ipyprofile, chunks)
-
-    # Load the data into a dict on each client
+    # load the image on each worker
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"image_dict": image_dict, "patchsize": patchsize})
+    cluster.push({"full_filename": full_filename, "patchsize": patchsize,
+                  "chunks": chunks})
+    cluster.execute("image = geoio.Image(full_filename, chunk_index, "
+                    "chunks, patchsize)")
     if targets is not None:
         #  we need full path for targets for the workers
         targets = os.path.abspath(targets)
-
         cluster.push({"targets": targets})
-        cluster.execute("data_dict, index_dict = "
-                        " feature.load_target_image_data( "
-                        "image_dict, chunk_indices, patchsize, targets)")
-
-        # collect the indices from each worker and write back to targets
-        index_dict = {}
-        for i in cluster['index_dict']:
-            index_dict.update(i)
-        all_indices = np.concatenate([index_dict[i] for i in range(chunks)],
+        cluster.execute("x, indices = patch.patches_at_target(image, "
+                        "patchsize, targets)")
+        all_indices = np.concatenate(cluster['indices'],
                                      axis=0).astype(np.uint)
         geoio.writeback_target_indices(all_indices, targets)
+
     else:
-        cluster.execute("data_dict = "
-                        " feature.load_all_image_data( "
-                        "image_dict, chunk_indices, patchsize)")
+        cluster.execute("x = patch.all_patches(image, patchsize)")
 
     # compute settings
     if settings is None:
@@ -179,13 +167,8 @@ def main(name, geotiff, targets, onehot,
     log.info("Constructing feature transformation function")
     f = partial(extract_transform, **f_args)
 
-    log.info("Applying transform across nodes")
-    # Apply the transformation function
-    cluster.push({"f": f, "featurename": name, "outputdir": outputdir,
-                  "shape": eff_shape, "bbox": eff_bbox})
-    log.info("Applying final transform and writing output files")
-    cluster.execute("parallel.write_data(data_dict, f, featurename, "
-                    "outputdir, shape=shape, bbox=bbox)")
+    parallel.apply_and_write(cluster, f, "x", name, outputdir, eff_shape,
+                             eff_bbox)
 
     log.info("Output vector has length {}, dimensionality {}".format(
         full_image.resolution[0] * full_image.resolution[1], total_dims))

@@ -42,50 +42,51 @@ def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
 
 def compute_statistics(impute, centre, standardise, whiten,
                        featurefraction, cluster):
+    # copy data so as not to screw with original
+    cluster.execute("xs = np.copy(x)")
     # Get count data
-    cluster.execute("x = feature.data_vector(data_dict)")
-    cluster.execute("x_n = parallel.node_count(x)")
-    cluster.execute("x_full = parallel.node_full_count(x)")
+    cluster.execute("x_n = parallel.node_count(xs)")
+    cluster.execute("x_full = parallel.node_full_count(xs)")
     x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
     x_full = np.sum(np.array(cluster.pull('x_full')))
     out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
-    fraction_missing = (1.0 - np.sum(x_n) /(x_full*x_n.shape[0]))*100.0
+    fraction_missing = (1.0 - np.sum(x_n) / (x_full*x_n.shape[0]))*100.0
     log.info("Input data is {}% missing".format(fraction_missing))
 
     impute_mean = None
     if impute is True:
-        cluster.execute("impute_sum = parallel.node_sum(x)")
+        cluster.execute("impute_sum = parallel.node_sum(xs)")
         impute_sum = np.sum(np.array(cluster.pull('impute_sum')), axis=0)
         impute_mean = impute_sum / x_n
         log.info("Imputing missing data from mean {}".format(impute_mean))
         cluster.push({'impute_mean': impute_mean})
-        cluster.execute("x = parallel.impute_with_mean(x, impute_mean)")
-        cluster.execute("x_n = parallel.node_count(x)")
+        cluster.execute("xs = parallel.impute_with_mean(xs, impute_mean)")
+        cluster.execute("x_n = parallel.node_count(xs)")
         x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
 
     mean = None
     if centre is True:
-        cluster.execute("x_sum = parallel.node_sum(x)")
+        cluster.execute("x_sum = parallel.node_sum(xs)")
         x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
         mean = x_sum / x_n
         log.info("Subtracting global mean {}".format(mean))
         cluster.push({"mean": mean})
-        cluster.execute("x = parallel.centre(x, mean)")
+        cluster.execute("xs = parallel.centre(xs, mean)")
 
     sd = None
     if standardise is True:
-        cluster.execute("x_var = parallel.node_var(x)")
+        cluster.execute("x_var = parallel.node_var(xs)")
         x_var = np.sum(np.array(cluster.pull('x_var')), axis=0)
         sd = np.sqrt(x_var/x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
         cluster.push({"sd": sd})
-        cluster.execute("x = parallel.standardise(x, sd)")
+        cluster.execute("xs = parallel.standardise(xs, sd)")
 
     eigvecs = None
     eigvals = None
     if whiten is True:
-        cluster.execute("x_outer = parallel.node_outer(x)")
+        cluster.execute("x_outer = parallel.node_outer(xs)")
         outer = np.sum(np.array(cluster.pull('x_outer')), axis=0)
         cov = outer/x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
@@ -150,19 +151,18 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
 
     # Get attribs if they exist
     eff_shape, eff_bbox = feature.load_attributes(filename_dict)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile, nchunks)
+    cluster = parallel.direct_view(ipyprofile)
 
     # Load the data into a dict on each client
-    # Note chunk_indices is a global with different value on each node
-    cluster.push({"filename_dict": filename_dict})
-    cluster.execute("data_dict = feature.load_data("
-                    "filename_dict, chunk_indices)")
+    # Note chunk_index is a global with different value on each node
+    for i in range(len(cluster)):
+        cluster.push({"filenames": filename_dict[i]}, targets=i)
+    cluster.execute("x = geoio.load_and_cat(filenames)")
 
     # load settings
     f_args = {}
@@ -184,10 +184,6 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     # We have all the information we need, now build the transform
     f = partial(transform, **f_args)
 
-    # Apply the transformation function
-    cluster.push({"f": f, "featurename": featurename, "outputdir": outputdir,
-                  "shape": eff_shape, "bbox": eff_bbox})
-    log.info("Applying final transform and writing output files")
-    cluster.execute("parallel.write_data(data_dict, f, "
-                    "featurename, outputdir, shape, bbox)")
+    parallel.apply_and_write(cluster, f, "x", featurename, outputdir,
+                             eff_shape, eff_bbox)
     sys.exit(0)

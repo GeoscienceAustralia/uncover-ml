@@ -3,6 +3,7 @@
 from __future__ import division
 
 import numpy as np
+from uncoverml import geoio
 
 
 def grid_patches(image, pwidth, pstride=1):
@@ -109,3 +110,56 @@ def _checkim(image):
         raise ValueError('image must be a 2D or 3D array')
 
     return Ih, Iw, Ic
+
+
+def _image_to_data(image):
+    """
+    breaks up an image object into arrays suitable for sending to the
+    patching functions
+    """
+    data_and_mask = image.data()
+    data = data_and_mask.data
+    data_dtype = data.dtype
+    mask = data_and_mask.mask
+    return data, mask, data_dtype
+
+
+def _patches_to_array(patches, patch_mask, data_dtype):
+    """
+    converts the patch and mask iterators into a masked array
+    """
+    patch_data = np.array(list(patches), dtype=data_dtype)
+    mask_data = np.array(list(patch_mask), dtype=bool)
+    result = np.ma.masked_array(data=patch_data, mask=mask_data)
+    return result
+
+
+def all_patches(image, patchsize):
+    data, mask, data_dtype = _image_to_data(image)
+
+    patches = grid_patches(data, patchsize)
+    patch_mask = grid_patches(mask, patchsize)
+
+    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+
+    return patch_array
+
+
+def patches_at_target(image, patchsize, targets):
+    data, mask, data_dtype = _image_to_data(image)
+
+    lonlats = geoio.points_from_hdf(targets)
+    inx = np.logical_and(lonlats[:, 0] >= image.xmin,
+                         lonlats[:, 0] < image.xmax)
+    iny = np.logical_and(lonlats[:, 1] >= image.ymin,
+                         lonlats[:, 1] < image.ymax)
+    valid = np.logical_and(inx, iny)
+    # FIXME what if we get an empty chunk??
+    valid_indices = np.where(valid)[0]
+    valid_lonlats = lonlats[valid]
+    pixels = image.lonlat2pix(valid_lonlats)
+    patches = point_patches(data, patchsize, pixels)
+    patch_mask = point_patches(mask, patchsize, pixels)
+
+    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+    return patch_array, valid_indices

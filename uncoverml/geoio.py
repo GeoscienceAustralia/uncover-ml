@@ -5,10 +5,15 @@ import os.path
 import numpy as np
 from affine import Affine
 import shapefile
-import tables
+import tables as hdf
 import logging
 
 log = logging.getLogger(__name__)
+
+
+def flatten_image(im):
+    x = im.reshape(im.shape[0], -1)
+    return x
 
 
 def file_indices_okay(filenames):
@@ -56,7 +61,8 @@ def files_by_chunk(filenames):
     """
 
     # get just the name eg /path/to/file.part0.hdf5 -> file.part0
-    transform = lambda x: os.path.splitext(os.path.basename(x))[0]
+    def transform(x):
+        return os.path.splitext(os.path.basename(x))[0]
     sorted_filenames = sorted(filenames, key=transform)
     basenames = [transform(k) for k in sorted_filenames]
     indices = [int(k.rsplit('.part', 1)[1]) for k in basenames]
@@ -96,7 +102,7 @@ def points_from_hdf(filename, fieldname=None):
     TODO
     """
 
-    with tables.open_file(filename, mode='r') as f:
+    with hdf.open_file(filename, mode='r') as f:
         lons = f.root.Longitude.read()
         lats = f.root.Latitude.read()
         if fieldname is not None:
@@ -110,13 +116,13 @@ def indices_from_hdf(filename):
     """
     TODO
     """
-    with tables.open_file(filename, mode='r') as f:
+    with hdf.open_file(filename, mode='r') as f:
         indices = f.root.Indices.read()
     return indices
 
 
 def writeback_target_indices(indices, targets):
-    with tables.open_file(targets, mode='r+') as f:
+    with hdf.open_file(targets, mode='r+') as f:
         if f.__contains__('/Indices'):
             # check my indices are the same?
             log.info("skipping writing taget indices... already exist")
@@ -127,7 +133,7 @@ def writeback_target_indices(indices, targets):
 
 def points_to_hdf(lonlat, outfile, fieldname=None, fieldvals=None):
 
-    with tables.open_file(outfile, 'w') as f:
+    with hdf.open_file(outfile, 'w') as f:
         f.create_array("/", "Longitude", obj=lonlat[:, 0][:, np.newaxis])
         f.create_array("/", "Latitude", obj=lonlat[:, 1][:, np.newaxis])
         if fieldname is not None:
@@ -153,7 +159,7 @@ def values_from_shp(filename, field):
 
 def values_from_hdf(filename, field):
 
-    with tables.open_file(filename, mode='r') as f:
+    with hdf.open_file(filename, mode='r') as f:
         vals = [v for v in f.root.field]
 
     return np.array(vals)
@@ -354,3 +360,89 @@ def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
                0, -pixsize_y, ymax)
 
     return A, pixsize_x, pixsize_y
+
+
+def output_filename(feature_name, chunk_index, output_dir):
+    filename = feature_name + ".part{}.hdf5".format(chunk_index)
+    full_path = os.path.join(output_dir, filename)
+    return full_path
+
+
+def output_features(feature_vector, outfile, featname="features",
+                    shape=None, bbox=None):
+    """
+    Writes a vector of features out to a standard HDF5 format. The function
+    assumes that it is only 1 chunk of a larger vector, so outputs a numerical
+    suffix to the file as an index.
+
+    Parameters
+    ----------
+        feature_vector: array
+            A 2D numpy array of shape (nPoints, nDims) of type float. This can
+            be a masked array.
+        outfile: path
+            The name of the output file
+        featname: str, optional
+            The name of the features.
+        shape: tuple, optional
+            The original shape of the feature for reproducing an image
+        bbox: ndarray, optional
+            The bounding box of the original data for reproducing an image
+    """
+    h5file = hdf.open_file(outfile, mode='w')
+
+    # Make sure we are writing "long" arrays
+    if feature_vector.ndim < 2:
+        feature_vector = feature_vector[:, np.newaxis]
+    array_shape = feature_vector.shape
+
+    filters = hdf.Filters(complevel=5, complib='zlib')
+
+    if np.ma.isMaskedArray(feature_vector):
+        fobj = feature_vector.data
+        if np.ma.count_masked(feature_vector) == 0:
+            fmask = np.zeros(array_shape, dtype=bool)
+        else:
+            fmask = feature_vector.mask
+    else:
+        fobj = feature_vector
+        fmask = np.zeros(array_shape, dtype=bool)
+
+    h5file.create_carray("/", featname, filters=filters,
+                         atom=hdf.Float64Atom(), shape=array_shape, obj=fobj)
+    h5file.create_carray("/", "mask", filters=filters,
+                         atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
+
+    if shape is not None:
+        h5file.getNode('/' + featname).attrs.shape = shape
+        h5file.root.mask.attrs.shape = shape
+    if bbox is not None:
+        h5file.getNode('/' + featname).attrs.bbox = bbox
+        h5file.root.mask.attrs.bbox = bbox
+
+    h5file.close()
+
+def load_and_cat(hdf5_vectors):
+    data_list = []
+    for filename in hdf5_vectors:
+        with hdf.open_file(filename, mode='r') as f:
+            data = f.root.features[:]
+            mask = f.root.mask[:]
+            a = np.ma.masked_array(data=data, mask=mask)
+            data_list.append(a)
+    all_data = np.ma.concatenate(data_list, axis=1)
+    return all_data
+
+
+def load_attributes(filename_dict):
+    # Only bother loading the first one as they're all the same for now
+    fname = filename_dict[0][0]
+    shape = None
+    bbox = None
+    with hdf.open_file(fname, mode='r') as f:
+        if 'shape' in f.root.features.attrs:
+            shape = f.root.features.attrs.shape
+        if 'bbox' in f.root.features.attrs:
+            bbox = f.root.features.attrs.bbox
+    return shape, bbox
+

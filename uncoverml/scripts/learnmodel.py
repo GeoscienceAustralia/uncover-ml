@@ -10,6 +10,7 @@ import os.path
 import pickle
 import json
 import click as cl
+import numpy as np
 
 import uncoverml.defaults as df
 from uncoverml import geoio, feature
@@ -73,12 +74,15 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
     y = y[target_indices]
 
     # Read ALL the features in here, and learn on a single machine
-    data_dict = feature.load_data(filename_dict, range(nchunks))
-    X = feature.data_vector(data_dict)
+    data_vectors = [geoio.load_and_cat(filename_dict[i])
+                    for i in range(nchunks)]
+    X = np.ma.concatenate(data_vectors, axis=0)
 
     # Optionally subset the data for cross validation
     if cvindex[0] is not None:
         cv_ind = input_cvindex(cvindex[0])
+        #  permute the cv indices as well
+        cv_ind = cv_ind[target_indices]
         y = y[cv_ind != cvindex[1]]
         X = X[cv_ind != cvindex[1]]
 
