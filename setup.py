@@ -65,6 +65,7 @@ setup(
         'wheel',
         'scipy',
         'numpy',
+        'pycontracts',
         'tables',
         'affine',
         'rasterio',
