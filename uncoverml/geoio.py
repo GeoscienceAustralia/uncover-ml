@@ -106,6 +106,15 @@ def points_from_hdf(filename, fieldname=None):
     return lonlat if fieldname is None else (lonlat, vals)
 
 
+def indices_from_hdf(filename):
+    """
+    TODO
+    """
+    with tables.open_file(filename, mode='r') as f:
+        indices = f.root.Indices.read()
+    return indices
+
+
 def writeback_target_indices(indices, targets):
     with tables.open_file(targets, mode='r+') as f:
         if f.__contains__('/Indices'):
