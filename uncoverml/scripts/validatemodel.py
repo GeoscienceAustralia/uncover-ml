@@ -83,7 +83,9 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
     s_ind = np.where(cvind == cvindex[1])[0]
     t_ind = np.where(cvind != cvindex[1])[0]
 
-    Y = input_targets(targets)
+    Y, target_indices = input_targets(targets)
+    Y = Y[target_indices]
+
     Yt = Y[t_ind]
     Ys = Y[s_ind]
     Ns = len(Ys)

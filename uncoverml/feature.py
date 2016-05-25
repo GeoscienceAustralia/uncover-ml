@@ -62,37 +62,57 @@ def output_features(feature_vector, outfile, featname="features",
     h5file.close()
 
 
-def patches_from_image(image, patchsize, targets=None):
+def _image_to_data(image):
     """
-    Pulls out masked patches from a geotiff, either everywhere or
-    at locations specificed by a targets shapefile
+    breaks up an image object into arrays suitable for sending to the
+    patching functions
     """
-    # Get the target points if they exist:
     data_and_mask = image.data()
     data = data_and_mask.data
     data_dtype = data.dtype
     mask = data_and_mask.mask
-    pixels = None
-    if targets is not None:
-        lonlats = geoio.points_from_hdf(targets)
-        inx = np.logical_and(lonlats[:, 0] > image.xmin,
-                             lonlats[:, 0] < image.xmax)
-        iny = np.logical_and(lonlats[:, 1] > image.ymin,
-                             lonlats[:, 1] < image.ymax)
-        valid = np.logical_and(inx, iny)
-        # FIXME what if we get an empty chunk??
-        valid_lonlats = lonlats[valid]
-        pixels = image.lonlat2pix(valid_lonlats)
-        patches = patch.point_patches(data, patchsize, pixels)
-        patch_mask = patch.point_patches(mask, patchsize, pixels)
-    else:
-        patches = patch.grid_patches(data, patchsize)
-        patch_mask = patch.grid_patches(mask, patchsize)
+    return data, mask, data_dtype
 
+
+def _patches_to_array(patches, patch_mask, data_dtype):
+    """
+    converts the patch and mask iterators into a masked array
+    """
     patch_data = np.array(list(patches), dtype=data_dtype)
     mask_data = np.array(list(patch_mask), dtype=bool)
     result = np.ma.masked_array(data=patch_data, mask=mask_data)
     return result
+
+
+def all_patches(image, patchsize):
+    data, mask, data_dtype = _image_to_data(image)
+
+    patches = patch.grid_patches(data, patchsize)
+    patch_mask = patch.grid_patches(mask, patchsize)
+
+    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+
+    return patch_array
+
+
+def patches_at_target(image, patchsize, targets):
+    data, mask, data_dtype = _image_to_data(image)
+
+    lonlats = geoio.points_from_hdf(targets)
+    inx = np.logical_and(lonlats[:, 0] >= image.xmin,
+                         lonlats[:, 0] < image.xmax)
+    iny = np.logical_and(lonlats[:, 1] >= image.ymin,
+                         lonlats[:, 1] < image.ymax)
+    valid = np.logical_and(inx, iny)
+    # FIXME what if we get an empty chunk??
+    valid_indices = np.where(valid)[0]
+    valid_lonlats = lonlats[valid]
+    pixels = image.lonlat2pix(valid_lonlats)
+    patches = patch.point_patches(data, patchsize, pixels)
+    patch_mask = patch.point_patches(mask, patchsize, pixels)
+
+    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+    return patch_array, valid_indices
 
 
 def __load_hdf5(infiles):
@@ -135,14 +155,29 @@ def load_cvdata(filename_dict, cv_chunks, chunk_indices):
     return {i: d[cv_chunks[i]] for i, d in data_dict.items()}
 
 
-def load_image_data(image_dict, chunk_indices, patchsize, targets):
+def load_all_image_data(image_dict, chunk_indices, patchsize):
     """
     we load references to the data into each node, this function runs
     on the node to actually load the data itself.
     """
-    data_dict = {i: patches_from_image(image_dict[i], patchsize, targets)
+    data_dict = {i: all_patches(image_dict[i], patchsize)
                  for i in chunk_indices}
     return data_dict
+
+
+def load_target_image_data(image_dict, chunk_indices, patchsize, targets):
+    """
+    we load references to the data into each node, this function runs
+    on the node to actually load the data itself.
+    """
+    full_dict = [patches_at_target(image_dict[i], patchsize, targets)
+                 for i in chunk_indices]
+    patch_list, index_list = zip(*full_dict)
+    data_dict = dict(zip(chunk_indices, patch_list))
+    # The indices of the targets corresponding to the output patches
+    index_dict = dict(zip(chunk_indices, index_list))
+    return data_dict, index_dict
+
 
 def image_data_vector(image_data):
     """

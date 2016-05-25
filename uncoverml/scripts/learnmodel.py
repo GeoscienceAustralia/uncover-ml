@@ -69,7 +69,8 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         args = {}
 
     # Load targets file
-    y = input_targets(targets)
+    y, target_indices = input_targets(targets)
+    y = y[target_indices]
 
     # Read ALL the features in here, and learn on a single machine
     data_dict = feature.load_data(filename_dict, range(nchunks))

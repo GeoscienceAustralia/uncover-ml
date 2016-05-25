@@ -141,10 +141,27 @@ def main(name, geotiff, targets, onehot,
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
-    cluster.push({"image_dict": image_dict, "patchsize": patchsize,
-                  "targets": targets})
-    cluster.execute("data_dict = feature.load_image_data( "
-                    "image_dict, chunk_indices, patchsize, targets)")
+    cluster.push({"image_dict": image_dict, "patchsize": patchsize})
+    if targets is not None:
+        #  we need full path for targets for the workers
+        targets = os.path.abspath(targets)
+
+        cluster.push({"targets": targets})
+        cluster.execute("data_dict, index_dict = "
+                        " feature.load_target_image_data( "
+                        "image_dict, chunk_indices, patchsize, targets)")
+
+        # collect the indices from each worker and write back to targets
+        index_dict = {}
+        for i in cluster['index_dict']:
+            index_dict.update(i)
+        all_indices = np.concatenate([index_dict[i] for i in range(chunks)],
+                                     axis=0).astype(np.uint)
+        geoio.writeback_target_indices(all_indices, targets)
+    else:
+        cluster.execute("data_dict = "
+                        " feature.load_all_image_data( "
+                        "image_dict, chunk_indices, patchsize)")
 
     # compute settings
     if settings is None:
