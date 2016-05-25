@@ -49,7 +49,6 @@ RUN pip3 -v install \
   scikit-learn \
   ipyparallel
 
-COPY . /usr/src/python/uncoverml
 
 # install prereqs for caching reasons
 RUN pip3 -v install \ 
@@ -62,6 +61,8 @@ RUN pip3 -v install \
   revrand
 
 WORKDIR /usr/src/python/uncoverml
+
+COPY . /usr/src/python/uncoverml
 
 RUN python3 setup.py develop
 
