@@ -106,6 +106,16 @@ def points_from_hdf(filename, fieldname=None):
     return lonlat if fieldname is None else (lonlat, vals)
 
 
+def writeback_target_indices(indices, targets):
+    with tables.open_file(targets, mode='r+') as f:
+        if f.__contains__('/Indices'):
+            # check my indices are the same?
+            log.info("skipping writing taget indices... already exist")
+        else:
+            log.info("writing target indices back to target file")
+            f.create_array("/", "Indices", obj=indices)
+
+
 def points_to_hdf(lonlat, outfile, fieldname=None, fieldvals=None):
 
     with tables.open_file(outfile, 'w') as f:
