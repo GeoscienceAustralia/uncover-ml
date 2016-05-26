@@ -58,7 +58,7 @@ compos_file = "composite"
 #
 
 # Number of jobs (must be >= number of workers)
-nchunks = 48
+nchunks = 4
 
 # Name of the prediction algorithm
 # algorithm = 'svr'

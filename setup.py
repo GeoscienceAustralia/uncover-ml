@@ -58,7 +58,8 @@ setup(
             'learnmodel = uncoverml.scripts.learnmodel:main',
             'predict = uncoverml.scripts.predict:main',
             'validatemodel = uncoverml.scripts.validatemodel:main',
-            'exportgeotiff = uncoverml.scripts.exportgeotiff:main'
+            'exportgeotiff = uncoverml.scripts.exportgeotiff:main',
+            'tiff2kmz = uncoverml.scripts.tiff2kmz:main'
         ]
     },
     install_requires=[
@@ -73,11 +74,15 @@ setup(
         'ipyparallel',
         'click',
         'scikit-learn',
-        'revrand'
+        'revrand',
     ],
     extras_require={
         'demos': [
             'matplotlib'
+        ],
+        'kmz': [
+            'simplekml',
+            'pillow'
         ],
         'dev': [
             'sphinx',

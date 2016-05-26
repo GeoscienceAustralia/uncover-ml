@@ -192,8 +192,6 @@ def bounding_box(raster):
     lon_range = np.sort(lon_range)
     lat_range = np.sort(lat_range)
 
-    # import IPython; IPython.embed()
-
     return lon_range, lat_range
 
 
