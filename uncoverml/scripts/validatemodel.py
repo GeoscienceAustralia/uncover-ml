@@ -136,7 +136,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
             json.dump(scores, f, sort_keys=True, indent=4)
 
     # Make figure
-    if plotyy or outfile is not None:
+    if plotyy is not None:
         fig = pl.figure()
         maxy = max(Ys.max(), get_first_dim(EYs).max())
         miny = min(Ys.min(), get_first_dim(EYs).min())
@@ -148,5 +148,4 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
         pl.title('True vs. predicted target values.')
         if outfile is not None:
             fig.savefig(outfile + ".png")
-        if plotyy:
-            pl.show()
+        pl.show()
