@@ -50,7 +50,7 @@ def compute_statistics(impute, centre, standardise, whiten,
     x_full = np.sum(np.array(cluster.pull('x_full')))
     out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
-    fraction_missing = (1.0 - np.sum(x_n) /(x_full*x_n.shape[0]))*100.0
+    fraction_missing = (1.0 - np.sum(x_n) / (x_full * x_n.shape[0])) * 100.0
     log.info("Input data is {}% missing".format(fraction_missing))
 
     impute_mean = None
@@ -77,7 +77,7 @@ def compute_statistics(impute, centre, standardise, whiten,
     if standardise is True:
         cluster.execute("x_var = parallel.node_var(x)")
         x_var = np.sum(np.array(cluster.pull('x_var')), axis=0)
-        sd = np.sqrt(x_var/x_n)
+        sd = np.sqrt(x_var / x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
         cluster.push({"sd": sd})
         cluster.execute("x = parallel.standardise(x, sd)")
@@ -87,9 +87,9 @@ def compute_statistics(impute, centre, standardise, whiten,
     if whiten is True:
         cluster.execute("x_outer = parallel.node_outer(x)")
         outer = np.sum(np.array(cluster.pull('x_outer')), axis=0)
-        cov = outer/x_n
+        cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
-        out_dims = int(out_dims*featurefraction)
+        out_dims = int(out_dims * featurefraction)
         log.info("Whitening and keeping {} dimensions".format(out_dims))
 
     d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
