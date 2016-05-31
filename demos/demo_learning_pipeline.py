@@ -83,7 +83,7 @@ patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 impute = True
 
 # Starndardise each input dimension? (0 mean, 1 std)
-standardise = False  # standardise all of the extracted features?
+standardise = True  # standardise all of the extracted features?
 
 # Whiten all inputs?
 whiten = False  # whiten all of the extracted features?
@@ -105,12 +105,14 @@ algdict = {
     # Bayesian linear regression
     # "bayesreg": {},
 
-    # Approximate Gaussian process, for large scale data
+    # Approximate GaussiaN process, for large scale data
     # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 43, 'nbases': 50},
     # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
+    # "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 87, 'nbases': 100},
+    # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
-    # "svr": {'gamma': 1. / 90, 'epsilon': 0.05},
+    # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
     # "svr": {},
 
     # Random forest regressor
@@ -123,7 +125,7 @@ algdict = {
     # 'kernelridge': {'kernel': 'rbf'},
 
     # Decision tree regressor
-    # 'deciciontree': {},
+    # 'decisiontree': {},
 
     # Extra tree regressor
     # 'extratree': {},

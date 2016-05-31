@@ -13,7 +13,7 @@ from functools import partial
 
 import uncoverml.defaults as df
 from uncoverml import geoio, parallel, feature
-from uncoverml.models import probmodels, apply_masked
+from uncoverml.models import apply_masked
 
 log = logging.getLogger(__name__)
 
@@ -22,18 +22,18 @@ log = logging.getLogger(__name__)
 def predict(data, model):
 
     # Ask for predictive outputs if predictive model
-    if isinstance(model, probmodels):
-        predwrap = lambda x: np.vstack(model.predict(x, uncertainty=True)).T
+    if 'predict_proba' in dir(model):
+        predproba = lambda x: np.vstack(model.predict_proba(x)).T
+        if 'entropy_reduction' in dir(model):
+            pred = lambda x: \
+                np.hstack((predproba(x),
+                           model.entropy_reduction(x)[:, np.newaxis]))
+        else:
+            pred = predproba
     else:
-        predwrap = lambda x: model.predict(x)
+        pred = lambda x: model.predict(x)[:, np.newaxis]
 
-    return apply_masked(predwrap, data)
-
-
-# Apply expeded reduction in entropy to data
-def entropy_reduct(data, model):
-
-    return apply_masked(model.entropy_reduction, data)
+    return apply_masked(pred, data)
 
 
 @cl.command()
@@ -42,14 +42,11 @@ def entropy_reduct(data, model):
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.option('--entropred', is_flag=True, help="Calculate expected reduction in "
-           "entropy, for probabilistic regressors only. The generates another "
-           "set of files with 'entropred_' prepended to the output files")
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
            default=None)
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
+def main(model, files, outputdir, ipyprofile, predictname, quiet):
     """
     Predict the target values for query data from a machine learning
     algorithm.
@@ -98,18 +95,3 @@ def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
                   "shape": eff_shape, "bbox": eff_bbox})
     cluster.execute("parallel.write_data(data_dict, f, featurename,"
                     "outputdir, shape, bbox)")
-
-    # Expected entropy reduction
-    if entropred:
-        if not isinstance(model, probmodels):
-            log.fatal("Cannot calculate expected entropy reduction for"
-                      " non-probabilistic models!")
-            sys.exit(-1)
-
-        f = partial(entropy_reduct, model=model)
-
-        cluster.push({"f": f, "entropyname": "entropred_" + predictname,
-                      "outputdir": outputdir, "shape": eff_shape,
-                      "bbox": eff_bbox})
-        cluster.execute("parallel.write_data(data_dict, f, entropyname,"
-                        "outputdir, shape, bbox)")

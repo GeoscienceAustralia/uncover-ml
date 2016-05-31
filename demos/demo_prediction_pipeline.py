@@ -9,7 +9,6 @@ import logging
 from os import path, mkdir
 from glob import glob
 
-from uncoverml.models import probmodels_str
 from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
 log = logging.getLogger(__name__)
@@ -58,20 +57,16 @@ compos_file = "composite"
 #
 
 # Number of jobs (must be >= number of workers)
-nchunks = 4
+nchunks = 12
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
+# algorithm = 'bayesreg'
 algorithm = 'approxgp'
+# algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction_file"
-
-# Extra options for probabilistic regressors
-if algorithm in probmodels_str:
-    entropy_reduction = True
-else:
-    entropy_reduction = False
 
 
 #
@@ -150,8 +145,6 @@ def main():
 
     cmd = ["predict", "--outputdir", pred_dir,
            "--predictname", predict_file]
-    if entropy_reduction:
-        cmd.append('--entropred')
     cmd += [alg_file] + cfiles
 
     pfile = path.join(pred_dir, predict_file + endsuf)
@@ -166,14 +159,6 @@ def main():
     pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
     cmdp = cmd + pfiles
     try_run(cmdp)
-
-    # Output a Geotiff of the expeded reduction in entropy
-    if entropy_reduction:
-        cmd[1] = gtiffname_ent
-        efiles = glob(path.join(pred_dir,
-                                "entropred_" + predict_file + "*.hdf5"))
-        cmde = cmd + efiles
-        try_run(cmde)
 
 
 if __name__ == "__main__":
