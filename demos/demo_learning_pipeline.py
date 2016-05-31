@@ -71,7 +71,7 @@ cv_file = path.join(data_dir, cv_file_name)
 
 # How many chunks to divide the work into -- this is all combined in the
 # learning stage, and so just here to test the pipeline
-nchunks = 4  # NOTE: if you change this, make sure you delete all old feats
+nchunks = 12  # NOTE: if you change this, make sure you delete all old feats
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False  # NOTE: if you change this, make sure you delete all old feats
@@ -86,7 +86,7 @@ impute = True
 standardise = False  # standardise all of the extracted features?
 
 # Whiten all inputs?
-whiten = True  # whiten all of the extracted features?
+whiten = False  # whiten all of the extracted features?
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.5
@@ -106,7 +106,7 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 43, 'nbases': 50},
+    # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 43, 'nbases': 50},
     # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
 
     # Support vector machine (regressor)
@@ -114,7 +114,7 @@ algdict = {
     # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 20},
+    "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},
