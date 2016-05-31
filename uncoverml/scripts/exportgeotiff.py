@@ -32,7 +32,7 @@ def transform(x, rows, x_min, x_max, band, separatebands):
     if x_min is not None and x_max is not None:
         x = np.ma.asarray(x, dtype=float)
         x = ((x - x_min) / (x_max - x_min))
-        cmap = pl.cm.inferno
+        cmap = pl.cm.inferno if hasattr(pl.cm, 'inferno') else pl.cm.afmhot
         cmap.set_bad(alpha=0)
         for i in range(x.shape[2]):
             rgba = cmap(x[:, :, i])
