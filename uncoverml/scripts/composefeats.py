@@ -15,8 +15,9 @@ import uncoverml.defaults as df
 from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
-from uncoverml import feature
+from uncoverml import stats
 import pickle
+
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +25,11 @@ log = logging.getLogger(__name__)
 def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
 
     if impute_mean is not None:
-        x = parallel.impute_with_mean(x, impute_mean)
+        x = stats.impute_with_mean(x, impute_mean)
     if mean is not None:
-        x = parallel.centre(x, mean)
+        x = stats.centre(x, mean)
     if sd is not None:
-        x = parallel.standardise(x, sd)
+        x = stats.standardise(x, sd)
     if eigvecs is not None:
         ndims = x.shape[1]
         # make sure 1 <= keepdims <= ndims
@@ -43,10 +44,10 @@ def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
 def compute_statistics(impute, centre, standardise, whiten,
                        featurefraction, cluster):
     # copy data so as not to screw with original
-    cluster.execute("xs = np.copy(x)")
+    cluster.execute("xs = np.ma.copy(x)")
     # Get count data
-    cluster.execute("x_n = parallel.node_count(xs)")
-    cluster.execute("x_full = parallel.node_full_count(xs)")
+    cluster.execute("x_n = stats.count(xs)")
+    cluster.execute("x_full = stats.full_count(xs)")
     x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
     x_full = np.sum(np.array(cluster.pull('x_full')))
     out_dims = x_n.shape[0]
@@ -56,37 +57,37 @@ def compute_statistics(impute, centre, standardise, whiten,
 
     impute_mean = None
     if impute is True:
-        cluster.execute("impute_sum = parallel.node_sum(xs)")
+        cluster.execute("impute_sum = stats.sum(xs)")
         impute_sum = np.sum(np.array(cluster.pull('impute_sum')), axis=0)
         impute_mean = impute_sum / x_n
         log.info("Imputing missing data from mean {}".format(impute_mean))
         cluster.push({'impute_mean': impute_mean})
-        cluster.execute("xs = parallel.impute_with_mean(xs, impute_mean)")
-        cluster.execute("x_n = parallel.node_count(xs)")
+        cluster.execute("xs = stats.impute_with_mean(xs, impute_mean)")
+        cluster.execute("x_n = stats.count(xs)")
         x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
 
     mean = None
     if centre is True:
-        cluster.execute("x_sum = parallel.node_sum(xs)")
+        cluster.execute("x_sum = stats.sum(xs)")
         x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
         mean = x_sum / x_n
         log.info("Subtracting global mean {}".format(mean))
         cluster.push({"mean": mean})
-        cluster.execute("xs = parallel.centre(xs, mean)")
+        cluster.execute("xs = stats.centre(xs, mean)")
 
     sd = None
     if standardise is True:
-        cluster.execute("x_var = parallel.node_var(xs)")
+        cluster.execute("x_var = stats.var(xs)")
         x_var = np.sum(np.array(cluster.pull('x_var')), axis=0)
         sd = np.sqrt(x_var/x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
         cluster.push({"sd": sd})
-        cluster.execute("xs = parallel.standardise(xs, sd)")
+        cluster.execute("xs = stats.standardise(xs, sd)")
 
     eigvecs = None
     eigvals = None
     if whiten is True:
-        cluster.execute("x_outer = parallel.node_outer(xs)")
+        cluster.execute("x_outer = stats.outer(xs)")
         outer = np.sum(np.array(cluster.pull('x_outer')), axis=0)
         cov = outer/x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
@@ -153,7 +154,7 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
     filename_dict = geoio.files_by_chunk(full_filenames)
 
     # Get attribs if they exist
-    eff_shape, eff_bbox = feature.load_attributes(filename_dict)
+    eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile)

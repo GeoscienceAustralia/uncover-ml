@@ -63,3 +63,5 @@ output/
 *.bin
 data/
 
+# HDF5 install (Arch workaround
+hdf5-1.8.*

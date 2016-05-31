@@ -422,6 +422,7 @@ def output_features(feature_vector, outfile, featname="features",
 
     h5file.close()
 
+
 def load_and_cat(hdf5_vectors):
     data_list = []
     for filename in hdf5_vectors:

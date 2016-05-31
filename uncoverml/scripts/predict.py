@@ -80,7 +80,7 @@ def main(model, files, outputdir, ipyprofile, predictname, entropred, quiet):
     nchunks = len(filename_dict)
 
     # Get the extra hdf5 attributes
-    eff_shape, eff_bbox = feature.load_attributes(filename_dict)
+    eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
     cluster = parallel.direct_view(ipyprofile, nchunks)

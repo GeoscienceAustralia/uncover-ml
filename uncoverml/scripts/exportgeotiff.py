@@ -13,7 +13,6 @@ import uncoverml.defaults as df
 from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
-from uncoverml import feature
 import matplotlib.pyplot as pl
 import numpy as np
 import rasterio
@@ -86,17 +85,16 @@ def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
 
     # Get attribs if they exist
-    eff_shape, eff_bbox = feature.load_attributes(filename_dict)
+    eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # affine
     A, _, _ = geoio.bbox2affine(eff_bbox[1, 0], eff_bbox[0, 0],
                                 eff_bbox[0, 1], eff_bbox[1, 1], *eff_shape)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile, nchunks)
+    cluster = parallel.direct_view(ipyprofile)
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node

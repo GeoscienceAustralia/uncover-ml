@@ -15,9 +15,11 @@ def direct_view(profile):
     # Initialise the cluster
     c.block = True
     # Ensure this module's requirments are imported externally
-    c.execute('from uncoverml import feature')
-    c.execute('from uncoverml import parallel')
     c.execute('import numpy as np')
+    c.execute('from uncoverml import geoio')
+    c.execute('from uncoverml import patch')
+    c.execute('from uncoverml import parallel')
+    c.execute('from uncoverml import stats')
 
     log.info("dividing work between {} engines".format(nchunks))
     for i in range(nchunks):

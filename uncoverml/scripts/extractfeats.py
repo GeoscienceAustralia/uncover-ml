@@ -17,6 +17,8 @@ log = logging.getLogger(__name__)
 
 
 def extract_transform(x, x_sets):
+    # reshape
+    x = x.reshape((x.shape[0], -1))
     if x_sets is not None:  # one-hot activated!
         x = parallel.one_hot(x, x_sets)
     x = x.astype(float)
@@ -49,8 +51,6 @@ def compute_unique_values(full_image, cluster):
 @cl.command()
 @cl.option('--quiet', is_flag=True, help="Log verbose output",
            default=df.quiet_logging)
-@cl.option('--chunks', type=int, default=df.work_chunks, help="Number of "
-           "chunks in which to split the computation and output")
 @cl.option('--patchsize', type=int,
            default=df.feature_patch_size, help="window width of patches, i.e. "
            "patchsize of 0 is a single pixel, patchsize of 1 is a 3x3 patch, "
