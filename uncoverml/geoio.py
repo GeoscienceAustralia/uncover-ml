@@ -1,5 +1,6 @@
 from __future__ import division
 
+from contracts import contract
 import rasterio
 import os.path
 import numpy as np
@@ -167,8 +168,8 @@ def values_from_hdf(filename, field):
 
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
-    # plus one for exclusive upper range
-    y_arrays = np.array_split(np.arange(npixels + 1), nchunks)
+    # y bounds are INCLUSIVE
+    y_arrays = np.array_split(np.arange(npixels), nchunks)
     y_bounds = []
     # construct the overlap
     for s in y_arrays:
@@ -186,19 +187,12 @@ def bounding_box(raster):
     """
     T1 = raster.affine
 
-    # No shearing or rotation allowed!!
-    if not ((T1[1] == 0) and (T1[3] == 0)):
-        raise RuntimeError("Transform to pixel coordinates has rotation "
-                           "or shear")
-
     # the +1 because we want pixel corner 1 beyond the last pixel
     lon_range = T1[2] + np.array([0, raster.width + 1]) * T1[0]
     lat_range = T1[5] + np.array([0, raster.height + 1]) * T1[4]
 
     lon_range = np.sort(lon_range)
     lat_range = np.sort(lat_range)
-
-    # import IPython; IPython.embed()
 
     return lon_range, lat_range
 
@@ -213,7 +207,7 @@ class Image:
 
         # Get the full image details
         with rasterio.open(self.filename, 'r') as geotiff:
-            self._full_xrange, self._full_yrange = bounding_box(geotiff)
+            # self._full_xrange, self._full_yrange = bounding_box(geotiff)
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
@@ -224,31 +218,64 @@ class Image:
             self._dtype = np.dtype(geotiff.dtypes[0])
 
             # Build the affine transformation for the FULL image
-            self.A = geotiff.affine
-            self.pixsize_x = abs(self.A[0])
-            self.pixsize_y = abs(self.A[4])
+            A = geotiff.affine
 
-            # centered pixels
-            self.cA = self.A * Affine.translation(0.5, 0.5)
+        # No shearing or rotation allowed!!
+        if not ((A[1] == 0) and (A[3] == 0)):
+            raise RuntimeError("Transform to pixel coordinates"
+                               "has rotation or shear")
 
-        # Get bounds of window
-        xmin, xmax = (0, self._full_res[0])
-        # splits = construct_splits(self._full_res[1],
-        #                           nchunks, overlap)
-        # ymin, ymax = splits[chunk_idx]
+        # TODO clean this up into a function
+        self.pixsize_x = A[0]
+        self.pixsize_y = A[4]
+        self._y_flipped = self.pixsize_y < 0
+        self._start_lon = A[2]
+        self._start_lat = A[5]
+
+        # construct the canonical pixel<->position map
+        pix_x = range(self._full_res[0] + 1 + 1)  # 1 past corner of last pixel
+        coords_x = [self._start_lon + float(k) * self.pixsize_x
+                    for k in pix_x]
+        self._coords_x = coords_x
+        pix_y = range(self._full_res[1] + 1 + 1)  # ditto
+        coords_y = [self._start_lat + float(k) * self.pixsize_y
+                    for k in pix_y]
+        self._coords_y = coords_y
+        self._pix_x_to_coords = dict(zip(pix_x, coords_x))
+        self._pix_y_to_coords = dict(zip(pix_y, coords_y))
+
+        # inclusive y range of this chunk in full image
         ymin, ymax = construct_splits(self._full_res[1],
                                       nchunks, overlap)[chunk_idx]
+        self._offset = np.array([0, ymin], dtype=int)
+        # inclusive x range of this chunk (same for all chunks)
+        xmin, xmax = 0, self._full_res[0] - 1
+
+        assert(xmin < xmax)
+        assert(ymin < ymax)
+
+        # get resolution of this chunk
+        xres = self._full_res[0]
+        yres = ymax - ymin + 1  # note the +1 because inclusive bounds
 
         # Calculate the new values for resolution and bounding box
-        self._offset = np.array([xmin, ymin])
-        self.resolution = (xmax - xmin, ymax - ymin, self._full_res[2])
-        chunk_xy = np.array([[xmin, ymin], [xmax + 1, ymax + 1]])
-        ((lonmin, lat0), (lonmax, lat1)) = self.pix2latlon(chunk_xy,
-                                                           centres=False,
-                                                           addoffset=False)
-        # import IPython; IPython.embed()
-        self.bbox = np.array([[lonmin, lonmax],
-                              [min(lat0, lat1), max(lat0, lat1)]])
+        self.resolution = (xres, yres, self._full_res[2])
+
+        start_bound_x, start_bound_y = self._global_pix2lonlat(
+            np.array([[xmin, ymin]]))[0]
+        # one past the last pixel (note the +1)
+        outer_bound_x, outer_bound_y = self._global_pix2lonlat(
+            np.array([[xmax + 1, ymax + 1]]))[0]
+
+        assert(start_bound_x < outer_bound_x)
+        if self._y_flipped:
+            assert(start_bound_y > outer_bound_y)
+            self.bbox = [[start_bound_x, outer_bound_x],
+                         [outer_bound_y, start_bound_y]]
+        else:
+            assert(start_bound_y < outer_bound_y)
+            self.bbox = [[start_bound_x, outer_bound_x],
+                         [start_bound_y, outer_bound_y]]
 
     def __repr__(self):
         return "<geo.Image({}), chunk {} of {})>".format(self.filename,
@@ -256,9 +283,9 @@ class Image:
                                                          self.nchunks)
 
     def data(self):
-        # ((ymin, ymax),(xmin, xmax)) plus one for exlusive upper index
-        window = ((self._offset[1], self._offset[1] + self.resolution[1] + 1),
-                  (self._offset[0], self._offset[0] + self.resolution[0] + 1))
+        # ((ymin, ymax),(xmin, xmax))
+        window = ((self._offset[1], self._offset[1] + self.resolution[1]),
+                  (self._offset[0], self._offset[0] + self.resolution[0]))
         with rasterio.open(self.filename, 'r') as geotiff:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
@@ -318,48 +345,69 @@ class Image:
     def ymax(self):
         return self.bbox[1][1]
 
-    # def lonlat2pix(self, lonlat, centres=True):
+    # @contract(xy='array[Nx2](int64),N>0')
+    def _global_pix2lonlat(self, xy):
+        result = np.array([[self._pix_x_to_coords[x],
+                           self._pix_y_to_coords[y]] for x, y in xy])
+        return result
+
+    # @contract(xy='array[Nx2](int64),N>0')
+    def pix2lonlat(self, xy):
+        result = self._global_pix2lonlat(xy + self._offset)
+        return result
+
+    # @contract(lonlat='array[Nx2](float64),N>0')
+    def _global_lonlat2pix(self, lonlat):
+        x = np.searchsorted(self._coords_x, lonlat[:, 0], side='right') - 1
+        x = x.astype(int)
+        ycoords = self._coords_y[::-1] if self._y_flipped else self._coords_y
+        side = 'left' if self._y_flipped else 'right'
+        y = np.searchsorted(ycoords, lonlat[:, 1], side=side) - 1
+        y = self._full_res[1] - y if self._y_flipped else y
+        y = y.astype(int)
+
+        # We want the *closed* interval, which means moving
+        # points on the end back by 1
+        on_end_x = lonlat[:, 0] == self._coords_x[-1]
+        on_end_y = lonlat[:, 1] == self._coords_y[-1]
+        x[on_end_x] -= 1
+        y[on_end_y] -= 1
+
+        assert all(np.logical_and(x >= 0, x < self._full_res[0]))
+        assert all(np.logical_and(y >= 0, y < self._full_res[1]))
+
+        result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)
+        return result
+
+    # @contract(lonlat='array[Nx2](float64),N>0')
     def lonlat2pix(self, lonlat):
+        result = self._global_lonlat2pix(lonlat) - self._offset
+        # check the postcondition
+        x = result[:, 0]
+        y = result[:, 1]
+        assert all(np.logical_and(x >= 0, x < self.resolution[0]))
+        assert all(np.logical_and(y >= 0, y < self.resolution[1]))
+        return result
 
-        iA = ~self.A
-        xy = np.floor([np.array(iA * ll) for ll in lonlat]).astype(int)
+    def in_bounds(self, lonlat):
+        xy = self._global_lonlat2pix(lonlat)
+        xy -= self._offset
+        x = xy[:, 0]
+        y = xy[:, 1]
+        inx = np.logical_and(x >= 0, x < self.resolution[0])
+        iny = np.logical_and(y >= 0, y < self.resolution[1])
+        result = np.logical_and(inx, iny)
+        return result
 
-        # subtract the offset because iA is for full image
-        xy -= self._offset[np.newaxis, :]
+# def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
-        # Allow 1-pixel slop around boundaries because of numerical inaccuracy
-        xy[xy == -1] = 0
-        xy[xy[:, 0] == self.resolution[0], 0] = self.resolution[0] - 1
-        xy[xy[:, 1] == self.resolution[1], 1] = self.resolution[1] - 1
+#     pixsize_x = (xmax - xmin) / (xres + 1)
+#     pixsize_y = (ymax - ymin) / (yres + 1)
 
-        assert all(np.logical_and(xy[:, 0] >= 0,
-                                  xy[:, 0] < self.resolution[0]))
-        assert all(np.logical_and(xy[:, 1] >= 0,
-                                  xy[:, 1] < self.resolution[1]))
+#     A = Affine(pixsize_x, 0, xmin,
+#                0, -pixsize_y, ymax)
 
-        return xy
-
-    def pix2latlon(self, xy, centres=True, addoffset=True):
-
-        A = self.cA if centres else self.A
-
-        # add the offset because A is for full image
-        if addoffset:
-            xy += self._offset[np.newaxis, :]
-        lonlat = np.array([A * pix for pix in xy])
-
-        return lonlat
-
-
-def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
-
-    pixsize_x = (xmax - xmin) / (xres + 1)
-    pixsize_y = (ymax - ymin) / (yres + 1)
-
-    A = Affine(pixsize_x, 0, xmin,
-               0, -pixsize_y, ymax)
-
-    return A, pixsize_x, pixsize_y
+#     return A, pixsize_x, pixsize_y
 
 
 def output_filename(feature_name, chunk_index, output_dir):
@@ -446,4 +494,3 @@ def load_attributes(filename_dict):
         if 'bbox' in f.root.features.attrs:
             bbox = f.root.features.attrs.bbox
     return shape, bbox
-

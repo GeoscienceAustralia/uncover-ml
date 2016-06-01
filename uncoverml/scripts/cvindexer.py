@@ -7,8 +7,7 @@ import os
 import sys
 import logging
 import click as cl
-
-from uncoverml import geoio, validation
+from uncoverml import validation
 
 log = logging.getLogger(__name__)
 
@@ -34,12 +33,10 @@ def main(targetfile, outfile, folds, quiet):
 
     # Try to read in shapefile or hdf5
     ext = os.path.splitext(targetfile)[-1]
-    if ext == ".shp":
-        lonlat = geoio.points_from_shp(targetfile)
-    elif (ext == ".hdf5") or (ext == ".hdf"):
-        _, lonlat = validation.input_targets(targetfile, return_lonlat=True)
+    if ext == ".hdf5":
+        lonlat, _, _ = validation.input_targets(targetfile)
     else:
-        log.fatal("Invalid file type, {}, need *.shp or *.hdf(5)".format(ext))
+        log.fatal("Invalid file type, {}, need *.hdf5".format(ext))
         sys.exit(-1)
 
     # Make fold indices associated with the coordinates/grid
@@ -48,7 +45,7 @@ def main(targetfile, outfile, folds, quiet):
 
     # make sure outfile has an hdf extension
     outsplit = os.path.splitext(outfile)
-    outfile = outsplit[0] + ".hdf5" if outsplit[1] != ".hdf5" else outfile
+    outfile = outsplit[0] + ".hdf5"
 
     # Write out an HDF5
     validation.output_cvindex(cvassigns, lonlat, outfile)

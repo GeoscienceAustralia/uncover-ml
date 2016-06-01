@@ -29,13 +29,13 @@ def output_targets(target, lonlat, outfile):
     points_to_hdf(lonlat, outfile, "targets", target)
 
 
-def input_targets(target_file, return_lonlat=False):
+def input_targets(target_file):
 
     lonlat, targets = points_from_hdf(target_file, "targets")
     target_indices = indices_from_hdf(target_file)
 
-    result = (targets.flatten(), lonlat) if return_lonlat else targets.flatten()
-    return result, target_indices
+    result = lonlat, targets.flatten(), target_indices
+    return result
 
 
 def chunk_cvindex(cvind, nchunks):

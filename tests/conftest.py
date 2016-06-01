@@ -141,17 +141,16 @@ def make_raster():
     pix_x = (x_range[1] - x_range[0]) / res_x
     pix_y = (y_range[1] - y_range[0]) / res_y
 
-    Aorig = Affine(pix_x, 0, x_range[0],
+    A = Affine(pix_x, 0, x_range[0],
                    0, -pix_y, y_range[1])
-    Apix = Aorig * Affine.translation(0.5, 0.5)
 
-    lons = np.array([(x, x) * Apix for x in np.arange(res_x)])[:, 0]
-    lats = np.array([(y, y) * Apix for y in np.arange(res_y)])[:, 1]
+    lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
+    lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
 
     x_bound = (x_range[0], x_range[1] + pix_x)
     y_bound = (y_range[0] - pix_y, y_range[1])
 
-    return (res_x, res_y), x_bound, y_bound, lons, lats, Aorig, Apix
+    return (res_x, res_y), x_bound, y_bound, lons, lats, A
 
 
 @pytest.fixture(scope='session')
@@ -162,7 +161,7 @@ def make_shp_gtiff(tmpdir_factory):
     ftif = str(tmpdir_factory.mktemp('tif').join('test.tif').realpath())
 
     # Create grid
-    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster()
+    res, x_bound, y_bound, lons, lats, Ao = make_raster()
 
     # Generate data for shapefile
     nsamples = 100

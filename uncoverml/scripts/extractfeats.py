@@ -110,7 +110,7 @@ def main(name, geotiff, targets, onehot,
         end_p1 = [full_image.xres - patchsize + 1,  # +1 because bbox
                   full_image.yres - patchsize + 1]  # +1 because bbox
         xy = np.array([start, end_p1])
-        eff_bbox = full_image.pix2latlon(xy, centres=False)
+        eff_bbox = full_image.pix2lonlat(xy)
         eff_shape = (full_image.xres - 2 * patchsize,
                      full_image.yres - 2 * patchsize)
         log.info("Effective input resolution "
@@ -142,10 +142,16 @@ def main(name, geotiff, targets, onehot,
         #  we need full path for targets for the workers
         targets = os.path.abspath(targets)
         cluster.push({"targets": targets})
+
+        # debug
+        from uncoverml import patch
+        image = geoio.Image(full_filename, 0, chunks, patchsize)
+        x, indices = patch.patches_at_target(image, patchsize, targets)
+
         cluster.execute("x, indices = patch.patches_at_target(image, "
                         "patchsize, targets)")
         all_indices = np.concatenate(cluster['indices'],
-                                     axis=0).astype(np.uint)
+                                     axis=0).astype(int)
         geoio.writeback_target_indices(all_indices, targets)
 
     else:

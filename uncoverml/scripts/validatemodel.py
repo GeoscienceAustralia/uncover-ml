@@ -81,7 +81,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
     # Read cv index and targets
     cvind = input_cvindex(cvindex[0])
 
-    Y, target_indices = input_targets(targets)
+    _, Y, target_indices = input_targets(targets)
 
     # Permute everything by target indices
     Y = Y[target_indices]

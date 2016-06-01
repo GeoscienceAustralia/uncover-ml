@@ -28,6 +28,7 @@ def direct_view(profile):
 
     return c
 
+
 def apply_and_write(cluster, f, data_var_name, feature_name,
                     outputdir, shape, bbox):
     log.info("Applying transform across nodes")

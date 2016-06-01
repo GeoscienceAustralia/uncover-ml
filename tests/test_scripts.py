@@ -4,6 +4,8 @@ import numpy as np
 import shapefile
 import rasterio
 
+
+from uncoverml import geoio
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
@@ -36,13 +38,17 @@ def test_cvindexer_shp(make_shp_gtiff):
     fshp_hdf5 = os.path.splitext(fshp)[0] + ".hdf5"
     fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
 
-    # Make crossval with shapefile
-    cvindexer.callback(targetfile=fshp, outfile=fshp_hdf5, folds=6,
-                       quiet=True)
-
     # Make target file
     maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
                          quiet=False)
+
+    # Create Indices as if extractfeats had been called with an image
+    permutation = np.arange(10)  # number of features in fixture
+    geoio.writeback_target_indices(permutation, fshp_targets)
+
+    # Make crossval with hdf5
+    cvindexer.callback(targetfile=fshp_targets, outfile=fshp_hdf5, folds=6,
+                       quiet=True)
 
     # Read in resultant HDF5
     with tables.open_file(fshp_hdf5, mode='r') as f:
@@ -61,37 +67,7 @@ def test_cvindexer_shp(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_cvindexer_hdf(make_shp_gtiff):
-
-    fshp, _ = make_shp_gtiff
-    folds = 6
-    field = "lon"
-    fshp_hdf5 = os.path.splitext(fshp)[0] + ".hdf5"
-    fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
-
-    # Make crossval with target file
-    cvindexer.callback(targetfile=fshp_targets, outfile=fshp_hdf5, folds=6,
-                       quiet=True)
-
-    # Read in resultant HDF5
-    with tables.open_file(fshp_hdf5, mode='r') as f:
-        hdfcoords = np.array([(x, y) for x, y in zip(f.root.Longitude,
-                                                     f.root.Latitude)])
-        finds = np.array([i for i in f.root.FoldIndices])
-
-    # Validate order is consistent with target file
-    with tables.open_file(fshp_targets, mode='r') as f:
-        targcoords = np.array([(x, y) for x, y in zip(f.root.Longitude,
-                                                      f.root.Latitude)])
-
-    assert np.allclose(targcoords, hdfcoords)
-
-    # Test we have the right number of folds
-    assert finds.min() == 0
-    assert finds.max() == (folds - 1)
-
-
-def test_extractfeats(make_shp_gtiff, make_ipcluster1):
+def test_extractfeats(make_shp_gtiff, make_ipcluster4):
 
     fshp, ftif = make_shp_gtiff
     chunks = 4
@@ -100,7 +76,7 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster1):
 
     # Extract features from gtiff
     extractfeats.callback(geotiff=ftif, name=name, targets=None,
-                          chunks=chunks, patchsize=0, quiet=False,
+                          patchsize=0, quiet=False,
                           outputdir=outdir, ipyprofile=None, onehot=False,
                           settings=None)
 
@@ -127,10 +103,9 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster1):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp_gtiff, make_ipcluster1):
+def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
 
     fshp, ftif = make_shp_gtiff
-    chunks = 1
     outdir = os.path.dirname(fshp)
     name = "fpatch"
 
@@ -142,17 +117,24 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster1):
 
     # Extract features from gtiff
     extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
-                          chunks=chunks, patchsize=0, quiet=False,
+                          patchsize=0, quiet=False,
                           outputdir=outdir, ipyprofile=None, onehot=False,
                           settings=None)
 
-    with tables.open_file(os.path.join(outdir,
-                                       name + ".part0.hdf5"), 'r') as f:
-        feats = np.array([fts for fts in f.root.features])
+    # Get the 4 parts
+    feat_list = []
+    for i in range(4):
+        fname = name + ".part{}.hdf5".format(i)
+        with tables.open_file(os.path.join(outdir, fname), 'r') as f:
+            feat_list.append(f.root.features[:])
+    feats = np.concatenate(feat_list, axis=0)
 
     # Read lats and lons from targets
     with tables.open_file(fshp_targets, mode='r') as f:
         lonlat = np.hstack((f.root.Longitude.read(),
                             f.root.Latitude.read()))
+        permutation = f.root.Indices.read()
 
-    assert np.allclose(feats, lonlat)
+    lonlat_p = lonlat[permutation]
+
+    assert np.allclose(feats, lonlat_p)

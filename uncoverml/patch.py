@@ -149,17 +149,20 @@ def patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
     lonlats = geoio.points_from_hdf(targets)
-    inx = np.logical_and(lonlats[:, 0] >= image.xmin,
-                         lonlats[:, 0] < image.xmax)
-    iny = np.logical_and(lonlats[:, 1] >= image.ymin,
-                         lonlats[:, 1] < image.ymax)
-    valid = np.logical_and(inx, iny)
-    # FIXME what if we get an empty chunk??
+
+    valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
     valid_lonlats = lonlats[valid]
     pixels = image.lonlat2pix(valid_lonlats)
     patches = point_patches(data, patchsize, pixels)
     patch_mask = point_patches(mask, patchsize, pixels)
-
     patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+    # else:
+    #     side = 2 * patchsize + 1
+    #     nbands = image.channels
+    #     patch_data = np.zeros((0, side, side, nbands))
+    #     mask_data = np.ones((0, side, side, nbands))
+    #     patch_array = np.ma.masked_array(data=patch_data, mask=mask_data)
+    #     valid_indices = np.array([], dtype=np.int)
+
     return patch_array, valid_indices

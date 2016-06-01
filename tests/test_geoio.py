@@ -51,24 +51,24 @@ def test_files_by_chunk():
     assert r == answer
 
 
-def test_grid_affine(make_shp_gtiff):
+# def test_grid_affine(make_shp_gtiff):
 
-    _, ftif = make_shp_gtiff
+#     _, ftif = make_shp_gtiff
 
-    with rasterio.open(ftif, 'r') as f:
-        A = f.affine
-        cA = f.affine * Affine.translation(0.5, 0.5)
+#     with rasterio.open(ftif, 'r') as f:
+#         A = f.affine
+#         cA = f.affine * Affine.translation(0.5, 0.5)
 
-    ispec = geoio.Image(ftif)
-    assert np.allclose(A, ispec.A)
-    assert np.allclose(cA, ispec.cA)
-    assert np.allclose(~A, ~ispec.A)
-    assert np.allclose(~cA, ~ispec.cA)
+#     ispec = geoio.Image(ftif)
+#     assert np.allclose(A, ispec.A)
+#     assert np.allclose(cA, ispec.cA)
+#     assert np.allclose(~A, ~ispec.A)
+#     assert np.allclose(~cA, ~ispec.cA)
 
 
 def test_bounding_box(make_raster):
 
-    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
+    res, x_bound, y_bound, lons, lats, Ao = make_raster
 
     class f:
         affine = Ao
@@ -80,9 +80,9 @@ def test_bounding_box(make_raster):
     assert np.allclose(y_bound, by)
 
 
-def test_latlon2pix(make_raster, make_shp_gtiff):
+def test_latlon2pix_edges(make_raster, make_shp_gtiff):
 
-    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
+    res, x_bound, y_bound, lons, lats, Ao = make_raster
     _, ftif = make_shp_gtiff
     ispec = geoio.Image(ftif)
 
@@ -95,9 +95,25 @@ def test_latlon2pix(make_raster, make_shp_gtiff):
     assert all(xy[:, 1] == y)
 
 
-def test_pix2latlon(make_raster, make_shp_gtiff):
+def test_latlon2pix_internals(make_raster, make_shp_gtiff):
 
-    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
+    res, x_bound, y_bound, lons, lats, Ao = make_raster
+    _, ftif = make_shp_gtiff
+    ispec = geoio.Image(ftif)
+
+    x = [1, 47, 81]
+    y = [0, 23, 43]
+
+    xy = ispec.lonlat2pix(np.array([lons[x]+0.5*ispec.pixsize_x,
+                          lats[y]+0.5*ispec.pixsize_y]).T)
+
+    assert all(xy[:, 0] == x)
+    assert all(xy[:, 1] == y)
+
+
+def test_pix2lonlat(make_raster, make_shp_gtiff):
+
+    res, x_bound, y_bound, lons, lats, Ao = make_raster
     _, ftif = make_shp_gtiff
     ispec = geoio.Image(ftif)
 
@@ -105,15 +121,15 @@ def test_pix2latlon(make_raster, make_shp_gtiff):
     yq = [0, 22, 3]
     xy = np.array([xq, yq]).T
 
-    latlon = ispec.pix2latlon(xy)
+    latlon = ispec.pix2lonlat(xy)
 
     latlon_true = np.array([lons[xq], lats[yq]]).T
     assert(np.allclose(latlon, latlon_true))
 
 
-def test_pix2latlon2latlon2pix(make_raster, make_shp_gtiff):
+def test_pix2lonlat2latlon2pix(make_raster, make_shp_gtiff):
 
-    res, x_bound, y_bound, lons, lats, Ao, Ap = make_raster
+    res, x_bound, y_bound, lons, lats, Ao = make_raster
     _, ftif = make_shp_gtiff
     ispec = geoio.Image(ftif)
 
@@ -121,7 +137,7 @@ def test_pix2latlon2latlon2pix(make_raster, make_shp_gtiff):
     yq = [0, 22, 3]
     xy = np.array([xq, yq]).T
 
-    xy2 = ispec.lonlat2pix(ispec.pix2latlon(xy))
+    xy2 = ispec.lonlat2pix(ispec.pix2lonlat(xy))
 
     assert np.allclose(xy, xy2)
 

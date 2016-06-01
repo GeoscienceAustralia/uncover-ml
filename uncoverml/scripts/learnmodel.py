@@ -70,7 +70,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
         args = {}
 
     # Load targets file
-    y, target_indices = input_targets(targets)
+    _, y, target_indices = input_targets(targets)
     y = y[target_indices]
 
     # Read ALL the features in here, and learn on a single machine
