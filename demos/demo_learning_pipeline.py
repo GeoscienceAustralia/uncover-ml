@@ -108,15 +108,15 @@ algdict = {
     # Approximate GaussiaN process, for large scale data
     # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 43, 'nbases': 50},
     # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
-    # "approxgp": {'kern': 'matern32', 'lenscale': [100.] * 87, 'nbases': 100},
+    "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 100},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
-    # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
+    "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
     # "svr": {},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 500},
+    # "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},

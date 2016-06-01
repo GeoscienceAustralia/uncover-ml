@@ -68,6 +68,9 @@ algorithm = 'approxgp'
 # Prediction file names (prefix)
 predict_file = "prediction_file"
 
+# Quantiles
+quantiles = 0.95
+
 
 #
 # Visualisation/Geotiff settings
@@ -144,7 +147,7 @@ def main():
     cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
     cmd = ["predict", "--outputdir", pred_dir,
-           "--predictname", predict_file]
+           "--predictname", predict_file, "--quantiles", str(quantiles)]
     cmd += [alg_file] + cfiles
 
     pfile = path.join(pred_dir, predict_file + endsuf)

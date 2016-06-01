@@ -9,6 +9,7 @@ import os.path
 import pickle
 import click as cl
 import numpy as np
+from scipy.stats import norm
 from functools import partial
 
 import uncoverml.defaults as df
@@ -19,19 +20,27 @@ log = logging.getLogger(__name__)
 
 
 # Apply the prediction to the data
-def predict(data, model):
+def predict(data, model, interval):
 
-    # Ask for predictive outputs if predictive model
-    if 'predict_proba' in dir(model):
-        predproba = lambda x: np.vstack(model.predict_proba(x)).T
-        if 'entropy_reduction' in dir(model):
-            pred = lambda x: \
-                np.hstack((predproba(x),
-                           model.entropy_reduction(x)[:, np.newaxis]))
+    def pred(X):
+
+        if hasattr(model, 'predict_proba'):
+            Ey, Vy = model.predict_proba(X)
+            predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis]))
+
+            if interval is not None:
+                ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+                predres = np.hstack((predres, ql[:, np.newaxis],
+                                     qu[:, np.newaxis]))
+
+            if hasattr(model, 'entropy_reduction'):
+                H = model.entropy_reduction(X)
+                predres = np.hstack((predres, H[:, np.newaxis]))
+
         else:
-            pred = predproba
-    else:
-        pred = lambda x: model.predict(x)[:, np.newaxis]
+            predres = model.predict(X).flatten()[:, np.newaxis]
+
+        return predres
 
     return apply_masked(pred, data)
 
@@ -44,9 +53,11 @@ def predict(data, model):
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
            default=None)
+@cl.option('--quantiles', type=float, default=None,
+           help="Also output quantile intervals for the probabilistic models.")
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, quiet):
+def main(model, files, outputdir, ipyprofile, predictname, quiet, quantiles):
     """
     Predict the target values for query data from a machine learning
     algorithm.
@@ -89,7 +100,7 @@ def main(model, files, outputdir, ipyprofile, predictname, quiet):
                     "chunk_indices)")
 
     # Prediction
-    f = partial(predict, model=model)
+    f = partial(predict, model=model, interval=quantiles)
 
     cluster.push({"f": f, "featurename": predictname, "outputdir": outputdir,
                   "shape": eff_shape, "bbox": eff_bbox})
