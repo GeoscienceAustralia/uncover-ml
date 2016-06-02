@@ -64,12 +64,18 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
     The following metrics are evaluated:
 
     - R-square
+
     - Explained variance
+
     - Standardised Mean Squared Error
+
     - Lin's concordance correlation coefficient
+
     - Mean Gaussian negative log likelihood (for probabilistic predictions)
+
     - Standardised mean Gaussian negative log likelihood (for probabilistic
       predictions)
+
     """
 
     # setup logging
