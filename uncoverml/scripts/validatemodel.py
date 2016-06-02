@@ -15,7 +15,7 @@ from sklearn.metrics import r2_score, explained_variance_score
 from revrand.metrics import smse, mll, msll, lins_ccc
 
 import uncoverml.defaults as df
-from uncoverml import geoio, feature
+from uncoverml import geoio
 from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import apply_multiple_masked
 
@@ -107,7 +107,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
     # Load all prediction files
     filename_dict = geoio.files_by_chunk(full_filenames)
     data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in len(filename_dict)]
+                    for i in range(len(filename_dict))]
     EYs = np.ma.concatenate(data_vectors, axis=0)
 
     # See if this data is already subset for xval
@@ -139,7 +139,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
             json.dump(scores, f, sort_keys=True, indent=4)
 
     # Make figure
-    if (plotyy is not None) or (outfile is not None):
+    if plotyy or (outfile is not None):
         fig = pl.figure()
         maxy = max(Ys.max(), get_first_dim(EYs).max())
         miny = min(Ys.min(), get_first_dim(EYs).min())
@@ -151,5 +151,5 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
         pl.title('True vs. predicted target values.')
         if outfile is not None:
             fig.savefig(outfile + ".png")
-        if plotyy is not None:
+        if plotyy:
             pl.show()

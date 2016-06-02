@@ -56,13 +56,10 @@ compos_file = "composite"
 # Prediction settings
 #
 
-# Number of jobs (must be >= number of workers)
-nchunks = 12
-
 # Name of the prediction algorithm
-# algorithm = 'svr'
+algorithm = 'svr'
 # algorithm = 'bayesreg'
-algorithm = 'approxgp'
+# algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Prediction file names (prefix)
@@ -112,12 +109,12 @@ def main():
             sys.exit(-1)
         settings.append(setting)
 
-    # Get suffix of end processed file for checking completion of commands
-    endsuf = ".part" + str(nchunks - 1) + ".hdf5"
+    # Get suffix of processed file for checking completion of commands
+    endsuf = ".part0.hdf5"  # FIXME make a more robust way to check this
 
     # Now Extact features from each tif
-    cmd = ["extractfeats", None, None, "--outputdir", pred_dir, "--chunks",
-           str(nchunks), "--settings", None]
+    cmd = ["extractfeats", None, None, "--outputdir", pred_dir,
+           "--settings", None]
     for tif, setting in zip(tifs, settings):
         msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]

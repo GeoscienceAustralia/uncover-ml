@@ -69,8 +69,8 @@ def compute_unique_values(full_image, cluster):
            default=None)
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-def main(name, geotiff, targets, onehot,
-         patchsize, quiet, outputdir, ipyprofile, settings):
+def main(name, geotiff, targets, onehot, patchsize, quiet, outputdir,
+         ipyprofile, settings):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.

@@ -69,10 +69,6 @@ cv_file = path.join(data_dir, cv_file_name)
 # Feature settings
 #
 
-# How many chunks to divide the work into -- this is all combined in the
-# learning stage, and so just here to test the pipeline
-nchunks = 12  # NOTE: if you change this, make sure you delete all old feats
-
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False  # NOTE: if you change this, make sure you delete all old feats
 
@@ -105,14 +101,12 @@ algdict = {
     # Bayesian linear regression
     # "bayesreg": {},
 
-    # Approximate GaussiaN process, for large scale data
-    # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 43, 'nbases': 50},
-    # "approxgp": {'kern': 'matern32', 'lenscale': 10., 'nbases': 200},
-    "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 100},
+    # Approximate Gaussian process, for large scale data
+    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 100},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
-    "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
+    # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
     # "svr": {},
 
     # Random forest regressor
@@ -161,22 +155,24 @@ def main():
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
     # Generic extract feats command
-    cmd = ["extractfeats", None, None, "--outputdir", proc_dir, "--chunks",
-           str(nchunks), "--patchsize", str(patchsize),
+    cmd = ["extractfeats", None, None, "--outputdir", proc_dir,
+           "--patchsize", str(patchsize),
            "--targets", target_hdf]
     if onehot:
         cmd.append('--onehot')
 
     # Find all of the tifs and extract features
-    ffiles = []
+    # ffiles = []
     for tif in tifs:
         msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
         cmd[1], cmd[2] = name, tif
-        ffile = [path.join(proc_dir, name + ".part{}.hdf5".format(n))
-                 for n in range(nchunks)]
-        try_run_checkfile(cmd, ffile[-1], msg)
-        ffiles.extend(ffile)
+        ffile = path.join(proc_dir, name + ".part0.hdf5")
+        try_run_checkfile(cmd, ffile, msg)
+
+    efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
+              if not (path.basename(f).startswith(compos_file)
+                      or path.basename(f).startswith(predict_file))]
 
     # Compose individual image features into single feature vector
     cmd = ["composefeats"]
@@ -186,11 +182,11 @@ def main():
         cmd += ['--centre', '--standardise']
     if whiten:
         cmd += ['--whiten', '--featurefraction', str(pca_frac)]
-    cmd += ['--outputdir', proc_dir, compos_file] + ffiles
+    cmd += ['--outputdir', proc_dir, compos_file] + efiles
 
-    feat_files = [path.join(proc_dir, compos_file + ".part{}.hdf5".format(n))
-                  for n in range(nchunks)]
     try_run(cmd)
+
+    feat_files = glob(path.join(proc_dir, compos_file + ".part*.hdf5"))
 
     for alg, args in algdict.items():
 
@@ -210,9 +206,8 @@ def main():
         log.info("Predicting targets for {}.".format(alg))
         try_run(cmd)
 
-        pred_files = [path.join(proc_dir, predict_file + "_" + alg
-                                + ".part{}.hdf5".format(n))
-                      for n in range(nchunks)]
+        pred_files = glob(path.join(proc_dir, predict_file + "_" + alg +
+                                    ".part*.hdf5"))
 
         # Report score
         cmd = ['validatemodel', '--outfile',

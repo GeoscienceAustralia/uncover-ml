@@ -399,15 +399,16 @@ class Image:
         result = np.logical_and(inx, iny)
         return result
 
-# def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
-#     pixsize_x = (xmax - xmin) / (xres + 1)
-#     pixsize_y = (ymax - ymin) / (yres + 1)
+def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
-#     A = Affine(pixsize_x, 0, xmin,
-#                0, -pixsize_y, ymax)
+    pixsize_x = (xmax - xmin) / (xres + 1)
+    pixsize_y = (ymax - ymin) / (yres + 1)
 
-#     return A, pixsize_x, pixsize_y
+    A = Affine(pixsize_x, 0, xmin,
+               0, -pixsize_y, ymax)
+
+    return A, pixsize_x, pixsize_y
 
 
 def output_filename(feature_name, chunk_index, output_dir):

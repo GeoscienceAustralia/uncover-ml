@@ -13,7 +13,7 @@ import click as cl
 import numpy as np
 
 import uncoverml.defaults as df
-from uncoverml import geoio, feature
+from uncoverml import geoio
 from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import modelmaps, apply_multiple_masked
 

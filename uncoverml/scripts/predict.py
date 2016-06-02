@@ -85,13 +85,12 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles, quiet):
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
 
     # Get the extra hdf5 attributes
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile, nchunks)
+    cluster = parallel.direct_view(ipyprofile)
 
     # Load the data on each client
     # Note chunk_index is a global with different value on each node
