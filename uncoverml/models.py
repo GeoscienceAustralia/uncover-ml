@@ -2,33 +2,28 @@
 
 import numpy as np
 
-from revrand import regression
+from revrand.skl import StandardLinearModel
 from revrand.basis_functions import LinearBasis, RandomRBF, RandomLaplace, \
     RandomCauchy, RandomMatern32, RandomMatern52
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 from revrand.btypes import Parameter, Positive
 
-from sklearn.base import BaseEstimator
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
 from sklearn.linear_model import ARDRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 
-class LinearModel(BaseEstimator):
+class LinearModel(StandardLinearModel):
 
     def __init__(self, basis, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
+                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=1000,
                  centretargets=True, verbose=True):
 
-        self.basis = basis
-        self.var = var
-        self.regulariser = regulariser
-        self.tol = tol
-        self.maxit = maxit
-        self.verbose = verbose
         self.centretargets = centretargets
+        super(LinearModel, self).__init__(basis, var, regulariser, tol, maxit,
+                                          verbose)
 
     def fit(self, X, y):
 
@@ -37,38 +32,29 @@ class LinearModel(BaseEstimator):
             y -= self.ymean
 
         self._make_basis(X)
-        m, C, bparams, var = regression.learn(X, y,
-                                              basis=self.basis,
-                                              var=self.var,
-                                              regulariser=self.regulariser,
-                                              tol=self.tol,
-                                              maxit=self.maxit,
-                                              verbose=self.verbose
-                                              )
-        self.m = m
-        self.C = C
-        self.bparams = bparams
-        self.optvar = var
+        return super(LinearModel, self).fit(X, y)
 
-        return self
+    def predict(self, X):
 
-    def predict(self, X, uncertainty=False):
+        Ey = super(LinearModel, self).predict(X)
 
-        Ey, _, Vy = regression.predict(X,
-                                       self.basis,
-                                       self.m,
-                                       self.C,
-                                       self.bparams,
-                                       self.optvar
-                                       )
         if self.centretargets:
             Ey += self.ymean
 
-        return (Ey, Vy) if uncertainty else Ey
+        return Ey
+
+    def predict_proba(self, X):
+
+        Ey, _, Vy = super(LinearModel, self).predict_proba(X)
+
+        if self.centretargets:
+            Ey += self.ymean
+
+        return Ey, Vy
 
     def entropy_reduction(self, X):
 
-        Phi = self.basis(X, *self.bparams)
+        Phi = self.basis(X, *self.hypers)
         pCp = [p.dot(self.C).dot(p.T) for p in Phi]
         return 0.5 * (np.log(self.optvar + np.array(pCp))
                       - np.log(self.optvar))
@@ -91,24 +77,35 @@ class LinearReg(LinearModel):
 
 class ApproxGP(LinearModel):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=1.,
+    def __init__(self, kern='rbf', nbases=200, lenscale=.1,
                  var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
                  verbose=True):
-
-        super(ApproxGP, self).__init__(None, var, regulariser, tol,
-                                       maxit, verbose)
 
         self.nbases = nbases
         self.lenscale = lenscale if np.isscalar(lenscale) \
             else np.asarray(lenscale)
         self.kern = kern
+        super(ApproxGP, self).__init__(None, var, regulariser, tol,
+                                       maxit, verbose)
 
     def _make_basis(self, X):
 
         self.basis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
                                          lenscale_init=Parameter(self.lenscale,
                                                                  Positive()))
+
+
+class RandomForestRegressor(RFR):
+    """
+    Implements a "probabilistic" output by looking at the variance of the
+    decision tree estimator ouputs.
+    """
+
+    def predict_proba(self, X, *args):
+
+        Eys = [dt.predict(X, *args) for dt in self.estimators_]
+        return self.predict(X), np.var(Eys, axis=0)
 
 
 #
@@ -179,7 +176,7 @@ modelmaps = {'randomforest': RandomForestRegressor,
              'svr': SVR,
              'kernelridge': KernelRidge,
              'ardregression': ARDRegression,
-             'deciciontree': DecisionTreeRegressor,
+             'decisiontree': DecisionTreeRegressor,
              'extratree': ExtraTreeRegressor
              }
 
@@ -196,7 +193,3 @@ basismap = {'rbf': RandomRBF,
             'matern32': RandomMatern32,
             'matern52': RandomMatern52
             }
-
-
-probmodels = (LinearReg, ApproxGP, LinearModel)
-probmodels_str = ['approxgp', 'bayesreg']
