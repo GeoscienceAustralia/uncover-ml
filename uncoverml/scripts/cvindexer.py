@@ -27,9 +27,9 @@ def main(targetfile, outfile, folds, quiet):
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # Try to read in shapefile or hdf5
     ext = os.path.splitext(targetfile)[-1]

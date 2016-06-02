@@ -80,9 +80,9 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # Read cv index and targets
     cvind = input_cvindex(cvindex[0])

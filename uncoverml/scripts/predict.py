@@ -65,9 +65,9 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles, quiet):
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]

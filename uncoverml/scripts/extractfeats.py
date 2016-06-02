@@ -86,9 +86,9 @@ def main(name, geotiff, targets, onehot, patchsize, quiet, outputdir,
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # build full filename for geotiff
     full_filename = os.path.abspath(geotiff)

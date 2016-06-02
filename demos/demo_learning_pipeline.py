@@ -11,7 +11,7 @@ from glob import glob
 
 from runcommands import try_run, try_run_checkfile, PipeLineFailure
 
-log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 # NOTE: INSTRUCTIONS ----------------------------------------------------------
@@ -135,7 +135,7 @@ valoutput = "validation"
 # NOTE: Do not change the following unless you know what you are doing
 def main():
 
-    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger(__name__)
 
     # Make processed dir if it does not exist
     if not path.exists(proc_dir):

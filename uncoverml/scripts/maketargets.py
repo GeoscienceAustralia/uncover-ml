@@ -7,7 +7,6 @@ import os
 import sys
 import logging
 import click as cl
-import numpy as np
 
 from uncoverml import geoio
 from uncoverml.validation import output_targets
@@ -32,9 +31,9 @@ def main(shapefile, fieldname, outfile, quiet):
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # Extract data from shapefile
     try:

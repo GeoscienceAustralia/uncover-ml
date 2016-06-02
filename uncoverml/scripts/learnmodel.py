@@ -40,9 +40,9 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
 
     # setup logging
     if quiet is True:
-        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
