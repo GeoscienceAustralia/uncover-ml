@@ -3,6 +3,7 @@ import tables
 import numpy as np
 import shapefile
 import rasterio
+from click import Context
 
 
 from uncoverml import geoio
@@ -16,8 +17,8 @@ def test_make_targets(make_shp_gtiff):
     fshp, _ = make_shp_gtiff
     field = "lon"
 
-    maketargets.callback(shapefile=fshp, fieldname=field, outfile=None,
-                         quiet=False)
+    ctx = Context(maketargets)
+    ctx.forward(maketargets, shapefile=fshp, fieldname=field)
 
     fhdf5 = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
 
@@ -39,16 +40,16 @@ def test_cvindexer_shp(make_shp_gtiff):
     fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
 
     # Make target file
-    maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
-                         quiet=False)
+    ctx = Context(maketargets)
+    ctx.forward(maketargets, shapefile=fshp, fieldname=field)
 
     # Create Indices as if extractfeats had been called with an image
     permutation = np.arange(10)  # number of features in fixture
     geoio.writeback_target_indices(permutation, fshp_targets)
 
     # Make crossval with hdf5
-    cvindexer.callback(targetfile=fshp_targets, outfile=fshp_hdf5, folds=6,
-                       quiet=True)
+    ctx = Context(cvindexer)
+    ctx.forward(cvindexer, targetfile=fshp_targets, outfile=fshp_hdf5, folds=6)
 
     # Read in resultant HDF5
     with tables.open_file(fshp_hdf5, mode='r') as f:
@@ -75,10 +76,8 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
     name = "fchunk_worker"
 
     # Extract features from gtiff
-    extractfeats.callback(geotiff=ftif, name=name, targets=None,
-                          patchsize=0, quiet=False,
-                          outputdir=outdir, ipyprofile=None, onehot=False,
-                          settings=None)
+    ctx = Context(extractfeats)
+    ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir)
 
     ffiles = []
     for i in range(chunks):
@@ -112,14 +111,14 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
     # Make target file
     field = "lat"
     fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
-    maketargets.callback(shapefile=fshp, fieldname=field, outfile=fshp_targets,
-                         quiet=False)
+    ctx = Context(maketargets)
+    ctx.forward(maketargets, shapefile=fshp, fieldname=field,
+                outfile=fshp_targets)
 
     # Extract features from gtiff
-    extractfeats.callback(geotiff=ftif, name=name, targets=fshp_targets,
-                          patchsize=0, quiet=False,
-                          outputdir=outdir, ipyprofile=None, onehot=False,
-                          settings=None)
+    ctx = Context(extractfeats)
+    ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir,
+                targets=fshp_targets)
 
     # Get the 4 parts
     feat_list = []
