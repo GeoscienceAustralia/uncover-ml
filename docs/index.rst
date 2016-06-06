@@ -21,9 +21,9 @@ Contents:
    projectreport
 
    geoio
-   feature
    parallel
    patch
+   stats
    models
    validation
 

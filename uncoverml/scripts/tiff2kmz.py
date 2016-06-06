@@ -1,3 +1,9 @@
+"""
+Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.
+National Map).
+
+.. program-output:: tiff2kmz --help
+"""
 import os.path
 import click as cl
 import simplekml
