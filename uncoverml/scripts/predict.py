@@ -8,6 +8,7 @@ import sys
 import os.path
 import pickle
 import click as cl
+import click_log as cl_log
 import numpy as np
 from scipy.stats import norm
 from functools import partial
@@ -46,8 +47,8 @@ def predict(data, model, interval):
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
@@ -57,17 +58,11 @@ def predict(data, model, interval):
            help="Also output quantile intervals for the probabilistic models.")
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, quantiles, quiet):
+def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     """
     Predict the target values for query data from a machine learning
     algorithm.
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]

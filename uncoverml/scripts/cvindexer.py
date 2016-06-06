@@ -7,29 +7,25 @@ import os
 import sys
 import logging
 import click as cl
+import click_log as cl_log
 from uncoverml import validation
 
 log = logging.getLogger(__name__)
 
 
 @cl.command()
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--folds', required=False, help="Number of folds for cross"
            "validation", type=int, default=5)
-@cl.option('--quiet', is_flag=True, help="Log verbose output", default=False)
 @cl.argument('targetfile', type=cl.Path(exists=True), required=True)
 @cl.argument('outfile', type=cl.Path(exists=False), required=True)
-def main(targetfile, outfile, folds, quiet):
+def main(targetfile, outfile, folds):
     """
     Create a cross validation fold index file from a shapefile or HDF5 of
     appropriate formats. This outputs an HDF5 file with "Latitude",
     "Longitude", and "FoldIndices" arrays.
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # Try to read in shapefile or hdf5
     ext = os.path.splitext(targetfile)[-1]

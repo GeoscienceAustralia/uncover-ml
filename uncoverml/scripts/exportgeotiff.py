@@ -9,7 +9,7 @@ import logging
 import sys
 import os.path
 import click as cl
-import uncoverml.defaults as df
+import click_log as cl_log
 from functools import partial
 from uncoverml import parallel
 from uncoverml import geoio
@@ -47,8 +47,8 @@ def transform(x, rows, x_min, x_max, band, separatebands):
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--rgb', is_flag=True, help="Colormap data to rgb format")
 @cl.option('--separatebands', is_flag=True, help="Output each band in a"
            "separate geotiff, --rgb flag automatically does this")
@@ -59,7 +59,7 @@ def transform(x, rows, x_min, x_max, band, separatebands):
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.argument('name', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
+def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
     """
     Output a geotiff from a set of HDF5 chunked features.
 
@@ -67,12 +67,6 @@ def main(name, files, rgb, separatebands, band, quiet, ipyprofile, outputdir):
     Multi-band geotiffs are also optionally output (RGB output has to be per
     band however).
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]

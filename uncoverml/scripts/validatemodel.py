@@ -8,13 +8,13 @@ import sys
 import json
 import os.path
 import click as cl
+import click_log as cl_log
 import numpy as np
 import matplotlib.pyplot as pl
 
 from sklearn.metrics import r2_score, explained_variance_score
 from revrand.metrics import smse, mll, msll, lins_ccc
 
-import uncoverml.defaults as df
 from uncoverml import geoio
 from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import apply_multiple_masked
@@ -48,8 +48,8 @@ probscores = ['msll', 'mll']
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--outfile', type=cl.Path(exists=False), default=None,
            help="File name (minus extension) to save output too")
 @cl.option('--plotyy', is_flag=True, help="Show plot of the target vs."
@@ -57,7 +57,7 @@ probscores = ['msll', 'mll']
 @cl.argument('cvindex', type=(cl.Path(exists=True), int))
 @cl.argument('targets', type=cl.Path(exists=True))
 @cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
-def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
+def main(cvindex, targets, prediction_files, plotyy, outfile):
     """
     Run cross-validation metrics on a model prediction.
 
@@ -77,12 +77,6 @@ def main(cvindex, targets, prediction_files, plotyy, outfile, quiet):
       predictions)
 
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # Read cv index and targets
     cvind = input_cvindex(cvindex[0])

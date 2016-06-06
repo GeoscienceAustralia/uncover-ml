@@ -1,5 +1,4 @@
 
-quiet_logging = False
 feature_patch_size = 0
 standalone = False
 
