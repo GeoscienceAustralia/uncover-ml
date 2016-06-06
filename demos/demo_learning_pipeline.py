@@ -102,7 +102,7 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 100},
+    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
@@ -192,7 +192,8 @@ def main():
 
         # Train the model
         cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
-               "0", "--algorithm", alg, "--algopts", json.dumps(args)] \
+               "0", "--verbosity", "INFO", "--algorithm", alg,
+               "--algopts", json.dumps(args)] \
             + feat_files + [target_hdf]
 
         log.info("Training model {}.".format(alg))

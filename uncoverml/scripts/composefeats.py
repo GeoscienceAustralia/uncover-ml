@@ -10,6 +10,7 @@ import logging
 import sys
 import os.path
 import click as cl
+import click_log as cl_log
 import numpy as np
 import uncoverml.defaults as df
 from functools import partial
@@ -101,8 +102,8 @@ def compute_statistics(impute, centre, standardise, whiten,
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--settings', type=cl.Path(exists=True), help="file containing"
            " previous setting used for evaluating testing data. If provided "
            "all other option flags are ignored")
@@ -119,8 +120,8 @@ def compute_statistics(impute, centre, standardise, whiten,
            default=None)
 @cl.argument('featurename', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(files, featurename, quiet, outputdir, ipyprofile,
-         centre, standardise, whiten, featurefraction, impute, settings):
+def main(files, featurename, outputdir, ipyprofile, centre, standardise,
+         whiten, featurefraction, impute, settings):
     """
     Compose multiple image features into a single feature vector.
 
@@ -134,12 +135,6 @@ def main(files, featurename, quiet, outputdir, ipyprofile,
         unit variance. This can be used to reduce the dimensionality of the
         features too).
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]

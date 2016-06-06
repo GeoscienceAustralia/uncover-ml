@@ -57,9 +57,9 @@ compos_file = "composite"
 #
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
-# algorithm = 'approxgp'
+algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Prediction file names (prefix)

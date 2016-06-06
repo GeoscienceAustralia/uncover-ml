@@ -73,6 +73,7 @@ setup(
         'pyshp',
         'ipyparallel',
         'click',
+        'click_log',
         'scikit-learn',
         'revrand',
     ],

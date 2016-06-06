@@ -7,6 +7,7 @@ import logging
 from functools import partial
 import os
 import click as cl
+import click_log as cl_log
 from uncoverml import geoio
 import uncoverml.defaults as df
 from uncoverml import parallel
@@ -49,8 +50,8 @@ def compute_unique_values(full_image, cluster):
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--patchsize', type=int,
            default=df.feature_patch_size, help="window width of patches, i.e. "
            "patchsize of 0 is a single pixel, patchsize of 1 is a 3x3 patch, "
@@ -69,8 +70,8 @@ def compute_unique_values(full_image, cluster):
            default=None)
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-def main(name, geotiff, targets, onehot, patchsize, quiet, outputdir,
-         ipyprofile, settings):
+def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
+         settings):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.
@@ -83,12 +84,6 @@ def main(name, geotiff, targets, onehot, patchsize, quiet, outputdir,
     - One-hot encode intger-valued/categorical layers
     - Only extract patches at specified locations given a target file
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # build full filename for geotiff
     full_filename = os.path.abspath(geotiff)

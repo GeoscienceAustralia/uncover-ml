@@ -10,9 +10,9 @@ import os.path
 import pickle
 import json
 import click as cl
+import click_log as cl_log
 import numpy as np
 
-import uncoverml.defaults as df
 from uncoverml import geoio
 from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import modelmaps, apply_multiple_masked
@@ -22,8 +22,8 @@ log = logging.getLogger(__name__)
 
 
 @cl.command()
-@cl.option('--quiet', is_flag=True, help="Log verbose output",
-           default=df.quiet_logging)
+@cl_log.simple_verbosity_option()
+@cl_log.init(__name__)
 @cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
            help="Optional cross validation index file and index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
@@ -33,16 +33,10 @@ log = logging.getLogger(__name__)
            default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 @cl.argument('targets', type=cl.Path(exists=True))
-def main(targets, files, algorithm, algopts, outputdir, cvindex, quiet):
+def main(targets, files, algorithm, algopts, outputdir, cvindex):
     """
     Learn the Parameters of a machine learning model.
     """
-
-    # setup logging
-    if quiet is True:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
