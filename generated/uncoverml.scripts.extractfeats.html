@@ -67,13 +67,20 @@
 <p>Extract patch features from a single geotiff.</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>Usage: extractfeats [OPTIONS] NAME GEOTIFF
 
-  TODO
+  Extract patch features from a single geotiff and output to HDF5 file
+  chunks for distribution to worker nodes.
+
+  Apart from extracting patches from images, this also has the following
+  functionality,
+
+  - chunk the original geotiff into many small HDF5 files for distributed
+  work - One-hot encode intger-valued/categorical layers - Only extract
+  patches at specified locations given a target file
 
 Options:
-  --quiet              Log verbose output
-  --patchsize INTEGER  window size of patches
-  --chunks INTEGER     Number of chunks in which to split the computation and
-                       output
+  -v, --verbosity LVL  Either CRITICAL, ERROR, WARNING, INFO or DEBUG
+  --patchsize INTEGER  window width of patches, i.e. patchsize of 0 is a
+                       single pixel, patchsize of 1 is a 3x3 patch, etc
   --targets PATH       Optional hdf5 file for providing target points at which
                        to evaluate feature. See maketargets for creating an
                        appropriate target files.
@@ -97,7 +104,7 @@ Options:
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">compute_unique_values</span></code>(full_image,&nbsp;cluster)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">extract_transform</span></code>(data,&nbsp;x_sets)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">extract_transform</span></code>(x,&nbsp;x_sets)</td>
 <td></td>
 </tr>
 </tbody>

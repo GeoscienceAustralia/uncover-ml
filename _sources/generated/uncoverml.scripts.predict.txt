@@ -9,8 +9,7 @@ uncoverml.scripts.predict
 
    .. autosummary::
    
-      chunk_cvindex
-      input_cvindex
+      apply_masked
       predict
    
    

@@ -67,16 +67,17 @@
 <p>Predict the target values for query data</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>Usage: predict [OPTIONS] MODEL [FILES]...
 
-  Predict the target values for query data.
+  Predict the target values for query data from a machine learning
+  algorithm.
 
 Options:
-  --quiet                      Log verbose output
-  --cvindex &lt;PATH INTEGER&gt;...  Optional cross validation index file and index
-                               to hold out.
-  --predictname TEXT           The name to give the predicted target variable.
+  -v, --verbosity LVL  Either CRITICAL, ERROR, WARNING, INFO or DEBUG
+  --predictname TEXT   The name to give the predicted target variable.
   --outputdir PATH
-  --ipyprofile TEXT            ipyparallel profile to use
-  --help                       Show this message and exit.
+  --ipyprofile TEXT    ipyparallel profile to use
+  --quantiles FLOAT    Also output quantile intervals for the probabilistic
+                       models.
+  --help               Show this message and exit.
 </pre></div>
 </div>
 <p class="rubric">Functions</p>
@@ -86,13 +87,10 @@ Options:
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">chunk_cvindex</span></code>(cvind,&nbsp;nchunks)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">apply_masked</span></code>(func,&nbsp;data[,&nbsp;args])</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">input_cvindex</span></code>(cvindex_file[,&nbsp;return_lonlat])</td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">predict</span></code>(data,&nbsp;model)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">predict</span></code>(data,&nbsp;model,&nbsp;interval)</td>
 <td></td>
 </tr>
 </tbody>

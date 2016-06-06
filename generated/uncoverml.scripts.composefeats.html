@@ -67,10 +67,19 @@
 <p>Compose multiple image features into a single feature vector.</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>Usage: composefeats [OPTIONS] FEATURENAME [FILES]...
 
-  TODO
+  Compose multiple image features into a single feature vector.
+
+  This tool also has the following functionality beyond combining image
+  features (from, e.g. the output of extractfeats):
+
+  - Impute missing features with the mean of the dimension - Centre the
+  features (zero-mean) - Standardise the features (unit standard deviation)
+  - Whiten the features (decorrelated all of the features and scale to have
+  unit variance. This can be used to reduce the dimensionality of the
+  features too).
 
 Options:
-  --quiet                  Log verbose output
+  -v, --verbosity LVL      Either CRITICAL, ERROR, WARNING, INFO or DEBUG
   --settings PATH          file containing previous setting used for
                            evaluating testing data. If provided all other
                            option flags are ignored
