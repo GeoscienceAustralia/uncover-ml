@@ -44,7 +44,7 @@ Have a look at some of the `demos <demos/>`_ for how to use these tools.
 
 Running on NCI
 --------------
-Please see [The PBS Readme](pbs/README.md).
+Please see `The PBS Readme <pbs/README.md>`_ .
 
 
 Useful Links

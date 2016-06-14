@@ -4,6 +4,10 @@ This README is a quick guide to getting the uncover-ml library up and running
 in a PBS batch environment that has MPI support. This setup is common in
 HPC systems such as the NCI (raijin).
 
+The instructions below should apply to both single- and multi-node runs
+on the NCI. Just set ncpus in the PBS  directives in the job submission
+script accordingly (e.g. ncpus=32 for 2 nodes).
+
 ## Pre-installation
 
 These instructions currently only work with gcc and not the Intel compiler.
