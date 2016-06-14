@@ -19,11 +19,10 @@ class LinearModel(StandardLinearModel):
 
     def __init__(self, basis, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-6, maxit=1000,
-                 centretargets=True, verbose=True):
+                 centretargets=True):
 
         self.centretargets = centretargets
-        super(LinearModel, self).__init__(basis, var, regulariser, tol, maxit,
-                                          verbose)
+        super(LinearModel, self).__init__(basis, var, regulariser, tol, maxit)
 
     def fit(self, X, y):
 
@@ -67,27 +66,23 @@ class LinearModel(StandardLinearModel):
 class LinearReg(LinearModel):
 
     def __init__(self, onescol=True, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
-                 verbose=True):
+                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
 
         basis = LinearBasis(onescol=onescol)
-        super(LinearReg, self).__init__(basis, var, regulariser, tol, maxit,
-                                        verbose)
+        super(LinearReg, self).__init__(basis, var, regulariser, tol, maxit)
 
 
 class ApproxGP(LinearModel):
 
     def __init__(self, kern='rbf', nbases=200, lenscale=.1,
                  var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500,
-                 verbose=True):
+                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
 
         self.nbases = nbases
         self.lenscale = lenscale if np.isscalar(lenscale) \
             else np.asarray(lenscale)
         self.kern = kern
-        super(ApproxGP, self).__init__(None, var, regulariser, tol,
-                                       maxit, verbose)
+        super(ApproxGP, self).__init__(None, var, regulariser, tol, maxit)
 
     def _make_basis(self, X):
 

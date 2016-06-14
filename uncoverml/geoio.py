@@ -207,7 +207,6 @@ class Image:
 
         # Get the full image details
         with rasterio.open(self.filename, 'r') as geotiff:
-            # self._full_xrange, self._full_yrange = bounding_box(geotiff)
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
@@ -373,8 +372,9 @@ class Image:
         x[on_end_x] -= 1
         y[on_end_y] -= 1
 
-        assert all(np.logical_and(x >= 0, x < self._full_res[0]))
-        assert all(np.logical_and(y >= 0, y < self._full_res[1]))
+        if (not all(np.logical_and(x >= 0, x < self._full_res[0]))) or \
+                (not all(np.logical_and(y >= 0, y < self._full_res[1]))):
+            raise ValueError("Queried location is not in the image!")
 
         result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)
         return result
@@ -385,8 +385,11 @@ class Image:
         # check the postcondition
         x = result[:, 0]
         y = result[:, 1]
-        assert all(np.logical_and(x >= 0, x < self.resolution[0]))
-        assert all(np.logical_and(y >= 0, y < self.resolution[1]))
+
+        if (not all(np.logical_and(x >= 0, x < self.resolution[0]))) or \
+                (not all(np.logical_and(y >= 0, y < self.resolution[1]))):
+            raise ValueError("Queried location is not in the image!")
+
         return result
 
     def in_bounds(self, lonlat):

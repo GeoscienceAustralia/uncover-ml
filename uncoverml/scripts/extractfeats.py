@@ -144,9 +144,9 @@ def main(name, geotiff, targets, onehot, patchsize, quiet, outputdir,
         cluster.push({"targets": targets})
 
         # debug
-        from uncoverml import patch
-        image = geoio.Image(full_filename, 0, chunks, patchsize)
-        x, indices = patch.patches_at_target(image, patchsize, targets)
+        # from uncoverml import patch
+        # image = geoio.Image(full_filename, 0, chunks, patchsize)
+        # x, indices = patch.patches_at_target(image, patchsize, targets)
 
         cluster.execute("x, indices = patch.patches_at_target(image, "
                         "patchsize, targets)")
