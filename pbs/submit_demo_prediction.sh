@@ -10,5 +10,5 @@ source $HOME/.profile
 # start the virtualenv
 workon uncoverml
 
-mpirun scripts/ipyparallel_mpi.sh
+mpirun ipympi $HOME/uncover-ml/demos/demo_prediction_pipeline.py
 

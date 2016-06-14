@@ -22,7 +22,7 @@ fi
 if [ $ID -eq 0 ]; then
     echo "Running $1 on cpu $ID"
     sleep 10
-    $1 2>&1 > ${1}.log
+    $@ 2>&1 > ${1}.log
 
 elif [ $ID -eq 1 ]; then
     echo "Running ipcontroller on cpu $ID"
