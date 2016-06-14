@@ -15,20 +15,15 @@ In your `~/.profile` file:
 ```
 # module load icc
 ```
-is commented out. 
+is commented out. Also check openmpi is being loaded
 
 2. Noww add the following lines to the end of the file:
 ```
+module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3
 export PATH=$PATH:$HOME/.local/bin
 export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.4/site-packages
 export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
 source $HOME/.local/bin/virtualenvwrapper.sh 
-```
-
-3. In your terminal session, run the following command to load the needed
-modules:
-```
-$ module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3 
 ```
 
 4. Install virtualenv and virtualenvwrapper by running the following command
@@ -74,6 +69,57 @@ $ py.test ~/uncover-ml/tests/
 ```
 
 ## Running Batch Jobs
+
+in the `pbs` subfolder of uncover-ml there are some example scripts and a
+helper function to assist launching batch jobs over multiple nodes with pbs
+
+### Batch testing
+
+To check everything is working, submit the tests as a batch job:
+```
+$ cd ~/uncover-ml/pbs
+$ qsub submit_tests.sh
+```
+
+### ipympi
+
+In the pbs folder there is a helper script called `ipympi`. It takes a single
+argument which is a command to run. It will run 1 copy of that command,
+along with 1 ipyparallel controller and (n-2) ipyparallel engines, where
+n is the total number of processors assigned via mpirun. For example,
+on the command line we could do something like
+```
+mpirun -n 4 ipympi <command>
+```
+
+whilst a PBS job submission might look like this:
+```
+#!/bin/bash
+#PBS -P ge3
+#PBS -q normal
+#PBS -l walltime=00:10:00,mem=1GB,ncpus=2,jobfs=1GB
+#PBS -l wd
+
+# setup environment
+source $HOME/.profile
+
+# start the virtualenv
+workon uncoverml
+
+mpirun ipympi $HOME/uncover-ml/demos/demo_learning_pipeline.py
+```
+where in this case mpirun is able to determine the number of available
+cores via PBS.
+
+### Running the demos
+In the pbs folder there are two scripts called  `submit_demo_predicion.sh`
+and `submit_demo_learning.sh` that will submit a batch job to PBS that uses
+mpirun and ipympi to run the demos. Feel free to modify the PBS directives
+as needed, or copy these scripts to a more convenient location.
+
+
+
+
 
 
 
