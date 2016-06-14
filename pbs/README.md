@@ -122,13 +122,6 @@ mpirun and ipympi to run the demos. Feel free to modify the PBS directives
 as needed, or copy these scripts to a more convenient location.
 
 
-### Killing Jobs
-At the moment the ipyparallel cluster will continue to stay up even when
-the demo scripts have finished running. So once the demo has finished kill
-the job using `qdel` to save on CPU time.
-
-
-
 
 
 

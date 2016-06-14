@@ -27,11 +27,12 @@ if [ $NNODES -lt 3 ]; then
   exit 1
 fi
 
-# Run the actual program in node 0
+# Run the actual program in node 0 then kill the job if it exists
 if [ $ID -eq 0 ]; then
     echo "Running $1 on cpu $ID"
     sleep 10
     $@ 2>&1 > ${1}.log
+    qdel $PBS_JOBID
 
 elif [ $ID -eq 1 ]; then
     echo "Running ipcontroller on cpu $ID"
