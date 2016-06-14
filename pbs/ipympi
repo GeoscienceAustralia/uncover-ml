@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# ipympi: run a command in addition to an ipyparallel cluster inside MPI.
+# ipympi takes a single argument, which is the command to be run. It requires
+# at least 3 processors to be assigned in the mpirun environment. 
+# rank 0: the command given in the argument
+# rank 1: the ipcontroller
+# rank 2+: ipengines
+# This is a simple way to get a large multi-node cluster set up when
+# MPIRUN is available.
+
 if [ $# -ne 1 ]; then
   echo "Usage: ipympi <command>"
   exit 1
