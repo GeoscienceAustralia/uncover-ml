@@ -9,17 +9,17 @@ HPC systems such as the NCI (raijin).
 These instructions currently only work with gcc and not the Intel compiler.
 Note that on NCI it appears python is compiled against gcc anyway.
 
-In your `~/.profile` file:
+1. Unload the icc compiler from the terminal:
+```
+$ module unload icc
+```
+2. Load the modules requried for installation and running:
+```
+$ module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3
+```
 
-1. In your `~/.profile` file, make sure the line 
+2. Now add the following lines to the end of your ~/.profile:
 ```
-# module load icc
-```
-is commented out. Also check openmpi is being loaded
-
-2. Noww add the following lines to the end of the file:
-```
-module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3
 export PATH=$PATH:$HOME/.local/bin
 export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.4/site-packages
 export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
@@ -101,7 +101,11 @@ whilst a PBS job submission might look like this:
 #PBS -l wd
 
 # setup environment
-source $HOME/.profile
+module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3
+export PATH=$PATH:$HOME/.local/bin
+export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.4/site-packages
+export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
+source $HOME/.local/bin/virtualenvwrapper.sh 
 
 # start the virtualenv
 workon uncoverml
