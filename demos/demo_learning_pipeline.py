@@ -63,6 +63,7 @@ target_hdf = path.join(proc_dir, "{}_{}.hdf5"
 cv_file_name = "soilcrossvalindices.hdf5"
 # cv_file_name = "drillhole_xvalindices.hdf5"
 cv_file = path.join(data_dir, cv_file_name)
+folds = 5
 
 
 #
@@ -173,6 +174,10 @@ def main():
     efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
               if not (path.basename(f).startswith(compos_file)
                       or path.basename(f).startswith(predict_file))]
+
+    # Make a crossval file if it doesn't exist
+    cmd = ["cvindexer", "--folds", str(folds), target_hdf, cv_file]
+    try_run_checkfile(cmd, cv_file, "Making cross-val file")
 
     # Compose individual image features into single feature vector
     cmd = ["composefeats"]
