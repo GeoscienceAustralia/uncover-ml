@@ -1,17 +1,23 @@
+NOTE: these instructions currently only work with gcc not the Intel compiler.
+make sure your ~/.profile file is not loading icc.
+
 
 load the right modules
 ```
-$ module load intel-mkl/16.0.3.210 python3/3.4.3 python3/3.4.3-matplotlib hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3 
+$ module load zlib atlas python3/3.4.3 hdf5/1.8.10 gdal/2.0.0 zeromq/4.1.3 
 ```
 
-create a local directory for local prereqs
-```
-$ mkdir -p ~/.local/lib/python3.4/site-packages ~/.local/bin
-```
-Then in your `.profile` file, add the lines
+Then in your `.profile` file, add the lines (for local python installation)
 ```
 export PATH=$PATH:$HOME/.local/bin
 export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.4/site-packages
+export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
+source $HOME/.local/bin/virtualenvwrapper.sh 
+```
+
+Install virtualenv
+```
+pip3 install  --user virtualenv virtualenvwrapper
 ```
 
 now refresh your environment
@@ -19,24 +25,43 @@ now refresh your environment
 $ source ~/.profile
 ```
 
+create a new virtualenv for uncoverml
+```
+$ mkvirtualenv --system-site-packages uncoverml
+```
+
+make sure the virtualenv is activated
+```
+$ workon uncoverml
+```
+
 clone the uncoverml repo
 ```
 $ git clone git@github.com:NICTA/uncover-ml.git
 ```
 
-then install
+then install (note setup.py develop does not work for some reason)
 ```
 $ cd uncover-ml
-$ python3 setup.py develop --prefix=~/.local
+$ python setup.py install
 ```
 
 Now check all is okay with the test script:
+```
+pip install pytest
+py.test tests/
+```
+
+
+-lncpus=32,mem=10GB implies 2 nodes. Memory is across all nodes,
+so in this case we're asking for 2 nodes with 5GB of memory each
 
 ## Possibilities for syncronisation of the 3 jobs
 
 1.python mpi, do it all inside python
 2. separate jobs
-3. PBS_VNODENUM and PBS_NODENUM environment variables (only with -t?)
+
+using pbsdsh instead of mpirun then utilising PBS_VNODENUM
 
 qsub -l nodes=4:ppn=2 	Request 2 processors on each of four nodes
 
