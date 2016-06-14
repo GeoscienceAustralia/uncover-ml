@@ -15,7 +15,7 @@ else
   echo "Running in PBS with job ID $PBS_JOBID "
 fi
 
-if [ $# -le 1 ]; then
+if [ $# -lt 1 ]; then
   echo "Usage: ipympi <command>"
   exit 1
 fi
