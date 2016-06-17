@@ -15,7 +15,8 @@ Note that on NCI it appears python is compiled against gcc anyway.
 
 1. Unload the icc compiler from the terminal:
 ```
-$ module unload icc
+$ module unload intel-cc
+$ module unload intel-fc
 ```
 2. Load the modules requried for installation and running:
 ```
