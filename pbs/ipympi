@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# ipympi: run a command in addition to an ipyparallel cluster inside MPI.
+# ipympi takes a single argument, which is the command to be run. It requires
+# at least 3 processors to be assigned in the mpirun environment. 
+# rank 0: the command given in the argument
+# rank 1: the ipcontroller
+# rank 2+: ipengines
+# This is a simple way to get a large multi-node cluster set up when
+# MPIRUN is available.
+
+if [ -z $PBS_JOBID ]; then
+  echo "Running in interactive mode"
+else
+  echo "Running in PBS with job ID $PBS_JOBID "
+fi
+
+if [ $# -lt 1 ]; then
+  echo "Usage: ipympi <command>"
+  exit 1
+fi
+
+if [ -z $OMPI_COMM_WORLD_SIZE ]; then
+  echo "Cannot see MPI world, are you using mpirun?"
+  exit 1
+fi
+
+ID=$OMPI_COMM_WORLD_RANK
+NNODES=$OMPI_COMM_WORLD_SIZE
+
+if [ $NNODES -lt 3 ]; then
+  echo "Error: 3 cpu minimum (1 app, 1 controller, 1 engine)"
+  exit 1
+fi
+
+# Run the actual program in node 0 then kill the job if it exists
+if [ $ID -eq 0 ]; then
+    echo "Running $1 on cpu $ID"
+    sleep 10
+    $@ 2>&1 > ${1}.log
+    if [ ! -z $PBS_JOBID ]; then
+      echo "Finished. Killing self (job $PBS_JOBID)"
+      qdel $PBS_JOBID
+    fi
+
+elif [ $ID -eq 1 ]; then
+    echo "Running ipcontroller on cpu $ID"
+    ipcontroller --ip="*" 2>&1 > ipcontroller.log
+
+else
+    ENGINEID=$((ID - 2))
+    echo "Running ipengine $ENGINEID on cpu $ID"
+    sleep 5
+    ipengine 2>&1 > ipengine_${ENGINEID}.log
+fi 
