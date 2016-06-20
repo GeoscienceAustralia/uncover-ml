@@ -1,6 +1,6 @@
 from __future__ import division
 
-from contracts import contract
+# from contracts import contract
 import rasterio
 import os.path
 import numpy as np
@@ -22,8 +22,22 @@ def file_indices_okay(filenames):
     # get just the name eg /path/to/file_0.hdf5 -> file_0
     basenames = [os.path.splitext(os.path.basename(k))[0] for k in filenames]
 
-    # file_0 -> [file,0]
-    base_and_idx = [k.rsplit('.part', 1) for k in basenames]
+    # file.part0of3 -> [file,0]
+    split_total = [k.rsplit('of', 1) for k in basenames]
+    try:
+        totals = set([int(k[1]) for k in split_total])
+    except:
+        log.error("Filename does not contain total number of parts.")
+        return False
+
+    if len(totals) > 1:
+        log.error("Files disagree about total chunks")
+        return False
+
+    total = totals.pop()
+
+    minus_total = [k[0] for k in split_total]
+    base_and_idx = [k.rsplit('.part', 1) for k in minus_total]
     bases = set([k[0] for k in base_and_idx])
     log.info("Input file sets: {}".format(set(bases)))
 
@@ -33,14 +47,13 @@ def file_indices_okay(filenames):
         base_ids = {k: set([int(j[1])
                            for j in base_and_idx if j[0] == k]) for k in bases}
     except:
-        log.error("One or more filenames are not in <name>.part<idx>.hdf5"
-                  "format")
+        log.error("One or more filenames are not in <name>.part<idx>of<total>"
+                  ".hdf5 format")
         # either there are no ints at the end or no underscore
         return False
 
-    # determine the 'correct' number of indices (highest index we see)
-    num_ids = np.amax(np.array([max(k) for j, k in base_ids.items()])) + 1
-    true_set = set(range(num_ids))
+    # Ensure all files are present
+    true_set = set(range(total))
     files_ok = True
     for b, nums in base_ids.items():
         if not nums == true_set:
@@ -66,7 +79,11 @@ def files_by_chunk(filenames):
         return os.path.splitext(os.path.basename(x))[0]
     sorted_filenames = sorted(filenames, key=transform)
     basenames = [transform(k) for k in sorted_filenames]
-    indices = [int(k.rsplit('.part', 1)[1]) for k in basenames]
+
+    split_total = [k.rsplit('of', 1) for k in basenames]
+    minus_total = [k[0] for k in split_total]
+    indices = [int(k.rsplit('.part', 1)[1]) for k in minus_total]
+
     d = {i: [] for i in set(indices)}
     for i, f in zip(indices, sorted_filenames):
         d[i].append(f)
@@ -414,8 +431,8 @@ def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
     return A, pixsize_x, pixsize_y
 
 
-def output_filename(feature_name, chunk_index, output_dir):
-    filename = feature_name + ".part{}.hdf5".format(chunk_index)
+def output_filename(feature_name, chunk_index, n_chunks, output_dir):
+    filename = feature_name + ".part{}of{}.hdf5".format(chunk_index, n_chunks)
     full_path = os.path.join(output_dir, filename)
     return full_path
 

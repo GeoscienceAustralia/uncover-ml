@@ -85,7 +85,8 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile)
+    eff_nchunks = len(filename_dict)
+    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
 
     # Load the data on each client
     # Note chunk_index is a global with different value on each node

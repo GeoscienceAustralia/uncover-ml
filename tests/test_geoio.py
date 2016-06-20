@@ -8,21 +8,21 @@ from uncoverml import geoio
 
 def test_file_indices_okay():
     # test the correct case
-    t1 = ["/path/to/file.part1.hdf5", 
-          "/path/to/file.part0.hdf5", 
-          "/path/to/file.part2.hdf5"]
+    t1 = ["/path/to/file.part1of3.hdf5", 
+          "/path/to/file.part0of3.hdf5", 
+          "/path/to/file.part2of3.hdf5"]
     assert geoio.file_indices_okay(t1)
     
     # multiple features
-    t2 = t1 + ["/some/other/path.part0.hdf5", 
-               "/some/other/path.part1.hdf5",
-               "/some/other/path.part2.hdf5"]
+    t2 = t1 + ["/some/other/path.part0of3.hdf5", 
+               "/some/other/path.part1of3.hdf5",
+               "/some/other/path.part2of3.hdf5"]
     assert geoio.file_indices_okay(t2)
 
     # wierd paths
-    t3 = t2 + ["/my/name.part0.hdf5",
-               "/oh/dear/name.part1.hdf5",
-               "name.part2.hdf5"]
+    t3 = t2 + ["/my/name.part0of3.hdf5",
+               "/oh/dear/name.part1of3.hdf5",
+               "name.part2of3.hdf5"]
     assert geoio.file_indices_okay(t3)
 
     # missing data
@@ -30,23 +30,23 @@ def test_file_indices_okay():
     assert not geoio.file_indices_okay(t4)
 
     # craaazy data
-    t5 = t3 + ["extra_file.hdf5"]
+    t5 = t3 + ["extra_fileof3.hdf5"]
     assert not geoio.file_indices_okay(t5)
 
 
 def test_files_by_chunk():
-    t1 = ["/path/to/file.part1.hdf5", 
-          "/path/to/file.part0.hdf5", 
-          "/path/to/file.part2.hdf5",
-          "/some/to/zile.part0.hdf5", 
-          "/other/to/zile.part1.hdf5", 
-          "/path/to/zile.part2.hdf5"]
+    t1 = ["/path/to/file.part1of3.hdf5", 
+          "/path/to/file.part0of3.hdf5", 
+          "/path/to/file.part2of3.hdf5",
+          "/some/to/zile.part0of3.hdf5", 
+          "/other/to/zile.part1of3.hdf5", 
+          "/path/to/zile.part2of3.hdf5"]
 
     r = geoio.files_by_chunk(t1)
 
-    answer = {0:["/path/to/file.part0.hdf5", "/some/to/zile.part0.hdf5"],
-              1:["/path/to/file.part1.hdf5", "/other/to/zile.part1.hdf5"],
-              2:["/path/to/file.part2.hdf5", "/path/to/zile.part2.hdf5"]}
+    answer = {0:["/path/to/file.part0of3.hdf5", "/some/to/zile.part0of3.hdf5"],
+              1:["/path/to/file.part1of3.hdf5", "/other/to/zile.part1of3.hdf5"],
+              2:["/path/to/file.part2of3.hdf5", "/path/to/zile.part2of3.hdf5"]}
 
     assert r == answer
 

@@ -153,8 +153,8 @@ def make_raster():
     return (res_x, res_y), x_bound, y_bound, lons, lats, A
 
 
-@pytest.fixture(scope='session')
-def make_shp_gtiff(tmpdir_factory):
+@pytest.fixture(scope='session', params=["allchunks", "somechunks"])
+def make_shp_gtiff(tmpdir_factory, request):
 
     # File names for test shapefile and test geotiff
     fshp = str(tmpdir_factory.mktemp('shapes').join('test.shp').realpath())
@@ -167,7 +167,11 @@ def make_shp_gtiff(tmpdir_factory):
     nsamples = 100
     ntargets = 10
     dlon = lons[np.random.randint(0, high=len(lons), size=nsamples)]
-    dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
+    if request.param == "allchunks":
+        dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
+    else:
+        dlat = lats[np.random.randint(3 / 8 * len(lats),
+                                      high=5 / 8 * len(lats), size=nsamples)]
     fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
     vals = np.hstack((vals, np.array([dlon, dlat]).T))

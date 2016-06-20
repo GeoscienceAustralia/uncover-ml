@@ -1,10 +1,11 @@
 import os
 import tables
+import time
+
 import numpy as np
 import shapefile
 import rasterio
 from click import Context
-
 
 from uncoverml import geoio
 from uncoverml.scripts.maketargets import main as maketargets
@@ -79,11 +80,20 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
     ctx = Context(extractfeats)
     ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir)
 
+    # Let pytables write out
+    time.sleep(0.1)
+
     ffiles = []
+    exists = []
+    # import IPython; IPython.embed()
     for i in range(chunks):
-        fname = os.path.join(outdir, "{}.part{}.hdf5".format(name, i))
-        assert os.path.exists(fname)
+        fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(name, i,
+                                                                 chunks))
+        exists.append(os.path.exists(fname))
+        # assert os.path.exists(fname)
         ffiles.append(fname)
+
+    assert all(exists)
 
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
@@ -120,10 +130,13 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
     ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir,
                 targets=fshp_targets)
 
+    # Let pytables write out
+    time.sleep(0.1)
+
     # Get the 4 parts
     feat_list = []
     for i in range(4):
-        fname = name + ".part{}.hdf5".format(i)
+        fname = name + ".part{}of4.hdf5".format(i)
         with tables.open_file(os.path.join(outdir, fname), 'r') as f:
             feat_list.append(f.root.features[:])
     feats = np.concatenate(feat_list, axis=0)
