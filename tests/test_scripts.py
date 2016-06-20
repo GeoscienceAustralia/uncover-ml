@@ -13,9 +13,9 @@ from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
 
 
-def test_make_targets(make_shp_gtiff):
+def test_make_targets(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
     field = "lon"
 
     ctx = Context(maketargets)
@@ -32,9 +32,9 @@ def test_make_targets(make_shp_gtiff):
     assert np.allclose(lon, Longitude)
 
 
-def test_cvindexer_shp(make_shp_gtiff):
+def test_cvindexer_shp(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
     folds = 6
     field = "lon"
     fshp_hdf5 = os.path.splitext(fshp)[0] + ".hdf5"
@@ -69,11 +69,11 @@ def test_cvindexer_shp(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_shp_gtiff, make_ipcluster4):
+def test_extractfeats(make_gtiff, make_ipcluster4):
 
-    fshp, ftif = make_shp_gtiff
+    ftif = make_gtiff
     chunks = 4
-    outdir = os.path.dirname(fshp)
+    outdir = os.path.dirname(ftif)
     name = "fchunk_worker"
 
     # Extract features from gtiff
@@ -85,12 +85,10 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
 
     ffiles = []
     exists = []
-    # import IPython; IPython.embed()
     for i in range(chunks):
-        fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(name, i,
-                                                                 chunks))
+        fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(
+            name, i, chunks))
         exists.append(os.path.exists(fname))
-        # assert os.path.exists(fname)
         ffiles.append(fname)
 
     assert all(exists)
@@ -112,9 +110,9 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
-
-    fshp, ftif = make_shp_gtiff
+def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster4):
+    ftif = make_gtiff
+    fshp, hdf5_filenames = make_shp
     outdir = os.path.dirname(fshp)
     name = "fpatch"
 
@@ -135,8 +133,8 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
 
     # Get the 4 parts
     feat_list = []
-    for i in range(4):
-        fname = name + ".part{}of4.hdf5".format(i)
+    for fname in hdf5_filenames:
+        # fname = name + ".part{}of4.hdf5".format(i)
         with tables.open_file(os.path.join(outdir, fname), 'r') as f:
             feat_list.append(f.root.features[:])
     feats = np.concatenate(feat_list, axis=0)
