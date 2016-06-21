@@ -36,7 +36,7 @@ fi
 # Run the actual program in node 0 then kill the job if it exists
 if [ $ID -eq 0 ]; then
     echo "Running $1 on cpu $ID"
-    sleep 10
+    sleep 20
     $@ 2>&1 > ${1}.log
     if [ ! -z $PBS_JOBID ]; then
       echo "Finished. Killing self (job $PBS_JOBID)"
@@ -50,6 +50,6 @@ elif [ $ID -eq 1 ]; then
 else
     ENGINEID=$((ID - 2))
     echo "Running ipengine $ENGINEID on cpu $ID"
-    sleep 5
+    sleep 10
     ipengine 2>&1 > ipengine_${ENGINEID}.log
 fi 

@@ -14,6 +14,7 @@ from uncoverml import parallel
 import numpy as np
 import pickle
 
+# logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
