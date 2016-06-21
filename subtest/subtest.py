@@ -17,25 +17,25 @@ def run_with_ipyparallel(command_list):
         raise RuntimeError("At least 3 cpus needed in mpi world, "
                            "found {}".format(size))
     n_engines = size - 2
-    log.info("Cluster will have {} engines".format(n_engines))
+    if rank == 0:
+        log.info("Cluster will have {} engines".format(n_engines))
 
     if rank == 1:
-        log.info("CPU 1 running ipcontroller")
+        log.info("Running ipcontroller")
         thread = run_ipcontroller()
 
     #  Everyone wait until ip controller is up
-    log.info("CPU 1 knows ipcontroller started, broadcasting")
     ipc_started = np.zeros(1)
     ipc_started = comm.bcast(ipc_started, root=1)
-    log.info("All nodes sychronised after ipcontroller startup")
+    log.debug("All nodes sychronised after ipcontroller startup")
 
     #  Start the ipengines on cpus 2 and up
     if rank >= 2:
-        log.info("Starting ipengine {} on node {}".format(rank-2, rank))
+        log.info("Starting ipengine {}".format(rank-2))
         thread = run_ipengine()
         ipengine_started = np.ones(1)
         comm.Send(ipengine_started, dest=0)
-        log.info("Engine {} has announced startup".format(rank-2))
+        log.debug("Engine {} has announced startup".format(rank-2))
 
     if rank == 0:
         num_engines_started = 0
@@ -52,13 +52,12 @@ def run_with_ipyparallel(command_list):
 
     # make everyone wait for the main task to finish on task zero
     if rank != 0:
-        log.info("Waiting for shutdown signal")
+        log.debug("Waiting for shutdown signal")
     task_done = np.ones(1)
     task_done = comm.bcast(task_done, root=0)
     if rank != 0:
-        log.info("Shutting down cluster")
         thread.terminate()
-    log.info("Node finished without error")
+    log.info("Node exited successfully")
 
 
 class ThreadWrapper:
@@ -78,9 +77,9 @@ def run_and_wait(command_list, output_string, timeout=None):
                                       args=(command_list, output_string,
                                             is_ready, is_finished, timeout))
     subproc_thread.start()
-    logging.info("node {} started subproc, waiting to be ready".format(rank))
+    log.debug("Started subproc, waiting to be ready".format(rank))
     is_ready.wait()
-    logging.info("node {} subproc is ready".format(rank))
+    log.debug("Subproc is ready".format(rank))
     result = ThreadWrapper(subproc_thread, is_finished)
     return result
 
@@ -105,7 +104,7 @@ def run_with_check(command_list, output_string,
             log.debug(line)
             if not ready:
                 if output_string in line:
-                    log.info("Command {} now has ready status".format(
+                    log.debug("Command {} now has ready status".format(
                         command_list))
                     is_ready.set()
                     ready = True
@@ -121,8 +120,7 @@ def run_with_check(command_list, output_string,
     if timedout:
         raise RuntimeError("Process timed out without string match")
     else:
-        log.info("process on node {} successfully terminated "
-                 "after finish flag raised".format(rank))
+        log.debug("subprocess successfully terminated")
 
 
 def run_ipcontroller():
