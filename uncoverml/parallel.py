@@ -1,7 +1,7 @@
 from __future__ import division
 
-import ipyparallel as ipp
 import logging
+import ipyparallel as ipp
 
 log = logging.getLogger(__name__)
 
@@ -42,12 +42,16 @@ def apply_and_write(cluster, f, data_var_name, feature_name,
     nodes_with_data = cluster['has_data']
     indices_with_data = [i for i, j in enumerate(nodes_with_data) if j]
 
+    log.info("Indices with data: {}".format(indices_with_data))
+
     # Filter out no-data nodes
     for new_index, old_index in enumerate(indices_with_data):
         cluster.client[old_index].execute("chunk_index = {}".format(new_index))
+        log.info("Assigning node {} new id {}".format(old_index, new_index))
 
     new_cluster = cluster.client[indices_with_data]
-    new_cluster.execute("n_chunks = {}".format(len(new_cluster)))
+    new_cluster.execute("n_chunks = {}".format(len(indices_with_data)))
+    log.info("New cluster size: {}".format(len(new_cluster)))
 
     log.info("Applying transform across nodes")
     # Apply the transformation function
@@ -58,5 +62,5 @@ def apply_and_write(cluster, f, data_var_name, feature_name,
     new_cluster.execute("f_x = f({})".format(data_var_name))
     new_cluster.execute("outfile = geoio.output_filename(featurename, "
                         "chunk_index, n_chunks, outputdir)")
-    new_cluster.execute("geoio.output_features(f_x, outfile, " "shape=shape, "
-                        "bbox=bbox)")
+    new_cluster.execute("write_ok = geoio.output_features(f_x, outfile, "
+                        "shape=shape, bbox=bbox)")

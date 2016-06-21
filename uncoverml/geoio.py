@@ -1,6 +1,5 @@
 from __future__ import division
 
-# from contracts import contract
 import rasterio
 import os.path
 import numpy as np
@@ -8,6 +7,7 @@ from affine import Affine
 import shapefile
 import tables as hdf
 import logging
+import time
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def file_indices_okay(filenames):
         return False
 
     # Ensure all files are present
-    true_set = set(range(total))
+    true_set = set(range(1, total + 1))
     files_ok = True
     for b, nums in base_ids.items():
         if not nums == true_set:
@@ -432,7 +432,8 @@ def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
 
 def output_filename(feature_name, chunk_index, n_chunks, output_dir):
-    filename = feature_name + ".part{}of{}.hdf5".format(chunk_index, n_chunks)
+    filename = feature_name + ".part{}of{}.hdf5".format(chunk_index + 1,
+                                                        n_chunks)
     full_path = os.path.join(output_dir, filename)
     return full_path
 
@@ -490,6 +491,19 @@ def output_features(feature_vector, outfile, featname="features",
         h5file.root.mask.attrs.bbox = bbox
 
     h5file.close()
+
+    start = time.time()
+    file_exists = False
+
+    while not file_exists and (time.time() - start) < 5:
+
+        file_exists = os.path.exists(outfile)
+        time.sleep(0.1)
+
+    if not file_exists:
+        raise RuntimeError("{} never written!".format(outfile))
+
+    return True
 
 
 def load_and_cat(hdf5_vectors):
