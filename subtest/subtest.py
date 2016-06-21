@@ -4,8 +4,6 @@ import threading
 import time
 import numpy as np
 import subprocess
-# from fcntl import fcntl, F_GETFL, F_SETFL
-# from os import O_NONBLOCK, read
 from mpi4py import MPI
 
 log = logging.getLogger(__name__)
@@ -89,6 +87,7 @@ def run_and_wait(command_list, output_string, timeout=None):
 
 def run_with_check(command_list, output_string,
                    is_ready, is_finished, timeout=None):
+    # note bufsize=0 is critical, lines sometimes get missed otherwise
     p = subprocess.Popen(command_list, stdin=None,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          shell=False, bufsize=0)
@@ -104,7 +103,6 @@ def run_with_check(command_list, output_string,
         if poll_obj.poll(1):
             line = p.stdout.readline().decode()
             log.debug(line)
-            # check if we're ready or if timed out
             if not ready:
                 if output_string in line:
                     log.info("Command {} now has ready status".format(
