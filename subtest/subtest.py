@@ -91,7 +91,8 @@ def run_with_check(command_list, output_string,
                    is_ready, is_finished, timeout=None):
     p = subprocess.Popen(command_list, stdin=None,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         shell=False)
+                         shell=False, bufsize=0)
+
     poll_obj = select.poll()
     poll_obj.register(p.stdout, select.POLLIN)
 
@@ -99,8 +100,7 @@ def run_with_check(command_list, output_string,
     ready = False
     timedout = False
     done = False
-    # while not ready and not timedout and not done:
-    while not ready and not timedout and not done:
+    while not timedout and not done:
         if poll_obj.poll(1):
             line = p.stdout.readline().decode()
             log.debug(line)
@@ -111,7 +111,6 @@ def run_with_check(command_list, output_string,
                         command_list))
                     is_ready.set()
                     ready = True
-                    break
 
         if not ready and timeout and time.time() - start_time > timeout:
             timedout = True
@@ -126,56 +125,6 @@ def run_with_check(command_list, output_string,
     else:
         log.info("process on node {} successfully terminated "
                  "after finish flag raised".format(rank))
-
-
-# def simple_run_and_wait(command_list, output_string):
-#     p = subprocess.Popen(command_list, stdin=None,
-#                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-#                          shell=False)
-#     for outbytes in p.stdout:
-#         outline = outbytes.decode()
-#         log.debug(outline)
-#         if output_string in outline:
-#             break
-#     return p
-
-# def run_and_wait(command_list, output_string, timeout=60):
-#     p = subprocess.Popen(command_list, stdin=subprocess.PIPE,
-#                          stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-#                          shell=False)
-#     # set the O_NONBLOCK flag of p.stdout file descriptor:
-#     oflags = fcntl(p.stdout, F_GETFL)  # get current p.stdout flags
-#     eflags = fcntl(p.stderr, F_GETFL)  # get current p.stdout flags
-#     fcntl(p.stdout, F_SETFL, oflags | O_NONBLOCK)
-#     fcntl(p.stderr, F_SETFL, eflags | O_NONBLOCK)
-
-#     stdout_output = ""
-#     stderr_output = ""
-
-#     start_time = time.time()
-#     found = False
-#     while time.time() - start_time < timeout and not found:
-#         try:
-#             stdout_output += read(p.stdout.fileno(), 1024).decode()
-#         except OSError:
-#             pass
-#         try:
-#             stderr_output += read(p.stderr.fileno(), 1024).decode()
-#         except OSError:
-#             pass
-#         time.sleep(0.5)
-#         if output_string in stdout_output:
-#             found = True
-#         if output_string in stderr_output:
-#             found = True
-
-#     # Return the procs to the way they were
-#     fcntl(p.stdout, F_SETFL, oflags)
-#     fcntl(p.stderr, F_SETFL, eflags)
-
-#     if not found:
-#         raise RuntimeError("command timed out without string match")
-#     return p
 
 
 def run_ipcontroller():
@@ -193,17 +142,13 @@ def run_ipengine():
 
 
 def main():
-    # logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(level=logging.DEBUG,
-        format='%(relativeCreated)6d %(threadName)s %(message)s')
+    logging.basicConfig(level=logging.INFO,
+                        format='node{} %(threadName)s %(relativeCreated)6d'
+                        ' %(levelname)s: %(message)s'.format(rank))
     # logging.basicConfig(filename='node{}.log'.format(rank),
-                        # level=logging.INFO)
-    
+    #                     level=logging.INFO)
+
     run_with_ipyparallel(["python", "wait.py"])
-    # result = run_ipcontroller()
-    # time.sleep(4)
-    # time.sleep(20)
-    # result.terminate()
 
 if __name__ == "__main__":
     main()
