@@ -11,6 +11,12 @@ from mpi4py import MPI
 log = logging.getLogger(__name__)
 
 
+def barrier(comm):
+    req = comm.Ibarrier()
+    while not req:
+        time.sleep(1)
+
+
 def waitfor_n_engines(n):
     client = ipp.Client()
     while len(client) < n:
@@ -61,7 +67,7 @@ def call_with_ipympi(fn):
         log.debug("ipcontroller ready")
 
     #  Everyone wait until ip controller is up
-    comm.Barrier()
+    barrier()
     # sync_to_node(1, comm)
     log.debug("All nodes sychronised after ipcontroller startup")
 
@@ -80,7 +86,7 @@ def call_with_ipympi(fn):
             log.info("Root node has completed main command")
     finally:
         # make everyone wait for the main task to finish on task zero
-        comm.Barrier()
+        barrier()
         # sync_to_node(0, comm)
         if rank != 0:
             thread.terminate()
