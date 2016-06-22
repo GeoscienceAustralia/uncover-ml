@@ -76,6 +76,7 @@ setup(
         'click_log',
         'scikit-learn',
         'revrand',
+        'mpi4py',
     ],
     extras_require={
         'demos': [

@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ge3
 #PBS -q normal
-#PBS -l walltime=01:00:00,mem=32GB,ncpus=32,jobfs=10GB
+#PBS -l walltime=02:00:00,mem=128GB,ncpus=48,jobfs=100GB
 #PBS -l wd
 
 # setup environment

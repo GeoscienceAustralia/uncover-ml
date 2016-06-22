@@ -1,13 +1,13 @@
 from __future__ import division
 
+import logging
 import pytest
 import numpy as np
 import shapefile as shp
 import rasterio
 from affine import Affine
-import time
-import signal
-import subprocess
+
+from uncoverml import ipympi
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
@@ -108,26 +108,20 @@ def make_multi_patch(request):
 
 
 @pytest.fixture
-def make_ipcluster4(request):
-    return make_ipcluster(request, 4)
-
-
-@pytest.fixture
-def make_ipcluster1(request):
-    return make_ipcluster(request, 1)
-
-
-def make_ipcluster(request, n):
-    proc = subprocess.Popen(["ipcluster", "start", "--n=" + str(n)])
-    time.sleep(10)
+def make_ipcluster(request):
+    n = 4
+    controller = ipympi.run_ipcontroller()
+    engines = [ipympi.run_ipengine() for k in range(n)]
+    ipympi.waitfor_n_engines(n)
 
     def fin():
-        # Shutdown engines
-        proc.send_signal(signal.SIGINT)
-        proc.wait()
-
+        # Shutdown
+        controller.terminate()
+        for e in engines:
+            e.terminate()
     request.addfinalizer(fin)
-    return proc
+
+    return n
 
 
 @pytest.fixture
@@ -142,7 +136,7 @@ def make_raster():
     pix_y = (y_range[1] - y_range[0]) / res_y
 
     A = Affine(pix_x, 0, x_range[0],
-                   0, -pix_y, y_range[1])
+               0, -pix_y, y_range[1])
 
     lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
     lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
@@ -154,11 +148,44 @@ def make_raster():
 
 
 @pytest.fixture(scope='session')
-def make_shp_gtiff(tmpdir_factory):
+def make_gtiff(tmpdir_factory):
+    ftif = str(tmpdir_factory.mktemp('tif').join('test.tif').realpath())
+    # Create grid
+    res, x_bound, y_bound, lons, lats, Ao = make_raster()
+    # Generate data for geotiff
+    Lons, Lats = np.meshgrid(lons, lats)
+
+    # Write geotiff
+    profile = {'driver': "GTiff",
+               'width': len(lons),
+               'height': len(lats),
+               'count': 2,
+               'dtype': rasterio.float64,
+               'transform': Ao,
+               'crs': {'proj': 'longlat',
+                       'ellps': 'WGS84',
+                       'datum': 'WGS84',
+                       'nodefs': True
+                       }
+               }
+
+    with rasterio.open(ftif, 'w', **profile) as f:
+        f.write(np.array([Lons, Lats]))
+    return ftif
+
+
+@pytest.fixture(scope='session', params=["allchunks", "somechunks"])
+def make_shp(tmpdir_factory, request):
 
     # File names for test shapefile and test geotiff
     fshp = str(tmpdir_factory.mktemp('shapes').join('test.shp').realpath())
-    ftif = str(tmpdir_factory.mktemp('tif').join('test.tif').realpath())
+
+    if request.param == "allchunks":
+        output_filenames = ["fpatch.part{}of4.hdf5".format(i)
+                            for i in range(1, 5)]
+    else:
+        output_filenames = ["fpatch.part{}of2.hdf5".format(i)
+                            for i in range(1, 3)]
 
     # Create grid
     res, x_bound, y_bound, lons, lats, Ao = make_raster()
@@ -167,7 +194,11 @@ def make_shp_gtiff(tmpdir_factory):
     nsamples = 100
     ntargets = 10
     dlon = lons[np.random.randint(0, high=len(lons), size=nsamples)]
-    dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
+    if request.param == "allchunks":
+        dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
+    else:
+        dlat = lats[np.random.randint(3 / 8 * len(lats),
+                                      high=5 / 8 * len(lats), size=nsamples)]
     fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
     vals = np.hstack((vals, np.array([dlon, dlat]).T))
@@ -191,27 +222,7 @@ def make_shp_gtiff(tmpdir_factory):
 
     w.save(fshp)
 
-    # Generate data for geotiff
-    Lons, Lats = np.meshgrid(lons, lats)
-
-    # Write geotiff
-    profile = {'driver': "GTiff",
-               'width': len(lons),
-               'height': len(lats),
-               'count': 2,
-               'dtype': rasterio.float64,
-               'transform': Ao,
-               'crs': {'proj': 'longlat',
-                       'ellps': 'WGS84',
-                       'datum': 'WGS84',
-                       'nodefs': True
-                       }
-               }
-
-    with rasterio.open(ftif, 'w', **profile) as f:
-        f.write(np.array([Lons, Lats]))
-
-    return fshp, ftif
+    return fshp, output_filenames
 
 
 @pytest.fixture(scope='session')

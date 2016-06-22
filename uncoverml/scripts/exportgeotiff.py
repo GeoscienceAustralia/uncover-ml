@@ -88,7 +88,8 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
                                 eff_bbox[0, 1], eff_bbox[1, 1], *eff_shape)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile)
+    eff_nchunks = len(filename_dict)
+    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
 
     # Load the data into a dict on each client
     # Note chunk_indices is a global with different value on each node
@@ -139,4 +140,6 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
                 f.write(data, window=window, indexes=index_list)
                 ystart = yend
 
-    sys.exit(0)
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()

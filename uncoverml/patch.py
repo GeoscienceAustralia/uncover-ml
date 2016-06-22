@@ -152,17 +152,20 @@ def patches_at_target(image, patchsize, targets):
 
     valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
-    valid_lonlats = lonlats[valid]
-    pixels = image.lonlat2pix(valid_lonlats)
-    patches = point_patches(data, patchsize, pixels)
-    patch_mask = point_patches(mask, patchsize, pixels)
-    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
-    # else:
+
+    if len(valid_indices) > 0:
+        valid_lonlats = lonlats[valid]
+        pixels = image.lonlat2pix(valid_lonlats)
+        patches = point_patches(data, patchsize, pixels)
+        patch_mask = point_patches(mask, patchsize, pixels)
+        patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+    else:
+        patch_array = None
     #     side = 2 * patchsize + 1
     #     nbands = image.channels
     #     patch_data = np.zeros((0, side, side, nbands))
     #     mask_data = np.ones((0, side, side, nbands))
     #     patch_array = np.ma.masked_array(data=patch_data, mask=mask_data)
-    #     valid_indices = np.array([], dtype=np.int)
+        valid_indices = np.array([], dtype=np.int)
 
     return patch_array, valid_indices

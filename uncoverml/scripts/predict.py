@@ -13,7 +13,6 @@ import numpy as np
 from scipy.stats import norm
 from functools import partial
 
-import uncoverml.defaults as df
 from uncoverml import geoio, parallel
 from uncoverml.models import apply_masked
 
@@ -60,8 +59,7 @@ def predict(data, model, interval):
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     """
-    Predict the target values for query data from a machine learning
-    algorithm.
+    Predict the target values for query data from a machine learning algorithm.
     """
 
     # build full filenames
@@ -85,7 +83,8 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile)
+    eff_nchunks = len(filename_dict)
+    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
 
     # Load the data on each client
     # Note chunk_index is a global with different value on each node
@@ -97,3 +96,7 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     f = partial(predict, model=model, interval=quantiles)
     parallel.apply_and_write(cluster, f, "x", predictname, outputdir,
                              eff_shape, eff_bbox)
+
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()

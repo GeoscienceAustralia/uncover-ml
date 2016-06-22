@@ -1,10 +1,11 @@
 import os
 import tables
+import time
+
 import numpy as np
 import shapefile
 import rasterio
 from click import Context
-
 
 from uncoverml import geoio
 from uncoverml.scripts.maketargets import main as maketargets
@@ -12,9 +13,9 @@ from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
 
 
-def test_make_targets(make_shp_gtiff):
+def test_make_targets(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
     field = "lon"
 
     ctx = Context(maketargets)
@@ -31,9 +32,9 @@ def test_make_targets(make_shp_gtiff):
     assert np.allclose(lon, Longitude)
 
 
-def test_cvindexer_shp(make_shp_gtiff):
+def test_cvindexer_shp(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
     folds = 6
     field = "lon"
     fshp_hdf5 = os.path.splitext(fshp)[0] + ".hdf5"
@@ -68,22 +69,29 @@ def test_cvindexer_shp(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_shp_gtiff, make_ipcluster4):
+def test_extractfeats(make_gtiff, make_ipcluster):
 
-    fshp, ftif = make_shp_gtiff
-    chunks = 4
-    outdir = os.path.dirname(fshp)
+    ftif = make_gtiff
+    chunks = make_ipcluster
+    outdir = os.path.dirname(ftif)
     name = "fchunk_worker"
 
     # Extract features from gtiff
     ctx = Context(extractfeats)
     ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir)
 
+    # Let pytables write out
+    time.sleep(0.1)
+
     ffiles = []
-    for i in range(chunks):
-        fname = os.path.join(outdir, "{}.part{}.hdf5".format(name, i))
-        assert os.path.exists(fname)
+    exists = []
+    for i in range(1, chunks+1):
+        fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(
+            name, i, chunks))
+        exists.append(os.path.exists(fname))
         ffiles.append(fname)
+
+    assert all(exists)
 
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
@@ -102,9 +110,9 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
-
-    fshp, ftif = make_shp_gtiff
+def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster):
+    ftif = make_gtiff
+    fshp, hdf5_filenames = make_shp
     outdir = os.path.dirname(fshp)
     name = "fpatch"
 
@@ -120,10 +128,13 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
     ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir,
                 targets=fshp_targets)
 
+    # Let pytables write out
+    time.sleep(0.1)
+
     # Get the 4 parts
     feat_list = []
-    for i in range(4):
-        fname = name + ".part{}.hdf5".format(i)
+    for fname in hdf5_filenames:
+        # fname = name + ".part{}of4.hdf5".format(i)
         with tables.open_file(os.path.join(outdir, fname), 'r') as f:
             feat_list.append(f.root.features[:])
     feats = np.concatenate(feat_list, axis=0)

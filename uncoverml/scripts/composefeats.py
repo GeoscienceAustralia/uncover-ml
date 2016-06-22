@@ -152,7 +152,8 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
     # Define the transform function to build the features
-    cluster = parallel.direct_view(ipyprofile)
+    eff_nchunks = len(filename_dict)
+    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
 
     # Load the data into a dict on each client
     # Note chunk_index is a global with different value on each node
@@ -182,4 +183,7 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
 
     parallel.apply_and_write(cluster, f, "x", featurename, outputdir,
                              eff_shape, eff_bbox)
-    sys.exit(0)
+
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()
