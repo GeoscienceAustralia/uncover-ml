@@ -183,4 +183,3 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
 
     parallel.apply_and_write(cluster, f, "x", featurename, outputdir,
                              eff_shape, eff_bbox)
-    sys.exit(0)

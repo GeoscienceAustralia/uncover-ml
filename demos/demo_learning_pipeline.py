@@ -9,7 +9,18 @@ import json
 from os import path, mkdir
 from glob import glob
 
-from runcommands import try_run, try_run_checkfile, PipeLineFailure
+from click import Context
+
+from uncoverml.scripts.maketargets import main as maketargets
+from uncoverml.scripts.cvindexer import main as cvindexer
+from uncoverml.scripts.extractfeats import main as extractfeats
+from uncoverml.scripts.composefeats import main as composefeats
+from uncoverml.scripts.learnmodel import main as learnmodel
+from uncoverml.scripts.predict import main as predict
+from uncoverml.scripts.validatemodel import main as validatemodel
+
+# from runcommands import try_run, try_run_checkfile, PipeLineFailure
+from runcommands import PipeLineFailure
 
 logging.basicConfig(level=logging.INFO)
 
@@ -147,11 +158,13 @@ def main():
         log.info("Made processed dir")
 
     # Make pointspec and hdf5 for targets
-    cmd = ["maketargets", path.join(data_dir, target_file), target_var,
-           "--outfile", target_hdf]
-
-    if try_run_checkfile(cmd, target_hdf):
-        log.info("Made targets")
+    if not path.exists(target_hdf):
+        ctx = Context(maketargets)
+        ctx.forward(maketargets,
+                    shapefile=path.join(data_dir, target_file),
+                    fieldname=target_var,
+                    outfile=target_hdf
+                    )
 
     # Extract feats for training
     # tifs = glob(path.join(data_dir, "*.tif"))
@@ -161,73 +174,109 @@ def main():
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
     # Generic extract feats command
-    cmd = ["extractfeats", None, None, "--outputdir", proc_dir,
-           "--patchsize", str(patchsize),
-           "--targets", target_hdf]
-    if onehot:
-        cmd.append('--onehot')
+    ctx = Context(extractfeats)
 
     # Find all of the tifs and extract features
-    # ffiles = []
     for tif in tifs:
-        msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
-        cmd[1], cmd[2] = name, tif
-        # ffile = path.join(proc_dir, name + ".part30of31.hdf5")
-        # try_run_checkfile(cmd, ffile, msg)
-        try_run(cmd)
+        hdffeats = glob(path.join(proc_dir, name + '*.hdf5'))
+        if len(hdffeats) == 0:
+            log.info("Processing {}.".format(path.basename(tif)))
+            ctx.forward(extractfeats,
+                        geotiff=tif,
+                        name=name,
+                        outputdir=proc_dir,
+                        targets=target_hdf,
+                        onehot=onehot,
+                        patchsize=patchsize
+                        )
 
     efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
               if not (path.basename(f).startswith(compos_file)
                       or path.basename(f).startswith(predict_file))]
 
     # Make a crossval file if it doesn't exist
-    cmd = ["cvindexer", "--folds", str(folds), target_hdf, cv_file]
-    try_run_checkfile(cmd, cv_file, "Making cross-val file")
+    if not path.exists(cv_file):
+        ctx = Context(cvindexer)
+        ctx.forward(cvindexer,
+                    targetfile=target_hdf,
+                    outfile=cv_file,
+                    folds=folds
+                    )
 
     # Compose individual image features into single feature vector
-    cmd = ["composefeats"]
-    if impute:
-        cmd.append('--impute')
-    if standardise:
-        cmd += ['--centre', '--standardise']
-    if whiten:
-        cmd += ['--whiten', '--featurefraction', str(pca_frac)]
-    cmd += ['--outputdir', proc_dir, compos_file] + efiles
-
-    try_run(cmd)
+    log.info("Composing features...")
+    ctx = Context(composefeats)
+    ctx.forward(composefeats,
+                featurename=compos_file,
+                outputdir=proc_dir,
+                impute=impute,
+                centre=standardise or whiten,
+                standardise=standardise,
+                whiten=whiten,
+                featurefraction=pca_frac,
+                files=efiles
+                )
 
     feat_files = glob(path.join(proc_dir, compos_file + ".part*.hdf5"))
 
+    # import IPython; IPython.embed()
     for alg, args in algdict.items():
 
         # Train the model
-        cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
-               "0", "--verbosity", "INFO", "--algorithm", alg,
-               "--algopts", json.dumps(args)] \
-            + feat_files + [target_hdf]
+        # cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
+        #        "0", "--verbosity", "INFO", "--algorithm", alg,
+        #        "--algopts", json.dumps(args)] \
+        #     + feat_files + [target_hdf]
+
+        # try_run(cmd)
 
         log.info("Training model {}.".format(alg))
-        try_run(cmd)
+        ctx = Context(learnmodel)
+        ctx.forward(learnmodel,
+                    outputdir=proc_dir,
+                    cvindex=(cv_file, 0),
+                    algorithm=alg,
+                    algopts=json.dumps(args),
+                    targets=target_hdf,
+                    files=feat_files
+                    )
 
         # Test the model
-        alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        cmd = ["predict", "--outputdir", proc_dir, "--predictname",
-               predict_file + "_" + alg, alg_file] + feat_files
+        # alg_file = path.join(proc_dir, "{}.pk".format(alg))
+        # cmd = ["predict", "--outputdir", proc_dir, "--predictname",
+        #        predict_file + "_" + alg, alg_file] + feat_files
+
+        # try_run(cmd)
 
         log.info("Predicting targets for {}.".format(alg))
-        try_run(cmd)
+        alg_file = path.join(proc_dir, "{}.pk".format(alg))
+        ctx.Context(predict)
+        ctx.forward(predict,
+                    outputdir=proc_dir,
+                    predictname=predict_file + "_" + alg,
+                    model=alg_file,
+                    files=feat_files
+                    )
 
         pred_files = glob(path.join(proc_dir, predict_file + "_" + alg +
                                     ".part*.hdf5"))
 
         # Report score
-        cmd = ['validatemodel', '--outfile',
-               path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
-               target_hdf] + pred_files
+        # cmd = ['validatemodel', '--outfile',
+        #        path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
+        #        target_hdf] + pred_files
+
+        # try_run(cmd)
 
         log.info("Validating {}.".format(alg))
-        try_run(cmd)
+        ctx = Context(validatemodel)
+        ctx.forward(validatemodel,
+                    outfile=path.join(proc_dir, valoutput + "_" + alg),
+                    cvindex=(cv_file, 0),
+                    targets=target_hdf,
+                    prediction_files=pred_files
+                    )
 
     log.info("Finished!")
 
