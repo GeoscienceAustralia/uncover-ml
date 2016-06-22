@@ -75,22 +75,24 @@ def call_with_ipympi(fn):
 
     #  Start the ipengines on cpus 2 and up
     if rank >= 2:
-        log.info("Starting ipengine {}".format(rank-2))
+        log.info("Starting ipengine {}".format(rank - 2))
         thread = run_ipengine()
 
     # Node 1 waits until all engines are up
-    if rank == 0:
-        waitfor_n_engines(n_engines)
-        log.info("Root node reports {} engines ready".format(n_engines))
-        log.info("Root node starting main command")
-        result = fn()
-        log.info("Root node has completed main command")
+    try:
+        if rank == 0:
+            waitfor_n_engines(n_engines)
+            log.info("Root node reports {} engines ready".format(n_engines))
+            log.info("Root node starting main command")
+            result = fn()
+            log.info("Root node has completed main command")
+    finally:
+        # make everyone wait for the main task to finish on task zero
+        sync_to_node(0, comm)
+        if rank != 0:
+            thread.terminate()
+        log.info("Node exited successfully")
 
-    # make everyone wait for the main task to finish on task zero
-    sync_to_node(0, comm)
-    if rank != 0:
-        thread.terminate()
-    log.info("Node exited successfully")
     return result
 
 
@@ -168,9 +170,8 @@ def run_with_check(command_list, output_string,
 
     """
     # note bufsize=0 is critical, lines sometimes get missed otherwise
-    p = subprocess.Popen(command_list, stdin=None,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         shell=False, bufsize=0)
+    p = subprocess.Popen(command_list, stdin=None, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, shell=False, bufsize=0)
 
     poll_obj = select.poll()
     poll_obj.register(p.stdout, select.POLLIN)
@@ -187,6 +188,8 @@ def run_with_check(command_list, output_string,
                         command_list))
                     is_ready.set()
                     ready = True
+        time.sleep(0.01)
+
     p.terminate()
     log.debug("subprocess successfully terminated")
 

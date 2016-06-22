@@ -459,39 +459,38 @@ def output_features(feature_vector, outfile, featname="features",
         bbox: ndarray, optional
             The bounding box of the original data for reproducing an image
     """
-    h5file = hdf.open_file(outfile, mode='w')
+    with hdf.open_file(outfile, mode='w') as h5file:
 
-    # Make sure we are writing "long" arrays
-    if feature_vector.ndim < 2:
-        feature_vector = feature_vector[:, np.newaxis]
-    array_shape = feature_vector.shape
+        # Make sure we are writing "long" arrays
+        if feature_vector.ndim < 2:
+            feature_vector = feature_vector[:, np.newaxis]
+        array_shape = feature_vector.shape
 
-    filters = hdf.Filters(complevel=5, complib='zlib')
+        filters = hdf.Filters(complevel=5, complib='zlib')
 
-    if np.ma.isMaskedArray(feature_vector):
-        fobj = feature_vector.data
-        if np.ma.count_masked(feature_vector) == 0:
-            fmask = np.zeros(array_shape, dtype=bool)
+        if np.ma.isMaskedArray(feature_vector):
+            fobj = feature_vector.data
+            if np.ma.count_masked(feature_vector) == 0:
+                fmask = np.zeros(array_shape, dtype=bool)
+            else:
+                fmask = feature_vector.mask
         else:
-            fmask = feature_vector.mask
-    else:
-        fobj = feature_vector
-        fmask = np.zeros(array_shape, dtype=bool)
+            fobj = feature_vector
+            fmask = np.zeros(array_shape, dtype=bool)
 
-    h5file.create_carray("/", featname, filters=filters,
-                         atom=hdf.Float64Atom(), shape=array_shape, obj=fobj)
-    h5file.create_carray("/", "mask", filters=filters,
-                         atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
+        h5file.create_carray("/", featname, filters=filters,
+                             atom=hdf.Float64Atom(), shape=array_shape,
+                             obj=fobj)
 
-    if shape is not None:
-        h5file.getNode('/' + featname).attrs.shape = shape
-        h5file.root.mask.attrs.shape = shape
-    if bbox is not None:
-        h5file.getNode('/' + featname).attrs.bbox = bbox
-        h5file.root.mask.attrs.bbox = bbox
+        h5file.create_carray("/", "mask", filters=filters,
+                             atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
 
-    h5file.flush()
-    h5file.close()
+        if shape is not None:
+            h5file.getNode('/' + featname).attrs.shape = shape
+            h5file.root.mask.attrs.shape = shape
+        if bbox is not None:
+            h5file.getNode('/' + featname).attrs.bbox = bbox
+            h5file.root.mask.attrs.bbox = bbox
 
     start = time.time()
     file_exists = False

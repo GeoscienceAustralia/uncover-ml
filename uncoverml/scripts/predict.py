@@ -13,7 +13,6 @@ import numpy as np
 from scipy.stats import norm
 from functools import partial
 
-import uncoverml.defaults as df
 from uncoverml import geoio, parallel
 from uncoverml.models import apply_masked
 
@@ -60,8 +59,7 @@ def predict(data, model, interval):
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     """
-    Predict the target values for query data from a machine learning
-    algorithm.
+    Predict the target values for query data from a machine learning algorithm.
     """
 
     # build full filenames

@@ -58,9 +58,15 @@ def apply_and_write(cluster, f, data_var_name, feature_name,
 
     new_cluster.push({"f": f, "featurename": feature_name, "outputdir":
                       outputdir, "shape": shape, "bbox": bbox})
+
     log.info("Applying final transform and writing output files")
     new_cluster.execute("f_x = f({})".format(data_var_name))
     new_cluster.execute("outfile = geoio.output_filename(featurename, "
                         "chunk_index, n_chunks, outputdir)")
     new_cluster.execute("write_ok = geoio.output_features(f_x, outfile, "
                         "shape=shape, bbox=bbox)")
+
+    # Check write status
+    file_written = new_cluster['write_ok']
+    if not all(file_written):
+        raise RuntimeError("Apply could not write all files!")

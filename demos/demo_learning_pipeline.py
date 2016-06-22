@@ -11,6 +11,7 @@ from glob import glob
 
 from click import Context
 
+from uncoverml import ipympi
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
@@ -22,7 +23,7 @@ from uncoverml.scripts.validatemodel import main as validatemodel
 # from runcommands import try_run, try_run_checkfile, PipeLineFailure
 from runcommands import PipeLineFailure
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 # NOTE: INSTRUCTIONS ----------------------------------------------------------
@@ -146,11 +147,16 @@ predict_file = "prediction_file"
 # Output suffix files for validation metrics
 valoutput = "validation"
 
+# Logging
+log = logging.getLogger(__name__)
+
 
 # NOTE: Do not change the following unless you know what you are doing
-def main():
+def run_pipeline():
 
-    log = logging.getLogger(__name__)
+    log.info("zzzzz")
+    import time
+    time.sleep(20)
 
     # Make processed dir if it does not exist
     if not path.exists(proc_dir):
@@ -220,7 +226,6 @@ def main():
 
     feat_files = glob(path.join(proc_dir, compos_file + ".part*.hdf5"))
 
-    # import IPython; IPython.embed()
     for alg, args in algdict.items():
 
         # Train the model
@@ -251,7 +256,9 @@ def main():
 
         log.info("Predicting targets for {}.".format(alg))
         alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        ctx.Context(predict)
+        # import IPython; IPython.embed()
+
+        ctx = Context(predict)
         ctx.forward(predict,
                     outputdir=proc_dir,
                     predictname=predict_file + "_" + alg,
@@ -280,6 +287,20 @@ def main():
 
     log.info("Finished!")
 
+
+def main():
+
+    logging.basicConfig(level=logging.INFO)
+    # c = ipympi.run_ipcontroller()
+    # e = [ipympi.run_ipengine() for i in range(4)]
+    # ipympi.waitfor_n_engines(n=4)
+
+    # run_pipeline()
+    # c.terminate()
+    # for i in e:
+    #     i.terminate()
+
+    ipympi.call_with_ipympi(run_pipeline)
 
 if __name__ == "__main__":
     main()
