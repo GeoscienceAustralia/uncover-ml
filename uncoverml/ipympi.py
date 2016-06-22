@@ -5,19 +5,10 @@ import time
 import subprocess
 import ipyparallel as ipp
 
-import numpy as np
 from mpi4py import MPI
 
 # Globals from MPI and logging
 log = logging.getLogger(__name__)
-
-
-def sync_to_node(rank, comm):
-    """
-    All nodes in mpi cluster wait for node with rank
-    """
-    flag = np.zeros(1)
-    flag = comm.bcast(flag, root=rank)
 
 
 def waitfor_n_engines(n):
@@ -70,7 +61,8 @@ def call_with_ipympi(fn):
         log.debug("ipcontroller ready")
 
     #  Everyone wait until ip controller is up
-    sync_to_node(1, comm)
+    comm.Barrier()
+    # sync_to_node(1, comm)
     log.debug("All nodes sychronised after ipcontroller startup")
 
     #  Start the ipengines on cpus 2 and up
@@ -88,7 +80,8 @@ def call_with_ipympi(fn):
             log.info("Root node has completed main command")
     finally:
         # make everyone wait for the main task to finish on task zero
-        sync_to_node(0, comm)
+        comm.Barrier()
+        # sync_to_node(0, comm)
         if rank != 0:
             thread.terminate()
         log.info("Node exited successfully")
