@@ -490,6 +490,7 @@ def output_features(feature_vector, outfile, featname="features",
         h5file.getNode('/' + featname).attrs.bbox = bbox
         h5file.root.mask.attrs.bbox = bbox
 
+    h5file.flush()
     h5file.close()
 
     start = time.time()
