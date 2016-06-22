@@ -78,6 +78,7 @@ target_hdf = path.join(proc_dir, "{}_{}.hdf5"
 cv_file_name = "soilcrossvalindices.hdf5"
 # cv_file_name = "drillhole_xvalindices.hdf5"
 cv_file = path.join(proc_dir, cv_file_name)
+# cv_file = path.join(data_dir, cv_file_name)
 folds = 5
 
 
@@ -123,10 +124,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    # "svr": {},
+    "svr": {},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 500},
+    # "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -154,10 +155,6 @@ log = logging.getLogger(__name__)
 # NOTE: Do not change the following unless you know what you are doing
 def run_pipeline():
 
-    log.info("zzzzz")
-    import time
-    time.sleep(20)
-
     # Make processed dir if it does not exist
     if not path.exists(proc_dir):
         mkdir(proc_dir)
@@ -173,9 +170,7 @@ def run_pipeline():
                     )
 
     # Extract feats for training
-    # tifs = glob(path.join(data_dir, "*.tif"))
-    tifs = [path.join(data_dir, 'modis10_te.tif'),
-            path.join(data_dir, 'modis7_te.tif')]
+    tifs = glob(path.join(data_dir, "*.tif"))
     if len(tifs) == 0:
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
@@ -229,13 +224,6 @@ def run_pipeline():
     for alg, args in algdict.items():
 
         # Train the model
-        # cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
-        #        "0", "--verbosity", "INFO", "--algorithm", alg,
-        #        "--algopts", json.dumps(args)] \
-        #     + feat_files + [target_hdf]
-
-        # try_run(cmd)
-
         log.info("Training model {}.".format(alg))
         ctx = Context(learnmodel)
         ctx.forward(learnmodel,
@@ -248,15 +236,8 @@ def run_pipeline():
                     )
 
         # Test the model
-        # alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        # cmd = ["predict", "--outputdir", proc_dir, "--predictname",
-        #        predict_file + "_" + alg, alg_file] + feat_files
-
-        # try_run(cmd)
-
         log.info("Predicting targets for {}.".format(alg))
         alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        # import IPython; IPython.embed()
 
         ctx = Context(predict)
         ctx.forward(predict,
@@ -270,12 +251,6 @@ def run_pipeline():
                                     ".part*.hdf5"))
 
         # Report score
-        # cmd = ['validatemodel', '--outfile',
-        #        path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
-        #        target_hdf] + pred_files
-
-        # try_run(cmd)
-
         log.info("Validating {}.".format(alg))
         ctx = Context(validatemodel)
         ctx.forward(validatemodel,
@@ -291,6 +266,8 @@ def run_pipeline():
 def main():
 
     logging.basicConfig(level=logging.INFO)
+    # logging.basicConfig(level=logging.DEBUG)
+
     # c = ipympi.run_ipcontroller()
     # e = [ipympi.run_ipengine() for i in range(4)]
     # ipympi.waitfor_n_engines(n=4)

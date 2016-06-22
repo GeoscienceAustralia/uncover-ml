@@ -96,3 +96,7 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     f = partial(predict, model=model, interval=quantiles)
     parallel.apply_and_write(cluster, f, "x", predictname, outputdir,
                              eff_shape, eff_bbox)
+
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()

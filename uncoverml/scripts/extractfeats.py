@@ -174,3 +174,7 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
 
     log.info("Output vector has length {}, dimensionality {}".format(
         full_image.resolution[0] * full_image.resolution[1], total_dims))
+
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()

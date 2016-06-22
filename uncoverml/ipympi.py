@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 def barrier(comm):
     req = comm.Ibarrier()
-    while not req:
+    while not req.Get_status():
         time.sleep(1)
 
 
@@ -21,6 +21,8 @@ def waitfor_n_engines(n):
     client = ipp.Client()
     while len(client) < n:
         time.sleep(0.1)
+
+    client.close()
 
 
 def call_with_ipympi(fn):
@@ -67,7 +69,7 @@ def call_with_ipympi(fn):
         log.debug("ipcontroller ready")
 
     #  Everyone wait until ip controller is up
-    barrier()
+    barrier(comm)
     # sync_to_node(1, comm)
     log.debug("All nodes sychronised after ipcontroller startup")
 
@@ -86,7 +88,7 @@ def call_with_ipympi(fn):
             log.info("Root node has completed main command")
     finally:
         # make everyone wait for the main task to finish on task zero
-        barrier()
+        barrier(comm)
         # sync_to_node(0, comm)
         if rank != 0:
             thread.terminate()

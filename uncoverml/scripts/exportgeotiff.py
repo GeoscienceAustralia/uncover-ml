@@ -140,4 +140,6 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
                 f.write(data, window=window, indexes=index_list)
                 ystart = yend
 
-    sys.exit(0)
+    # Make sure client cleans up
+    cluster.client.purge_everything()
+    cluster.client.close()

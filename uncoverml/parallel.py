@@ -45,13 +45,21 @@ def apply_and_write(cluster, f, data_var_name, feature_name,
     log.info("Indices with data: {}".format(indices_with_data))
 
     # Filter out no-data nodes
-    for new_index, old_index in enumerate(indices_with_data):
-        cluster.client[old_index].execute("chunk_index = {}".format(new_index))
-        log.info("Assigning node {} new id {}".format(old_index, new_index))
+    if len(indices_with_data) < len(cluster):
+        for new_index, old_index in enumerate(indices_with_data):
 
-    new_cluster = cluster.client[indices_with_data]
+            cluster.client[old_index].execute("chunk_index = {}"
+                                              .format(new_index))
+
+            log.debug("Assigning node {} new id {}"
+                      .format(old_index, new_index))
+
+        new_cluster = cluster.client[indices_with_data]
+        log.info("New cluster size: {}".format(len(new_cluster)))
+    else:
+        new_cluster = cluster
+
     new_cluster.execute("n_chunks = {}".format(len(indices_with_data)))
-    log.info("New cluster size: {}".format(len(new_cluster)))
 
     log.info("Applying transform across nodes")
     # Apply the transformation function
