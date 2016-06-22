@@ -82,7 +82,7 @@ def files_by_chunk(filenames):
 
     split_total = [k.rsplit('of', 1) for k in basenames]
     minus_total = [k[0] for k in split_total]
-    indices = [int(k.rsplit('.part', 1)[1]) for k in minus_total]
+    indices = [int(k.rsplit('.part', 1)[1]) - 1 for k in minus_total]
 
     d = {i: [] for i in set(indices)}
     for i, f in zip(indices, sorted_filenames):

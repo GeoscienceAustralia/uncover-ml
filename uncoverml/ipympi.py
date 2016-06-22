@@ -3,6 +3,7 @@ import select
 import threading
 import time
 import subprocess
+import ipyparallel as ipp
 
 import numpy as np
 from mpi4py import MPI
@@ -17,6 +18,12 @@ def sync_to_node(rank, comm):
     """
     flag = np.zeros(1)
     flag = comm.bcast(flag, root=rank)
+
+
+def waitfor_n_engines(n):
+    client = ipp.Client()
+    while len(client) < n:
+        time.sleep(0.1)
 
 
 def call_with_ipympi(fn):
@@ -70,21 +77,11 @@ def call_with_ipympi(fn):
     if rank >= 2:
         log.info("Starting ipengine {}".format(rank-2))
         thread = run_ipengine()
-        ipengine_started = np.ones(1)
-        comm.Send(ipengine_started, dest=0)
-        log.debug("Engine {} has announced startup".format(rank-2))
 
     # Node 1 waits until all engines are up
     if rank == 0:
-        num_engines_started = 0
-        while num_engines_started < n_engines:
-            started = np.zeros(1)
-            comm.Recv(started, source=MPI.ANY_SOURCE)
-            num_engines_started += 1
-            log.info("Root node reports {} of {} engines ready".format(
-                     num_engines_started, n_engines))
-
-        # All engines ready
+        waitfor_n_engines(n_engines)
+        log.info("Root node reports {} engines ready".format(n_engines))
         log.info("Root node starting main command")
         result = fn()
         log.info("Root node has completed main command")
@@ -141,9 +138,13 @@ def run_and_wait(command_list, output_string, timeout=None):
                                       args=(command_list, output_string,
                                             is_ready, is_finished, timeout))
     subproc_thread.start()
-    log.debug("Started subproc, waiting to be ready")
-    is_ready.wait()
-    log.debug("Subproc is ready")
+    log.debug("Started subprocess, waiting to be ready")
+    ready_flagged = is_ready.wait(timeout=timeout)
+    if not ready_flagged:
+        is_finished.set()
+        subproc_thread.join()
+        raise RuntimeError("Timout reached before subprocess ready")
+    log.debug("Subprocess is ready")
     result = ThreadWrapper(subproc_thread, is_finished)
     return result
 
@@ -164,12 +165,7 @@ def run_with_check(command_list, output_string,
     output_string : the string which subprocess outputs to indicate it's ready
     is_ready : threading event to signal when subprocess is ready
     is_finish : threading event on which to listen for shutdown signal
-    timeout: optional integer number of seconds to wait for ready signal
-             (default infinity)
 
-    Raises
-    ------
-    RuntimeError : If the ready string is not found within the timeout
     """
     # note bufsize=0 is critical, lines sometimes get missed otherwise
     p = subprocess.Popen(command_list, stdin=None,
@@ -179,33 +175,20 @@ def run_with_check(command_list, output_string,
     poll_obj = select.poll()
     poll_obj.register(p.stdout, select.POLLIN)
 
-    start_time = time.time()
     ready = False
-    timedout = False
-    done = False
-    while not timedout and not done:
+    while not is_finished.is_set():
         if poll_obj.poll(1):
             line = p.stdout.readline().decode()
-            log.debug(line)
+            if line != "":
+                log.debug(line)
             if not ready:
                 if output_string in line:
                     log.debug("Command {} now has ready status".format(
                         command_list))
                     is_ready.set()
                     ready = True
-
-        if not ready and timeout and time.time() - start_time > timeout:
-            timedout = True
-
-        # check we're not done
-        if is_finished.is_set():
-            done = True
-
     p.terminate()
-    if timedout:
-        raise RuntimeError("Process timed out without string match")
-    else:
-        log.debug("subprocess successfully terminated")
+    log.debug("subprocess successfully terminated")
 
 
 def run_ipcontroller():
@@ -238,28 +221,3 @@ def run_ipengine():
     connected_string = "Completed registration with id"
     proc = run_and_wait(cmd_list, connected_string)
     return proc
-
-
-def main():
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    log_format = ("node{} %(threadName)s %(relativeCreated)6d " +
-                  "%(levelname)s: %(message)s").format(rank)
-    log_level = logging.INFO
-    log_to_files = False
-    if log_to_files:
-        logging.basicConfig(level=log_level,
-                            format=log_format,
-                            filename='ipympi_node{}.log'.format(rank))
-    else:
-        logging.basicConfig(level=log_level,
-                            format=log_format)
-
-    def fn():
-        print("Hello world!")
-        time.sleep(5)
-
-    call_with_ipympi(fn)
-
-if __name__ == "__main__":
-    main()

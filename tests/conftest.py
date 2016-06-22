@@ -1,13 +1,13 @@
 from __future__ import division
 
+import logging
 import pytest
 import numpy as np
 import shapefile as shp
 import rasterio
 from affine import Affine
-import time
-import signal
-import subprocess
+
+from uncoverml import ipympi
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
@@ -108,26 +108,20 @@ def make_multi_patch(request):
 
 
 @pytest.fixture
-def make_ipcluster4(request):
-    return make_ipcluster(request, 4)
-
-
-@pytest.fixture
-def make_ipcluster1(request):
-    return make_ipcluster(request, 1)
-
-
-def make_ipcluster(request, n):
-    proc = subprocess.Popen(["ipcluster", "start", "--n=" + str(n)])
-    time.sleep(10)
+def make_ipcluster(request):
+    n = 4
+    controller = ipympi.run_ipcontroller()
+    engines = [ipympi.run_ipengine() for k in range(n)]
+    ipympi.waitfor_n_engines(n)
 
     def fin():
-        # Shutdown engines
-        proc.send_signal(signal.SIGINT)
-        proc.wait()
-
+        # Shutdown
+        controller.terminate()
+        for e in engines:
+            e.terminate()
     request.addfinalizer(fin)
-    return proc
+
+    return n
 
 
 @pytest.fixture
@@ -142,7 +136,7 @@ def make_raster():
     pix_y = (y_range[1] - y_range[0]) / res_y
 
     A = Affine(pix_x, 0, x_range[0],
-                   0, -pix_y, y_range[1])
+               0, -pix_y, y_range[1])
 
     lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
     lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
@@ -188,10 +182,10 @@ def make_shp(tmpdir_factory, request):
 
     if request.param == "allchunks":
         output_filenames = ["fpatch.part{}of4.hdf5".format(i)
-                            for i in range(4)]
+                            for i in range(1, 5)]
     else:
         output_filenames = ["fpatch.part{}of2.hdf5".format(i)
-                            for i in range(2)]
+                            for i in range(1, 3)]
 
     # Create grid
     res, x_bound, y_bound, lons, lats, Ao = make_raster()

@@ -69,10 +69,10 @@ def test_cvindexer_shp(make_shp):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_gtiff, make_ipcluster4):
+def test_extractfeats(make_gtiff, make_ipcluster):
 
     ftif = make_gtiff
-    chunks = 4
+    chunks = make_ipcluster
     outdir = os.path.dirname(ftif)
     name = "fchunk_worker"
 
@@ -85,7 +85,7 @@ def test_extractfeats(make_gtiff, make_ipcluster4):
 
     ffiles = []
     exists = []
-    for i in range(chunks):
+    for i in range(1, chunks+1):
         fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(
             name, i, chunks))
         exists.append(os.path.exists(fname))
@@ -110,7 +110,7 @@ def test_extractfeats(make_gtiff, make_ipcluster4):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster4):
+def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster):
     ftif = make_gtiff
     fshp, hdf5_filenames = make_shp
     outdir = os.path.dirname(fshp)

@@ -1,7 +1,7 @@
 from uncoverml import parallel
 
 
-def test_direct_view(make_ipcluster4):
+def test_direct_view(make_ipcluster):
     cluster = parallel.direct_view(profile=None)
     cluster.execute("import sys; mods = set(sys.modules.keys())")
     for i in range(len(cluster)):
