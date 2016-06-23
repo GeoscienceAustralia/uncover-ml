@@ -180,7 +180,7 @@ def run_pipeline():
     log.info("Exporting geoftiffs...")
     ctx = Context(exportgeotiff)
     ctx.forward(exportgeotiff,
-                name=gtiffname,
+                name=gtiffname + "_" + alg,
                 outputdir=pred_dir,
                 rgb=makergbtif,
                 files=pfiles
