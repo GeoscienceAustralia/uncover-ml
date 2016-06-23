@@ -20,19 +20,19 @@ from uncoverml.scripts.learnmodel import main as learnmodel
 from uncoverml.scripts.predict import main as predict
 from uncoverml.scripts.validatemodel import main as validatemodel
 
-# from runcommands import try_run, try_run_checkfile, PipeLineFailure
 from runcommands import PipeLineFailure
 
-# logging.basicConfig(level=logging.INFO)
+# Logging
+log = logging.getLogger(__name__)
 
 
 # NOTE: INSTRUCTIONS ----------------------------------------------------------
-#   1) Make sure you have an ipcluster working running, i.e.
-#       $ ipcluster start --n=1
-#   2) Make sure you have all of the data and cross-val file in the directory
-#      structure specified below (or change it to suit your purposes)
-#   3) run this script, e.g.
-#       $ ./demo_learning_pipline.py
+#   1) Make sure you have open MPI install (i.e. mpirun)
+#   2) Make sure you have all of the data in the directory structure specified
+#      below (or change it to suit your purposes)
+#   3) run this script using mpirun with n + 2 workers, e.g.
+#       $ mpirun -n 6 demo_learning_pipline.py
+#      for 4 workers (we need two workers for coordination)
 # -----------------------------------------------------------------------------
 
 
@@ -119,12 +119,12 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
+    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 500},
@@ -147,9 +147,6 @@ predict_file = "prediction_file"
 
 # Output suffix files for validation metrics
 valoutput = "validation"
-
-# Logging
-log = logging.getLogger(__name__)
 
 
 # NOTE: Do not change the following unless you know what you are doing

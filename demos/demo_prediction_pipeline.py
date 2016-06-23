@@ -9,22 +9,29 @@ import logging
 from os import path, mkdir
 from glob import glob
 
-from runcommands import try_run, try_run_checkfile, PipeLineFailure
+from click import Context
 
-logging.basicConfig(level=logging.INFO)
+from uncoverml import ipympi
+from uncoverml.scripts.extractfeats import main as extractfeats
+from uncoverml.scripts.composefeats import main as composefeats
+from uncoverml.scripts.predict import main as predict
+from uncoverml.scripts.exportgeotiff import main as exportgeotiff
+
+from runcommands import PipeLineFailure
+
+
+log = logging.getLogger(__name__)
 
 
 # NOTE: INSTRUCTIONS ----------------------------------------------------------
-#   1) Make sure you have an ipcluster working running, i.e.
-#       $ ipcluster start --n=4
-#   2) Make sure you have all of the data and cross-val file in the directory
-#      structure specified below (or change it to suit your purposes)
-#   3) Make sure you have learned a model by running
-#       $ ./demo_learning_pipeline.py
-#   4) run this script, e.g.
-#       $ ./demo_prediction_pipeline.py
+#   1) Make sure you have open MPI install (i.e. mpirun)
+#   2) Make sure you have all of the data in the directory structure specified
+#      below (or change it to suit your purposes)
+#   3) Make sure you have a learned model by running demo_learning_pipeline.py
+#   4) run this script using mpirun with n + 2 workers, e.g.
+#       $ mpirun -n 6 demo_prediction_pipline.py
+#      for 4 workers (we need two workers for coordination)
 # -----------------------------------------------------------------------------
-
 
 #
 # Path Settings
@@ -63,7 +70,7 @@ algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Prediction file names (prefix)
-predict_file = "prediction_file"
+predict_file = "prediction"
 
 # Quantiles
 quantiles = 0.95
@@ -82,9 +89,7 @@ makergbtif = True
 
 
 # NOTE: Do not change the following unless you know what you are doing
-def main():
-
-    log = logging.getLogger(__name__)
+def run_pipeline():
 
     if not path.exists(proc_dir):
         log.fatal("Please run demo_learning_pipline.py first!")
@@ -109,18 +114,21 @@ def main():
             sys.exit(-1)
         settings.append(setting)
 
-    # Get suffix of processed file for checking completion of commands
-    endsuf = ".part0.hdf5"  # FIXME make a more robust way to check this
-
     # Now Extact features from each tif
-    cmd = ["extractfeats", None, None, "--outputdir", pred_dir,
-           "--settings", None]
+    ctx = Context(extractfeats)
+
+    # Find all of the tifs and extract features
     for tif, setting in zip(tifs, settings):
-        msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
-        cmd[1], cmd[2], cmd[-1] = name, tif, setting
-        ffile = path.join(pred_dir, name + endsuf)
-        try_run_checkfile(cmd, ffile, msg)
+        hdffeats = glob(path.join(pred_dir, name + '*.hdf5'))
+        if len(hdffeats) == 0:
+            log.info("Processing {}.".format(path.basename(tif)))
+            ctx.forward(extractfeats,
+                        geotiff=tif,
+                        name=name,
+                        outputdir=pred_dir,
+                        settings=setting
+                        )
 
     # Compose individual image features into single feature vector
     compos_settings = path.join(proc_dir, compos_file + "_settings.bin")
@@ -128,38 +136,63 @@ def main():
         log.fatal("Settings file for composite features does not exist!")
         sys.exit(-1)
 
-    efiles = [f for f in glob(path.join(pred_dir, "*.hdf5"))
-              if not path.basename(f).startswith(compos_file)]
-    cmd = ["composefeats", "--outputdir", pred_dir, "--settings",
-           compos_settings, compos_file] + efiles
+    efiles = [f for f in glob(path.join(pred_dir, "*.part*.hdf5"))
+              if not (path.basename(f).startswith(compos_file)
+                      or path.basename(f).startswith(predict_file))]
 
-    ffile = path.join(pred_dir, compos_file + endsuf)
-    try_run_checkfile(cmd, ffile, "Composing features...")
+    cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
+    if len(cfiles) == 0:
+        log.info("Composing features...")
+        ctx = Context(composefeats)
+        ctx.forward(composefeats,
+                    featurename=compos_file,
+                    outputdir=pred_dir,
+                    files=efiles,
+                    settings=compos_settings
+                    )
+
+        cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
     # Now predict on the composite features!
     alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
     if not path.exists(alg_file):
         log.fatal("Learned algorithm file {} missing!".format(alg_file))
         sys.exit(-1)
-    cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
-    cmd = ["predict", "--outputdir", pred_dir,
-           "--predictname", predict_file, "--quantiles", str(quantiles)]
-    cmd += [alg_file] + cfiles
+    alg = path.splitext(path.basename(alg_file))[0]
+    predict_alg_file = predict_file + '_' + alg
 
-    pfile = path.join(pred_dir, predict_file + endsuf)
-    try_run_checkfile(cmd, pfile, "Predicting targets...")
+    pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
+    if len(pfiles) == 0:
+        log.info("Predicting targets...")
+        ctx = Context(predict)
+        ctx.forward(predict,
+                    outputdir=pred_dir,
+                    predictname=predict_alg_file,
+                    model=alg_file,
+                    quantiles=quantiles,
+                    files=cfiles
+                    )
 
-    # General export command
-    cmd = ["exportgeotiff", gtiffname, "--outputdir", pred_dir]
-    if makergbtif:
-        cmd += ["--rgb"]
+        pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
 
     # Output a Geotiff of the predictions
-    pfiles = glob(path.join(pred_dir, predict_file + "*.hdf5"))
-    cmdp = cmd + pfiles
-    try_run(cmdp)
+    log.info("Exporting geoftiffs...")
+    ctx = Context(exportgeotiff)
+    ctx.forward(exportgeotiff,
+                name=gtiffname,
+                outputdir=pred_dir,
+                rgb=makergbtif,
+                files=pfiles
+                )
 
+    log.info("Done!")
+
+
+def main():
+
+    logging.basicConfig(level=logging.INFO)
+    ipympi.call_with_ipympi(run_pipeline)
 
 if __name__ == "__main__":
     main()
