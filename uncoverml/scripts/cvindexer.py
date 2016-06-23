@@ -30,7 +30,7 @@ def main(targetfile, outfile, folds):
     # Try to read in shapefile or hdf5
     ext = os.path.splitext(targetfile)[-1]
     if ext == ".hdf5":
-        lonlat, _, _ = validation.input_targets(targetfile)
+        lonlat, _ = validation.input_targets(targetfile)
     else:
         log.fatal("Invalid file type, {}, need *.hdf5".format(ext))
         sys.exit(-1)

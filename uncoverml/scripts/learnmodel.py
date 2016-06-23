@@ -64,8 +64,7 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
         args = {}
 
     # Load targets file
-    _, y, target_indices = input_targets(targets)
-    y = y[target_indices]
+    _, y = input_targets(targets)
 
     # Read ALL the features in here, and learn on a single machine
     data_vectors = [geoio.load_and_cat(filename_dict[i])
@@ -75,8 +74,6 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
     # Optionally subset the data for cross validation
     if cvindex[0] is not None:
         cv_ind = input_cvindex(cvindex[0])
-        #  permute the cv indices as well
-        cv_ind = cv_ind[target_indices]
         y = y[cv_ind != cvindex[1]]
         X = X[cv_ind != cvindex[1]]
 

@@ -138,18 +138,8 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
         #  we need full path for targets for the workers
         targets = os.path.abspath(targets)
         cluster.push({"targets": targets})
-
-        # debug
-        # from uncoverml import patch
-        # image = geoio.Image(full_filename, 0, chunks, patchsize)
-        # x, indices = patch.patches_at_target(image, patchsize, targets)
-
-        cluster.execute("x, indices = patch.patches_at_target(image, "
+        cluster.execute("x = patch.patches_at_target(image, "
                         "patchsize, targets)")
-        all_indices = np.concatenate(cluster['indices'],
-                                     axis=0).astype(int)
-        geoio.writeback_target_indices(all_indices, targets)
-
     else:
         cluster.execute("x = patch.all_patches(image, patchsize)")
 

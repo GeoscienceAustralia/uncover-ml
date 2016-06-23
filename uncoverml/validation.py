@@ -4,7 +4,7 @@ from __future__ import division
 
 import numpy as np
 
-from uncoverml.geoio import points_from_hdf, points_to_hdf, indices_from_hdf
+from uncoverml.geoio import points_from_hdf, points_to_hdf
 
 
 #
@@ -26,15 +26,14 @@ def input_cvindex(cvindex_file, return_lonlat=False):
 
 def output_targets(target, lonlat, outfile):
 
-    points_to_hdf(lonlat, outfile, "targets", target)
+    points_to_hdf(lonlat, outfile, "targets_sorted", target)
 
 
 def input_targets(target_file):
 
-    lonlat, targets = points_from_hdf(target_file, "targets")
-    target_indices = indices_from_hdf(target_file)
+    lonlat, targets = points_from_hdf(target_file, "targets_sorted")
 
-    result = lonlat, targets.flatten(), target_indices
+    result = lonlat, targets.flatten()
     return result
 
 

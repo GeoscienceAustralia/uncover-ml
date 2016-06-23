@@ -80,12 +80,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
 
     # Read cv index and targets
     cvind = input_cvindex(cvindex[0])
-
-    _, Y, target_indices = input_targets(targets)
-
-    # Permute everything by target indices
-    Y = Y[target_indices]
-    cvind = cvind[target_indices]
+    _, Y = input_targets(targets)
 
     s_ind = np.where(cvind == cvindex[1])[0]
     t_ind = np.where(cvind != cvindex[1])[0]

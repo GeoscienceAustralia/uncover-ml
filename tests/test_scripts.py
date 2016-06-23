@@ -26,7 +26,7 @@ def test_make_targets(make_shp):
     assert os.path.exists(fhdf5)
 
     with tables.open_file(fhdf5, mode='r') as f:
-        lon = f.root.targets.read()
+        lon = f.root.targets_sorted.read()
         Longitude = f.root.Longitude.read().flatten()
 
     assert np.allclose(lon, Longitude)
@@ -43,10 +43,6 @@ def test_cvindexer_shp(make_shp):
     # Make target file
     ctx = Context(maketargets)
     ctx.forward(maketargets, shapefile=fshp, fieldname=field)
-
-    # Create Indices as if extractfeats had been called with an image
-    permutation = np.arange(10)  # number of features in fixture
-    geoio.writeback_target_indices(permutation, fshp_targets)
 
     # Make crossval with hdf5
     ctx = Context(cvindexer)
@@ -143,8 +139,5 @@ def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster):
     with tables.open_file(fshp_targets, mode='r') as f:
         lonlat = np.hstack((f.root.Longitude.read(),
                             f.root.Latitude.read()))
-        permutation = f.root.Indices.read()
 
-    lonlat_p = lonlat[permutation]
-
-    assert np.allclose(feats, lonlat_p)
+    assert np.allclose(feats, lonlat)
