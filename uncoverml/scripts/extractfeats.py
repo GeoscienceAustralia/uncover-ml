@@ -6,13 +6,15 @@ Extract patch features from a single geotiff.
 import logging
 from functools import partial
 import os
+
 import click as cl
 import click_log as cl_log
+import numpy as np
+import pickle
+
 from uncoverml import geoio
 import uncoverml.defaults as df
 from uncoverml import parallel
-import numpy as np
-import pickle
 
 # logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

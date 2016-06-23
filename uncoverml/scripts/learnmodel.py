@@ -14,7 +14,7 @@ import click_log as cl_log
 import numpy as np
 
 from uncoverml import geoio
-from uncoverml.validation import input_cvindex, input_targets
+# from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import modelmaps, apply_multiple_masked
 
 
@@ -24,8 +24,8 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl_log.simple_verbosity_option()
 @cl_log.init(__name__)
-@cl.option('--cvindex', type=(cl.Path(exists=True), int), default=(None, None),
-           help="Optional cross validation index file and index to hold out.")
+@cl.option('--cvindex', type=int, default=None,
+           help="Optional cross validation index to hold out.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--algopts', type=str, default=None, help="JSON string of optional "
            "parameters to pass to the learning algorithm.")
@@ -64,7 +64,9 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
         args = {}
 
     # Load targets file
-    _, y = input_targets(targets)
+    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
+                                            'FoldIndices_sorted'])
+    y = ydict['targets_sorted']
 
     # Read ALL the features in here, and learn on a single machine
     data_vectors = [geoio.load_and_cat(filename_dict[i])
@@ -72,10 +74,10 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
     X = np.ma.concatenate(data_vectors, axis=0)
 
     # Optionally subset the data for cross validation
-    if cvindex[0] is not None:
-        cv_ind = input_cvindex(cvindex[0])
-        y = y[cv_ind != cvindex[1]]
-        X = X[cv_ind != cvindex[1]]
+    if cvindex is not None:
+        cv_ind = ydict['FoldIndices_sorted']
+        y = y[cv_ind != cvindex]
+        X = X[cv_ind != cvindex]
 
     # Train the model
     mod = modelmaps[algorithm](**args)
