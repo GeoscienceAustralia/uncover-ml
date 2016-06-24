@@ -14,5 +14,5 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 # start the virtualenv
 workon uncoverml
 
-mpirun ipympi $HOME/uncover-ml/demos/demo_learning_pipeline.py
+mpirun $HOME/uncover-ml/demos/demo_learning_pipeline.py
 

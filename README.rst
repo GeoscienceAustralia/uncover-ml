@@ -24,6 +24,7 @@ Before you start, make sure your system has the following packages installed,
 
 - gdal (libgdal-dev)
 - zeromq (libzmq-dev)
+- openmp
 
 To install, simply run ``setup.py``:
 
@@ -41,6 +42,17 @@ Refer to `docs/installation.rst <docs/installation.rst>`_ for advanced
 installation instructions.
 
 Have a look at some of the `demos <demos/>`_ for how to use these tools.
+
+Running IPyParallel
+-------------------
+Spinning up an IPyParallel cluster is now integrated into the demos.
+*DO NOT RUN ipcluster yourself*. Instead, simply run the demos using
+mpirun:
+
+.. code:: console
+
+  $ mpirun -n 4 python demo_learning_pipeline.py
+
 
 Running on NCI
 --------------

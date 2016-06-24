@@ -86,15 +86,13 @@ $ cd ~/uncover-ml/pbs
 $ qsub submit_tests.sh
 ```
 
-### ipympi
+### MPIRun
 
-In the pbs folder there is a helper script called `ipympi`. It takes a single
-argument which is a command to run. It will run 1 copy of that command,
-along with 1 ipyparallel controller and (n-2) ipyparallel engines, where
-n is the total number of processors assigned via mpirun. For example,
-on the command line we could do something like
+MPI is now used to automatically initialise a cluster. To run a demo simply
+do
+
 ```
-mpirun -n 4 ipympi <command>
+mpirun -n 4 <command>
 ```
 
 whilst a PBS job submission might look like this:
@@ -114,7 +112,7 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 # start the virtualenv
 workon uncoverml
 
-mpirun ipympi $HOME/uncover-ml/demos/demo_learning_pipeline.py
+mpirun $HOME/uncover-ml/demos/demo_learning_pipeline.py
 ```
 where in this case mpirun is able to determine the number of available
 cores via PBS.
