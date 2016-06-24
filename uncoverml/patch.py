@@ -148,7 +148,10 @@ def all_patches(image, patchsize):
 def patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
-    lonlats = geoio.points_from_hdf(targets)
+    tdict = geoio.points_from_hdf(targets, ['Longitude_sorted',
+                                            'Latitude_sorted'])
+    lonlats = np.vstack((tdict['Longitude_sorted'],
+                         tdict['Latitude_sorted'])).T
 
     valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
@@ -159,13 +162,16 @@ def patches_at_target(image, patchsize, targets):
         patches = point_patches(data, patchsize, pixels)
         patch_mask = point_patches(mask, patchsize, pixels)
         patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+
+        # FIXME HACK
+        # if patch_array.shape[-1] > 1:
+        #     patch_array = patch_array[:, :, :, :1]
+        # patch_array = np.reshape(valid_lonlats[:, 1],
+        #                          newshape=patch_array.shape)
+        # patch_mask = np.zeros_like(patch_array, dtype=bool)
+        # patch_array = np.ma.array(patch_array, mask=patch_mask)
+
     else:
         patch_array = None
-    #     side = 2 * patchsize + 1
-    #     nbands = image.channels
-    #     patch_data = np.zeros((0, side, side, nbands))
-    #     mask_data = np.ones((0, side, side, nbands))
-    #     patch_array = np.ma.masked_array(data=patch_data, mask=mask_data)
-        valid_indices = np.array([], dtype=np.int)
 
-    return patch_array, valid_indices
+    return patch_array

@@ -16,7 +16,7 @@ from sklearn.metrics import r2_score, explained_variance_score
 from revrand.metrics import smse, mll, msll, lins_ccc
 
 from uncoverml import geoio
-from uncoverml.validation import input_cvindex, input_targets
+# from uncoverml.validation import input_cvindex, input_targets
 from uncoverml.models import apply_multiple_masked
 
 log = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ probscores = ['msll', 'mll']
            help="File name (minus extension) to save output too")
 @cl.option('--plotyy', is_flag=True, help="Show plot of the target vs."
            "prediction, otherwise just save")
-@cl.argument('cvindex', type=(cl.Path(exists=True), int))
+@cl.argument('cvindex', type=int)
 @cl.argument('targets', type=cl.Path(exists=True))
 @cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
 def main(cvindex, targets, prediction_files, plotyy, outfile):
@@ -79,16 +79,15 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
     """
 
     # Read cv index and targets
-    cvind = input_cvindex(cvindex[0])
+    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
+                                            'FoldIndices_sorted'])
+    Y = ydict['targets_sorted']
+    cvind = ydict['FoldIndices_sorted']
+    # cvind = input_cvindex(cvindex[0])
+    # _, Y = input_targets(targets)
 
-    _, Y, target_indices = input_targets(targets)
-
-    # Permute everything by target indices
-    Y = Y[target_indices]
-    cvind = cvind[target_indices]
-
-    s_ind = np.where(cvind == cvindex[1])[0]
-    t_ind = np.where(cvind != cvindex[1])[0]
+    s_ind = np.where(cvind == cvindex)[0]
+    t_ind = np.where(cvind != cvindex)[0]
 
     Yt = Y[t_ind]
     Ys = Y[s_ind]

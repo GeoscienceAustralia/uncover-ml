@@ -131,6 +131,9 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
                            dtype=dtype, count=n_bands, transform=A) as f:
             ystart = 0
             for node in range(nnodes):
+                # Reverse order of concatentation to account for image
+                # conventions
+                node = nnodes - node - 1
                 engine = cluster.client[node]
                 data = engine["images[{}]".format(img_idx)]
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose

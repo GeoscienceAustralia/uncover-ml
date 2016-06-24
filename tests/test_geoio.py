@@ -1,7 +1,6 @@
 import rasterio
 import numpy as np
 import shapefile as shp
-from affine import Affine
 
 from uncoverml import geoio
 
@@ -54,21 +53,6 @@ def test_files_by_chunk():
     assert r == answer
 
 
-# def test_grid_affine(make_shp_gtiff):
-
-#     _, ftif = make_shp_gtiff
-
-#     with rasterio.open(ftif, 'r') as f:
-#         A = f.affine
-#         cA = f.affine * Affine.translation(0.5, 0.5)
-
-#     ispec = geoio.Image(ftif)
-#     assert np.allclose(A, ispec.A)
-#     assert np.allclose(cA, ispec.cA)
-#     assert np.allclose(~A, ~ispec.A)
-#     assert np.allclose(~cA, ~ispec.cA)
-
-
 def test_bounding_box(make_raster):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
@@ -107,8 +91,8 @@ def test_latlon2pix_internals(make_raster, make_gtiff):
     x = [1, 47, 81]
     y = [0, 23, 43]
 
-    xy = ispec.lonlat2pix(np.array([lons[x]+0.5*ispec.pixsize_x,
-                          lats[y]+0.5*ispec.pixsize_y]).T)
+    xy = ispec.lonlat2pix(np.array([lons[x] + 0.5 * ispec.pixsize_x,
+                          lats[y] + 0.5 * ispec.pixsize_y]).T)
 
     assert all(xy[:, 0] == x)
     assert all(xy[:, 1] == y)
@@ -187,19 +171,22 @@ def test_Image_split(make_gtiff):
         chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks).data()
         Ichunks.append(chunk)
 
-    Irecon = np.hstack(Ichunks)
+    # Reverse Ichunks to account for y-decreasing convention in images
+    Irecon = np.hstack(Ichunks[::-1])
 
     assert I.shape == Irecon.shape
     assert np.all(I == Irecon)
 
     Ichunks = []
     for i in range(nchunks):
+        # Reverse Ichunks to account for y-decreasing convention in images
+        i = nchunks - i - 1
         chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks,
                             overlap=overlap).data()
         if i == 0:
-            Ichunks.append(chunk[:, 0:-overlap])
-        elif i == (nchunks - 1):
             Ichunks.append(chunk[:, overlap:])
+        elif i == (nchunks - 1):
+            Ichunks.append(chunk[:, 0:-overlap])
         else:
             Ichunks.append(chunk[:, overlap:-overlap])
 

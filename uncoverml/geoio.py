@@ -115,47 +115,23 @@ def points_from_shp(filename):
     return label_coords
 
 
-def points_from_hdf(filename, fieldname=None):
+def points_from_hdf(filename, fieldnames):
     """
     TODO
     """
-
+    vals = {}
     with hdf.open_file(filename, mode='r') as f:
-        lons = f.root.Longitude.read()
-        lats = f.root.Latitude.read()
-        if fieldname is not None:
-            vals = f.get_node("/" + fieldname).read()
+        for fld in fieldnames:
+            vals[fld] = (f.get_node("/" + fld).read())
 
-    lonlat = np.hstack((lons, lats))
-    return lonlat if fieldname is None else (lonlat, vals)
+    return vals
 
 
-def indices_from_hdf(filename):
-    """
-    TODO
-    """
-    with hdf.open_file(filename, mode='r') as f:
-        indices = f.root.Indices.read()
-    return indices
-
-
-def writeback_target_indices(indices, targets):
-    with hdf.open_file(targets, mode='r+') as f:
-        if f.__contains__('/Indices'):
-            # check my indices are the same?
-            log.info("skipping writing taget indices... already exist")
-        else:
-            log.info("writing target indices back to target file")
-            f.create_array("/", "Indices", obj=indices)
-
-
-def points_to_hdf(lonlat, outfile, fieldname=None, fieldvals=None):
+def points_to_hdf(outfile, fielddict={}):
 
     with hdf.open_file(outfile, 'w') as f:
-        f.create_array("/", "Longitude", obj=lonlat[:, 0][:, np.newaxis])
-        f.create_array("/", "Latitude", obj=lonlat[:, 1][:, np.newaxis])
-        if fieldname is not None:
-            f.create_array("/", fieldname, obj=fieldvals)
+        for fld, v in fielddict.items():
+            f.create_array("/", fld, obj=v)
 
 
 def values_from_shp(filename, field):
@@ -186,7 +162,8 @@ def values_from_hdf(filename, field):
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
     # y bounds are INCLUSIVE
-    y_arrays = np.array_split(np.arange(npixels), nchunks)
+    # Reverse order to account for y origin at top of image
+    y_arrays = np.array_split(np.arange(npixels), nchunks)[::-1]
     y_bounds = []
     # construct the overlap
     for s in y_arrays:

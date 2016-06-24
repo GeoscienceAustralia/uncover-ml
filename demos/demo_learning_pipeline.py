@@ -13,7 +13,6 @@ from click import Context
 
 from uncoverml import ipympi
 from uncoverml.scripts.maketargets import main as maketargets
-from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
 from uncoverml.scripts.composefeats import main as composefeats
 from uncoverml.scripts.learnmodel import main as learnmodel
@@ -74,11 +73,6 @@ target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
                        .format(path.splitext(target_file)[0], target_var))
 
-# Location of cross val index file. NOTE: see cvindexer tool to make these
-cv_file_name = "soilcrossvalindices.hdf5"
-# cv_file_name = "drillhole_xvalindices.hdf5"
-cv_file = path.join(proc_dir, cv_file_name)
-# cv_file = path.join(data_dir, cv_file_name)
 folds = 5
 
 
@@ -119,7 +113,7 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
+    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
@@ -127,7 +121,7 @@ algdict = {
     # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 500},
+    "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -163,8 +157,10 @@ def run_pipeline():
         ctx.forward(maketargets,
                     shapefile=path.join(data_dir, target_file),
                     fieldname=target_var,
+                    folds=folds,
                     outfile=target_hdf
                     )
+        # assert False
 
     # Extract feats for training
     tifs = glob(path.join(data_dir, "*.tif"))
@@ -193,15 +189,6 @@ def run_pipeline():
               if not (path.basename(f).startswith(compos_file)
                       or path.basename(f).startswith(predict_file))]
 
-    # Make a crossval file if it doesn't exist
-    if not path.exists(cv_file):
-        ctx = Context(cvindexer)
-        ctx.forward(cvindexer,
-                    targetfile=target_hdf,
-                    outfile=cv_file,
-                    folds=folds
-                    )
-
     # Compose individual image features into single feature vector
     log.info("Composing features...")
     ctx = Context(composefeats)
@@ -225,7 +212,7 @@ def run_pipeline():
         ctx = Context(learnmodel)
         ctx.forward(learnmodel,
                     outputdir=proc_dir,
-                    cvindex=(cv_file, 0),
+                    cvindex=0,
                     algorithm=alg,
                     algopts=json.dumps(args),
                     targets=target_hdf,
@@ -252,7 +239,7 @@ def run_pipeline():
         ctx = Context(validatemodel)
         ctx.forward(validatemodel,
                     outfile=path.join(proc_dir, valoutput + "_" + alg),
-                    cvindex=(cv_file, 0),
+                    cvindex=0,
                     targets=target_hdf,
                     prediction_files=pred_files
                     )

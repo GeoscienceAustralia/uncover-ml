@@ -4,44 +4,6 @@ from __future__ import division
 
 import numpy as np
 
-from uncoverml.geoio import points_from_hdf, points_to_hdf, indices_from_hdf
-
-
-#
-# Read and write validation files
-#
-
-
-def output_cvindex(index, lonlat, outfile):
-
-    points_to_hdf(lonlat, outfile, "FoldIndices", index)
-
-
-def input_cvindex(cvindex_file, return_lonlat=False):
-
-    lonlat, cv_ind = points_from_hdf(cvindex_file, "FoldIndices")
-
-    return (cv_ind.flatten(), lonlat) if return_lonlat else cv_ind.flatten()
-
-
-def output_targets(target, lonlat, outfile):
-
-    points_to_hdf(lonlat, outfile, "targets", target)
-
-
-def input_targets(target_file):
-
-    lonlat, targets = points_from_hdf(target_file, "targets")
-    target_indices = indices_from_hdf(target_file)
-
-    result = lonlat, targets.flatten(), target_indices
-    return result
-
-
-def chunk_cvindex(cvind, nchunks):
-
-    return np.array_split(cvind, nchunks)
-
 
 #
 # Data Partitioning
