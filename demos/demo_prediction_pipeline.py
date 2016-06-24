@@ -45,12 +45,16 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir_name = "data/GA-cover"
+# data_dir_name = "data/GA-cover"
 # data_dir_name = "data/GA-depth"
-data_dir = path.join(path.expanduser("~"), data_dir_name)
+# data_dir = path.join(path.expanduser("~"), data_dir_name)
+# data_dir = "/short/ge3/jrw547/Murray_datasets"
+data_dir = "/short/ge3/jrw547/GA-cover"
 
 # Location of processed file (features, predictions etc)
-proc_dir = path.join(data_dir, "processed")
+# proc_dir = "/short/ge3/dms599/Murray_processed"
+proc_dir = "/short/ge3/dms599/GA-cover_processed"
+# proc_dir = path.join(data_dir, "processed")
 
 # Location of the prediction output from this script
 pred_dir = path.join(proc_dir, "prediction")
