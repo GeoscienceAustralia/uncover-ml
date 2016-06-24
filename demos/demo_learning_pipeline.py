@@ -87,7 +87,7 @@ onehot = False  # NOTE: if you change this, make sure you delete all old feats
 patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
 
 # Impute missing values?
-impute = False
+impute = True
 
 # Starndardise each input dimension? (0 mean, 1 std)
 standardise = True  # standardise all of the extracted features?
@@ -113,15 +113,15 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
+    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 500},
+    "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},

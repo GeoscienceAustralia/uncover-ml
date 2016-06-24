@@ -27,17 +27,22 @@ def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
 
     if impute_mean is not None:
         x = stats.impute_with_mean(x, impute_mean)
+
     if mean is not None:
-        x = stats.centre(x, mean)
-    if sd is not None:
-        x = stats.standardise(x, sd)
-    if eigvecs is not None:
-        ndims = x.shape[1]
-        # make sure 1 <= keepdims <= ndims
-        keepdims = min(max(1, int(ndims * featurefraction)), ndims)
-        mat = eigvecs[:, -keepdims:]
-        vec = eigvals[-keepdims:]
-        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+
+        # Always subtract mean before whiten
+        if sd is not None:
+            x = stats.standardise(x, sd, mean)
+        else:
+            x = stats.centre(x, mean)
+
+        if eigvecs is not None:
+            ndims = x.shape[1]
+            # make sure 1 <= keepdims <= ndims
+            keepdims = min(max(1, int(ndims * featurefraction)), ndims)
+            mat = eigvecs[:, -keepdims:]
+            vec = eigvals[-keepdims:]
+            x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
 
     return x
 
@@ -53,7 +58,7 @@ def compute_statistics(impute, centre, standardise, whiten,
     x_full = np.sum(np.array(cluster.pull('x_full')))
     out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
-    fraction_missing = (1.0 - np.sum(x_n) / (x_full*x_n.shape[0]))*100.0
+    fraction_missing = (1.0 - np.sum(x_n) / (x_full * x_n.shape[0])) * 100.0
     log.info("Input data is {}% missing".format(fraction_missing))
 
     impute_mean = None
@@ -68,31 +73,35 @@ def compute_statistics(impute, centre, standardise, whiten,
         x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
 
     mean = None
-    if centre is True:
+    if centre or standardise or whiten:
         cluster.execute("x_sum = stats.sum(xs)")
         x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
         mean = x_sum / x_n
         log.info("Subtracting global mean {}".format(mean))
-        cluster.push({"mean": mean})
-        cluster.execute("xs = stats.centre(xs, mean)")
+        cluster.push({"xs_mean": mean})
+
+    if centre is True:
+        cluster.execute("xs = stats.centre(xs, xs_mean)")
+        cluster.push({"xs_mean": np.zeros_like(mean)})  # Now zero worker means
 
     sd = None
     if standardise is True:
-        cluster.execute("x_var = stats.var(xs)")
+        cluster.execute("x_var = stats.var(xs, xs_mean)")
         x_var = np.sum(np.array(cluster.pull('x_var')), axis=0)
-        sd = np.sqrt(x_var/x_n)
+        sd = np.sqrt(x_var / x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
         cluster.push({"sd": sd})
-        cluster.execute("xs = stats.standardise(xs, sd)")
+        cluster.execute("xs = stats.standardise(xs, sd, xs_mean)")
+        cluster.push({"xs_mean": np.zeros_like(mean)})  # Now zero worker means
 
     eigvecs = None
     eigvals = None
     if whiten is True:
-        cluster.execute("x_outer = stats.outer(xs)")
+        cluster.execute("x_outer = stats.outer(xs, xs_mean)")
         outer = np.sum(np.array(cluster.pull('x_outer')), axis=0)
-        cov = outer/x_n
+        cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
-        out_dims = int(out_dims*featurefraction)
+        out_dims = int(out_dims * featurefraction)
         log.info("Whitening and keeping {} dimensions".format(out_dims))
 
     d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
