@@ -11,13 +11,22 @@ import click as cl
 import click_log as cl_log
 import numpy as np
 import pickle
+from mpi4py import MPI
 
+
+from uncoverml import patch
+from uncoverml import stats
 from uncoverml import geoio
 import uncoverml.defaults as df
 from uncoverml import parallel
 
 # logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# MPI globals
+comm = MPI.COMM_WORLD
+chunks = comm.Get_size()
+chunk_index = comm.Get_rank()
 
 
 def extract_transform(x, x_sets):
@@ -29,23 +38,28 @@ def extract_transform(x, x_sets):
     return x
 
 
-def compute_unique_values(full_image, cluster):
+def unique(sets1, sets2, dtype):
+    per_dim = zip(sets1, sets2)
+    out_sets = [np.unique(np.concatenate(k, axis=0)) for k in per_dim]
+    return out_sets
+
+unique_op = MPI.Op.Create(unique, commute=True)
+
+
+def compute_unique_values(x, dtype):
     x_sets = None
     # check data is okay
-    dtype = full_image.dtype
+    # TODO is x.dtype == dtype always?
     if dtype == np.dtype('float32') or dtype == np.dtype('float64'):
         log.warn("Cannot use one-hot for floating point data -- ignoring")
     else:
-        cluster.execute("x_set = parallel.node_sets(x)")
-        all_x_sets = cluster.pull('x_set')
-        per_dim = zip(*all_x_sets)
-        potential_x_sets = [np.unique(np.concatenate(k, axis=0))
-                            for k in per_dim]
-        total_dims = np.sum([len(k) for k in potential_x_sets])
+        local_sets = stats.sets(x)
+        full_sets = comm.allreduce(local_sets, op=unique_op)
+        total_dims = np.sum([len(k) for k in full_sets])
         log.info("Total features from one-hot encoding: {}".format(
             total_dims))
         if total_dims <= df.max_onehot_dims:
-            x_sets = potential_x_sets
+            x_sets = full_sets
         else:
             log.warn("Too many distinct values for one-hot encoding."
                      " If you're sure increase max value in default file.")
@@ -116,10 +130,6 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
         log.info("Effective bounding box after "
                  "patch extraction: {}".format(eff_bbox))
 
-    # Initialise the cluster
-    cluster = parallel.direct_view(ipyprofile)
-    chunks = len(cluster)
-
     # load settings
     f_args = {}
     if settings is not None:
@@ -130,43 +140,42 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
                 patchsize))
             f_args.update(s['f_args'])
 
-    # load the image on each worker
-    # Note chunk_indices is a global with different value on each node
-    cluster.push({"full_filename": full_filename, "patchsize": patchsize,
-                  "chunks": chunks})
-    cluster.execute("image = geoio.Image(full_filename, chunk_index, "
-                    "chunks, patchsize)")
+    image = geoio.Image(full_filename, chunk_index, chunks, patchsize)
     if targets is not None:
         #  we need full path for targets for the workers
         targets = os.path.abspath(targets)
-        cluster.push({"targets": targets})
-        cluster.execute("x = patch.patches_at_target(image, "
-                        "patchsize, targets)")
+        x = patch.patches_at_target(image, patchsize, targets)
     else:
-        cluster.execute("x = patch.all_patches(image, patchsize)")
+        x = patch.all_patches(image, patchsize)
 
     # compute settings
-    if settings is None:
+    if not settings:
         settings_dict = {}
-        x_sets = compute_unique_values(full_image, cluster) if onehot else None
+        x_sets = compute_unique_values(full_image.dtype, x) if onehot else None
         f_args['x_sets'] = x_sets
         settings_filename = os.path.join(outputdir, name + "_settings.bin")
         settings_dict["f_args"] = f_args
         settings_dict["cmd_args"] = {'patchsize': patchsize}
-        log.info("Writing feature settings to {}".format(settings_filename))
-        with open(settings_filename, 'wb') as f:
-            pickle.dump(settings_dict, f)
+        if chunk_index == 0:
+            log.info("Writing feature settings to {}".format(settings_filename))
+            with open(settings_filename, 'wb') as f:
+                pickle.dump(settings_dict, f)
 
     # We have all the information we need, now build the transform
     log.info("Constructing feature transformation function")
     f = partial(extract_transform, **f_args)
 
-    parallel.apply_and_write(cluster, f, "x", name, outputdir, eff_shape,
-                             eff_bbox)
+    outfile = geoio.output_filename(name, chunk_index,
+                                    chunks, outputdir)
+    if x is not None:
+        log.info("Applying final transform and writing output files")
+        f_x = f(x)
+        write_ok = geoio.output_features(f_x, outfile, shape=eff_shape,
+                                         bbox=eff_bbox)
+    else:
+        write_ok = geoio.output_blank(outfile)
 
-    log.info("Output vector has length {}, dimensionality {}".format(
-        full_image.resolution[0] * full_image.resolution[1], total_dims))
+    if chunk_index == 0:
+        log.info("Output vector has length {}, dimensionality {}".format(
+            full_image.resolution[0] * full_image.resolution[1], total_dims))
 
-    # Make sure client cleans up
-    cluster.client.purge_everything()
-    cluster.client.close()

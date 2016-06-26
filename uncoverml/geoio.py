@@ -415,6 +415,11 @@ def output_filename(feature_name, chunk_index, n_chunks, output_dir):
     return full_path
 
 
+def output_blank(filename):
+    with hdf.open_file(filename, mode='w') as h5file:
+        h5file.root._v_attrs["blank"] = True
+
+
 def output_features(feature_vector, outfile, featname="features",
                     shape=None, bbox=None):
     """
@@ -437,6 +442,7 @@ def output_features(feature_vector, outfile, featname="features",
             The bounding box of the original data for reproducing an image
     """
     with hdf.open_file(outfile, mode='w') as h5file:
+        h5file.root._v_attrs["blank"] = False
 
         # Make sure we are writing "long" arrays
         if feature_vector.ndim < 2:
@@ -487,6 +493,8 @@ def load_and_cat(hdf5_vectors):
     data_list = []
     for filename in hdf5_vectors:
         with hdf.open_file(filename, mode='r') as f:
+            if f.root._v_attrs["blank"]:  # no data in this chunk
+                return None
             data = f.root.features[:]
             mask = f.root.mask[:]
             a = np.ma.masked_array(data=data, mask=mask)

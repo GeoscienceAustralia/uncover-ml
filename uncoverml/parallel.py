@@ -33,48 +33,18 @@ def direct_view(profile, n_chunks=None):
     return c
 
 
-def apply_and_write(cluster, f, data_var_name, feature_name,
+def apply_and_write(f, x, feature_name,
                     outputdir, shape, bbox):
 
     log.info("Filtering out nodes with no data")
-
-    cluster.execute("has_data = x is not None")
-    nodes_with_data = cluster['has_data']
-    indices_with_data = [i for i, j in enumerate(nodes_with_data) if j]
-
-    log.info("Indices with data: {}".format(indices_with_data))
-
-    # Filter out no-data nodes
-    if len(indices_with_data) < len(cluster):
-        for new_index, old_index in enumerate(indices_with_data):
-
-            cluster.client[old_index].execute("chunk_index = {}"
-                                              .format(new_index))
-
-            log.debug("Assigning node {} new id {}"
-                      .format(old_index, new_index))
-
-        new_cluster = cluster.client[indices_with_data]
-        log.info("New cluster size: {}".format(len(new_cluster)))
+    has_data = x is not None
+    if has_data:
+        log.info("Applying final transform and writing output files")
+        f_x = f(x)
+        outfile = geoio.output_filename(featurename, chunk_index,
+                                        n_chunks, outputdir)
+        write_ok = geoio.output_features(f_x, outfile, shape=shape, bbox=bbox)
     else:
-        new_cluster = cluster
+        write_ok = geoio.output_blank(chunk_index, n_chunks)
 
-    new_cluster.execute("n_chunks = {}".format(len(indices_with_data)))
 
-    log.info("Applying transform across nodes")
-    # Apply the transformation function
-
-    new_cluster.push({"f": f, "featurename": feature_name, "outputdir":
-                      outputdir, "shape": shape, "bbox": bbox})
-
-    log.info("Applying final transform and writing output files")
-    new_cluster.execute("f_x = f({})".format(data_var_name))
-    new_cluster.execute("outfile = geoio.output_filename(featurename, "
-                        "chunk_index, n_chunks, outputdir)")
-    new_cluster.execute("write_ok = geoio.output_features(f_x, outfile, "
-                        "shape=shape, bbox=bbox)")
-
-    # Check write status
-    file_written = new_cluster['write_ok']
-    if not all(file_written):
-        raise RuntimeError("Apply could not write all files!")

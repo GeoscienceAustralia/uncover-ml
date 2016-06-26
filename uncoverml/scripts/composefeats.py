@@ -14,16 +14,18 @@ import click_log as cl_log
 import numpy as np
 import uncoverml.defaults as df
 from functools import partial
-from uncoverml import parallel
 from uncoverml import geoio
 from uncoverml import stats
 import pickle
 
 
+from mpi4py import MPI
+
 log = logging.getLogger(__name__)
 
 
-def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
+def transform_with_params(x, impute_mean, mean, sd, eigvecs,
+                          eigvals, featurefraction, comm):
 
     if impute_mean is not None:
         x = stats.impute_with_mean(x, impute_mean)
@@ -47,15 +49,21 @@ def transform(x, impute_mean, mean, sd, eigvecs, eigvals, featurefraction):
     return x
 
 
-def compute_statistics(impute, centre, standardise, whiten,
-                       featurefraction, cluster):
-    # copy data so as not to screw with original
-    cluster.execute("xs = np.ma.copy(x)")
-    # Get count data
-    cluster.execute("x_n = stats.count(xs)")
-    cluster.execute("x_full = stats.full_count(xs)")
-    x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
-    x_full = np.sum(np.array(cluster.pull('x_full')))
+def sum_axis_0(x, y, dtype):
+    s = np.sum(np.array([x, y]), axis=0)
+    return s
+
+sum0_op = MPI.Op.Create(sum_axis_0, commute=True)
+
+
+def transform(x, impute, centre, standardise, whiten,
+              featurefraction, comm):
+
+    x_n_local = stats.count(x)
+    x_n = comm.allreduce(x_n_local, op=MPI.SUM)
+    x_full_local = stats.full_count(x)
+    x_full = comm.allreduce(x_full_local, op=MPI.SUM)
+
     out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
     fraction_missing = (1.0 - np.sum(x_n) / (x_full * x_n.shape[0])) * 100.0
@@ -63,51 +71,57 @@ def compute_statistics(impute, centre, standardise, whiten,
 
     impute_mean = None
     if impute is True:
-        cluster.execute("impute_sum = stats.sum(xs)")
-        impute_sum = np.sum(np.array(cluster.pull('impute_sum')), axis=0)
+        local_impute_sum = stats.sum(x)
+        impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
         impute_mean = impute_sum / x_n
         log.info("Imputing missing data from mean {}".format(impute_mean))
-        cluster.push({'impute_mean': impute_mean})
-        cluster.execute("xs = stats.impute_with_mean(xs, impute_mean)")
-        cluster.execute("x_n = stats.count(xs)")
-        x_n = np.sum(np.array(cluster.pull('x_n'), dtype=float), axis=0)
+        x = stats.impute_with_mean(x, impute_mean)
+        x_n_local = stats.count(x)
+        x_n = comm.allreduce(x_n_local, op=MPI.SUM)
 
     mean = None
     if centre or standardise or whiten:
-        cluster.execute("x_sum = stats.sum(xs)")
-        x_sum = np.sum(np.array(cluster.pull('x_sum')), axis=0)
+        x_sum_local = stats.sum(x)
+        x_sum = comm.allreduce(x_sum_local, op=sum0_op)
         mean = x_sum / x_n
-        log.info("Subtracting global mean {}".format(mean))
-        cluster.push({"xs_mean": mean})
 
     if centre is True:
-        cluster.execute("xs = stats.centre(xs, xs_mean)")
-        cluster.push({"xs_mean": np.zeros_like(mean)})  # Now zero worker means
+        log.info("Subtracting global mean {}".format(mean))
+        x = stats.centre(x, mean)
+        new_mean = np.zeros_like(mean)
+    else:
+        new_mean = mean
 
     sd = None
     if standardise is True:
-        cluster.execute("x_var = stats.var(xs, xs_mean)")
-        x_var = np.sum(np.array(cluster.pull('x_var')), axis=0)
+        x_var_local = stats.var(x, new_mean)
+        x_var = comm.allreduce(x_var_local, op=sum0_op)
         sd = np.sqrt(x_var / x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
-        cluster.push({"sd": sd})
-        cluster.execute("xs = stats.standardise(xs, sd, xs_mean)")
-        cluster.push({"xs_mean": np.zeros_like(mean)})  # Now zero worker means
+        x = stats.standardise(x, sd, mean)
+        new_mean = np.zeros_like(new_mean)
 
     eigvecs = None
     eigvals = None
     if whiten is True:
-        cluster.execute("x_outer = stats.outer(xs, xs_mean)")
-        outer = np.sum(np.array(cluster.pull('x_outer')), axis=0)
+        x_outer_local = stats.outer(x, new_mean)
+        outer = comm.allreduce(x_outer_local, op=sum0_op)
         cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
         out_dims = int(out_dims * featurefraction)
         log.info("Whitening and keeping {} dimensions".format(out_dims))
+        ndims = x.shape[1]
+        # make sure 1 <= keepdims <= ndims
+        keepdims = min(max(1, int(ndims * featurefraction)), ndims)
+        mat = eigvecs[:, -keepdims:]
+        vec = eigvals[-keepdims:]
+        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
 
     d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
          "eigvecs": eigvecs, "eigvals": eigvals,
          "featurefraction": featurefraction}
-    return d
+
+    return x, d
 
 
 @cl.command()
@@ -144,6 +158,10 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
         unit variance. This can be used to reduce the dimensionality of the
         features too).
     """
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunks = comm.Get_size()
+    chunk_index = comm.Get_rank()
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
@@ -159,16 +177,11 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
 
     # Get attribs if they exist
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
+    x = geoio.load_and_cat(filename_dict[chunk_index])
 
-    # Define the transform function to build the features
-    eff_nchunks = len(filename_dict)
-    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
-
-    # Load the data into a dict on each client
-    # Note chunk_index is a global with different value on each node
-    for i in range(len(cluster)):
-        cluster.push({"filenames": filename_dict[i]}, targets=i)
-    cluster.execute("x = geoio.load_and_cat(filenames)")
+    has_data = x is not None
+    key = chunk_index if has_data else -1 * chunk_index
+    dcomm = comm.Split(has_data, key)
 
     # load settings
     f_args = {}
@@ -176,23 +189,32 @@ def main(files, featurename, outputdir, ipyprofile, centre, standardise,
         with open(settings, 'rb') as f:
             s = pickle.load(f)
             f_args.update(s['f_args'])
+        if has_data:
+            f = partial(transform_with_params, **f_args)
+            xt = f(x, dcomm)
     else:
-        f_args.update(compute_statistics(impute, centre, standardise, whiten,
-                                         featurefraction, cluster))
+        if has_data:
+            xt, params = transform(x, impute, centre, standardise, whiten,
+                                   featurefraction, dcomm)
+
+        f_args.update(params)
         settings_dict = {}
-        settings_filename = os.path.join(outputdir,
-                                         featurename + "_settings.bin")
         settings_dict["f_args"] = f_args
-        log.info("Writing feature settings to {}".format(settings_filename))
-        with open(settings_filename, 'wb') as f:
-            pickle.dump(settings_dict, f)
+        # write settings
+        if chunk_index == 0:
+            settings_filename = os.path.join(outputdir,
+                                             featurename + "_settings.bin")
+            log.info("Writing feature settings to {}".format(
+                settings_filename))
+            with open(settings_filename, 'wb') as f:
+                pickle.dump(settings_dict, f)
 
     # We have all the information we need, now build the transform
-    f = partial(transform, **f_args)
-
-    parallel.apply_and_write(cluster, f, "x", featurename, outputdir,
-                             eff_shape, eff_bbox)
-
-    # Make sure client cleans up
-    cluster.client.purge_everything()
-    cluster.client.close()
+    outfile = geoio.output_filename(featurename, chunk_index,
+                                    chunks, outputdir)
+    if has_data:
+        log.info("Applying final transform and writing output files")
+        write_ok = geoio.output_features(xt, outfile, shape=eff_shape,
+                                         bbox=eff_bbox)
+    else:
+        write_ok = geoio.output_blank(outfile)
