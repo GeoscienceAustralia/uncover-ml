@@ -144,26 +144,33 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     else:
         x = patch.all_patches(image, patchsize)
 
+    # not everyone has data
+    has_data = x is not None
+    has_data_mask = comm.allgather(has_data)
+    key = chunk_index if has_data else -1 * chunk_index
+    dcomm_root = has_data_mask.index(True)
+    dcomm = comm.Split(has_data, key)
+
     # compute settings
-    if not settings:
+    if not settings and has_data:
         settings_dict = {}
-        x_sets = compute_unique_values(x, comm) if onehot else None
+        x_sets = compute_unique_values(x, dcomm) if onehot else None
         f_args['x_sets'] = x_sets
         settings_filename = os.path.join(outputdir, name + "_settings.bin")
         settings_dict["f_args"] = f_args
         settings_dict["cmd_args"] = {'patchsize': patchsize}
-        if chunk_index == 0:
+        if dcomm.Get_rank() == dcomm_root:
             log.info("Writing feature settings to {}".format(settings_filename))
             with open(settings_filename, 'wb') as f:
                 pickle.dump(settings_dict, f)
 
     # We have all the information we need, now build the transform
     log.info("Constructing feature transformation function")
-    f = partial(extract_transform, **f_args)
 
     outfile = geoio.output_filename(name, chunk_index,
                                     chunks, outputdir)
-    if x is not None:
+    if has_data:
+        f = partial(extract_transform, **f_args)
         log.info("Applying final transform and writing output files")
         f_x = f(x)
         total_dims = f_x.shape[1]
