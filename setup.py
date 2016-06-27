@@ -71,7 +71,6 @@ setup(
         'affine',
         'rasterio',
         'pyshp',
-        'ipyparallel',
         'click',
         'click_log',
         'scikit-learn',
