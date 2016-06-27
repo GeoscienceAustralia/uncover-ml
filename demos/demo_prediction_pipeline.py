@@ -8,6 +8,7 @@ import sys
 import logging
 from os import path, mkdir
 from glob import glob
+from mpi4py import MPI
 
 from click import Context
 
@@ -93,6 +94,9 @@ makergbtif = True
 
 # NOTE: Do not change the following unless you know what you are doing
 def run_pipeline():
+    
+    # MPI globals
+    comm = MPI.COMM_WORLD
 
     if not path.exists(proc_dir):
         log.fatal("Please run demo_learning_pipline.py first!")
@@ -132,6 +136,7 @@ def run_pipeline():
                         outputdir=pred_dir,
                         settings=setting
                         )
+            comm.barrier()
 
     # Compose individual image features into single feature vector
     compos_settings = path.join(proc_dir, compos_file + "_settings.bin")
@@ -153,6 +158,7 @@ def run_pipeline():
                     files=efiles,
                     settings=compos_settings
                     )
+        comm.barrier()
 
         cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
@@ -176,6 +182,7 @@ def run_pipeline():
                     quantiles=quantiles,
                     files=cfiles
                     )
+        comm.barrier()
 
         pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
 
@@ -188,6 +195,7 @@ def run_pipeline():
                 rgb=makergbtif,
                 files=pfiles
                 )
+    comm.barrier()
 
     log.info("Done!")
 

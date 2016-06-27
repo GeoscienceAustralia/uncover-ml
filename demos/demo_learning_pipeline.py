@@ -8,6 +8,7 @@ import logging
 import json
 from os import path, mkdir
 from glob import glob
+from mpi4py import MPI
 
 from click import Context
 
@@ -146,6 +147,9 @@ valoutput = "validation"
 
 # NOTE: Do not change the following unless you know what you are doing
 def run_pipeline():
+    
+    # MPI globals
+    comm = MPI.COMM_WORLD
 
     # Make processed dir if it does not exist
     if not path.exists(proc_dir):
@@ -162,6 +166,8 @@ def run_pipeline():
                     outfile=target_hdf
                     )
         # assert False
+
+    comm.barrier()
 
     # Extract feats for training
     tifs = glob(path.join(data_dir, "*.tif"))
@@ -185,6 +191,7 @@ def run_pipeline():
                         onehot=onehot,
                         patchsize=patchsize
                         )
+            comm.barrier()
 
     efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
               if not (path.basename(f).startswith(compos_file)
@@ -203,6 +210,7 @@ def run_pipeline():
                 featurefraction=pca_frac,
                 files=efiles
                 )
+    comm.barrier()
 
     feat_files = glob(path.join(proc_dir, compos_file + ".part*.hdf5"))
 
@@ -219,6 +227,7 @@ def run_pipeline():
                     targets=target_hdf,
                     files=feat_files
                     )
+        comm.barrier()
 
         # Test the model
         log.info("Predicting targets for {}.".format(alg))
@@ -231,6 +240,7 @@ def run_pipeline():
                     model=alg_file,
                     files=feat_files
                     )
+        comm.barrier()
 
         pred_files = glob(path.join(proc_dir, predict_file + "_" + alg +
                                     ".part*.hdf5"))
@@ -244,6 +254,7 @@ def run_pipeline():
                     targets=target_hdf,
                     prediction_files=pred_files
                     )
+        comm.barrier()
 
     log.info("Finished!")
 
