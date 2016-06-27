@@ -189,7 +189,7 @@ def main(files, featurename, outputdir, centre, standardise,
             f_args.update(s['f_args'])
         if has_data:
             f = partial(transform_with_params, **f_args)
-            xt = f(x, dcomm)
+            xt = f(x, comm=dcomm)
     else:
         if has_data:
             xt, params = transform(x, impute, centre, standardise, whiten,

@@ -40,11 +40,10 @@ def unique(sets1, sets2, dtype):
 unique_op = MPI.Op.Create(unique, commute=True)
 
 
-def compute_unique_values(x, dtype, comm):
+def compute_unique_values(x, comm):
     x_sets = None
     # check data is okay
-    # TODO is x.dtype == dtype always?
-    if dtype == np.dtype('float32') or dtype == np.dtype('float64'):
+    if x.dtype == np.dtype('float32') or x.dtype == np.dtype('float64'):
         log.warn("Cannot use one-hot for floating point data -- ignoring")
     else:
         local_sets = stats.sets(x)
@@ -140,6 +139,7 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     if targets is not None:
         #  we need full path for targets for the workers
         targets = os.path.abspath(targets)
+        log.info("node {} reading target file {}".format(chunk_index, targets))
         x = patch.patches_at_target(image, patchsize, targets)
     else:
         x = patch.all_patches(image, patchsize)
@@ -147,8 +147,7 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     # compute settings
     if not settings:
         settings_dict = {}
-        x_sets = compute_unique_values(full_image.dtype,
-                                       x, comm) if onehot else None
+        x_sets = compute_unique_values(x, comm) if onehot else None
         f_args['x_sets'] = x_sets
         settings_filename = os.path.join(outputdir, name + "_settings.bin")
         settings_dict["f_args"] = f_args
@@ -167,12 +166,12 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     if x is not None:
         log.info("Applying final transform and writing output files")
         f_x = f(x)
+        total_dims = f_x.shape[1]
         write_ok = geoio.output_features(f_x, outfile, shape=eff_shape,
                                          bbox=eff_bbox)
     else:
         write_ok = geoio.output_blank(outfile)
 
-    if chunk_index == 0:
-        log.info("Output vector has length {}, dimensionality {}".format(
-            full_image.resolution[0] * full_image.resolution[1], total_dims))
+    log.info("Output vector has length {}, dimensionality {}".format(
+        full_image.resolution[0] * full_image.resolution[1], total_dims))
 
