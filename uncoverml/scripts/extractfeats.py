@@ -18,22 +18,16 @@ from uncoverml import patch
 from uncoverml import stats
 from uncoverml import geoio
 import uncoverml.defaults as df
-from uncoverml import parallel
 
 # logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-
-# MPI globals
-comm = MPI.COMM_WORLD
-chunks = comm.Get_size()
-chunk_index = comm.Get_rank()
 
 
 def extract_transform(x, x_sets):
     # reshape
     x = x.reshape((x.shape[0], -1))
     if x_sets is not None:  # one-hot activated!
-        x = parallel.one_hot(x, x_sets)
+        x = stats.one_hot(x, x_sets)
     x = x.astype(float)
     return x
 
@@ -46,7 +40,7 @@ def unique(sets1, sets2, dtype):
 unique_op = MPI.Op.Create(unique, commute=True)
 
 
-def compute_unique_values(x, dtype):
+def compute_unique_values(x, dtype, comm):
     x_sets = None
     # check data is okay
     # TODO is x.dtype == dtype always?
@@ -83,12 +77,9 @@ def compute_unique_values(x, dtype):
            " previous setting used for evaluating testing data. If provided "
            "all other option flags are ignored")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
-           default=None)
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
-         settings):
+def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.
@@ -101,6 +92,11 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
     - One-hot encode intger-valued/categorical layers
     - Only extract patches at specified locations given a target file
     """
+
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunks = comm.Get_size()
+    chunk_index = comm.Get_rank()
 
     # build full filename for geotiff
     full_filename = os.path.abspath(geotiff)
@@ -151,7 +147,8 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, ipyprofile,
     # compute settings
     if not settings:
         settings_dict = {}
-        x_sets = compute_unique_values(full_image.dtype, x) if onehot else None
+        x_sets = compute_unique_values(full_image.dtype,
+                                       x, comm) if onehot else None
         f_args['x_sets'] = x_sets
         settings_filename = os.path.join(outputdir, name + "_settings.bin")
         settings_dict["f_args"] = f_args

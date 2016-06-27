@@ -11,13 +11,26 @@ import os.path
 import click as cl
 import click_log as cl_log
 from functools import partial
-from uncoverml import parallel
 from uncoverml import geoio
 import matplotlib.pyplot as pl
 import numpy as np
 import rasterio
+from mpi4py import MPI
 
 log = logging.getLogger(__name__)
+
+
+def max_axis_0(x, y, dtype):
+    s = np.amax(np.array([x, y]), axis=0)
+    return s
+
+
+def min_axis_0(x, y, dtype):
+    s = np.amin(np.array([x, y]), axis=0)
+    return s
+
+max0_op = MPI.Op.Create(max_axis_0, commute=True)
+min0_op = MPI.Op.Create(min_axis_0, commute=True)
 
 
 def transform(x, rows, x_min, x_max, band, separatebands):
@@ -54,12 +67,10 @@ def transform(x, rows, x_min, x_max, band, separatebands):
            "separate geotiff, --rgb flag automatically does this")
 @cl.option('--band', type=int, default=None,
            help="Output only a specific band")
-@cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
-           default=None)
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.argument('name', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
+def main(name, files, rgb, separatebands, band, outputdir):
     """
     Output a geotiff from a set of HDF5 chunked features.
 
@@ -67,6 +78,11 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
     Multi-band geotiffs are also optionally output (RGB output has to be per
     band however).
     """
+
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunks = comm.Get_size()
+    chunk_index = comm.Get_rank()
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
@@ -87,62 +103,53 @@ def main(name, files, rgb, separatebands, band, ipyprofile, outputdir):
     A, _, _ = geoio.bbox2affine(eff_bbox[1, 0], eff_bbox[0, 0],
                                 eff_bbox[0, 1], eff_bbox[1, 1], *eff_shape)
 
-    # Define the transform function to build the features
-    eff_nchunks = len(filename_dict)
-    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
+    x = geoio.load_and_cat(filename_dict[chunk_index])
+    if x is None:
+        raise RuntimeError("Prediction output cant have nodes without data")
 
-    # Load the data into a dict on each client
-    # Note chunk_indices is a global with different value on each node
-    for i in range(len(cluster)):
-        cluster.push({"filenames": filename_dict[i]}, targets=i)
-    cluster.execute("x = geoio.load_and_cat(filenames)")
-
-    # Get the bounds for image output
     x_min = None
     x_max = None
     if rgb is True:
-        cluster.execute("x_min = np.ma.min(x,axis=0)")
-        cluster.execute("x_max = np.ma.max(x,axis=0)")
-        x_min = np.amin(np.array(cluster['x_min']), axis=0)
-        x_max = np.amax(np.array(cluster['x_max']), axis=0)
+        x_min_local = np.ma.min(x, axis=0)
+        x_max_local = np.ma.max(x, axis=0)
+        x_min = comm.allreduce(x_min_local, op=min0_op)
+        x_max = comm.allreduce(x_max_local, op=min0_op)
 
     f = partial(transform, rows=eff_shape[0], x_min=x_min,
                 x_max=x_max, band=band, separatebands=separatebands)
-    cluster.push({"f": f})
-    cluster.execute("images = f(x)")
+
+    images = f(x)
 
     # Couple of pieces of information we need here
-    firstnode = cluster.client[0]
-    firstnode.execute("n_images = len(images)")
-    firstnode.execute("dtype = images[0].dtype")
-    firstnode.execute("n_bands = images[0].shape[2]")
-    n_images = firstnode["n_images"]
-    dtype = firstnode["dtype"]
-    n_bands = firstnode["n_bands"]  # for each image
-    nnodes = len(cluster)
+    if chunk_index != 0:
+        reqs = []
+        for img_idx in range(len(images)):
+            reqs.append(comm.isend(images, dest=0, tag=img_idx))
+        for r in reqs:
+            r.wait()
+    else:
+        n_images = len(images)
+        dtype = images[0].dtype
+        n_bands = images[0].shape[2]
 
-    for img_idx in range(n_images):
-        band_num = img_idx if band is None else band
-        output_filename = os.path.join(outputdir, name +
-                                       "_band{}.tif".format(band_num))
+        for img_idx in range(n_images):
+            band_num = img_idx if band is None else band
+            output_filename = os.path.join(outputdir, name +
+                                           "_band{}.tif".format(band_num))
 
-        with rasterio.open(output_filename, 'w', driver='GTiff',
-                           width=eff_shape[0], height=eff_shape[1],
-                           dtype=dtype, count=n_bands, transform=A) as f:
-            ystart = 0
-            for node in range(nnodes):
-                # Reverse order of concatentation to account for image
-                # conventions
-                node = nnodes - node - 1
-                engine = cluster.client[node]
-                data = engine["images[{}]".format(img_idx)]
-                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                yend = ystart + data.shape[1]  # this is Y
-                window = ((ystart, yend), (0, eff_shape[0]))
-                index_list = list(range(1, n_bands + 1))
-                f.write(data, window=window, indexes=index_list)
-                ystart = yend
-
-    # Make sure client cleans up
-    cluster.client.purge_everything()
-    cluster.client.close()
+            with rasterio.open(output_filename, 'w', driver='GTiff',
+                               width=eff_shape[0], height=eff_shape[1],
+                               dtype=dtype, count=n_bands, transform=A) as f:
+                ystart = 0
+                for node in range(chunks):
+                    # Reverse order of concatentation to account for image
+                    # conventions
+                    node = chunks - node - 1
+                    data = comm.recv(source=node, tag=img_idx) \
+                        if node != 0 else images[img_idx]
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, eff_shape[0]))
+                    index_list = list(range(1, n_bands + 1))
+                    f.write(data, window=window, indexes=index_list)
+                    ystart = yend

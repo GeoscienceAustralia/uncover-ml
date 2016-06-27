@@ -11,6 +11,7 @@ import click as cl
 import click_log as cl_log
 import numpy as np
 import matplotlib.pyplot as pl
+from mpi4py import MPI
 
 from sklearn.metrics import r2_score, explained_variance_score
 from revrand.metrics import smse, mll, msll, lins_ccc
@@ -77,6 +78,13 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
       predictions)
 
     """
+
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunk_index = comm.Get_rank()
+    # This runs on the root node only
+    if chunk_index != 0:
+        return
 
     # Read cv index and targets
     ydict = geoio.points_from_hdf(targets, ['targets_sorted',

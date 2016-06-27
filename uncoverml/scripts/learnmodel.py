@@ -12,6 +12,7 @@ import json
 import click as cl
 import click_log as cl_log
 import numpy as np
+from mpi4py import MPI
 
 from uncoverml import geoio
 # from uncoverml.validation import input_cvindex, input_targets
@@ -37,6 +38,13 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
     """
     Learn the Parameters of a machine learning model.
     """
+
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunk_index = comm.Get_rank()
+    # This runs on the root node only
+    if chunk_index != 0:
+        return
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]

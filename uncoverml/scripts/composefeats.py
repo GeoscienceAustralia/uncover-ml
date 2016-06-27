@@ -139,11 +139,9 @@ def transform(x, impute, centre, standardise, whiten,
            help="The fraction of dimensions to keep for PCA transformed"
            " (whitened) data. Between 0 and 1. Only applies if --whiten given")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
-           default=None)
 @cl.argument('featurename', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(files, featurename, outputdir, ipyprofile, centre, standardise,
+def main(files, featurename, outputdir, centre, standardise,
          whiten, featurefraction, impute, settings):
     """
     Compose multiple image features into a single feature vector.

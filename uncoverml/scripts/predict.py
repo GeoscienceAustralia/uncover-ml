@@ -12,8 +12,9 @@ import click_log as cl_log
 import numpy as np
 from scipy.stats import norm
 from functools import partial
+from mpi4py import MPI
 
-from uncoverml import geoio, parallel
+from uncoverml import geoio
 from uncoverml.models import apply_masked
 
 log = logging.getLogger(__name__)
@@ -61,6 +62,10 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     """
     Predict the target values for query data from a machine learning algorithm.
     """
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunks = comm.Get_size()
+    chunk_index = comm.Get_rank()
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
@@ -82,21 +87,18 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     # Get the extra hdf5 attributes
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
-    # Define the transform function to build the features
-    eff_nchunks = len(filename_dict)
-    cluster = parallel.direct_view(ipyprofile, eff_nchunks)
-
-    # Load the data on each client
-    # Note chunk_index is a global with different value on each node
-    for i in range(len(cluster)):
-        cluster.push({"filenames": filename_dict[i]}, targets=i)
-    cluster.execute("x = geoio.load_and_cat(filenames)")
+    x = geoio.load_and_cat(filename_dict[chunk_index])
 
     # Prediction
     f = partial(predict, model=model, interval=quantiles)
-    parallel.apply_and_write(cluster, f, "x", predictname, outputdir,
-                             eff_shape, eff_bbox)
 
-    # Make sure client cleans up
-    cluster.client.purge_everything()
-    cluster.client.close()
+    outfile = geoio.output_filename(predictname, chunk_index,
+                                    chunks, outputdir)
+    if x is not None:
+        log.info("Applying final transform and writing output files")
+        f_x = f(x)
+        write_ok = geoio.output_features(f_x, outfile, shape=eff_shape,
+                                         bbox=eff_bbox)
+    else:
+        write_ok = geoio.output_blank(outfile)
+

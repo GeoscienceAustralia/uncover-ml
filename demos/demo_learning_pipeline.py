@@ -11,7 +11,6 @@ from glob import glob
 
 from click import Context
 
-from uncoverml import ipympi
 from uncoverml.scripts.maketargets import main as maketargets
 from uncoverml.scripts.extractfeats import main as extractfeats
 from uncoverml.scripts.composefeats import main as composefeats
@@ -252,6 +251,7 @@ def run_pipeline():
 def main():
 
     logging.basicConfig(level=logging.INFO)
+    run_pipeline()
     # logging.basicConfig(level=logging.DEBUG)
 
     # c = ipympi.run_ipcontroller()
@@ -262,8 +262,6 @@ def main():
     # c.terminate()
     # for i in e:
     #     i.terminate()
-
-    ipympi.call_with_ipympi(run_pipeline)
 
 if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ import logging
 import click as cl
 import click_log as cl_log
 import numpy as np
+from mpi4py import MPI
 
 from uncoverml import geoio
 from uncoverml.validation import split_cfold
@@ -50,6 +51,13 @@ def main(shapefile, fieldname, outfile, folds):
     - Longitude_sorted
 
     """
+
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    chunk_index = comm.Get_rank()
+    # This runs on the root node only
+    if chunk_index != 0:
+        return
 
     # Extract data from shapefile
     try:
