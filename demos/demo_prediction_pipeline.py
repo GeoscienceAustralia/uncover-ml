@@ -68,10 +68,10 @@ compos_file = "composite"
 #
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
-# algorithm = 'randomforest'
+algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction"
@@ -173,6 +173,9 @@ def run_pipeline():
 
     alg = path.splitext(path.basename(alg_file))[0]
     predict_alg_file = predict_file + '_' + alg
+
+    if rank == 0:
+        print(cfiles)
 
     pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
     if len(pfiles) == 0:

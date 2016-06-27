@@ -79,32 +79,31 @@ def transform(x, impute, centre, standardise, whiten,
         x_n_local = stats.count(x)
         x_n = comm.allreduce(x_n_local, op=MPI.SUM)
 
-    mean = None
+    out_mean = None
     if centre or standardise or whiten:
         x_sum_local = stats.sum(x)
         x_sum = comm.allreduce(x_sum_local, op=sum0_op)
         mean = x_sum / x_n
+        out_mean = mean.copy()
 
-    if centre is True:
+    if centre is True and not standardise:
         log.info("Subtracting global mean {}".format(mean))
         x = stats.centre(x, mean)
-        new_mean = np.zeros_like(mean)
-    else:
-        new_mean = mean
+        mean = np.zeros_like(mean)
 
     sd = None
     if standardise is True:
-        x_var_local = stats.var(x, new_mean)
+        x_var_local = stats.var(x, mean)
         x_var = comm.allreduce(x_var_local, op=sum0_op)
         sd = np.sqrt(x_var / x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
         x = stats.standardise(x, sd, mean)
-        new_mean = np.zeros_like(new_mean)
+        mean = np.zeros_like(mean)
 
     eigvecs = None
     eigvals = None
     if whiten is True:
-        x_outer_local = stats.outer(x, new_mean)
+        x_outer_local = stats.outer(x, mean)
         outer = comm.allreduce(x_outer_local, op=sum0_op)
         cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
@@ -117,7 +116,7 @@ def transform(x, impute, centre, standardise, whiten,
         vec = eigvals[-keepdims:]
         x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
 
-    d = {"impute_mean": impute_mean, "mean": mean, "sd": sd,
+    d = {"impute_mean": impute_mean, "mean": out_mean, "sd": sd,
          "eigvecs": eigvecs, "eigvals": eigvals,
          "featurefraction": featurefraction}
 

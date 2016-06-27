@@ -120,10 +120,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 500},
+    "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
