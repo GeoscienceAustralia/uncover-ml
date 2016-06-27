@@ -23,8 +23,8 @@ Quickstart
 Before you start, make sure your system has the following packages installed,
 
 - gdal (libgdal-dev)
-- zeromq (libzmq-dev)
-- openmp
+- openmpi
+- hdf5
 
 To install, simply run ``setup.py``:
 
@@ -43,16 +43,19 @@ installation instructions.
 
 Have a look at some of the `demos <demos/>`_ for how to use these tools.
 
-Running IPyParallel
--------------------
-Spinning up an IPyParallel cluster is now integrated into the demos.
-*DO NOT RUN ipcluster yourself*. Instead, simply run the demos using
-mpirun:
+Running 
+-------
+
+Uncover-ML uses MPI for parallelization on localhosts and on clusters.
+*DO NOT RUN ipcluster*, we no longer use ipyparallel. Run the demos and scripts
+using mpirun:
 
 .. code:: console
 
   $ mpirun -n 4 python demo_learning_pipeline.py
 
+Note that demo_learning_pipeline and demo_prediction_pipeline must be run
+with the same number of CPUs.
 
 Running on NCI
 --------------

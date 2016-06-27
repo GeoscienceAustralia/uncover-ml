@@ -53,10 +53,10 @@ def test_make_targets(make_shp):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_gtiff, make_ipcluster):
+def test_extractfeats(make_gtiff):
 
     ftif = make_gtiff
-    chunks = make_ipcluster
+    chunks = 4
     outdir = os.path.dirname(ftif)
     name = "fchunk_worker"
 
@@ -91,7 +91,7 @@ def test_extractfeats(make_gtiff, make_ipcluster):
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp, make_gtiff, make_ipcluster):
+def test_extractfeats_targets(make_shp, make_gtiff):
     ftif = make_gtiff
     fshp, hdf5_filenames = make_shp
     outdir = os.path.dirname(fshp)

@@ -7,8 +7,6 @@ import shapefile as shp
 import rasterio
 from affine import Affine
 
-from uncoverml import ipympi
-
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
 
@@ -105,23 +103,6 @@ def make_points():
 @pytest.fixture(params=[make_patch_31, make_patch_11, make_patch_12])
 def make_multi_patch(request):
     return request.param()
-
-
-@pytest.fixture
-def make_ipcluster(request):
-    n = 4
-    controller = ipympi.run_ipcontroller()
-    engines = [ipympi.run_ipengine() for k in range(n)]
-    ipympi.waitfor_n_engines(n)
-
-    def fin():
-        # Shutdown
-        controller.terminate()
-        for e in engines:
-            e.terminate()
-    request.addfinalizer(fin)
-
-    return n
 
 
 @pytest.fixture
