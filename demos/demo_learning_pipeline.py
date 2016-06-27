@@ -8,19 +8,30 @@ import logging
 import json
 from os import path, mkdir
 from glob import glob
+from mpi4py import MPI
 
-from runcommands import try_run, try_run_checkfile, PipeLineFailure
+from click import Context
 
-logging.basicConfig(level=logging.INFO)
+from uncoverml.scripts.maketargets import main as maketargets
+from uncoverml.scripts.extractfeats import main as extractfeats
+from uncoverml.scripts.composefeats import main as composefeats
+from uncoverml.scripts.learnmodel import main as learnmodel
+from uncoverml.scripts.predict import main as predict
+from uncoverml.scripts.validatemodel import main as validatemodel
+
+from runcommands import PipeLineFailure
+
+# Logging
+log = logging.getLogger(__name__)
 
 
 # NOTE: INSTRUCTIONS ----------------------------------------------------------
-#   1) Make sure you have an ipcluster working running, i.e.
-#       $ ipcluster start --n=1
-#   2) Make sure you have all of the data and cross-val file in the directory
-#      structure specified below (or change it to suit your purposes)
-#   3) run this script, e.g.
-#       $ ./demo_learning_pipline.py
+#   1) Make sure you have open MPI install (i.e. mpirun)
+#   2) Make sure you have all of the data in the directory structure specified
+#      below (or change it to suit your purposes)
+#   3) run this script using mpirun with n + 2 workers, e.g.
+#       $ mpirun -n 6 demo_learning_pipline.py
+#      for 4 workers (we need two workers for coordination)
 # -----------------------------------------------------------------------------
 
 
@@ -38,9 +49,13 @@ logging.basicConfig(level=logging.INFO)
 # Location of data
 data_dir = path.join(path.expanduser("~"), "data/GA-cover")
 # data_dir = path.join(path.expanduser("~"), "data/GA-depth")
+# data_dir = "/short/ge3/jrw547/Murray_datasets"
+# data_dir = "/short/ge3/jrw547/GA-cover"
 
 # Location of processed files (features, predictions etc)
 proc_dir = path.join(data_dir, "processed")
+# proc_dir = "/short/ge3/dms599/Murray_processed"
+# proc_dir = "/short/ge3/dms599/GA-cover_processed"
 
 
 #
@@ -50,6 +65,7 @@ proc_dir = path.join(data_dir, "processed")
 # Shape file with target variable info
 target_file = "geochem_sites.shp"
 # target_file = "drillhole_confid_3.shp"
+# target_file = "Targets_V8.shp"
 
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
@@ -59,10 +75,6 @@ target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
                        .format(path.splitext(target_file)[0], target_var))
 
-# Location of cross val index file. NOTE: see cvindexer tool to make these
-cv_file_name = "soilcrossvalindices.hdf5"
-# cv_file_name = "drillhole_xvalindices.hdf5"
-cv_file = path.join(data_dir, cv_file_name)
 folds = 5
 
 
@@ -103,7 +115,7 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {'kern': 'rbf', 'lenscale': [100.] * 87, 'nbases': 50},
+    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
@@ -111,7 +123,7 @@ algdict = {
     # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 500},
+    "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -134,21 +146,31 @@ valoutput = "validation"
 
 
 # NOTE: Do not change the following unless you know what you are doing
-def main():
+def run_pipeline():
 
-    log = logging.getLogger(__name__)
+    # MPI globals
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
     # Make processed dir if it does not exist
-    if not path.exists(proc_dir):
+    if not path.exists(proc_dir) and rank == 0:
         mkdir(proc_dir)
         log.info("Made processed dir")
 
-    # Make pointspec and hdf5 for targets
-    cmd = ["maketargets", path.join(data_dir, target_file), target_var,
-           "--outfile", target_hdf]
+    comm.barrier()
 
-    if try_run_checkfile(cmd, target_hdf):
-        log.info("Made targets")
+    # Make pointspec and hdf5 for targets
+    if not path.exists(target_hdf):
+        ctx = Context(maketargets)
+        ctx.forward(maketargets,
+                    shapefile=path.join(data_dir, target_file),
+                    fieldname=target_var,
+                    folds=folds,
+                    outfile=target_hdf
+                    )
+        # assert False
+
+        comm.barrier()
 
     # Extract feats for training
     tifs = glob(path.join(data_dir, "*.tif"))
@@ -156,75 +178,104 @@ def main():
         raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
 
     # Generic extract feats command
-    cmd = ["extractfeats", None, None, "--outputdir", proc_dir,
-           "--patchsize", str(patchsize),
-           "--targets", target_hdf]
-    if onehot:
-        cmd.append('--onehot')
+    ctx = Context(extractfeats)
 
     # Find all of the tifs and extract features
-    # ffiles = []
     for tif in tifs:
-        msg = "Processing {}.".format(path.basename(tif))
         name = path.splitext(path.basename(tif))[0]
-        cmd[1], cmd[2] = name, tif
-        ffile = path.join(proc_dir, name + ".part0.hdf5")
-        try_run_checkfile(cmd, ffile, msg)
+        hdffeats = glob(path.join(proc_dir, name + '*.hdf5'))
+        if len(hdffeats) == 0:
+            log.info("Processing {}.".format(path.basename(tif)))
+            ctx.forward(extractfeats,
+                        geotiff=tif,
+                        name=name,
+                        outputdir=proc_dir,
+                        targets=target_hdf,
+                        onehot=onehot,
+                        patchsize=patchsize
+                        )
+            comm.barrier()
 
     efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
               if not (path.basename(f).startswith(compos_file)
                       or path.basename(f).startswith(predict_file))]
 
-    # Make a crossval file if it doesn't exist
-    cmd = ["cvindexer", "--folds", str(folds), target_hdf, cv_file]
-    try_run_checkfile(cmd, cv_file, "Making cross-val file")
-
     # Compose individual image features into single feature vector
-    cmd = ["composefeats"]
-    if impute:
-        cmd.append('--impute')
-    if standardise:
-        cmd += ['--centre', '--standardise']
-    if whiten:
-        cmd += ['--whiten', '--featurefraction', str(pca_frac)]
-    cmd += ['--outputdir', proc_dir, compos_file] + efiles
-
-    try_run(cmd)
+    log.info("Composing features...")
+    ctx = Context(composefeats)
+    ctx.forward(composefeats,
+                featurename=compos_file,
+                outputdir=proc_dir,
+                impute=impute,
+                centre=standardise or whiten,
+                standardise=standardise,
+                whiten=whiten,
+                featurefraction=pca_frac,
+                files=efiles
+                )
+    comm.barrier()
 
     feat_files = glob(path.join(proc_dir, compos_file + ".part*.hdf5"))
 
     for alg, args in algdict.items():
 
         # Train the model
-        cmd = ["learnmodel", "--outputdir", proc_dir, "--cvindex", cv_file,
-               "0", "--verbosity", "INFO", "--algorithm", alg,
-               "--algopts", json.dumps(args)] \
-            + feat_files + [target_hdf]
-
         log.info("Training model {}.".format(alg))
-        try_run(cmd)
+        ctx = Context(learnmodel)
+        ctx.forward(learnmodel,
+                    outputdir=proc_dir,
+                    cvindex=0,
+                    algorithm=alg,
+                    algopts=json.dumps(args),
+                    targets=target_hdf,
+                    files=feat_files
+                    )
+        comm.barrier()
 
         # Test the model
-        alg_file = path.join(proc_dir, "{}.pk".format(alg))
-        cmd = ["predict", "--outputdir", proc_dir, "--predictname",
-               predict_file + "_" + alg, alg_file] + feat_files
-
         log.info("Predicting targets for {}.".format(alg))
-        try_run(cmd)
+        alg_file = path.join(proc_dir, "{}.pk".format(alg))
+
+        ctx = Context(predict)
+        ctx.forward(predict,
+                    outputdir=proc_dir,
+                    predictname=predict_file + "_" + alg,
+                    model=alg_file,
+                    files=feat_files
+                    )
+        comm.barrier()
 
         pred_files = glob(path.join(proc_dir, predict_file + "_" + alg +
                                     ".part*.hdf5"))
 
         # Report score
-        cmd = ['validatemodel', '--outfile',
-               path.join(proc_dir, valoutput + "_" + alg), cv_file, "0",
-               target_hdf] + pred_files
-
         log.info("Validating {}.".format(alg))
-        try_run(cmd)
+        ctx = Context(validatemodel)
+        ctx.forward(validatemodel,
+                    outfile=path.join(proc_dir, valoutput + "_" + alg),
+                    cvindex=0,
+                    targets=target_hdf,
+                    prediction_files=pred_files
+                    )
+        comm.barrier()
 
     log.info("Finished!")
 
+
+def main():
+
+    logging.basicConfig(level=logging.INFO)
+    run_pipeline()
+    # logging.basicConfig(level=logging.DEBUG)
+
+    # c = ipympi.run_ipcontroller()
+    # e = [ipympi.run_ipengine() for i in range(4)]
+    # ipympi.waitfor_n_engines(n=4)
+
+    # run_pipeline()
+    # c.terminate()
+    # for i in e:
+    #     i.terminate()
 
 if __name__ == "__main__":
     main()
