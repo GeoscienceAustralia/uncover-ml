@@ -25,6 +25,7 @@ Before you start, make sure your system has the following packages installed,
 - gdal (libgdal-dev)
 - zeromq (libzmq-dev)
 
+We strongly recommond using a virtual environment.
 To install, simply run ``setup.py``:
 
 .. code:: console
@@ -37,9 +38,7 @@ or install with ``pip``:
 
    $ pip install git+https://github.com/nicta/uncover-ml.git@release
 
-Refer to `docs/installation.rst <docs/installation.rst>`_ for advanced 
-installation instructions.
-
+The python requirements should automatically be built and installed.
 Have a look at some of the `demos <demos/>`_ for how to use these tools.
 
 Running on NCI
