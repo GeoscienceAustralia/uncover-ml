@@ -124,7 +124,7 @@ def main(name, files, rgb, separatebands, band, outputdir):
     if chunk_index != 0:
         reqs = []
         for img_idx in range(len(images)):
-            reqs.append(comm.isend(images, dest=0, tag=img_idx))
+            reqs.append(comm.isend(images[img_idx], dest=0, tag=img_idx))
         for r in reqs:
             r.wait()
     else:

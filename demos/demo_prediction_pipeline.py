@@ -45,16 +45,16 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-# data_dir_name = "data/GA-cover"
+data_dir_name = "data/GA-cover"
 # data_dir_name = "data/GA-depth"
-# data_dir = path.join(path.expanduser("~"), data_dir_name)
+data_dir = path.join(path.expanduser("~"), data_dir_name)
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
-data_dir = "/short/ge3/jrw547/GA-cover"
+# data_dir = "/short/ge3/jrw547/GA-cover"
 
 # Location of processed file (features, predictions etc)
 # proc_dir = "/short/ge3/dms599/Murray_processed"
-proc_dir = "/short/ge3/dms599/GA-cover_processed"
-# proc_dir = path.join(data_dir, "processed")
+# proc_dir = "/short/ge3/dms599/GA-cover_processed"
+proc_dir = path.join(data_dir, "processed")
 
 # Location of the prediction output from this script
 pred_dir = path.join(proc_dir, "prediction")
@@ -68,10 +68,10 @@ compos_file = "composite"
 #
 
 # Name of the prediction algorithm
-# algorithm = 'svr'
+algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
-algorithm = 'randomforest'
+# algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction"
@@ -94,18 +94,21 @@ makergbtif = True
 
 # NOTE: Do not change the following unless you know what you are doing
 def run_pipeline():
-    
+
     # MPI globals
     comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
     if not path.exists(proc_dir):
         log.fatal("Please run demo_learning_pipline.py first!")
         sys.exit(-1)
 
     # Make processed dir if it does not exist
-    if not path.exists(pred_dir):
+    if not path.exists(pred_dir) and rank == 0:
         mkdir(pred_dir)
         log.info("Made prediction dir")
+
+    comm.barrier()
 
     # Make sure we have an extractfeats settings file for each tif
     tifs = glob(path.join(data_dir, "*.tif"))

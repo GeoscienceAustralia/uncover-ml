@@ -47,15 +47,15 @@ log = logging.getLogger(__name__)
 # please change the following paths to suit your needs
 
 # Location of data
-# data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+data_dir = path.join(path.expanduser("~"), "data/GA-cover")
 # data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
-data_dir = "/short/ge3/jrw547/GA-cover"
+# data_dir = "/short/ge3/jrw547/GA-cover"
 
 # Location of processed files (features, predictions etc)
-# proc_dir = path.join(data_dir, "processed")
+proc_dir = path.join(data_dir, "processed")
 # proc_dir = "/short/ge3/dms599/Murray_processed"
-proc_dir = "/short/ge3/dms599/GA-cover_processed"
+# proc_dir = "/short/ge3/dms599/GA-cover_processed"
 
 
 #
@@ -63,13 +63,13 @@ proc_dir = "/short/ge3/dms599/GA-cover_processed"
 #
 
 # Shape file with target variable info
-# target_file = "geochem_sites.shp"
+target_file = "geochem_sites.shp"
 # target_file = "drillhole_confid_3.shp"
-target_file = "Targets_V8.shp"
+# target_file = "Targets_V8.shp"
 
 # Target variable name (in shape file)
-# target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
-target_var = "depth"
+target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
+# target_var = "depth"
 
 # Where to save processed targets
 target_hdf = path.join(proc_dir, "{}_{}.hdf5"
@@ -120,10 +120,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    # "svr": {},
+    "svr": {},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 500},
+    # "randomforest": {'n_estimators': 500},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -147,14 +147,17 @@ valoutput = "validation"
 
 # NOTE: Do not change the following unless you know what you are doing
 def run_pipeline():
-    
+
     # MPI globals
     comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
     # Make processed dir if it does not exist
-    if not path.exists(proc_dir):
+    if not path.exists(proc_dir) and rank == 0:
         mkdir(proc_dir)
         log.info("Made processed dir")
+
+    comm.barrier()
 
     # Make pointspec and hdf5 for targets
     if not path.exists(target_hdf):
@@ -167,7 +170,7 @@ def run_pipeline():
                     )
         # assert False
 
-    comm.barrier()
+        comm.barrier()
 
     # Extract feats for training
     tifs = glob(path.join(data_dir, "*.tif"))
