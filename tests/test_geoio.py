@@ -1,28 +1,27 @@
 import rasterio
 import numpy as np
 import shapefile as shp
-from affine import Affine
 
 from uncoverml import geoio
 
 
 def test_file_indices_okay():
     # test the correct case
-    t1 = ["/path/to/file.part1.hdf5", 
-          "/path/to/file.part0.hdf5", 
-          "/path/to/file.part2.hdf5"]
+    t1 = ["/path/to/file.part1of3.hdf5",
+          "/path/to/file.part3of3.hdf5",
+          "/path/to/file.part2of3.hdf5"]
     assert geoio.file_indices_okay(t1)
-    
+
     # multiple features
-    t2 = t1 + ["/some/other/path.part0.hdf5", 
-               "/some/other/path.part1.hdf5",
-               "/some/other/path.part2.hdf5"]
+    t2 = t1 + ["/some/other/path.part3of3.hdf5",
+               "/some/other/path.part1of3.hdf5",
+               "/some/other/path.part2of3.hdf5"]
     assert geoio.file_indices_okay(t2)
 
     # wierd paths
-    t3 = t2 + ["/my/name.part0.hdf5",
-               "/oh/dear/name.part1.hdf5",
-               "name.part2.hdf5"]
+    t3 = t2 + ["/my/name.part3of3.hdf5",
+               "/oh/dear/name.part1of3.hdf5",
+               "name.part2of3.hdf5"]
     assert geoio.file_indices_okay(t3)
 
     # missing data
@@ -30,40 +29,28 @@ def test_file_indices_okay():
     assert not geoio.file_indices_okay(t4)
 
     # craaazy data
-    t5 = t3 + ["extra_file.hdf5"]
+    t5 = t3 + ["extra_fileof3.hdf5"]
     assert not geoio.file_indices_okay(t5)
 
 
 def test_files_by_chunk():
-    t1 = ["/path/to/file.part1.hdf5", 
-          "/path/to/file.part0.hdf5", 
-          "/path/to/file.part2.hdf5",
-          "/some/to/zile.part0.hdf5", 
-          "/other/to/zile.part1.hdf5", 
-          "/path/to/zile.part2.hdf5"]
+    t1 = ["/path/to/file.part1of3.hdf5",
+          "/path/to/file.part3of3.hdf5",
+          "/path/to/file.part2of3.hdf5",
+          "/some/to/zile.part1of3.hdf5",
+          "/other/to/zile.part2of3.hdf5",
+          "/path/to/zile.part3of3.hdf5"]
 
     r = geoio.files_by_chunk(t1)
 
-    answer = {0:["/path/to/file.part0.hdf5", "/some/to/zile.part0.hdf5"],
-              1:["/path/to/file.part1.hdf5", "/other/to/zile.part1.hdf5"],
-              2:["/path/to/file.part2.hdf5", "/path/to/zile.part2.hdf5"]}
+    answer = {0: ["/path/to/file.part1of3.hdf5",
+                  "/some/to/zile.part1of3.hdf5"],
+              1: ["/path/to/file.part2of3.hdf5",
+                  "/other/to/zile.part2of3.hdf5"],
+              2: ["/path/to/file.part3of3.hdf5",
+                  "/path/to/zile.part3of3.hdf5"]}
 
     assert r == answer
-
-
-# def test_grid_affine(make_shp_gtiff):
-
-#     _, ftif = make_shp_gtiff
-
-#     with rasterio.open(ftif, 'r') as f:
-#         A = f.affine
-#         cA = f.affine * Affine.translation(0.5, 0.5)
-
-#     ispec = geoio.Image(ftif)
-#     assert np.allclose(A, ispec.A)
-#     assert np.allclose(cA, ispec.cA)
-#     assert np.allclose(~A, ~ispec.A)
-#     assert np.allclose(~cA, ~ispec.cA)
 
 
 def test_bounding_box(make_raster):
@@ -80,10 +67,10 @@ def test_bounding_box(make_raster):
     assert np.allclose(y_bound, by)
 
 
-def test_latlon2pix_edges(make_raster, make_shp_gtiff):
+def test_latlon2pix_edges(make_raster, make_gtiff):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
-    _, ftif = make_shp_gtiff
+    ftif = make_gtiff
     ispec = geoio.Image(ftif)
 
     x = [1, 47, 81]
@@ -95,26 +82,26 @@ def test_latlon2pix_edges(make_raster, make_shp_gtiff):
     assert all(xy[:, 1] == y)
 
 
-def test_latlon2pix_internals(make_raster, make_shp_gtiff):
+def test_latlon2pix_internals(make_raster, make_gtiff):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
-    _, ftif = make_shp_gtiff
+    ftif = make_gtiff
     ispec = geoio.Image(ftif)
 
     x = [1, 47, 81]
     y = [0, 23, 43]
 
-    xy = ispec.lonlat2pix(np.array([lons[x]+0.5*ispec.pixsize_x,
-                          lats[y]+0.5*ispec.pixsize_y]).T)
+    xy = ispec.lonlat2pix(np.array([lons[x] + 0.5 * ispec.pixsize_x,
+                          lats[y] + 0.5 * ispec.pixsize_y]).T)
 
     assert all(xy[:, 0] == x)
     assert all(xy[:, 1] == y)
 
 
-def test_pix2lonlat(make_raster, make_shp_gtiff):
+def test_pix2lonlat(make_raster, make_gtiff):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
-    _, ftif = make_shp_gtiff
+    ftif = make_gtiff
     ispec = geoio.Image(ftif)
 
     xq = [0, 10, 15]
@@ -127,10 +114,10 @@ def test_pix2lonlat(make_raster, make_shp_gtiff):
     assert(np.allclose(latlon, latlon_true))
 
 
-def test_pix2lonlat2latlon2pix(make_raster, make_shp_gtiff):
+def test_pix2lonlat2latlon2pix(make_raster, make_gtiff):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
-    _, ftif = make_shp_gtiff
+    ftif = make_gtiff
     ispec = geoio.Image(ftif)
 
     xq = [0, 10, 15]
@@ -142,9 +129,9 @@ def test_pix2lonlat2latlon2pix(make_raster, make_shp_gtiff):
     assert np.allclose(xy, xy2)
 
 
-def test_points_from_shp(make_shp_gtiff):
+def test_points_from_shp(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
 
     coords = geoio.points_from_shp(fshp)
 
@@ -155,18 +142,18 @@ def test_points_from_shp(make_shp_gtiff):
     assert np.allclose(coords, lonlat)
 
 
-def test_values_from_shp(make_shp_gtiff):
+def test_values_from_shp(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
 
     for i in range(10):
         vals = geoio.values_from_shp(fshp, str(i))
         assert all(vals == i)
 
 
-def test_Image_split(make_shp_gtiff):
+def test_Image_split(make_gtiff):
 
-    _, ftif = make_shp_gtiff
+    ftif = make_gtiff
 
     nchunks = 4
     overlap = 3
@@ -184,19 +171,22 @@ def test_Image_split(make_shp_gtiff):
         chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks).data()
         Ichunks.append(chunk)
 
-    Irecon = np.hstack(Ichunks)
+    # Reverse Ichunks to account for y-decreasing convention in images
+    Irecon = np.hstack(Ichunks[::-1])
 
     assert I.shape == Irecon.shape
     assert np.all(I == Irecon)
 
     Ichunks = []
     for i in range(nchunks):
+        # Reverse Ichunks to account for y-decreasing convention in images
+        i = nchunks - i - 1
         chunk = geoio.Image(ftif, chunk_idx=i, nchunks=nchunks,
                             overlap=overlap).data()
         if i == 0:
-            Ichunks.append(chunk[:, 0:-overlap])
-        elif i == (nchunks - 1):
             Ichunks.append(chunk[:, overlap:])
+        elif i == (nchunks - 1):
+            Ichunks.append(chunk[:, 0:-overlap])
         else:
             Ichunks.append(chunk[:, overlap:-overlap])
 

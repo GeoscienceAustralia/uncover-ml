@@ -1,24 +1,27 @@
 import os
 import tables
+import time
+
 import numpy as np
 import shapefile
 import rasterio
 from click import Context
 
-
-from uncoverml import geoio
+# from uncoverml import geoio
 from uncoverml.scripts.maketargets import main as maketargets
-from uncoverml.scripts.cvindexer import main as cvindexer
+# from uncoverml.scripts.cvindexer import main as cvindexer
 from uncoverml.scripts.extractfeats import main as extractfeats
 
 
-def test_make_targets(make_shp_gtiff):
+def test_make_targets(make_shp):
 
-    fshp, _ = make_shp_gtiff
+    fshp, _ = make_shp
     field = "lon"
+    folds = 6
 
     ctx = Context(maketargets)
-    ctx.forward(maketargets, shapefile=fshp, fieldname=field)
+    ctx.forward(maketargets, shapefile=fshp, fieldname=field,
+                folds=folds)
 
     fhdf5 = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
 
@@ -27,40 +30,22 @@ def test_make_targets(make_shp_gtiff):
     with tables.open_file(fhdf5, mode='r') as f:
         lon = f.root.targets.read()
         Longitude = f.root.Longitude.read().flatten()
+        Latitude = f.root.Latitude.read().flatten()
+        finds = f.root.FoldIndices.read()
+        Latitude_sorted = f.root.Latitude_sorted.read()
 
     assert np.allclose(lon, Longitude)
 
+    # Test ordering
+    latorder = [l1 <= l2 for l1, l2 in zip(Latitude_sorted[:-1],
+                                           Latitude_sorted[1:])]
+    assert all(latorder)
 
-def test_cvindexer_shp(make_shp_gtiff):
-
-    fshp, _ = make_shp_gtiff
-    folds = 6
-    field = "lon"
-    fshp_hdf5 = os.path.splitext(fshp)[0] + ".hdf5"
-    fshp_targets = os.path.splitext(fshp)[0] + "_" + field + ".hdf5"
-
-    # Make target file
-    ctx = Context(maketargets)
-    ctx.forward(maketargets, shapefile=fshp, fieldname=field)
-
-    # Create Indices as if extractfeats had been called with an image
-    permutation = np.arange(10)  # number of features in fixture
-    geoio.writeback_target_indices(permutation, fshp_targets)
-
-    # Make crossval with hdf5
-    ctx = Context(cvindexer)
-    ctx.forward(cvindexer, targetfile=fshp_targets, outfile=fshp_hdf5, folds=6)
-
-    # Read in resultant HDF5
-    with tables.open_file(fshp_hdf5, mode='r') as f:
-        hdfcoords = np.hstack((f.root.Longitude.read(),
-                               f.root.Latitude.read()))
-        finds = f.root.FoldIndices.read()
-
-    # Validate order is consistent with shapefile
+    # Validate target order is consistent with shapefile
     f = shapefile.Reader(fshp)
     shpcoords = np.array([p.points[0] for p in f.shapes()])
 
+    hdfcoords = np.vstack((Longitude, Latitude)).T
     assert np.allclose(shpcoords, hdfcoords)
 
     # Test we have the right number of folds
@@ -68,11 +53,11 @@ def test_cvindexer_shp(make_shp_gtiff):
     assert finds.max() == (folds - 1)
 
 
-def test_extractfeats(make_shp_gtiff, make_ipcluster4):
+def test_extractfeats(make_gtiff):
 
-    fshp, ftif = make_shp_gtiff
+    ftif = make_gtiff
     chunks = 4
-    outdir = os.path.dirname(fshp)
+    outdir = os.path.dirname(ftif)
     name = "fchunk_worker"
 
     # Extract features from gtiff
@@ -80,10 +65,14 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
     ctx.forward(extractfeats, geotiff=ftif, name=name, outputdir=outdir)
 
     ffiles = []
-    for i in range(chunks):
-        fname = os.path.join(outdir, "{}.part{}.hdf5".format(name, i))
-        assert os.path.exists(fname)
+    exists = []
+    for i in range(1, chunks + 1):
+        fname = os.path.join(outdir, "{}.part{}of{}.hdf5".format(
+            name, i, chunks))
+        exists.append(os.path.exists(fname))
         ffiles.append(fname)
+
+    assert all(exists)
 
     # Now compare extracted features to geotiff
     with rasterio.open(ftif, 'r') as f:
@@ -96,15 +85,15 @@ def test_extractfeats(make_shp_gtiff, make_ipcluster4):
             strip = [fts for fts in f.root.features]
             efeats.append(np.reshape(strip, (I.shape[0], -1, I.shape[2])))
 
-    efeats = np.concatenate(efeats, axis=1)
+    efeats = np.concatenate(efeats[::-1], axis=1)
 
     assert I.shape == efeats.shape
     assert np.allclose(I, efeats)
 
 
-def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
-
-    fshp, ftif = make_shp_gtiff
+def test_extractfeats_targets(make_shp, make_gtiff):
+    ftif = make_gtiff
+    fshp, hdf5_filenames = make_shp
     outdir = os.path.dirname(fshp)
     name = "fpatch"
 
@@ -122,18 +111,15 @@ def test_extractfeats_targets(make_shp_gtiff, make_ipcluster4):
 
     # Get the 4 parts
     feat_list = []
-    for i in range(4):
-        fname = name + ".part{}.hdf5".format(i)
+    for fname in hdf5_filenames:
+        # fname = name + ".part{}of4.hdf5".format(i)
         with tables.open_file(os.path.join(outdir, fname), 'r') as f:
             feat_list.append(f.root.features[:])
     feats = np.concatenate(feat_list, axis=0)
 
     # Read lats and lons from targets
     with tables.open_file(fshp_targets, mode='r') as f:
-        lonlat = np.hstack((f.root.Longitude.read(),
-                            f.root.Latitude.read()))
-        permutation = f.root.Indices.read()
+        lonlat = np.vstack((f.root.Longitude_sorted.read(),
+                            f.root.Latitude_sorted.read())).T
 
-    lonlat_p = lonlat[permutation]
-
-    assert np.allclose(feats, lonlat_p)
+    assert np.allclose(feats, lonlat)

@@ -63,19 +63,19 @@ setup(
         ]
     },
     install_requires=[
-        'wheel',
-        'scipy',
-        'numpy',
         'pycontracts',
         'tables',
-        'affine',
         'rasterio',
+        'affine',
         'pyshp',
-        'ipyparallel',
-        'click',
         'click_log',
-        'scikit-learn',
+        'click',
         'revrand',
+        'scikit-learn',
+        'mpi4py',
+        'scipy',
+        'numpy',
+        'wheel',
     ],
     extras_require={
         'demos': [

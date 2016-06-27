@@ -23,16 +23,16 @@ def sum(x):
     return result
 
 
-def var(x):
-    delta = x - np.ma.mean(x, axis=0)
+def var(x, mean):
+    delta = x - mean
     result = np.ma.sum(delta * delta, axis=0)
     if np.ma.count_masked(result) != 0:
         raise ValueError("Too many missing values to compute variance")
     return result.data
 
 
-def outer(x):
-    delta = x - np.ma.mean(x, axis=0)
+def outer(x, mean):
+    delta = x - mean
     result = np.ma.dot(delta.T, delta)
     if np.ma.count_masked(result) != 0:
         raise ValueError("Too many missing values to compute outer product")
@@ -47,12 +47,12 @@ def sets(x):
     return sets
 
 
-def centre(x, x_mean):
-    return x - x_mean
+def centre(x, mean):
+    return x - mean
 
 
-def standardise(x, x_sd):
-    return x / x_sd[np.newaxis, :]
+def standardise(x, x_sd, mean):
+    return centre(x, mean) / x_sd[np.newaxis, :]
 
 
 def impute_with_mean(x, mean):
@@ -75,11 +75,10 @@ def one_hot(x, x_set):
     for dim_idx, dim_set in enumerate(x_set):
         dim_in = x[:, dim_idx]
         dim_mask = x.mask[:, dim_idx]
-        dim_out = out[:, indices[dim_idx]:indices[dim_idx+1]]
-        dim_out_mask = out_mask[:, indices[dim_idx]:indices[dim_idx+1]]
+        dim_out = out[:, indices[dim_idx]:indices[dim_idx + 1]]
+        dim_out_mask = out_mask[:, indices[dim_idx]:indices[dim_idx + 1]]
         dim_out_mask[:] = dim_mask[:, np.newaxis]
         for i, val in enumerate(dim_set):
             dim_out[:, i][dim_in == val] = 0.5
     result = np.ma.array(data=out, mask=out_mask)
     return result
-        
