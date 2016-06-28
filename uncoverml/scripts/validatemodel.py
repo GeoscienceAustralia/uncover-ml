@@ -148,7 +148,7 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
             json.dump(scores, f, sort_keys=True, indent=4)
 
     # Make figure
-    if plotyy or (outfile is not None):
+    if plotyy and (outfile is not None):
         fig = pl.figure()
         maxy = max(Ys.max(), get_first_dim(EYs).max())
         miny = min(Ys.min(), get_first_dim(EYs).min())
