@@ -176,9 +176,13 @@ def main(files, featurename, outputdir, centre, standardise,
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
     x = geoio.load_and_cat(filename_dict[chunk_index])
 
+    # not everyone has data
     has_data = x is not None
+    has_data_mask = comm.allgather(has_data)
     key = chunk_index if has_data else -1 * chunk_index
+    dcomm_root = has_data_mask.index(True)
     dcomm = comm.Split(has_data, key)
+
 
     # load settings
     f_args = {}
@@ -194,17 +198,17 @@ def main(files, featurename, outputdir, centre, standardise,
             xt, params = transform(x, impute, centre, standardise, whiten,
                                    featurefraction, dcomm)
 
-        f_args.update(params)
-        settings_dict = {}
-        settings_dict["f_args"] = f_args
-        # write settings
-        if chunk_index == 0:
-            settings_filename = os.path.join(outputdir,
-                                             featurename + "_settings.bin")
-            log.info("Writing feature settings to {}".format(
-                settings_filename))
-            with open(settings_filename, 'wb') as f:
-                pickle.dump(settings_dict, f)
+            f_args.update(params)
+            settings_dict = {}
+            settings_dict["f_args"] = f_args
+            # write settings
+            if chunk_index == dcomm_root:
+                settings_filename = os.path.join(outputdir,
+                                                 featurename + "_settings.bin")
+                log.info("Writing feature settings to {}".format(
+                    settings_filename))
+                with open(settings_filename, 'wb') as f:
+                    pickle.dump(settings_dict, f)
 
     # We have all the information we need, now build the transform
     outfile = geoio.output_filename(featurename, chunk_index,
