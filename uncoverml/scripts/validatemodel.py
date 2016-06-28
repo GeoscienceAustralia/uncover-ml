@@ -115,6 +115,8 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
     filename_dict = geoio.files_by_chunk(full_filenames)
     data_vectors = [geoio.load_and_cat(filename_dict[i])
                     for i in range(len(filename_dict))]
+    # Remove missing data
+    data_vectors = [x for x in data_vectors if x is not None]
     EYs = np.ma.concatenate(data_vectors, axis=0)
 
     # See if this data is already subset for xval

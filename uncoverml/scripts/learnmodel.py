@@ -79,6 +79,8 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
     # Read ALL the features in here, and learn on a single machine
     data_vectors = [geoio.load_and_cat(filename_dict[i])
                     for i in range(nchunks)]
+    # Remove the missing data
+    data_vectors = [x for x in data_vectors if x is not None]
     X = np.ma.concatenate(data_vectors, axis=0)
 
     # Optionally subset the data for cross validation
