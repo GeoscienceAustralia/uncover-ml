@@ -255,7 +255,8 @@ def run_pipeline():
                     outfile=path.join(proc_dir, valoutput + "_" + alg),
                     cvindex=0,
                     targets=target_hdf,
-                    prediction_files=pred_files
+                    prediction_files=pred_files,
+                    plotyy=False
                     )
         comm.barrier()
 
