@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ge3
-#PBS -q normal
-#PBS -l walltime=01:00:00,mem=32GB,ncpus=32,jobfs=10GB
+#PBS -q express 
+#PBS -l walltime=00:05:00,mem=32GB,ncpus=32,jobfs=2GB
 #PBS -l wd
 
 # setup environment
@@ -15,6 +15,6 @@ source $HOME/.profile
 workon uncoverml
 
 # run command
-mpirun $HOME/uncover-ml/demos/demo_prediction_pipeline.py
+mpirun --mca mpi_warn_on_fork 0 $HOME/uncover-ml/demos/demo_prediction_pipeline.py
 
 
