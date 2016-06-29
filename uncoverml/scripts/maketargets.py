@@ -25,9 +25,10 @@ log = logging.getLogger(__name__)
            help="File name (minus extension) to give to the output files")
 @cl.option('--folds', required=False, help="Number of folds for cross"
            "validation", type=int, default=5)
+@cl.option('--seed', type=int, default=None, help="Integer random seed")
 @cl.argument('shapefile', type=cl.Path(exists=True), required=True)
 @cl.argument('fieldname', type=str, required=True)
-def main(shapefile, fieldname, outfile, folds):
+def main(shapefile, fieldname, outfile, folds, seed):
     """
     Turn a shapefile of target variables into an HDF5 file and create a cross
     validation fold index.
@@ -76,7 +77,7 @@ def main(shapefile, fieldname, outfile, folds):
 
     # Make fold indices associated with the coordinates/grid
     N = len(lonlat)
-    _, cvassigns = split_cfold(N, folds)
+    _, cvassigns = split_cfold(N, folds, seed)
 
     # Get ascending order of targets by lat then lon
     ordind = np.lexsort(lonlat.T)

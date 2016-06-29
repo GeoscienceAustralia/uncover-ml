@@ -6,9 +6,10 @@ pipeline for learning and validating models.
 
 import logging
 import json
-from os import path, mkdir
+from os import path, mkdir, listdir
 from glob import glob
 from mpi4py import MPI
+import sys
 
 from click import Context
 
@@ -18,8 +19,6 @@ from uncoverml.scripts.composefeats import main as composefeats
 from uncoverml.scripts.learnmodel import main as learnmodel
 from uncoverml.scripts.predict import main as predict
 from uncoverml.scripts.validatemodel import main as validatemodel
-
-from runcommands import PipeLineFailure
 
 # Logging
 log = logging.getLogger(__name__)
@@ -82,11 +81,14 @@ folds = 5
 # Feature settings
 #
 
+# Allows deternministic cross-val. Set to None for a random seed
+crossval_seed = 1
+
 # Automatically detect integer-valued files and use one-hot encoding?
-onehot = False  # NOTE: if you change this, make sure you delete all old feats
+onehot = False
 
 # Patch size to extract around targets (0 = 1x1 pixel, 1 = 3x3 pixels etc)
-patchsize = 0  # NOTE: if you change this, make sure you delete all old feats
+patchsize = 0
 
 # Impute missing values?
 impute = True
@@ -120,10 +122,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    # "svr": {},
+    "svr": {},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 100},
+    # "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -156,26 +158,30 @@ def run_pipeline():
     if not path.exists(proc_dir) and rank == 0:
         mkdir(proc_dir)
         log.info("Made processed dir")
-
     comm.barrier()
 
+    # Make sure the directory is empty if it does exist
+    if listdir(proc_dir):
+        log.fatal("Output directory must be empty!")
+        sys.exit(-1)
+
     # Make pointspec and hdf5 for targets
-    if not path.exists(target_hdf):
+    if rank == 0:
         ctx = Context(maketargets)
         ctx.forward(maketargets,
                     shapefile=path.join(data_dir, target_file),
                     fieldname=target_var,
                     folds=folds,
-                    outfile=target_hdf
+                    outfile=target_hdf,
+                    seed=crossval_seed
                     )
-        # assert False
-
-        comm.barrier()
+    comm.barrier()
 
     # Extract feats for training
     tifs = glob(path.join(data_dir, "*.tif"))
     if len(tifs) == 0:
-        raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
+        log.fatal("No geotiffs found in {}!".format(data_dir))
+        sys.exit(-1)
 
     # Generic extract feats command
     ctx = Context(extractfeats)
@@ -183,18 +189,16 @@ def run_pipeline():
     # Find all of the tifs and extract features
     for tif in tifs:
         name = path.splitext(path.basename(tif))[0]
-        hdffeats = glob(path.join(proc_dir, name + '*.hdf5'))
-        if len(hdffeats) == 0:
-            log.info("Processing {}.".format(path.basename(tif)))
-            ctx.forward(extractfeats,
-                        geotiff=tif,
-                        name=name,
-                        outputdir=proc_dir,
-                        targets=target_hdf,
-                        onehot=onehot,
-                        patchsize=patchsize
-                        )
-            comm.barrier()
+        log.info("Processing {}.".format(path.basename(tif)))
+        ctx.forward(extractfeats,
+                    geotiff=tif,
+                    name=name,
+                    outputdir=proc_dir,
+                    targets=target_hdf,
+                    onehot=onehot,
+                    patchsize=patchsize
+                    )
+        comm.barrier()
 
     efiles = [f for f in glob(path.join(proc_dir, "*.part*.hdf5"))
               if not (path.basename(f).startswith(compos_file)
@@ -267,16 +271,6 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     run_pipeline()
-    # logging.basicConfig(level=logging.DEBUG)
-
-    # c = ipympi.run_ipcontroller()
-    # e = [ipympi.run_ipengine() for i in range(4)]
-    # ipympi.waitfor_n_engines(n=4)
-
-    # run_pipeline()
-    # c.terminate()
-    # for i in e:
-    #     i.terminate()
 
 if __name__ == "__main__":
     main()

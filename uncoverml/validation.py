@@ -55,41 +55,43 @@ def gen_cfold_data(X, Y, k=5):
         yield (X_r, Y_r, X_s, Y_s)
 
 
-def gen_cfold_ind(nsamples, k=5):
-    """
-    Generator to return random test and training indices for cross fold
-    validation.
+# def gen_cfold_ind(nsamples, k=5, seed=None):
+#     """
+#     Generator to return random test and training indices for cross fold
+#     validation.
 
-    Parameters
-    ----------
-        nsamples: int
-            the number of samples in the dataset
-        k: int, optional
-            the number of folds
+#     Parameters
+#     ----------
+#         nsamples: int
+#             the number of samples in the dataset
+#         k: int, optional
+#             the number of folds
+#         seed: int, optional
+#             random seed for numpy permutation
 
-    Yields
-    ------
-        rind: ndarray
-            training indices of shape (nsamples * (k-1)/k,)
-        sind: ndarray
-            testing indices of shape (nsamples * 1/k,)
+#     Yields
+#     ------
+#         rind: ndarray
+#             training indices of shape (nsamples * (k-1)/k,)
+#         sind: ndarray
+#             testing indices of shape (nsamples * 1/k,)
 
-    Note
-    ----
-        Each call to this generator returns a random but non-overlapping
-        split of data.
+#     Note
+#     ----
+#         Each call to this generator returns a random but non-overlapping
+#         split of data.
 
-    """
+#     """
 
-    cvinds, _ = split_cfold(nsamples, k)
+#     cvinds, _ = split_cfold(nsamples, k, seed)
 
-    for i in range(k):
-        sind = cvinds[i]
-        rind = np.concatenate(cvinds[0:i] + cvinds[i + 1:])
-        yield (rind, sind)
+#     for i in range(k):
+#         sind = cvinds[i]
+#         rind = np.concatenate(cvinds[0:i] + cvinds[i + 1:])
+#         yield (rind, sind)
 
 
-def split_cfold(nsamples, k=5):
+def split_cfold(nsamples, k=5, seed=None):
     """
     Function that returns indices for splitting data into random folds.
 
@@ -99,6 +101,8 @@ def split_cfold(nsamples, k=5):
             the number of samples in the dataset
         k: int, optional
             the number of folds
+        seed: int, optional
+            random seed to provide to numpy
 
     Returns
     -------
@@ -112,7 +116,7 @@ def split_cfold(nsamples, k=5):
             cvinds.
 
     """
-
+    np.random.seed(seed)
     pindeces = np.random.permutation(nsamples)
     cvinds = np.array_split(pindeces, k)
 

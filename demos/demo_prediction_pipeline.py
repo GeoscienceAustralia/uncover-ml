@@ -6,7 +6,7 @@ pipeline for prediction.
 
 import sys
 import logging
-from os import path, mkdir
+from os import path, mkdir, listdir
 from glob import glob
 from mpi4py import MPI
 
@@ -68,10 +68,10 @@ compos_file = "composite"
 #
 
 # Name of the prediction algorithm
-# algorithm = 'svr'
+algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
-algorithm = 'randomforest'
+# algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction"
@@ -107,39 +107,42 @@ def run_pipeline():
     if not path.exists(pred_dir) and rank == 0:
         mkdir(pred_dir)
         log.info("Made prediction dir")
-
     comm.barrier()
+
+    # Make sure prediction dir is empty
+    if listdir(pred_dir):
+        log.fatal("Prediction directory must be empty!")
+        sys.exit(-1)
 
     # Make sure we have an extractfeats settings file for each tif
     tifs = glob(path.join(data_dir, "*.tif"))
     if len(tifs) == 0:
-        raise PipeLineFailure("No geotiffs found in {}!".format(data_dir))
+        log.fatal("No geotiffs found in {}!".format(data_dir))
+        sys.exit(-1)
 
     settings = []
     for tif in tifs:
-        setting = path.join(proc_dir, path.splitext(path.basename(tif))[0]
-                            + "_settings.bin")
+        setting = path.join(proc_dir, path.splitext(path.basename(tif))[0] +
+                            "_settings.bin")
         if not path.exists(setting):
-            log.fatal("Setting file for {} does not exist!".format(tif))
+            log.fatal("Setting file {} does not exist!".format(setting))
             sys.exit(-1)
         settings.append(setting)
 
-    # Now Extact features from each tif
+    # Now extact features from each tif
     ctx = Context(extractfeats)
 
     # Find all of the tifs and extract features
     for tif, setting in zip(tifs, settings):
         name = path.splitext(path.basename(tif))[0]
-        hdffeats = glob(path.join(pred_dir, name + '*.hdf5'))
-        if len(hdffeats) == 0:
-            log.info("Processing {}.".format(path.basename(tif)))
-            ctx.forward(extractfeats,
-                        geotiff=tif,
-                        name=name,
-                        outputdir=pred_dir,
-                        settings=setting
-                        )
-            comm.barrier()
+        log.info("Processing {}.".format(path.basename(tif)))
+        ctx.forward(extractfeats,
+                    geotiff=tif,
+                    name=name,
+                    outputdir=pred_dir,
+                    settings=setting
+                    )
+        comm.barrier()
 
     # Compose individual image features into single feature vector
     compos_settings = path.join(proc_dir, compos_file + "_settings.bin")
@@ -148,22 +151,20 @@ def run_pipeline():
         sys.exit(-1)
 
     efiles = [f for f in glob(path.join(pred_dir, "*.part*.hdf5"))
-              if not (path.basename(f).startswith(compos_file)
-                      or path.basename(f).startswith(predict_file))]
+              if not (path.basename(f).startswith(compos_file) or
+                      path.basename(f).startswith(predict_file))]
+
+    log.info("Composing features...")
+    ctx = Context(composefeats)
+    ctx.forward(composefeats,
+                featurename=compos_file,
+                outputdir=pred_dir,
+                files=efiles,
+                settings=compos_settings
+                )
+    comm.barrier()
 
     cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
-    if len(cfiles) == 0:
-        log.info("Composing features...")
-        ctx = Context(composefeats)
-        ctx.forward(composefeats,
-                    featurename=compos_file,
-                    outputdir=pred_dir,
-                    files=efiles,
-                    settings=compos_settings
-                    )
-        comm.barrier()
-
-        cfiles = glob(path.join(pred_dir, compos_file + "*.hdf5"))
 
     # Now predict on the composite features!
     alg_file = path.join(proc_dir, "{}.pk".format(algorithm))
@@ -174,23 +175,18 @@ def run_pipeline():
     alg = path.splitext(path.basename(alg_file))[0]
     predict_alg_file = predict_file + '_' + alg
 
-    if rank == 0:
-        print(cfiles)
+    log.info("Predicting targets...")
+    ctx = Context(predict)
+    ctx.forward(predict,
+                outputdir=pred_dir,
+                predictname=predict_alg_file,
+                model=alg_file,
+                quantiles=quantiles,
+                files=cfiles
+                )
+    comm.barrier()
 
     pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
-    if len(pfiles) == 0:
-        log.info("Predicting targets...")
-        ctx = Context(predict)
-        ctx.forward(predict,
-                    outputdir=pred_dir,
-                    predictname=predict_alg_file,
-                    model=alg_file,
-                    quantiles=quantiles,
-                    files=cfiles
-                    )
-        comm.barrier()
-
-        pfiles = glob(path.join(pred_dir, predict_alg_file + '*.hdf5'))
 
     # Output a Geotiff of the predictions
     log.info("Exporting geoftiffs...")
