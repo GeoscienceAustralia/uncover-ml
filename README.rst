@@ -60,6 +60,12 @@ Running on NCI
 --------------
 Please see `The PBS Readme <pbs/README.md>`_ .
 
+Contract with Geoscience Australia
+----------------------------------
+This software is being developed under contract with Geoscience Australia.
+For a list of features still to be implemented, see the 
+`issue tracker <https://github.com/nicta/uncover-ml/issues>`.
+
 
 Useful Links
 ------------
