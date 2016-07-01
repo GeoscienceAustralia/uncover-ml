@@ -1,11 +1,118 @@
 from __future__ import division
 
 import numpy as np
-from scipy.special import digamma, betaln
+from scipy.special import digamma, betaln, erf, expit
 from scipy.stats import beta
 
 from revrand.likelihoods import Bernoulli
 from revrand.btypes import Parameter, Positive
+from revrand.mathfun.special import safesoftplus
+
+
+class UnifGauss(Bernoulli):
+
+    def pdf(self, y, f):
+
+        return self.__split_apply(self._pdf_unif, self._pdf_gaus, y, f)
+
+    def cdf(self, y, f):
+
+        return self.__split_apply(self._cdf_unif, self._cdf_gaus, y, f)
+
+    def loglike(self, y, f):
+
+        return self.__split_apply(self._loglike_unif, self._loglike_gaus, y, f)
+
+    def Ey(self, f):
+
+        g = safesoftplus(f)
+        gaus_mean = g + np.sqrt(2 / np.pi)
+        unif_mean = g / 2
+
+        norm = self.__norm(g)
+        weight_gaus = norm * np.sqrt(np.pi) / 2
+        weight_unif = g * norm
+
+        return weight_gaus * gaus_mean + weight_unif + unif_mean
+
+    def df(self, y, f):
+
+        return self.__split_apply(self._df_unif, self._df_gaus, y, f)
+
+    def _df_unif(y, f, g):
+
+        gp = expit(f)
+        spi2 = np.sqrt(np.pi) / 2
+        dnorm = - gp / (spi2 + g)
+
+        return dnorm
+
+    def _df_gaus(y, f, g):
+
+        gp = expit(f)
+        spi2 = np.sqrt(np.pi) / 2
+        dnorm = - gp / (spi2 + g)
+
+        return dnorm + 2 * (y - g) * gp
+
+    def _d2f_unif(y, f, g):
+        gp = expit(f)
+        g2p = gp * (1 - gp)
+        spi2g = np.sqrt(np.pi) / 2 + g
+        dnorm = (gp / spi2g)**2 - g2p / spi2g
+        return dnorm
+
+
+    # g = safesoftplus(f)
+    # gp = expit(f)
+    # g2p = gp * (1 - gp)
+    # g3p = g2p * (1 - 2 * gp)
+
+    def _loglike_unif(self, y, f, g):
+
+        return self.__lognorm(g)
+
+    def _loglike_gaus(self, y, f, g):
+
+        return self.__lognorm(g) - (y - g)**2
+
+    def _pdf_unif(self, y, f, g):
+
+        return self.__norm(g)
+
+    def _pdf_gaus(self, y, f, g):
+
+        return np.exp(-(y - g)**2) * self.__norm(g)
+
+    def _cdf_unif(self, y, f, g):
+
+        return y * self.__norm(g)
+
+    def _cdf_gaus(self, y, f, g):
+
+        return (erf(y - g) * np.sqrt(np.pi) / 2 + g) * self.__norm(g)
+
+    def __split_apply(self, func_unif, func_gaus, y, f):
+
+        y, f = np.broadcast_arrays(y, f)
+        g = safesoftplus(f)
+        isunif = y <= g
+        isgaus = ~ isunif
+
+        result = np.zeros_like(y)
+
+        result[isunif] = func_unif(y[isunif], f[isunif], g[isunif])
+        result[isgaus] = func_gaus(y[isgaus], f[isgaus], g[isgaus])
+
+        return result
+
+    def __norm(self, g):
+
+        return 1. / (g + np.sqrt(np.pi) / 2)
+
+    def __lognorm(self, g):
+
+        return - np.log(g + np.sqrt(np.pi) / 2)
 
 
 class Beta3(Bernoulli):
