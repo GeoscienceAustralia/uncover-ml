@@ -56,11 +56,22 @@ class UnifGauss(Bernoulli):
         return dnorm + 2 * (y - g) * gp
 
     def _d2f_unif(y, f, g):
+
         gp = expit(f)
         g2p = gp * (1 - gp)
         spi2g = np.sqrt(np.pi) / 2 + g
         dnorm = (gp / spi2g)**2 - g2p / spi2g
+
         return dnorm
+
+    def _d2f_gaus(y, f, g):
+
+        gp = expit(f)
+        g2p = gp * (1 - gp)
+        spi2g = np.sqrt(np.pi) / 2 + g
+        dnorm = (gp / spi2g)**2 - g2p / spi2g
+
+        return dnorm + 2 
 
 
     # g = safesoftplus(f)
