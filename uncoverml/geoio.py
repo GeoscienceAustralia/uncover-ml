@@ -490,17 +490,32 @@ def output_features(feature_vector, outfile, featname="features",
 
 
 def load_and_cat(hdf5_vectors):
-    data_list = []
+    data_shapes = []
+    # pass one to get the shapes
     for filename in hdf5_vectors:
         with hdf.open_file(filename, mode='r') as f:
             if f.root._v_attrs["blank"]:  # no data in this chunk
                 return None
-            data = f.root.features[:]
-            mask = f.root.mask[:]
-            a = np.ma.masked_array(data=data, mask=mask)
-            data_list.append(a)
-    all_data = np.ma.concatenate(data_list, axis=1)
-    return all_data
+            data_shapes.append(f.root.features.shape)
+
+    # allocate memory
+    x_shps, y_shps = zip(*data_shapes)
+    x_shp = set(x_shps).pop()
+    y_shp = np.sum(np.array(y_shps))
+    all_data = np.empty((x_shp, y_shp), dtype=float)
+    all_mask = np.empty((x_shp, y_shp), dtype=bool)
+
+    # read files in
+    start_idx = 0
+    end_idx = -1
+    for filename in hdf5_vectors:
+        with hdf.open_file(filename, mode='r') as f:
+            end_idx = start_idx + f.root.features.shape[1]
+            all_data[:, start_idx, end_idx] = f.root.features
+            all_mask[:, start_idx, end_idx] = f.root.mask
+
+    result = np.ma.masked_array(data=all_data, mask=all_mask)
+    return result
 
 
 def load_attributes(filename_dict):
