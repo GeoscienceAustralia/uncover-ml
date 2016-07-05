@@ -502,6 +502,10 @@ def load_and_cat(hdf5_vectors):
     x_shps, y_shps = zip(*data_shapes)
     x_shp = set(x_shps).pop()
     y_shp = np.sum(np.array(y_shps))
+
+    log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
+                                                   x_shp * y_shp * 72. / 1e9)) 
+
     all_data = np.empty((x_shp, y_shp), dtype=float)
     all_mask = np.empty((x_shp, y_shp), dtype=bool)
 
@@ -511,8 +515,9 @@ def load_and_cat(hdf5_vectors):
     for filename in hdf5_vectors:
         with hdf.open_file(filename, mode='r') as f:
             end_idx = start_idx + f.root.features.shape[1]
-            all_data[:, start_idx, end_idx] = f.root.features
-            all_mask[:, start_idx, end_idx] = f.root.mask
+            all_data[:, start_idx:end_idx] = f.root.features[:]
+            all_mask[:, start_idx:end_idx] = f.root.mask[:]
+            start_idx = end_idx
 
     result = np.ma.masked_array(data=all_data, mask=all_mask)
     return result

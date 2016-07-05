@@ -48,20 +48,27 @@ def sets(x):
 
 
 def centre(x, mean):
-    return x - mean
+    x -= mean
 
 
 def standardise(x, x_sd, mean):
-    return centre(x, mean) / x_sd[np.newaxis, :]
+    centre(x, mean)
+    x /= x_sd
 
 
 def impute_with_mean(x, mean):
-    xi = np.ma.masked_array(data=np.copy(x.data), mask=False)
-    tilemean = np.tile(mean, reps=(xi.shape[0], 1))
-    xi.data[x.mask] = tilemean[x.mask]
-    xi.mask = np.zeros_like(xi, dtype=bool)
+    
+    for i, r in enumerate(x):
+        x.data[i][x.mask[i]] = mean[x.mask[i]]
+
+    x.mask *= False
+
+    # xi = np.ma.masked_array(data=np.copy(x.data), mask=False)
+    # tilemean = np.tile(mean, reps=(xi.shape[0], 1))
+    # xi.data[x.mask] = tilemean[x.mask]
+    # xi.mask = np.zeros_like(xi, dtype=bool)
     # xi.data[x.mask] = np.broadcast_to(mean, x.shape)[x.mask]
-    return xi
+    # return x
 
 
 def one_hot(x, x_set):

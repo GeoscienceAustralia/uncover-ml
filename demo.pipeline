@@ -94,10 +94,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 100},
+    "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -117,10 +117,10 @@ algdict = {
 #
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
-# algorithm = 'randomforest'
+algorithm = 'randomforest'
 
 # Prediction file names (prefix)
 predict_file = "prediction"

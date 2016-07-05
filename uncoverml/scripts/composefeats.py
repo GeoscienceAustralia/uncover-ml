@@ -28,15 +28,15 @@ def transform_with_params(x, impute_mean, mean, sd, eigvecs,
                           eigvals, featurefraction, comm):
 
     if impute_mean is not None:
-        x = stats.impute_with_mean(x, impute_mean)
+        stats.impute_with_mean(x, impute_mean)
 
     if mean is not None:
 
         # Always subtract mean before whiten
         if sd is not None:
-            x = stats.standardise(x, sd, mean)
+            stats.standardise(x.data, sd, mean)
         else:
-            x = stats.centre(x, mean)
+            stats.centre(x.data, mean)
 
         if eigvecs is not None:
             ndims = x.shape[1]
