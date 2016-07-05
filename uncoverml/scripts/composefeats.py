@@ -174,6 +174,8 @@ def main(files, featurename, outputdir, centre, standardise,
 
     # Get attribs if they exist
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
+    chunk_files = filename_dict[chunk_index]
+    log.info("Node {} loading {}".format(chunk_index, chunk_files))
     x = geoio.load_and_cat(filename_dict[chunk_index])
 
     # not everyone has data

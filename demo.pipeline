@@ -25,6 +25,9 @@ proc_dir = path.join(data_dir, "processed")
 # proc_dir = "/short/ge3/dms599/Murray_processed"
 # proc_dir = "/short/ge3/dms599/GA-cover_processed"
 
+# Location of the prediction output from this script
+pred_dir = path.join(proc_dir, "prediction")
+
 
 #
 # Target Settings
@@ -114,7 +117,7 @@ algdict = {
 #
 
 # Name of the prediction algorithm
-prediction_algorithm = 'svr'
+algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'randomforest'
