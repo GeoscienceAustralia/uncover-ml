@@ -148,7 +148,7 @@ def run_pipeline(config):
 
 
 def main():
-    if (sys.argv) != 2:
+    if len(sys.argv) != 2:
         print("Usage: learningpipeline <configfile>")
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
