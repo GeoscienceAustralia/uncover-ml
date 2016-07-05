@@ -51,6 +51,8 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
+            'learningpipeline = uncoverml.scripts.learningpipeline:main',
+            'predictionpipeline = uncoverml.scripts.predictionpipeline:main',
             'maketargets = uncoverml.scripts.maketargets:main',
             'cvindexer = uncoverml.scripts.cvindexer:main',
             'extractfeats = uncoverml.scripts.extractfeats:main',
@@ -63,19 +65,19 @@ setup(
         ]
     },
     install_requires=[
-        'pycontracts',
-        'tables',
-        'rasterio',
-        'affine',
-        'pyshp',
-        'click_log',
-        'click',
-        'revrand',
-        'scikit-learn',
-        'mpi4py',
-        'scipy',
-        'numpy',
-        'wheel',
+        'pycontracts == 1.7.9',
+        'tables == 3.2.2',
+        'rasterio == 0.36.0',
+        'affine == 2.0.0.post1',
+        'pyshp == 1.2.3',
+        'click_log == 0.1.4',
+        'click == 6.6',
+        'revrand == 0.4.1',
+        'scikit-learn == 0.17.1',
+        'mpi4py == 2.0.0',
+        'scipy >= 0.15.1',
+        'numpy >= 1.9.2',
+        'wheel >= 0.29.0',
     ],
     extras_require={
         'demos': [
