@@ -51,6 +51,8 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
+            'learningpipeline = uncoverml.scripts.learningpipeline:main',
+            'predictionpipeline = uncoverml.scripts.predictionpipeline:main',
             'maketargets = uncoverml.scripts.maketargets:main',
             'cvindexer = uncoverml.scripts.cvindexer:main',
             'extractfeats = uncoverml.scripts.extractfeats:main',
@@ -64,7 +66,7 @@ setup(
     },
     install_requires=[
         'pycontracts',
-        'tables',
+        'tables == 3.2.2',
         'rasterio',
         'affine',
         'pyshp',
