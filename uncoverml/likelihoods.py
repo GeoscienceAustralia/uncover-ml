@@ -14,11 +14,11 @@ SQRTPI2 = np.sqrt(np.pi) / 2
 
 class Switching(Bernoulli):
 
-    def __init__(self, var_init=Parameter(1., Positive())):
+    def __init__(self, y0=0., var_init=Parameter(1., Positive())):
 
         self.params = var_init
         self.gaus = Gaussian(var_init)
-        self.unif = UnifGauss()
+        self.unif = UnifGauss(y0)
 
     def loglike(self, y, f, var, z):
         return self.__split_on_z(self.unif.loglike, self.gaus.loglike, y, f,
@@ -68,17 +68,21 @@ class Switching(Bernoulli):
 
 class UnifGauss(Bernoulli):
 
+    def __init__(self, y0=0.):
+
+        self.y0 = y0
+
     def loglike(self, y, f):
 
         return self.__split_apply(self._loglike_unif, self._loglike_gaus, y, f)
 
     def _loglike_unif(self, y, f, g):
 
-        return - np.log(g + SQRTPI2)
+        return - np.log(g - self.y0 + SQRTPI2)
 
     def _loglike_gaus(self, y, f, g):
 
-        return - np.log(g + SQRTPI2) - (y - g)**2
+        return - np.log(g - self.y0 + SQRTPI2) - (y - g)**2
 
     def pdf(self, y, f):
 
@@ -86,11 +90,11 @@ class UnifGauss(Bernoulli):
 
     def _pdf_unif(self, y, f, g):
 
-        return 1 / (g + SQRTPI2)
+        return 1 / (g - self.y0 + SQRTPI2)
 
     def _pdf_gaus(self, y, f, g):
 
-        return np.exp(-(y - g)**2) / (g + SQRTPI2)
+        return np.exp(-(y - g)**2) / (g - self.y0 + SQRTPI2)
 
     def cdf(self, y, f):
 
@@ -98,24 +102,25 @@ class UnifGauss(Bernoulli):
 
     def _cdf_unif(self, y, f, g):
 
-        return y / (g + SQRTPI2)
+        return (y - self.y0) / (g - self.y0 + SQRTPI2)
 
     def _cdf_gaus(self, y, f, g):
 
-        return (erf(y - g) * SQRTPI2 + g) / (g + SQRTPI2)
+        return (erf(y - g) * SQRTPI2 + g - self.y0) / (g - self.y0 + SQRTPI2)
 
     def Ey(self, f):
 
         if np.isscalar(f):
-            g = np.log(1 + np.exp(f))
+            g = np.log(1 + np.exp(f)) + self.y0
         else:
-            g = softplus(f)
-        gaus_mean = g + np.sqrt(2 / np.pi)
-        unif_mean = g / 2
+            g = softplus(f) + self.y0
 
-        norm = 1 / (g + SQRTPI2)
+        gaus_mean = g + np.sqrt(2 / np.pi)
+        unif_mean = (g - self.y0) / 2
+
+        norm = 1 / (g - self.y0 + SQRTPI2)
         weight_gaus = norm * SQRTPI2
-        weight_unif = g * norm
+        weight_unif = (g - self.y0) * norm
 
         Ey = weight_gaus * gaus_mean + weight_unif + unif_mean
 
@@ -128,7 +133,7 @@ class UnifGauss(Bernoulli):
     def _df_unif(self, y, f, g, gdivs=False):
 
         gp = expit(f)
-        df = - gp / (SQRTPI2 + g)
+        df = - gp / (SQRTPI2 + g - self.y0)
 
         return df if not gdivs else (df, gp)
 
@@ -146,7 +151,7 @@ class UnifGauss(Bernoulli):
 
         gp = expit(f)
         g2p = gp * (1 - gp)
-        SQRTPI2g = (SQRTPI2 + g)
+        SQRTPI2g = (SQRTPI2 + g - self.y0)
         d2f = (gp / SQRTPI2g)**2 - g2p / SQRTPI2g
 
         return d2f if not gdivs else (d2f, gp, g2p)
@@ -165,7 +170,7 @@ class UnifGauss(Bernoulli):
         gp = expit(f)
         g2p = gp * (1 - gp)
         g3p = g2p * (1 - 2 * gp)
-        SQRTPI2g = (SQRTPI2 + g)
+        SQRTPI2g = (SQRTPI2 + g - self.y0)
         d3f = - g3p / SQRTPI2g + 3 * gp * g2p / SQRTPI2g**2 \
             - 2 * (gp / SQRTPI2g)**3
 
@@ -179,7 +184,7 @@ class UnifGauss(Bernoulli):
     def __split_apply(self, func_unif, func_gaus, y, f):
 
         y, f = np.broadcast_arrays(y, f)
-        g = softplus(f)
+        g = softplus(f) + self.y0
         isunif = y <= g
         isgaus = ~ isunif
 

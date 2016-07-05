@@ -6,13 +6,13 @@ import numpy as np
 import logging
 
 from revrand import glm
-from revrand.basis_functions import RandomMatern52
+from revrand.basis_functions import RandomRBF
 from revrand.btypes import Parameter, Positive
 from revrand.utils.datasets import gen_gausprocess_se
 from revrand.mathfun.special import softplus
-from revrand.likelihoods import Gaussian
+# from revrand.likelihoods import Gaussian
 
-from uncoverml.likelihoods import Switching
+from uncoverml.likelihoods import Switching, UnifGauss
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -39,12 +39,12 @@ nbases = 100
 lenscale = 1  # For all basis functions that take lengthscales
 rho = 0.9
 epsilon = 1e-5
-passes = 500
+passes = 5 * 40
 batch_size = 10
 kappa = 6
 use_sgd = True
-regulariser = 10
-noise = 2.0
+regulariser = 1.
+noise = 1.0
 
 #
 # Make Data
@@ -55,16 +55,25 @@ not_hit = ~ hit
 Xtrain, ftrain, Xtest, ftest = \
     gen_gausprocess_se(N, Ns, lenscale=lenscale_true, noise=0.0)
 
-gtrain = softplus(5 * ftrain + offset)
-gtest = softplus(5 * ftest + offset)
+gtrain = softplus(ftrain + offset)
+gtest = softplus(ftest + offset)
 
 ytrain = np.empty(N)
 ytrain[hit] = gtrain[hit] + np.random.randn(hit.sum()) * noise_true
 ytrain[not_hit] = np.random.rand(not_hit.sum()) * gtrain[not_hit]
 
+
+#
+# Transform Inputs for learning
+#
+
+ymean = ytrain.mean()
+ytrain -= ymean
+
 # Setup likelihood
-var = Parameter(noise**2, Positive(3.))
-like = Switching(var)
+var = Parameter(noise**2, Positive(1.))
+# like = UnifGauss(y0=-ymean)
+like = Switching(y0=-ymean, var_init=var)
 # like = Gaussian(var)
 
 #
@@ -72,8 +81,10 @@ like = Switching(var)
 #
 
 if vis_likelihood:
-    f = np.log(np.exp(ytrain[not_hit]) - 1).mean()
-    y = np.linspace(0, f + 3, 1000)
+    print(ymean)
+
+    f = ytrain.mean()
+    y = np.linspace(-ymean, f + 3, 1000)
     p = like.pdf(y, f)
     P = like.cdf(y, f)
     Ey = like.Ey(f)
@@ -89,12 +100,11 @@ if vis_likelihood:
              .format(f))
     pl.show()
 
-
 #
 # Inference
 #
 
-basis = RandomMatern52(nbases, Xtrain.shape[1],
+basis = RandomRBF(nbases, Xtrain.shape[1],
                        lenscale_init=Parameter(lenscale, Positive()))
 regulariser = Parameter(regulariser, Positive())
 
@@ -115,7 +125,17 @@ gmean = softplus(fs).mean(axis=1)
 
 y95n, y95x = glm.predict_interval(0.8, Xtest, like, basis, *params,
                                   multiproc=False,
+                                  # likelihood_args=())
                                   likelihood_args=(hit_predict,))
+
+#
+# Untransform targets
+#
+
+Ey += ymean
+y95n += ymean
+y95x += ymean
+ytrain += ymean
 
 
 #
@@ -128,8 +148,8 @@ Xpl_s = Xtest.flatten()
 # Regressor
 pl.plot(Xpl_s, Ey, 'b-', label='GLM mean.')
 pl.plot(Xpl_s, gmean, 'r-', label='$\mathbf{g}(\mathbf{f})$ mean')
-pl.fill_between(Xpl_s, y95n, y95x, facecolor='none', edgecolor='b', label=None,
-                linestyle='--')
+# pl.fill_between(Xpl_s, y95n, y95x, facecolor='none', edgecolor='b', label=None,
+                # linestyle='--')
 
 # # Training/Truth
 pl.plot(Xpl_t[hit], ytrain[hit], 'k.', label='Training (hit)')
