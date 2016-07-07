@@ -98,10 +98,15 @@ class RandomForestRegressor(RFR):
     """
 
     def predict_proba(self, X, *args):
+        Ey = self.predict(X)
 
-        Eys = [dt.predict(X, *args) for dt in self.estimators_]
-        return self.predict(X), np.var(Eys, axis=0)
+        Vy = np.zeros_like(Ey)
+        for dt in self.estimators_:
+            Vy += (dt.predict(X, *args) - Ey)**2
 
+        Vy /= len(self.estimators_) 
+
+        return Ey, Vy
 
 #
 # Helper functions

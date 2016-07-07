@@ -79,6 +79,24 @@ $ pip install pytest
 $ py.test ~/uncover-ml/tests/
 ```
 
+## Updating the Code
+To update the code, first make sure you are in the `uncoverml` virtual environment:
+```bash
+$ workon uncoverml
+```
+Next, pull the latest commit from the master branch, and install:
+```bash
+$ cd ~/uncover-ml
+$ git pull origin
+$ python setup.py install
+```
+If the pull and the installation complete successfully, the code is ready to run!
+
+
+
+
+
+
 ## Running Batch Jobs
 
 in the `pbs` subfolder of uncover-ml there are some example scripts and a

@@ -75,7 +75,7 @@ def transform(x, impute, centre, standardise, whiten,
         impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
         impute_mean = impute_sum / x_n
         log.info("Imputing missing data from mean {}".format(impute_mean))
-        x = stats.impute_with_mean(x, impute_mean)
+        stats.impute_with_mean(x, impute_mean)
         x_n_local = stats.count(x)
         x_n = comm.allreduce(x_n_local, op=MPI.SUM)
 
@@ -88,7 +88,7 @@ def transform(x, impute, centre, standardise, whiten,
 
     if centre is True and not standardise:
         log.info("Subtracting global mean {}".format(mean))
-        x = stats.centre(x, mean)
+        stats.centre(x.data, mean)
         mean = np.zeros_like(mean)
 
     sd = None
@@ -97,7 +97,7 @@ def transform(x, impute, centre, standardise, whiten,
         x_var = comm.allreduce(x_var_local, op=sum0_op)
         sd = np.sqrt(x_var / x_n)
         log.info("Dividing through global standard deviation {}".format(sd))
-        x = stats.standardise(x, sd, mean)
+        stats.standardise(x.data, sd, mean)
         mean = np.zeros_like(mean)
 
     eigvecs = None
