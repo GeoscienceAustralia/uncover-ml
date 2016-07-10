@@ -12,11 +12,6 @@ import time
 log = logging.getLogger(__name__)
 
 
-def flatten_image(im):
-    x = im.reshape(im.shape[0], -1)
-    return x
-
-
 def file_indices_okay(filenames):
 
     # get just the name eg /path/to/file_0.hdf5 -> file_0
@@ -90,18 +85,6 @@ def files_by_chunk(filenames):
     return d
 
 
-def _invert_affine(A):
-
-    R = np.array([A[0:2], A[3:5]])
-    T = np.array([[A[2], A[5]]]).T
-
-    iR = np.linalg.pinv(R)
-    iT = -iR.dot(T)
-    iA = np.hstack((iR, iT))
-
-    return Affine(*iA.flatten())
-
-
 def points_from_shp(filename):
     """
     TODO
@@ -151,14 +134,6 @@ def values_from_shp(filename, field):
     return np.array(vals)
 
 
-def values_from_hdf(filename, field):
-
-    with hdf.open_file(filename, mode='r') as f:
-        vals = [v for v in f.root.field]
-
-    return np.array(vals)
-
-
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
     # y bounds are INCLUSIVE
@@ -173,22 +148,6 @@ def construct_splits(npixels, nchunks, overlap=0):
         new_max = min(npixels, old_max + overlap)
         y_bounds.append((new_min, new_max))
     return y_bounds
-
-
-def bounding_box(raster):
-    """
-    TODO
-    """
-    T1 = raster.affine
-
-    # the +1 because we want pixel corner 1 beyond the last pixel
-    lon_range = T1[2] + np.array([0, raster.width + 1]) * T1[0]
-    lat_range = T1[5] + np.array([0, raster.height + 1]) * T1[4]
-
-    lon_range = np.sort(lon_range)
-    lat_range = np.sort(lat_range)
-
-    return lon_range, lat_range
 
 
 class Image:

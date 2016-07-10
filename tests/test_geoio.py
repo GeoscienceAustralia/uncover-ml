@@ -53,20 +53,6 @@ def test_files_by_chunk():
     assert r == answer
 
 
-def test_bounding_box(make_raster):
-
-    res, x_bound, y_bound, lons, lats, Ao = make_raster
-
-    class f:
-        affine = Ao
-        width = res[0]
-        height = res[1]
-
-    bx, by = geoio.bounding_box(f)
-    assert np.allclose(x_bound, bx)
-    assert np.allclose(y_bound, by)
-
-
 def test_latlon2pix_edges(make_raster, make_gtiff):
 
     res, x_bound, y_bound, lons, lats, Ao = make_raster
