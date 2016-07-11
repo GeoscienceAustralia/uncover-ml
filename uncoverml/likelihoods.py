@@ -20,6 +20,9 @@ class Switching(Bernoulli):
         self.gaus = Gaussian(var_init)
         self.unif = UnifGauss()
 
+        # FIXME: TEMP
+        self.i = 0
+
     def loglike(self, y, f, var, z):
         return self.__split_on_z(self.unif.loglike, self.gaus.loglike, y, f,
                                  var, z)
@@ -43,6 +46,11 @@ class Switching(Bernoulli):
         return self.__split_on_z(self.unif.d2f, self.gaus.d2f, y, f, var, z)
 
     def d3f(self, y, f, var, z):
+        # FIXME: TEMP
+        if (self.i % 1000) == 0:
+            print("fmin: {}, fmax: {}, fshape: {}".format(f.min(), f.max(),
+                                                          f.shape))
+        self.i += 1
         return self.__split_on_z(self.unif.d3f, self.gaus.d3f, y, f, var, z)
 
     def dp(self, y, f, var, z):
