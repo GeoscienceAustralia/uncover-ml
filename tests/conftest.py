@@ -217,3 +217,9 @@ def make_fakedata(tmpdir_factory):
     y = X.dot(w) + np.random.randn(100) / 1000
 
     return X, y, w, mod_dir
+
+
+@pytest.fixture
+def make_tmpdir(tmpdir_factory):
+    path = str(tmpdir_factory.mktemp('geoio').realpath())
+    return path

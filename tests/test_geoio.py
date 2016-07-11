@@ -1,6 +1,8 @@
 import rasterio
 import numpy as np
 import shapefile as shp
+import os.path
+import tables as hdf
 
 from uncoverml import geoio
 
@@ -180,3 +182,117 @@ def test_Image_split(make_gtiff):
 
     assert I.shape == Irecon.shape
     assert np.all(I == Irecon)
+
+
+def test_points_fromto_hdf(make_tmpdir):
+
+    filename = os.path.join(make_tmpdir, "fromto.hdf5")
+
+    data = {"intfield": np.arange(10, dtype=int),
+            "floatfield": np.random.rand(2, 3),
+            "boolfield": np.random.choice(2, 5).astype(bool)}
+    geoio.points_to_hdf(filename, data)
+    new_data = geoio.points_from_hdf(filename, list(data.keys()))
+    matches = [k for k in data if np.all(data[k] == new_data[k])]
+    assert set(matches) == set(data.keys())
+
+
+def test_load_attributes(make_tmpdir):
+    filename = os.path.join(make_tmpdir, "loadattribs.hdf5")
+    shape = (10, 4)
+    bbox = np.array([1.0, 2.0, 1.0, 2.0])
+    with hdf.open_file(filename, 'w') as f:
+        f.create_carray("/", "features",
+                             atom=hdf.Float64Atom(),
+                             obj=np.random.rand(10, 4))
+        f.root.features.attrs.shape = shape
+        f.root.features.attrs.bbox = bbox
+
+    fdict = {0: [filename]}
+    nshape, nbbox = geoio.load_attributes(fdict)
+    assert shape == nshape
+    assert np.all(bbox == nbbox)
+
+
+def test_load_attributes_blank(make_tmpdir):
+    filename = os.path.join(make_tmpdir, "loadattribs_blank.hdf5")
+    with hdf.open_file(filename, 'w') as f:
+            f.create_carray("/", "features",
+                                 atom=hdf.Float64Atom(),
+                                 obj=np.random.rand(10, 4))
+
+    fdict = {0: [filename]}
+    shape, bbox = geoio.load_attributes(fdict)
+    assert shape is None
+    assert bbox is None
+
+
+def output_filename(feature_name, chunk_index, n_chunks, output_dir):
+    filename = feature_name + ".part{}of{}.hdf5".format(chunk_index + 1,
+                                                        n_chunks)
+    full_path = os.path.join(output_dir, filename)
+    return full_path
+
+
+def test_output_filename():
+    true_filename = "/path/to/my/file/featurename.part3of5.hdf5"
+    filename = geoio.output_filename("featurename", 2, 5, "/path/to/my/file")
+    assert true_filename == filename
+
+
+def test_output_blank(make_tmpdir):
+    filename = os.path.join(make_tmpdir, "outputblank.hdf5")
+    geoio.output_blank(filename)
+    with hdf.open_file(filename, mode='r') as f:
+        assert f.root._v_attrs["blank"]
+
+
+def test_output_features(make_tmpdir):
+    filename = os.path.join(make_tmpdir, "outputfeatures.hdf5")
+    shp = (100, 5)
+    feature_vector_data = np.random.random(size=shp)
+    feature_vector_mask = np.random.choice(2, size=shp).astype(bool)
+    X = np.ma.array(data=feature_vector_data, mask=feature_vector_mask)
+    shape = (20, 5, 3)
+    bbox = np.array([0.0, 1.0, 1.0, 0.0])
+    geoio.output_features(X, filename, featname="features",
+                          shape=shape, bbox=bbox)
+
+    with hdf.open_file(filename, mode='r') as f:
+        assert not f.root._v_attrs["blank"]
+        assert np.all(f.root.mask.read() == X.mask)
+        assert np.all(f.root.features.read() == X.data)
+        assert np.all(f.root.mask.attrs.bbox == bbox)
+        assert np.all(f.root.features.attrs.bbox == bbox)
+        assert np.all(f.root.mask.attrs.shape == shape)
+        assert np.all(f.root.features.attrs.shape == shape)
+
+
+def test_load_and_cat(make_tmpdir):
+    filename1 = os.path.join(make_tmpdir, "loadcat1.hdf5")
+    data1 = np.random.rand(10, 4)
+    mask1 = (np.random.rand(10, 4) > 0.5).astype(bool)
+    with hdf.open_file(filename1, 'w') as f:
+            f.root._v_attrs["blank"] = False
+            f.create_carray("/", "features",
+                                 atom=hdf.Float64Atom(),
+                                 obj=data1)
+            f.create_carray("/", "mask",
+                                 atom=hdf.BoolAtom(),
+                                 obj=mask1)
+    filename2 = os.path.join(make_tmpdir, "loadcat2.hdf5")
+    data2 = np.random.rand(10, 2)
+    mask2 = (np.random.rand(10, 2) > 0.5).astype(bool)
+    with hdf.open_file(filename2, 'w') as f:
+            f.root._v_attrs["blank"] = False
+            f.create_carray("/", "features",
+                                 atom=hdf.Float64Atom(),
+                                 obj=data2)
+            f.create_carray("/", "mask",
+                                 atom=hdf.BoolAtom(),
+                                 obj=mask2)
+    x = geoio.load_and_cat([filename1, filename2])
+    trueval = np.concatenate((data1, data2), axis=1)
+    truemask = np.concatenate((mask1, mask2), axis=1)
+    assert np.all(x.data == trueval)
+    assert np.all(x.mask == truemask)

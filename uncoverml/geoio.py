@@ -463,7 +463,7 @@ def load_and_cat(hdf5_vectors):
     y_shp = np.sum(np.array(y_shps))
 
     log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
-                                                   x_shp * y_shp * 72. / 1e9)) 
+                                                  x_shp * y_shp * 72. / 1e9))
 
     all_data = np.empty((x_shp, y_shp), dtype=float)
     all_mask = np.empty((x_shp, y_shp), dtype=bool)
