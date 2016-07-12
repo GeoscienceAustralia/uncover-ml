@@ -61,11 +61,11 @@ def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
     if settings.onehot and not settings.x_sets:
         settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
 
-    if not x:
-        geoio.output_blank(hdf_outfile)
-    else:
-        x = transform(x)
+    if x is not None:
+        x = transform(x, settings.x_sets)
         geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+    else:
+        geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
 
     return settings
 

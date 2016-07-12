@@ -189,12 +189,6 @@ class Image:
         self._y_flipped = self.pixsize_y < 0
         self._start_lon = A[2]
         self._start_lat = A[5]
-        
-        log.info("Effective input resolution "
-                 "after patch extraction: {}".format(eff_shape))
-        log.info("Effective bounding box after "
-                 "patch extraction: {}".format(eff_bbox))
-
 
         # construct the canonical pixel<->position map
         pix_x = range(self._full_res[0] + 1 + 1)  # 1 past corner of last pixel
@@ -399,9 +393,13 @@ def output_filename(feature_name, chunk_index, n_chunks, output_dir):
     return full_path
 
 
-def output_blank(filename):
+def output_blank(filename, shape=None, bbox=None):
     with hdf.open_file(filename, mode='w') as h5file:
         h5file.root._v_attrs["blank"] = True
+        if shape is not None:
+            h5file.root._v_attrs["image_shape"] = shape
+        if bbox is not None:
+            h5file.root._v_attrs["image_bbox"] = bbox
 
 
 def output_features(feature_vector, outfile, featname="features",
@@ -453,11 +451,9 @@ def output_features(feature_vector, outfile, featname="features",
                              atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
 
         if shape is not None:
-            h5file.getNode('/' + featname).attrs.shape = shape
-            h5file.root.mask.attrs.shape = shape
+            h5file.root._v_attrs["image_shape"] = shape
         if bbox is not None:
-            h5file.getNode('/' + featname).attrs.bbox = bbox
-            h5file.root.mask.attrs.bbox = bbox
+            h5file.root._v_attrs["image_bbox"] = bbox
 
     start = time.time()
     file_exists = False
@@ -513,8 +509,8 @@ def load_attributes(filename_dict):
     shape = None
     bbox = None
     with hdf.open_file(fname, mode='r') as f:
-        if 'shape' in f.root.features.attrs:
-            shape = f.root.features.attrs.shape
-        if 'bbox' in f.root.features.attrs:
-            bbox = f.root.features.attrs.bbox
+        if 'image_shape' in f.root._v_attrs:
+            shape = f.root._v_attrs.shape
+        if 'image_bbox' in f.root._v_attrs:
+            bbox = f.root._v_attrs.bbox
     return shape, bbox

@@ -21,19 +21,24 @@ class PredicateGroup:
         i = chunk_index
         self.new_index = (true_ids.index(i) if flag_mask[i] else
                           (-1 * false_ids.index(i) - 1))
-        self.root_chunk = self.true_ids[0]
+        self.root_chunk = true_ids[0]
 
     def __enter__(self):
         self.dcomm = comm.Split(self.flag, self.new_index)
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.dcomm.Free()
 
 
 def run_if(f, flag, *args, **kwargs):
     with PredicateGroup(flag) as p:
         if flag:
-            kwargs.update({"comm": p.dcomm})
+            if kwargs:
+                kwargs.update({"comm": p.dcomm})
+            else:
+                kwargs = {"comm": p.dcomm}
+
             f_result = f(*args, **kwargs)
         result = comm.bcast(f_result, root=p.root_chunk)
     return result
@@ -60,12 +65,15 @@ def _compute_unique(x, comm, max_onehot_dims):
 
 def compute_unique_values(x, max_onehot_dims):
     flag = x is not None
-    x_sets = run_if(_compute_unique, flag, max_onehot_dims=max_onehot_dims)
+    x_sets = run_if(_compute_unique, flag, x=x,
+                    max_onehot_dims=max_onehot_dims)
     return x_sets
 
 
 def run_once(f, *args, **kwargs):
     if chunk_index == 0:
         f_result = f(*args, **kwargs)
+    else:
+        f_result = None
     result = comm.bcast(f_result, root=0)
     return result
