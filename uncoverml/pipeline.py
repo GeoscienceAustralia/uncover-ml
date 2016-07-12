@@ -29,7 +29,7 @@ class ExtractSettings(PickledSettings):
         self.patchsize = patchsize
 
 
-def transform(x, x_sets):
+def extract_transform(x, x_sets):
     x = x.reshape(x.shape[0], -1)
     if x_sets:
         x = stats.one_hot(x, x_sets)
@@ -53,7 +53,7 @@ def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
         settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
 
     if x is not None:
-        x = transform(x, settings.x_sets)
+        x = extract_transform(x, settings.x_sets)
         geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
     else:
         geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
