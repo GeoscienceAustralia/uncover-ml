@@ -84,3 +84,11 @@ def one_hot(x, x_set):
             dim_out[:, i][dim_in == val] = 0.5
     result = np.ma.array(data=out, mask=out_mask)
     return result
+
+
+def unique(sets1, sets2, dtype):
+    per_dim = zip(sets1, sets2)
+    out_sets = [np.unique(np.concatenate(k, axis=0)) for k in per_dim]
+    return out_sets
+
+

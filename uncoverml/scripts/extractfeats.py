@@ -4,59 +4,70 @@ Extract patch features from a single geotiff.
 .. program-output:: extractfeats --help
 """
 import logging
-from functools import partial
 import os
 
 import click as cl
 import click_log as cl_log
-import numpy as np
 import pickle
-from mpi4py import MPI
 
-
+import uncoverml.defaults as df
+from uncoverml import mpiops
 from uncoverml import patch
 from uncoverml import stats
 from uncoverml import geoio
-import uncoverml.defaults as df
 
 # logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def extract_transform(x, x_sets):
-    # reshape
-    x = x.reshape((x.shape[0], -1))
-    if x_sets is not None:  # one-hot activated!
+class PickledSettings:
+    def from_file(settings_file):
+        s = pickle.load(settings_file)
+        return s
+
+    def save(self, settings_file):
+        with open(settings_file, 'wb') as f:
+            pickle.dump(self, f)
+
+
+class ExtractSettings(PickledSettings):
+
+    def __init__(self, onehot, x_sets, patchsize):
+        self.onehot = onehot
+        self.x_sets = x_sets
+        self.patchsize = patchsize
+
+
+def transform(x, x_sets):
+    x = x.reshape(x.shape[0], -1)
+    if x_sets:
         x = stats.one_hot(x, x_sets)
     x = x.astype(float)
     return x
 
 
-def unique(sets1, sets2, dtype):
-    per_dim = zip(sets1, sets2)
-    out_sets = [np.unique(np.concatenate(k, axis=0)) for k in per_dim]
-    return out_sets
+def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
 
-unique_op = MPI.Op.Create(unique, commute=True)
+    # Compute the effective sampled resolution accounting for patchsize
+    full_image = geoio.Image(geotiff_infile)
+    eff_shape = full_image.patched_shape(settings.patchsize)
+    eff_bbox = full_image.patched_bbox(settings.patchsize)
 
+    image = geoio.Image(geotiff_infile, mpiops.chunk_index,
+                        mpiops.chunks, settings.patchsize)
 
-def compute_unique_values(x, comm):
-    x_sets = None
-    # check data is okay
-    if x.dtype == np.dtype('float32') or x.dtype == np.dtype('float64'):
-        log.warn("Cannot use one-hot for floating point data -- ignoring")
+    x = patch.load(image, settings.patchsize, target_infile)
+
+    if settings.onehot and not settings.x_sets:
+        settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
+
+    if not x:
+        geoio.output_blank(hdf_outfile)
     else:
-        local_sets = stats.sets(x)
-        full_sets = comm.allreduce(local_sets, op=unique_op)
-        total_dims = np.sum([len(k) for k in full_sets])
-        log.info("Total features from one-hot encoding: {}".format(
-            total_dims))
-        if total_dims <= df.max_onehot_dims:
-            x_sets = full_sets
-        else:
-            log.warn("Too many distinct values for one-hot encoding."
-                     " If you're sure increase max value in default file.")
-    return x_sets
+        x = transform(x)
+        geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+
+    return settings
 
 
 @cl.command()
@@ -72,13 +83,13 @@ def compute_unique_values(x, comm):
 @cl.option('--onehot', is_flag=True, help="Produce a one-hot encoding for "
            "each channel in the data. Ignored for float-valued data. "
            "Uses -0.5 and 0.5)")
-@cl.option('--settings', type=cl.Path(exists=True), help="file containing"
+@cl.option('--config', type=cl.Path(exists=True), help="file containing"
            " previous setting used for evaluating testing data. If provided "
            "all other option flags are ignored")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
+def main(name, geotiff, targets, onehot, patchsize, outputdir, config):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.
@@ -92,93 +103,22 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, settings):
     - Only extract patches at specified locations given a target file
     """
 
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    chunks = comm.Get_size()
-    chunk_index = comm.Get_rank()
+    # Full paths
+    target_infile = os.path.abspath(targets) if targets else None
+    geotiff_infile = os.path.abspath(geotiff)
+    settings_infile = os.path.abspath(config) if config else None
+    settings_outfile = os.path.join(outputdir, name + "_settings.bin")
+    hdf_outfile = geoio.output_filename(name, mpiops.chunk_index,
+                                        mpiops.chunks, outputdir)
 
-    # build full filename for geotiff
-    full_filename = os.path.abspath(geotiff)
-    log.info("Input file full path: {}".format(full_filename))
-
-    # Print some helpful statistics about the full image
-    full_image = geoio.Image(full_filename)
-
-    total_dims = full_image.resolution[2]
-    log.info("Image has resolution {}".format(full_image.resolution))
-    log.info("Image has datatype {}".format(full_image.dtype))
-    log.info("Image missing value: {}".format(full_image.nodata_value))
-
-    # Compute the effective sampled resolution accounting for patchsize
-    eff_shape = None
-    eff_bbox = None
-    if targets is None:
-        start = [patchsize, patchsize]
-        end_p1 = [full_image.xres - patchsize + 1,  # +1 because bbox
-                  full_image.yres - patchsize + 1]  # +1 because bbox
-        xy = np.array([start, end_p1])
-        eff_bbox = full_image.pix2lonlat(xy)
-        eff_shape = (full_image.xres - 2 * patchsize,
-                     full_image.yres - 2 * patchsize)
-        log.info("Effective input resolution "
-                 "after patch extraction: {}".format(eff_shape))
-        log.info("Effective bounding box after "
-                 "patch extraction: {}".format(eff_bbox))
-
-    # load settings
-    f_args = {}
-    if settings is not None:
-        with open(settings, 'rb') as f:
-            s = pickle.load(f)
-            patchsize = s['cmd_args']['patchsize']
-            log.info("Loading patchsize {} from settings file".format(
-                patchsize))
-            f_args.update(s['f_args'])
-
-    image = geoio.Image(full_filename, chunk_index, chunks, patchsize)
-    if targets is not None:
-        #  we need full path for targets for the workers
-        targets = os.path.abspath(targets)
-        log.info("node {} reading target file {}".format(chunk_index, targets))
-        x = patch.patches_at_target(image, patchsize, targets)
+    if settings_infile:
+        settings = ExtractSettings.from_file(settings_infile)
     else:
-        x = patch.all_patches(image, patchsize)
+        settings = ExtractSettings(onehot=onehot, x_sets=None,
+                                   patchsize=patchsize)
 
-    # not everyone has data
-    has_data = x is not None
-    has_data_mask = comm.allgather(has_data)
-    key = chunk_index if has_data else -1 * chunk_index
-    dcomm_root = has_data_mask.index(True)
-    dcomm = comm.Split(has_data, key)
+    settings = extract_features(settings, target_infile,
+                                geotiff_infile, hdf_outfile)
 
-    # compute settings
-    if not settings and has_data:
-        settings_dict = {}
-        x_sets = compute_unique_values(x, dcomm) if onehot else None
-        f_args['x_sets'] = x_sets
-        settings_filename = os.path.join(outputdir, name + "_settings.bin")
-        settings_dict["f_args"] = f_args
-        settings_dict["cmd_args"] = {'patchsize': patchsize}
-        if dcomm.Get_rank() == dcomm_root:
-            log.info("Writing feature settings to {}".format(settings_filename))
-            with open(settings_filename, 'wb') as f:
-                pickle.dump(settings_dict, f)
-
-    # We have all the information we need, now build the transform
-    log.info("Constructing feature transformation function")
-
-    outfile = geoio.output_filename(name, chunk_index,
-                                    chunks, outputdir)
-    if has_data:
-        f = partial(extract_transform, **f_args)
-        log.info("Applying final transform and writing output files")
-        f_x = f(x)
-        total_dims = f_x.shape[1]
-        write_ok = geoio.output_features(f_x, outfile, shape=eff_shape,
-                                         bbox=eff_bbox)
-    else:
-        write_ok = geoio.output_blank(outfile)
-
-    log.info("Output vector has length {}, dimensionality {}".format(
-        full_image.resolution[0] * full_image.resolution[1], total_dims))
-
+    if not settings_infile:
+        mpiops.run_once(settings.save, settings_outfile)

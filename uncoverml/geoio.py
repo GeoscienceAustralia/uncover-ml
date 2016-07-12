@@ -162,6 +162,8 @@ class Image:
         with rasterio.open(self.filename, 'r') as geotiff:
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
+            
+            
             # we don't support different channels with different dtypes
             for d in geotiff.dtypes[1:]:
                 if geotiff.dtypes[0] != d:
@@ -177,12 +179,22 @@ class Image:
             raise RuntimeError("Transform to pixel coordinates"
                                "has rotation or shear")
 
+        log.info("Image has resolution {}".format(self._full_res))
+        log.info("Image has datatype {}".format(self._dtype))
+        log.info("Image missing value: {}".format(self._nodata_value))
+
         # TODO clean this up into a function
         self.pixsize_x = A[0]
         self.pixsize_y = A[4]
         self._y_flipped = self.pixsize_y < 0
         self._start_lon = A[2]
         self._start_lat = A[5]
+        
+        log.info("Effective input resolution "
+                 "after patch extraction: {}".format(eff_shape))
+        log.info("Effective bounding box after "
+                 "patch extraction: {}".format(eff_bbox))
+
 
         # construct the canonical pixel<->position map
         pix_x = range(self._full_res[0] + 1 + 1)  # 1 past corner of last pixel
@@ -296,6 +308,19 @@ class Image:
     @property
     def ymax(self):
         return self.bbox[1][1]
+
+    def patched_shape(self, patchsize):
+        eff_shape = (self.xres - 2 * patchsize,
+                     self.yres - 2 * patchsize)
+        return eff_shape
+
+    def patched_bbox(self, patchsize):
+        start = [patchsize, patchsize]
+        end_p1 = [self.xres - patchsize + 1,  # +1 because bbox
+                  self.yres - patchsize + 1]  # +1 because bbox
+        xy = np.array([start, end_p1])
+        eff_bbox = self.pix2lonlat(xy)
+        return eff_bbox
 
     # @contract(xy='array[Nx2](int64),N>0')
     def _global_pix2lonlat(self, xy):
