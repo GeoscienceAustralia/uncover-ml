@@ -244,7 +244,12 @@ class UnifGauss(Bernoulli):
 
     def __split_apply(self, func_unif, func_gaus, y, f):
 
+        # Make sure all arrays are of a compatible type
         y, f = np.broadcast_arrays(y, f)
+        y = y.astype(float, copy=False)
+        f = f.astype(float, copy=False)
+
+        # get indicators of which likelihoods to apply where
         g = softplus(f)
         isunif = y <= g
         isgaus = ~ isunif
