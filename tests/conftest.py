@@ -1,6 +1,9 @@
 from __future__ import division
 
-import logging
+import random
+import string
+import os.path
+
 import pytest
 import numpy as np
 import shapefile as shp
@@ -8,6 +11,14 @@ import rasterio
 from affine import Affine
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
+
+
+@pytest.fixture
+def random_filename(tmpdir_factory):
+    dir = str(tmpdir_factory.mktemp('uncoverml').realpath())
+    fname = ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
+    filename = os.path.join(dir, fname)
+    return filename
 
 
 @pytest.fixture
@@ -128,9 +139,9 @@ def make_raster():
     return (res_x, res_y), x_bound, y_bound, lons, lats, A
 
 
-@pytest.fixture(scope='session')
-def make_gtiff(tmpdir_factory):
-    ftif = str(tmpdir_factory.mktemp('tif').join('test.tif').realpath())
+@pytest.fixture
+def make_geotiff(random_filename):
+    filename = random_filename + ".tif"
     # Create grid
     res, x_bound, y_bound, lons, lats, Ao = make_raster()
     # Generate data for geotiff
@@ -152,7 +163,7 @@ def make_gtiff(tmpdir_factory):
 
     with rasterio.open(ftif, 'w', **profile) as f:
         f.write(np.array([Lons, Lats]))
-    return ftif
+    return filename
 
 
 @pytest.fixture(scope='session', params=["allchunks", "somechunks"])

@@ -40,11 +40,12 @@ def extract_transform(x, x_sets):
 def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
 
     # Compute the effective sampled resolution accounting for patchsize
-    full_image = geoio.Image(geotiff_infile)
+    image_source = geoio.RasterioImageSource(geotiff_infile)
+    full_image = geoio.Image(image_source)
     eff_shape = full_image.patched_shape(settings.patchsize)
     eff_bbox = full_image.patched_bbox(settings.patchsize)
 
-    image = geoio.Image(geotiff_infile, mpiops.chunk_index,
+    image = geoio.Image(image_source, mpiops.chunk_index,
                         mpiops.chunks, settings.patchsize)
 
     x = patch.load(image, settings.patchsize, target_infile)

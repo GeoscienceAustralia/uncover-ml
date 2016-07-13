@@ -142,7 +142,6 @@ def test_values_from_shp(make_shp):
 def test_Image_split(make_gtiff):
 
     ftif = make_gtiff
-
     nchunks = 4
     overlap = 3
 
@@ -184,9 +183,9 @@ def test_Image_split(make_gtiff):
     assert np.all(I == Irecon)
 
 
-def test_points_fromto_hdf(make_tmpdir):
+def test_points_fromto_hdf(random_filename):
 
-    filename = os.path.join(make_tmpdir, "fromto.hdf5")
+    filename = random_filename + ".hdf5"
 
     data = {"intfield": np.arange(10, dtype=int),
             "floatfield": np.random.rand(2, 3),
@@ -195,10 +194,11 @@ def test_points_fromto_hdf(make_tmpdir):
     new_data = geoio.points_from_hdf(filename, list(data.keys()))
     matches = [k for k in data if np.all(data[k] == new_data[k])]
     assert set(matches) == set(data.keys())
+    os.remove(filename)
 
 
-def test_load_attributes(make_tmpdir):
-    filename = os.path.join(make_tmpdir, "loadattribs.hdf5")
+def test_load_attributes(random_filename):
+    filename = random_filename + ".hdf5"
     shape = (10, 4)
     bbox = np.array([1.0, 2.0, 1.0, 2.0])
     with hdf.open_file(filename, 'w') as f:
@@ -212,10 +212,11 @@ def test_load_attributes(make_tmpdir):
     nshape, nbbox = geoio.load_attributes(fdict)
     assert shape == nshape
     assert np.all(bbox == nbbox)
+    os.remove(filename)
 
 
-def test_load_attributes_blank(make_tmpdir):
-    filename = os.path.join(make_tmpdir, "loadattribs_blank.hdf5")
+def test_load_attributes_blank(random_filename):
+    filename = random_filename + ".hdf5"
     with hdf.open_file(filename, 'w') as f:
             f.create_carray("/", "features",
                                  atom=hdf.Float64Atom(),
@@ -225,13 +226,7 @@ def test_load_attributes_blank(make_tmpdir):
     shape, bbox = geoio.load_attributes(fdict)
     assert shape is None
     assert bbox is None
-
-
-def output_filename(feature_name, chunk_index, n_chunks, output_dir):
-    filename = feature_name + ".part{}of{}.hdf5".format(chunk_index + 1,
-                                                        n_chunks)
-    full_path = os.path.join(output_dir, filename)
-    return full_path
+    os.remove(filename)
 
 
 def test_output_filename():
@@ -240,15 +235,16 @@ def test_output_filename():
     assert true_filename == filename
 
 
-def test_output_blank(make_tmpdir):
-    filename = os.path.join(make_tmpdir, "outputblank.hdf5")
+def test_output_blank(random_filename):
+    filename = random_filename + ".hdf5"
     geoio.output_blank(filename)
     with hdf.open_file(filename, mode='r') as f:
         assert f.root._v_attrs["blank"]
+    os.remove(filename)
 
 
-def test_output_features(make_tmpdir):
-    filename = os.path.join(make_tmpdir, "outputfeatures.hdf5")
+def test_output_features(random_filename):
+    filename = random_filename + ".hdf5"
     shp = (100, 5)
     feature_vector_data = np.random.random(size=shp)
     feature_vector_mask = np.random.choice(2, size=shp).astype(bool)
@@ -266,10 +262,11 @@ def test_output_features(make_tmpdir):
         assert np.all(f.root.features.attrs.bbox == bbox)
         assert np.all(f.root.mask.attrs.shape == shape)
         assert np.all(f.root.features.attrs.shape == shape)
+    os.remove(filename)
 
 
-def test_load_and_cat(make_tmpdir):
-    filename1 = os.path.join(make_tmpdir, "loadcat1.hdf5")
+def test_load_and_cat(random_filename):
+    filename1 = random_filename + "_1.hdf5"
     data1 = np.random.rand(10, 4)
     mask1 = (np.random.rand(10, 4) > 0.5).astype(bool)
     with hdf.open_file(filename1, 'w') as f:
@@ -280,7 +277,7 @@ def test_load_and_cat(make_tmpdir):
             f.create_carray("/", "mask",
                                  atom=hdf.BoolAtom(),
                                  obj=mask1)
-    filename2 = os.path.join(make_tmpdir, "loadcat2.hdf5")
+    filename2 = random_filename + "_2.hdf5"
     data2 = np.random.rand(10, 2)
     mask2 = (np.random.rand(10, 2) > 0.5).astype(bool)
     with hdf.open_file(filename2, 'w') as f:
@@ -296,3 +293,5 @@ def test_load_and_cat(make_tmpdir):
     truemask = np.concatenate((mask1, mask2), axis=1)
     assert np.all(x.data == trueval)
     assert np.all(x.mask == truemask)
+    os.remove(filename1)
+    os.remove(filename2)

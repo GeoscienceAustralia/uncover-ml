@@ -1,4 +1,5 @@
 from __future__ import division
+from abc import ABCMeta, abstractmethod
 
 import rasterio
 import os.path
@@ -150,20 +151,49 @@ def construct_splits(npixels, nchunks, overlap=0):
     return y_bounds
 
 
-class Image:
-    def __init__(self, filename, chunk_idx=0, nchunks=1, overlap=0):
-        assert chunk_idx >= 0 and chunk_idx < nchunks
+class ImageSource(metaclass=ABCMeta):
 
-        self.chunk_idx = chunk_idx
-        self.nchunks = nchunks
-        self.filename = filename
+    @abstractmethod
+    def data(self, min_x, max_x, min_y, max_y):
+        pass
 
-        # Get the full image details
-        with rasterio.open(self.filename, 'r') as geotiff:
+    @property
+    def full_resolution(self):
+        return self._full_res
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def nodata_value(self):
+        return self._nodata_value
+
+    @property
+    def pixsize_x(self):
+        return self._pixsize_x
+
+    @property
+    def pixsize_y(self):
+        return self._pixsize_y
+
+    @property
+    def origin_latitude(self):
+        return self._start_lat
+
+    @property
+    def origin_longitude(self):
+        return self._start_lon
+
+
+class RasterioImageSource(ImageSource):
+
+    def __init__(self, filename):
+
+        self._filename = filename
+        with rasterio.open(self._filename, 'r') as geotiff:
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
-            
-            
             # we don't support different channels with different dtypes
             for d in geotiff.dtypes[1:]:
                 if geotiff.dtypes[0] != d:
@@ -171,24 +201,79 @@ class Image:
                                      "with differently typed channels")
             self._dtype = np.dtype(geotiff.dtypes[0])
 
-            # Build the affine transformation for the FULL image
             A = geotiff.affine
+            # No shearing or rotation allowed!!
+            if not ((A[1] == 0) and (A[3] == 0)):
+                raise RuntimeError("Transform to pixel coordinates"
+                                   "has rotation or shear")
+            self._pixsize_x = A[0]
+            self._pixsize_y = A[4]
+            self._start_lon = A[2]
+            self._start_lat = A[5]
 
-        # No shearing or rotation allowed!!
-        if not ((A[1] == 0) and (A[3] == 0)):
-            raise RuntimeError("Transform to pixel coordinates"
-                               "has rotation or shear")
+    def data(self, min_x, max_x, min_y, max_y):
+        # ((ymin, ymax),(xmin, xmax))
+        window = ((min_y, max_y), (min_x, max_x))
+        with rasterio.open(self._filename, 'r') as geotiff:
+            d = geotiff.read(window=window, masked=True)
+        d = d[np.newaxis, :, :] if d.ndim == 2 else d
+        d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
 
-        log.info("Image has resolution {}".format(self._full_res))
-        log.info("Image has datatype {}".format(self._dtype))
-        log.info("Image missing value: {}".format(self._nodata_value))
+        # uniform mask format
+        if np.ma.count_masked(d) == 0:
+            d = np.ma.masked_array(data=d.data,
+                                   mask=np.zeros_like(d.data, dtype=bool))
+        return d
 
-        # TODO clean this up into a function
-        self.pixsize_x = A[0]
-        self.pixsize_y = A[4]
-        self._y_flipped = self.pixsize_y < 0
-        self._start_lon = A[2]
-        self._start_lat = A[5]
+
+class ArrayImageSource(ImageSource):
+    """
+    An image source that uses an internally stored numpy array
+
+    Parameters
+    ----------
+    A : MaskedArray
+        masked array of shape (xpix, ypix, channels) that contains the
+        image data.
+    origin : ndarray
+        Array of the form [lonmin, latmin] that defines the origin of the image
+    pixsize : ndarray
+        Array of the form [pixsize_x, pixsize_y] defining the size of a pixel
+    """
+    def __init__(self, A, origin, pixsize):
+        self._data = A
+        self._full_res = A.shape
+        self._dtype = A.dtype
+        self._nodata_value = A.fill_value
+        self._pixsize_x = pixsize[0]
+        self._pixsize_y = pixsize[1]
+        self._start_lon = origin[0]
+        self._start_lat = origin[1]
+
+    def data(self, min_x, max_x, min_y, max_y):
+        # TODO: check inclusive??
+        data_window = self._data[min_x:max_x + 1, :][min_y:max_y + 1]
+        return data_window
+
+
+class Image:
+    def __init__(self, source, chunk_idx=0, nchunks=1, overlap=0):
+        assert chunk_idx >= 0 and chunk_idx < nchunks
+
+        self.chunk_idx = chunk_idx
+        self.nchunks = nchunks
+        self.source = source
+
+        log.info("Image has resolution {}".format(source.full_resolution))
+        log.info("Image has datatype {}".format(source.dtype))
+        log.info("Image missing value: {}".format(source.nodata_value))
+
+        self._full_res = source.full_resolution
+        self._start_lon = source.origin_longitude
+        self._start_lat = source.origin_latitude
+        self.pixsize_x = source.pixsize_x
+        self.pixsize_y = source.pixsize_y
+        self._y_flipped = source.pixsize_y < 0
 
         # construct the canonical pixel<->position map
         pix_x = range(self._full_res[0] + 1 + 1)  # 1 past corner of last pixel
@@ -236,32 +321,25 @@ class Image:
                          [start_bound_y, outer_bound_y]]
 
     def __repr__(self):
-        return "<geo.Image({}), chunk {} of {})>".format(self.filename,
+        return "<geo.Image({}), chunk {} of {})>".format(self.source,
                                                          self.chunk_idx,
                                                          self.nchunks)
 
     def data(self):
-        # ((ymin, ymax),(xmin, xmax))
-        window = ((self._offset[1], self._offset[1] + self.resolution[1]),
-                  (self._offset[0], self._offset[0] + self.resolution[0]))
-        with rasterio.open(self.filename, 'r') as geotiff:
-            d = geotiff.read(window=window, masked=True)
-        d = d[np.newaxis, :, :] if d.ndim == 2 else d
-        d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
-
-        # uniform mask format
-        if np.ma.count_masked(d) == 0:
-            d = np.ma.masked_array(data=d.data,
-                                   mask=np.zeros_like(d.data, dtype=bool))
-        return d
+        xmin = self._offset[0]
+        xmax = self._offset[0] + self.resolution[0]
+        ymin = self._offset[1]
+        ymax = self._offset[1] + self.resolution[1]
+        data = self.source.data(xmin, xmax, ymin, ymax)
+        return data
 
     @property
     def nodata_value(self):
-        return self._nodata_value
+        return self.source.nodata_value
 
     @property
     def dtype(self):
-        return self._dtype
+        return self.source.dtype
 
     @property
     def xres(self):
