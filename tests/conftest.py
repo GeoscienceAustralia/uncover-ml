@@ -8,7 +8,6 @@ import pytest
 import numpy as np
 import shapefile as shp
 import rasterio
-from affine import Affine
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
@@ -116,34 +115,34 @@ def make_multi_patch(request):
     return request.param()
 
 
-@pytest.fixture
-def make_raster():
+# @pytest.fixture
+# def make_raster():
 
-    res_x = 100
-    res_y = 50
-    x_range = (50, 80)
-    y_range = (-40, -30)
+#     res_x = 100
+#     res_y = 50
+#     x_range = (50, 80)
+#     y_range = (-40, -30)
 
-    pix_x = (x_range[1] - x_range[0]) / res_x
-    pix_y = (y_range[1] - y_range[0]) / res_y
+#     pix_x = (x_range[1] - x_range[0]) / res_x
+#     pix_y = (y_range[1] - y_range[0]) / res_y
 
-    A = Affine(pix_x, 0, x_range[0],
-               0, -pix_y, y_range[1])
+#     A = Affine(pix_x, 0, x_range[0],
+#                0, -pix_y, y_range[1])
 
-    lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
-    lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
+#     lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
+#     lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
 
-    x_bound = (x_range[0], x_range[1] + pix_x)
-    y_bound = (y_range[0] - pix_y, y_range[1])
+#     x_bound = (x_range[0], x_range[1] + pix_x)
+#     y_bound = (y_range[0] - pix_y, y_range[1])
 
-    return (res_x, res_y), x_bound, y_bound, lons, lats, A
+#     return (res_x, res_y), x_bound, y_bound, lons, lats, A
 
 
 @pytest.fixture
 def make_geotiff(random_filename):
     filename = random_filename + ".tif"
-    # Create grid
-    res, x_bound, y_bound, lons, lats, Ao = make_raster()
+    # # Create grid
+    # res, x_bound, y_bound, lons, lats, Ao = make_raster()
     # Generate data for geotiff
     Lons, Lats = np.meshgrid(lons, lats)
 
@@ -161,39 +160,28 @@ def make_geotiff(random_filename):
                        }
                }
 
-    with rasterio.open(ftif, 'w', **profile) as f:
+    with rasterio.open(filename, 'w', **profile) as f:
         f.write(np.array([Lons, Lats]))
     return filename
 
 
-@pytest.fixture(scope='session', params=["allchunks", "somechunks"])
-def make_shp(tmpdir_factory, request):
+@pytest.fixture
+def shapefile(random_filename, request):
 
     # File names for test shapefile and test geotiff
-    fshp = str(tmpdir_factory.mktemp('shapes').join('test.shp').realpath())
-
-    if request.param == "allchunks":
-        output_filenames = ["fpatch.part{}of4.hdf5".format(i)
-                            for i in range(1, 5)]
-    else:
-        output_filenames = ["fpatch.part{}of2.hdf5".format(i)
-                            for i in range(1, 3)]
-
-    # Create grid
-    res, x_bound, y_bound, lons, lats, Ao = make_raster()
+    filename = random_filename + ".shp"
+    lons = np.arange(0, 20, 100)
+    lats = np.arange(-10, 30, 100)
 
     # Generate data for shapefile
     nsamples = 100
     ntargets = 10
     dlon = lons[np.random.randint(0, high=len(lons), size=nsamples)]
-    if request.param == "allchunks":
-        dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
-    else:
-        dlat = lats[np.random.randint(3 / 8 * len(lats),
-                                      high=5 / 8 * len(lats), size=nsamples)]
+    dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
     fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
-    vals = np.hstack((vals, np.array([dlon, dlat]).T))
+    lonlats = np.array([dlon, dlat]).T
+    vals = np.hstack((vals, lonlats))
 
     # write shapefile
     w = shp.Writer(shp.POINT)
@@ -212,25 +200,25 @@ def make_shp(tmpdir_factory, request):
         vdict = dict(zip(fields, v))
         w.record(**vdict)
 
-    w.save(fshp)
+    w.save(filename)
 
-    return fshp, output_filenames
-
-
-@pytest.fixture(scope='session')
-def make_fakedata(tmpdir_factory):
-
-    mod_dir = str(tmpdir_factory.mktemp('models').realpath())
-
-    w = np.array([1., 2.])
-    x = np.atleast_2d(np.arange(-50, 50)).T
-    X = np.hstack((np.ones((100, 1)), x))
-    y = X.dot(w) + np.random.randn(100) / 1000
-
-    return X, y, w, mod_dir
+    return lonlats, filename
 
 
-@pytest.fixture
-def make_tmpdir(tmpdir_factory):
-    path = str(tmpdir_factory.mktemp('geoio').realpath())
-    return path
+# @pytest.fixture(scope='session')
+# def make_fakedata(tmpdir_factory):
+
+#     mod_dir = str(tmpdir_factory.mktemp('models').realpath())
+
+#     w = np.array([1., 2.])
+#     x = np.atleast_2d(np.arange(-50, 50)).T
+#     X = np.hstack((np.ones((100, 1)), x))
+#     y = X.dot(w) + np.random.randn(100) / 1000
+
+#     return X, y, w, mod_dir
+
+
+# @pytest.fixture
+# def make_tmpdir(tmpdir_factory):
+#     path = str(tmpdir_factory.mktemp('geoio').realpath())
+#     return path
