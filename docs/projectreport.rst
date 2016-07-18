@@ -102,41 +102,54 @@ know the basement must lie below. Hence, we need different likelihood models
 for each of these "sensors". For the first, where the drill has hit basement,
 we can simply use a Gaussian measurement error model. For the second, we know
 that there is non-zero probability of the drill encountering basement between
-the ground, and the basement. We may expect that we will drill deeper the
-deeper the basement is, and so we can use a Beta_ distribution to model this
-situation, as we have depicted in the following image
+the ground, and the basement. We don't know the reason for stopping the
+drilling before the basement, and so we can put a uniform distribution on this
+measurement between the surface and the basement. However we know that we are
+unlikely to drill past the basement (otherwise this is the first type of
+measurement), and so we put a steep Gaussian falloff after the basement layer,
+as we have depicted in the following image
 
 .. image:: comp_likelihood.svg
 
 The formulation of the actual likelihood and prior is as follows, recall
-:math:`f(\mathbf{x}_n) = \phi(\mathbf{x}_n)^\top \mathbf{w}`,
+:math:`f_n := f(\mathbf{x}_n) = \phi(\mathbf{x}_n)^\top \mathbf{w}`,
 
 .. math::
     
     \text{Likelihood:}& \quad
-    \mathbf{y} | \mathbf{z} \sim \prod^N_{n=1}
-            \mathcal{N}(\phi(\mathbf{x}_n)^\top \mathbf{w}, \sigma^2)^{z_n}
-            \mathcal{B}(\phi(\mathbf{x}_n)^\top \mathbf{w}, \alpha, \beta)
-            ^{1 - z_n},
+    \mathbf{y} | \mathbf{z}, \mathbf{w} \sim \prod^N_{n=1}
+            \mathcal{N}(f_n, \sigma^2)^{z_n}
+            p_{z_n=0}(f_n, l^2)^{1 - z_n},
 
     \text{Prior:}& \quad
     \mathbf{w} \sim \mathcal{N}(\mathbf{0}, \lambda \mathbf{I}_D).
 
 Here :math:`z_n` is an indicator variable that is 1 if an observation has hit
 the basement, and so uses a Gaussian measurement error model, or 0 if the
-basement was not hit, and so uses a *three parameter* Beta_ measurement model,
+basement was not hit, and so uses a piecewise modified uniform measurement
+model,
 
 .. math::
 
-    \mathcal{B}(y | f, \alpha, \beta) = \frac{1}{f^{\alpha + \beta - 1}
-        B(\alpha, \beta)} y^{\alpha - 1} (f - y)^{\beta - 1},
+    p_{z_n=0}(y_n | f_n, l^2) = 
+    \begin{cases}
+    \frac{1}{f_n + l \sqrt{(\pi/2)}} 
+        & \text{if}~y_n \leq f_n~\text{and}~f_n > 0, \\
+    \frac{1}{f_n + l \sqrt{(\pi/2)}} e^{-\frac{(y_n - f_n)^2}{2 l^2}} 
+        & \text{if}~y_n > f_n~\text{and}~f_n > 0, \\
+    \frac{1}{l \sqrt{(\pi/2)}} e^{-\frac{(y_n - f_n)^2}{2 l^2}} 
+        & \text{if}~f < 0.
+    \end{cases}
 
-where :math:`B(\cdot)` is a Beta function. This is a distribution between
-:math:`(0, f)`, with the special case of :math:`\alpha = \beta = 1` being a
-uniform distribution. This essentially models the case where our measurement of
-depth has to occur between the basement depth :math:`f`, and the surface, 0
-with some non-zero probability. There is zero probability of measurement
-outside of these bounds.
+The first condition models the case where the observation occurs above the
+basement (most likely scenario). The second condition models the case where the
+basement is above the measurement, which is very unlikely. The third condition
+models the case where the basement is above the surface and our observation is
+below the surface. Again this condition is very unlikely, but it is included in
+the likelihood mainly as a way to constrain inference of :math:`f_n` to be
+below the surface and below :math:`y_n`. Here :math:`l` is a scale parameter
+which is set a-priori to penalise the model for placing the basement above
+observations that do not impact the basement.
 
 Inference in this model is more difficult than in the standard linear model,
 however there is an implementation of a *generalised* linear model in revrand,
@@ -147,7 +160,6 @@ References
 ----------
 
 .. _revrand: http://github.com/NICTA/revrand
-.. _Beta: https://en.wikipedia.org/wiki/Beta_distribution#Four_parameters_2
 
 .. [1] Yang, Z., Smola, A. J., Song, L., & Wilson, A. G. "A la Carte --
    Learning Fast Kernels". Proceedings of the Eighteenth International
