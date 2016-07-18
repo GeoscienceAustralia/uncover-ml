@@ -9,6 +9,8 @@ uncoverml.scripts.exportgeotiff
 
    .. autosummary::
    
+      max_axis_0
+      min_axis_0
       transform
    
    

@@ -91,7 +91,6 @@ Options:
                            transformed (whitened) data. Between 0 and 1. Only
                            applies if --whiten given
   --outputdir PATH
-  --ipyprofile TEXT        ipyparallel profile to use
   --help                   Show this message and exit.
 </pre></div>
 </div>
@@ -102,10 +101,13 @@ Options:
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">compute_statistics</span></code>(impute,&nbsp;centre,&nbsp;...)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">sum_axis_0</span></code>(x,&nbsp;y,&nbsp;dtype)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code>(x,&nbsp;impute_mean,&nbsp;mean,&nbsp;sd,&nbsp;eigvecs,&nbsp;...)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code>(x,&nbsp;impute,&nbsp;centre,&nbsp;standardise,&nbsp;...)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">transform_with_params</span></code>(x,&nbsp;impute_mean,&nbsp;mean,&nbsp;...)</td>
 <td></td>
 </tr>
 </tbody>

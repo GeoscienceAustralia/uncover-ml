@@ -12,8 +12,6 @@ uncoverml.scripts.validatemodel
       apply_multiple_masked
       explained_variance_score
       get_first_dim
-      input_cvindex
-      input_targets
       lins_ccc
       mll
       msll

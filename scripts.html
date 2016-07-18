@@ -69,30 +69,27 @@
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.maketargets.html#module-uncoverml.scripts.maketargets" title="uncoverml.scripts.maketargets"><code class="xref py py-obj docutils literal"><span class="pre">maketargets</span></code></a></td>
-<td>Make output target files.</td>
+<td>Make output target file with cross-validation indices.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.cvindexer.html#module-uncoverml.scripts.cvindexer" title="uncoverml.scripts.cvindexer"><code class="xref py py-obj docutils literal"><span class="pre">cvindexer</span></code></a></td>
-<td>Create a cross validation fold index.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.extractfeats.html#module-uncoverml.scripts.extractfeats" title="uncoverml.scripts.extractfeats"><code class="xref py py-obj docutils literal"><span class="pre">extractfeats</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.extractfeats.html#module-uncoverml.scripts.extractfeats" title="uncoverml.scripts.extractfeats"><code class="xref py py-obj docutils literal"><span class="pre">extractfeats</span></code></a></td>
 <td>Extract patch features from a single geotiff.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.composefeats.html#module-uncoverml.scripts.composefeats" title="uncoverml.scripts.composefeats"><code class="xref py py-obj docutils literal"><span class="pre">composefeats</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.composefeats.html#module-uncoverml.scripts.composefeats" title="uncoverml.scripts.composefeats"><code class="xref py py-obj docutils literal"><span class="pre">composefeats</span></code></a></td>
 <td>Compose multiple image features into a single feature vector.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.learnmodel.html#module-uncoverml.scripts.learnmodel" title="uncoverml.scripts.learnmodel"><code class="xref py py-obj docutils literal"><span class="pre">learnmodel</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.learnmodel.html#module-uncoverml.scripts.learnmodel" title="uncoverml.scripts.learnmodel"><code class="xref py py-obj docutils literal"><span class="pre">learnmodel</span></code></a></td>
 <td>Learn the Parameters of a machine learning model</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.predict.html#module-uncoverml.scripts.predict" title="uncoverml.scripts.predict"><code class="xref py py-obj docutils literal"><span class="pre">predict</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.predict.html#module-uncoverml.scripts.predict" title="uncoverml.scripts.predict"><code class="xref py py-obj docutils literal"><span class="pre">predict</span></code></a></td>
 <td>Predict the target values for query data</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.validatemodel.html#module-uncoverml.scripts.validatemodel" title="uncoverml.scripts.validatemodel"><code class="xref py py-obj docutils literal"><span class="pre">validatemodel</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.validatemodel.html#module-uncoverml.scripts.validatemodel" title="uncoverml.scripts.validatemodel"><code class="xref py py-obj docutils literal"><span class="pre">validatemodel</span></code></a></td>
 <td>Run cross-validation metrics on a model prediction</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.exportgeotiff.html#module-uncoverml.scripts.exportgeotiff" title="uncoverml.scripts.exportgeotiff"><code class="xref py py-obj docutils literal"><span class="pre">exportgeotiff</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.exportgeotiff.html#module-uncoverml.scripts.exportgeotiff" title="uncoverml.scripts.exportgeotiff"><code class="xref py py-obj docutils literal"><span class="pre">exportgeotiff</span></code></a></td>
 <td>Output a geotiff from a set of HDF5 chunked features</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html#module-uncoverml.scripts.tiff2kmz" title="uncoverml.scripts.tiff2kmz"><code class="xref py py-obj docutils literal"><span class="pre">tiff2kmz</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html#module-uncoverml.scripts.tiff2kmz" title="uncoverml.scripts.tiff2kmz"><code class="xref py py-obj docutils literal"><span class="pre">tiff2kmz</span></code></a></td>
 <td>Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.</td>
 </tr>
 </tbody>
@@ -101,9 +98,8 @@
 <h2>Example Learning pipeline<a class="headerlink" href="#example-learning-pipeline" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><ul class="simple">
-<li>maketargets - turns a shapefile of targets into an hdf5 file of targets</li>
-<li>cvindexer - takes the targets and returns indices to split the targets into
-folds</li>
+<li>maketargets - turns a shapefile of targets into an hdf5 file of targets and
+returns indices to split the targets into folds.</li>
 <li>extractfeats - takes targets and geotiffs, extracts pixels/patches at the
 target locations and puts them into hdf5 chunk files (#chunks = #cpus), total
 number of files = #geotiffs * #chunks</li>

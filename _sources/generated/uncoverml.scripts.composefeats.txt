@@ -9,8 +9,9 @@ uncoverml.scripts.composefeats
 
    .. autosummary::
    
-      compute_statistics
+      sum_axis_0
       transform
+      transform_with_params
    
    
 

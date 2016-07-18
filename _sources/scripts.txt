@@ -7,7 +7,6 @@ Command Line Scripts
    :toctree: generated/
 
    maketargets
-   cvindexer
    extractfeats
    composefeats
    learnmodel
@@ -20,9 +19,8 @@ Command Line Scripts
 Example Learning pipeline
 -------------------------
 
- - maketargets - turns a shapefile of targets into an hdf5 file of targets
- - cvindexer - takes the targets and returns indices to split the targets into
-   folds
+ - maketargets - turns a shapefile of targets into an hdf5 file of targets and
+   returns indices to split the targets into folds.
  - extractfeats - takes targets and geotiffs, extracts pixels/patches at the
    target locations and puts them into hdf5 chunk files (#chunks = #cpus), total
    number of files = #geotiffs * #chunks

@@ -11,6 +11,7 @@ uncoverml.scripts.extractfeats
    
       compute_unique_values
       extract_transform
+      unique
    
    
 

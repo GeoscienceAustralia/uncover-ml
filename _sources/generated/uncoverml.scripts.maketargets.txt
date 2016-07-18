@@ -9,7 +9,7 @@ uncoverml.scripts.maketargets
 
    .. autosummary::
    
-      output_targets
+      split_cfold
    
    
 

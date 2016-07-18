@@ -10,8 +10,6 @@ uncoverml.scripts.learnmodel
    .. autosummary::
    
       apply_multiple_masked
-      input_cvindex
-      input_targets
    
    
 

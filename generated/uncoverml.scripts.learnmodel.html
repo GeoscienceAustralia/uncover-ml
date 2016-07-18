@@ -72,12 +72,11 @@
 Options:
   -v, --verbosity LVL             Either CRITICAL, ERROR, WARNING, INFO or
                                   DEBUG
-  --cvindex &lt;PATH INTEGER&gt;...     Optional cross validation index file and
-                                  index to hold out.
+  --cvindex INTEGER               Optional cross validation index to hold out.
   --outputdir PATH
   --algopts TEXT                  JSON string of optional parameters to pass
                                   to the learning algorithm.
-  --algorithm [bayesreg|kernelridge|approxgp|ardregression|decisiontree|randomforest|extratree|svr]
+  --algorithm [decisiontree|extratree|approxgp|randomforest|bayesreg|svr|kernelridge|ardregression]
                                   algorithm to learn.
   --help                          Show this message and exit.
 </pre></div>
@@ -90,12 +89,6 @@ Options:
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">apply_multiple_masked</span></code>(func,&nbsp;data[,&nbsp;args])</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">input_cvindex</span></code>(cvindex_file[,&nbsp;return_lonlat])</td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">input_targets</span></code>(target_file)</td>
 <td></td>
 </tr>
 </tbody>

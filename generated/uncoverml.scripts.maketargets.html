@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="../index.html" />
     <link rel="up" title="Command Line Scripts" href="../scripts.html" />
-    <link rel="next" title="uncoverml.scripts.cvindexer" href="uncoverml.scripts.cvindexer.html" />
+    <link rel="next" title="uncoverml.scripts.extractfeats" href="uncoverml.scripts.extractfeats.html" />
     <link rel="prev" title="Command Line Scripts" href="../scripts.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
@@ -47,7 +47,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="../scripts.html" title="Command Line Scripts"
@@ -64,18 +64,35 @@
             
   <div class="section" id="module-uncoverml.scripts.maketargets">
 <span id="uncoverml-scripts-maketargets"></span><h1>uncoverml.scripts.maketargets<a class="headerlink" href="#module-uncoverml.scripts.maketargets" title="Permalink to this headline">¶</a></h1>
-<p>Make output target files.</p>
+<p>Make output target file with cross-validation indices.</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>Usage: maketargets [OPTIONS] SHAPEFILE FIELDNAME
 
-  Turn a shapefile of target variables into an HDF5 file. This file can
-  subsequently be used by cross validation and machine learning routines.
+  Turn a shapefile of target variables into an HDF5 file and create a cross
+  validation fold index.
 
-  The output hdf5 will have three arrays, &quot;targets&quot;, &quot;Longitude&quot; and
-  &quot;Latitude&quot;.
+  The output hdf5 will have the following arrays:
+
+  - targets
+
+  - Longitude
+
+  - Latitude
+
+  - FoldIndices
+
+  - targets_sorted
+
+  - FoldIndices_sorted
+
+  - Latitude_sorted
+
+  - Longitude_sorted
 
 Options:
   -v, --verbosity LVL  Either CRITICAL, ERROR, WARNING, INFO or DEBUG
   --outfile PATH       File name (minus extension) to give to the output files
+  --folds INTEGER      Number of folds for crossvalidation
+  --seed INTEGER       Integer random seed
   --help               Show this message and exit.
 </pre></div>
 </div>
@@ -86,8 +103,8 @@ Options:
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">output_targets</span></code>(target,&nbsp;lonlat,&nbsp;outfile)</td>
-<td></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">split_cfold</span></code>(nsamples[,&nbsp;k,&nbsp;seed])</td>
+<td>Function that returns indices for splitting data into random folds.</td>
 </tr>
 </tbody>
 </table>
@@ -103,8 +120,8 @@ Options:
   <p class="topless"><a href="../scripts.html"
                         title="previous chapter">Command Line Scripts</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.scripts.cvindexer.html"
-                        title="next chapter">uncoverml.scripts.cvindexer</a></p>
+  <p class="topless"><a href="uncoverml.scripts.extractfeats.html"
+                        title="next chapter">uncoverml.scripts.extractfeats</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -129,7 +146,7 @@ Options:
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="uncoverml.scripts.cvindexer.html" title="uncoverml.scripts.cvindexer"
+          <a href="uncoverml.scripts.extractfeats.html" title="uncoverml.scripts.extractfeats"
              >next</a> |</li>
         <li class="right" >
           <a href="../scripts.html" title="Command Line Scripts"
