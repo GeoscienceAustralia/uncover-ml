@@ -69,9 +69,8 @@ def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
 
     if x is not None:
         x = extract_transform(x, settings.x_sets)
-        geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
-    else:
-        geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+
+    geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
 
     return settings
 
@@ -88,9 +87,6 @@ def compose_features(settings, hdf_infiles, hdf_outfile):
 
     x, settings = mpiops.compose_transform(x, settings)
 
-    if x is not None:
-        geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
-    else:
-        geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+    geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
 
     return settings

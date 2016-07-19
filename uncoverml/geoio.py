@@ -485,6 +485,10 @@ def output_features(feature_vector, outfile, featname="features",
         bbox: ndarray, optional
             The bounding box of the original data for reproducing an image
     """
+    if feature_vector is None:
+        output_blank(outfile, featname, shape, bbox)
+        return
+
     with hdf.open_file(outfile, mode='w') as h5file:
         h5file.root._v_attrs["blank"] = False
 
