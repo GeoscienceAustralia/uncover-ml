@@ -2,6 +2,7 @@ import pytest
 from uncoverml import mpiops
 
 
+# Make sure all MPI tests use this fixure
 @pytest.fixture()
 def mpisync(request):
     mpiops.comm.barrier()

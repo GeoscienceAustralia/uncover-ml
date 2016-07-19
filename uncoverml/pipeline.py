@@ -29,6 +29,20 @@ class ExtractSettings(PickledSettings):
         self.patchsize = patchsize
 
 
+class ComposeSettings(PickledSettings):
+
+    def __init__(self, impute, transform, featurefraction, impute_mean, mean,
+                 sd, eig_vals, eig_vecs):
+        self.impute = impute
+        self.transform = transform
+        self.featurefraction = featurefraction
+        self.impute_mean = impute_mean
+        self.mean = mean
+        self.sd = sd
+        self.eig_vals = eig_vals
+        self.eig_vecs = eig_vecs
+
+
 def extract_transform(x, x_sets):
     x = x.reshape(x.shape[0], -1)
     if x_sets:
@@ -55,6 +69,26 @@ def extract_features(settings, target_infile, geotiff_infile, hdf_outfile):
 
     if x is not None:
         x = extract_transform(x, settings.x_sets)
+        geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+    else:
+        geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
+
+    return settings
+
+
+def compose_features(settings, hdf_infiles, hdf_outfile):
+
+    # verify the files are all present
+    filename_dict = geoio.files_by_chunk(hdf_infiles)
+
+    # Get attribs if they exist
+    eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
+    chunk_files = filename_dict[mpiops.chunk_index]
+    x = geoio.load_and_cat(chunk_files)
+
+    x, settings = mpiops.compose_transform(x, settings)
+
+    if x is not None:
         geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)
     else:
         geoio.output_blank(hdf_outfile, shape=eff_shape, bbox=eff_bbox)
