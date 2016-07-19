@@ -388,9 +388,10 @@ class Image:
     def _global_lonlat2pix(self, lonlat):
         x = np.searchsorted(self._coords_x, lonlat[:, 0], side='right') - 1
         x = x.astype(int)
+        # searchsorted only works for increasing arrays
         ycoords = self._coords_y[::-1] if self._y_flipped else self._coords_y
-        side = 'left' if self._y_flipped else 'right'
-        y = np.searchsorted(ycoords, lonlat[:, 1], side=side) - 1
+        # side = 'left' if self._y_flipped else 'right'
+        y = np.searchsorted(ycoords, lonlat[:, 1], side='right') - 1
         y = self._full_res[1] - y if self._y_flipped else y
         y = y.astype(int)
 

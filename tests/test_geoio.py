@@ -58,12 +58,7 @@ def test_files_by_chunk():
 
 
 @pytest.fixture(params=[1., 0.5, 1.5])
-def pix_size_x(request):
-    return request.param
-
-
-@pytest.fixture(params=[-1., 0.5, 1.5, -0.5])
-def pix_size_y(request):
+def pix_size_single(request):
     return request.param
 
 
@@ -72,12 +67,20 @@ def origin_point(request):
     return request.param
 
 
-def test_latlon2pix_edges(pix_size_x, pix_size_y, origin_point):
+@pytest.fixture(params=[True, False])
+def is_flipped(request):
+    return request.param
+
+
+def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
 
     data = np.random.rand(32, 24, 1)
     masked_array = np.ma.array(data=data, mask=False)
-    pix_size = (0.5, 0.5)
-    origin = (1., 1.)
+    pix_size = (pix_size_single, pix_size_single)
+    if is_flipped:
+        pix_size = (pix_size_single, -1 * pix_size_single)
+    # origin needs to change as well
+    origin = (origin_point, origin_point)
     src = geoio.ArrayImageSource(masked_array, origin, pix_size)
     ispec = geoio.Image(src)
 
@@ -92,8 +95,8 @@ def test_latlon2pix_edges(pix_size_x, pix_size_y, origin_point):
     d = np.array([[a, b] for a in lons for b in lats])
     xy = ispec.lonlat2pix(d)
     true_xy = np.array([[a, b] for a in pix_x for b in pix_y])
-
     assert np.all(xy == true_xy)
+
 
 # def test_latlon2pix_internals(make_raster, make_gtiff):
 
