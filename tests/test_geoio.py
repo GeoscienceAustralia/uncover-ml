@@ -71,7 +71,24 @@ def is_flipped(request):
     return request.param
 
 
-def make_image(pix_size_single, origin_point, is_flipped):
+@pytest.fixture(params=[1, 2, 3])
+def overlap_pixels(request):
+    return request.param
+
+
+@pytest.fixture(params=[1, 2, 9])
+def num_chunks(request):
+    return request.param
+
+
+@pytest.fixture(params=['start', 'middle', 'end'])
+def chunk_position(request):
+    return request.param
+
+
+def make_image(pix_size_single, origin_point,
+               is_flipped, num_chunks, chunk_position):
+
     data = np.random.rand(32, 24, 1)
     masked_array = np.ma.array(data=data, mask=False)
     pix_size = (pix_size_single, pix_size_single)
@@ -84,9 +101,11 @@ def make_image(pix_size_single, origin_point, is_flipped):
     return ispec
 
 
-def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
+def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped,
+                          num_chunks, chunk_position):
 
-    img = make_image(pix_size_single, origin_point, is_flipped)
+    img = make_image(pix_size_single, origin_point, is_flipped,
+                     num_chunks, chunk_position)
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
@@ -106,9 +125,11 @@ def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
     assert np.all(xy == true_xy)
 
 
-def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped):
+def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped,
+                              num_chunks, chunk_position):
 
-    img = make_image(pix_size_single, origin_point, is_flipped)
+    img = make_image(pix_size_single, origin_point, is_flipped,
+                     num_chunks, chunk_position)
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
@@ -127,9 +148,11 @@ def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped):
     assert np.all(xy == true_xy)
 
 
-def test_pix2latlong(pix_size_single, origin_point, is_flipped):
+def test_pix2latlong(pix_size_single, origin_point, is_flipped,
+                     num_chunks, chunk_position):
 
-    img = make_image(pix_size_single, origin_point, is_flipped)
+    img = make_image(pix_size_single, origin_point, is_flipped,
+                     num_chunks, chunk_position)
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
@@ -206,15 +229,6 @@ def array_image_src(request):
                                     (pixsize_x, pixsize_y))
     return im_src
 
-
-@pytest.fixture(params=[1, 2, 3])
-def overlap_pixels(request):
-    return request.param
-
-
-@pytest.fixture(params=[1, 2, 31])
-def num_chunks(request):
-    return request.param
 
 
 def test_Image_data(array_image_src):
