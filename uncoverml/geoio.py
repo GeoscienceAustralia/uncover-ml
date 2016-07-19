@@ -391,7 +391,11 @@ class Image:
         # searchsorted only works for increasing arrays
         ycoords = self._coords_y[::-1] if self._y_flipped else self._coords_y
         # side = 'left' if self._y_flipped else 'right'
-        y = np.searchsorted(ycoords, lonlat[:, 1], side='right') - 1
+        if self._y_flipped:
+            y = np.searchsorted(ycoords, lonlat[:, 1], side='left')
+        else:
+            y = np.searchsorted(ycoords, lonlat[:, 1], side='right') - 1
+
         y = self._full_res[1] - y if self._y_flipped else y
         y = y.astype(int)
 
@@ -403,6 +407,7 @@ class Image:
         y[on_end_y] -= 1
         if (not all(np.logical_and(x >= 0, x < self._full_res[0]))) or \
                 (not all(np.logical_and(y >= 0, y < self._full_res[1]))):
+            import IPython; IPython.embed(); import sys; sys.exit()
             raise ValueError("Queried location is not in the image!")
 
         result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)

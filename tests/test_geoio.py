@@ -1,8 +1,7 @@
-import pytest
-import rasterio
-import numpy as np
-# import shapefile as shp
 import os.path
+
+import pytest
+import numpy as np
 import tables as hdf
 from affine import Affine
 
@@ -72,8 +71,7 @@ def is_flipped(request):
     return request.param
 
 
-def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
-
+def make_image(pix_size_single, origin_point, is_flipped):
     data = np.random.rand(32, 24, 1)
     masked_array = np.ma.array(data=data, mask=False)
     pix_size = (pix_size_single, pix_size_single)
@@ -83,66 +81,71 @@ def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
     origin = (origin_point, origin_point)
     src = geoio.ArrayImageSource(masked_array, origin, pix_size)
     ispec = geoio.Image(src)
+    return ispec
+
+
+def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped):
+
+    img = make_image(pix_size_single, origin_point, is_flipped)
+    res_x = img._full_res[0]
+    res_y = img._full_res[1]
+    pix_size = (img.pixsize_x, img.pixsize_y)
+    origin = (img._start_lon, img._start_lat)
 
     # +1 to test the outer edge
-    lons = np.arange(data.shape[0] + 1) * pix_size[0] + origin[0]
-    lats = np.arange(data.shape[1] + 1) * pix_size[1] + origin[1]
+    lons = np.arange(res_x + 1) * pix_size[0] + origin[0]
+    lats = np.arange(res_y + 1) * pix_size[1] + origin[1]
 
     # last pixel appears twice
-    pix_x = np.concatenate((np.arange(data.shape[0]), [data.shape[0]-1]))
-    pix_y = np.concatenate((np.arange(data.shape[1]), [data.shape[1]-1]))
+    pix_x = np.concatenate((np.arange(res_x), [res_x - 1]))
+    pix_y = np.concatenate((np.arange(res_y), [res_y - 1]))
 
     d = np.array([[a, b] for a in lons for b in lats])
-    xy = ispec.lonlat2pix(d)
+    xy = img.lonlat2pix(d)
     true_xy = np.array([[a, b] for a in pix_x for b in pix_y])
     assert np.all(xy == true_xy)
 
 
-# def test_latlon2pix_internals(make_raster, make_gtiff):
+def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped):
 
-#     res, x_bound, y_bound, lons, lats, Ao = make_raster
-#     ftif = make_gtiff
-#     ispec = geoio.Image(ftif)
+    img = make_image(pix_size_single, origin_point, is_flipped)
+    res_x = img._full_res[0]
+    res_y = img._full_res[1]
+    pix_size = (img.pixsize_x, img.pixsize_y)
+    origin = (img._start_lon, img._start_lat)
 
-#     x = [1, 47, 81]
-#     y = [0, 23, 43]
+    # +0.5 for centre of pixels
+    lons = (np.arange(res_x) + 0.5) * pix_size[0] + origin[0]
+    lats = (np.arange(res_y) + 0.5) * pix_size[1] + origin[1]
 
-#     xy = ispec.lonlat2pix(np.array([lons[x] + 0.5 * ispec.pixsize_x,
-#                           lats[y] + 0.5 * ispec.pixsize_y]).T)
+    pix_x = np.arange(res_x)
+    pix_y = np.arange(res_y)
 
-#     assert all(xy[:, 0] == x)
-#     assert all(xy[:, 1] == y)
-
-
-# def test_pix2lonlat(make_raster, make_gtiff):
-
-#     res, x_bound, y_bound, lons, lats, Ao = make_raster
-#     ftif = make_gtiff
-#     ispec = geoio.Image(ftif)
-
-#     xq = [0, 10, 15]
-#     yq = [0, 22, 3]
-#     xy = np.array([xq, yq]).T
-
-#     latlon = ispec.pix2lonlat(xy)
-
-#     latlon_true = np.array([lons[xq], lats[yq]]).T
-#     assert(np.allclose(latlon, latlon_true))
+    d = np.array([[a, b] for a in lons for b in lats])
+    xy = img.lonlat2pix(d)
+    true_xy = np.array([[a, b] for a in pix_x for b in pix_y])
+    assert np.all(xy == true_xy)
 
 
-# def test_pix2lonlat2latlon2pix(make_raster, make_gtiff):
+def test_pix2latlong(pix_size_single, origin_point, is_flipped):
 
-#     res, x_bound, y_bound, lons, lats, Ao = make_raster
-#     ftif = make_gtiff
-#     ispec = geoio.Image(ftif)
+    img = make_image(pix_size_single, origin_point, is_flipped)
+    res_x = img._full_res[0]
+    res_y = img._full_res[1]
+    pix_size = (img.pixsize_x, img.pixsize_y)
+    origin = (img._start_lon, img._start_lat)
 
-#     xq = [0, 10, 15]
-#     yq = [0, 22, 3]
-#     xy = np.array([xq, yq]).T
+    true_lons = np.arange(res_x) * pix_size[0] + origin[0]
+    true_lats = np.arange(res_y) * pix_size[1] + origin[1]
+    true_d = np.array([[a, b] for a in true_lons for b in true_lats])
 
-#     xy2 = ispec.lonlat2pix(ispec.pix2lonlat(xy))
+    pix_x = np.arange(res_x)
+    pix_y = np.arange(res_y)
 
-#     assert np.allclose(xy, xy2)
+    xy = np.array([[a, b] for a in pix_x for b in pix_y])
+
+    lonlats = img.pix2lonlat(xy)
+    assert np.all(lonlats == true_d)
 
 
 def test_load_shapefile(shapefile):
