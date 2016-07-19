@@ -142,9 +142,6 @@ def main(name, files, rgb, separatebands, band, outputdir):
                                dtype=dtype, count=n_bands, transform=A) as f:
                 ystart = 0
                 for node in range(chunks):
-                    # Reverse order of concatentation to account for image
-                    # conventions
-                    node = chunks - node - 1
                     data = comm.recv(source=node, tag=img_idx) \
                         if node != 0 else images[img_idx]
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
