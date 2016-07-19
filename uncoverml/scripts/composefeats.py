@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
            help="The fraction of dimensions to keep for PCA transformed"
            " (whitened) data. Between 0 and 1. Only applies if --whiten given")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.argument('featurename', type=str, required=True)
+@cl.argument('name', type=str, required=True)
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 def main(files, name, outputdir, transform,
          featurefraction, impute, config):
@@ -66,7 +66,12 @@ def main(files, name, outputdir, transform,
     else:
         settings = pipeline.ComposeSettings(impute=impute,
                                             transform=transform,
-                                            featurefraction=featurefraction)
+                                            featurefraction=featurefraction,
+                                            impute_mean=None,
+                                            mean=None,
+                                            sd=None,
+                                            eigvals=None,
+                                            eigvecs=None)
 
     settings = pipeline.compose_features(settings, hdf_infiles, hdf_outfile)
 

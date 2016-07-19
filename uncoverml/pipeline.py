@@ -32,15 +32,15 @@ class ExtractSettings(PickledSettings):
 class ComposeSettings(PickledSettings):
 
     def __init__(self, impute, transform, featurefraction, impute_mean, mean,
-                 sd, eig_vals, eig_vecs):
+                 sd, eigvals, eigvecs):
         self.impute = impute
         self.transform = transform
         self.featurefraction = featurefraction
         self.impute_mean = impute_mean
         self.mean = mean
         self.sd = sd
-        self.eig_vals = eig_vals
-        self.eig_vecs = eig_vecs
+        self.eigvals = eigvals
+        self.eigvecs = eigvecs
 
 
 def extract_transform(x, x_sets):

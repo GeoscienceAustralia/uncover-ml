@@ -111,8 +111,8 @@ def _compose_transform(x, settings, comm):
             impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
             impute_mean = impute_sum / x_n
             log.info("Imputing missing data from mean {}".format(impute_mean))
-            settings.imput_mean = impute_mean
-        impute_mean = settings.mean
+            settings.impute_mean = impute_mean
+        impute_mean = settings.impute_mean
         stats.impute_with_mean(x, impute_mean)
         x_n_local = stats.count(x)
         x_n = comm.allreduce(x_n_local, op=MPI.SUM)
