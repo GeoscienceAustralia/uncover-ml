@@ -486,7 +486,7 @@ def output_features(feature_vector, outfile, featname="features",
             The bounding box of the original data for reproducing an image
     """
     if feature_vector is None:
-        output_blank(outfile, featname, shape, bbox)
+        output_blank(outfile, shape, bbox)
         return
 
     log.info("writing {} array with name {}".format(

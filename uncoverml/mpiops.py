@@ -15,9 +15,11 @@ class PredicateGroup:
     def __init__(self, flag):
         self.flag = flag
         flag_mask = comm.allgather(flag)
-        flags_with_ids = enumerate(flag_mask)
+        flags_with_ids = list(enumerate(flag_mask))
         true_ids = [i for i, v in flags_with_ids if v]
         false_ids = [i for i, v in flags_with_ids if not v]
+        if len(true_ids) == 0:
+            raise RuntimeError("run_if: all nodes have false flag")
         i = chunk_index
         self.new_index = (true_ids.index(i) if flag_mask[i] else
                           (-1 * false_ids.index(i) - 1))
@@ -32,6 +34,7 @@ class PredicateGroup:
 
 
 def run_if(f, flag, broadcast=False, *args, **kwargs):
+    result = None
     with PredicateGroup(flag) as p:
         if flag:
             if kwargs:
@@ -39,11 +42,9 @@ def run_if(f, flag, broadcast=False, *args, **kwargs):
             else:
                 kwargs = {"comm": p.dcomm}
 
-            f_result = f(*args, **kwargs)
+            result = f(*args, **kwargs)
         if broadcast:
-            result = comm.bcast(f_result, root=p.root_chunk)
-        else:
-            result = f_result
+            result = comm.bcast(result, root=p.root_chunk)
     return result
 
 

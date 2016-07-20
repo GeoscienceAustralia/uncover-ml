@@ -152,13 +152,22 @@ def load(image, patchsize, targets=None):
         result = _patches_at_target(image, patchsize, targets)
     return result
 
+
 def _patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
     tdict = geoio.points_from_hdf(targets, ['Longitude_sorted',
                                             'Latitude_sorted'])
-    lonlats = np.vstack((tdict['Longitude_sorted'],
-                         tdict['Latitude_sorted'])).T
+
+    # TODO we shouldn't need to do this
+    # Longlats always sorts lats *ascending*, not starting
+    # from image origin. We need to compensate.
+    lons = tdict['Longitude_sorted']
+    lats = tdict['Latitude_sorted']
+    if image.pixsize_y < 0:
+        lats = lats[::-1]
+
+    lonlats = np.vstack((lons, lats)).T
 
     valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
