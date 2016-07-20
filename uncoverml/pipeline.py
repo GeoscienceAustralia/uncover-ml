@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class PickledSettings:
+
     def from_file(settings_file):
         s = pickle.load(settings_file)
         return s
@@ -84,7 +85,6 @@ def compose_features(settings, hdf_infiles, hdf_outfile):
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
     chunk_files = filename_dict[mpiops.chunk_index]
     x = geoio.load_and_cat(chunk_files)
-
     x, settings = mpiops.compose_transform(x, settings)
 
     geoio.output_features(x, hdf_outfile, shape=eff_shape, bbox=eff_bbox)

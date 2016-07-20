@@ -62,8 +62,7 @@ def main(shapefile, fieldname, outfile, folds, seed):
 
     # Extract data from shapefile
     try:
-        lonlat = geoio.points_from_shp(shapefile)
-        vals = geoio.values_from_shp(shapefile, fieldname)
+        lonlat, vals = geoio.load_shapefile(shapefile, fieldname)
     except Exception as e:
         log.fatal("Error parsing shapefile: {}".format(e))
         sys.exit(-1)

@@ -31,7 +31,7 @@ class PredicateGroup:
         self.dcomm.Free()
 
 
-def run_if(f, flag, *args, **kwargs):
+def run_if(f, flag, broadcast=False, *args, **kwargs):
     with PredicateGroup(flag) as p:
         if flag:
             if kwargs:
@@ -40,7 +40,10 @@ def run_if(f, flag, *args, **kwargs):
                 kwargs = {"comm": p.dcomm}
 
             f_result = f(*args, **kwargs)
-        result = comm.bcast(f_result, root=p.root_chunk)
+        if broadcast:
+            result = comm.bcast(f_result, root=p.root_chunk)
+        else:
+            result = f_result
     return result
 
 
@@ -66,7 +69,8 @@ def _compute_unique(x, comm, max_onehot_dims):
 def compute_unique_values(x, max_onehot_dims):
     flag = x is not None
     x_sets = run_if(_compute_unique, flag, x=x,
-                    max_onehot_dims=max_onehot_dims)
+                    max_onehot_dims=max_onehot_dims,
+                    broadcast=True)
     return x_sets
 
 
@@ -88,9 +92,9 @@ sum0_op = MPI.Op.Create(sum_axis_0, commute=True)
 
 def compose_transform(x, settings):
     flag = x is not None
-    x_sets = run_if(_compose_transform, flag, x=x,
-                    settings=settings)
-    return x_sets
+    x = run_if(_compose_transform, flag, x=x,
+               settings=settings)
+    return x
 
 
 def _compose_transform(x, settings, comm):
@@ -110,7 +114,7 @@ def _compose_transform(x, settings, comm):
             local_impute_sum = stats.sum(x)
             impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
             impute_mean = impute_sum / x_n
-            log.info("Imputing missing data from mean {}".format(impute_mean))
+            log.debug("Imputing missing data from mean {}".format(impute_mean))
             settings.impute_mean = impute_mean
         impute_mean = settings.impute_mean
         stats.impute_with_mean(x, impute_mean)
@@ -124,7 +128,7 @@ def _compose_transform(x, settings, comm):
             mean = x_sum / x_n
             settings.mean = mean
 
-        log.info("Subtracting global mean {}".format(mean))
+        log.debug("Subtracting global mean {}".format(mean))
         stats.centre(x.data, mean)
         mean = np.zeros_like(mean)
 
@@ -135,9 +139,8 @@ def _compose_transform(x, settings, comm):
             sd = np.sqrt(x_var / x_n)
             settings.sd = sd
 
-        log.info("Dividing through global standard deviation {}".format(sd))
+        log.debug("Dividing through global standard deviation {}".format(sd))
         stats.standardise(x.data, sd, mean)
-        mean = np.zeros_like(mean)
 
     if settings.transform == "whiten":
         if not settings.eigvals or not settings.eigvecs:
@@ -149,7 +152,7 @@ def _compose_transform(x, settings, comm):
             settings.eigvecs = eigvecs
 
         out_dims = int(out_dims * settings.featurefraction)
-        log.info("Whitening and keeping {} dimensions".format(out_dims))
+        log.debug("Whitening and keeping {} dimensions".format(out_dims))
         ndims = x.shape[1]
         # make sure 1 <= keepdims <= ndims
         keepdims = min(max(1, int(ndims * settings.featurefraction)), ndims)

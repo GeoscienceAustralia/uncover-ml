@@ -244,9 +244,9 @@ class Image:
         self.nchunks = nchunks
         self.source = source
 
-        log.info("Image has resolution {}".format(source.full_resolution))
-        log.info("Image has datatype {}".format(source.dtype))
-        log.info("Image missing value: {}".format(source.nodata_value))
+        log.debug("Image has resolution {}".format(source.full_resolution))
+        log.debug("Image has datatype {}".format(source.dtype))
+        log.debug("Image missing value: {}".format(source.nodata_value))
 
         self._full_res = source.full_resolution
         self._start_lon = source.origin_longitude
@@ -421,6 +421,7 @@ class Image:
 
         if (not all(np.logical_and(x >= 0, x < self.resolution[0]))) or \
                 (not all(np.logical_and(y >= 0, y < self.resolution[1]))):
+            import IPython; IPython.embed(); import sys; sys.exit()
             raise ValueError("Queried location is not in the image!")
 
         return result
@@ -488,6 +489,8 @@ def output_features(feature_vector, outfile, featname="features",
         output_blank(outfile, featname, shape, bbox)
         return
 
+    log.info("writing {} array with name {}".format(
+        feature_vector.shape, outfile))
     with hdf.open_file(outfile, mode='w') as h5file:
         h5file.root._v_attrs["blank"] = False
 

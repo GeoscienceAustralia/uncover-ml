@@ -1,9 +1,8 @@
-import os.path
-
+import os
 import pytest
-import numpy as np
 import tables as hdf
 from affine import Affine
+import numpy as np
 
 from uncoverml import geoio
 
@@ -97,7 +96,17 @@ def make_image(pix_size_single, origin_point,
     # origin needs to change as well
     origin = (origin_point, origin_point)
     src = geoio.ArrayImageSource(masked_array, origin, pix_size)
-    ispec = geoio.Image(src)
+
+    if num_chunks > 1:
+        if chunk_position == 'start':
+            chunk_index = 0
+        elif chunk_position == 'end':
+            chunk_index = num_chunks - 1
+        else:
+            chunk_index = round(num_chunks/2)
+        ispec = geoio.Image(src, chunk_idx=chunk_index, nchunks=num_chunks)
+    else:
+        ispec = geoio.Image(src)
     return ispec
 
 
@@ -106,18 +115,24 @@ def test_latlon2pix_edges(pix_size_single, origin_point, is_flipped,
 
     img = make_image(pix_size_single, origin_point, is_flipped,
                      num_chunks, chunk_position)
+    chunk_idx = img.chunk_idx
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
     origin = (img._start_lon, img._start_lat)
 
-    # +1 to test the outer edge
-    lons = np.arange(res_x + 1) * pix_size[0] + origin[0]
-    lats = np.arange(res_y + 1) * pix_size[1] + origin[1]
-
-    # last pixel appears twice
+    # compute chunks
+    lons = np.arange(res_x + 1) * pix_size[0] + origin[0]  # right edge +1
+    all_lats = np.arange(res_y) * pix_size[1] + origin[1]
+    lats_chunks = np.array_split(all_lats, num_chunks)[chunk_idx]
     pix_x = np.concatenate((np.arange(res_x), [res_x - 1]))
-    pix_y = np.concatenate((np.arange(res_y), [res_y - 1]))
+    pix_y_chunks = range(lats_chunks.shape[0])
+    if chunk_position == 'end':
+        pix_y = np.concatenate((pix_y_chunks, [pix_y_chunks[-1]]))
+        lats = np.concatenate((lats_chunks, [res_y * pix_size[1] + origin[1]]))
+    else:
+        pix_y = pix_y_chunks
+        lats = lats_chunks
 
     d = np.array([[a, b] for a in lons for b in lats])
     xy = img.lonlat2pix(d)
@@ -130,6 +145,7 @@ def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped,
 
     img = make_image(pix_size_single, origin_point, is_flipped,
                      num_chunks, chunk_position)
+    chunk_idx = img.chunk_idx
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
@@ -137,10 +153,11 @@ def test_latlon2pix_internals(pix_size_single, origin_point, is_flipped,
 
     # +0.5 for centre of pixels
     lons = (np.arange(res_x) + 0.5) * pix_size[0] + origin[0]
-    lats = (np.arange(res_y) + 0.5) * pix_size[1] + origin[1]
+    all_lats = (np.arange(res_y) + 0.5) * pix_size[1] + origin[1]
+    lats = np.array_split(all_lats, num_chunks)[chunk_idx]
 
     pix_x = np.arange(res_x)
-    pix_y = np.arange(res_y)
+    pix_y = np.arange(lats.shape[0])
 
     d = np.array([[a, b] for a in lons for b in lats])
     xy = img.lonlat2pix(d)
@@ -153,17 +170,19 @@ def test_pix2latlong(pix_size_single, origin_point, is_flipped,
 
     img = make_image(pix_size_single, origin_point, is_flipped,
                      num_chunks, chunk_position)
+    chunk_idx = img.chunk_idx
     res_x = img._full_res[0]
     res_y = img._full_res[1]
     pix_size = (img.pixsize_x, img.pixsize_y)
     origin = (img._start_lon, img._start_lat)
 
     true_lons = np.arange(res_x) * pix_size[0] + origin[0]
-    true_lats = np.arange(res_y) * pix_size[1] + origin[1]
+    all_lats = np.arange(res_y) * pix_size[1] + origin[1]
+    true_lats = np.array_split(all_lats, num_chunks)[chunk_idx]
     true_d = np.array([[a, b] for a in true_lons for b in true_lats])
 
     pix_x = np.arange(res_x)
-    pix_y = np.arange(res_y)
+    pix_y = np.arange(img.resolution[1])  # chunk resolution
 
     xy = np.array([[a, b] for a in pix_x for b in pix_y])
 
