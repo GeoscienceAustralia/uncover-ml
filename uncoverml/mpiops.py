@@ -103,67 +103,82 @@ def compose_transform(x, settings):
     return x, settings
 
 
-def _compose_transform(x, settings, comm):
-
+def _count(x, comm):
     x_n_local = stats.count(x)
     x_n = comm.allreduce(x_n_local, op=MPI.SUM)
+    return x_n
+
+def _impute(x, comm, settings):
+    if not settings.impute_mean:
+        x_n = _count(x, comm)
+        local_impute_sum = stats.sum(x)
+        impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
+        impute_mean = (impute_sum / x_n).data
+        settings.impute_mean = impute_mean
+    stats.impute_with_mean(x, settings.impute_mean)
+
+
+def _centre(x, comm, settings):
+    if settings.mean is not None:
+        x_n = _count(x, comm)
+        x_sum_local = stats.sum(x)
+        x_sum = comm.allreduce(x_sum_local, op=sum0_op)
+        mean = x_sum / x_n
+        settings.mean = mean
+    stats.centre(x.data, settings.mean)
+
+
+def _standardise(x, comm, settings):
+    _centre(x, comm, settings.mean)
+    if settings.sd is not None:
+        x_n = _count(x, comm)
+        x_var_local = stats.var(x, 0.0)
+        x_var = comm.allreduce(x_var_local, op=sum0_op)
+        sd = np.sqrt(x_var / x_n)
+        settings.sd = sd
+    stats.standardise(x.data, settings.sd, 0.0)
+
+
+def _whiten(x, comm, settings):
+    _standardise(x, comm, settings)
+    if not settings.eigvals or not settings.eigvecs:
+        x_n = _count(x, comm)
+        x_outer_local = stats.outer(x, 0.0)
+        outer = comm.allreduce(x_outer_local, op=sum0_op)
+        cov = outer / x_n
+        eigvals, eigvecs = np.linalg.eigh(cov)
+        settings.eigvals, settings.eigvecs = eigvals, eigvecs
+
+    ndims = x.shape[1]
+    # make sure 1 <= keepdims <= ndims
+    keepdims = min(max(1, int(ndims * settings.featurefraction)), ndims)
+    mat = eigvecs[:, -keepdims:]
+    vec = eigvals[-keepdims:]
+    x[:] = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+
+
+transform_map = {'whiten': _whiten,
+                 'standardise': _standardise,
+                 'centre': _centre}
+
+
+def _log_missing(x, comm):
+    x_n = _count(x, comm)
     x_full_local = stats.full_count(x)
     x_full = comm.allreduce(x_full_local, op=MPI.SUM)
 
-    out_dims = x_n.shape[0]
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))
     fraction_missing = (1.0 - np.sum(x_n) / (x_full * x_n.shape[0])) * 100.0
     log.info("Input data is {}% missing".format(fraction_missing))
 
+
+def _compose_transform(x, settings, comm):
+
+    _log_missing(x, comm)
     if settings.impute:
-        if settings.impute_mean is None:
-            local_impute_sum = stats.sum(x)
-            impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
-            impute_mean = impute_sum / x_n
-            log.debug("Imputing missing data from mean {}".format(impute_mean))
-            settings.impute_mean = impute_mean
-        impute_mean = settings.impute_mean
-        stats.impute_with_mean(x, impute_mean)
-        x_n_local = stats.count(x)
-        x_n = comm.allreduce(x_n_local, op=MPI.SUM)
+        _impute(x, comm, settings)
 
-    if settings.transform in {"centre", "standardise", "whiten"}:
-        if settings.mean is None:
-            x_sum_local = stats.sum(x)
-            x_sum = comm.allreduce(x_sum_local, op=sum0_op)
-            mean = x_sum / x_n
-            settings.mean = mean
-
-        log.debug("Subtracting global mean {}".format(mean))
-        stats.centre(x.data, mean)
-        mean = np.zeros_like(mean)
-
-    if settings.transform in {"standardise", "whiten"}:
-        if settings.sd is None:
-            x_var_local = stats.var(x, mean)
-            x_var = comm.allreduce(x_var_local, op=sum0_op)
-            sd = np.sqrt(x_var / x_n)
-            settings.sd = sd
-
-        log.debug("Dividing through global standard deviation {}".format(sd))
-        stats.standardise(x.data, sd, mean)
-
-    if settings.transform == "whiten":
-        if not settings.eigvals or not settings.eigvecs:
-            x_outer_local = stats.outer(x, mean)
-            outer = comm.allreduce(x_outer_local, op=sum0_op)
-            cov = outer / x_n
-            eigvals, eigvecs = np.linalg.eigh(cov)
-            settings.eigvals = eigvals
-            settings.eigvecs = eigvecs
-
-        out_dims = int(out_dims * settings.featurefraction)
-        log.debug("Whitening and keeping {} dimensions".format(out_dims))
-        ndims = x.shape[1]
-        # make sure 1 <= keepdims <= ndims
-        keepdims = min(max(1, int(ndims * settings.featurefraction)), ndims)
-        mat = eigvecs[:, -keepdims:]
-        vec = eigvals[-keepdims:]
-        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+    f = transform_map.get(settings.transform, default=lambda *_: None)
+    f(x, settings, comm)
 
     return x, settings

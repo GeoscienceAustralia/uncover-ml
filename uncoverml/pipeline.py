@@ -21,6 +21,9 @@ class PickledSettings:
         with open(settings_file, 'wb') as f:
             pickle.dump(self, f)
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 
 class ExtractSettings(PickledSettings):
 
