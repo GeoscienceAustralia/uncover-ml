@@ -65,11 +65,8 @@ patchsize = 0
 # Impute missing values?
 impute = True
 
-# Starndardise each input dimension? (0 mean, 1 std)
-standardise = True  # standardise all of the extracted features?
-
-# Whiten all inputs?
-whiten = False  # whiten all of the extracted features?
+# Transform the data? options are {whiten, standardise, centre, None}
+transform = 'centre'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.5
