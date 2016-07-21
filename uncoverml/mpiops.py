@@ -41,7 +41,6 @@ def run_if(f, flag, broadcast=False, *args, **kwargs):
                 kwargs.update({"comm": p.dcomm})
             else:
                 kwargs = {"comm": p.dcomm}
-
             result = f(*args, **kwargs)
         if broadcast:
             result = comm.bcast(result, root=p.root_chunk)
@@ -92,10 +91,16 @@ sum0_op = MPI.Op.Create(sum_axis_0, commute=True)
 
 
 def compose_transform(x, settings):
+
     flag = x is not None
-    x = run_if(_compose_transform, flag, x=x,
-               settings=settings)
-    return x
+    result = run_if(_compose_transform, flag, x=x,
+                    settings=settings)
+
+    flag = result is not None
+    x = result[0] if flag else None
+    settings = run_if(lambda r, comm: r[1], flag, r=result, broadcast=True)
+
+    return x, settings
 
 
 def _compose_transform(x, settings, comm):
