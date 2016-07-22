@@ -177,7 +177,7 @@ transform_map = {'whiten': _whiten,
 
 def _log_missing(x, comm):
     x_n = _count(x, comm)
-    x_full_local = stats.full_count(x)
+    x_full_local = x.shape[0]
     x_full = comm.allreduce(x_full_local, op=MPI.SUM)
 
     log.info("Total input dimensionality: {}".format(x_n.shape[0]))

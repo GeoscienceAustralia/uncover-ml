@@ -66,7 +66,7 @@ patchsize = 0
 impute = True
 
 # Transform the data? options are {whiten, standardise, centre, None}
-transform = 'standardise'
+transform = 'centre'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.5
