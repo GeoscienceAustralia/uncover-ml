@@ -7,7 +7,7 @@ import os.path
 import pytest
 import numpy as np
 import shapefile as shp
-import rasterio
+# import rasterio
 
 timg = np.reshape(np.arange(1, 17), (4, 4))
 
@@ -116,53 +116,30 @@ def make_multi_patch(request):
 
 
 # @pytest.fixture
-# def make_raster():
+# def make_geotiff(random_filename):
+#     filename = random_filename + ".tif"
+#     # # Create grid
+#     # res, x_bound, y_bound, lons, lats, Ao = make_raster()
+#     # Generate data for geotiff
+#     Lons, Lats = np.meshgrid(lons, lats)
 
-#     res_x = 100
-#     res_y = 50
-#     x_range = (50, 80)
-#     y_range = (-40, -30)
+#     # Write geotiff
+#     profile = {'driver': "GTiff",
+#                'width': len(lons),
+#                'height': len(lats),
+#                'count': 2,
+#                'dtype': rasterio.float64,
+#                'transform': Ao,
+#                'crs': {'proj': 'longlat',
+#                        'ellps': 'WGS84',
+#                        'datum': 'WGS84',
+#                        'nodefs': True
+#                        }
+#                }
 
-#     pix_x = (x_range[1] - x_range[0]) / res_x
-#     pix_y = (y_range[1] - y_range[0]) / res_y
-
-#     A = Affine(pix_x, 0, x_range[0],
-#                0, -pix_y, y_range[1])
-
-#     lons = np.array([(x, 0) * A for x in np.arange(res_x)])[:, 0]
-#     lats = np.array([(0, y) * A for y in np.arange(res_y)])[:, 1]
-
-#     x_bound = (x_range[0], x_range[1] + pix_x)
-#     y_bound = (y_range[0] - pix_y, y_range[1])
-
-#     return (res_x, res_y), x_bound, y_bound, lons, lats, A
-
-
-@pytest.fixture
-def make_geotiff(random_filename):
-    filename = random_filename + ".tif"
-    # # Create grid
-    # res, x_bound, y_bound, lons, lats, Ao = make_raster()
-    # Generate data for geotiff
-    Lons, Lats = np.meshgrid(lons, lats)
-
-    # Write geotiff
-    profile = {'driver': "GTiff",
-               'width': len(lons),
-               'height': len(lats),
-               'count': 2,
-               'dtype': rasterio.float64,
-               'transform': Ao,
-               'crs': {'proj': 'longlat',
-                       'ellps': 'WGS84',
-                       'datum': 'WGS84',
-                       'nodefs': True
-                       }
-               }
-
-    with rasterio.open(filename, 'w', **profile) as f:
-        f.write(np.array([Lons, Lats]))
-    return filename
+#     with rasterio.open(filename, 'w', **profile) as f:
+#         f.write(np.array([Lons, Lats]))
+#     return filename
 
 
 @pytest.fixture
@@ -203,22 +180,3 @@ def shapefile(random_filename, request):
     w.save(filename)
 
     return lonlats, filename
-
-
-# @pytest.fixture(scope='session')
-# def make_fakedata(tmpdir_factory):
-
-#     mod_dir = str(tmpdir_factory.mktemp('models').realpath())
-
-#     w = np.array([1., 2.])
-#     x = np.atleast_2d(np.arange(-50, 50)).T
-#     X = np.hstack((np.ones((100, 1)), x))
-#     y = X.dot(w) + np.random.randn(100) / 1000
-
-#     return X, y, w, mod_dir
-
-
-# @pytest.fixture
-# def make_tmpdir(tmpdir_factory):
-#     path = str(tmpdir_factory.mktemp('geoio').realpath())
-#     return path
