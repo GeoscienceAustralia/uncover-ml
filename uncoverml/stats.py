@@ -2,41 +2,34 @@
 import numpy as np
 
 
-def count(x):
-    """
-    note that this is a vector per dimension because x is masked
-    """
-    return x.count(axis=0)
+# def count(x):
+#     """
+#     note that this is a vector per dimension because x is masked
+#     """
+#     return np.ma.count(x, axis=0)
 
 
-def full_count(x):
-    """
-    total number of points including missing
-    """
-    return x.shape[0]
+# def full_count(x):
+#     """
+#     total number of points including missing
+#     """
+#     return x.shape[0]
 
 
-def sum(x):
-    result = np.ma.sum(x, axis=0)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute sum")
-    return result
+# def sum(x):
+#     s = np.ma.sum(x, axis=0)
+#     if np.ma.count_masked(s) != 0:
+#         raise ValueError("Too many missing values to compute sum")
+#     result = s.data
+#     return result
 
 
-def var(x, mean):
-    delta = x - mean
-    result = np.ma.sum(delta * delta, axis=0)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute variance")
-    return result.data
-
-
-def outer(x, mean):
-    delta = x - mean
-    result = np.ma.dot(delta.T, delta)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute outer product")
-    return result.data
+# def outer(x, mean):
+#     delta = x - mean
+#     result = np.ma.dot(delta.T, delta)
+#     if np.ma.count_masked(result) != 0:
+#         raise ValueError("Too many missing values to compute outer product")
+#     return result.data
 
 
 def sets(x):
@@ -47,19 +40,18 @@ def sets(x):
     return sets
 
 
-def centre(x, mean):
-    x -= mean
+# def centre(x, mean):
+#     x -= mean
 
 
-def standardise(x, x_sd, mean):
-    centre(x, mean)
-    x /= x_sd
+# def standardise(x, x_sd, mean):
+#     centre(x, mean)
+#     x /= x_sd
 
 
 def impute_with_mean(x, mean):
     for i, r in enumerate(x):
         x.data[i][x.mask[i]] = mean[x.mask[i]]
-
     x.mask *= False
 
 

@@ -104,17 +104,14 @@ def compose_transform(x, settings):
 
 
 def _count(x, comm):
-    x_n_local = stats.count(x)
-    x_n = comm.allreduce(x_n_local, op=MPI.SUM)
+    x_n_local = np.ma.count(x, axis=0)
+    x_n = comm.allreduce(x_n_local, op=sum0_op)
     return x_n
 
 
 def _impute(x, settings, comm):
     if settings.impute_mean is None:
-        x_n = _count(x, comm)
-        local_impute_sum = stats.sum(x)
-        impute_sum = comm.allreduce(local_impute_sum, op=sum0_op)
-        impute_mean = impute_sum / x_n
+        impute_mean = _mean(x, comm)
         settings.impute_mean = impute_mean
     stats.impute_with_mean(x, settings.impute_mean)
     return x
@@ -122,27 +119,26 @@ def _impute(x, settings, comm):
 
 def _mean(x, comm):
     x_n = _count(x, comm)
-    x_sum_local = stats.sum(x)
+    x_sum_local = np.ma.sum(x, axis=0)
+    if np.ma.count_masked(x_sum_local) != 0:
+        raise ValueError("Too many missing values to compute sum")
+    x_sum_local = x_sum_local.data
     x_sum = comm.allreduce(x_sum_local, op=sum0_op)
     mean = x_sum / x_n
     return mean
 
 
 def _sd(x, comm):
-    x_n = _count(x, comm)
-    x_var_local = stats.var(x, 0.0)
-    x_var = comm.allreduce(x_var_local, op=sum0_op)
-    sd = np.sqrt(x_var / x_n)
+    x_mean = _mean(x, comm)
+    delta_mean = _mean((x - x_mean)**2, comm)
+    sd = np.sqrt(delta_mean)
     return sd
 
 
 def _centre(x, settings, comm):
     if settings.mean is None:
         settings.mean = _mean(x, comm)
-    print('mean before: {}'.format(settings.mean))
-    stats.centre(x.data, settings.mean)
-    new_mean = _mean(x, comm)
-    print('mean after: {}'.format(new_mean))
+    x -= settings.mean
     return x
 
 
@@ -150,18 +146,15 @@ def _standardise(x, settings, comm):
     x = _centre(x, settings, comm)
     if settings.sd is None:
         settings.sd = _sd(x, comm)
-    print('sd: {}'.format(settings.sd))
-    stats.standardise(x.data, settings.sd, 0.0)
-    new_sd = _sd(x, comm)
-    print('sd after: {}'.format(new_sd))
+    x /= settings.sd
     return x
 
 
 def _whiten(x, settings, comm):
-    x = _standardise(x, settings, comm)
+    x = _centre(x, settings, comm)
     if settings.eigvals is None or settings.eigvecs is None:
         x_n = _count(x, comm)
-        x_outer_local = stats.outer(x, 0.0)
+        x_outer_local = np.ma.dot(x.T, x)
         outer = comm.allreduce(x_outer_local, op=sum0_op)
         cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
@@ -170,9 +163,10 @@ def _whiten(x, settings, comm):
     ndims = x.shape[1]
     # make sure 1 <= keepdims <= ndims
     keepdims = min(max(1, int(ndims * settings.featurefraction)), ndims)
-    mat = eigvecs[:, -keepdims:]
-    vec = eigvals[-keepdims:]
+    mat = settings.eigvecs[:, -keepdims:]
+    vec = settings.eigvals[-keepdims:]
     x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+    print(mat, vec)
     return x
 
 
