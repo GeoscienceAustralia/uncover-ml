@@ -49,6 +49,36 @@ def train(model, X, y, index_mask=None):
     apply_multiple_masked(model.fit, (X_fold, y_fold))
 
 
+def load_training_data(files, targets):
+
+    # Build full filenames
+    full_filenames = [os.path.abspath(f) for f in files]
+    log.debug("Input files: {}".format(full_filenames))
+
+    # Verify the files are all present
+    files_ok = geoio.file_indices_okay(full_filenames)
+    if not files_ok:
+        exit("Input file indices invalid!")
+
+    # Build the images
+    filename_dict = geoio.files_by_chunk(full_filenames)
+    nchunks = len(filename_dict)
+
+    # Read ALL the features in here and remove any missing data for the X's
+    data_vectors = [geoio.load_and_cat(filename_dict[i])
+                    for i in range(nchunks)]
+    data_vectors = list(filter(exists, data_vectors))
+    X = np.ma.concatenate(data_vectors, axis=0)
+
+    # Load the targets file to produce the y's and cross validation indices
+    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
+                                            'FoldIndices_sorted'])
+    y = ydict['targets_sorted']
+    cv_indices = ydict['FoldIndices_sorted']
+
+    return (X, y, cv_indices)
+
+
 @cl.command()
 @cl_log.simple_verbosity_option()
 @cl_log.init(__name__)
@@ -72,29 +102,7 @@ def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
     if rank != 0:
         return
 
-    # Build full filenames
-    full_filenames = [os.path.abspath(f) for f in files]
-    log.debug("Input files: {}".format(full_filenames))
-
-    # Verify the files are all present
-    files_ok = geoio.file_indices_okay(full_filenames)
-    if not files_ok:
-        exit("Input file indices invalid!")
-
-    # Build the images
-    filename_dict = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
-
-    # Read ALL the features in here and remove any missing data for the X's
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(nchunks)]
-    data_vectors = list(filter(exists, data_vectors))
-    X = np.ma.concatenate(data_vectors, axis=0)
-
-    # Load targets file to produce the y's
-    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
-                                            'FoldIndices_sorted'])
-    y = ydict['targets_sorted']
+    X, y, cv_indices = load_training_data(files, targets)
 
     # Determine the required algorithm and parse it's options
     if algorithm not in modelmaps:
@@ -112,10 +120,10 @@ def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
 
         # Populate the validation indices
         models['cross_validation'] = dict()
-        models['cv_indices'] = cv_indices = ydict['FoldIndices_sorted']
+        models['cv_indices'] = cv_indices
 
         # Train each model and store it
-        for fold in range(max(models['cv_indices'])):
+        for fold in range(max(cv_indices)):
 
             # Train a model for each row
             remaining_rows = [cv_indices != fold]

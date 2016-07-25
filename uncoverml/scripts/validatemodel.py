@@ -7,6 +7,8 @@ import os.path
 
 import sys
 
+import pickle
+
 import click as cl
 
 import click_log as cl_log
@@ -16,6 +18,10 @@ import matplotlib.pyplot as pl
 from mpi4py import MPI
 
 import numpy as np
+
+from uncoverml.scripts.predict import predict
+
+from uncoverml.scripts.learnmodel import load_training_data
 
 from revrand.metrics import lins_ccc, mll, msll, smse
 
@@ -34,11 +40,49 @@ def get_first_dim(Y):
 
 # Decorator to deal with probabilistic output for non-probabilistic scores
 def score_first_dim(func):
-
     def newscore(y_true, y_pred, *args, **kwargs):
         return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
-
     return newscore
+
+
+def calculate_validation_scores(Ys, EYs):
+
+    scores = {}
+    for m in metrics:
+
+        if m not in probscores:
+            score = apply_multiple_masked(score_first_dim(metrics[m]),
+                                          (Ys, EYs))
+        elif EYs.ndim == 2 and m == 'mll' and EYs.shape[1] > 1:
+            score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
+        
+        elif EYs.ndim == 2 and m == 'msll' and EYs.shape[1] > 1:
+            score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
+                                          (Yt,))
+        else:
+            continue
+
+        scores[m] = score
+        log.info("{} score = {}".format(m, score))
+        return scores
+
+
+def make_y_y_plot(y1, y2, y1_label=None, y2_label=None, title=None, 
+    outfile=None):
+        fig = pl.figure()
+        maxy = max(Ys.max(), get_first_dim(EYs).max())
+        miny = min(Ys.min(), get_first_dim(EYs).min())
+        apply_multiple_masked(pl.plot, (Ys, get_first_dim(EYs)), ('k.',))
+        pl.plot([miny, maxy], [miny, maxy], 'r')
+        pl.grid(True)
+        pl.xlabel(y1_label)
+        pl.ylabel(y2_label)
+        pl.title(title)
+        if outfile is not None:
+            fig.savefig(outfile + ".png")
+        if plotyy:
+            pl.show()
+
 
 metrics = {'r2_score': r2_score,
            'expvar': explained_variance_score,
@@ -50,7 +94,6 @@ metrics = {'r2_score': r2_score,
 
 probscores = ['msll', 'mll']
 
-
 @cl.command()
 @cl_log.simple_verbosity_option()
 @cl_log.init(__name__)
@@ -58,10 +101,10 @@ probscores = ['msll', 'mll']
            help="File name (minus extension) to save output too")
 @cl.option('--plotyy', is_flag=True, help="Show plot of the target vs."
            "prediction, otherwise just save")
-@cl.argument('cvindex', type=int)
+@cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('targets', type=cl.Path(exists=True))
-@cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
-def main(cvindex, targets, prediction_files, plotyy, outfile):
+@cl.argument('files', type=cl.Path(exists=True), nargs=-1)
+def main(model, targets, files, plotyy, outfile):
     """ Run cross-validation metrics on a model prediction.
     The following metrics are evaluated:
     - R-square
@@ -75,80 +118,46 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
 
     # Make sure python only runs on a single machine at a time
     comm = MPI.COMM_WORLD
-    chunk_index = comm.Get_rank()
-    if chunk_index != 0:
+    rank = comm.Get_rank()
+    if rank != 0:
         return
 
-    # Build full filenames
-    full_filenames = [os.path.abspath(f) for f in prediction_files]
-    log.debug("Input files: {}".format(full_filenames))
+    # Get all of the input data
+    X, y, cv_indices = load_training_data(files, targets)
 
-    # Verify the files are all present
-    files_ok = geoio.file_indices_okay(full_filenames)
-    if not files_ok:
-        log.fatal("Input file indices invalid!")
-        sys.exit(-1)
+    # Get all of the cross validation models 
+    with open(model, 'rb') as f:
+        models = pickle.load(f)
+        cv_models = models['cross_validation']
+        cv_indices = models['cv_indices']
 
-    # Load all prediction files and remove any missing data
-    filename_dict = geoio.files_by_chunk(full_filenames)
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(len(filename_dict))]
-    data_vectors = [x for x in data_vectors if x is not None]
-    EYs = np.ma.concatenate(data_vectors, axis=0)
 
-    # Read cv index and targets
-    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
-                                            'FoldIndices_sorted'])
-    Y = ydict['targets_sorted']
-    cvind = ydict['FoldIndices_sorted']
+    # Use the models to determine the predicted y's
+    y_pred = np.zeros(len(y))
+    for index, model in enumerate(cv_models):
+        
+        # Perform the prediction
+        y_pred = predict(X, model)
 
-    s_ind = np.where(cvind == cvindex)[0]
-    t_ind = np.where(cvind != cvindex)[0]
+        # Only take the predictions that correspond to this model
+        y_pred[cv_indices==index] = y[cv_indices==index]
 
-    Yt = Y[t_ind]
-    Ys = Y[s_ind]
-    Ns = len(Ys)
+    rank = comm.Get_rank()
+    if rank == 0:
+        import IPython; IPython.embed()
+    comm.barrier()   
 
-    # See if this data is already subset for xval
-    if len(EYs) > Ns:
-        EYs = EYs[s_ind]
-
-    scores = {}
-    for m in metrics:
-
-        if m not in probscores:
-            score = apply_multiple_masked(score_first_dim(metrics[m]),
-                                          (Ys, EYs))
-        elif EYs.ndim == 2:
-            if m == 'mll' and EYs.shape[1] > 1:
-                score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
-            elif m == 'msll' and EYs.shape[1] > 1:
-                score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
-                                              (Yt,))
-            else:
-                continue
-        else:
-            continue
-
-        scores[m] = score
-        log.info("{} score = {}".format(m, score))
-
+    
+    # Use the expected y's to display the validation scores
+    scores = calculate_validation_scores(Ys, EYs)
     if outfile is not None:
         with open(outfile + ".json", 'w') as f:
             json.dump(scores, f, sort_keys=True, indent=4)
 
     # Make figure
     if plotyy and (outfile is not None):
-        fig = pl.figure()
-        maxy = max(Ys.max(), get_first_dim(EYs).max())
-        miny = min(Ys.min(), get_first_dim(EYs).min())
-        apply_multiple_masked(pl.plot, (Ys, get_first_dim(EYs)), ('k.',))
-        pl.plot([miny, maxy], [miny, maxy], 'r')
-        pl.grid(True)
-        pl.xlabel('True targets')
-        pl.ylabel('Predicted targets')
-        pl.title('True vs. predicted target values.')
-        if outfile is not None:
-            fig.savefig(outfile + ".png")
-        if plotyy:
-            pl.show()
+        make_y_y_plot( y, y_pred,
+              title = 'True vs. predicted target values.',
+              y1_label = 'True targets',
+              y2_label = 'Predicted targets',
+              outfile = outfile)

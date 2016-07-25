@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 # Apply the prediction to the data
-def predict(data, model, interval):
+def predict(data, model, interval=None):
 
     def pred(X):
 
@@ -80,14 +80,13 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
 
     # Load model
     with open(model, 'rb') as f:
-        model = pickle.load(f)
+        model = pickle.load(f)['master']
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
 
     # Get the extra hdf5 attributes
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
-
     x = geoio.load_and_cat(filename_dict[chunk_index])
 
     # Prediction

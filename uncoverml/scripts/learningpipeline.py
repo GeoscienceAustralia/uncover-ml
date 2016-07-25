@@ -137,9 +137,9 @@ def run_pipeline(config):
         ctx.forward(validatemodel,
                     outfile=path.join(config.proc_dir,
                                       config.valoutput + "_" + alg),
-                    cvindex=0,
+                    model=alg_file,
+                    files=feat_files,
                     targets=config.target_hdf,
-                    prediction_files=pred_files,
                     plotyy=False
                     )
         comm.barrier()
