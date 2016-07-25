@@ -13,6 +13,7 @@ import uncoverml.defaults as df
 from uncoverml import mpiops
 from uncoverml import pipeline
 from uncoverml import geoio
+from uncoverml import datatypes
 
 log = logging.getLogger(__name__)
 
@@ -59,13 +60,15 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, config):
                                         mpiops.chunks, outputdir)
 
     if settings_infile:
-        settings = pipeline.ExtractSettings.from_file(settings_infile)
+        settings = datatypes.ExtractSettings.from_file(settings_infile)
     else:
-        settings = pipeline.ExtractSettings(onehot=onehot, x_sets=None,
-                                            patchsize=patchsize)
+        settings = datatypes.ExtractSettings(onehot=onehot, x_sets=None,
+                                             patchsize=patchsize)
 
-    settings = pipeline.extract_features(settings, target_infile,
-                                         geotiff_infile, hdf_outfile)
+    image_source = geoio.RasterioImageSource(geotiff_infile)
+    targets = geoio.load_targets(target_infile)
+    x, settings = pipeline.extract_features(image_source, targets, settings)
+    geoio.output_features(x, hdf_outfile)
 
     if not settings_infile:
-        mpiops.run_once(settings.save, settings_outfile)
+        mpiops.run_once(geoio.save_settings, settings, settings_outfile)

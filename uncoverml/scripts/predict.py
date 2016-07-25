@@ -49,9 +49,6 @@ def main(model, files, outputdir, predictname, quantiles):
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
 
-    # Get the extra hdf5 attributes
-    eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
-
     x = geoio.load_and_cat(filename_dict[mpiops.chunk_index])
 
     # Prediction
@@ -62,7 +59,6 @@ def main(model, files, outputdir, predictname, quantiles):
     if x is not None:
         log.info("Applying final transform and writing output files")
         f_x = f(x)
-        geoio.output_features(f_x, outfile, shape=eff_shape,
-                              bbox=eff_bbox)
+        geoio.output_features(f_x, outfile)
     else:
         geoio.output_blank(outfile)

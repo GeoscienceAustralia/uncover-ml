@@ -107,7 +107,7 @@ def run_pipeline(config):
                     cvindex=0,
                     algorithm=alg,
                     algopts=json.dumps(args),
-                    targets=config.target_hdf,
+                    targetsfile=config.target_hdf,
                     files=feat_files
                     )
         comm.barrier()
@@ -136,7 +136,7 @@ def run_pipeline(config):
                     outfile=path.join(config.proc_dir,
                                       config.valoutput + "_" + alg),
                     cvindex=0,
-                    targets=config.target_hdf,
+                    targetsfile=config.target_hdf,
                     prediction_files=pred_files,
                     plotyy=False
                     )

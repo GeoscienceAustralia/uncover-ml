@@ -15,6 +15,7 @@ import uncoverml.defaults as df
 from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml import pipeline
+from uncoverml import datatypes
 
 
 log = logging.getLogger(__name__)
@@ -62,18 +63,22 @@ def main(files, name, outputdir, transform,
                                         mpiops.chunks, outputdir)
 
     if settings_infile:
-        settings = pipeline.ComposeSettings.from_file(settings_infile)
+        settings = datatypes.ComposeSettings.from_file(settings_infile)
     else:
-        settings = pipeline.ComposeSettings(impute=impute,
-                                            transform=transform,
-                                            featurefraction=featurefraction,
-                                            impute_mean=None,
-                                            mean=None,
-                                            sd=None,
-                                            eigvals=None,
-                                            eigvecs=None)
+        settings = datatypes.ComposeSettings(impute=impute,
+                                             transform=transform,
+                                             featurefraction=featurefraction,
+                                             impute_mean=None,
+                                             mean=None,
+                                             sd=None,
+                                             eigvals=None,
+                                             eigvecs=None)
 
-    settings = pipeline.compose_features(settings, hdf_infiles, hdf_outfile)
+    filename_dict = geoio.files_by_chunk(hdf_infiles)
+    chunk_files = filename_dict[mpiops.chunk_index]
+    x = geoio.load_and_cat(chunk_files)
+    x_out, settings = pipeline.compose_features(x, settings)
+    geoio.output_features(x, hdf_outfile)
 
     if not settings_infile:
-        mpiops.run_once(settings.save, settings_outfile)
+        mpiops.run_once(geoio.save_settings, settings, settings_outfile)

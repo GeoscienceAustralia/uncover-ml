@@ -127,7 +127,7 @@ def write_targets(targets, filename):
         'Latitude': targets._positions_unsorted[:, 1],
         'FoldIndices': targets._folds_unsorted,
         'Targets_sorted': targets.observations,
-        'Position_sorted': targets.positions,
+        'Positions_sorted': targets.positions,
         'FoldIndices_sorted': targets.folds
     }
     points_to_hdf(filename, fielddict)
@@ -137,9 +137,9 @@ def load_targets(filename):
     fields = ['Targets_sorted', 'Positions_sorted', 'FoldIndices_sorted']
     fielddict = points_from_hdf(filename, fields)
     positions = fielddict['Positions_sorted']
-    observations = fielddict['targets_sorted']
+    observations = fielddict['Targets_sorted']
     folds = fielddict['FoldIndices_sorted']
-    result = datatypes.CrassValTargets(positions, observations, folds)
+    result = datatypes.CrossValTargets(positions, observations, folds)
     return result
 
 

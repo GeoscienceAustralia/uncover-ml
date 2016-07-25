@@ -12,7 +12,7 @@ import click_log as cl_log
 
 from uncoverml import geoio
 from uncoverml import mpiops
-from uncoverml import pipeline
+from uncoverml import datatypes
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def main(shapefile, fieldname, outfile, folds, seed):
         sys.exit(-1)
 
     # Create the targets
-    targets = pipeline.CrossValTargets(lonlat, vals, folds, seed, sort=True)
+    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True)
 
     # Write
     geoio.write_targets(targets, outfile)

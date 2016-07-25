@@ -6,6 +6,16 @@ from uncoverml import validation
 log = logging.getLogger(__name__)
 
 
+class ImageDataVector:
+
+    def __init__(self, x, origin, pix_size, patchsize):
+        self.x = x
+        self.origin = origin
+        self.pix_size = pix_size
+        self.patchsize = patchsize
+        pass
+
+
 class Settings:
 
     def __repr__(self):
@@ -49,6 +59,9 @@ class CrossValTargets:
             self.observations = vals[ordind]
             self.positions = lonlat[ordind]
             self.folds = cvassigns[ordind]
+            self._observations_unsorted = vals
+            self._positions_unsorted = lonlat
+            self._folds_unsorted = cvassigns
         else:
             self.observations = vals
             self.positions = lonlat
