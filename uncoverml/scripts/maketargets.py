@@ -69,7 +69,7 @@ def main(shapefile, fieldname, outfile, folds, seed):
         sys.exit(-1)
 
     # Create the targets
-    targets = pipeline.CrossValTargets(lonlat, vals, folds, seed)
+    targets = pipeline.CrossValTargets(lonlat, vals, folds, seed, sort=True)
 
     # Write
     geoio.write_targets(targets, outfile)

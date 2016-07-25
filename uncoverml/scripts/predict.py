@@ -9,41 +9,13 @@ import os.path
 import pickle
 import click as cl
 import click_log as cl_log
-import numpy as np
-from scipy.stats import norm
 from functools import partial
-from mpi4py import MPI
 
+from uncoverml import mpiops
+from uncoverml import pipeline
 from uncoverml import geoio
-from uncoverml.models import apply_masked
 
 log = logging.getLogger(__name__)
-
-
-# Apply the prediction to the data
-def predict(data, model, interval):
-
-    def pred(X):
-
-        if hasattr(model, 'predict_proba'):
-            Ey, Vy = model.predict_proba(X)
-            predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis]))
-
-            if interval is not None:
-                ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-                predres = np.hstack((predres, ql[:, np.newaxis],
-                                     qu[:, np.newaxis]))
-
-            if hasattr(model, 'entropy_reduction'):
-                H = model.entropy_reduction(X)
-                predres = np.hstack((predres, H[:, np.newaxis]))
-
-        else:
-            predres = model.predict(X).flatten()[:, np.newaxis]
-
-        return predres
-
-    return apply_masked(pred, data)
 
 
 @cl.command()
@@ -52,21 +24,14 @@ def predict(data, model, interval):
 @cl.option('--predictname', type=str, default="predicted",
            help="The name to give the predicted target variable.")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
-@cl.option('--ipyprofile', type=str, help="ipyparallel profile to use",
-           default=None)
 @cl.option('--quantiles', type=float, default=None,
            help="Also output quantile intervals for the probabilistic models.")
 @cl.argument('model', type=cl.Path(exists=True))
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-def main(model, files, outputdir, ipyprofile, predictname, quantiles):
+def main(model, files, outputdir, predictname, quantiles):
     """
     Predict the target values for query data from a machine learning algorithm.
     """
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    chunks = comm.Get_size()
-    chunk_index = comm.Get_rank()
-
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
     log.debug("Input files: {}".format(full_filenames))
@@ -87,18 +52,17 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     # Get the extra hdf5 attributes
     eff_shape, eff_bbox = geoio.load_attributes(filename_dict)
 
-    x = geoio.load_and_cat(filename_dict[chunk_index])
+    x = geoio.load_and_cat(filename_dict[mpiops.chunk_index])
 
     # Prediction
-    f = partial(predict, model=model, interval=quantiles)
+    f = partial(pipeline.predict, model=model, interval=quantiles)
 
-    outfile = geoio.output_filename(predictname, chunk_index,
-                                    chunks, outputdir)
+    outfile = geoio.output_filename(predictname, mpiops.chunk_index,
+                                    mpiops.chunks, outputdir)
     if x is not None:
         log.info("Applying final transform and writing output files")
         f_x = f(x)
-        write_ok = geoio.output_features(f_x, outfile, shape=eff_shape,
-                                         bbox=eff_bbox)
+        geoio.output_features(f_x, outfile, shape=eff_shape,
+                              bbox=eff_bbox)
     else:
-        write_ok = geoio.output_blank(outfile)
-
+        geoio.output_blank(outfile)

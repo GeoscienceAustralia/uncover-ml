@@ -11,12 +11,11 @@ import pickle
 import json
 import click as cl
 import click_log as cl_log
-import numpy as np
-from mpi4py import MPI
 
 from uncoverml import geoio
-# from uncoverml.validation import input_cvindex, input_targets
-from uncoverml.models import modelmaps, apply_multiple_masked
+from uncoverml import mpiops
+from uncoverml import pipeline
+from uncoverml.models import modelmaps
 
 
 log = logging.getLogger(__name__)
@@ -33,17 +32,14 @@ log = logging.getLogger(__name__)
 @cl.option('--algorithm', type=cl.Choice(list(modelmaps.keys())),
            default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-@cl.argument('targets', type=cl.Path(exists=True))
-def main(targets, files, algorithm, algopts, outputdir, cvindex):
+@cl.argument('targetsfile', type=cl.Path(exists=True))
+def main(targetsfile, files, algorithm, algopts, outputdir, cvindex):
     """
     Learn the Parameters of a machine learning model.
     """
 
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    chunk_index = comm.Get_rank()
     # This runs on the root node only
-    if chunk_index != 0:
+    if mpiops.chunk_index != 0:
         return
 
     # build full filenames
@@ -72,35 +68,14 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
         args = {}
 
     # Load targets file
-    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
-                                            'FoldIndices_sorted'])
-    y = ydict['targets_sorted']
+    targets = geoio.load_targets(targetsfile)
 
     # Read ALL the features in here, and learn on a single machine
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(nchunks)]
-    # Remove the missing data
-    data_vectors = [x for x in data_vectors if x is not None]
-    X = np.ma.concatenate(data_vectors, axis=0)
-
-    # Optionally subset the data for cross validation
-    print("X shape: {}".format(X.shape))
-    print("y shape: {}".format(y.shape))
-    if cvindex is not None:
-        cv_ind = ydict['FoldIndices_sorted']
-
-        # TODO: temporary fix!!!! REMOVE THIS
-        cv_ind = cv_ind[::-1]
-
-        print("cv_ind shape: {}".format(cv_ind.shape))
-        y = y[cv_ind != cvindex]
-        X = X[cv_ind != cvindex]
-
-    # Train the model
-    mod = modelmaps[algorithm](**args)
-    apply_multiple_masked(mod.fit, (X, y))
+    X_list = [geoio.load_and_cat(filename_dict[i]) for i in range(nchunks)]
+    model = pipeline.learn_model(X_list, targets, algorithm, cvindex,
+                                 algorithm_params=args)
 
     # Pickle the model
     outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
     with open(outfile, 'wb') as f:
-        pickle.dump(mod, f)
+        pickle.dump(model, f)
