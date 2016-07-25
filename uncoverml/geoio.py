@@ -106,6 +106,22 @@ def points_to_hdf(outfile, fielddict={}):
             f.create_array("/", fld, obj=v)
 
 
+def write_targets(targets, filename):
+    # takes a Target class
+    # Make field dict for writing to HDF5
+    fielddict = {
+        'targets': targets._observations_unsorted,
+        'Longitude': targets._positions_unsorted[:, 0],
+        'Latitude': targets._positions_unsorted[:, 1],
+        'FoldIndices': targets._folds_unsorted,
+        'targets_sorted': targets.observations,
+        'Longitude_sorted': targets.positions[:, 0],
+        'Latitude_sorted': targets.positions[:, 1],
+        'FoldIndices_sorted': targets.folds
+    }
+    points_to_hdf(filename, fielddict)
+
+
 def construct_splits(npixels, nchunks, overlap=0):
     # Build the equivalent windowed image
     # y bounds are EXCLUSIVE

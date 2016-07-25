@@ -1,11 +1,14 @@
 import pickle
 import logging
 
+import numpy as np
+
 import uncoverml.defaults as df
 from uncoverml import mpiops
 from uncoverml import patch
 from uncoverml import stats
 from uncoverml import geoio
+from uncoverml import validation
 
 
 log = logging.getLogger(__name__)
@@ -45,6 +48,24 @@ class ComposeSettings(PickledSettings):
         self.sd = sd
         self.eigvals = eigvals
         self.eigvecs = eigvecs
+
+
+class CrossValTargets:
+    def __init__(self, lonlat, vals, folds=10, seed=None):
+        N = len(lonlat)
+        _, cvassigns = validation.split_cfold(N, folds, seed)
+        # Get ascending order of targets by lat then lon
+        ordind = np.lexsort(lonlat.T)
+
+        # Parameters
+        self.observations = vals[ordind]
+        self.positions = lonlat[ordind]
+        self.folds = cvassigns[ordind]
+
+        # Backups
+        self._positions_unsorted = lonlat
+        self._observations_unsorted = vals
+        self._folds_unsorted = cvassigns
 
 
 def extract_transform(x, x_sets):
