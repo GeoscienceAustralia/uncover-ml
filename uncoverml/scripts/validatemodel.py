@@ -1,30 +1,34 @@
-"""
-Run cross-validation metrics on a model prediction
 
-.. program-output:: validatemodel --help
-"""
-import logging
-import sys
 import json
+
+import logging
+
 import os.path
+
+import sys
+
 import click as cl
+
 import click_log as cl_log
-import numpy as np
+
 import matplotlib.pyplot as pl
+
 from mpi4py import MPI
 
-from sklearn.metrics import r2_score, explained_variance_score
-from revrand.metrics import smse, mll, msll, lins_ccc
+import numpy as np
+
+from revrand.metrics import lins_ccc, mll, msll, smse
+
+from sklearn.metrics import explained_variance_score, r2_score
 
 from uncoverml import geoio
-# from uncoverml.validation import input_cvindex, input_targets
+
 from uncoverml.models import apply_multiple_masked
 
 log = logging.getLogger(__name__)
 
 
 def get_first_dim(Y):
-
     return Y[:, 0] if Y.ndim > 1 else Y
 
 
@@ -32,7 +36,6 @@ def get_first_dim(Y):
 def score_first_dim(func):
 
     def newscore(y_true, y_pred, *args, **kwargs):
-
         return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
 
     return newscore
@@ -59,40 +62,45 @@ probscores = ['msll', 'mll']
 @cl.argument('targets', type=cl.Path(exists=True))
 @cl.argument('prediction_files', type=cl.Path(exists=True), nargs=-1)
 def main(cvindex, targets, prediction_files, plotyy, outfile):
-    """
-    Run cross-validation metrics on a model prediction.
-
+    """ Run cross-validation metrics on a model prediction.
     The following metrics are evaluated:
-
     - R-square
-
     - Explained variance
-
     - Standardised Mean Squared Error
-
     - Lin's concordance correlation coefficient
-
     - Mean Gaussian negative log likelihood (for probabilistic predictions)
-
     - Standardised mean Gaussian negative log likelihood (for probabilistic
       predictions)
-
     """
 
-    # MPI globals
+    # Make sure python only runs on a single machine at a time
     comm = MPI.COMM_WORLD
     chunk_index = comm.Get_rank()
-    # This runs on the root node only
     if chunk_index != 0:
         return
+
+    # Build full filenames
+    full_filenames = [os.path.abspath(f) for f in prediction_files]
+    log.debug("Input files: {}".format(full_filenames))
+
+    # Verify the files are all present
+    files_ok = geoio.file_indices_okay(full_filenames)
+    if not files_ok:
+        log.fatal("Input file indices invalid!")
+        sys.exit(-1)
+
+    # Load all prediction files and remove any missing data
+    filename_dict = geoio.files_by_chunk(full_filenames)
+    data_vectors = [geoio.load_and_cat(filename_dict[i])
+                    for i in range(len(filename_dict))]
+    data_vectors = [x for x in data_vectors if x is not None]
+    EYs = np.ma.concatenate(data_vectors, axis=0)
 
     # Read cv index and targets
     ydict = geoio.points_from_hdf(targets, ['targets_sorted',
                                             'FoldIndices_sorted'])
     Y = ydict['targets_sorted']
     cvind = ydict['FoldIndices_sorted']
-    # cvind = input_cvindex(cvindex[0])
-    # _, Y = input_targets(targets)
 
     s_ind = np.where(cvind == cvindex)[0]
     t_ind = np.where(cvind != cvindex)[0]
@@ -100,24 +108,6 @@ def main(cvindex, targets, prediction_files, plotyy, outfile):
     Yt = Y[t_ind]
     Ys = Y[s_ind]
     Ns = len(Ys)
-
-    # build full filenames
-    full_filenames = [os.path.abspath(f) for f in prediction_files]
-    log.debug("Input files: {}".format(full_filenames))
-
-    # verify the files are all present
-    files_ok = geoio.file_indices_okay(full_filenames)
-    if not files_ok:
-        log.fatal("Input file indices invalid!")
-        sys.exit(-1)
-
-    # Load all prediction files
-    filename_dict = geoio.files_by_chunk(full_filenames)
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(len(filename_dict))]
-    # Remove missing data
-    data_vectors = [x for x in data_vectors if x is not None]
-    EYs = np.ma.concatenate(data_vectors, axis=0)
 
     # See if this data is already subset for xval
     if len(EYs) > Ns:

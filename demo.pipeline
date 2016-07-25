@@ -15,7 +15,7 @@ from os import path
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+data_dir = path.relpath('../GA-cover')
 # data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
 # data_dir = "/short/ge3/jrw547/GA-cover"

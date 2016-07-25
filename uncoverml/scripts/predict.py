@@ -62,6 +62,7 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
     """
     Predict the target values for query data from a machine learning algorithm.
     """
+
     # MPI globals
     comm = MPI.COMM_WORLD
     chunks = comm.Get_size()
@@ -101,4 +102,3 @@ def main(model, files, outputdir, ipyprofile, predictname, quantiles):
                                          bbox=eff_bbox)
     else:
         write_ok = geoio.output_blank(outfile)
-

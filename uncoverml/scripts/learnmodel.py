@@ -4,29 +4,56 @@ Learn the Parameters of a machine learning model
 .. program-output:: learnmodel --help
 """
 
-import logging
-import sys
-import os.path
-import pickle
+
 import json
+
+import logging
+
+import os.path
+
+import pickle
+
+import sys
+
 import click as cl
+
 import click_log as cl_log
-import numpy as np
+
 from mpi4py import MPI
 
-from uncoverml import geoio
-# from uncoverml.validation import input_cvindex, input_targets
-from uncoverml.models import modelmaps, apply_multiple_masked
+import numpy as np
 
+from uncoverml import geoio
+
+from uncoverml.models import apply_multiple_masked, modelmaps
 
 log = logging.getLogger(__name__)
+
+
+def exists(item):
+    return item is not None
+
+
+def exit(message):
+    log.fatal(message)
+    sys.exit(-1)
+
+
+def train(model, X, y, index_mask=None):
+
+    # Remove the rows in this fold
+    X_fold = X[index_mask] if index_mask else X
+    y_fold = y[index_mask] if index_mask else y
+
+    # Train the model for this fold
+    apply_multiple_masked(model.fit, (X_fold, y_fold))
 
 
 @cl.command()
 @cl_log.simple_verbosity_option()
 @cl_log.init(__name__)
-@cl.option('--cvindex', type=int, default=None,
-           help="Optional cross validation index to hold out.")
+@cl.option('--crossvalidate', default=False,
+           help="Trains K cross validation models")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--algopts', type=str, default=None, help="JSON string of optional "
            "parameters to pass to the learning algorithm.")
@@ -34,66 +61,71 @@ log = logging.getLogger(__name__)
            default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
 @cl.argument('targets', type=cl.Path(exists=True))
-def main(targets, files, algorithm, algopts, outputdir, cvindex):
-    """
-    Learn the Parameters of a machine learning model.
-    """
+def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
+    """ Learn the Parameters of a machine learning model. """
 
     # MPI globals
     comm = MPI.COMM_WORLD
-    chunk_index = comm.Get_rank()
-    # This runs on the root node only
-    if chunk_index != 0:
+    rank = comm.Get_rank()
+
+    # This runs on the root node only, so we learn only on a single machine
+    if rank != 0:
         return
 
-    # build full filenames
+    # Build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
     log.debug("Input files: {}".format(full_filenames))
 
-    # verify the files are all present
+    # Verify the files are all present
     files_ok = geoio.file_indices_okay(full_filenames)
     if not files_ok:
-        log.fatal("Input file indices invalid!")
-        sys.exit(-1)
+        exit("Input file indices invalid!")
 
-    # build the images
+    # Build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
     nchunks = len(filename_dict)
 
-    # Parse algorithm
-    if algorithm not in modelmaps:
-        log.fatal("Invalid algorthm specified")
-        sys.exit(-1)
+    # Read ALL the features in here and remove any missing data for the X's
+    data_vectors = [geoio.load_and_cat(filename_dict[i])
+                    for i in range(nchunks)]
+    data_vectors = list(filter(exists, data_vectors))
+    X = np.ma.concatenate(data_vectors, axis=0)
 
-    # Parse all algorithm options
-    if algopts is not None:
-        args = json.loads(algopts)
-    else:
-        args = {}
-
-    # Load targets file
+    # Load targets file to produce the y's
     ydict = geoio.points_from_hdf(targets, ['targets_sorted',
                                             'FoldIndices_sorted'])
     y = ydict['targets_sorted']
 
-    # Read ALL the features in here, and learn on a single machine
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(nchunks)]
-    # Remove the missing data
-    data_vectors = [x for x in data_vectors if x is not None]
-    X = np.ma.concatenate(data_vectors, axis=0)
+    # Determine the required algorithm and parse it's options
+    if algorithm not in modelmaps:
+        exit("Invalid algorthm specified")
+    args = json.loads(algopts) if algopts is not None else {}
 
-    # Optionally subset the data for cross validation
-    if cvindex is not None:
-        cv_ind = ydict['FoldIndices_sorted']
-        y = y[cv_ind != cvindex]
-        X = X[cv_ind != cvindex]
+    # Train the master model and store it
+    model = modelmaps[algorithm](**args)
+    train(model, X, y)
+    models = dict()
+    models['master'] = model
 
-    # Train the model
-    mod = modelmaps[algorithm](**args)
-    apply_multiple_masked(mod.fit, (X, y))
+    # Train the cross validation models if necessary
+    if crossvalidate:
 
-    # Pickle the model
+        # Populate the validation indices
+        models['cross_validation'] = dict()
+        models['cv_indices'] = cv_indices = ydict['FoldIndices_sorted']
+
+        # Train each model and store it
+        for fold in range(max(models['cv_indices'])):
+
+            # Train a model for each row
+            remaining_rows = [cv_indices != fold]
+            model = modelmaps[algorithm](**args)
+            train(model, X, y, remaining_rows)
+
+            # Store the model parameters
+            models['cross_validation'][fold] = model
+
+    # Pickle and store the models
     outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
     with open(outfile, 'wb') as f:
-        pickle.dump(mod, f)
+        pickle.dump(models, f)

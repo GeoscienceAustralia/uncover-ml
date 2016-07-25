@@ -106,7 +106,7 @@ def run_pipeline(config):
         ctx = Context(learnmodel)
         ctx.forward(learnmodel,
                     outputdir=config.proc_dir,
-                    cvindex=0,
+                    crossvalidate=True,
                     algorithm=alg,
                     algopts=json.dumps(args),
                     targets=config.target_hdf,
