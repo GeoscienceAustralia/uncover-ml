@@ -84,8 +84,15 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
     X = np.ma.concatenate(data_vectors, axis=0)
 
     # Optionally subset the data for cross validation
+    print("X shape: {}".format(X.shape))
+    print("y shape: {}".format(y.shape))
     if cvindex is not None:
         cv_ind = ydict['FoldIndices_sorted']
+
+        # TODO: temporary fix!!!! REMOVE THIS
+        cv_ind = cv_ind[::-1]
+
+        print("cv_ind shape: {}".format(cv_ind.shape))
         y = y[cv_ind != cvindex]
         X = X[cv_ind != cvindex]
 

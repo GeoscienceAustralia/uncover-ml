@@ -85,12 +85,10 @@ def run_pipeline(config):
     log.info("Composing features...")
     ctx = Context(composefeats)
     ctx.forward(composefeats,
-                featurename=config.compos_file,
+                name=config.compos_file,
                 outputdir=config.proc_dir,
                 impute=config.impute,
-                centre=config.standardise or config.whiten,
-                standardise=config.standardise,
-                whiten=config.whiten,
+                transform=config.transform,
                 featurefraction=config.pca_frac,
                 files=efiles
                 )
