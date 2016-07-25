@@ -1,17 +1,54 @@
 import logging
+
 import numpy as np
 from mpi4py import MPI
+
 from uncoverml import stats
 
 log = logging.getLogger(__name__)
 
-# MPI globals
 comm = MPI.COMM_WORLD
+"""module-level MPI 'world' object representing all connected nodes
+"""
+
 chunks = comm.Get_size()
+"""int: the total number of nodes in the MPI world
+"""
+
 chunk_index = comm.Get_rank()
+"""int: the index (from zero) of this node in the MPI world. Also known as
+the rank of the node.
+"""
 
 
 class PredicateGroup:
+    """Class for creating a context with a subset of MPI nodes
+
+    This is a context manager class that creates a temporary MPI world
+    using MPI_Split, based on a boolean evaluated on every node. Those
+    members which evaluate true will be part of the world. In the
+    temporary world, members are assigned indices 0..num_members, where
+    as non-members are assigned indices -1...-num_non_members+1.
+
+    Parameters
+    ----------
+    flag : bool
+        The flag which decides membership of the temporary MPI world. True
+        indicates membership.
+
+    Attributes
+    ----------
+    dcomm : MPI comm world
+        The temporary world whose membership contains all nodes whose
+        flag evaluated true
+    new_index : int
+        The new index of the node in the temporary world. From 0..n if
+        a member, from -1...-m if not.
+    root_chunk : int
+        The *original* index of the lowest-ranked node in the temporary
+        world. This can be used as a 'root' node for broadcasting or for
+        operations that need be performed only once
+    """
     def __init__(self, flag):
         self.flag = flag
         flag_mask = comm.allgather(flag)
@@ -34,6 +71,39 @@ class PredicateGroup:
 
 
 def run_if(f, flag, broadcast=False, *args, **kwargs):
+    """Runs a function on a subset of MPI nodes
+
+    This function takes a function f, runs it on every node in an MPI world
+    whose flag evaluates to true, then optionally broadcasts the result of
+    that function to *all* members of the world, even those with flag=False.
+
+    Parameters
+    ----------
+    f : callable
+        The function to run on each node. Should take 'comm' as an argument,
+        and will be passed a temporary world object only containing the nodes
+        with flag=True. Can take arbitrary other arguments.
+    flag : bool
+        The flag to indicate whether a node should run the function or not.
+
+    broadcast : bool, optional
+        When true, the result of the function is broadcast to every member
+        of the world (with flag=True or flag=False). The root node used
+        for the broadcast is the lowest-ranked node that had a True flag.
+
+    args : optional
+        Other positional arguments to pass on to f
+
+    kwargs : optional
+        Other named arguments to pass on to f
+
+    Returns
+    -------
+    Result
+        The result of the function f if broadcasting is False and the node
+        run f, otherwise None. If broadcasting is True then the result of
+        f from the lowest-ranked node whose flag evaluated true.
+    """
     result = None
     with PredicateGroup(flag) as p:
         if flag:
@@ -44,6 +114,36 @@ def run_if(f, flag, broadcast=False, *args, **kwargs):
             result = f(*args, **kwargs)
         if broadcast:
             result = comm.bcast(result, root=p.root_chunk)
+    return result
+
+
+def run_once(f, *args, **kwargs):
+    """Run a function on one node, broadcast result to all
+
+    This function evaluates a function on a single node in the MPI world,
+    then broadcasts the result of that function to every node in the world.
+
+    Parameters
+    ----------
+    f : callable
+        The function to be evaluated. Can take arbitrary arguments and return
+        anything or nothing
+    args : optional
+        Other positional arguments to pass on to f
+
+    kwargs : optional
+        Other named arguments to pass on to f
+
+    Returns
+    -------
+    result
+        The value returned by f
+    """
+    if chunk_index == 0:
+        f_result = f(*args, **kwargs)
+    else:
+        f_result = None
+    result = comm.bcast(f_result, root=0)
     return result
 
 
@@ -67,20 +167,30 @@ def _compute_unique(x, comm, max_onehot_dims):
 
 
 def compute_unique_values(x, max_onehot_dims):
+    """compute per-dimension unique values over a data vector
+
+    This function computes the set of unique values for each dimension in
+    x, unless the number of unique values exceeds max_onehot_dims.
+
+    Parameters
+    ----------
+    x : ndarray (n x m)
+        The array over which to compute unique values. The set is over
+        the first dimension
+    max_onehot_dims : int
+        The maximum number of unique values to accept. If exceeded returns
+        None
+
+    Returns
+    -------
+    x_sets : list of ndarray or None
+        A list of m sets of unique values for each dimension in x
+    """
     flag = x is not None
     x_sets = run_if(_compute_unique, flag, x=x,
                     max_onehot_dims=max_onehot_dims,
                     broadcast=True)
     return x_sets
-
-
-def run_once(f, *args, **kwargs):
-    if chunk_index == 0:
-        f_result = f(*args, **kwargs)
-    else:
-        f_result = None
-    result = comm.bcast(f_result, root=0)
-    return result
 
 
 def sum_axis_0(x, y, dtype):
