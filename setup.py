@@ -53,6 +53,7 @@ setup(
         'console_scripts': [
             'learningpipeline = uncoverml.scripts.learningpipeline:main',
             'predictionpipeline = uncoverml.scripts.predictionpipeline:main',
+            'newlearn = uncoverml.scripts.newlearn:main',
             'maketargets = uncoverml.scripts.maketargets:main',
             'extractfeats = uncoverml.scripts.extractfeats:main',
             'composefeats = uncoverml.scripts.composefeats:main',
