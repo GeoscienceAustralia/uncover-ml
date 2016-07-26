@@ -1,6 +1,7 @@
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import pickle
+from functools import partial
 
 import rasterio
 import os.path
@@ -11,13 +12,16 @@ import tables as hdf
 import logging
 import time
 
+from uncoverml import mpiops
+from uncoverml import image
 from uncoverml import datatypes
 
 log = logging.getLogger(__name__)
 
 
 def load_settings(settings_file):
-    s = pickle.load(settings_file)
+    with open(settings_file, 'rb') as f:
+        s = pickle.load(f)
     return s
 
 
@@ -249,17 +253,6 @@ class ArrayImageSource(ImageSource):
         return data_window
 
 
-# def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
-
-#     pixsize_x = (xmax - xmin) / (xres + 1)
-#     pixsize_y = (ymax - ymin) / (yres + 1)
-
-#     A = Affine(pixsize_x, 0, xmin,
-#                0, -pixsize_y, ymax)
-
-#     return A, pixsize_x, pixsize_y
-
-
 def output_filename(feature_name, chunk_index, n_chunks, output_dir):
     filename = feature_name + ".part{}of{}.hdf5".format(chunk_index + 1,
                                                         n_chunks)
@@ -414,3 +407,56 @@ def load_shapefile(filename, field):
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
     return label_coords, vals
+
+
+def create_image(x, shape, bbox, name, outputdir,
+                 rgb=True, separatebands=True, band=None):
+
+    # affine
+    A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
+                                bbox[0, 1], bbox[1, 1], *shape)
+
+    x_min = None
+    x_max = None
+    if rgb is True:
+        x_min_local = np.ma.min(x, axis=0)
+        x_max_local = np.ma.max(x, axis=0)
+        x_min = mpiops.comm.allreduce(x_min_local, op=mpiops.min0_op)
+        x_max = mpiops.comm.allreduce(x_max_local, op=mpiops.max0_op)
+
+    f = partial(image.to_image_transform, rows=shape[0], x_min=x_min,
+                x_max=x_max, band=band, separatebands=separatebands)
+
+    images = f(x)
+
+    # Couple of pieces of information we need here
+    if mpiops.chunk_index != 0:
+        reqs = []
+        for img_idx in range(len(images)):
+            reqs.append(mpiops.comm.isend(
+                images[img_idx], dest=0, tag=img_idx))
+        for r in reqs:
+            r.wait()
+    else:
+        n_images = len(images)
+        dtype = images[0].dtype
+        n_bands = images[0].shape[2]
+
+        for img_idx in range(n_images):
+            band_num = img_idx if band is None else band
+            output_filename = os.path.join(outputdir, name +
+                                           "_band{}.tif".format(band_num))
+
+            with rasterio.open(output_filename, 'w', driver='GTiff',
+                               width=shape[0], height=shape[1],
+                               dtype=dtype, count=n_bands, transform=A) as f:
+                ystart = 0
+                for node in range(mpiops.chunks):
+                    data = mpiops.comm.recv(source=node, tag=img_idx) \
+                        if node != 0 else images[img_idx]
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, shape[0]))
+                    index_list = list(range(1, n_bands + 1))
+                    f.write(data, window=window, indexes=index_list)
+                    ystart = yend

@@ -63,7 +63,7 @@ def main(files, name, outputdir, transform,
                                         mpiops.chunks, outputdir)
 
     if settings_infile:
-        settings = datatypes.ComposeSettings.from_file(settings_infile)
+        settings = geoio.load_settings(settings_infile)
     else:
         settings = datatypes.ComposeSettings(impute=impute,
                                              transform=transform,

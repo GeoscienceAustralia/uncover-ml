@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
            default=df.feature_patch_size, help="window width of patches, i.e. "
            "patchsize of 0 is a single pixel, patchsize of 1 is a 3x3 patch, "
            "etc")
-@cl.option('--targets', type=cl.Path(exists=True), help="Optional hdf5 file "
+@cl.option('--targetsfile', type=cl.Path(exists=True), help="Optional hdf5 file "
            "for providing target points at which to evaluate feature. See "
            "maketargets for creating an appropriate target files.")
 @cl.option('--onehot', is_flag=True, help="Produce a one-hot encoding for "
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.argument('name', type=str, required=True)
 @cl.argument('geotiff', type=cl.Path(exists=True), required=True)
-def main(name, geotiff, targets, onehot, patchsize, outputdir, config):
+def main(name, geotiff, targetsfile, onehot, patchsize, outputdir, config):
     """
     Extract patch features from a single geotiff and output to HDF5 file chunks
     for distribution to worker nodes.
@@ -52,7 +52,7 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, config):
     """
 
     # Full paths
-    target_infile = os.path.abspath(targets) if targets else None
+    target_infile = os.path.abspath(targetsfile) if targetsfile else None
     geotiff_infile = os.path.abspath(geotiff)
     settings_infile = os.path.abspath(config) if config else None
     settings_outfile = os.path.join(outputdir, name + "_settings.bin")
@@ -60,13 +60,13 @@ def main(name, geotiff, targets, onehot, patchsize, outputdir, config):
                                         mpiops.chunks, outputdir)
 
     if settings_infile:
-        settings = datatypes.ExtractSettings.from_file(settings_infile)
+        settings = geoio.load_settings(settings_infile)
     else:
         settings = datatypes.ExtractSettings(onehot=onehot, x_sets=None,
                                              patchsize=patchsize)
 
     image_source = geoio.RasterioImageSource(geotiff_infile)
-    targets = geoio.load_targets(target_infile)
+    targets = geoio.load_targets(target_infile) if targetsfile else None
     x, settings = pipeline.extract_features(image_source, targets, settings)
     geoio.output_features(x, hdf_outfile)
 

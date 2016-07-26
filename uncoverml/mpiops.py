@@ -305,3 +305,16 @@ def _compose_transform(x, settings, comm):
     x = f(x, settings, comm)
 
     return x, settings
+
+
+def max_axis_0(x, y, dtype):
+    s = np.amax(np.array([x, y]), axis=0)
+    return s
+
+
+def min_axis_0(x, y, dtype):
+    s = np.amin(np.array([x, y]), axis=0)
+    return s
+
+max0_op = MPI.Op.Create(max_axis_0, commute=True)
+min0_op = MPI.Op.Create(min_axis_0, commute=True)

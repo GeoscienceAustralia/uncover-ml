@@ -71,7 +71,7 @@ def run_pipeline(config):
                     geotiff=tif,
                     name=name,
                     outputdir=config.proc_dir,
-                    targets=config.target_hdf,
+                    targetsfile=config.target_hdf,
                     onehot=config.onehot,
                     patchsize=config.patchsize
                     )

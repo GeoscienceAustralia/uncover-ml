@@ -136,3 +136,58 @@ def validate(targets, data_vectors, cvindex):
         log.info("{} score = {}".format(m, score))
 
     return scores, Ys, EYs
+
+
+def create_image(x, shape, bbox, name, outputdir,
+                 rgb=True, separatebands=True, band=None):
+
+    # affine
+    A, _, _ = geoio.bbox2affine(bbox[1, 0], bbox[0, 0],
+                                bbox[0, 1], bbox[1, 1], *shape)
+
+    x_min = None
+    x_max = None
+    if rgb is True:
+        x_min_local = np.ma.min(x, axis=0)
+        x_max_local = np.ma.max(x, axis=0)
+        x_min = mpiops.comm.allreduce(x_min_local, op=mpiops.min0_op)
+        x_max = mpiops.comm.allreduce(x_max_local, op=mpiops.max0_op)
+
+    f = partial(image.to_image_transform, rows=shape[0], x_min=x_min,
+                x_max=x_max, band=band, separatebands=separatebands)
+
+    images = f(x)
+
+    # Couple of pieces of information we need here
+    if mpiops.chunk_index != 0:
+        reqs = []
+        for img_idx in range(len(images)):
+            reqs.append(mpiops.comm.isend(
+                images[img_idx], dest=0, tag=img_idx))
+        for r in reqs:
+            r.wait()
+    else:
+        n_images = len(images)
+        dtype = images[0].dtype
+        n_bands = images[0].shape[2]
+
+        for img_idx in range(n_images):
+            band_num = img_idx if band is None else band
+            output_filename = os.path.join(outputdir, name +
+                                           "_band{}.tif".format(band_num))
+
+            with rasterio.open(output_filename, 'w', driver='GTiff',
+                               width=shape[0], height=shape[1],
+                               dtype=dtype, count=n_bands, transform=A) as f:
+                ystart = 0
+                for node in range(mpiops.chunks):
+                    data = mpiops.comm.recv(source=node, tag=img_idx) \
+                        if node != 0 else images[img_idx]
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, shape[0]))
+                    index_list = list(range(1, n_bands + 1))
+                    f.write(data, window=window, indexes=index_list)
+                    ystart = yend
+
+

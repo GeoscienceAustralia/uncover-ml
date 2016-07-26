@@ -37,10 +37,10 @@ def run_pipeline(config):
         log.info("Made prediction dir")
     comm.barrier()
 
-    # Make sure prediction dir is empty
-    if listdir(config.pred_dir):
-        log.fatal("Prediction directory must be empty!")
-        sys.exit(-1)
+    # # Make sure prediction dir is empty
+    # if listdir(config.pred_dir):
+    #     log.fatal("Prediction directory must be empty!")
+    #     sys.exit(-1)
 
     # Make sure we have an extractfeats settings file for each tif
     tifs = glob(path.join(config.data_dir, "*.tif"))
@@ -61,20 +61,20 @@ def run_pipeline(config):
     # Now extact features from each tif
     ctx = Context(extractfeats)
 
-    # Find all of the tifs and extract features
-    for tif, setting in zip(tifs, settings):
-        name = path.splitext(path.basename(tif))[0]
-        log.info("Processing {}.".format(path.basename(tif)))
-        ctx.forward(extractfeats,
-                    geotiff=tif,
-                    name=name,
-                    outputdir=config.pred_dir,
-                    settings=setting
-                    )
-        comm.barrier()
+    # # Find all of the tifs and extract features
+    # for tif, setting in zip(tifs, settings):
+    #     name = path.splitext(path.basename(tif))[0]
+    #     log.info("Processing {}.".format(path.basename(tif)))
+    #     ctx.forward(extractfeats,
+    #                 geotiff=tif,
+    #                 name=name,
+    #                 outputdir=config.pred_dir,
+    #                 config=setting
+    #                 )
+    #     comm.barrier()
 
     # Compose individual image features into single feature vector
-    compos_settings = path.join(config.proc_dir, 
+    compos_settings = path.join(config.proc_dir,
                                 config.compos_file + "_settings.bin")
     if not path.exists(compos_settings):
         log.fatal("Settings file for composite features does not exist!")
@@ -90,7 +90,7 @@ def run_pipeline(config):
                 name=config.compos_file,
                 outputdir=config.pred_dir,
                 files=efiles,
-                settings=compos_settings
+                config=compos_settings
                 )
     comm.barrier()
 
