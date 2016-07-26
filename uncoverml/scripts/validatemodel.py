@@ -18,6 +18,8 @@ import matplotlib.pyplot as pl
 
 from mpi4py import MPI
 
+from numpy import append
+
 from revrand.metrics import lins_ccc, mll, msll, smse
 
 from sklearn.metrics import explained_variance_score, r2_score
@@ -131,24 +133,24 @@ def main(model, targets, files, plotyy, outfile):
         cv_indices = models['cv_indices']
 
     # Use the models to determine the predicted y's
-    y_true = []
-    y_predicted = []
+    y_true = None
+    y_pred = None
     score_sum = {m: 0 for m in metrics.keys()}
     for k, model in enumerate(cv_models):
 
         # Perform the prediction for the Kth index
         y_k_test = y[cv_indices == k]
         y_k_train = y[cv_indices != k]
-        y_k_predicted = predict(X, model)[cv_indices == k, :]
+        y_k_pred = predict(X, model)[cv_indices == k, :]
 
         # Store the reordered versions for the y-y plot
-        y_true.append(y_k_test)
-        y_predicted.append(y_k_predicted)
+        y_true = y_k_test if k == 0 else append(y_true, y_k_test)
+        y_pred = y_k_pred if k == 0 else append(y_pred, y_k_pred, axis=0)
 
         # Use the expected y's to display the validation scores
         scores = calculate_validation_scores(y_k_test,
                                              y_k_train,
-                                             y_k_predicted)
+                                             y_k_pred)
         score_sum = {m: score_sum[m] + score for (m, score) in scores.items()}
 
     # Average the scores from each test and store them
@@ -164,7 +166,7 @@ def main(model, targets, files, plotyy, outfile):
 
     # Make a figure if necessary
     if plotyy and (outfile is not None):
-        y_y_plot(y, y_predicted,
+        y_y_plot(y, y_pred,
                  title='True vs. predicted target values.',
                  y_label='True targets',
                  y_exp_label='Predicted targets',
