@@ -1,4 +1,9 @@
 
+"""
+Run cross-validation metrics on a model prediction
+.. program-output:: validatemodel --help
+"""
+
 import json
 
 import logging

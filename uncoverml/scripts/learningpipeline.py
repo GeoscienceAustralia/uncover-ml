@@ -140,6 +140,7 @@ def run_pipeline(config):
                     model=alg_file,
                     files=feat_files,
                     targets=config.target_hdf,
+
                     plotyy=False
                     )
         comm.barrier()
