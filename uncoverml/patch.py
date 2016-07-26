@@ -134,7 +134,7 @@ def _patches_to_array(patches, patch_mask, data_dtype):
     return result
 
 
-def all_patches(image, patchsize):
+def _all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
 
     patches = grid_patches(data, patchsize)
@@ -145,13 +145,29 @@ def all_patches(image, patchsize):
     return patch_array
 
 
-def patches_at_target(image, patchsize, targets):
+def load(image, patchsize, targets=None):
+    if targets is None:
+        result = _all_patches(image, patchsize)
+    else:
+        result = _patches_at_target(image, patchsize, targets)
+    return result
+
+
+def _patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
     tdict = geoio.points_from_hdf(targets, ['Longitude_sorted',
                                             'Latitude_sorted'])
-    lonlats = np.vstack((tdict['Longitude_sorted'],
-                         tdict['Latitude_sorted'])).T
+
+    # TODO we shouldn't need to do this
+    # Longlats always sorts lats *ascending*, not starting
+    # from image origin. We need to compensate.
+    lons = tdict['Longitude_sorted']
+    lats = tdict['Latitude_sorted']
+    if image.pixsize_y < 0:
+        lats = lats[::-1]
+
+    lonlats = np.vstack((lons, lats)).T
 
     valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
@@ -162,14 +178,6 @@ def patches_at_target(image, patchsize, targets):
         patches = point_patches(data, patchsize, pixels)
         patch_mask = point_patches(mask, patchsize, pixels)
         patch_array = _patches_to_array(patches, patch_mask, data_dtype)
-
-        # FIXME HACK
-        # if patch_array.shape[-1] > 1:
-        #     patch_array = patch_array[:, :, :, :1]
-        # patch_array = np.reshape(valid_lonlats[:, 1],
-        #                          newshape=patch_array.shape)
-        # patch_mask = np.zeros_like(patch_array, dtype=bool)
-        # patch_array = np.ma.array(patch_array, mask=patch_mask)
 
     else:
         patch_array = None
