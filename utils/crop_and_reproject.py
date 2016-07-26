@@ -11,18 +11,34 @@ from osgeo import gdal
 
 TSRS = 'EPSG:3112'
 EXTENTS = [str(s) for s in
-           [-2362974.47956, -5097641.80634, 2251415.52044, -1174811.80634]]
+          [-2362974.47956, -5097641.80634, 2251415.52044, -1174811.80634]]
 OUTPUT_RES = [str(s) for s in [90, 90]]
 
 
 def crop_resample(input_file, output_file, sampling):
+    """
+    The -wm flag sets the amount of memory used for the
+    big working buffers (the chunks) when warping.  But down within GDAL
+    itself the format drivers use a block cache which comes from a seperate
+    memory pool controlled by GDAL_CACHEMAX.
+    Parameters
+    ----------
+    input_file: input tif
+    output_file: output cropped and resampled tif
+    sampling: sampling algo to use
+
+    This can also be done by avoiding system calls using the python api.
+    -------
+
+    """
     # TODO: add extents checking between input_file and extents
     cmd = ['gdalwarp', '-overwrite'] + \
           ['-t_srs'] + [TSRS] + \
           ['-tr'] + OUTPUT_RES +  \
           ['-te'] + EXTENTS + \
           ['-r'] + [sampling] + \
-          ['-wm'] + ['20']  # use 20MB Cache
+          ['-wm'] + ['200'] + \
+          ['--config', 'GDAL_CACHEMAX', '150']
     cmd += [input_file, output_file]
     subprocess.check_call(cmd)
 
@@ -37,6 +53,9 @@ if __name__ == '__main__':
 
     parser.add_option('-o', '--out', type=str, dest='output_file',
                       help='name of cropped output interferrogram')
+
+    parser.add_option('-m', '--mask', type=str, dest='mask_file',
+                      help='name of mask file')
 
     parser.add_option('-s', '--sampling', type=str, dest='sampling',
                       help='sampling algorithm to use')
@@ -55,5 +74,6 @@ if __name__ == '__main__':
     crop_resample(input_file=options.input_file,
                   output_file=options.output_file,
                   sampling=options.sampling)
+
 
 
