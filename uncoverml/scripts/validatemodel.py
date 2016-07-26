@@ -53,12 +53,14 @@ def calculate_validation_scores(Ys, EYs):
         if m not in probscores:
             score = apply_multiple_masked(score_first_dim(metrics[m]),
                                           (Ys, EYs))
-        elif EYs.ndim == 2 and m == 'mll' and EYs.shape[1] > 1:
-            score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
-        
-        elif EYs.ndim == 2 and m == 'msll' and EYs.shape[1] > 1:
-            score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
-                                          (Yt,))
+        elif EYs.ndim == 2:
+            if m == 'mll' and EYs.shape[1] > 1:
+                score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
+            elif m == 'msll' and EYs.shape[1] > 1:
+                score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
+                                              (Yt,))
+            else:
+                continue
         else:
             continue
 
@@ -116,6 +118,8 @@ def main(model, targets, files, plotyy, outfile):
       predictions)
     """
 
+    i_mean, i_variance = 0, 1
+
     # Make sure python only runs on a single machine at a time
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -131,23 +135,17 @@ def main(model, targets, files, plotyy, outfile):
         cv_models = models['cross_validation']
         cv_indices = models['cv_indices']
 
-
     # Use the models to determine the predicted y's
-    y_pred = np.zeros(len(y))
+    Ys, EYs = np.zeros(len(y)), np.zeros(len(y))
     for index, model in enumerate(cv_models):
-        
+
         # Perform the prediction
         y_pred = predict(X, model)
 
-        # Only take the predictions that correspond to this model
-        y_pred[cv_indices==index] = y[cv_indices==index]
+        # Only keep the predictions that were unseen whilst making this model
+        Ys[cv_indices==index]  = y_pred[cv_indices==index, i_mean]
+        EYs[cv_indices==index] = y_pred[cv_indices==index, i_variance]
 
-    rank = comm.Get_rank()
-    if rank == 0:
-        import IPython; IPython.embed()
-    comm.barrier()   
-
-    
     # Use the expected y's to display the validation scores
     scores = calculate_validation_scores(Ys, EYs)
     if outfile is not None:

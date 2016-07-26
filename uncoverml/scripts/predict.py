@@ -43,6 +43,8 @@ def predict(data, model, interval=None):
 
         return predres
 
+
+
     return apply_masked(pred, data)
 
 

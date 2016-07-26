@@ -102,6 +102,7 @@ def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
     if rank != 0:
         return
 
+    # Get all of the required data
     X, y, cv_indices = load_training_data(files, targets)
 
     # Determine the required algorithm and parse it's options
@@ -119,11 +120,11 @@ def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
     if crossvalidate:
 
         # Populate the validation indices
-        models['cross_validation'] = dict()
+        models['cross_validation'] = []
         models['cv_indices'] = cv_indices
 
         # Train each model and store it
-        for fold in range(max(cv_indices)):
+        for fold in range(max(cv_indices) + 1):
 
             # Train a model for each row
             remaining_rows = [cv_indices != fold]
@@ -131,7 +132,7 @@ def main(targets, files, algorithm, algopts, outputdir, crossvalidate):
             train(model, X, y, remaining_rows)
 
             # Store the model parameters
-            models['cross_validation'][fold] = model
+            models['cross_validation'].append(model)
 
     # Pickle and store the models
     outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
