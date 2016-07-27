@@ -2,12 +2,14 @@
 A pipeline for learning and validating models.
 """
 
+import pickle
 from collections import OrderedDict
 import importlib.machinery
 import logging
 from os import path, mkdir, listdir
 from glob import glob
 import sys
+import json
 
 import numpy as np
 
@@ -58,12 +60,6 @@ def extract(targets, config):
 
 def run_pipeline(config):
 
-    mpiops.run_once(make_proc_dir, config.proc_dir)
-
-    if listdir(config.proc_dir):
-        log.fatal("Output directory must be empty!")
-        sys.exit(-1)
-
     # Make the targets
     shapefile = path.join(config.data_dir, config.target_file)
     targets = mpiops.run_once(get_targets,
@@ -71,8 +67,14 @@ def run_pipeline(config):
                               fieldname=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
+    
+    if config.export_targets:
+        outfile_targets = path.join(config.output_dir,
+                                    config.name + "_targets.hdf5")
+        mpiops.run_once(geoio.write_targets, targets, outfile_targets)
 
     extracted_chunks = extract(targets, config)
+    image_settings = {k: v["settings"] for k, v in extracted_chunks.items()}
 
     compose_settings = datatypes.ComposeSettings(
         impute=config.impute,
@@ -88,13 +90,16 @@ def run_pipeline(config):
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
+    models = {}
     for alg, args in config.algdict.items():
 
         X_list = mpiops.comm.gather(x_out, root=0)
+        model = None
         if mpiops.chunk_index == 0:
             model = pipeline.learn_model(X_list, targets, alg, cvindex=0,
                                          algorithm_params=args)
         model = mpiops.comm.bcast(model, root=0)
+        models[alg] = model
 
         # Test the model
         log.info("Predicting targets for {}.".format(alg))
@@ -103,7 +108,21 @@ def run_pipeline(config):
         Y_list = mpiops.comm.gather(y_star, root=0)
         if mpiops.chunk_index == 0:
             scores, Ys, EYs = pipeline.validate(targets, Y_list, cvindex=0)
-            print(scores)
+        
+        # Outputs
+        if mpiops.chunk_index == 0:
+            outfile_scores = path.join(config.output_dir,
+                                       config.name + "_scores.json")
+            outfile_state = path.join(config.output_dir,
+                                      config.name + ".state")
+            with open(outfile_scores, 'w') as f:
+                json.dump(scores, f, sort_keys=True, indent=4)
+
+            state_dict = {"models": models,
+                          "image_settings": image_settings,
+                          "compose_settings": compose_settings}
+            with open(outfile_state, 'wb') as f:
+                pickle.dump(state_dict, f)
 
         log.info("Finished!")
 
@@ -114,8 +133,12 @@ def main():
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
+    name = path.basename(config_filename).rstrip(".pipeline")
     config = importlib.machinery.SourceFileLoader(
         'config', config_filename).load_module()
+    if not hasattr(config, 'name'):
+        config.name = name
+    config.output_dir = path.abspath(config.output_dir)
     run_pipeline(config)
 
 if __name__ == "__main__":

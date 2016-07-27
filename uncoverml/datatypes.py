@@ -55,6 +55,8 @@ class CrossValTargets:
             cvassigns = folds
         if sort:
             # Get ascending order of targets by lat then lon
+            # FIXME -- temporary hack, only works with y_pix_size < 0
+            # ordind = np.lexsort(lonlat.T)[::-1]
             ordind = np.lexsort(lonlat.T)
             self.observations = vals[ordind]
             self.positions = lonlat[ordind]

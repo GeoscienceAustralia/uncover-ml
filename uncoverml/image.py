@@ -48,7 +48,8 @@ class Image:
         self._start_lat = source.origin_latitude
         self.pixsize_x = source.pixsize_x
         self.pixsize_y = source.pixsize_y
-        self._y_flipped = source.pixsize_y < 0
+        assert self.pixsize_x > 0
+        assert self.pixsize_y > 0
 
         # construct the canonical pixel<->position map
         pix_x = range(self._full_res[0] + 1)  # outer corner of last pixel
@@ -85,14 +86,9 @@ class Image:
         outer_bound_x, outer_bound_y = self._global_pix2lonlat(
             np.array([[xmax, ymax]]))[0]
         assert(start_bound_x < outer_bound_x)
-        if self._y_flipped:
-            assert(start_bound_y > outer_bound_y)
-            self.bbox = [[start_bound_x, outer_bound_x],
-                         [outer_bound_y, start_bound_y]]
-        else:
-            assert(start_bound_y < outer_bound_y)
-            self.bbox = [[start_bound_x, outer_bound_x],
-                         [start_bound_y, outer_bound_y]]
+        assert(start_bound_y < outer_bound_y)
+        self.bbox = [[start_bound_x, outer_bound_x],
+                     [start_bound_y, outer_bound_y]]
 
     def __repr__(self):
         return "<geo.Image({}), chunk {} of {})>".format(self.source,
@@ -183,15 +179,8 @@ class Image:
     def _global_lonlat2pix(self, lonlat):
         x = np.searchsorted(self._coords_x, lonlat[:, 0], side='right') - 1
         x = x.astype(int)
-        # searchsorted only works for increasing arrays
-        ycoords = self._coords_y[::-1] if self._y_flipped else self._coords_y
-        # side = 'left' if self._y_flipped else 'right'
-        if self._y_flipped:
-            y = np.searchsorted(ycoords, lonlat[:, 1], side='left')
-        else:
-            y = np.searchsorted(ycoords, lonlat[:, 1], side='right') - 1
-
-        y = self._full_res[1] - y if self._y_flipped else y
+        ycoords = self._coords_y
+        y = np.searchsorted(ycoords, lonlat[:, 1], side='right') - 1
         y = y.astype(int)
 
         # We want the *closed* interval, which means moving

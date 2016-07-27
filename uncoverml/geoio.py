@@ -207,14 +207,28 @@ class RasterioImageSource(ImageSource):
             self._start_lon = A[2]
             self._start_lat = A[5]
 
+            self._y_flipped = self._pixsize_y < 0
+            if self._y_flipped:
+                self._start_lat += self._pixsize_y * self._full_res[1]
+                self._pixsize_y *= -1
+
     def data(self, min_x, max_x, min_y, max_y):
-        # ((ymin, ymax),(xmin, xmax))
+        
+        if self._y_flipped:
+            min_y_new = self._full_res[1] - max_y
+            max_y_new = self._full_res[1] - min_y
+            min_y = min_y_new
+            max_y = max_y_new
+
         # NOTE these are exclusive
         window = ((min_y, max_y), (min_x, max_x))
         with rasterio.open(self._filename, 'r') as geotiff:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
+
+        if self._y_flipped:
+            d = d[:, ::-1]
 
         # uniform mask format
         if np.ma.count_masked(d) == 0:
@@ -452,8 +466,13 @@ def create_image(x, shape, bbox, name, outputdir,
                                dtype=dtype, count=n_bands, transform=A) as f:
                 ystart = 0
                 for node in range(mpiops.chunks):
+                    # Reverse order of concatentation to account for image
+                    # conventions
+                    node = mpiops.chunks - node - 1
                     data = mpiops.comm.recv(source=node, tag=img_idx) \
                         if node != 0 else images[img_idx]
+                    # Data also needs to be swapped in y
+                    data = data[:, ::-1]
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     yend = ystart + data.shape[1]  # this is Y
                     window = ((ystart, yend), (0, shape[0]))

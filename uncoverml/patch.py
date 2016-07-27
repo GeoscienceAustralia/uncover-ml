@@ -156,13 +156,7 @@ def load(image, patchsize, targets=None):
 def _patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
-    # TODO we shouldn't need to do this
-    # Longlats always sorts lats *ascending*, not starting
-    # from image origin. We need to compensate.
     lonlats = targets.positions
-    if image.pixsize_y < 0:
-        lonlats[:, 1] = lonlats[::-1, 1]
-
     valid = image.in_bounds(lonlats)
     valid_indices = np.where(valid)[0]
 
