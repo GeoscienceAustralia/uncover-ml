@@ -67,7 +67,7 @@ def run_pipeline(config):
                               fieldname=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
-    
+
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")
@@ -84,31 +84,36 @@ def run_pipeline(config):
         mean=None,
         sd=None,
         eigvals=None,
-        eigvecs=None
-        )
+        eigvecs=None)
 
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
+    ################################################
+    # TODO: Import all of the data once here
+    # Use the function in mpiops.py 
+    ################################################
+
     models = {}
-    for alg, args in config.algdict.items():
+    for algorithm, args in config.algdict.items():
 
         X_list = mpiops.comm.gather(x_out, root=0)
         model = None
         if mpiops.chunk_index == 0:
-            model = pipeline.learn_model(X_list, targets, alg, cvindex=0,
+            model = pipeline.learn_model(X_list, targets, algorithm,
+                                         crossvalidate=True,
                                          algorithm_params=args)
         model = mpiops.comm.bcast(model, root=0)
-        models[alg] = model
+        models[algorithm] = model
 
         # Test the model
-        log.info("Predicting targets for {}.".format(alg))
+        log.info("Predicting targets for {}.".format(algorithm))
         y_star = pipeline.predict(x_out, model, interval=None)
 
         Y_list = mpiops.comm.gather(y_star, root=0)
         if mpiops.chunk_index == 0:
             scores, Ys, EYs = pipeline.validate(targets, Y_list, cvindex=0)
-        
+
         # Outputs
         if mpiops.chunk_index == 0:
             outfile_scores = path.join(config.output_dir,

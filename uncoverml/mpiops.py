@@ -318,3 +318,9 @@ def min_axis_0(x, y, dtype):
 
 max0_op = MPI.Op.Create(max_axis_0, commute=True)
 min0_op = MPI.Op.Create(min_axis_0, commute=True)
+
+
+
+def gather_data(X):
+    pass
+    # TODO: Make this function gather all of the data from all of the nodes
