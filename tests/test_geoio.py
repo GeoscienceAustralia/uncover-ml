@@ -5,6 +5,7 @@ from affine import Affine
 import numpy as np
 
 from uncoverml import geoio
+from uncoverml.image import Image
 
 
 def test_file_indices_okay():
@@ -65,7 +66,7 @@ def origin_point(request):
     return request.param
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[False])
 def is_flipped(request):
     return request.param
 
@@ -104,9 +105,9 @@ def make_image(pix_size_single, origin_point,
             chunk_index = num_chunks - 1
         else:
             chunk_index = round(num_chunks/2)
-        ispec = geoio.Image(src, chunk_idx=chunk_index, nchunks=num_chunks)
+        ispec = Image(src, chunk_idx=chunk_index, nchunks=num_chunks)
     else:
-        ispec = geoio.Image(src)
+        ispec = Image(src)
     return ispec
 
 
@@ -216,7 +217,7 @@ def test_array_image_src():
     assert np.all(data_new.mask == data_orig.mask)
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture
 def array_image_src(request):
 
     res_x = 1000
@@ -224,12 +225,7 @@ def array_image_src(request):
     x_range = (50, 80)
     y_range = (-40, -30)
 
-    flipped = request.param
-    if flipped:
-        y_range = (-30, -40)
-
     pixsize_x = (x_range[1] - x_range[0]) / res_x
-    # Try both flipped and non_flipped images
     pixsize_y = (y_range[1] - y_range[0]) / res_y
 
     A = Affine(pixsize_x, 0, x_range[0],
@@ -252,7 +248,7 @@ def array_image_src(request):
 
 def test_Image_data(array_image_src):
     true_data = array_image_src._data
-    data = geoio.Image(array_image_src).data()
+    data = Image(array_image_src).data()
     assert np.all(true_data.data == data.data)
     assert np.all(true_data.mask == data.mask)
 
@@ -261,7 +257,7 @@ def test_Image_split(array_image_src, num_chunks):
     Ichunks = []
     I = array_image_src._data
     for i in range(num_chunks):
-        chunk = geoio.Image(array_image_src, chunk_idx=i,
+        chunk = Image(array_image_src, chunk_idx=i,
                             nchunks=num_chunks).data()
         Ichunks.append(chunk)
 
@@ -279,7 +275,7 @@ def test_Image_split_overlap(array_image_src, num_chunks, overlap_pixels):
     Ichunks = []
     images = []
     for i in range(nchunks):
-        img = geoio.Image(array_image_src, chunk_idx=i, nchunks=nchunks,
+        img = Image(array_image_src, chunk_idx=i, nchunks=nchunks,
                           overlap=overlap)
         images.append(img)
         chunk = img.data()
