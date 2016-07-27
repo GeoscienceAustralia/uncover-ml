@@ -61,6 +61,16 @@ def apply_mask(mask_file, output_file, jpeg):
     os.remove(TMP_VRT)
     os.remove(TMP_OUT)
 
+    if jpeg:
+        dir_name = os.path.dirname(output_file)
+        jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
+        jpeg_file = os.path.join(dir_name, jpeg_file)
+        cmd_jpg = ['gdal_translate', '-of', 'JPEG', '-scale',
+                   output_file,
+                   jpeg_file]
+        subprocess.check_call(cmd_jpg)
+        print('created jpg')
+
 
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_file -o output_file'
@@ -117,7 +127,8 @@ if __name__ == '__main__':
 
     if options.mask_file:
         apply_mask(mask_file=options.mask_file,
-                   output_file=options.output_file)
+                   output_file=options.output_file,
+                   jpeg=True)
 
 
 
