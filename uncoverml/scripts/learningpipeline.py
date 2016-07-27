@@ -1,150 +1,130 @@
 """
-A demo script that ties some of the command line utilities together in a
-pipeline for learning and validating models.
+A pipeline for learning and validating models.
 """
 
+import pickle
+from collections import OrderedDict
 import importlib.machinery
 import logging
-import json
 from os import path, mkdir, listdir
 from glob import glob
-from mpi4py import MPI
 import sys
+import json
 
-from click import Context
+import numpy as np
 
-from uncoverml.scripts.maketargets import main as maketargets
-from uncoverml.scripts.extractfeats import main as extractfeats
-from uncoverml.scripts.composefeats import main as composefeats
-from uncoverml.scripts.learnmodel import main as learnmodel
-from uncoverml.scripts.predict import main as predict
-from uncoverml.scripts.validatemodel import main as validatemodel
+from uncoverml import geoio
+from uncoverml import pipeline
+from uncoverml import mpiops
+from uncoverml import datatypes
 
 # Logging
 log = logging.getLogger(__name__)
 
 
-# NOTE: Do not change the following unless you know what you are doing
-def run_pipeline(config):
-
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
-    # Make processed dir if it does not exist
-    if not path.exists(config.proc_dir) and rank == 0:
-        mkdir(config.proc_dir)
+def make_proc_dir(dirname):
+    if not path.exists(dirname):
+        mkdir(dirname)
         log.info("Made processed dir")
-    comm.barrier()
 
-    # Make sure the directory is empty if it does exist
-    if listdir(config.proc_dir):
-        log.fatal("Output directory must be empty!")
-        sys.exit(-1)
 
-    # Make pointspec and hdf5 for targets
-    if rank == 0:
-        ctx = Context(maketargets)
-        ctx.forward(maketargets,
-                    shapefile=path.join(config.data_dir, config.target_file),
-                    fieldname=config.target_var,
-                    folds=config.folds,
-                    outfile=config.target_hdf,
-                    seed=config.crossval_seed
-                    )
-    comm.barrier()
+def get_targets(shapefile, fieldname, folds, seed):
+    shape_infile = path.abspath(shapefile)
+    lonlat, vals = geoio.load_shapefile(shape_infile, fieldname)
+    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True)
+    return targets
 
+
+def extract(targets, config):
     # Extract feats for training
     tifs = glob(path.join(config.data_dir, "*.tif"))
     if len(tifs) == 0:
         log.fatal("No geotiffs found in {}!".format(config.data_dir))
         sys.exit(-1)
 
-    # Generic extract feats command
-    ctx = Context(extractfeats)
-
-    # Find all of the tifs and extract features
+    extracted_chunks = {}
     for tif in tifs:
-        name = path.splitext(path.basename(tif))[0]
-        log.info("Processing {}.".format(path.basename(tif)))
-        ctx.forward(extractfeats,
-                    geotiff=tif,
-                    name=name,
-                    outputdir=config.proc_dir,
-                    targets=config.target_hdf,
-                    onehot=config.onehot,
-                    patchsize=config.patchsize
-                    )
-        comm.barrier()
+        name = path.basename(tif)
+        log.info("Processing {}.".format(name))
+        settings = datatypes.ExtractSettings(onehot=config.onehot,
+                                             x_sets=None,
+                                             patchsize=config.patchsize)
+        image_source = geoio.RasterioImageSource(tif)
+        x, settings = pipeline.extract_features(image_source,
+                                                targets, settings)
+        d = {"x": x, "settings": settings}
+        extracted_chunks[name] = d
+    result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
+    return result
 
-    efiles = [f for f in glob(path.join(config.proc_dir, "*.part*.hdf5"))
-              if not (path.basename(f).startswith(config.compos_file)
-                      or path.basename(f).startswith(config.predict_file))]
 
-    # Compose individual image features into single feature vector
-    log.info("Composing features...")
-    ctx = Context(composefeats)
-    ctx.forward(composefeats,
-                featurename=config.compos_file,
-                outputdir=config.proc_dir,
-                impute=config.impute,
-                centre=config.standardise or config.whiten,
-                standardise=config.standardise,
-                whiten=config.whiten,
-                featurefraction=config.pca_frac,
-                files=efiles
-                )
-    comm.barrier()
+def run_pipeline(config):
 
-    feat_files = glob(path.join(config.proc_dir,
-                                config.compos_file + ".part*.hdf5"))
+    # Make the targets
+    shapefile = path.join(config.data_dir, config.target_file)
+    targets = mpiops.run_once(get_targets,
+                              shapefile=shapefile,
+                              fieldname=config.target_var,
+                              folds=config.folds,
+                              seed=config.crossval_seed)
+    
+    if config.export_targets:
+        outfile_targets = path.join(config.output_dir,
+                                    config.name + "_targets.hdf5")
+        mpiops.run_once(geoio.write_targets, targets, outfile_targets)
 
+    extracted_chunks = extract(targets, config)
+    image_settings = {k: v["settings"] for k, v in extracted_chunks.items()}
+
+    compose_settings = datatypes.ComposeSettings(
+        impute=config.impute,
+        transform=config.transform,
+        featurefraction=config.pca_frac,
+        impute_mean=None,
+        mean=None,
+        sd=None,
+        eigvals=None,
+        eigvecs=None
+        )
+
+    x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
+    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
+
+    models = {}
     for alg, args in config.algdict.items():
 
-        # Train the model
-        log.info("Training model {}.".format(alg))
-        ctx = Context(learnmodel)
-        ctx.forward(learnmodel,
-                    outputdir=config.proc_dir,
-                    cvindex=0,
-                    algorithm=alg,
-                    algopts=json.dumps(args),
-                    targets=config.target_hdf,
-                    files=feat_files
-                    )
-        comm.barrier()
+        X_list = mpiops.comm.gather(x_out, root=0)
+        model = None
+        if mpiops.chunk_index == 0:
+            model = pipeline.learn_model(X_list, targets, alg, cvindex=0,
+                                         algorithm_params=args)
+        model = mpiops.comm.bcast(model, root=0)
+        models[alg] = model
 
         # Test the model
         log.info("Predicting targets for {}.".format(alg))
-        alg_file = path.join(config.proc_dir, "{}.pk".format(alg))
+        y_star = pipeline.predict(x_out, model, interval=None)
 
-        ctx = Context(predict)
-        ctx.forward(predict,
-                    outputdir=config.proc_dir,
-                    predictname=config.predict_file + "_" + alg,
-                    model=alg_file,
-                    files=feat_files
-                    )
-        comm.barrier()
+        Y_list = mpiops.comm.gather(y_star, root=0)
+        if mpiops.chunk_index == 0:
+            scores, Ys, EYs = pipeline.validate(targets, Y_list, cvindex=0)
+        
+        # Outputs
+        if mpiops.chunk_index == 0:
+            outfile_scores = path.join(config.output_dir,
+                                       config.name + "_scores.json")
+            outfile_state = path.join(config.output_dir,
+                                      config.name + ".state")
+            with open(outfile_scores, 'w') as f:
+                json.dump(scores, f, sort_keys=True, indent=4)
 
-        pred_files = glob(path.join(config.proc_dir,
-                                    config.predict_file + "_" + alg +
-                                    ".part*.hdf5"))
+            state_dict = {"models": models,
+                          "image_settings": image_settings,
+                          "compose_settings": compose_settings}
+            with open(outfile_state, 'wb') as f:
+                pickle.dump(state_dict, f)
 
-        # Report score
-        log.info("Validating {}.".format(alg))
-        ctx = Context(validatemodel)
-        ctx.forward(validatemodel,
-                    outfile=path.join(config.proc_dir,
-                                      config.valoutput + "_" + alg),
-                    cvindex=0,
-                    targets=config.target_hdf,
-                    prediction_files=pred_files,
-                    plotyy=False
-                    )
-        comm.barrier()
-
-    log.info("Finished!")
+        log.info("Finished!")
 
 
 def main():
@@ -153,8 +133,12 @@ def main():
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
+    name = path.basename(config_filename).rstrip(".pipeline")
     config = importlib.machinery.SourceFileLoader(
         'config', config_filename).load_module()
+    if not hasattr(config, 'name'):
+        config.name = name
+    config.output_dir = path.abspath(config.output_dir)
     run_pipeline(config)
 
 if __name__ == "__main__":

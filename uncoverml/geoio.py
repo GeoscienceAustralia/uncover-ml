@@ -1,20 +1,33 @@
 from __future__ import division
+from abc import ABCMeta, abstractmethod
+import pickle
+from functools import partial
 
 import rasterio
 import os.path
 import numpy as np
-from affine import Affine
+# from affine import Affine
 import shapefile
 import tables as hdf
 import logging
 import time
 
+from uncoverml import mpiops
+from uncoverml import image
+from uncoverml import datatypes
+
 log = logging.getLogger(__name__)
 
 
-def flatten_image(im):
-    x = im.reshape(im.shape[0], -1)
-    return x
+def load_settings(settings_file):
+    with open(settings_file, 'rb') as f:
+        s = pickle.load(f)
+    return s
+
+
+def save_settings(s, settings_file):
+    with open(settings_file, 'wb') as f:
+        pickle.dump(s, f)
 
 
 def file_indices_okay(filenames):
@@ -90,31 +103,6 @@ def files_by_chunk(filenames):
     return d
 
 
-def _invert_affine(A):
-
-    R = np.array([A[0:2], A[3:5]])
-    T = np.array([[A[2], A[5]]]).T
-
-    iR = np.linalg.pinv(R)
-    iT = -iR.dot(T)
-    iA = np.hstack((iR, iT))
-
-    return Affine(*iA.flatten())
-
-
-def points_from_shp(filename):
-    """
-    TODO
-    """
-    # TODO check the shapefile only contains points
-    coords = []
-    sf = shapefile.Reader(filename)
-    for shape in sf.iterShapes():
-        coords.append(list(shape.__geo_interface__['coordinates']))
-    label_coords = np.array(coords)
-    return label_coords
-
-
 def points_from_hdf(filename, fieldnames):
     """
     TODO
@@ -134,73 +122,72 @@ def points_to_hdf(outfile, fielddict={}):
             f.create_array("/", fld, obj=v)
 
 
-def values_from_shp(filename, field):
-    """
-    TODO
-    """
-
-    sf = shapefile.Reader(filename)
-    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
-
-    if field not in fdict:
-        raise ValueError("Requested field is not in records!")
-
-    vind = fdict[field]
-    vals = [r[vind] for r in sf.records()]
-
-    return np.array(vals)
+def write_targets(targets, filename):
+    # takes a Target class
+    # Make field dict for writing to HDF5
+    fielddict = {
+        'targets': targets._observations_unsorted,
+        'Longitude': targets._positions_unsorted[:, 0],
+        'Latitude': targets._positions_unsorted[:, 1],
+        'FoldIndices': targets._folds_unsorted,
+        'Targets_sorted': targets.observations,
+        'Positions_sorted': targets.positions,
+        'FoldIndices_sorted': targets.folds
+    }
+    points_to_hdf(filename, fielddict)
 
 
-def values_from_hdf(filename, field):
-
-    with hdf.open_file(filename, mode='r') as f:
-        vals = [v for v in f.root.field]
-
-    return np.array(vals)
-
-
-def construct_splits(npixels, nchunks, overlap=0):
-    # Build the equivalent windowed image
-    # y bounds are INCLUSIVE
-    # Reverse order to account for y origin at top of image
-    y_arrays = np.array_split(np.arange(npixels), nchunks)[::-1]
-    y_bounds = []
-    # construct the overlap
-    for s in y_arrays:
-        old_min = s[0]
-        old_max = s[-1]
-        new_min = max(0, old_min - overlap)
-        new_max = min(npixels, old_max + overlap)
-        y_bounds.append((new_min, new_max))
-    return y_bounds
+def load_targets(filename):
+    fields = ['Targets_sorted', 'Positions_sorted', 'FoldIndices_sorted']
+    fielddict = points_from_hdf(filename, fields)
+    positions = fielddict['Positions_sorted']
+    observations = fielddict['Targets_sorted']
+    folds = fielddict['FoldIndices_sorted']
+    result = datatypes.CrossValTargets(positions, observations, folds)
+    return result
 
 
-def bounding_box(raster):
-    """
-    TODO
-    """
-    T1 = raster.affine
+class ImageSource(metaclass=ABCMeta):
 
-    # the +1 because we want pixel corner 1 beyond the last pixel
-    lon_range = T1[2] + np.array([0, raster.width + 1]) * T1[0]
-    lat_range = T1[5] + np.array([0, raster.height + 1]) * T1[4]
+    @abstractmethod
+    def data(self, min_x, max_x, min_y, max_y):
+        pass
 
-    lon_range = np.sort(lon_range)
-    lat_range = np.sort(lat_range)
+    @property
+    def full_resolution(self):
+        return self._full_res
 
-    return lon_range, lat_range
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def nodata_value(self):
+        return self._nodata_value
+
+    @property
+    def pixsize_x(self):
+        return self._pixsize_x
+
+    @property
+    def pixsize_y(self):
+        return self._pixsize_y
+
+    @property
+    def origin_latitude(self):
+        return self._start_lat
+
+    @property
+    def origin_longitude(self):
+        return self._start_lon
 
 
-class Image:
-    def __init__(self, filename, chunk_idx=0, nchunks=1, overlap=0):
-        assert chunk_idx >= 0 and chunk_idx < nchunks
+class RasterioImageSource(ImageSource):
 
-        self.chunk_idx = chunk_idx
-        self.nchunks = nchunks
-        self.filename = filename
+    def __init__(self, filename):
 
-        # Get the full image details
-        with rasterio.open(self.filename, 'r') as geotiff:
+        self._filename = filename
+        with rasterio.open(self._filename, 'r') as geotiff:
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
@@ -210,79 +197,38 @@ class Image:
                                      "with differently typed channels")
             self._dtype = np.dtype(geotiff.dtypes[0])
 
-            # Build the affine transformation for the FULL image
             A = geotiff.affine
+            # No shearing or rotation allowed!!
+            if not ((A[1] == 0) and (A[3] == 0)):
+                raise RuntimeError("Transform to pixel coordinates"
+                                   "has rotation or shear")
+            self._pixsize_x = A[0]
+            self._pixsize_y = A[4]
+            self._start_lon = A[2]
+            self._start_lat = A[5]
 
-        # No shearing or rotation allowed!!
-        if not ((A[1] == 0) and (A[3] == 0)):
-            raise RuntimeError("Transform to pixel coordinates"
-                               "has rotation or shear")
+            self._y_flipped = self._pixsize_y < 0
+            if self._y_flipped:
+                self._start_lat += self._pixsize_y * self._full_res[1]
+                self._pixsize_y *= -1
 
-        # TODO clean this up into a function
-        self.pixsize_x = A[0]
-        self.pixsize_y = A[4]
-        self._y_flipped = self.pixsize_y < 0
-        self._start_lon = A[2]
-        self._start_lat = A[5]
-
-        # construct the canonical pixel<->position map
-        pix_x = range(self._full_res[0] + 1 + 1)  # 1 past corner of last pixel
-        coords_x = [self._start_lon + float(k) * self.pixsize_x
-                    for k in pix_x]
-        self._coords_x = coords_x
-        pix_y = range(self._full_res[1] + 1 + 1)  # ditto
-        coords_y = [self._start_lat + float(k) * self.pixsize_y
-                    for k in pix_y]
-        self._coords_y = coords_y
-        self._pix_x_to_coords = dict(zip(pix_x, coords_x))
-        self._pix_y_to_coords = dict(zip(pix_y, coords_y))
-
-        # inclusive y range of this chunk in full image
-        ymin, ymax = construct_splits(self._full_res[1],
-                                      nchunks, overlap)[chunk_idx]
-        self._offset = np.array([0, ymin], dtype=int)
-        # inclusive x range of this chunk (same for all chunks)
-        xmin, xmax = 0, self._full_res[0] - 1
-
-        assert(xmin < xmax)
-        assert(ymin < ymax)
-
-        # get resolution of this chunk
-        xres = self._full_res[0]
-        yres = ymax - ymin + 1  # note the +1 because inclusive bounds
-
-        # Calculate the new values for resolution and bounding box
-        self.resolution = (xres, yres, self._full_res[2])
-
-        start_bound_x, start_bound_y = self._global_pix2lonlat(
-            np.array([[xmin, ymin]]))[0]
-        # one past the last pixel (note the +1)
-        outer_bound_x, outer_bound_y = self._global_pix2lonlat(
-            np.array([[xmax + 1, ymax + 1]]))[0]
-
-        assert(start_bound_x < outer_bound_x)
+    def data(self, min_x, max_x, min_y, max_y):
+        
         if self._y_flipped:
-            assert(start_bound_y > outer_bound_y)
-            self.bbox = [[start_bound_x, outer_bound_x],
-                         [outer_bound_y, start_bound_y]]
-        else:
-            assert(start_bound_y < outer_bound_y)
-            self.bbox = [[start_bound_x, outer_bound_x],
-                         [start_bound_y, outer_bound_y]]
+            min_y_new = self._full_res[1] - max_y
+            max_y_new = self._full_res[1] - min_y
+            min_y = min_y_new
+            max_y = max_y_new
 
-    def __repr__(self):
-        return "<geo.Image({}), chunk {} of {})>".format(self.filename,
-                                                         self.chunk_idx,
-                                                         self.nchunks)
-
-    def data(self):
-        # ((ymin, ymax),(xmin, xmax))
-        window = ((self._offset[1], self._offset[1] + self.resolution[1]),
-                  (self._offset[0], self._offset[0] + self.resolution[0]))
-        with rasterio.open(self.filename, 'r') as geotiff:
+        # NOTE these are exclusive
+        window = ((min_y, max_y), (min_x, max_x))
+        with rasterio.open(self._filename, 'r') as geotiff:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
+
+        if self._y_flipped:
+            d = d[:, ::-1]
 
         # uniform mask format
         if np.ma.count_masked(d) == 0:
@@ -290,122 +236,35 @@ class Image:
                                    mask=np.zeros_like(d.data, dtype=bool))
         return d
 
-    @property
-    def nodata_value(self):
-        return self._nodata_value
 
-    @property
-    def dtype(self):
-        return self._dtype
+class ArrayImageSource(ImageSource):
+    """
+    An image source that uses an internally stored numpy array
 
-    @property
-    def xres(self):
-        return self.resolution[0]
+    Parameters
+    ----------
+    A : MaskedArray
+        masked array of shape (xpix, ypix, channels) that contains the
+        image data.
+    origin : ndarray
+        Array of the form [lonmin, latmin] that defines the origin of the image
+    pixsize : ndarray
+        Array of the form [pixsize_x, pixsize_y] defining the size of a pixel
+    """
+    def __init__(self, A, origin, pixsize):
+        self._data = A
+        self._full_res = A.shape
+        self._dtype = A.dtype
+        self._nodata_value = A.fill_value
+        self._pixsize_x = pixsize[0]
+        self._pixsize_y = pixsize[1]
+        self._start_lon = origin[0]
+        self._start_lat = origin[1]
 
-    @property
-    def yres(self):
-        return self.resolution[1]
-
-    @property
-    def channels(self):
-        return self.resolution[2]
-
-    @property
-    def npoints(self):
-        return self.resolution[0] * self.resolution[1]
-
-    @property
-    def x_range(self):
-        return self.bbox[0]
-
-    @property
-    def y_range(self):
-        return self.bbox[1]
-
-    @property
-    def xmin(self):
-        return self.bbox[0][0]
-
-    @property
-    def xmax(self):
-        return self.bbox[0][1]
-
-    @property
-    def ymin(self):
-        return self.bbox[1][0]
-
-    @property
-    def ymax(self):
-        return self.bbox[1][1]
-
-    # @contract(xy='array[Nx2](int64),N>0')
-    def _global_pix2lonlat(self, xy):
-        result = np.array([[self._pix_x_to_coords[x],
-                           self._pix_y_to_coords[y]] for x, y in xy])
-        return result
-
-    # @contract(xy='array[Nx2](int64),N>0')
-    def pix2lonlat(self, xy):
-        result = self._global_pix2lonlat(xy + self._offset)
-        return result
-
-    # @contract(lonlat='array[Nx2](float64),N>0')
-    def _global_lonlat2pix(self, lonlat):
-        x = np.searchsorted(self._coords_x, lonlat[:, 0], side='right') - 1
-        x = x.astype(int)
-        ycoords = self._coords_y[::-1] if self._y_flipped else self._coords_y
-        side = 'left' if self._y_flipped else 'right'
-        y = np.searchsorted(ycoords, lonlat[:, 1], side=side) - 1
-        y = self._full_res[1] - y if self._y_flipped else y
-        y = y.astype(int)
-
-        # We want the *closed* interval, which means moving
-        # points on the end back by 1
-        on_end_x = lonlat[:, 0] == self._coords_x[-1]
-        on_end_y = lonlat[:, 1] == self._coords_y[-1]
-        x[on_end_x] -= 1
-        y[on_end_y] -= 1
-
-        if (not all(np.logical_and(x >= 0, x < self._full_res[0]))) or \
-                (not all(np.logical_and(y >= 0, y < self._full_res[1]))):
-            raise ValueError("Queried location is not in the image!")
-
-        result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)
-        return result
-
-    # @contract(lonlat='array[Nx2](float64),N>0')
-    def lonlat2pix(self, lonlat):
-        result = self._global_lonlat2pix(lonlat) - self._offset
-        # check the postcondition
-        x = result[:, 0]
-        y = result[:, 1]
-
-        if (not all(np.logical_and(x >= 0, x < self.resolution[0]))) or \
-                (not all(np.logical_and(y >= 0, y < self.resolution[1]))):
-            raise ValueError("Queried location is not in the image!")
-
-        return result
-
-    def in_bounds(self, lonlat):
-        xy = self._global_lonlat2pix(lonlat)
-        xy -= self._offset
-        x = xy[:, 0]
-        y = xy[:, 1]
-        inx = np.logical_and(x >= 0, x < self.resolution[0])
-        iny = np.logical_and(y >= 0, y < self.resolution[1])
-        result = np.logical_and(inx, iny)
-        return result
-
-
-def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
-
-    pixsize_x = (xmax - xmin) / (xres + 1)
-    pixsize_y = (ymax - ymin) / (yres + 1)
-
-    A = Affine(pixsize_x, 0, xmin,
-               0, -pixsize_y, ymax)
-
-    return A, pixsize_x, pixsize_y
+    def data(self, min_x, max_x, min_y, max_y):
+        # MUST BE EXCLUSIVE
+        data_window = self._data[min_x:max_x, :][:, min_y:max_y]
+        return data_window
 
 
 def output_filename(feature_name, chunk_index, n_chunks, output_dir):
@@ -415,9 +274,13 @@ def output_filename(feature_name, chunk_index, n_chunks, output_dir):
     return full_path
 
 
-def output_blank(filename):
+def output_blank(filename, shape=None, bbox=None):
     with hdf.open_file(filename, mode='w') as h5file:
         h5file.root._v_attrs["blank"] = True
+        if shape is not None:
+            h5file.root._v_attrs["image_shape"] = shape
+        if bbox is not None:
+            h5file.root._v_attrs["image_bbox"] = bbox
 
 
 def output_features(feature_vector, outfile, featname="features",
@@ -441,6 +304,12 @@ def output_features(feature_vector, outfile, featname="features",
         bbox: ndarray, optional
             The bounding box of the original data for reproducing an image
     """
+    if feature_vector is None:
+        output_blank(outfile, shape, bbox)
+        return
+
+    log.info("writing {} array with name {}".format(
+        feature_vector.shape, outfile))
     with hdf.open_file(outfile, mode='w') as h5file:
         h5file.root._v_attrs["blank"] = False
 
@@ -469,11 +338,9 @@ def output_features(feature_vector, outfile, featname="features",
                              atom=hdf.BoolAtom(), shape=array_shape, obj=fmask)
 
         if shape is not None:
-            h5file.getNode('/' + featname).attrs.shape = shape
-            h5file.root.mask.attrs.shape = shape
+            h5file.root._v_attrs["image_shape"] = shape
         if bbox is not None:
-            h5file.getNode('/' + featname).attrs.bbox = bbox
-            h5file.root.mask.attrs.bbox = bbox
+            h5file.root._v_attrs["image_bbox"] = bbox
 
     start = time.time()
     file_exists = False
@@ -504,7 +371,7 @@ def load_and_cat(hdf5_vectors):
     y_shp = np.sum(np.array(y_shps))
 
     log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
-                                                   x_shp * y_shp * 72. / 1e9)) 
+                                                  x_shp * y_shp * 72. / 1e9))
 
     all_data = np.empty((x_shp, y_shp), dtype=float)
     all_mask = np.empty((x_shp, y_shp), dtype=bool)
@@ -529,8 +396,86 @@ def load_attributes(filename_dict):
     shape = None
     bbox = None
     with hdf.open_file(fname, mode='r') as f:
-        if 'shape' in f.root.features.attrs:
-            shape = f.root.features.attrs.shape
-        if 'bbox' in f.root.features.attrs:
-            bbox = f.root.features.attrs.bbox
+        if 'image_shape' in f.root._v_attrs:
+            shape = f.root._v_attrs.image_shape
+        if 'image_bbox' in f.root._v_attrs:
+            bbox = f.root._v_attrs.image_bbox
     return shape, bbox
+
+
+def load_shapefile(filename, field):
+    """
+    TODO
+    """
+
+    sf = shapefile.Reader(filename)
+    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
+
+    if field not in fdict:
+        raise ValueError("Requested field is not in records!")
+
+    vind = fdict[field]
+    vals = np.array([r[vind] for r in sf.records()])
+    coords = []
+    for shape in sf.iterShapes():
+        coords.append(list(shape.__geo_interface__['coordinates']))
+    label_coords = np.array(coords)
+    return label_coords, vals
+
+
+def create_image(x, shape, bbox, name, outputdir,
+                 rgb=True, separatebands=True, band=None):
+
+    # affine
+    A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
+                                bbox[0, 1], bbox[1, 1], *shape)
+
+    x_min = None
+    x_max = None
+    if rgb is True:
+        x_min_local = np.ma.min(x, axis=0)
+        x_max_local = np.ma.max(x, axis=0)
+        x_min = mpiops.comm.allreduce(x_min_local, op=mpiops.min0_op)
+        x_max = mpiops.comm.allreduce(x_max_local, op=mpiops.max0_op)
+
+    f = partial(image.to_image_transform, rows=shape[0], x_min=x_min,
+                x_max=x_max, band=band, separatebands=separatebands)
+
+    images = f(x)
+
+    # Couple of pieces of information we need here
+    if mpiops.chunk_index != 0:
+        reqs = []
+        for img_idx in range(len(images)):
+            reqs.append(mpiops.comm.isend(
+                images[img_idx], dest=0, tag=img_idx))
+        for r in reqs:
+            r.wait()
+    else:
+        n_images = len(images)
+        dtype = images[0].dtype
+        n_bands = images[0].shape[2]
+
+        for img_idx in range(n_images):
+            band_num = img_idx if band is None else band
+            output_filename = os.path.join(outputdir, name +
+                                           "_band{}.tif".format(band_num))
+
+            with rasterio.open(output_filename, 'w', driver='GTiff',
+                               width=shape[0], height=shape[1],
+                               dtype=dtype, count=n_bands, transform=A) as f:
+                ystart = 0
+                for node in range(mpiops.chunks):
+                    # Reverse order of concatentation to account for image
+                    # conventions
+                    node = mpiops.chunks - node - 1
+                    data = mpiops.comm.recv(source=node, tag=img_idx) \
+                        if node != 0 else images[img_idx]
+                    # Data also needs to be swapped in y
+                    data = data[:, ::-1]
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, shape[0]))
+                    index_list = list(range(1, n_bands + 1))
+                    f.write(data, window=window, indexes=index_list)
+                    ystart = yend

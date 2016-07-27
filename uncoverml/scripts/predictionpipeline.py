@@ -1,145 +1,98 @@
-#! /usr/bin/env python
 """
-A demo script that ties some of the command line utilities together in a
-pipeline for prediction.
+A pipeline for learning and validating models.
 """
 
+import pickle
+from collections import OrderedDict
 import importlib.machinery
-import sys
 import logging
-from os import path, mkdir, listdir
+from os import path, mkdir, listdir, getcwd
 from glob import glob
-from mpi4py import MPI
+import sys
 
-from click import Context
+import numpy as np
 
-from uncoverml.scripts.extractfeats import main as extractfeats
-from uncoverml.scripts.composefeats import main as composefeats
-from uncoverml.scripts.predict import main as predict
-from uncoverml.scripts.exportgeotiff import main as exportgeotiff
+from uncoverml import image
+from uncoverml import geoio
+from uncoverml import pipeline
 
+# Logging
 log = logging.getLogger(__name__)
 
 
-def run_pipeline(config):
-
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
-    if not path.exists(config.proc_dir):
-        log.fatal("Please run demo_learning_pipline.py first!")
-        sys.exit(-1)
-
-    # Make processed dir if it does not exist
-    if not path.exists(config.pred_dir) and rank == 0:
-        mkdir(config.pred_dir)
-        log.info("Made prediction dir")
-    comm.barrier()
-
-    # Make sure prediction dir is empty
-    if listdir(config.pred_dir):
-        log.fatal("Prediction directory must be empty!")
-        sys.exit(-1)
-
-    # Make sure we have an extractfeats settings file for each tif
+def extract(image_settings, config):
+    # Extract feats for training
     tifs = glob(path.join(config.data_dir, "*.tif"))
     if len(tifs) == 0:
         log.fatal("No geotiffs found in {}!".format(config.data_dir))
         sys.exit(-1)
 
-    settings = []
+    extracted_chunks = {}
     for tif in tifs:
-        setting = path.join(config.proc_dir, 
-                            path.splitext(path.basename(tif))[0] +
-                            "_settings.bin")
-        if not path.exists(setting):
-            log.fatal("Setting file {} does not exist!".format(setting))
-            sys.exit(-1)
-        settings.append(setting)
+        name = path.basename(tif)
+        settings = image_settings[name]
+        log.info("Processing {}.".format(name))
+        image_source = geoio.RasterioImageSource(tif)
+        targets = None
+        x, settings = pipeline.extract_features(image_source,
+                                                targets, settings)
+        d = {"x": x, "settings": settings}
+        extracted_chunks[name] = d
+    result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
+    return result
 
-    # Now extact features from each tif
-    ctx = Context(extractfeats)
 
-    # Find all of the tifs and extract features
-    for tif, setting in zip(tifs, settings):
-        name = path.splitext(path.basename(tif))[0]
-        log.info("Processing {}.".format(path.basename(tif)))
-        ctx.forward(extractfeats,
-                    geotiff=tif,
-                    name=name,
-                    outputdir=config.pred_dir,
-                    settings=setting
-                    )
-        comm.barrier()
+def run_pipeline(config):
 
-    # Compose individual image features into single feature vector
-    compos_settings = path.join(config.proc_dir, 
-                                config.compos_file + "_settings.bin")
-    if not path.exists(compos_settings):
-        log.fatal("Settings file for composite features does not exist!")
-        sys.exit(-1)
+    outfile_state = path.join(config.output_dir,
+                              config.name + ".state")
+    with open(outfile_state, 'rb') as f:
+        state_dict = pickle.load(f)
 
-    efiles = [f for f in glob(path.join(config.pred_dir, "*.part*.hdf5"))
-              if not (path.basename(f).startswith(config.compos_file) or
-                      path.basename(f).startswith(config.predict_file))]
+    image_settings = state_dict["image_settings"]
+    compose_settings = state_dict["compose_settings"]
+    models = state_dict["models"]
 
-    log.info("Composing features...")
-    ctx = Context(composefeats)
-    ctx.forward(composefeats,
-                featurename=config.compos_file,
-                outputdir=config.pred_dir,
-                files=efiles,
-                settings=compos_settings
-                )
-    comm.barrier()
+    extracted_chunks = extract(image_settings, config)
 
-    cfiles = glob(path.join(config.pred_dir, config.compos_file + "*.hdf5"))
+    x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
+    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
-    # Now predict on the composite features!
-    alg_file = path.join(config.proc_dir, "{}.pk".format(config.algorithm))
-    if not path.exists(alg_file):
-        log.fatal("Learned algorithm file {} missing!".format(alg_file))
-        sys.exit(-1)
+    alg = config.algorithm
+    model = models[alg]
 
-    alg = path.splitext(path.basename(alg_file))[0]
-    predict_alg_file = config.predict_file + '_' + alg
+    log.info("Predicting targets for {}.".format(alg))
+    y_star = pipeline.predict(x_out, model, interval=None)
 
-    log.info("Predicting targets...")
-    ctx = Context(predict)
-    ctx.forward(predict,
-                outputdir=config.pred_dir,
-                predictname=predict_alg_file,
-                model=alg_file,
-                quantiles=config.quantiles,
-                files=cfiles
-                )
-    comm.barrier()
+    # temp workaround
+    imagelike = glob(path.join(config.data_dir, "*.tif"))[0]
+    template_image = image.Image(geoio.RasterioImageSource(imagelike))
+    eff_shape = template_image.patched_shape(config.patchsize)
+    eff_bbox = template_image.patched_bbox(config.patchsize)
 
-    pfiles = glob(path.join(config.pred_dir, predict_alg_file + '*.hdf5'))
+    outfile_tif = config.name + "_output_" + config.algorithm
+    geoio.create_image(y_star,
+                       shape=eff_shape,
+                       bbox=eff_bbox,
+                       name=outfile_tif,
+                       outputdir=config.output_dir,
+                       rgb=config.makergbtif)
 
-    # Output a Geotiff of the predictions
-    log.info("Exporting geoftiffs...")
-    ctx = Context(exportgeotiff)
-    ctx.forward(exportgeotiff,
-                name=config.gtiffname + "_" + alg,
-                outputdir=config.pred_dir,
-                rgb=config.makergbtif,
-                files=pfiles
-                )
-    comm.barrier()
-
-    log.info("Done!")
+    log.info("Finished!")
 
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: predictionpipeline <configfile>")
+        print("Usage: learningpipeline <configfile>")
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
+    name = path.basename(config_filename).rstrip(".pipeline")
     config = importlib.machinery.SourceFileLoader(
         'config', config_filename).load_module()
+    if not hasattr(config, 'name'):
+        config.name = name
+    config.output_dir = path.abspath(config.output_dir)
     run_pipeline(config)
 
 if __name__ == "__main__":
