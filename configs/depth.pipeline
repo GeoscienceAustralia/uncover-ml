@@ -15,23 +15,16 @@ from os import path
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
-# data_dir = path.join(path.expanduser("~"), "data/GA-depth")
-# data_dir = "/short/ge3/jrw547/Murray_datasets"
-# data_dir = "/short/ge3/jrw547/GA-cover"
+data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
 
 # Location of outputs
 output_dir = "."
 
-
 # Shape file with target variable info
-target_file = "geochem_sites.shp"
-# target_file = "drillhole_confid_3.shp"
-# target_file = "Targets_V8.shp"
+target_file = "Targets_V_final_inside.shp"
 
 # Target variable name (in shape file)
-target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
-# target_var = "depth"
+target_var = "depth"
 
 export_targets = True
 
