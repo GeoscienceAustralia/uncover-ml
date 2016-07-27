@@ -20,18 +20,9 @@ data_dir = path.relpath('../GA-cover')
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
 # data_dir = "/short/ge3/jrw547/GA-cover"
 
-# Location of processed files (features, predictions etc)
-proc_dir = path.join(data_dir, "processed")
-# proc_dir = "/short/ge3/dms599/Murray_processed"
-# proc_dir = "/short/ge3/dms599/GA-cover_processed"
+# Location of outputs
+output_dir = "."
 
-# Location of the prediction output from this script
-pred_dir = path.join(proc_dir, "prediction")
-
-
-#
-# Target Settings
-#
 
 # Shape file with target variable info
 target_file = "geochem_sites.shp"
@@ -42,9 +33,7 @@ target_file = "geochem_sites.shp"
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 # target_var = "depth"
 
-# Where to save processed targets
-target_hdf = path.join(proc_dir, "{}_{}.hdf5"
-                       .format(path.splitext(target_file)[0], target_var))
+export_targets = True
 
 folds = 5
 
@@ -66,14 +55,10 @@ patchsize = 0
 impute = True
 
 # Transform the data? options are {whiten, standardise, centre, None}
-transform = 'centre'
+transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.5
-
-# Composite feature names (prefixes)
-compos_file = "composite"
-
+pca_frac = 0.8
 
 #
 # Algorithm settings
@@ -86,7 +71,7 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
+    "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
@@ -114,13 +99,10 @@ algdict = {
 #
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
-# algorithm = 'approxgp'
+algorithm = 'approxgp'
 # algorithm = 'randomforest'
-
-# Prediction file names (prefix)
-predict_file = "prediction"
 
 # Quantiles
 quantiles = 0.95
@@ -130,17 +112,6 @@ quantiles = 0.95
 # Visualisation/Geotiff settings
 #
 
-# Name of the prediction output tif
-gtiffname = "prediction_image"
-gtiffname_ent = "entropy_reduction_image"
-
 # Make the image RGB?
 makergbtif = True
-
-
-# Prediction file names (prefix)
-predict_file = "prediction_file"
-
-# Output suffix files for validation metrics
-valoutput = "validation"
 
