@@ -43,7 +43,7 @@ def crop_mask_resample(input_file, output_file, sampling, extents):
     subprocess.check_call(cmd)
 
 
-def apply_mask(mask_file, output_file, jpeg):
+def apply_mask(mask_file, output_file, extents, jpeg):
     """
     Parameters
     ----------
@@ -53,12 +53,19 @@ def apply_mask(mask_file, output_file, jpeg):
     -------
 
     """
+    dir_name = os.path.dirname(mask_file)
+    cropped_mask = os.path.basename(mask_file).split('.')[0] + '_cropped.tif'
+    cropped_mask = os.path.join(dir_name, cropped_mask)
+
+    crop_mask_resample(mask_file, cropped_mask,
+                       sampling='near',
+                       extents=extents)
 
     cmd_build = ['gdalbuildvrt', '-separate',
                  '--config', 'GDAL_CACHEMAX', '150',
                  TMP_VRT,
                  TMP_OUT,
-                 mask_file
+                 cropped_mask
                  ]
     subprocess.check_call(cmd_build)
 
@@ -70,6 +77,7 @@ def apply_mask(mask_file, output_file, jpeg):
     # clean up
     os.remove(TMP_VRT)
     os.remove(TMP_OUT)
+    os.remove(cropped_mask)
 
     if jpeg:
         dir_name = os.path.dirname(output_file)
@@ -79,7 +87,7 @@ def apply_mask(mask_file, output_file, jpeg):
                    output_file,
                    jpeg_file]
         subprocess.check_call(cmd_jpg)
-        print('created jpg')
+        print('created', jpeg_file)
 
 
 if __name__ == '__main__':
@@ -138,6 +146,7 @@ if __name__ == '__main__':
     if options.mask_file:
         apply_mask(mask_file=options.mask_file,
                    output_file=options.output_file,
+                   extents=options.extents,
                    jpeg=True)
 
 
