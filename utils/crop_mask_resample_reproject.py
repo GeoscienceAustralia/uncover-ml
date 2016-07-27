@@ -83,7 +83,7 @@ def apply_mask(mask_file, output_file, extents, jpeg):
         dir_name = os.path.dirname(output_file)
         jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
         jpeg_file = os.path.join(dir_name, jpeg_file)
-        cmd_jpg = ['gdal_translate', '-of', 'JPEG', '-scale',
+        cmd_jpg = ['gdal_translate', '-ot', 'Byte', '-of', 'JPEG', '-scale',
                    output_file,
                    jpeg_file]
         subprocess.check_call(cmd_jpg)
