@@ -2,11 +2,12 @@
 
 import numpy as np
 
-from revrand.skl import StandardLinearModel
-from revrand.basis_functions import LinearBasis, RandomRBF, RandomLaplace, \
-    RandomCauchy, RandomMatern32, RandomMatern52
+from revrand import StandardLinearModel
+from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
+    RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
 from revrand.likelihoods import Gaussian, Bernoulli, Poisson
 from revrand.btypes import Parameter, Positive
+from revrand.utils import atleast_list
 
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
@@ -17,46 +18,23 @@ from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 class LinearModel(StandardLinearModel):
 
-    def __init__(self, basis, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=1000,
-                 centretargets=True):
-
-        self.centretargets = centretargets
-        super(LinearModel, self).__init__(basis, var, regulariser, tol, maxit)
-
     def fit(self, X, y):
-
-        if self.centretargets:
-            self.ymean = y.mean()
-            y -= self.ymean
 
         self._make_basis(X)
         return super(LinearModel, self).fit(X, y)
 
-    def predict(self, X):
-
-        Ey = super(LinearModel, self).predict(X)
-
-        if self.centretargets:
-            Ey += self.ymean
-
-        return Ey
-
     def predict_proba(self, X):
 
-        Ey, _, Vy = super(LinearModel, self).predict_proba(X)
-
-        if self.centretargets:
-            Ey += self.ymean
+        Ey, _, Vy = super(LinearModel, self).predict_moments(X)
 
         return Ey, Vy
 
     def entropy_reduction(self, X):
 
-        Phi = self.basis(X, *self.hypers)
-        pCp = [p.dot(self.C).dot(p.T) for p in Phi]
-        return 0.5 * (np.log(self.optvar + np.array(pCp))
-                      - np.log(self.optvar))
+        Phi = self.basis.transform(X, *atleast_list(self.hypers))
+        pCp = [p.dot(self.covariance).dot(p.T) for p in Phi]
+        MI = 0.5 * (np.log(self.var + np.array(pCp)) - np.log(self.var))
+        return MI
 
     def _make_basis(self, X):
 
@@ -66,29 +44,44 @@ class LinearModel(StandardLinearModel):
 class LinearReg(LinearModel):
 
     def __init__(self, onescol=True, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
+                 regulariser=Parameter(1., Positive()), tol=1e-8,
+                 maxiter=1000):
 
         basis = LinearBasis(onescol=onescol)
-        super(LinearReg, self).__init__(basis, var, regulariser, tol, maxit)
+        super(LinearReg, self).__init__(basis=basis,
+                                        var=var,
+                                        regulariser=regulariser,
+                                        tol=tol,
+                                        maxiter=maxiter
+                                        )
 
 
 class ApproxGP(LinearModel):
 
     def __init__(self, kern='rbf', nbases=200, lenscale=.1,
                  var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
+                 regulariser=Parameter(1., Positive()), tol=1e-8,
+                 maxiter=1000):
 
         self.nbases = nbases
         self.lenscale = lenscale if np.isscalar(lenscale) \
             else np.asarray(lenscale)
         self.kern = kern
-        super(ApproxGP, self).__init__(None, var, regulariser, tol, maxit)
+
+        super(ApproxGP, self).__init__(basis=None,
+                                       var=var,
+                                       regulariser=regulariser,
+                                       tol=tol,
+                                       maxiter=maxiter
+                                       )
 
     def _make_basis(self, X):
 
-        self.basis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
+        self.basis = basismap[self.kern](Xdim=X.shape[1],
+                                         nbases=self.nbases,
                                          lenscale_init=Parameter(self.lenscale,
-                                                                 Positive()))
+                                                                 Positive())
+                                         ) + BiasBasis()
 
 
 class RandomForestRegressor(RFR):
@@ -104,9 +97,10 @@ class RandomForestRegressor(RFR):
         for dt in self.estimators_:
             Vy += (dt.predict(X, *args) - Ey)**2
 
-        Vy /= len(self.estimators_) 
+        Vy /= len(self.estimators_)
 
         return Ey, Vy
+
 
 #
 # Helper functions
