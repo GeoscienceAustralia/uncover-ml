@@ -5,6 +5,35 @@ from __future__ import division
 import numpy as np
 
 
+from revrand.metrics import smse, mll, msll, lins_ccc
+from sklearn.metrics import r2_score, explained_variance_score
+
+
+def get_first_dim(Y):
+
+    return Y[:, 0] if Y.ndim > 1 else Y
+
+
+# Decorator to deal with probabilistic output for non-probabilistic scores
+def score_first_dim(func):
+
+    def newscore(y_true, y_pred, *args, **kwargs):
+
+        return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
+
+    return newscore
+
+metrics = {'r2_score': r2_score,
+           'expvar': explained_variance_score,
+           'smse': smse,
+           'lins_ccc': lins_ccc,
+           'mll': mll,
+           'msll': msll
+           }
+
+probscores = ['msll', 'mll']
+
+
 #
 # Data Partitioning
 #
