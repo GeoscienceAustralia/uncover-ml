@@ -93,8 +93,8 @@ algdict = {
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-# algorithm = 'bayesreg'
-algorithm = 'approxgp'
+algorithm = 'bayesreg'
+# algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
