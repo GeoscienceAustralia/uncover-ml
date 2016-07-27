@@ -1,9 +1,8 @@
 from __future__ import print_function
 """
-python utility to crop, resample, and mask, a larger ifg into samller ifg if
+python utility to crop, resample, reproject and optionally mask, a larger ifg into samller ifg if
 desired.
-
-example usage:
+example usage: python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif -e '-2362974.47956, -5097641.80634, 2251415.52044, -1174811.80634' -m mack_LCC.tif -s bilinear
 """
 from optparse import OptionParser
 import subprocess
@@ -44,6 +43,16 @@ def crop_mask_resample(input_file, output_file, sampling, extents):
 
 
 def apply_mask(mask_file, output_file, jpeg):
+    """
+    Parameters
+    ----------
+    mask_file: mask file path
+    output_file: output geotiff path
+    jpeg: boolean, whether to produce jpeg or not
+    -------
+
+    """
+
     cmd_build = ['gdalbuildvrt', '-separate',
                  '--config', 'GDAL_CACHEMAX', '150',
                  TMP_VRT,
