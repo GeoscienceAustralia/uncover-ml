@@ -1,4 +1,4 @@
-""" Model Spec Objects and ML algorithm serialisation. """
+"""Model Spec Objects and ML algorithm serialisation."""
 
 import numpy as np
 
