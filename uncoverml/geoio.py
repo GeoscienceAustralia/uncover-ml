@@ -3,7 +3,7 @@ from __future__ import division
 import os.path
 import logging
 import time
-import sys
+import json
 import pickle
 from functools import partial
 from abc import ABCMeta, abstractmethod
@@ -483,33 +483,11 @@ def create_image(x, shape, bbox, name, outputdir,
                     ystart = yend
 
 
-def load_training_data(files, targetsfile):
+def export_scores(scores, y, Ey, filename):
 
-    # Build full filenames
-    full_filenames = [os.path.abspath(f) for f in files]
-    log.debug("Input files: {}".format(full_filenames))
+    log.info("Scores")
+    for metric, score in scores.items():
+        log.info("{} = {}".format(metric, score))
 
-    # Verify the files are all present
-    files_ok = file_indices_okay(full_filenames)
-    if not files_ok:
-        log.fatal("Input file indices invalid!")
-        sys.exit(-1)
-
-    # Build the images
-    filename_dict = files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
-
-    # Load targets file
-    targets = load_targets(targetsfile)
-
-    # Extract the feature matrix from the targets
-    X_list = [load_and_cat(filename_dict[i]) for i in range(nchunks)]
-    data_vectors = [x for x in X_list if x is not None]
-    X = np.ma.concatenate(data_vectors, axis=0)
-
-    # Load the targets file to produce the y's and cross validation indices
-    ydict = points_from_hdf(targets, ['targets_sorted', 'FoldIndices_sorted'])
-    y = ydict['targets_sorted']
-    cv_indices = ydict['FoldIndices_sorted']
-
-    return (X, y, cv_indices)
+    with open(filename, 'w') as f:
+        json.dump(scores, f, sort_keys=True, indent=4)

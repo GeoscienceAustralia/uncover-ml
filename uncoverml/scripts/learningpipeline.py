@@ -94,41 +94,38 @@ def run_pipeline(config):
     # Use the function in mpiops.py
     ################################################
 
-    X_list = mpiops.comm.gather(x_out, root=0)
+    X_list = mpiops.comm.allgather(x_out)
+    X = np.ma.vstack(X_list)
+    models = {}
+
+    for algorithm, args in config.algdict.items():
+
+        model, scores, Ys, EYs = pipeline.learn_model(X,
+                                                      targets,
+                                                      algorithm,
+                                                      crossvalidate=True,
+                                                      algorithm_params=args
+                                                      )
+        models[algorithm] = model
+
+        # Outputs
+        if mpiops.chunk_index == 0:
+
+            outfile_scores = path.join(config.output_dir,
+                                       config.name + "_" + algorithm +
+                                       "_scores.json")
+
+            geoio.export_scores(scores, Ys, EYs, outfile_scores)
 
     if mpiops.chunk_index == 0:
 
-        X = np.ma.vstack(X_list)
-        models = {}
+        outfile_state = path.join(config.output_dir, config.name + ".state")
+        state_dict = {"models": models,
+                      "image_settings": image_settings,
+                      "compose_settings": compose_settings}
 
-        for algorithm, args in config.algdict.items():
-
-            model = pipeline.learn_model(X, targets, algorithm,
-                                         crossvalidate=True,
-                                         algorithm_params=args)
-
-            scores, Ys, EYs = pipeline.validate(X, targets, model)
-
-            log.info("Scores")
-            for metric, score in scores.items():
-                log.info("{} = {}".format(metric, score))
-
-            models[algorithm] = model
-
-            # Outputs
-            outfile_scores = path.join(config.output_dir,
-                                       config.name + "_scores.json")
-            outfile_state = path.join(config.output_dir,
-                                      config.name + ".state")
-            with open(outfile_scores, 'w') as f:
-                json.dump(scores, f, sort_keys=True, indent=4)
-
-            state_dict = {"models": model,
-                          "image_settings": image_settings,
-                          "compose_settings": compose_settings}
-
-            with open(outfile_state, 'wb') as f:
-                pickle.dump(state_dict, f)
+        with open(outfile_state, 'wb') as f:
+            pickle.dump(state_dict, f)
 
     log.info("Finished!")
 

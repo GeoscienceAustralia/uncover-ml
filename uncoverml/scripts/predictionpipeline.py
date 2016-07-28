@@ -44,8 +44,7 @@ def extract(image_settings, config):
 
 def run_pipeline(config):
 
-    outfile_state = path.join(config.output_dir,
-                              config.name + ".state")
+    outfile_state = path.join(config.output_dir, config.name + ".state")
     with open(outfile_state, 'rb') as f:
         state_dict = pickle.load(f)
 

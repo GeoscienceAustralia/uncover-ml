@@ -7,12 +7,15 @@ Learn the Parameters of a machine learning model
 import logging
 import os.path
 import pickle
+import sys
+import json
 
+import numpy as np
 import click as cl
 import click_log as cl_log
 
+from uncoverml import geoio
 from uncoverml import mpiops, pipeline
-from uncoverml.geoio import load_training_data
 from uncoverml.models import modelmaps
 
 
@@ -36,18 +39,50 @@ def main(targetsfile, files, algorithm, algopts, outputdir, crossvalidate):
     Learn the Parameters of a machine learning model.
     """
 
-    # This runs on the root node only
-    if mpiops.chunk_index != 0:
-        return
+    score_outfile = os.path.join(outputdir, "{}.json".format(algorithm))
+    model_outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
 
-    # Get all of the required data and learn the required models
-    X, y, cv_indices = load_training_data(files, targetsfile)
-    models = pipeline.learn_model(X, y,
-                                  algorithm,
-                                  cv_indices if crossvalidate else None,
-                                  algopts)
+    # build full filenames
+    full_filenames = [os.path.abspath(f) for f in files]
+    log.debug("Input files: {}".format(full_filenames))
 
-    # Pickle and store the models
-    outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
-    with open(outfile, 'wb') as f:
-        pickle.dump(models, f)
+    # verify the files are all present
+    files_ok = geoio.file_indices_okay(full_filenames)
+    if not files_ok:
+        log.fatal("Input file indices invalid!")
+        sys.exit(-1)
+
+    # build the images
+    filename_dict = geoio.files_by_chunk(full_filenames)
+
+    # Parse algorithm
+    if algorithm not in modelmaps:
+        log.fatal("Invalid algorthm specified")
+        sys.exit(-1)
+
+    # Parse all algorithm options
+    if algopts is not None:
+        args = json.loads(algopts)
+    else:
+        args = {}
+
+    # Load targets file
+    targets = geoio.load_targets(targetsfile)
+
+    # Read ALL the features in here, and learn on a single machine
+    X_node = geoio.load_and_cat(filename_dict[mpiops.chunk_index])
+    X_list = mpiops.comm.allgather(X_node)
+    X = np.ma.vstack(X_list)
+
+    model, scores, Ys, EYs = pipeline.learn_model(X,
+                                                  targets,
+                                                  algorithm,
+                                                  crossvalidate,
+                                                  args)
+
+    if mpiops.chunk_index == 0:
+        geoio.export_scores(scores, Ys, EYs, score_outfile)
+
+        # Pickle and store the models
+        with open(model_outfile, 'wb') as f:
+            pickle.dump(model, f)

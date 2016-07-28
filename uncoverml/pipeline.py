@@ -1,4 +1,3 @@
-import json
 import logging
 
 import numpy as np
@@ -47,6 +46,7 @@ def compose_features(x, settings):
 def learn_model(X, targets, algorithm, crossvalidate=True,
                 algorithm_params=None):
 
+    model = modelmaps[algorithm](**algorithm_params)
     y = targets.observations
     cv_indices = targets.folds
 
@@ -54,69 +54,61 @@ def learn_model(X, targets, algorithm, crossvalidate=True,
     if algorithm not in modelmaps:
         exit("Invalid algorthm specified")
 
-    # Train the master model and store it
-    model = modelmaps[algorithm](**algorithm_params)
-    apply_multiple_masked(model.fit, (X, y))
-    models = dict()
-    models['master'] = model
-
     # Train the cross validation models if necessary
     if crossvalidate:
 
-        # Populate the validation indices
-        models['cross_validation'] = []
-        models['cv_indices'] = cv_indices
+        # Split folds over workers
+        fold_list = np.arange(targets.nfolds)
+        fold_node = np.array_split(fold_list,
+                                   mpiops.chunks)[mpiops.chunk_index]
 
-        # Train each model and store it
-        for fold in range(max(cv_indices) + 1):
+        y_pred = {}
+        y_true = {}
+        fold_scores = {}
 
-            # Train a model for each row
-            train_mask = [cv_indices != fold]
-            model = modelmaps[algorithm](**algorithm_params)
-            apply_multiple_masked(model.fit, (X[train_mask], y[train_mask]))
+        # Train and score on each fold
+        for fold in fold_node:
 
-            # Store the model parameters
-            models['cross_validation'].append(model)
+            train_mask = cv_indices != fold
+            test_mask = ~ train_mask
 
-    return models
+            y_k_train = y[train_mask]
+            apply_multiple_masked(model.fit, (X[train_mask], y_k_train))
+            y_k_pred = predict(X[test_mask], model)
+            y_k_test = y[test_mask]
+
+            y_pred[fold] = y_k_pred
+            y_true[fold] = y_k_test
+
+            fold_scores[fold] = calculate_validation_scores(y_k_test,
+                                                            y_k_train,
+                                                            y_k_pred)
+    # Train the master model
+    if mpiops.chunk_index == 0:
+        apply_multiple_masked(model.fit, (X, y))
+
+    y_pred = join_dicts(mpiops.comm.gather(y_pred, root=0))
+    y_true = join_dicts(mpiops.comm.gather(y_true, root=0))
+    scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
+
+    if mpiops.chunk_index == 0:
+        y_true = np.concatenate([y_true[i] for i in range(targets.nfolds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(targets.nfolds)])
+        valid_metrics = scores[0].keys()
+        scores = {m: np.mean([d[m] for d in scores.values()]) for m in
+                  valid_metrics}
+
+    return model, scores, y_true, y_pred
 
 
-def validate(X, targets, models):
+def join_dicts(dicts):
 
-    y = targets.observations
-    cv_indices = targets.folds
+    if dicts is None:
+        return
 
-    # Get all of the cross validation models
-    cv_models = models['cross_validation']
-    # cv_indices = models['cv_indices']
+    d = {k: v for D in dicts for k, v in D.items()}
 
-    # Use the models to determine the predicted y's
-    y_true = None
-    y_pred = None
-    score_sum = {m: 0 for m in metrics.keys()}
-    for k, model in enumerate(cv_models):
-
-        # Perform the prediction for the Kth index
-        y_k_test = y[cv_indices == k]
-        y_k_train = y[cv_indices != k]
-        # y_k_pred = predict(X, model)[cv_indices == k, :]
-        y_k_pred = predict(X[cv_indices == k, :], model)
-
-        # Store the reordered versions for the y-y plot
-        y_true = y_k_test if k == 0 else np.append(y_true, y_k_test)
-        y_pred = y_k_pred if k == 0 else np.append(y_pred, y_k_pred, axis=0)
-
-        # Use the expected y's to display the validation scores
-        scores = calculate_validation_scores(y_k_test,
-                                             y_k_train,
-                                             y_k_pred)
-        score_sum = {m: score_sum[m] + score for (m, score) in scores.items()}
-
-    # Average the scores from each test and store them
-    folds = len(cv_models)
-    scores = {key: score / folds for key, score in score_sum.items()}
-
-    return scores, y_true, y_pred
+    return d
 
 
 def predict(data, model, interval=None):
