@@ -1,9 +1,8 @@
 from __future__ import print_function
 """
 python utility to crop, resample, reproject and optionally mask, a larger ifg into smaller ifg if desired.
-example usage: python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif -e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634' -m mack_LCC.tif -s bilinear
-
-Also outputs a jpeg file corresponding to the final cropped, resampled, reprojectd and masked geotiff.
+example usage: python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif -e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634' -m mack_LCC.tif -r bilinear -j 0
+Also optionally outputs a jpeg file corresponding to the final cropped, resampled, reprojectd and masked geotiff.
 """
 from optparse import OptionParser
 import subprocess
@@ -12,13 +11,12 @@ import os
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
-TMP_OUT = 'tmp_out.tif'
-TMP_VRT = 'tmp.vrt'
+MASK_VALUES_TO_KEEP = 1
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
 
 
-def crop_mask_resample(input_file, output_file, sampling, extents):
+def crop_reproject_resample(input_file, output_file, sampling, extents):
     """
     The -wm flag sets the amount of memory used for the
     big working buffers (the chunks) when warping.  But down within GDAL
@@ -59,27 +57,27 @@ def apply_mask(mask_file, output_file, extents, jpeg):
     cropped_mask = os.path.basename(mask_file).split('.')[0] + '_cropped.tif'
     cropped_mask = os.path.join(dir_name, cropped_mask)
 
-    crop_mask_resample(mask_file, cropped_mask,
-                       sampling='near',
-                       extents=extents)
+    crop_reproject_resample(mask_file, cropped_mask,
+                            sampling='near',
+                            extents=extents)
 
-    cmd_build = ['gdalbuildvrt', '-separate',
-                 TMP_VRT,
-                 TMP_OUT,
-                 cropped_mask
-                 ] + COMMON
-    subprocess.check_call(cmd_build)
+    mask_ds = gdal.Open(cropped_mask, gdal.GA_ReadOnly)
+    mask_data = mask_ds.GetRasterBand(1).ReadAsArray()
+    mask = mask_data != MASK_VALUES_TO_KEEP
+    mask_ds = None  # close dataset
 
-    cmd_mask = ['gdal_translate', '-b', '1', '-mask', '2',
-                '--config', 'GDAL_CACHEMAX', '150',
-                TMP_VRT,
-                output_file] + COMMON + TILES
-    subprocess.check_call(cmd_mask)
+    out_ds = gdal.Open(output_file, gdal.GA_Update)
+    out_band = out_ds.GetRasterBand(1)
+    out_data = out_band.ReadAsArray()
+    no_data_value = out_band.GetNoDataValue()
+    out_data[mask] = no_data_value
+    out_band.WriteArray(out_data)
+    out_ds = None  # close dataset and flush cache
+
     # clean up
-    os.remove(TMP_VRT)
-    os.remove(TMP_OUT)
     os.remove(cropped_mask)
-
+    print('removed intermediate cropped mask file', cropped_mask)
+    print('created', output_file)
     if jpeg:
         dir_name = os.path.dirname(output_file)
         jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
@@ -94,11 +92,13 @@ def apply_mask(mask_file, output_file, extents, jpeg):
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_file -o output_file'
                                 ' -e extents\n'
-                                ' -s sampling (optional)\n'
+                                ' -r resampling (optional)\n'
                                 ' -m mask_file (optional)\n'
+                                ' -j jpeg_file (optional)\n'
                                 'Crop, resample, reproject and '
                                 'optionally mask a larger '
-                                'interferrogram into smaller ones')
+                                'interferrogram into smaller ones.'
+                                'Optionally, create a outout jpeg')
     parser.add_option('-i', '--input', type=str, dest='input_file',
                       help='name of input interferrogram')
 
@@ -113,8 +113,11 @@ if __name__ == '__main__':
                            'needs to be a list of 4 floats with spaces\n'
                            'example: '
                            "-e '150.91 -34.229999976 150.949166651 -34.17'")
-    parser.add_option('-s', '--sampling', type=str, dest='sampling',
-                      help='sampling algorithm to use')
+    parser.add_option('-r', '--resampling', type=str, dest='sampling',
+                      help='optional resampling algorithm to use')
+
+    parser.add_option('-j', '--jpeg', type=int, dest='jpeg',
+                      help='optional jpeg conversion. 0=no jpeg, 1=jpeg')
 
     options, args = parser.parse_args()
 
@@ -130,8 +133,12 @@ if __name__ == '__main__':
     if not options.extents:  # if filename is not given
         parser.error('Crop extents must be provided')
 
-    extents = [float(t) for t in options.extents.split()]
+    if not options.jpeg:  # if filename is not given
+        options.jpeg = False
+    else:
+        options.jpeg = True
 
+    extents = [float(t) for t in options.extents.split()]
     if len(extents) != 4:
         raise AttributeError('extents to be used for the cropped file.\n'
                              'needs to be a list or tuples of 4 floats\n'
@@ -139,16 +146,13 @@ if __name__ == '__main__':
                              "--extents '-2362974.47956 -5097641.80634 "
                              "2251415.52044 -1174811.80634'")
     options.extents = [str(s) for s in extents]
-    crop_mask_resample(input_file=options.input_file,
-                       output_file=TMP_OUT,
-                       sampling=options.sampling,
-                       extents=options.extents)
+    crop_reproject_resample(input_file=options.input_file,
+                            output_file=options.output_file,
+                            sampling=options.sampling,
+                            extents=options.extents)
 
     if options.mask_file:
         apply_mask(mask_file=options.mask_file,
                    output_file=options.output_file,
                    extents=options.extents,
-                   jpeg=True)
-
-
-
+                   jpeg=options.jpeg)

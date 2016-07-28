@@ -9,4 +9,4 @@ module load python/2.7.6
 module load python/2.7.6-matplotlib
 module load gdal/1.11.1-python
 
-python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif  -m mack_LCC.tif -s bilinear -e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'
+python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif  -m mack_LCC.tif -r bilinear -e '-821597 -4530418 1431287 -4174316'
