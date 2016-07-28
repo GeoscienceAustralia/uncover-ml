@@ -14,6 +14,8 @@ TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
 TMP_OUT = 'tmp_out.tif'
 TMP_VRT = 'tmp.vrt'
+COMMON = ['--config', 'GDAL_CACHEMAX', '200']
+TILES = ['-co', 'TILED=YES']
 
 
 def crop_mask_resample(input_file, output_file, sampling, extents):
@@ -33,12 +35,12 @@ def crop_mask_resample(input_file, output_file, sampling, extents):
     """
     # TODO: add extents checking between input_file and extents
     cmd = ['gdalwarp', '-overwrite', '-multi'] + \
+          COMMON + TILES + \
           ['-t_srs'] + [TSRS] + \
           ['-tr'] + OUTPUT_RES +  \
           ['-te'] + extents + \
           ['-r'] + [sampling] + \
-          ['-wm'] + ['100'] + \
-          ['--config', 'GDAL_CACHEMAX', '150']
+          ['-wm'] + ['200']
     cmd += [input_file, output_file]
     subprocess.check_call(cmd)
 
@@ -62,17 +64,16 @@ def apply_mask(mask_file, output_file, extents, jpeg):
                        extents=extents)
 
     cmd_build = ['gdalbuildvrt', '-separate',
-                 '--config', 'GDAL_CACHEMAX', '150',
                  TMP_VRT,
                  TMP_OUT,
                  cropped_mask
-                 ]
+                 ] + COMMON
     subprocess.check_call(cmd_build)
 
     cmd_mask = ['gdal_translate', '-b', '1', '-mask', '2',
                 '--config', 'GDAL_CACHEMAX', '150',
                 TMP_VRT,
-                output_file]
+                output_file] + COMMON + TILES
     subprocess.check_call(cmd_mask)
     # clean up
     os.remove(TMP_VRT)
@@ -85,7 +86,7 @@ def apply_mask(mask_file, output_file, extents, jpeg):
         jpeg_file = os.path.join(dir_name, jpeg_file)
         cmd_jpg = ['gdal_translate', '-ot', 'Byte', '-of', 'JPEG', '-scale',
                    output_file,
-                   jpeg_file]
+                   jpeg_file] + COMMON
         subprocess.check_call(cmd_jpg)
         print('created', jpeg_file)
 
