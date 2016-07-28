@@ -15,10 +15,16 @@ from sklearn.linear_model import ARDRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
+# from .transforms import KDE
+
 
 class LinearModel(StandardLinearModel):
 
     def fit(self, X, y):
+
+        # self.tform = KDE()
+        # self.tform.fit(y)
+        # y_t = self.tform.transform(y)
 
         self._make_basis(X)
         return super(LinearModel, self).fit(X, y)
@@ -26,6 +32,8 @@ class LinearModel(StandardLinearModel):
     def predict_proba(self, X):
 
         Ey, _, Vy = super(LinearModel, self).predict_moments(X)
+        # Ey = self.tform.itransform(Ey)
+        # NOTE: How do we transform Vy??
 
         return Ey, Vy
 
