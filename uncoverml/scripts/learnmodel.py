@@ -1,4 +1,3 @@
-
 """
 Learn the Parameters of a machine learning model
 
@@ -6,19 +5,14 @@ Learn the Parameters of a machine learning model
 """
 
 import logging
-
 import os.path
-
 import pickle
 
 import click as cl
-
 import click_log as cl_log
 
 from uncoverml import mpiops, pipeline
-
 from uncoverml.geoio import load_training_data
-
 from uncoverml.models import modelmaps
 
 

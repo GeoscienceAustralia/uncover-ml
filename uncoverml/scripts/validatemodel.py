@@ -5,19 +5,14 @@ Run cross-validation metrics on a model prediction
 """
 
 import json
-
 import logging
-
 import pickle
 
 import click as cl
-
 import click_log as cl_log
 
+from uncoverml.geoio import load_training_data
 from uncoverml import mpiops, pipeline
-
-from uncoverml.scripts.learnmodel import load_training_data
-
 from uncoverml.validation import y_y_plot
 
 log = logging.getLogger(__name__)

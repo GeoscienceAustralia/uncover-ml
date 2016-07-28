@@ -1,20 +1,22 @@
 from __future__ import division
-from abc import ABCMeta, abstractmethod
-import pickle
-from functools import partial
 
-import rasterio
 import os.path
-import numpy as np
-import shapefile
-import tables as hdf
 import logging
 import time
 import sys
+import pickle
+from functools import partial
+from abc import ABCMeta, abstractmethod
+
+import rasterio
+import numpy as np
+import shapefile
+import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import datatypes
+
 
 log = logging.getLogger(__name__)
 

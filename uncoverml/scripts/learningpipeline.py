@@ -91,31 +91,31 @@ def run_pipeline(config):
 
     ################################################
     # TODO: Import all of the data once here
-    # Use the function in mpiops.py 
+    # Use the function in mpiops.py
     ################################################
 
-    models = {}
-    for algorithm, args in config.algdict.items():
+    X_list = mpiops.comm.gather(x_out, root=0)
 
-        X_list = mpiops.comm.gather(x_out, root=0)
-        model = None
-        if mpiops.chunk_index == 0:
-            model = pipeline.learn_model(X_list, targets, algorithm,
+    if mpiops.chunk_index == 0:
+
+        X = np.ma.vstack(X_list)
+        models = {}
+
+        for algorithm, args in config.algdict.items():
+
+            model = pipeline.learn_model(X, targets, algorithm,
                                          crossvalidate=True,
                                          algorithm_params=args)
-        model = mpiops.comm.bcast(model, root=0)
-        models[algorithm] = model
 
-        # Test the model
-        log.info("Predicting targets for {}.".format(algorithm))
-        y_star = pipeline.predict(x_out, model, interval=None)
+            scores, Ys, EYs = pipeline.validate(X, targets, model)
 
-        Y_list = mpiops.comm.gather(y_star, root=0)
-        if mpiops.chunk_index == 0:
-            scores, Ys, EYs = pipeline.validate(targets, Y_list, cvindex=0)
+            log.info("Scores")
+            for metric, score in scores.items():
+                log.info("{} = {}".format(metric, score))
 
-        # Outputs
-        if mpiops.chunk_index == 0:
+            models[algorithm] = model
+
+            # Outputs
             outfile_scores = path.join(config.output_dir,
                                        config.name + "_scores.json")
             outfile_state = path.join(config.output_dir,
@@ -123,13 +123,14 @@ def run_pipeline(config):
             with open(outfile_scores, 'w') as f:
                 json.dump(scores, f, sort_keys=True, indent=4)
 
-            state_dict = {"models": models,
+            state_dict = {"models": model,
                           "image_settings": image_settings,
                           "compose_settings": compose_settings}
+
             with open(outfile_state, 'wb') as f:
                 pickle.dump(state_dict, f)
 
-        log.info("Finished!")
+    log.info("Finished!")
 
 
 def main():
