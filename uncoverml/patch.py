@@ -3,10 +3,10 @@
 from __future__ import division
 
 import numpy as np
-from uncoverml import geoio
+import skimage
 
 
-def grid_patches(image, pwidth, pstride=1):
+def grid_patches(image, pwidth):
     """
     Generate (overlapping) patches from an image. This function extracts square
     patches from an image in an overlapping, dense grid.
@@ -20,26 +20,26 @@ def grid_patches(image, pwidth, pstride=1):
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
             = 2 gives a 5x5 patch etc. The formula for calculating the full
             patch width is pwidth * 2 + 1.
-        pstride: int, optional
-            the stride (in pixels) between successive patches.
-    Yields
-    ------
+    Returns
+    -------
         patch: ndarray
-            An image patch of shape (psize, psize, channels,), where
+            An image of shape (x, y, channels*psize*psize), where
             psize = pwidth * 2 + 1
     """
     # Check and get image dimensions
-    Ih, Iw, Ic = _checkim(image)
-    psize = pwidth * 2 + 1
-
-    # Extract the patches and get the patch centres
-    for x in _spacing(Ih, psize, pstride):           # Rows
-        patchx = slice(x, x + psize)
-
-        for y in _spacing(Iw, psize, pstride):       # Cols
-            patchy = slice(y, y + psize)
-            patch = image[patchx, patchy]
-            yield patch
+    window = (2 * pwidth + 1, 2 * pwidth + 1, 1)
+    if image.ndim == 3:
+        x = skimage.util.view_as_windows(image, window_shape=window, step=1)
+        # window_z, img_x, img_y, window_x, window_y, channel
+        x = x.transpose((5, 0, 1, 3, 4, 2))[0]
+        x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
+    elif image.ndim == 2:
+        window = window[0:2]
+        x = skimage.util.view_as_windows(image, window_shape=window, step=1)
+        x = x.reshape(-1, x.shape[2], x.shape[3])
+    else:
+        raise ValueError("image must be 2d or 3d!")
+    return x
 
 
 def point_patches(image, pwidth, points):
@@ -136,13 +136,10 @@ def _patches_to_array(patches, patch_mask, data_dtype):
 
 def _all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
-
     patches = grid_patches(data, patchsize)
     patch_mask = grid_patches(mask, patchsize)
-
-    patch_array = _patches_to_array(patches, patch_mask, data_dtype)
-
-    return patch_array
+    result = np.ma.masked_array(data=patches, mask=patch_mask)
+    return result
 
 
 def load(image, patchsize, targets=None):

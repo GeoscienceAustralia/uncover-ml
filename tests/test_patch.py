@@ -5,12 +5,12 @@ from uncoverml import patch
 
 def test_grid_patch(make_multi_patch):
 
-    timg, pwidth, pstride, tpatch, tx, ty = make_multi_patch
+    timg, pwidth, tpatch, tx, ty = make_multi_patch
 
     # patches = [p, x, y) for p, x, y
     #            in patch.grid_patches(timg, pwidth)]
     # ps, cxs, cys = zip(*patches)
-    patches = np.array(list(patch.grid_patches(timg, pwidth, pstride)))
+    patches = patch.grid_patches(timg, pwidth)
 
     assert np.allclose(patches, tpatch)
 
