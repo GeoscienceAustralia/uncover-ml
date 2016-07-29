@@ -7,7 +7,7 @@ from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df
 from uncoverml.image import Image
 from uncoverml.models import apply_masked, apply_multiple_masked, modelmaps
-from uncoverml.validation import calculate_validation_scores, metrics
+from uncoverml.validation import calculate_validation_scores
 
 
 log = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ def extract_transform(x, x_sets):
     return x
 
 
+@profile
 def extract_features(image_source, targets, settings):
 
     image = Image(image_source, mpiops.chunk_index,
