@@ -50,37 +50,41 @@ def point_patches(image, pwidth, points):
     ----------
         image: ndarray
             an array of shape (x, y) or (x, y, channels).
-        points: ndarray
-           of shape (N, 2) where there are N points, each with an x and y
-           coordinate of the patch centre within the image.
         pwidth: int
             the half-width of the square patches to extract, in pixels. E.g.
             pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
             = 2 gives a 5x5 patch etc. The formula for calculating the full
             patch width is pwidth * 2 + 1.
+        points: ndarray
+           of shape (N, 2) where there are N points, each with an x and y
+           coordinate of the patch centre within the image.
 
-    Yields
-    ------
-        patch: ndarray
-            An image patch of shape (psize, psize, channels,), where
+    Returns
+    -------
+        patches: ndarray
+            An image patch array of shape (N, psize, psize, channels), where
             psize = pwidth * 2 + 1
     """
+    points_x = points[:, 0]
+    points_y = points[:, 1]
+    npixels = points.shape[0]
+    side = 2 * pwidth + 1
+    offsets = np.mgrid[0:side, 0:side].transpose((1, 2, 0)).reshape((-1, 2))
+    # centre the patches on the middle pixel
+    dtype = image.dtype
 
-    # Check and get image dimensions
-    Ih, Iw, Ic = _checkim(image)
+    if image.ndim == 3:
+        nchannels = image.shape[2]
+        output = np.empty((npixels, side, side, nchannels), dtype=dtype)
+    elif image.ndim == 2:
+        output = np.empty((npixels, side, side), dtype=dtype)
+    else:
+        raise ValueError("Image must be 2D or 3D")
 
-    # Make sure points are within bounds of image taking into account psize
-    left = top = pwidth
-    bottom = Ih - pwidth
-    right = Iw - pwidth
-
-    if any(top > points[:, 0]) or any(bottom < points[:, 0]) \
-            or any(left > points[:, 1]) or any(right < points[:, 1]):
-        raise ValueError("Points are outside of image bounds")
-
-    return (image[slice(p[0] - pwidth, p[0] + pwidth + 1),
-                  slice(p[1] - pwidth, p[1] + pwidth + 1)]
-            for p in points)
+    for x, y in offsets:
+        output[:, x, y] = image[points_x + x - pwidth,
+                                points_y + y - pwidth]
+    return output
 
 
 def _spacing(dimension, psize, pstride):
@@ -124,16 +128,6 @@ def _image_to_data(image):
     return data, mask, data_dtype
 
 
-def _patches_to_array(patches, patch_mask, data_dtype):
-    """
-    converts the patch and mask iterators into a masked array
-    """
-    patch_data = np.array(list(patches), dtype=data_dtype)
-    mask_data = np.array(list(patch_mask), dtype=bool)
-    result = np.ma.masked_array(data=patch_data, mask=mask_data)
-    return result
-
-
 def _all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
     patches = grid_patches(data, patchsize)
@@ -162,7 +156,7 @@ def _patches_at_target(image, patchsize, targets):
         pixels = image.lonlat2pix(valid_lonlats)
         patches = point_patches(data, patchsize, pixels)
         patch_mask = point_patches(mask, patchsize, pixels)
-        patch_array = _patches_to_array(patches, patch_mask, data_dtype)
+        patch_array = np.ma.masked_array(data=patches, mask=patch_mask)
 
     else:
         patch_array = None

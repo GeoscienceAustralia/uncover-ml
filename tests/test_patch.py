@@ -20,5 +20,5 @@ def test_point_patches(make_points):
     timg, pwidth, points, tpatch = make_points
 
     patches = np.array(list(patch.point_patches(timg, pwidth, points)))
-
+    import IPython; IPython.embed()
     assert np.allclose(patches, tpatch)
