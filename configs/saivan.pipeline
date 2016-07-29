@@ -15,7 +15,7 @@ from os import path
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+data_dir = path.relpath('../GA-cover')
 # data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
 # data_dir = "/short/ge3/jrw547/GA-cover"
@@ -68,7 +68,7 @@ pca_frac = 0.8
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {},
+    "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
@@ -76,7 +76,7 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 100},
@@ -99,9 +99,9 @@ algdict = {
 #
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
-# algorithm = 'approxgp'
+algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Quantiles

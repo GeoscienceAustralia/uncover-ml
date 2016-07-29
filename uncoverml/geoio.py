@@ -1,20 +1,22 @@
 from __future__ import division
-from abc import ABCMeta, abstractmethod
-import pickle
-from functools import partial
 
-import rasterio
 import os.path
-import numpy as np
-# from affine import Affine
-import shapefile
-import tables as hdf
 import logging
 import time
+import json
+import pickle
+from functools import partial
+from abc import ABCMeta, abstractmethod
+
+import rasterio
+import numpy as np
+import shapefile
+import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import datatypes
+
 
 log = logging.getLogger(__name__)
 
@@ -213,7 +215,7 @@ class RasterioImageSource(ImageSource):
                 self._pixsize_y *= -1
 
     def data(self, min_x, max_x, min_y, max_y):
-        
+
         if self._y_flipped:
             min_y_new = self._full_res[1] - max_y
             max_y_new = self._full_res[1] - min_y
@@ -479,3 +481,13 @@ def create_image(x, shape, bbox, name, outputdir,
                     index_list = list(range(1, n_bands + 1))
                     f.write(data, window=window, indexes=index_list)
                     ystart = yend
+
+
+def export_scores(scores, y, Ey, filename):
+
+    log.info("Scores")
+    for metric, score in scores.items():
+        log.info("{} = {}".format(metric, score))
+
+    with open(filename, 'w') as f:
+        json.dump(scores, f, sort_keys=True, indent=4)

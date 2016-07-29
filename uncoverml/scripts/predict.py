@@ -44,7 +44,7 @@ def main(model, files, outputdir, predictname, quantiles):
 
     # Load model
     with open(model, 'rb') as f:
-        model = pickle.load(f)
+        model = pickle.load(f)['master']
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
