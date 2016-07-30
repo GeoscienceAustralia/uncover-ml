@@ -21,7 +21,6 @@ def extract_transform(x, x_sets):
     return x
 
 
-@profile
 def extract_features(image_source, targets, settings):
 
     image = Image(image_source, mpiops.chunk_index,
