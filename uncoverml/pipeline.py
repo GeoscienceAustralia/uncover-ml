@@ -43,6 +43,14 @@ def compose_features(x, settings):
     return x, settings
 
 
+class ModelOutput:
+    def __init__(self, model, scores, y_true, y_pred):
+        self.model = model
+        self.scores = scores
+        self.y_true = y_true
+        self.y_pred = y_pred
+
+
 def learn_model(X, targets, algorithm, crossvalidate=True,
                 algorithm_params=None):
 
@@ -98,7 +106,8 @@ def learn_model(X, targets, algorithm, crossvalidate=True,
         scores = {m: np.mean([d[m] for d in scores.values()]) for m in
                   valid_metrics}
 
-    return model, scores, y_true, y_pred
+    result = ModelOutput(model, scores, y_true, y_pred)
+    return result
 
 
 def join_dicts(dicts):

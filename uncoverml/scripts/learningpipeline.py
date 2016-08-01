@@ -10,6 +10,8 @@ from os import path, mkdir, listdir
 from glob import glob
 import sys
 import json
+import copy
+from itertools import product
 
 import numpy as np
 
@@ -73,6 +75,7 @@ def run_pipeline(config):
                                     config.name + "_targets.hdf5")
         mpiops.run_once(geoio.write_targets, targets, outfile_targets)
 
+    # keys for these two are the filenames
     extracted_chunks = extract(targets, config)
     image_settings = {k: v["settings"] for k, v in extracted_chunks.items()}
 
@@ -86,40 +89,62 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
+    algorithm = 'svr'
+    rank_features(extracted_chunks, targets, algorithm, compose_settings,
+                  config)
+
+
+def rank_features(extracted_chunks, targets, algorithm, compose_settings,
+                  config):
+
+    feature_scores = {}
+    for name in extracted_chunks:
+        dict_missing = dict(extracted_chunks)
+        del dict_missing[name]
+
+        fname = name.rstrip(".tif")
+        log.info("Computing {} feature importance of {}".format(algorithm,
+                                                                fname))
+
+        compose_missing = copy.deepcopy(compose_settings)
+        out = predict_and_score(dict_missing, targets, algorithm,
+                                compose_missing, config)
+        feature_scores[fname] = out
+
+    # get the different types of score from one of the outputs
+    # TODO make this not suck
+    measures = list(next(feature_scores.values().__iter__()).scores.keys())
+    feature_list = sorted(feature_scores.keys())
+    output_array = np.empty((len(measures), len(feature_list)))
+    for m, measure in enumerate(measures):
+        for f, feature in enumerate(feature_list):
+            output_array[m, f] = feature_scores[feature].scores[measure]
+
+    return measures, feature_list, output_array
+
+
+def dump_feature_ranks(measures, features, score_array, filename):
+    pass
+
+
+def predict_and_score(extracted_chunks, targets, algorithm,
+                      compose_settings, config):
+
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
-    ################################################
-    # TODO: Import all of the data once here
-    # Use the function in mpiops.py
-    ################################################
-
     X_list = mpiops.comm.allgather(x_out)
     X = np.ma.vstack(X_list)
-    models = {}
+    args = config.algdict[algorithm]
+    out = pipeline.learn_model(X, targets, algorithm, crossvalidate=True,
+                               algorithm_params=args)
+    return out
 
-    for algorithm, args in config.algdict.items():
 
-        model, scores, Ys, EYs = pipeline.learn_model(X,
-                                                      targets,
-                                                      algorithm,
-                                                      crossvalidate=True,
-                                                      algorithm_params=args
-                                                      )
-        models[algorithm] = model
-
-        # Outputs
-        if mpiops.chunk_index == 0:
-
-            outfile_scores = path.join(config.output_dir,
-                                       config.name + "_" + algorithm +
-                                       "_scores.json")
-
-            geoio.export_scores(scores, Ys, EYs, outfile_scores)
-
+def dump_state(config, models, image_settings, compose_settings):
     if mpiops.chunk_index == 0:
-
-        outfile_state = path.join(config.output_dir, config.name + ".state")
+        outfile_state = path.join(config.output_dir,
+                                  config.name + ".state")
         state_dict = {"models": models,
                       "image_settings": image_settings,
                       "compose_settings": compose_settings}
@@ -127,8 +152,19 @@ def run_pipeline(config):
         with open(outfile_state, 'wb') as f:
             pickle.dump(state_dict, f)
 
-    log.info("Finished!")
 
+def dump_outputs(outputs, config):
+
+    for algorithm, model_out in outputs.items():
+        # Outputs
+        if mpiops.chunk_index == 0:
+            outfile_scores = path.join(config.output_dir,
+                                       config.name + "_" + algorithm +
+                                       "_scores.json")
+            geoio.export_scores(model_out.scores,
+                                model_out.y_true,
+                                model_out.y_pred,
+                                outfile_scores)
 
 def main():
     if len(sys.argv) != 2:
