@@ -86,6 +86,7 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
+    # import IPython; IPython.embed()
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
