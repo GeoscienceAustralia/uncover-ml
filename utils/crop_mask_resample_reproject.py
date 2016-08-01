@@ -8,6 +8,7 @@ from optparse import OptionParser
 import subprocess
 from osgeo import gdal
 import os
+import tempfile
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
@@ -53,10 +54,7 @@ def apply_mask(mask_file, output_file, extents, jpeg):
     -------
 
     """
-    dir_name = os.path.dirname(mask_file)
-    cropped_mask = os.path.basename(mask_file).split('.')[0] + '_cropped.tif'
-    cropped_mask = os.path.join(dir_name, cropped_mask)
-
+    cropped_mask = tempfile.mktemp(suffix='.tif')
     crop_reproject_resample(mask_file, cropped_mask,
                             sampling='near',
                             extents=extents)
