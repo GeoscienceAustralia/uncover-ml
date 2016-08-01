@@ -70,7 +70,8 @@ def apply_mask(mask_file, tmp_output_file, output_file, extents, jpeg):
     out_band = out_ds.GetRasterBand(1)
     out_data = out_band.ReadAsArray()
     no_data_value = out_band.GetNoDataValue()
-    out_data[mask] = no_data_value
+    if no_data_value:
+        out_data[mask] = no_data_value
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
 
