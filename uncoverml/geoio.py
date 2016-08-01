@@ -239,6 +239,8 @@ class RasterioImageSource(ImageSource):
         if np.ma.count_masked(d) == 0:
             d = np.ma.masked_array(data=d.data,
                                    mask=np.zeros_like(d.data, dtype=bool))
+        assert d.data.ndim == 3
+        assert d.mask.ndim == 3
         return d
 
 

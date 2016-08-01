@@ -86,8 +86,6 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
-    print(mpiops.chunk_index, [v["x"].shape for v in extracted_chunks.values()])
-
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
@@ -134,7 +132,6 @@ def run_pipeline(config):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: learningpipeline <configfile>")
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
