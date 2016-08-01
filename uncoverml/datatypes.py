@@ -47,6 +47,7 @@ class ComposeSettings(Settings):
 class CrossValTargets:
 
     def __init__(self, lonlat, vals, folds=10, seed=None, sort=False):
+        self.nfolds = folds
         N = len(lonlat)
         # we may be given folds already
         if type(folds) == int:

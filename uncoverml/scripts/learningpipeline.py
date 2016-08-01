@@ -6,10 +6,9 @@ import pickle
 from collections import OrderedDict
 import importlib.machinery
 import logging
-from os import path, mkdir, listdir
+from os import path, mkdir
 from glob import glob
 import sys
-import json
 
 import numpy as np
 
@@ -67,7 +66,7 @@ def run_pipeline(config):
                               fieldname=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
-    
+
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")
@@ -84,52 +83,54 @@ def run_pipeline(config):
         mean=None,
         sd=None,
         eigvals=None,
-        eigvecs=None
-        )
+        eigvecs=None)
 
     x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
+    ################################################
+    # TODO: Import all of the data once here
+    # Use the function in mpiops.py
+    ################################################
+
+    X_list = mpiops.comm.allgather(x_out)
+    X = np.ma.vstack(X_list)
     models = {}
-    for alg, args in config.algdict.items():
 
-        X_list = mpiops.comm.gather(x_out, root=0)
-        model = None
-        if mpiops.chunk_index == 0:
-            model = pipeline.learn_model(X_list, targets, alg, cvindex=0,
-                                         algorithm_params=args)
-        model = mpiops.comm.bcast(model, root=0)
-        models[alg] = model
+    for algorithm, args in config.algdict.items():
 
-        # Test the model
-        log.info("Predicting targets for {}.".format(alg))
-        y_star = pipeline.predict(x_out, model, interval=None)
+        model, scores, Ys, EYs = pipeline.learn_model(X,
+                                                      targets,
+                                                      algorithm,
+                                                      crossvalidate=True,
+                                                      algorithm_params=args
+                                                      )
+        models[algorithm] = model
 
-        Y_list = mpiops.comm.gather(y_star, root=0)
-        if mpiops.chunk_index == 0:
-            scores, Ys, EYs = pipeline.validate(targets, Y_list, cvindex=0)
-        
         # Outputs
         if mpiops.chunk_index == 0:
+
             outfile_scores = path.join(config.output_dir,
-                                       config.name + "_scores.json")
-            outfile_state = path.join(config.output_dir,
-                                      config.name + ".state")
-            with open(outfile_scores, 'w') as f:
-                json.dump(scores, f, sort_keys=True, indent=4)
+                                       config.name + "_" + algorithm +
+                                       "_scores.json")
 
-            state_dict = {"models": models,
-                          "image_settings": image_settings,
-                          "compose_settings": compose_settings}
-            with open(outfile_state, 'wb') as f:
-                pickle.dump(state_dict, f)
+            geoio.export_scores(scores, Ys, EYs, outfile_scores)
 
-        log.info("Finished!")
+    if mpiops.chunk_index == 0:
+
+        outfile_state = path.join(config.output_dir, config.name + ".state")
+        state_dict = {"models": models,
+                      "image_settings": image_settings,
+                      "compose_settings": compose_settings}
+
+        with open(outfile_state, 'wb') as f:
+            pickle.dump(state_dict, f)
+
+    log.info("Finished!")
 
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: learningpipeline <configfile>")
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
