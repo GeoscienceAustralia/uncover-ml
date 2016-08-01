@@ -97,6 +97,7 @@ def run_pipeline(config):
 def rank_features(extracted_chunks, targets, algorithm, compose_settings,
                   config):
 
+    # Determine the importance of each feature
     feature_scores = {}
     for name in extracted_chunks:
         dict_missing = dict(extracted_chunks)
@@ -111,20 +112,36 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
                                 compose_missing, config)
         feature_scores[fname] = out
 
-    # get the different types of score from one of the outputs
+    # Get the different types of score from one of the outputs
     # TODO make this not suck
     measures = list(next(feature_scores.values().__iter__()).scores.keys())
-    feature_list = sorted(feature_scores.keys())
-    output_array = np.empty((len(measures), len(feature_list)))
+    features = sorted(feature_scores.keys())
+    scores = np.empty((len(measures), len(features)))
     for m, measure in enumerate(measures):
-        for f, feature in enumerate(feature_list):
-            output_array[m, f] = feature_scores[feature].scores[measure]
+        for f, feature in enumerate(features):
+            scores[m, f] = feature_scores[feature].scores[measure]
 
-    return measures, feature_list, output_array
+    # Save the feature scores to a file
+    dump_feature_ranks(measures, features, scores, "scores.json")
 
 
-def dump_feature_ranks(measures, features, score_array, filename):
-    pass
+def dump_feature_ranks(measures, features, scores, filename):
+
+    score_listing = dict(scores={}, ranks={})
+    for measure, measure_scores in zip(measures, scores):
+
+        # Sort the scores
+        scores = sorted(list(zip(features, measure_scores)),
+                        key=lambda s: s[1])
+        sorted_features, sorted_scores = list(zip(*scores))
+
+        # Store the results
+        score_listing['scores'][measure] = sorted_scores
+        score_listing['ranks'][measure] = sorted_features
+
+    # Write the results out to a file
+    with open(filename, 'w') as output_file:
+        json.dump(score_listing, output_file)
 
 
 def predict_and_score(extracted_chunks, targets, algorithm,
@@ -165,6 +182,7 @@ def dump_outputs(outputs, config):
                                 model_out.y_true,
                                 model_out.y_pred,
                                 outfile_scores)
+
 
 def main():
     if len(sys.argv) != 2:
