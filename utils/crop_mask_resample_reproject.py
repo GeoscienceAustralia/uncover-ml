@@ -16,6 +16,11 @@ MASK_VALUES_TO_KEEP = 1
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
 
+if os.environ['PBS_JOBFS']:
+    TMPDIR = os.environ['PBS_JOBFS']
+else:
+    TMPDIR = tempfile.mkdtemp()
+
 
 def crop_reproject_resample(input_file, output_file, sampling, extents):
     """
@@ -54,7 +59,7 @@ def apply_mask(mask_file, output_file, extents, jpeg):
     -------
 
     """
-    cropped_mask = tempfile.mktemp(suffix='.tif')
+    cropped_mask = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
     crop_reproject_resample(mask_file, cropped_mask,
                             sampling='near',
                             extents=extents)
