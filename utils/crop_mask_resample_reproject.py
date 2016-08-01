@@ -39,6 +39,7 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     -------
     """
     # TODO: add extents checking between input_file and extents
+    print('Crop/resample/reproject {}'.format(input_file))
     cmd = ['gdalwarp', '-overwrite', '-multi'] + \
           COMMON + TILES + \
           ['-t_srs'] + [TSRS] + \
@@ -60,12 +61,7 @@ def apply_mask(mask_file, tmp_output_file, output_file, extents, jpeg):
     -------
 
     """
-    cropped_mask = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-    crop_reproject_resample(mask_file, cropped_mask,
-                            sampling='near',
-                            extents=extents)
-
-    mask_ds = gdal.Open(cropped_mask, gdal.GA_ReadOnly)
+    mask_ds = gdal.Open(mask_file, gdal.GA_ReadOnly)
     mask_data = mask_ds.GetRasterBand(1).ReadAsArray()
     mask = mask_data != MASK_VALUES_TO_KEEP
     mask_ds = None  # close dataset
@@ -80,10 +76,6 @@ def apply_mask(mask_file, tmp_output_file, output_file, extents, jpeg):
 
     # copy file to output file
     shutil.copy(tmp_output_file, output_file)
-
-    # clean up
-    os.remove(cropped_mask)
-    print('removed intermediate cropped mask file', cropped_mask)
     print('created', output_file)
     if jpeg:
         dir_name = os.path.dirname(output_file)
@@ -157,8 +149,13 @@ if __name__ == '__main__':
     # file locally, else create the final output file
     if options.mask_file:
         tmp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+        tmp_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+        crop_reproject_resample(options.mask_file, tmp_mask_file,
+                                sampling='near',
+                                extents=extents)
     else:
         tmp_output_file = options.output_file
+        tmp_mask_file = options.mask_file  # redundant
 
     crop_reproject_resample(input_file=options.input_file,
                             output_file=tmp_output_file,
@@ -166,8 +163,11 @@ if __name__ == '__main__':
                             extents=options.extents)
 
     if options.mask_file:
-        apply_mask(mask_file=options.mask_file,
+        apply_mask(mask_file=tmp_mask_file,
                    tmp_output_file=tmp_output_file,
                    output_file=options.output_file,
                    extents=options.extents,
                    jpeg=options.jpeg)
+        # clean up
+        os.remove(tmp_mask_file)
+        print('removed intermediate cropped mask file', tmp_mask_file)
