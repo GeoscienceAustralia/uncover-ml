@@ -131,7 +131,7 @@ def dump_feature_ranks(measures, features, scores, filename):
     for measure, measure_scores in zip(measures, scores):
 
         # Sort the scores
-        scores = sorted(list(zip(features, measure_scores)),
+        scores = sorted(zip(features, measure_scores),
                         key=lambda s: s[1])
         sorted_features, sorted_scores = list(zip(*scores))
 
