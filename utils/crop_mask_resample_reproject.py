@@ -3,6 +3,7 @@ from __future__ import print_function
 python utility to crop, resample, reproject and optionally mask, a larger ifg into smaller ifg if desired.
 example usage: python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif -e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634' -m mack_LCC.tif -r bilinear -j 0
 Also optionally outputs a jpeg file corresponding to the final cropped, resampled, reprojectd and masked geotiff.
+For resampling options see gdal.org/gdalwarp.html.
 """
 from optparse import OptionParser
 import subprocess
@@ -73,6 +74,8 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     no_data_value = out_band.GetNoDataValue()
     if no_data_value:
         out_data[mask] = no_data_value
+    else:
+        print('NoDataValue was not set for {}'.format(output_file))
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
 
