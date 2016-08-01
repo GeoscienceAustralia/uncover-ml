@@ -1,3 +1,12 @@
+"""
+This script takes as input an input dir, an output dir, and optionally
+a mask file, a resampling algorithm, and a jpeg flag.
+
+It uses mpirun and the crop_mask_resample_reporject script functionality to
+covert the tifs in the input dir, and saves the result in the output dir.
+
+More details in crop_mask_resample_reproject.py
+"""
 import os
 from os.path import join, exists, basename
 import glob
@@ -17,9 +26,11 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
 
     for i in range(rank, len(files), size):
         in_file = files[i]
+        print('===============================================================')
         print("operating on {file} in process {rank}".format(file=in_file,
                                                              rank=rank))
         out_file = join(output_dir, basename(in_file))
+        print('Output file: {}'.format(out_file))
         do_work(input_file=in_file,
                 mask_file=mask_file,
                 output_file=out_file,

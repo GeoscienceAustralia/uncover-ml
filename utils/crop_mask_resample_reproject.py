@@ -122,7 +122,7 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
         os.remove(cropped_mask_file)
         print('removed intermediate cropped mask file', cropped_mask_file)
         os.remove(temp_output_file)
-        print('removed intermediate cropped output file', cropped_mask_file)
+        print('removed intermediate cropped output file', temp_output_file)
     else:
         crop_reproject_resample(input_file=input_file,
                                 output_file=output_file,
