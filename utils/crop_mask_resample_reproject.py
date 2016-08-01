@@ -9,6 +9,7 @@ import subprocess
 from osgeo import gdal
 import os
 import tempfile
+import shutil
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
@@ -49,7 +50,7 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     subprocess.check_call(cmd)
 
 
-def apply_mask(mask_file, output_file, extents, jpeg):
+def apply_mask(mask_file, tmp_output_file, output_file, extents, jpeg):
     """
     Parameters
     ----------
@@ -69,13 +70,16 @@ def apply_mask(mask_file, output_file, extents, jpeg):
     mask = mask_data != MASK_VALUES_TO_KEEP
     mask_ds = None  # close dataset
 
-    out_ds = gdal.Open(output_file, gdal.GA_Update)
+    out_ds = gdal.Open(tmp_output_file, gdal.GA_Update)
     out_band = out_ds.GetRasterBand(1)
     out_data = out_band.ReadAsArray()
     no_data_value = out_band.GetNoDataValue()
     out_data[mask] = no_data_value
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
+
+    # copy file to output file
+    shutil.copy(tmp_output_file, output_file)
 
     # clean up
     os.remove(cropped_mask)
@@ -86,7 +90,7 @@ def apply_mask(mask_file, output_file, extents, jpeg):
         jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
         jpeg_file = os.path.join(dir_name, jpeg_file)
         cmd_jpg = ['gdal_translate', '-ot', 'Byte', '-of', 'JPEG', '-scale',
-                   output_file,
+                   tmp_output_file,
                    jpeg_file] + COMMON
         subprocess.check_call(cmd_jpg)
         print('created', jpeg_file)
@@ -148,13 +152,22 @@ if __name__ == '__main__':
                              "example:"
                              "--extents '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'")
     options.extents = [str(s) for s in extents]
+
+    # if we are going to use the mask, create the intermediate output
+    # file locally, else create the final output file
+    if options.mask_file:
+        tmp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+    else:
+        tmp_output_file = options.output_file
+
     crop_reproject_resample(input_file=options.input_file,
-                            output_file=options.output_file,
+                            output_file=tmp_output_file,
                             sampling=options.sampling,
                             extents=options.extents)
 
     if options.mask_file:
         apply_mask(mask_file=options.mask_file,
+                   tmp_output_file=tmp_output_file,
                    output_file=options.output_file,
                    extents=options.extents,
                    jpeg=options.jpeg)
