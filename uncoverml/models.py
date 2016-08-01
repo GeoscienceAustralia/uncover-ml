@@ -15,16 +15,12 @@ from sklearn.linear_model import ARDRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
-# from .transforms import KDE
+import uncoverml.transforms as transforms
 
 
 class LinearModel(StandardLinearModel):
 
     def fit(self, X, y):
-
-        # self.tform = KDE()
-        # self.tform.fit(y)
-        # y_t = self.tform.transform(y)
 
         self._make_basis(X)
         return super(LinearModel, self).fit(X, y)
@@ -32,9 +28,6 @@ class LinearModel(StandardLinearModel):
     def predict_proba(self, X):
 
         Ey, _, Vy = super(LinearModel, self).predict_moments(X)
-        # Ey = self.tform.itransform(Ey)
-        # NOTE: How do we transform Vy??
-
         return Ey, Vy
 
     def entropy_reduction(self, X):
@@ -111,6 +104,49 @@ class RandomForestRegressor(RFR):
 
 
 #
+# Transformer factory
+#
+
+def transform_targets(Learner):
+
+    class TransformedLearner(Learner):
+
+        def __init__(self, transform='indentity', *args, **kwargs):
+
+            super(TransformedLearner, self).__init__(*args, **kwargs)
+            self.ytform = transforms.transforms[transform]()
+
+        def fit(self, X, y, *args, **kwargs):
+
+            self.ytform.fit(y)
+            y_t = self.ytform.transform(y)
+
+            return super(TransformedLearner, self).fit(X, y_t, *args, **kwargs)
+
+        def predict(self, X, *args):
+
+            Ey_t = super(TransformedLearner, self).predict(X, *args)
+            Ey = self.ytform.itransform(Ey_t)
+
+            return Ey
+
+        if hasattr(Learner, 'predict_proba'):
+            def predict_proba(self, X, *args):
+
+                Ey_t, Vy_t = super(TransformedLearner, self).predict(X, *args)
+
+                nsamples = 100
+                Ey = self.ytform.itransform(Ey_t)
+                Sy_t = np.sqrt(Vy_t)
+                Vy = np.var([Ey_t + np.random.randn(Ey.shape) * Sy_t
+                             for _ in range(nsamples)], axis=1)
+
+                return Ey, Vy
+
+    return TransformedLearner
+
+
+#
 # Helper functions
 #
 
@@ -172,14 +208,14 @@ def apply_multiple_masked(func, data, args=()):
 # Static module properties
 #
 
-modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': LinearReg,
-             'approxgp': ApproxGP,
-             'svr': SVR,
-             'kernelridge': KernelRidge,
-             'ardregression': ARDRegression,
-             'decisiontree': DecisionTreeRegressor,
-             'extratree': ExtraTreeRegressor
+modelmaps = {'randomforest': transform_targets(RandomForestRegressor),
+             'bayesreg': transform_targets(LinearReg),
+             'approxgp': transform_targets(ApproxGP),
+             'svr': transform_targets(SVR),
+             'kernelridge': transform_targets(KernelRidge),
+             'ardregression': transform_targets(ARDRegression),
+             'decisiontree': transform_targets(DecisionTreeRegressor),
+             'extratree': transform_targets(ExtraTreeRegressor)
              }
 
 
