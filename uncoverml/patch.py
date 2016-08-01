@@ -27,18 +27,21 @@ def grid_patches(image, pwidth):
             psize = pwidth * 2 + 1
     """
     # Check and get image dimensions
-    window = (2 * pwidth + 1, 2 * pwidth + 1, 1)
-    if image.ndim == 3:
-        x = skimage.util.view_as_windows(image, window_shape=window, step=1)
-        # window_z, img_x, img_y, window_x, window_y, channel
-        x = x.transpose((5, 0, 1, 3, 4, 2))[0]
-        x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
-    elif image.ndim == 2:
-        window = window[0:2]
-        x = skimage.util.view_as_windows(image, window_shape=window, step=1)
-        x = x.reshape(-1, x.shape[2], x.shape[3])
-    else:
-        raise ValueError("image must be 2d or 3d!")
+    window = (2 * pwidth + 1, 2 * pwidth + 1, image.shape[2])
+    # if image.ndim == 3:
+    assert image.ndim == 3
+    x = skimage.util.view_as_windows(image, window_shape=window, step=1)
+    # window_z, img_x, img_y, window_x, window_y, channel
+    x = x.transpose((5, 0, 1, 3, 4, 2))[0]
+    x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
+    # elif image.ndim == 2:
+    #     window = window[0:2]
+    #     x = skimage.util.view_as_windows(image, window_shape=window, step=1)
+    #     x = x.reshape(-1, x.shape[2], x.shape[3])
+    # else:
+    #     raise ValueError("image must be 2d or 3d!")
+    if image.shape[2] > 1:
+        print("!!!")
     return x
 
 
@@ -73,13 +76,13 @@ def point_patches(image, pwidth, points):
     # centre the patches on the middle pixel
     dtype = image.dtype
 
-    if image.ndim == 3:
-        nchannels = image.shape[2]
-        output = np.empty((npixels, side, side, nchannels), dtype=dtype)
-    elif image.ndim == 2:
-        output = np.empty((npixels, side, side), dtype=dtype)
-    else:
-        raise ValueError("Image must be 2D or 3D")
+    # if image.ndim == 3:
+    nchannels = image.shape[2]
+    output = np.empty((npixels, side, side, nchannels), dtype=dtype)
+    # elif image.ndim == 2:
+    #     output = np.empty((npixels, side, side), dtype=dtype)
+    # else:
+    #     raise ValueError("Image must be 2D or 3D")
 
     for x, y in offsets:
         output[:, x, y] = image[points_x + x - pwidth,
@@ -131,7 +134,8 @@ def _image_to_data(image):
 def _all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
     patches = grid_patches(data, patchsize)
-    patch_mask = grid_patches(mask, patchsize)
+    patch_mask = grid_patches(mask[:, :, np.newaxis], patchsize)
+    patch_mask = np.squeeze(patch_mask, axis=4)
     result = np.ma.masked_array(data=patches, mask=patch_mask)
     return result
 

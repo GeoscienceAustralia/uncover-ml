@@ -256,7 +256,16 @@ def _standardise(x, settings, comm):
     x = _centre(x, settings, comm)
     if settings.sd is None:
         settings.sd = _sd(x, comm)
-    x /= settings.sd
+
+    sd = settings.sd
+
+    # remove dimensions with no st. dev. (and hence no info)
+    zero_mask = settings.sd == 0.
+    if zero_mask.sum() > 0:
+        x = x[:, ~zero_mask]
+        sd = settings.sd[~zero_mask]
+
+    x /= sd
     return x
 
 

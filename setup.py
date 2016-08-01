@@ -65,7 +65,7 @@ setup(
     },
     install_requires=[
         'pycontracts == 1.7.9',
-        'tables == 3.2.2',
+        'tables >= 3.2.2',
         'rasterio == 0.36.0',
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
