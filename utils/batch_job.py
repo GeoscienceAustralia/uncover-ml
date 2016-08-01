@@ -3,8 +3,8 @@ from os.path import join, exists, basename
 import glob
 from optparse import OptionParser
 from mpi4py import MPI
-from utils.crop_mask_resample_reproject import (crop_reproject_resample,
-                                                apply_mask)
+from utils.crop_mask_resample_reproject import do_work
+
 
 def return_file_list(my_dir, extension):
     return glob.glob(join(my_dir, extension))
@@ -14,32 +14,19 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
     comm = MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
-    no_files = len(files)
 
-    for i in range(rank, no_files, size):
+    for i in range(rank, len(files), size):
         in_file = files[i]
         print("operating on {file} in process {rank}".format(file=in_file,
                                                              rank=rank))
         out_file = join(output_dir, basename(in_file))
-        print('Crop/reproject/resample {file} using \n '
-              'resampling: {resampling}\n'
-              'output file: {out_file}'.format(file=in_file,
-                                               resampling=resampling,
-                                               out_file=out_file))
-        crop_reproject_resample(input_file=in_file,
-                                output_file=out_file,
-                                sampling=resampling,
-                                extents=extents)
-        if mask_file:
-            print('Masking {file} using\n '
-                  'mask file: {mask_file} \n'
-                  'output file: {out_file}'.format(file=in_file,
-                                                   mask_file=mask_file,
-                                                   out_file=out_file))
-            apply_mask(mask_file=mask_file,
-                       output_file=out_file,
-                       extents=extents,
-                       jpeg=jpeg)
+        do_work(input_file=in_file,
+                mask_file=mask_file,
+                output_file=out_file,
+                extents=extents,
+                resampling=resampling,
+                jpeg=jpeg)
+
     comm.Barrier()
 
 
@@ -65,7 +52,7 @@ if __name__ == '__main__':
                            'needs to be a list of 4 floats with spaces\n'
                            'example: '
                            "-e '150.91 -34.229999976 150.949166651 -34.17'")
-    parser.add_option('-r', '--resampling', type=str, dest='sampling',
+    parser.add_option('-r', '--resampling', type=str, dest='resampling',
                       help='optional resampling algorithm to use')
 
     parser.add_option('-j', '--jpeg', type=int, dest='jpeg',
@@ -86,8 +73,8 @@ if __name__ == '__main__':
     if not exists(options.output_dir):
         os.mkdir(options.output_dir)
 
-    if not options.sampling:  # if sampling is not given
-        options.sampling = 'near'
+    if not options.resampling:  # if sampling is not given
+        options.resampling = 'near'
 
     if not options.extents:  # if extents is not given
         parser.error('Crop extents must be provided')
@@ -111,6 +98,6 @@ if __name__ == '__main__':
                   output_dir=options.output_dir,
                   mask_file=options.mask_file,
                   extents=options.extents,
-                  resampling=options.sampling,
+                  resampling=options.resampling,
                   jpeg=options.jpeg
                   )
