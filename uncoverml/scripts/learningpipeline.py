@@ -6,10 +6,9 @@ import pickle
 from collections import OrderedDict
 import importlib.machinery
 import logging
-from os import path, mkdir, listdir
+from os import path, mkdir
 from glob import glob
 import sys
-import json
 
 import numpy as np
 
