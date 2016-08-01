@@ -17,7 +17,7 @@ MASK_VALUES_TO_KEEP = 1
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
 
-if os.environ['PBS_JOBFS']:
+if 'PBS_JOBFS' in os.environ:
     TMPDIR = os.environ['PBS_JOBFS']
 else:
     TMPDIR = tempfile.mkdtemp()
@@ -90,6 +90,43 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
         print('created', jpeg_file)
 
 
+def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
+    # if we are going to use the mask, create the intermediate output
+    # file locally, else create the final output file
+    # also create the cropped mask file here, instead of inside apply_mask so
+    # this mask cropping is not repeated in a batch run when using apply mask
+    if mask_file:
+        temp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+
+        # crop/reproject/resample the mask
+        crop_reproject_resample(mask_file, cropped_mask_file,
+                                sampling='near',
+                                extents=extents)
+
+        # crop/reproject/resample the geotif
+        crop_reproject_resample(input_file=input_file,
+                                output_file=temp_output_file,
+                                sampling=resampling,
+                                extents=extents)
+
+        # apply mask and optional y convert to jpeg
+        apply_mask(mask_file=cropped_mask_file,
+                   tmp_output_file=temp_output_file,
+                   output_file=output_file,
+                   jpeg=jpeg)
+        # clean up
+        os.remove(cropped_mask_file)
+        print('removed intermediate cropped mask file', cropped_mask_file)
+        os.remove(temp_output_file)
+        print('removed intermediate cropped output file', cropped_mask_file)
+    else:
+        crop_reproject_resample(input_file=input_file,
+                                output_file=output_file,
+                                sampling=resampling,
+                                extents=extents)
+
+
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_file -o output_file'
                                 ' -e extents\n'
@@ -114,7 +151,7 @@ if __name__ == '__main__':
                            'needs to be a list of 4 floats with spaces\n'
                            'example: '
                            "-e '150.91 -34.229999976 150.949166651 -34.17'")
-    parser.add_option('-r', '--resampling', type=str, dest='sampling',
+    parser.add_option('-r', '--resampling', type=str, dest='resampling',
                       help='optional resampling algorithm to use')
 
     parser.add_option('-j', '--jpeg', type=int, dest='jpeg',
@@ -128,8 +165,8 @@ if __name__ == '__main__':
     if not options.output_file:  # if filename is not given
         parser.error('Output filename not given.')
 
-    if not options.sampling:  # if sampling is not given
-        options.sampling = 'near'
+    if not options.resampling:  # if sampling is not given
+        options.resampling = 'near'
 
     if not options.extents:  # if extents is not given
         parser.error('Crop extents must be provided')
@@ -147,38 +184,10 @@ if __name__ == '__main__':
                              "--extents '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'")
     options.extents = [str(s) for s in extents]
 
-    # if we are going to use the mask, create the intermediate output
-    # file locally, else create the final output file
-    # also create the cropped mask file here, instead of inside apply_mask so
-    # this mask cropping is not repeated in a batch run when using apply mask
-    if options.mask_file:
-        output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-
-        # crop the mask
-        crop_reproject_resample(options.mask_file, cropped_mask_file,
-                                sampling='near',
-                                extents=extents)
-
-        # crop/reproject/resample the geotif
-        crop_reproject_resample(input_file=options.input_file,
-                                output_file=output_file,
-                                sampling=options.sampling,
-                                extents=options.extents)
-
-        # apply mask
-        apply_mask(mask_file=cropped_mask_file,
-                   tmp_output_file=output_file,
-                   output_file=options.output_file,
-                   jpeg=options.jpeg)
-        # clean up
-        os.remove(cropped_mask_file)
-        print('removed intermediate cropped mask file', cropped_mask_file)
-        os.remove(output_file)
-        print('removed intermediate cropped output file', cropped_mask_file)
-    else:
-        crop_reproject_resample(input_file=options.input_file,
-                                output_file=options.output_file,
-                                sampling=options.sampling,
-                                extents=options.extents)
+    do_work(input_file=options.input_file,
+            mask_file=options.mask_file,
+            output_file=options.output_file,
+            resampling=options.resampling,
+            extents=options.extents,
+            jpeg=options.jpeg)
 
