@@ -148,27 +148,37 @@ if __name__ == '__main__':
 
     # if we are going to use the mask, create the intermediate output
     # file locally, else create the final output file
+    # also create the cropped mask file here, instead of inside apply_mask so
+    # this mask cropping is not repeated in a batch run when using apply mask
     if options.mask_file:
-        tmp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-        tmp_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-        crop_reproject_resample(options.mask_file, tmp_mask_file,
+        output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+
+        # crop the mask
+        crop_reproject_resample(options.mask_file, cropped_mask_file,
                                 sampling='near',
                                 extents=extents)
-    else:
-        tmp_output_file = options.output_file
-        tmp_mask_file = options.mask_file  # redundant
 
-    crop_reproject_resample(input_file=options.input_file,
-                            output_file=tmp_output_file,
-                            sampling=options.sampling,
-                            extents=options.extents)
+        # crop/reproject/resample the geotif
+        crop_reproject_resample(input_file=options.input_file,
+                                output_file=output_file,
+                                sampling=options.sampling,
+                                extents=options.extents)
 
-    if options.mask_file:
-        apply_mask(mask_file=tmp_mask_file,
-                   tmp_output_file=tmp_output_file,
+        # apply mask
+        apply_mask(mask_file=cropped_mask_file,
+                   tmp_output_file=output_file,
                    output_file=options.output_file,
                    extents=options.extents,
                    jpeg=options.jpeg)
         # clean up
-        os.remove(tmp_mask_file)
-        print('removed intermediate cropped mask file', tmp_mask_file)
+        os.remove(cropped_mask_file)
+        print('removed intermediate cropped mask file', cropped_mask_file)
+        os.remove(output_file)
+        print('removed intermediate cropped output file', cropped_mask_file)
+    else:
+        crop_reproject_resample(input_file=options.input_file,
+                                output_file=options.output_file,
+                                sampling=options.sampling,
+                                extents=options.extents)
+
