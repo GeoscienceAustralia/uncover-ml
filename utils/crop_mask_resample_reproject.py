@@ -51,11 +51,12 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     subprocess.check_call(cmd)
 
 
-def apply_mask(mask_file, tmp_output_file, output_file, extents, jpeg):
+def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     """
     Parameters
     ----------
     mask_file: mask file path
+    tmp_output_file: intermediate cropped geotiff before mask application
     output_file: output geotiff path
     jpeg: boolean, whether to produce jpeg or not
     -------
@@ -169,7 +170,6 @@ if __name__ == '__main__':
         apply_mask(mask_file=cropped_mask_file,
                    tmp_output_file=output_file,
                    output_file=options.output_file,
-                   extents=options.extents,
                    jpeg=options.jpeg)
         # clean up
         os.remove(cropped_mask_file)
