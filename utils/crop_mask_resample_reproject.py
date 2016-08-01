@@ -100,10 +100,10 @@ if __name__ == '__main__':
                                 'interferrogram into smaller ones.'
                                 'Optionally, create a outout jpeg')
     parser.add_option('-i', '--input', type=str, dest='input_file',
-                      help='name of input interferrogram')
+                      help='name of input tif')
 
     parser.add_option('-o', '--out', type=str, dest='output_file',
-                      help='name of cropped output interferrogram')
+                      help='name of cropped output tif')
 
     parser.add_option('-m', '--mask', type=str, dest='mask_file',
                       help='name of mask file')
@@ -127,13 +127,13 @@ if __name__ == '__main__':
     if not options.output_file:  # if filename is not given
         parser.error('Output filename not given.')
 
-    if not options.sampling:  # if filename is not given
+    if not options.sampling:  # if sampling is not given
         options.sampling = 'near'
 
-    if not options.extents:  # if filename is not given
+    if not options.extents:  # if extents is not given
         parser.error('Crop extents must be provided')
 
-    if not options.jpeg:  # if filename is not given
+    if not options.jpeg:  # if jpeg is not given
         options.jpeg = False
     else:
         options.jpeg = True
@@ -143,8 +143,7 @@ if __name__ == '__main__':
         raise AttributeError('extents to be used for the cropped file.\n'
                              'needs to be a list or tuples of 4 floats\n'
                              "example:"
-                             "--extents '-2362974.47956 -5097641.80634 "
-                             "2251415.52044 -1174811.80634'")
+                             "--extents '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'")
     options.extents = [str(s) for s in extents]
     crop_reproject_resample(input_file=options.input_file,
                             output_file=options.output_file,
