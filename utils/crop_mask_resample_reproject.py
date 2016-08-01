@@ -11,6 +11,7 @@ from osgeo import gdal
 import os
 import tempfile
 import shutil
+import gc
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
@@ -66,6 +67,8 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     mask_ds = gdal.Open(mask_file, gdal.GA_ReadOnly)
     mask_data = mask_ds.GetRasterBand(1).ReadAsArray()
     mask = mask_data != MASK_VALUES_TO_KEEP
+    del(mask_data)
+    gc.collect()
     mask_ds = None  # close dataset
 
     out_ds = gdal.Open(tmp_output_file, gdal.GA_Update)

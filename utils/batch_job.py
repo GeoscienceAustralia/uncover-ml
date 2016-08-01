@@ -26,7 +26,7 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
 
     for i in range(rank, len(files), size):
         in_file = files[i]
-        print('===============================================================')
+        print('=================file no: {}====================='.format(i))
         print("operating on {file} in process {rank}".format(file=in_file,
                                                              rank=rank))
         out_file = join(output_dir, basename(in_file))
