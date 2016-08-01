@@ -6,10 +6,9 @@ import pickle
 from collections import OrderedDict
 import importlib.machinery
 import logging
-from os import path, mkdir, listdir
+from os import path, mkdir
 from glob import glob
 import sys
-import json
 
 import numpy as np
 
@@ -132,7 +131,6 @@ def run_pipeline(config):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: learningpipeline <configfile>")
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]

@@ -40,7 +40,6 @@ def int_masked_array():
 @pytest.fixture
 def make_patch_31():
     pwidth = 1
-    pstride = 1
 
     # Test output patches, patch centres
     tpatch = np.array([[[1, 2, 3],
@@ -59,37 +58,19 @@ def make_patch_31():
     tx = np.array([1, 1, 2, 2])
     ty = np.array([1, 2, 1, 2])
 
-    return timg, pwidth, pstride, tpatch, tx, ty
+    return timg, pwidth, tpatch, tx, ty
 
 
 @pytest.fixture
 def make_patch_11():
     pwidth = 0
-    pstride = 1
 
     # Test output patches, patch centres
     tpatch = np.array([[timg.flatten()]]).T
 
     tx, ty = [g.flatten() for g in np.meshgrid(np.arange(3), np.arange(3))]
 
-    return timg, pwidth, pstride, tpatch, tx, ty
-
-
-@pytest.fixture
-def make_patch_12():
-    pwidth = 0
-    pstride = 2
-
-    # Test output patches, patch centres
-    tpatch = np.array([[[1]],
-                       [[3]],
-                       [[9]],
-                       [[11]]])
-
-    tx = np.array([0, 0, 2, 2])
-    ty = np.array([0, 2, 0, 2])
-
-    return timg, pwidth, pstride, tpatch, tx, ty
+    return timg, pwidth, tpatch, tx, ty
 
 
 @pytest.fixture
@@ -110,7 +91,7 @@ def make_points():
     return timg, pwidth, points, tpatch
 
 
-@pytest.fixture(params=[make_patch_31, make_patch_11, make_patch_12])
+@pytest.fixture(params=[make_patch_31, make_patch_11])
 def make_multi_patch(request):
     return request.param()
 

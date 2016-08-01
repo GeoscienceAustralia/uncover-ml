@@ -256,7 +256,16 @@ def _standardise(x, settings, comm):
     x = _centre(x, settings, comm)
     if settings.sd is None:
         settings.sd = _sd(x, comm)
-    x /= settings.sd
+
+    sd = settings.sd
+
+    # remove dimensions with no st. dev. (and hence no info)
+    zero_mask = settings.sd == 0.
+    if zero_mask.sum() > 0:
+        x = x[:, ~zero_mask]
+        sd = settings.sd[~zero_mask]
+
+    x /= sd
     return x
 
 
@@ -276,7 +285,6 @@ def _whiten(x, settings, comm):
     mat = settings.eigvecs[:, -keepdims:]
     vec = settings.eigvals[-keepdims:]
     x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
-    print(mat, vec)
     return x
 
 
@@ -303,7 +311,6 @@ def _compose_transform(x, settings, comm):
 
     f = transform_map.get(settings.transform, lambda x, *_: x)
     x = f(x, settings, comm)
-
     return x, settings
 
 
@@ -318,7 +325,6 @@ def min_axis_0(x, y, dtype):
 
 max0_op = MPI.Op.Create(max_axis_0, commute=True)
 min0_op = MPI.Op.Create(min_axis_0, commute=True)
-
 
 
 def gather_data(X):

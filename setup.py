@@ -65,7 +65,7 @@ setup(
     },
     install_requires=[
         'pycontracts == 1.7.9',
-        'tables == 3.2.2',
+        'tables >= 3.2.2',
         'rasterio == 0.36.0',
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
@@ -73,6 +73,7 @@ setup(
         'click == 6.6',
         'revrand >= 0.5',
         'scikit-learn == 0.17.1',
+        'scikit-image >= 0.12.3',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',
         'numpy >= 1.9.2',

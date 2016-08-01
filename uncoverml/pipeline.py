@@ -7,7 +7,7 @@ from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df
 from uncoverml.image import Image
 from uncoverml.models import apply_masked, apply_multiple_masked, modelmaps
-from uncoverml.validation import calculate_validation_scores, metrics
+from uncoverml.validation import calculate_validation_scores
 
 
 log = logging.getLogger(__name__)
