@@ -32,8 +32,8 @@ class Standardise(Identity):
 
     def itransform(self, y_transformed):
 
-        y_t = y_transformed * self.ystd + self.ymean
-        return self.transformer.itransform(y_t)
+        y = y_transformed * self.ystd + self.ymean
+        return y
 
 
 class Sqrt(Identity):
@@ -66,7 +66,7 @@ class Log(Identity):
 
 class Logistic(Identity):
 
-    def __init__(self, scale):
+    def __init__(self, scale=1):
 
         self.scale = scale
 
@@ -124,7 +124,7 @@ class KDE(Identity):
         return self.kde.integrate_box_1d(-np.inf, q) - percent
 
 
-transforms = {'indentity': Identity,
+transforms = {'identity': Identity,
               'standardise': Standardise,
               'sqrt': Sqrt,
               'log': Log,
