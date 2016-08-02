@@ -35,7 +35,12 @@ target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 
 export_targets = True
 
+
+# Crossval settings
+
+cross_validate = True
 folds = 5
+crossval_seed = 1
 
 
 #
@@ -43,7 +48,6 @@ folds = 5
 #
 
 # Allows deternministic cross-val. Set to None for a random seed
-crossval_seed = 1
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False
@@ -59,6 +63,9 @@ transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.8
+
+# Estimate the relative importance of each feature
+rank_features = False
 
 #
 # Algorithm settings
@@ -83,7 +90,7 @@ algdict = {
     "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 100},
+    "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
