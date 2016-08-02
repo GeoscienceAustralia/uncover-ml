@@ -82,8 +82,8 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
 
-    # copy file to output file
-    shutil.copy(tmp_output_file, output_file)
+    # move file to output file
+    shutil.move(tmp_output_file, output_file)
     print('created', output_file)
     if jpeg:
         dir_name = os.path.dirname(output_file)
