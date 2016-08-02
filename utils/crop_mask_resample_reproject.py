@@ -75,7 +75,7 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     out_band = out_ds.GetRasterBand(1)
     out_data = out_band.ReadAsArray()
     no_data_value = out_band.GetNoDataValue()
-    if no_data_value:
+    if isinstance(no_data_value, float):
         out_data[mask] = no_data_value
     else:
         print('NoDataValue was not set for {}'.format(output_file))
