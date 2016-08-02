@@ -13,14 +13,14 @@ class TestCropReSampleReProject(unittest.TestCase):
     def setUpClass(cls):
         mocks = join(UNCOVER, 'utils', 'mocks')
         # These file shave extents = '900000 -4300000 940000 -4260000'
-        cls.mask = join(mocks, 'model_mask.tif')
+        cls.mask = join(mocks, 'mask.tif')
         cls.std2000 = join(mocks, 'std2000.tif')
         cls.std2000_no_mask = join(mocks, 'std2000_no_mask.tif')
-        cls.extents = [900000, -4300000, 940000, -4260000]
+        cls.extents = [920000, -4300000, 930000, -4280000]
 
     def test_geotransform_projection_nodata(self):
         tmp_output = tempfile.mktemp(suffix='.tif')
-        extents = [str(s) for s in [900000, -4300000, 930000, -4280000]]
+        extents = [str(s) for s in [920000, -4300000, 929000, -4290000]]
 
         # the mock is already geotransformed, so this will have no effect
         # to projection and nodata, but will be cropped making the

@@ -83,8 +83,6 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     out_ds = None  # close dataset and flush cache
 
     # copy file to output file
-    print ('====================>>>>>>', tmp_output_file)
-    print('output file', output_file)
     shutil.copy(tmp_output_file, output_file)
     print('created', output_file)
     if jpeg:
