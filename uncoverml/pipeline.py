@@ -43,70 +43,65 @@ def compose_features(x, settings):
     return x, settings
 
 
-class ModelOutput:
-    def __init__(self, model, scores, y_true, y_pred):
-        self.model = model
+class CrossvalInfo:
+    def __init__(self, scores, y_true, y_pred):
         self.scores = scores
         self.y_true = y_true
         self.y_pred = y_pred
 
 
-def learn_model(X, targets, algorithm, crossvalidate=True,
-                algorithm_params=None):
+def learn_model(X, targets, algorithm, algorithm_params=None):
+    model = modelmaps[algorithm](**algorithm_params)
+    y = targets.observations
 
+    if mpiops.chunk_index == 0:
+        apply_multiple_masked(model.fit, (X, y))
+    model = mpiops.comm.bcast(model, root=0)
+    return model
+
+
+def cross_validate(X, targets, algorithm, algorithm_params=None):
     model = modelmaps[algorithm](**algorithm_params)
     y = targets.observations
     cv_indices = targets.folds
 
-    # Determine the required algorithm and parse it's options
-    if algorithm not in modelmaps:
-        exit("Invalid algorthm specified")
+    # Split folds over workers
+    fold_list = np.arange(targets.nfolds)
+    fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
 
-    # Train the cross validation models if necessary
-    if crossvalidate:
+    y_pred = {}
+    y_true = {}
+    fold_scores = {}
 
-        # Split folds over workers
-        fold_list = np.arange(targets.nfolds)
-        fold_node = np.array_split(fold_list,
-                                   mpiops.chunks)[mpiops.chunk_index]
+    # Train and score on each fold
+    for fold in fold_node:
 
-        y_pred = {}
-        y_true = {}
-        fold_scores = {}
+        train_mask = cv_indices != fold
+        test_mask = ~ train_mask
 
-        # Train and score on each fold
-        for fold in fold_node:
+        y_k_train = y[train_mask]
+        apply_multiple_masked(model.fit, (X[train_mask], y_k_train))
+        y_k_pred = predict(X[test_mask], model)
+        y_k_test = y[test_mask]
 
-            train_mask = cv_indices != fold
-            test_mask = ~ train_mask
+        y_pred[fold] = y_k_pred
+        y_true[fold] = y_k_test
 
-            y_k_train = y[train_mask]
-            apply_multiple_masked(model.fit, (X[train_mask], y_k_train))
-            y_k_pred = predict(X[test_mask], model)
-            y_k_test = y[test_mask]
-
-            y_pred[fold] = y_k_pred
-            y_true[fold] = y_k_test
-
-            fold_scores[fold] = calculate_validation_scores(y_k_test,
-                                                            y_k_train,
-                                                            y_k_pred)
-    # Train the master model
-    if mpiops.chunk_index == 0:
-        apply_multiple_masked(model.fit, (X, y))
-
+        fold_scores[fold] = calculate_validation_scores(y_k_test,
+                                                        y_k_train,
+                                                        y_k_pred)
     y_pred = join_dicts(mpiops.comm.gather(y_pred, root=0))
     y_true = join_dicts(mpiops.comm.gather(y_true, root=0))
     scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
-
+    result = None
     if mpiops.chunk_index == 0:
         y_true = np.concatenate([y_true[i] for i in range(targets.nfolds)])
         y_pred = np.concatenate([y_pred[i] for i in range(targets.nfolds)])
         valid_metrics = scores[0].keys()
-        scores = {m: np.mean([d[m] for d in scores.values()]) for m in
-                  valid_metrics}
-
-    result = ModelOutput(model, scores, y_true, y_pred)
+        scores = {m: np.mean([d[m] for d in scores.values()])
+                  for m in valid_metrics}
+        result = CrossvalInfo(scores, y_true, y_pred)
+    result = mpiops.comm.bcast(result, root=0)
     return result
 
 
