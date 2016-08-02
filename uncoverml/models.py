@@ -15,6 +15,8 @@ from sklearn.linear_model import ARDRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
+import uncoverml.transforms as transforms
+
 
 class LinearModel(StandardLinearModel):
 
@@ -26,7 +28,6 @@ class LinearModel(StandardLinearModel):
     def predict_proba(self, X):
 
         Ey, _, Vy = super(LinearModel, self).predict_moments(X)
-
         return Ey, Vy
 
     def entropy_reduction(self, X):
@@ -103,6 +104,95 @@ class RandomForestRegressor(RFR):
 
 
 #
+# Transformer factory
+#
+
+def transform_targets(Learner):
+
+    class TransformedLearner(Learner):
+
+        def __init__(self, target_transform='identity', *args, **kwargs):
+
+            super().__init__(*args, **kwargs)
+            self.ytform = transforms.transforms[target_transform]()
+
+        def fit(self, X, y, *args, **kwargs):
+
+            self.ytform.fit(y)
+            y_t = self.ytform.transform(y)
+
+            return super().fit(X, y_t, *args, **kwargs)
+
+        def predict(self, X, *args):
+
+            Ey_t = super().predict(X, *args)
+            Ey = self.ytform.itransform(Ey_t)
+
+            return Ey
+
+        if hasattr(Learner, 'predict_proba'):
+            def predict_proba(self, X, *args):
+
+                Ns = X.shape[0]
+                nsamples = 100
+
+                # Expectation and variance in latent space
+                Ey_t, Sy_t = super().predict_proba(X, *args)
+                Sy_t = np.sqrt(Sy_t)  # inplace to same mem
+
+                # Now transform expectation, and sample to get transformed
+                # variance
+                Ey = self.ytform.itransform(Ey_t)
+                Vy = np.zeros_like(Ey)
+
+                # Do this as much in place as possible for memory conservation
+                for _ in range(nsamples):
+                    ys = self.ytform.itransform(Ey_t + np.random.randn(Ns)
+                                                * Sy_t)
+                    Vy += (Ey - ys)**2
+
+                Vy /= nsamples
+
+                return Ey, Vy
+
+    return TransformedLearner
+
+
+# These are purely so we can pickle
+
+class SVRTransformed(transform_targets(SVR)):
+    pass
+
+
+class LinearRegTransformed(transform_targets(LinearReg)):
+    pass
+
+
+class RandomForestTransformed(transform_targets(RandomForestRegressor)):
+    pass
+
+
+class ApproxGPTransformed(transform_targets(ApproxGP)):
+    pass
+
+
+class KernelRidgeTransformed(transform_targets(KernelRidge)):
+    pass
+
+
+class ARDRegressionTransformed(transform_targets(ARDRegression)):
+    pass
+
+
+class DecisionTreeTransformed(transform_targets(DecisionTreeRegressor)):
+    pass
+
+
+class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor)):
+    pass
+
+
+#
 # Helper functions
 #
 
@@ -164,14 +254,14 @@ def apply_multiple_masked(func, data, args=()):
 # Static module properties
 #
 
-modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': LinearReg,
-             'approxgp': ApproxGP,
-             'svr': SVR,
-             'kernelridge': KernelRidge,
-             'ardregression': ARDRegression,
-             'decisiontree': DecisionTreeRegressor,
-             'extratree': ExtraTreeRegressor
+modelmaps = {'randomforest': RandomForestTransformed,
+             'bayesreg': LinearRegTransformed,
+             'approxgp': ApproxGPTransformed,
+             'svr': SVRTransformed,
+             'kernelridge': KernelRidgeTransformed,
+             'ardregression': ARDRegressionTransformed,
+             'decisiontree': DecisionTreeTransformed,
+             'extratree': ExtraTreeTransformed
              }
 
 
