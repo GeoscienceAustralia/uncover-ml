@@ -103,12 +103,6 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
     # this mask cropping is not repeated in a batch run when using apply mask
     if mask_file:
         temp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
-
-        # crop/reproject/resample the mask
-        crop_reproject_resample(mask_file, cropped_mask_file,
-                                sampling='near',
-                                extents=extents)
 
         # crop/reproject/resample the geotif
         crop_reproject_resample(input_file=input_file,
@@ -117,13 +111,11 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
                                 extents=extents)
 
         # apply mask and optional y convert to jpeg
-        apply_mask(mask_file=cropped_mask_file,
+        apply_mask(mask_file=mask_file,
                    tmp_output_file=temp_output_file,
                    output_file=output_file,
                    jpeg=jpeg)
         # clean up
-        os.remove(cropped_mask_file)
-        print('removed intermediate cropped mask file', cropped_mask_file)
         os.remove(temp_output_file)
         print('removed intermediate cropped output file', temp_output_file)
     else:
@@ -190,10 +182,25 @@ if __name__ == '__main__':
                              "--extents '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'")
     options.extents = [str(s) for s in extents]
 
+    if options.mask_file:
+        # temporary cropped mask file
+        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+
+        # crop/reproject/resample the mask
+        crop_reproject_resample(options.mask_file, cropped_mask_file,
+                            sampling='near',
+                            extents=options.extents)
+    else:
+        cropped_mask_file = options.mask_file
+
     do_work(input_file=options.input_file,
-            mask_file=options.mask_file,
+            mask_file=cropped_mask_file,
             output_file=options.output_file,
             resampling=options.resampling,
             extents=options.extents,
             jpeg=options.jpeg)
+
+    if options.mask_file:
+        os.remove(cropped_mask_file)
+        print('removed intermediate cropped mask file', cropped_mask_file)
 

@@ -12,7 +12,10 @@ from os.path import join, exists, basename
 import glob
 from optparse import OptionParser
 from mpi4py import MPI
-from utils.crop_mask_resample_reproject import do_work
+import tempfile
+from utils.crop_mask_resample_reproject import (do_work,
+                                                TMPDIR,
+                                                crop_reproject_resample)
 
 
 def return_file_list(my_dir, extension):
@@ -24,6 +27,17 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
     rank = comm.rank
     size = comm.size
 
+    if mask_file:
+        # temporary cropped mask file
+        cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
+
+        # crop/reproject/resample the mask
+        crop_reproject_resample(options.mask_file, cropped_mask_file,
+                                sampling='near',
+                                extents=options.extents)
+    else:
+        cropped_mask_file = options.mask_file
+
     for i in range(rank, len(files), size):
         in_file = files[i]
         print('=================file no: {}====================='.format(i))
@@ -32,11 +46,15 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
         out_file = join(output_dir, basename(in_file))
         print('Output file: {}'.format(out_file))
         do_work(input_file=in_file,
-                mask_file=mask_file,
+                mask_file=cropped_mask_file,
                 output_file=out_file,
                 extents=extents,
                 resampling=resampling,
                 jpeg=jpeg)
+
+    if mask_file:
+        os.remove(cropped_mask_file)
+        print('removed intermediate cropped mask file', cropped_mask_file)
 
     comm.Barrier()
 
@@ -105,6 +123,7 @@ if __name__ == '__main__':
 
     options.extents = [str(s) for s in extents]
     files_to_convert = return_file_list(options.input_dir, '*.tif')
+
     convert_files(files_to_convert,
                   output_dir=options.output_dir,
                   mask_file=options.mask_file,
