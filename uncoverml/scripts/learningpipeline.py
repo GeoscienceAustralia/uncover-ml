@@ -45,19 +45,20 @@ def extract(targets, config):
         sys.exit(-1)
 
     extracted_chunks = {}
+    settings = {}
     for tif in tifs:
         name = path.basename(tif)
         log.info("Processing {}.".format(name))
-        settings = datatypes.ExtractSettings(onehot=config.onehot,
-                                             x_sets=None,
-                                             patchsize=config.patchsize)
+        s = datatypes.ExtractSettings(onehot=config.onehot,
+                                      x_sets=None,
+                                      patchsize=config.patchsize)
         image_source = geoio.RasterioImageSource(tif)
-        x, settings = pipeline.extract_features(image_source,
-                                                targets, settings)
-        d = {"x": x, "settings": settings}
-        extracted_chunks[name] = d
+        # x may be none, but everyone gets the same settings object
+        x, s = pipeline.extract_features(image_source, targets, s)
+        extracted_chunks[name] = x
+        settings[name] = s
     result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
-    return result
+    return result, settings
 
 
 def run_pipeline(config):
@@ -76,8 +77,7 @@ def run_pipeline(config):
         mpiops.run_once(geoio.write_targets, targets, outfile_targets)
 
     # keys for these two are the filenames
-    extracted_chunks = extract(targets, config)
-    image_settings = {k: v["settings"] for k, v in extracted_chunks.items()}
+    extracted_chunks, image_settings = extract(targets, config)
 
     compose_settings = datatypes.ComposeSettings(
         impute=config.impute,
@@ -89,9 +89,28 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
-    algorithm = 'svr'
-    rank_features(extracted_chunks, targets, algorithm, compose_settings,
-                  config)
+    # all nodes need to agree on the order of iteration
+    X = gather_data(extracted_chunks, compose_settings)
+
+    for algorithm in sorted(config.algdict.keys()):
+        args = config.algdict[algorithm]
+
+        if config.rank_features:
+            measures, features, scores = rank_features(extracted_chunks,
+                                                       targets, algorithm,
+                                                       compose_settings,
+                                                       config)
+            mpiops.run_once(export_feature_ranks, measures,
+                            features, scores, algorithm, config)
+
+        if config.cross_validate:
+            crossval_results = pipeline.cross_validate(X, targets, algorithm,
+                                                       args)
+            mpiops.run_once(export_scores, crossval_results, algorithm, config)
+
+        model = pipeline.learn_model(X, targets, algorithm, args)
+        mpiops.run_once(export_model, model, image_settings,
+                        compose_settings, algorithm, config)
 
 
 def rank_features(extracted_chunks, targets, algorithm, compose_settings,
@@ -108,9 +127,10 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
                                                                 fname))
 
         compose_missing = copy.deepcopy(compose_settings)
-        out = predict_and_score(dict_missing, targets, algorithm,
-                                compose_missing, config)
-        feature_scores[fname] = out
+        X = gather_data(dict_missing, compose_missing)
+        results = pipeline.cross_validate(X, targets, algorithm,
+                                          config.algdict[algorithm])
+        feature_scores[fname] = results
 
     # Get the different types of score from one of the outputs
     # TODO make this not suck
@@ -120,12 +140,26 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
     for m, measure in enumerate(measures):
         for f, feature in enumerate(features):
             scores[m, f] = feature_scores[feature].scores[measure]
-
-    # Save the feature scores to a file
-    dump_feature_ranks(measures, features, scores, "scores.json")
+    return measures, features, scores
 
 
-def dump_feature_ranks(measures, features, scores, filename):
+def gather_data(extracted_chunks, compose_settings):
+    has_data = not (True in [k is None for k in extracted_chunks.values()])
+    if has_data:
+        x = np.ma.concatenate(extracted_chunks.values(), axis=1)
+    else:
+        x = None
+    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
+
+    X_list = mpiops.comm.allgather(x_out)
+    X = np.ma.vstack([k for k in X_list if k is not None])
+    return X
+
+
+def export_feature_ranks(measures, features, scores, algorithm, config):
+    outfile_ranks = path.join(config.output_dir,
+                              config.name + "_" + algorithm +
+                              "_featureranks.json")
 
     score_listing = dict(scores={}, ranks={})
     for measure, measure_scores in zip(measures, scores):
@@ -140,48 +174,30 @@ def dump_feature_ranks(measures, features, scores, filename):
         score_listing['ranks'][measure] = sorted_features
 
     # Write the results out to a file
-    with open(filename, 'w') as output_file:
-        json.dump(score_listing, output_file)
+    with open(outfile_ranks, 'w') as output_file:
+        json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 
-def predict_and_score(extracted_chunks, targets, algorithm,
-                      compose_settings, config):
+def export_model(model, image_settings, compose_settings, algorithm, config):
+    outfile_state = path.join(config.output_dir,
+                              config.name + "_" + algorithm + ".state")
+    state_dict = {"model": model,
+                  "image_settings": image_settings,
+                  "compose_settings": compose_settings}
 
-    x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()], axis=1)
-    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
-
-    X_list = mpiops.comm.allgather(x_out)
-    X = np.ma.vstack(X_list)
-    args = config.algdict[algorithm]
-    out = pipeline.learn_model(X, targets, algorithm, crossvalidate=True,
-                               algorithm_params=args)
-    return out
+    with open(outfile_state, 'wb') as f:
+        pickle.dump(state_dict, f)
 
 
-def dump_state(config, models, image_settings, compose_settings):
-    if mpiops.chunk_index == 0:
-        outfile_state = path.join(config.output_dir,
-                                  config.name + ".state")
-        state_dict = {"models": models,
-                      "image_settings": image_settings,
-                      "compose_settings": compose_settings}
+def export_scores(crossval_output, algorithm, config):
 
-        with open(outfile_state, 'wb') as f:
-            pickle.dump(state_dict, f)
-
-
-def dump_outputs(outputs, config):
-
-    for algorithm, model_out in outputs.items():
-        # Outputs
-        if mpiops.chunk_index == 0:
-            outfile_scores = path.join(config.output_dir,
-                                       config.name + "_" + algorithm +
-                                       "_scores.json")
-            geoio.export_scores(model_out.scores,
-                                model_out.y_true,
-                                model_out.y_pred,
-                                outfile_scores)
+    outfile_scores = path.join(config.output_dir,
+                               config.name + "_" + algorithm +
+                               "_scores.json")
+    geoio.export_scores(crossval_output.scores,
+                        crossval_output.y_true,
+                        crossval_output.y_pred,
+                        outfile_scores)
 
 
 def main():
