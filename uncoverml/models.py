@@ -146,6 +146,12 @@ def transform_targets(Learner):
     return TransformedLearner
 
 
+# These are purely so we can pickle
+
+class SVR_Transformed(transform_targets(SVR)):
+    pass
+
+
 #
 # Helper functions
 #
@@ -211,7 +217,7 @@ def apply_multiple_masked(func, data, args=()):
 modelmaps = {'randomforest': transform_targets(RandomForestRegressor),
              'bayesreg': transform_targets(LinearReg),
              'approxgp': transform_targets(ApproxGP),
-             'svr': transform_targets(SVR),
+             'svr': SVR_Transformed,
              'kernelridge': transform_targets(KernelRidge),
              'ardregression': transform_targets(ARDRegression),
              'decisiontree': transform_targets(DecisionTreeRegressor),

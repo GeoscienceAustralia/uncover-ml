@@ -76,7 +76,7 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {'transform': 'kde'},
+    "svr": {'transform': 'rank'},
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 100},
