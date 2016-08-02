@@ -75,15 +75,19 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {},
+    # "bayesreg": {'target_transform': 'standardise'},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
-    # "approxgp": {'kern': 'matern52', 'lenscale': 100., 'nbases': 50},
+    # "approxgp": {
+                 # 'target_transform': 'rank',
+                 # 'kern': 'matern52',
+                 # 'lenscale': [1000.] * 87,
+                 # 'lenscale': 1000.,
+                 # 'nbases': 50},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
     "randomforest": {'n_estimators': 100},
