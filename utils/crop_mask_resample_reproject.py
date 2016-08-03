@@ -12,6 +12,7 @@ import os
 import tempfile
 import shutil
 import gc
+import logging
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
@@ -23,6 +24,9 @@ if 'PBS_JOBFS' in os.environ:
     TMPDIR = os.environ['PBS_JOBFS']
 else:
     TMPDIR = tempfile.gettempdir()
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 def crop_reproject_resample(input_file, output_file, sampling, extents):
@@ -41,7 +45,7 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     -------
     """
     # TODO: add extents checking between input_file and extents
-    print('Crop/resample/reproject {}'.format(input_file))
+    log.info('Crop/resample/reproject of {}'.format(input_file))
     cmd = ['gdalwarp', '-overwrite', '-multi'] + \
           COMMON + TILES + \
           ['-t_srs'] + [TSRS] + \
@@ -51,6 +55,7 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
           ['-wm'] + ['200']
     cmd += [input_file, output_file]
     subprocess.check_call(cmd)
+    log.info('Finished crop/resample/reproject of {}'.format(input_file))
 
 
 def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
@@ -75,16 +80,17 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     out_band = out_ds.GetRasterBand(1)
     out_data = out_band.ReadAsArray()
     no_data_value = out_band.GetNoDataValue()
-    if isinstance(no_data_value, float):
+    log.info('Found NoDataValue {} for file {}'.format(
+        no_data_value, os.path.basename(output_file)))
+    if no_data_value is not None:
         out_data[mask] = no_data_value
     else:
-        print('NoDataValue was not set for {}'.format(output_file))
+        log.warning('NoDataValue was not set for {}'.format(output_file))
+        log.info('Manually setting NoDataValue for {}'.format(output_file))
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
 
-    # move file to output file
-    shutil.move(tmp_output_file, output_file)
-    print('created', output_file)
+    log.info('Output file {} created'.format(output_file))
     if jpeg:
         dir_name = os.path.dirname(output_file)
         jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
@@ -93,7 +99,7 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
                    tmp_output_file,
                    jpeg_file] + COMMON
         subprocess.check_call(cmd_jpg)
-        print('created', jpeg_file)
+        log.info('created', jpeg_file)
 
 
 def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
@@ -115,9 +121,6 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
                    tmp_output_file=temp_output_file,
                    output_file=output_file,
                    jpeg=jpeg)
-        # clean up
-        os.remove(temp_output_file)
-        print('removed intermediate cropped output file', temp_output_file)
     else:
         crop_reproject_resample(input_file=input_file,
                                 output_file=output_file,

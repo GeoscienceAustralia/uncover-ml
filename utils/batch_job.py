@@ -13,9 +13,13 @@ import glob
 from optparse import OptionParser
 from mpi4py import MPI
 import tempfile
+import logging
 from utils.crop_mask_resample_reproject import (do_work,
                                                 TMPDIR,
                                                 crop_reproject_resample)
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 def return_file_list(my_dir, extension):
@@ -40,11 +44,11 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
 
     for i in range(rank, len(files), size):
         in_file = files[i]
-        print('=================file no: {}====================='.format(i))
-        print("operating on {file} in process {rank}".format(file=in_file,
+        print('============file no: {} of {}==========='.format(i, len(files)))
+        log.info("operating on {file} in process {rank}".format(file=in_file,
                                                              rank=rank))
         out_file = join(output_dir, basename(in_file))
-        print('Output file: {}'.format(out_file))
+        log.info('Output file: {}'.format(out_file))
         do_work(input_file=in_file,
                 mask_file=cropped_mask_file,
                 output_file=out_file,
@@ -54,7 +58,8 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
 
     if mask_file:
         os.remove(cropped_mask_file)
-        print('removed intermediate cropped mask file', cropped_mask_file)
+        log.info('removed intermediate cropped '
+                 'mask file {}'.format(cropped_mask_file))
 
     comm.Barrier()
 
