@@ -55,8 +55,9 @@ def impute_with_mean(x, mean):
     if np.ma.count_masked(x) == 0:
         return
 
-    for i, r in enumerate(x):
-        x.data[i][x.mask[i]] = mean[x.mask[i]]
+    for i, m in enumerate(mean):
+        x.data[:, i][x.mask[:, i]] = m
+
     x.mask *= False
 
 

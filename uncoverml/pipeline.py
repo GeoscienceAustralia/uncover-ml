@@ -3,15 +3,11 @@ import logging
 import numpy as np
 from scipy.stats import norm
 
-from revrand.metrics import mll, msll
-
+from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df
-from uncoverml import mpiops
-from uncoverml import patch
-from uncoverml import stats
-from uncoverml import validation
 from uncoverml.image import Image
-from uncoverml.models import modelmaps, apply_multiple_masked, apply_masked
+from uncoverml.models import apply_masked, apply_multiple_masked, modelmaps
+from uncoverml.validation import calculate_validation_scores
 
 
 log = logging.getLogger(__name__)
@@ -47,26 +43,79 @@ def compose_features(x, settings):
     return x, settings
 
 
-def learn_model(X_list, targets, algorithm,
-                cvindex=None, algorithm_params=None):
-    # Remove the missing data
-    data_vectors = [x for x in X_list if x is not None]
-    X = np.ma.concatenate(data_vectors, axis=0)
-
-    # Optionally subset the data for cross validation
-    if cvindex is not None:
-        cv_ind = targets.folds
-        y = targets.observations
-        y = y[cv_ind != cvindex]
-        X = X[cv_ind != cvindex]
-
-    # Train the model
-    mod = modelmaps[algorithm](**algorithm_params)
-    apply_multiple_masked(mod.fit, (X, y))
-    return mod
+class CrossvalInfo:
+    def __init__(self, scores, y_true, y_pred):
+        self.scores = scores
+        self.y_true = y_true
+        self.y_pred = y_pred
 
 
-def predict(data, model, interval):
+def learn_model(X, targets, algorithm, algorithm_params=None):
+    model = modelmaps[algorithm](**algorithm_params)
+    y = targets.observations
+
+    if mpiops.chunk_index == 0:
+        apply_multiple_masked(model.fit, (X, y))
+    model = mpiops.comm.bcast(model, root=0)
+    return model
+
+
+def cross_validate(X, targets, algorithm, algorithm_params=None):
+    model = modelmaps[algorithm](**algorithm_params)
+    y = targets.observations
+    cv_indices = targets.folds
+
+    # Split folds over workers
+    fold_list = np.arange(targets.nfolds)
+    fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+
+    y_pred = {}
+    y_true = {}
+    fold_scores = {}
+
+    # Train and score on each fold
+    for fold in fold_node:
+
+        train_mask = cv_indices != fold
+        test_mask = ~ train_mask
+
+        y_k_train = y[train_mask]
+        apply_multiple_masked(model.fit, (X[train_mask], y_k_train))
+        y_k_pred = predict(X[test_mask], model)
+        y_k_test = y[test_mask]
+
+        y_pred[fold] = y_k_pred
+        y_true[fold] = y_k_test
+
+        fold_scores[fold] = calculate_validation_scores(y_k_test,
+                                                        y_k_train,
+                                                        y_k_pred)
+    y_pred = join_dicts(mpiops.comm.gather(y_pred, root=0))
+    y_true = join_dicts(mpiops.comm.gather(y_true, root=0))
+    scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
+    result = None
+    if mpiops.chunk_index == 0:
+        y_true = np.concatenate([y_true[i] for i in range(targets.nfolds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(targets.nfolds)])
+        valid_metrics = scores[0].keys()
+        scores = {m: np.mean([d[m] for d in scores.values()])
+                  for m in valid_metrics}
+        result = CrossvalInfo(scores, y_true, y_pred)
+    result = mpiops.comm.bcast(result, root=0)
+    return result
+
+
+def join_dicts(dicts):
+
+    if dicts is None:
+        return
+
+    d = {k: v for D in dicts for k, v in D.items()}
+
+    return d
+
+
+def predict(data, model, interval=None):
 
     def pred(X):
 
@@ -89,46 +138,3 @@ def predict(data, model, interval):
         return predres
 
     return apply_masked(pred, data)
-
-
-def validate(targets, data_vectors, cvindex):
-    cvind = targets.folds
-    Y = targets.observations
-
-    s_ind = np.where(cvind == cvindex)[0]
-    t_ind = np.where(cvind != cvindex)[0]
-
-    Yt = Y[t_ind]
-    Ys = Y[s_ind]
-    Ns = len(Ys)
-
-    # Remove missing data
-    data_vectors = [x for x in data_vectors if x is not None]
-    EYs = np.ma.concatenate(data_vectors, axis=0)
-
-    # See if this data is already subset for xval
-    if len(EYs) > Ns:
-        EYs = EYs[s_ind]
-
-    scores = {}
-    for m in validation.metrics:
-
-        if m not in validation.probscores:
-            score = apply_multiple_masked(validation.score_first_dim(
-                                          validation.metrics[m]),
-                                          (Ys, EYs))
-        elif EYs.ndim == 2:
-            if m == 'mll' and EYs.shape[1] > 1:
-                score = apply_multiple_masked(mll, (Ys, EYs[:, 0], EYs[:, 1]))
-            elif m == 'msll' and EYs.shape[1] > 1:
-                score = apply_multiple_masked(msll, (Ys, EYs[:, 0], EYs[:, 1]),
-                                              (Yt,))
-            else:
-                continue
-        else:
-            continue
-
-        scores[m] = score
-        log.info("{} score = {}".format(m, score))
-
-    return scores, Ys, EYs
