@@ -76,21 +76,22 @@ algdict = {
 
     # Bayesian linear regression
     # "bayesreg": {'target_transform': 'standardise'},
+    # "sgdbayesreg": {'target_transform': 'standardise'}
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {
-                 # 'target_transform': 'rank',
-                 # 'kern': 'matern52',
-                 # 'lenscale': [1000.] * 87,
+    "approxgp": {
+                 'target_transform': 'standardise',
+                 'kern': 'matern52',
+                 'lenscale': [1000.] * 87,
                  # 'lenscale': 1000.,
-                 # 'nbases': 50},
+                 'nbases': 100},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {'target_transform': 'standardise'},
+    # "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 100},
+    # "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},

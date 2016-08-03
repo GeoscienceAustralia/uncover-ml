@@ -2,12 +2,13 @@
 
 import numpy as np
 
-from revrand import StandardLinearModel
+from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
     RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
-from revrand.likelihoods import Gaussian, Bernoulli, Poisson
+from revrand.likelihoods import Gaussian
 from revrand.btypes import Parameter, Positive
 from revrand.utils import atleast_list
+from revrand.optimize import Adam
 
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
@@ -18,16 +19,21 @@ from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 import uncoverml.transforms as transforms
 
 
+#
+# Specialisation of revrand's interface to work from the command line with a
+# few curated algorithms
+#
+
 class LinearModel(StandardLinearModel):
 
     def fit(self, X, y):
 
         self._make_basis(X)
-        return super(LinearModel, self).fit(X, y)
+        return super().fit(X, y)
 
     def predict_proba(self, X):
 
-        Ey, _, Vy = super(LinearModel, self).predict_moments(X)
+        Ey, _, Vy = super().predict_moments(X)
         return Ey, Vy
 
     def entropy_reduction(self, X):
@@ -49,17 +55,17 @@ class LinearReg(LinearModel):
                  maxiter=1000):
 
         basis = LinearBasis(onescol=onescol)
-        super(LinearReg, self).__init__(basis=basis,
-                                        var=var,
-                                        regulariser=regulariser,
-                                        tol=tol,
-                                        maxiter=maxiter
-                                        )
+        super().__init__(basis=basis,
+                         var=var,
+                         regulariser=regulariser,
+                         tol=tol,
+                         maxiter=maxiter
+                         )
 
 
 class ApproxGP(LinearModel):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=.1,
+    def __init__(self, kern='rbf', nbases=200, lenscale=1.,
                  var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-8,
                  maxiter=1000):
@@ -69,12 +75,12 @@ class ApproxGP(LinearModel):
             else np.asarray(lenscale)
         self.kern = kern
 
-        super(ApproxGP, self).__init__(basis=None,
-                                       var=var,
-                                       regulariser=regulariser,
-                                       tol=tol,
-                                       maxiter=maxiter
-                                       )
+        super().__init__(basis=None,
+                         var=var,
+                         regulariser=regulariser,
+                         tol=tol,
+                         maxiter=maxiter
+                         )
 
     def _make_basis(self, X):
 
@@ -84,6 +90,61 @@ class ApproxGP(LinearModel):
                                                                  Positive())
                                          ) + BiasBasis()
 
+
+class SGDLinearModel(GeneralisedLinearModel):
+
+    def __init__(self, onescol=True, var=Parameter(1., Positive()),
+                 regulariser=Parameter(1., Positive()), maxiter=3000,
+                 batch_size=10):
+
+        super().__init__(likelihood=Gaussian(var),
+                         basis=LinearBasis(onescol),
+                         regulariser=regulariser,
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam()
+                         )
+
+    def predict_proba(self, X):
+
+        Ey, Vy, _, _ = super().predict_moments(X)
+        return Ey, Vy
+
+
+class SGDApproxGP(SGDLinearModel):
+
+    def __init__(self, kern='rbf', nbases=200, lenscale=1.,
+                 var=Parameter(1., Positive()),
+                 regulariser=Parameter(1., Positive()), maxiter=3000,
+                 batch_size=10):
+
+        self.nbases = nbases
+        self.lenscale = lenscale if np.isscalar(lenscale) \
+            else np.asarray(lenscale)
+        self.kern = kern
+
+        super().__init__(likelihood=Gaussian(var),
+                         basis=None,
+                         regulariser=regulariser,
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam()
+                         )
+
+        def fit(self, X, y, likelihood_args=()):
+
+            lenscale_init = Parameter(self.lenscale, Positive())
+            self.basis = basismap[self.kern](Xdim=X.shape[1],
+                                             nbases=self.nbases,
+                                             lenscale_init=lenscale_init,
+                                             ) + BiasBasis()
+
+            return super().fit(X, y, likelihood_args)
+
+
+#
+# Approximate probabilistic output for Random Forest
+#
 
 class RandomForestRegressor(RFR):
     """
@@ -104,7 +165,7 @@ class RandomForestRegressor(RFR):
 
 
 #
-# Transformer factory
+# Target Transformer factory
 #
 
 def transform_targets(Learner):
@@ -192,8 +253,16 @@ class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor)):
     pass
 
 
+class SGDLinearModelTransformed(transform_targets(SGDLinearModel)):
+    pass
+
+
+class SGDApproxGPTransformed(transform_targets(SGDApproxGP)):
+    pass
+
+
 #
-# Helper functions
+# Helper functions for multiple outputs and missing/masked data
 #
 
 def apply_masked(func, data, args=()):
@@ -256,18 +325,14 @@ def apply_multiple_masked(func, data, args=()):
 
 modelmaps = {'randomforest': RandomForestTransformed,
              'bayesreg': LinearRegTransformed,
+             'sgdbayesreg': SGDLinearModelTransformed,
              'approxgp': ApproxGPTransformed,
+             'sgdapproxgp': SGDApproxGPTransformed,
              'svr': SVRTransformed,
              'kernelridge': KernelRidgeTransformed,
              'ardregression': ARDRegressionTransformed,
              'decisiontree': DecisionTreeTransformed,
-             'extratree': ExtraTreeTransformed
-             }
-
-
-lhoodmaps = {'Gaussian': Gaussian,
-             'Bernoulli': Bernoulli,
-             'Poisson': Poisson
+             'extratree': ExtraTreeTransformed,
              }
 
 
