@@ -4,7 +4,7 @@ from os.path import join, basename, exists
 import tempfile
 import shutil
 from osgeo import gdal
-from utils import crop_mask_resample_reproject as crop
+from preprocessing import crop_mask_resample_reproject as crop
 UNCOVER = os.environ['UNCOVER']  # points to the uncover-ml directory
 
 
@@ -12,7 +12,7 @@ class TestCropReSampleReProject(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mocks = join(UNCOVER, 'utils', 'mocks')
+        mocks = join(UNCOVER, 'preprocessing', 'mocks')
         # These file shave extents = '900000 -4300000 940000 -4260000'
         cls.mask = join(mocks, 'mask.tif')
         cls.std2000 = join(mocks, 'std2000.tif')

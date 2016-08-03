@@ -14,9 +14,9 @@ from optparse import OptionParser
 from mpi4py import MPI
 import tempfile
 import logging
-from utils.crop_mask_resample_reproject import (do_work,
-                                                TMPDIR,
-                                                crop_reproject_resample)
+from preprocessing.crop_mask_resample_reproject import (do_work,
+                                                        TMPDIR,
+                                                        crop_reproject_resample)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
