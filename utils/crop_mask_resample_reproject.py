@@ -81,25 +81,28 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     out_data = out_band.ReadAsArray()
     no_data_value = out_band.GetNoDataValue()
     log.info('Found NoDataValue {} for file {}'.format(
-        no_data_value, os.path.basename(output_file)))
+        no_data_value, os.path.basename(tmp_output_file)))
     if no_data_value is not None:
         out_data[mask] = no_data_value
     else:
-        log.warning('NoDataValue was not set for {}'.format(output_file))
-        log.info('Manually setting NoDataValue for {}'.format(output_file))
+        log.warning('NoDataValue was not set for {}'.format(tmp_output_file))
+        log.info('Manually setting NoDataValue for {}'.format(tmp_output_file))
     out_band.WriteArray(out_data)
     out_ds = None  # close dataset and flush cache
 
-    log.info('Output file {} created'.format(output_file))
+    # move file to output file
+    shutil.move(tmp_output_file, output_file)
+    log.info('Output file {} created'.format(tmp_output_file))
+
     if jpeg:
         dir_name = os.path.dirname(output_file)
         jpeg_file = os.path.basename(output_file).split('.')[0] + '.jpg'
         jpeg_file = os.path.join(dir_name, jpeg_file)
         cmd_jpg = ['gdal_translate', '-ot', 'Byte', '-of', 'JPEG', '-scale',
-                   tmp_output_file,
+                   output_file,
                    jpeg_file] + COMMON
         subprocess.check_call(cmd_jpg)
-        log.info('created', jpeg_file)
+        log.info('Created {}'.format(jpeg_file))
 
 
 def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):

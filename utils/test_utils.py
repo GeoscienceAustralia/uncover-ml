@@ -2,6 +2,7 @@ import unittest
 import os
 from os.path import join, basename, exists
 import tempfile
+import shutil
 from osgeo import gdal
 from utils import crop_mask_resample_reproject as crop
 UNCOVER = os.environ['UNCOVER']  # points to the uncover-ml directory
@@ -50,8 +51,10 @@ class TestCropReSampleReProject(unittest.TestCase):
     def test_apply_mask(self):
         output_file = tempfile.mktemp(suffix='.tif')
         jpeg = False
+        tmp_out_file = tempfile.mktemp(suffix='.tif')
+        shutil.copy(self.std2000_no_mask, tmp_out_file)
         crop.apply_mask(mask_file=self.mask,
-                        tmp_output_file=self.std2000_no_mask,
+                        tmp_output_file=tmp_out_file,
                         output_file=output_file,
                         jpeg=jpeg)
 
