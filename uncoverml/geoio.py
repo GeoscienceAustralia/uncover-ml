@@ -233,15 +233,16 @@ class RasterioImageSource(ImageSource):
             d = d[:, ::-1]
 
         # Otherwise scikit image complains
-        d = np.ascontiguousarray(d)
+        m = np.ma.MaskedArray(data=np.ascontiguousarray(d.data),
+                              mask=np.ascontiguousarray(d.mask))
 
         # uniform mask format
-        if np.ma.count_masked(d) == 0:
-            d = np.ma.masked_array(data=d.data,
-                                   mask=np.zeros_like(d.data, dtype=bool))
-        assert d.data.ndim == 3
-        assert d.mask.ndim == 3
-        return d
+        if np.ma.count_masked(m) == 0:
+            m = np.ma.masked_array(data=m.data,
+                                   mask=np.zeros_like(m.data, dtype=bool))
+        assert m.data.ndim == 3
+        assert m.mask.ndim == 3
+        return m
 
 
 class ArrayImageSource(ImageSource):
@@ -490,7 +491,7 @@ def create_image(x, shape, bbox, name, outputdir,
 
 def export_scores(scores, y, Ey, filename):
 
-    log.info("Scores")
+    log.info("{} Scores".format(filename.rstrip(".json")))
     for metric, score in scores.items():
         log.info("{} = {}".format(metric, score))
 
