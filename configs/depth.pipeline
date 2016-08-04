@@ -28,6 +28,7 @@ target_var = "depth"
 
 export_targets = True
 
+cross_validate = True
 folds = 5
 
 
@@ -52,6 +53,10 @@ transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.8
+
+# Estimate the relative importance of each feature
+rank_features = False
+
 
 #
 # Algorithm settings
@@ -93,8 +98,8 @@ algdict = {
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-# algorithm = 'bayesreg'
-algorithm = 'approxgp'
+algorithm = 'bayesreg'
+# algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
