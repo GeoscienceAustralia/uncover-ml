@@ -57,7 +57,6 @@ def impute_with_mean(x, mean):
 
     for i, m in enumerate(mean):
         x.data[:, i][x.mask[:, i]] = m
-
     x.mask *= False
 
 

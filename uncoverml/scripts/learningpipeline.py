@@ -37,11 +37,11 @@ def get_targets(shapefile, fieldname, folds, seed):
     return targets
 
 
-def extract(targets, config):
+def extract(targets, feature_set):
     # Extract feats for training
-    tifs = glob(path.join(config.data_dir, "*.tif"))
+    tifs = glob(path.join(feature_set['path'], "*.tif"))
     if len(tifs) == 0:
-        log.fatal("No geotiffs found in {}!".format(config.data_dir))
+        log.fatal("No geotiffs found in {}!".format(feature_set['path']))
         sys.exit(-1)
 
     extracted_chunks = {}
@@ -49,9 +49,9 @@ def extract(targets, config):
     for tif in tifs:
         name = path.basename(tif)
         log.info("Processing {}.".format(name))
-        s = datatypes.ExtractSettings(onehot=config.onehot,
+        s = datatypes.ExtractSettings(onehot=feature_set['onehot'],
                                       x_sets=None,
-                                      patchsize=config.patchsize)
+                                      patchsize=feature_set['patchsize'])
         image_source = geoio.RasterioImageSource(tif)
         # x may be none, but everyone gets the same settings object
         x, s = pipeline.extract_features(image_source, targets, s)
@@ -61,12 +61,43 @@ def extract(targets, config):
     return result, settings
 
 
+class FeatureSet():
+    def __init__(self, image_chunks, image_settings, compose_settings):
+        self.image_chunks = image_chunks
+        self.image_settings = image_settings
+        self.compose_settings = compose_settings
+
+
+def load_all_data(targets, config):
+    features = []
+    for f in config.feature_sets:
+        # keys for these two are the filenames
+        extracted_chunks_f, settings_f = extract(targets, f)
+        compose_settings_f = datatypes.ComposeSettings(
+            impute=f['impute'],
+            transform=f['transform'],
+            featurefraction=f['pca_frac'],
+            impute_mean=None,
+            mean=None,
+            sd=None,
+            eigvals=None,
+            eigvecs=None)
+        features.append(FeatureSet(extracted_chunks_f, settings_f,
+                                   compose_settings_f))
+    return features
+
+
+def all_nodes_x(X):
+    X_list = mpiops.comm.allgather(X)
+    X = np.ma.vstack([k for k in X_list if k is not None])
+    return X
+
+
 def run_pipeline(config):
 
     # Make the targets
-    shapefile = path.join(config.data_dir, config.target_file)
     targets = mpiops.run_once(get_targets,
-                              shapefile=shapefile,
+                              shapefile=config.target_file,
                               fieldname=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
@@ -76,32 +107,22 @@ def run_pipeline(config):
                                     config.name + "_targets.hdf5")
         mpiops.run_once(geoio.write_targets, targets, outfile_targets)
 
-    # keys for these two are the filenames
-    extracted_chunks, image_settings = extract(targets, config)
+    features = load_all_data(targets, config)
 
-    compose_settings = datatypes.ComposeSettings(
-        impute=config.impute,
-        transform=config.transform,
-        featurefraction=config.pca_frac,
-        impute_mean=None,
-        mean=None,
-        sd=None,
-        eigvals=None,
-        eigvecs=None)
+    if config.rank_features:
+        for algorithm in sorted(config.algdict.keys()):
+            measures, feature_list, scores = rank_features(features, targets,
+                                                           algorithm, config)
+            mpiops.run_once(export_feature_ranks, measures,
+                            feature_list, scores, algorithm, config)
 
-    # all nodes need to agree on the order of iteration
-    X = gather_data(extracted_chunks, compose_settings)
-
+    print("extracting and composing per node:")
+    full_node_x = extract_and_compose(features)
+    print("gathering all data to all nodes:")
+    X = all_nodes_x(full_node_x)
+    print("now all data is at all nodes")
     for algorithm in sorted(config.algdict.keys()):
         args = config.algdict[algorithm]
-
-        if config.rank_features:
-            measures, features, scores = rank_features(extracted_chunks,
-                                                       targets, algorithm,
-                                                       compose_settings,
-                                                       config)
-            mpiops.run_once(export_feature_ranks, measures,
-                            features, scores, algorithm, config)
 
         if config.cross_validate:
             crossval_results = pipeline.cross_validate(X, targets, algorithm,
@@ -109,28 +130,24 @@ def run_pipeline(config):
             mpiops.run_once(export_scores, crossval_results, algorithm, config)
 
         model = pipeline.learn_model(X, targets, algorithm, args)
-        mpiops.run_once(export_model, model, image_settings,
-                        compose_settings, algorithm, config)
+        # mpiops.run_once(export_model, model, image_settings,
+        #                 compose_settings, algorithm, config)
 
 
-def rank_features(extracted_chunks, targets, algorithm, compose_settings,
-                  config):
+def rank_features(feature_sets, targets, algorithm, config):
 
     # Determine the importance of each feature
+    all_feature_names = [k.rstrip(".tif") for f in feature_sets
+                         for k in f.image_chunks]
     feature_scores = {}
-    for name in extracted_chunks:
-        dict_missing = dict(extracted_chunks)
-        del dict_missing[name]
-
-        fname = name.rstrip(".tif")
+    for name in all_feature_names:
         log.info("Computing {} feature importance of {}".format(algorithm,
-                                                                fname))
-
-        compose_missing = copy.deepcopy(compose_settings)
-        X = gather_data(dict_missing, compose_missing)
+                                                                name))
+        full_node_x = extract_and_compose(feature_sets, leave_out=name)
+        X = all_nodes_x(full_node_x)
         results = pipeline.cross_validate(X, targets, algorithm,
                                           config.algdict[algorithm])
-        feature_scores[fname] = results
+        feature_scores[name] = results
 
     # Get the different types of score from one of the outputs
     # TODO make this not suck
@@ -143,17 +160,33 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
     return measures, features, scores
 
 
-def gather_data(extracted_chunks, compose_settings):
-    has_data = not (True in [k is None for k in extracted_chunks.values()])
-    if has_data:
-        x = np.ma.concatenate(extracted_chunks.values(), axis=1)
-    else:
-        x = None
-    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
+def extract_and_compose(features, leave_out=None):
+    composed_vectors = []
+    # just test the first feature set because they all have same geometry
+    no_data = (True in [k is None for k in features[0].image_chunks.values()])
+    if no_data:
+        return
 
-    X_list = mpiops.comm.allgather(x_out)
-    X = np.ma.vstack([k for k in X_list if k is not None])
-    return X
+    composed_vectors = []
+    for f in features:
+        chunks = [v for k, v in f.image_chunks.items()
+                  if k != leave_out]
+        x_f = np.ma.concatenate(chunks, axis=1)
+        # prevent the leave-out extract from overwriting compose settings
+        comp_settings = (copy.deepcopy(f.compose_settings)
+                         if leave_out else f.compose_settings)
+        x_out, comp_settings = pipeline.compose_features(x_f,
+                                                         comp_settings)
+        if not leave_out:
+            f.compose_settings = comp_settings
+        composed_vectors.append(x_out)
+
+    # stack composed vectors
+    full_node_x = np.ma.concatenate(composed_vectors, axis=1)
+    return full_node_x
+    # X_list = mpiops.comm.allgather(full_node_x)
+    # X = np.ma.vstack([k for k in X_list if k is not None])
+    # return X
 
 
 def export_feature_ranks(measures, features, scores, algorithm, config):
