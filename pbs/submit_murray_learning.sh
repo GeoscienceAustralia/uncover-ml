@@ -3,6 +3,7 @@
 #PBS -q normal
 #PBS -l walltime=00:05:00,mem=128GB,ncpus=64,jobfs=1GB
 #PBS -l wd
+#PBS -j oe
 
 # setup environment
 source $HOME/.profile
@@ -11,5 +12,5 @@ source $HOME/.profile
 workon uncoverml
 
 # run command
-mpirun --mca mpi_warn_on_fork 0 learningpipeline $HOME/uncover-ml/pbs/nci_murray.pipeline
+mpirun --mca mpi_warn_on_fork 0 learningpipeline $HOME/uncover-ml/pbs/nci_murray.pipeline &> log.murray.learning.txt
 
