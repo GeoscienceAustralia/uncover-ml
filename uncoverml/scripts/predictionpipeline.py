@@ -44,13 +44,14 @@ def extract(image_settings, config):
 
 def run_pipeline(config):
 
-    outfile_state = path.join(config.output_dir, config.name + ".state")
+    outfile_state = path.join(config.output_dir,
+                              config.name + "_" + config.algorithm + ".state")
     with open(outfile_state, 'rb') as f:
         state_dict = pickle.load(f)
 
     image_settings = state_dict["image_settings"]
     compose_settings = state_dict["compose_settings"]
-    models = state_dict["models"]
+    model = state_dict["model"]
 
     extracted_chunks = extract(image_settings, config)
 
@@ -58,7 +59,6 @@ def run_pipeline(config):
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
     alg = config.algorithm
-    model = models[alg]
 
     log.info("Predicting targets for {}.".format(alg))
     y_star = pipeline.predict(x_out, model, interval=None)
