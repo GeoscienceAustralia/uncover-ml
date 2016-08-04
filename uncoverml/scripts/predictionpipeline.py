@@ -44,13 +44,13 @@ def extract(image_settings, config):
 
 def run_pipeline(config):
 
-    outfile_state = path.join(config.output_dir, config.name + ".state")
+    outfile_state = path.join(config.output_dir, config.name
+                              + "_" + config.algorithm + ".state")
     with open(outfile_state, 'rb') as f:
         state_dict = pickle.load(f)
-
     image_settings = state_dict["image_settings"]
     compose_settings = state_dict["compose_settings"]
-    models = state_dict["models"]
+    models = state_dict["model"]
 
     extracted_chunks = extract(image_settings, config)
 
