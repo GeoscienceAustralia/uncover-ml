@@ -58,7 +58,7 @@ def run_pipeline(config):
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
 
     alg = config.algorithm
-    model = models[alg]
+    model = models[0]
 
     log.info("Predicting targets for {}.".format(alg))
     y_star = pipeline.predict(x_out, model, interval=None)
