@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ge3
 #PBS -q normal
-#PBS -l walltime=00:30:00,mem=128GB,ncpus=64,jobfs=2GB
+#PBS -l walltime=00:30:00,mem=256GB,ncpus=128,jobfs=2GB
 #PBS -l wd
 #PBS -j oe
 
