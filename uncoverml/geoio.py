@@ -434,22 +434,24 @@ def load_shapefile(filename, field):
 class ImageWriter:
     def __init__(self, shape, bbox, name, n_subchunks, outputdir):
         # affine
-        A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
-                                    bbox[0, 1], bbox[1, 1], shape[0], shape[1])
+        self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
+                                         bbox[0, 1], bbox[1, 1],
+                                         shape[0], shape[1])
         self.shape = shape
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
-        output_filename = os.path.join(outputdir, name + ".tif")
-        if mpiops.chunk_index == 0:
-            self.f = rasterio.open(output_filename, 'w', driver='GTiff',
-                                   width=shape[0], height=shape[1],
-                                   dtype=np.float64, count=shape[2],
-                                   transform=A)
+        self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
+        if mpiops.chunk_index == 0:
+            with rasterio.open(self.output_filename, 'w', driver='GTiff',
+                               width=self.shape[0], height=self.shape[1],
+                               dtype=np.float64, count=self.shape[2],
+                               transform=self.A):
+                pass
 
     def write(self, x, subchunk_index):
         rows = self.shape[0]
@@ -457,25 +459,20 @@ class ImageWriter:
         image = x.reshape((rows, -1, bands))
 
         if mpiops.chunk_index != 0:
-            print("node {} sending...".format(mpiops.chunk_index))
             mpiops.comm.send(image, dest=0)
-            print("node {} sent.")
         else:
-            for node in range(mpiops.chunks):
-                node = mpiops.chunks - node - 1
-                subindex = node * self.n_subchunks + subchunk_index
-                ystart = self.sub_starts[subindex]
-                print("Receiving from node {}...".format(node))
-                data = mpiops.comm.recv(source=node) \
-                    if node != 0 else image
-                print("Received")
-                # Data also needs to be swapped in y
-                # data = data[:, ::-1]
-                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                yend = ystart + data.shape[1]  # this is Y
-                window = ((ystart, yend), (0, self.shape[0]))
-                index_list = list(range(1, bands + 1))
-                self.f.write(data, window=window, indexes=index_list)
+            with rasterio.open(self.output_filename, 'r+') as f:
+                for node in range(mpiops.chunks):
+                    node = mpiops.chunks - node - 1
+                    subindex = node * self.n_subchunks + subchunk_index
+                    ystart = self.sub_starts[subindex]
+                    data = mpiops.comm.recv(source=node) \
+                        if node != 0 else image
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, self.shape[0]))
+                    index_list = list(range(1, bands + 1))
+                    f.write(data, window=window, indexes=index_list)
 
 
 def create_image(x, shape, bbox, name, outputdir,
