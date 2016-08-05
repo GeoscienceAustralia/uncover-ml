@@ -21,6 +21,16 @@ def extract_transform(x, x_sets):
     return x
 
 
+def extract_subchunks(image_source, subchunk_index, n_subchunks, settings):
+    equiv_chunks = n_subchunks * mpiops.chunks
+    equiv_chunk_index = n_subchunks * mpiops.chunk_index + subchunk_index
+    image = Image(image_source, equiv_chunk_index,
+                  equiv_chunks, settings.patchsize)
+    x = patch.load(image, settings.patchsize, targets=None)
+    x = extract_transform(x, settings.x_sets)
+    return x
+
+
 def extract_features(image_source, targets, settings):
 
     image = Image(image_source, mpiops.chunk_index,
@@ -114,6 +124,14 @@ def join_dicts(dicts):
 
     return d
 
+
+def predict_channels(model):
+    if hasattr(model, 'entropy_reduction'):
+        return 3
+    elif hasattr(model, 'predict_proba'):
+        return 2
+    else:
+        return 1
 
 def predict(data, model, interval=None):
 

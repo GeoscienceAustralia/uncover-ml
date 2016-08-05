@@ -109,6 +109,9 @@ algdict = {
 # Prediction settings
 #
 
+# How many iterations to do through each chunk
+sub_partitions = 2
+
 # Name of the prediction algorithm
 algorithm = 'svr'
 # algorithm = 'bayesreg'
