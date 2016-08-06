@@ -91,6 +91,9 @@ algdict = {
 # Prediction settings
 #
 
+# How much data to keep in memory at a time. 
+memory_fraction = 1.0
+
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
@@ -99,12 +102,4 @@ algorithm = 'randomforest'
 
 # Quantiles
 quantiles = 0.95
-
-
-#
-# Visualisation/Geotiff settings
-#
-
-# Make the image RGB?
-makergbtif = True
 
