@@ -41,6 +41,20 @@ def extract(subchunk_index, n_subchunks, image_settings, config):
     return result
 
 
+def render_partition(model, subchunk, n_subchunks, image_out,
+                     image_settings, compose_settings, config):
+        extracted_chunks = extract(subchunk, n_subchunks,
+                                   image_settings, config)
+        x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
+                              axis=1)
+        x_out, compose_settings = pipeline.compose_features(x,
+                                                            compose_settings)
+        alg = config.algorithm
+        log.info("Predicting targets for {}.".format(alg))
+        y_star = pipeline.predict(x_out, model, interval=None)
+        image_out.write(y_star, subchunk)
+
+
 def run_pipeline(config):
 
     outfile_state = path.join(config.output_dir,
@@ -60,22 +74,16 @@ def run_pipeline(config):
     eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
     eff_bbox = template_image.patched_bbox(config.patchsize)
 
+    n_subchunks = max(1, round(1.0 / config.memory_fraction))
+    log.info("Dividing node data into {} partitions".format(n_subchunks))
+
     outfile_tif = config.name + "_output_" + config.algorithm
     image_out = geoio.ImageWriter(eff_shape, eff_bbox, outfile_tif,
-                                  config.sub_partitions, config.output_dir)
+                                  n_subchunks, config.output_dir)
 
-    n_subchunks = config.sub_partitions
     for i in range(n_subchunks):
-        extracted_chunks = extract(i, n_subchunks, image_settings, config)
-        x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
-                              axis=1)
-        x_out, compose_settings = pipeline.compose_features(x,
-                                                            compose_settings)
-        alg = config.algorithm
-        log.info("Predicting targets for {}.".format(alg))
-        y_star = pipeline.predict(x_out, model, interval=None)
-        image_out.write(y_star, i)
-
+        render_partition(model, i, n_subchunks, image_out, image_settings,
+                         compose_settings, config)
     log.info("Finished!")
 
 
