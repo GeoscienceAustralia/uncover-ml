@@ -15,6 +15,7 @@ import numpy as np
 from uncoverml import image
 from uncoverml import geoio
 from uncoverml import pipeline
+from uncoverml import mpiops
 
 # Logging
 log = logging.getLogger(__name__)
@@ -43,12 +44,18 @@ def extract(subchunk_index, n_subchunks, image_settings, config):
 
 def render_partition(model, subchunk, n_subchunks, image_out,
                      image_settings, compose_settings, config):
+        log.info("node {} starting extraction".format(mpiops.chunk_index))
         extracted_chunks = extract(subchunk, n_subchunks,
                                    image_settings, config)
+        log.info("node {} finish extraction".format(mpiops.chunk_index))
+        log.info("node {} concatenating".format(mpiops.chunk_index))
         x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
                               axis=1)
+        log.info("node {} concatenation finished".format(mpiops.chunk_index))
+        log.info("node {} composing".format(mpiops.chunk_index))
         x_out, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
+        log.info("node {} composing finished".format(mpiops.chunk_index))
         alg = config.algorithm
         log.info("x shape going to pred: {}".format(x_out.shape))
         log.info("Predicting targets for {}.".format(alg))
@@ -85,6 +92,7 @@ def run_pipeline(config):
                                   n_subchunks, config.output_dir)
 
     for i in range(n_subchunks):
+        log.info("starting to render partition {}".format(i))
         render_partition(model, i, n_subchunks, image_out, image_settings,
                          compose_settings, config)
     log.info("Finished!")
