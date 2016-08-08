@@ -65,7 +65,7 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {},
+    "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
@@ -73,7 +73,7 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    # "svr": {},
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 500},
@@ -96,11 +96,11 @@ algdict = {
 #
 
 # How much data to keep in memory at a time
-memory_fraction = 0.1
+memory_fraction = 0.05
 
 # Name of the prediction algorithm
-algorithm = 'svr'
-# algorithm = 'bayesreg'
+# algorithm = 'svr'
+algorithm = 'bayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'randomforest'
 

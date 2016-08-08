@@ -22,7 +22,7 @@ target_file = "geochem_sites.shp"
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 
-export_targets = True
+export_targets = False
 
 
 # Crossval settings
