@@ -125,13 +125,17 @@ def join_dicts(dicts):
     return d
 
 
-def predict_channels(model):
+def predict_channels(model, interval):
+    nchannels = 1
+
+    if hasattr(model, 'predict_proba'):
+        nchannels += 2 if interval is not None else 1
+
     if hasattr(model, 'entropy_reduction'):
-        return 3
-    elif hasattr(model, 'predict_proba'):
-        return 2
-    else:
-        return 1
+        nchannels += 1
+
+    return nchannels
+
 
 def predict(data, model, interval=None):
 

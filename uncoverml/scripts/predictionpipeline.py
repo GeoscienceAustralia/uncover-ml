@@ -51,7 +51,7 @@ def render_partition(model, subchunk, n_subchunks, image_out,
                                                             compose_settings)
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
-        y_star = pipeline.predict(x_out, model, interval=None)
+        y_star = pipeline.predict(x_out, model, interval=config.quantiles)
         image_out.write(y_star, subchunk)
 
 
@@ -66,7 +66,7 @@ def run_pipeline(config):
     compose_settings = state_dict["compose_settings"]
     model = state_dict["model"]
 
-    nchannels = pipeline.predict_channels(model)
+    nchannels = pipeline.predict_channels(model, config.quantiles)
 
     # temp workaround
     imagelike = glob(path.join(config.data_dir, "*.tif"))[0]
