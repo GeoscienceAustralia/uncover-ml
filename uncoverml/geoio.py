@@ -480,8 +480,12 @@ class ImageWriter:
                 window = ((ystart, yend), (0, self.shape[0]))
                 index_list = list(range(1, bands + 1))
                 log.info("write data index_list: {}".format(index_list))
+                log.info("writing to disk...")
                 self.f.write(data, window=window, indexes=index_list)
+                log.info("finished writing to disk")
+        log.info("waiting for end of write barrier")
         mpiops.comm.barrier()
+        log.info("WRITE COMPLETE")
 
 
 def export_scores(scores, y, Ey, filename):
