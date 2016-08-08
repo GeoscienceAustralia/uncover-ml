@@ -50,8 +50,10 @@ def render_partition(model, subchunk, n_subchunks, image_out,
         x_out, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
         alg = config.algorithm
+        log.info("x shape going to pred: {}".format(x_out.shape))
         log.info("Predicting targets for {}.".format(alg))
         y_star = pipeline.predict(x_out, model, interval=config.quantiles)
+        log.info("y shape coming out of pred: {}".format(y_star.shape))
         image_out.write(y_star, subchunk)
 
 
@@ -67,6 +69,7 @@ def run_pipeline(config):
     model = state_dict["model"]
 
     nchannels = pipeline.predict_channels(model, config.quantiles)
+    print("pipeline says we'll get {} channels".format(nchannels))
 
     # temp workaround
     imagelike = glob(path.join(config.data_dir, "*.tif"))[0]

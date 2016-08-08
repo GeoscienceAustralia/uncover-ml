@@ -443,15 +443,17 @@ class ImageWriter:
         self.outputdir = outputdir
         self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
+        log.info("Imwriter image shape: {}".format(self.shape))
+        log.info("Imwriter number of subchunks: {}".format(mpiops.chunks
+                                               * self.n_subchunks))
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
         if mpiops.chunk_index == 0:
-            with rasterio.open(self.output_filename, 'w', driver='GTiff',
-                               width=self.shape[0], height=self.shape[1],
-                               dtype=np.float64, count=self.shape[2],
-                               transform=self.A):
-                pass
+            self.f = rasterio.open(self.output_filename, 'w', driver='GTiff',
+                                   width=self.shape[0], height=self.shape[1],
+                                   dtype=np.float64, count=self.shape[2],
+                                   transform=self.A)
 
     def write(self, x, subchunk_index):
         rows = self.shape[0]
@@ -461,18 +463,19 @@ class ImageWriter:
         if mpiops.chunk_index != 0:
             mpiops.comm.send(image, dest=0)
         else:
-            with rasterio.open(self.output_filename, 'r+') as f:
-                for node in range(mpiops.chunks):
-                    node = mpiops.chunks - node - 1
-                    subindex = node * self.n_subchunks + subchunk_index
-                    ystart = self.sub_starts[subindex]
-                    data = mpiops.comm.recv(source=node) \
-                        if node != 0 else image
-                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                    yend = ystart + data.shape[1]  # this is Y
-                    window = ((ystart, yend), (0, self.shape[0]))
-                    index_list = list(range(1, bands + 1))
-                    f.write(data, window=window, indexes=index_list)
+            for node in range(mpiops.chunks):
+                node = mpiops.chunks - node - 1
+                subindex = node * self.n_subchunks + subchunk_index
+                ystart = self.sub_starts[subindex]
+                data = mpiops.comm.recv(source=node) \
+                    if node != 0 else image
+                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                yend = ystart + data.shape[1]  # this is Y
+                log.info("write data shape: {}".format(data.shape))
+                window = ((ystart, yend), (0, self.shape[0]))
+                index_list = list(range(1, bands + 1))
+                log.info("write data index_list: {}".format(index_list))
+                self.f.write(data, window=window, indexes=index_list)
 
 
 def export_scores(scores, y, Ey, filename):

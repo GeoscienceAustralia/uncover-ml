@@ -129,7 +129,7 @@ def predict_channels(model, interval):
     nchannels = 1
 
     if hasattr(model, 'predict_proba'):
-        nchannels += 2 if interval is not None else 1
+        nchannels += 3 if interval is not None else 1
 
     if hasattr(model, 'entropy_reduction'):
         nchannels += 1

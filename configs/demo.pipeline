@@ -75,7 +75,7 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {'target_transform': 'standardise'},
+    "bayesreg": {'target_transform': 'standardise'},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {
@@ -87,10 +87,10 @@ algdict = {
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {'target_transform': 'standardise'},
+    # "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 100},
+    # "randomforest": {'n_estimators': 100},
 
     # ARD Linear regression
     # "ardregression": {},
@@ -113,8 +113,8 @@ algdict = {
 memory_fraction = 0.5
 
 # Name of the prediction algorithm
-algorithm = 'svr'
-# algorithm = 'bayesreg'
+# algorithm = 'svr'
+algorithm = 'bayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
