@@ -443,9 +443,6 @@ class ImageWriter:
         self.outputdir = outputdir
         self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
-        log.info("Imwriter image shape: {}".format(self.shape))
-        log.info("Imwriter number of subchunks: {}".format(mpiops.chunks
-                                               * self.n_subchunks))
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
@@ -461,32 +458,22 @@ class ImageWriter:
         image = x.reshape((rows, -1, bands))
 
         mpiops.comm.barrier()
-        log.info("writing commenced!")
+        log.info("Writing partition to output file")
         if mpiops.chunk_index != 0:
-            log.info("node {} sending..".format(mpiops.chunk_index))
             mpiops.comm.send(image, dest=0)
-            log.info("node {} sent!".format(mpiops.chunk_index))
         else:
             for node in range(mpiops.chunks):
                 node = mpiops.chunks - node - 1
                 subindex = node * self.n_subchunks + subchunk_index
                 ystart = self.sub_starts[subindex]
-                log.info("node 0 receiveing from {}".format(node))
                 data = mpiops.comm.recv(source=node) \
                     if node != 0 else image
-                log.info("node 0 received from {}!".format(node))
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                 yend = ystart + data.shape[1]  # this is Y
                 window = ((ystart, yend), (0, self.shape[0]))
                 index_list = list(range(1, bands + 1))
-                log.info("write data index_list: {}".format(index_list))
-                log.info("window: {}".format(window))
-                log.info("writing {} to disk...".format(data.shape))
                 self.f.write(data, window=window, indexes=index_list)
-                log.info("finished writing to disk")
-        log.info("waiting for end of write barrier")
         mpiops.comm.barrier()
-        log.info("WRITE COMPLETE")
 
 
 def export_scores(scores, y, Ey, filename):

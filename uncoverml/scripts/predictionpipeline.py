@@ -44,24 +44,15 @@ def extract(subchunk_index, n_subchunks, image_settings, config):
 
 def render_partition(model, subchunk, n_subchunks, image_out,
                      image_settings, compose_settings, config):
-        log.info("node {} starting extraction".format(mpiops.chunk_index))
         extracted_chunks = extract(subchunk, n_subchunks,
                                    image_settings, config)
-        log.info("node {} finish extraction".format(mpiops.chunk_index))
-        mpiops.comm.barrier()
-        log.info("node {} concatenating".format(mpiops.chunk_index))
         x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
                               axis=1)
-        log.info("node {} concatenation finished".format(mpiops.chunk_index))
-        log.info("node {} composing".format(mpiops.chunk_index))
         x_out, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
-        log.info("node {} composing finished".format(mpiops.chunk_index))
         alg = config.algorithm
-        log.info("x shape going to pred: {}".format(x_out.shape))
         log.info("Predicting targets for {}.".format(alg))
         y_star = pipeline.predict(x_out, model, interval=config.quantiles)
-        log.info("y shape coming out of pred: {}".format(y_star.shape))
         image_out.write(y_star, subchunk)
 
 
