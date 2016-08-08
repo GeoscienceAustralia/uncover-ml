@@ -460,22 +460,28 @@ class ImageWriter:
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
 
+        mpiops.comm.barrier()
+        log.info("writing commenced!")
         if mpiops.chunk_index != 0:
+            log.info("node {} sending..".format(mpiops.chunk_index))
             mpiops.comm.send(image, dest=0)
+            log.info("node {} sent!".format(mpiops.chunk_index))
         else:
             for node in range(mpiops.chunks):
                 node = mpiops.chunks - node - 1
                 subindex = node * self.n_subchunks + subchunk_index
                 ystart = self.sub_starts[subindex]
+                log.info("node 0 receiveing from {}".format(node))
                 data = mpiops.comm.recv(source=node) \
                     if node != 0 else image
+                log.info("node 0 received from {}!".format(node))
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                 yend = ystart + data.shape[1]  # this is Y
-                log.info("write data shape: {}".format(data.shape))
                 window = ((ystart, yend), (0, self.shape[0]))
                 index_list = list(range(1, bands + 1))
                 log.info("write data index_list: {}".format(index_list))
                 self.f.write(data, window=window, indexes=index_list)
+        mpiops.comm.barrier()
 
 
 def export_scores(scores, y, Ey, filename):
