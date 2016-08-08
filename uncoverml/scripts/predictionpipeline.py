@@ -48,6 +48,7 @@ def render_partition(model, subchunk, n_subchunks, image_out,
         extracted_chunks = extract(subchunk, n_subchunks,
                                    image_settings, config)
         log.info("node {} finish extraction".format(mpiops.chunk_index))
+        mpiops.comm.barrier()
         log.info("node {} concatenating".format(mpiops.chunk_index))
         x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
                               axis=1)
