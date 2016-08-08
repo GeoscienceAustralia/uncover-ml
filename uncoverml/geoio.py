@@ -480,6 +480,7 @@ class ImageWriter:
                 window = ((ystart, yend), (0, self.shape[0]))
                 index_list = list(range(1, bands + 1))
                 log.info("write data index_list: {}".format(index_list))
+                log.info("window: {}".format(window))
                 log.info("writing {} to disk...".format(data.shape))
                 self.f.write(data, window=window, indexes=index_list)
                 log.info("finished writing to disk")
