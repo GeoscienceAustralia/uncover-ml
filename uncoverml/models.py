@@ -8,7 +8,6 @@ from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
 from revrand.likelihoods import Gaussian
 from revrand.btypes import Parameter, Positive
 from revrand.utils import atleast_list
-from revrand.optimize import Adam
 
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
@@ -93,6 +92,14 @@ class ApproxGP(LinearModel):
 
 class SGDLinearModel(GeneralisedLinearModel):
 
+    def predict_proba(self, X):
+
+        Ey, Vy, _, _ = super().predict_moments(X)
+        return Ey, Vy
+
+
+class SGDLinearReg(SGDLinearModel):
+
     def __init__(self, onescol=True, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), maxiter=3000,
                  batch_size=10):
@@ -101,14 +108,8 @@ class SGDLinearModel(GeneralisedLinearModel):
                          basis=LinearBasis(onescol),
                          regulariser=regulariser,
                          maxiter=maxiter,
-                         batch_size=batch_size,
-                         updater=Adam()
+                         batch_size=batch_size
                          )
-
-    def predict_proba(self, X):
-
-        Ey, Vy, _, _ = super().predict_moments(X)
-        return Ey, Vy
 
 
 class SGDApproxGP(SGDLinearModel):
@@ -123,21 +124,25 @@ class SGDApproxGP(SGDLinearModel):
             else np.asarray(lenscale)
         self.kern = kern
 
-        super().__init__(likelihood=Gaussian(var),
-                         basis=None,
-                         regulariser=regulariser,
-                         maxiter=maxiter,
-                         batch_size=batch_size,
-                         updater=Adam()
-                         )
+        self.regulariser_init = regulariser
+        self.var_init = var
+        self.batch_size = batch_size
+        self.maxiter = maxiter
 
         def fit(self, X, y, likelihood_args=()):
 
             lenscale_init = Parameter(self.lenscale, Positive())
-            self.basis = basismap[self.kern](Xdim=X.shape[1],
-                                             nbases=self.nbases,
-                                             lenscale_init=lenscale_init,
-                                             ) + BiasBasis()
+            basis = basismap[self.kern](Xdim=X.shape[1],
+                                        nbases=self.nbases,
+                                        lenscale_init=lenscale_init,
+                                        ) + BiasBasis()
+
+            super().__init__(likelihood=Gaussian(self.var_init),
+                             basis=basis,
+                             regulariser=self.regulariser_init,
+                             maxiter=maxiter,
+                             batch_size=batch_size
+                             )
 
             return super().fit(X, y, likelihood_args)
 
@@ -253,7 +258,7 @@ class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor)):
     pass
 
 
-class SGDLinearModelTransformed(transform_targets(SGDLinearModel)):
+class SGDLinearRegTransformed(transform_targets(SGDLinearReg)):
     pass
 
 
@@ -325,7 +330,7 @@ def apply_multiple_masked(func, data, args=()):
 
 modelmaps = {'randomforest': RandomForestTransformed,
              'bayesreg': LinearRegTransformed,
-             'sgdbayesreg': SGDLinearModelTransformed,
+             'sgdbayesreg': SGDLinearRegTransformed,
              'approxgp': ApproxGPTransformed,
              'sgdapproxgp': SGDApproxGPTransformed,
              'svr': SVRTransformed,
