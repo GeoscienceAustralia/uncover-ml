@@ -75,16 +75,15 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {'target_transform': 'standardise'},
-    # "sgdbayesreg": {'target_transform': 'standardise'}
+    "bayesreg": {'target_transform': 'standardise'},
 
     # Approximate Gaussian process, for large scale data
-    "approxgp": {
-                 'target_transform': 'standardise',
-                 'kern': 'matern52',
-                 'lenscale': [1000.] * 87,
+    # "approxgp": {
+                 # 'target_transform': 'rank',
+                 # 'kern': 'matern52',
+                 # 'lenscale': [1000.] * 87,
                  # 'lenscale': 1000.,
-                 'nbases': 100},
+                 # 'nbases': 50},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
@@ -110,20 +109,16 @@ algdict = {
 # Prediction settings
 #
 
+# How much data to keep in memory at a time
+memory_fraction = 0.5
+
 # Name of the prediction algorithm
-algorithm = 'svr'
-# algorithm = 'bayesreg'
+# algorithm = 'svr'
+algorithm = 'bayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
 quantiles = 0.95
 
-
-#
-# Visualisation/Geotiff settings
-#
-
-# Make the image RGB?
-makergbtif = True
 

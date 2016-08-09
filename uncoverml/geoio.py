@@ -233,15 +233,16 @@ class RasterioImageSource(ImageSource):
             d = d[:, ::-1]
 
         # Otherwise scikit image complains
-        d = np.ascontiguousarray(d)
+        m = np.ma.MaskedArray(data=np.ascontiguousarray(d.data),
+                              mask=np.ascontiguousarray(d.mask))
 
         # uniform mask format
-        if np.ma.count_masked(d) == 0:
-            d = np.ma.masked_array(data=d.data,
-                                   mask=np.zeros_like(d.data, dtype=bool))
-        assert d.data.ndim == 3
-        assert d.mask.ndim == 3
-        return d
+        if np.ma.count_masked(m) == 0:
+            m = np.ma.masked_array(data=m.data,
+                                   mask=np.zeros_like(m.data, dtype=bool))
+        assert m.data.ndim == 3
+        assert m.mask.ndim == 3
+        return m
 
 
 class ArrayImageSource(ImageSource):
@@ -430,67 +431,56 @@ def load_shapefile(filename, field):
     return label_coords, vals
 
 
-def create_image(x, shape, bbox, name, outputdir,
-                 rgb=True, separatebands=True, band=None):
+class ImageWriter:
+    def __init__(self, shape, bbox, name, n_subchunks, outputdir):
+        # affine
+        self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
+                                         bbox[0, 1], bbox[1, 1],
+                                         shape[0], shape[1])
+        self.shape = shape
+        self.bbox = bbox
+        self.name = name
+        self.outputdir = outputdir
+        self.output_filename = os.path.join(outputdir, name + ".tif")
+        self.n_subchunks = n_subchunks
+        log.info("Imwriter image shape: {}".format(self.shape))
+        log.info("Imwriter number of subchunks: {}".format(mpiops.chunks
+                                               * self.n_subchunks))
+        self.sub_starts = [k[0] for k in np.array_split(
+                           np.arange(self.shape[1]),
+                           mpiops.chunks * self.n_subchunks)]
+        if mpiops.chunk_index == 0:
+            self.f = rasterio.open(self.output_filename, 'w', driver='GTiff',
+                                   width=self.shape[0], height=self.shape[1],
+                                   dtype=np.float64, count=self.shape[2],
+                                   transform=self.A)
 
-    # affine
-    A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
-                                bbox[0, 1], bbox[1, 1], *shape)
+    def write(self, x, subchunk_index):
+        rows = self.shape[0]
+        bands = x.shape[1]
+        image = x.reshape((rows, -1, bands))
 
-    x_min = None
-    x_max = None
-    if rgb is True:
-        x_min_local = np.ma.min(x, axis=0)
-        x_max_local = np.ma.max(x, axis=0)
-        x_min = mpiops.comm.allreduce(x_min_local, op=mpiops.min0_op)
-        x_max = mpiops.comm.allreduce(x_max_local, op=mpiops.max0_op)
-
-    f = partial(image.to_image_transform, rows=shape[0], x_min=x_min,
-                x_max=x_max, band=band, separatebands=separatebands)
-
-    images = f(x)
-
-    # Couple of pieces of information we need here
-    if mpiops.chunk_index != 0:
-        reqs = []
-        for img_idx in range(len(images)):
-            reqs.append(mpiops.comm.isend(
-                images[img_idx], dest=0, tag=img_idx))
-        for r in reqs:
-            r.wait()
-    else:
-        n_images = len(images)
-        dtype = images[0].dtype
-        n_bands = images[0].shape[2]
-
-        for img_idx in range(n_images):
-            band_num = img_idx if band is None else band
-            output_filename = os.path.join(outputdir, name +
-                                           "_band{}.tif".format(band_num))
-
-            with rasterio.open(output_filename, 'w', driver='GTiff',
-                               width=shape[0], height=shape[1],
-                               dtype=dtype, count=n_bands, transform=A) as f:
-                ystart = 0
-                for node in range(mpiops.chunks):
-                    # Reverse order of concatentation to account for image
-                    # conventions
-                    node = mpiops.chunks - node - 1
-                    data = mpiops.comm.recv(source=node, tag=img_idx) \
-                        if node != 0 else images[img_idx]
-                    # Data also needs to be swapped in y
-                    data = data[:, ::-1]
-                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                    yend = ystart + data.shape[1]  # this is Y
-                    window = ((ystart, yend), (0, shape[0]))
-                    index_list = list(range(1, n_bands + 1))
-                    f.write(data, window=window, indexes=index_list)
-                    ystart = yend
+        if mpiops.chunk_index != 0:
+            mpiops.comm.send(image, dest=0)
+        else:
+            for node in range(mpiops.chunks):
+                node = mpiops.chunks - node - 1
+                subindex = node * self.n_subchunks + subchunk_index
+                ystart = self.sub_starts[subindex]
+                data = mpiops.comm.recv(source=node) \
+                    if node != 0 else image
+                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                yend = ystart + data.shape[1]  # this is Y
+                log.info("write data shape: {}".format(data.shape))
+                window = ((ystart, yend), (0, self.shape[0]))
+                index_list = list(range(1, bands + 1))
+                log.info("write data index_list: {}".format(index_list))
+                self.f.write(data, window=window, indexes=index_list)
 
 
 def export_scores(scores, y, Ey, filename):
 
-    log.info("Scores")
+    log.info("{} Scores".format(filename.rstrip(".json")))
     for metric, score in scores.items():
         log.info("{} = {}".format(metric, score))
 

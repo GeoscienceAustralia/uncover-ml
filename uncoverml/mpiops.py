@@ -274,7 +274,7 @@ def _whiten(x, settings, comm):
     if settings.eigvals is None or settings.eigvecs is None:
         x_n = _count(x, comm)
         x_outer_local = np.ma.dot(x.T, x)
-        outer = comm.allreduce(x_outer_local, op=sum0_op)
+        outer = comm.allreduce(x_outer_local, op=MPI.SUM)
         cov = outer / x_n
         eigvals, eigvecs = np.linalg.eigh(cov)
         settings.eigvals, settings.eigvecs = eigvals, eigvecs
@@ -283,7 +283,7 @@ def _whiten(x, settings, comm):
     # make sure 1 <= keepdims <= ndims
     keepdims = min(max(1, int(ndims * settings.featurefraction)), ndims)
     mat = settings.eigvecs[:, -keepdims:]
-    vec = settings.eigvals[-keepdims:]
+    vec = settings.eigvals[np.newaxis, -keepdims:]
     x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
     return x
 

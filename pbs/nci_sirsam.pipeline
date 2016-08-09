@@ -24,14 +24,17 @@ target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 
 export_targets = True
 
+
+# Crossval settings
+
+cross_validate = True
 folds = 5
+crossval_seed = 1
+
 
 #
 # Feature settings
 #
-
-# Allows deternministic cross-val. Set to None for a random seed
-crossval_seed = 1
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False
@@ -46,6 +49,9 @@ transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.5
+
+# Estimate the relative importance of each feature
+rank_features = False
 
 #
 # Algorithm settings
@@ -85,6 +91,9 @@ algdict = {
 # Prediction settings
 #
 
+# How much data to keep in memory at a time. 
+memory_fraction = 1.0
+
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
@@ -93,12 +102,4 @@ algorithm = 'randomforest'
 
 # Quantiles
 quantiles = 0.95
-
-
-#
-# Visualisation/Geotiff settings
-#
-
-# Make the image RGB?
-makergbtif = True
 
