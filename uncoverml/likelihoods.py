@@ -41,23 +41,11 @@ class Switching(Bernoulli):
         df = self.__split_on_z(self.unif.df, self.gaus.df, y, f, var, z)
         return df
 
-    def d2f(self, y, f, var, z):
-        d2f = self.__split_on_z(self.unif.d2f, self.gaus.d2f, y, f, var, z)
-        return d2f
-
-    def d3f(self, y, f, var, z):
-        d3f = self.__split_on_z(self.unif.d3f, self.gaus.d3f, y, f, var, z)
-        return d3f
-
     def dp(self, y, f, var, z):
+        yz, fz = np.broadcast_arrays(y[z], f[:, z])
         dp = np.zeros_like(f)
-        dp[z] = self.gaus.dp(y[z], f[z], var)
+        dp[:, z] = self.gaus.dp(yz, fz, var)
         return dp
-
-    def dpd2f(self, y, f, var, z):
-        dpd2f = np.zeros_like(f)
-        dpd2f[z] = self.gaus.dpd2f(y[z], f[z], var)
-        return dpd2f
 
     def __split_on_z(self, func_unif, func_gaus, y, f, var, z):
 
@@ -175,50 +163,6 @@ class UnifGauss(Bernoulli):
     def _df_f_lt_0(self, y, f):
 
         df = (y - f) / self.l**2
-        return df
-
-    def d2f(self, y, f):
-
-        return self.__split_apply(self._d2f_y_lt_f,
-                                  self._d2f_y_gt_f,
-                                  self._d2f_f_lt_0,
-                                  y, f)
-
-    def _d2f_y_lt_f(self, y, f):
-
-        d2f = 1. / (f + self.l * SQRTPI2)**2
-        return d2f
-
-    def _d2f_y_gt_f(self, y, f):
-
-        d2f = self._d2f_y_lt_f(y, f) + self._d2f_f_lt_0(y, f)
-        return d2f
-
-    def _d2f_f_lt_0(self, y, f):
-
-        d2f = - 1. / self.l**2
-        return d2f
-
-    def d3f(self, y, f):
-
-        return self.__split_apply(self._d3f_y_lt_f,
-                                  self._d3f_y_gt_f,
-                                  self._d3f_f_lt_0,
-                                  y, f)
-
-    def _d3f_y_lt_f(self, y, f):
-
-        d3f = - 2. / (f + self.l * SQRTPI2)**3
-        return d3f
-
-    def _d3f_y_gt_f(self, y, f):
-
-        d3f = self._d3f_y_lt_f(y, f)
-        return d3f
-
-    def _d3f_f_lt_0(self, y, f):
-
-        df = np.zeros_like(f)
         return df
 
     def __split_apply(self, func_y_lt_f, func_y_gt_f, func_f_lt_0, y, f):
