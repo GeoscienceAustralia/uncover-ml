@@ -19,21 +19,41 @@ import uncoverml.transforms as transforms
 
 
 #
-# Specialisation of revrand's interface to work from the command line with a
-# few curated algorithms
+# Mixin classes for providing pipeline compatibility to revrand
 #
 
-class LinearModel(StandardLinearModel):
+class BasisMakerMixin():
 
-    def fit(self, X, y):
+    def fit(self, X, y, *args):
 
         self._make_basis(X)
-        return super().fit(X, y)
+        return super().fit(X, y, *args)
+
+    def _store_params(self, kern, nbases, lenscale):
+
+        self.kern = kern
+        self.nbases = nbases
+        self.lenscale = lenscale if np.isscalar(lenscale) \
+            else np.asarray(lenscale)
+
+    def _make_basis(self, X):
+
+        lenscale_init = Parameter(self.lenscale, Positive())
+        gpbasis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
+                                      lenscale_init=lenscale_init)
+
+        self.basis = gpbasis + BiasBasis()
+
+
+class PredictProbaMixin():
 
     def predict_proba(self, X):
 
-        Ey, _, Vy = super().predict_moments(X)
+        Ey, Vy = self.predict_moments(X)
         return Ey, Vy
+
+
+class MutualInfoMixin():
 
     def entropy_reduction(self, X):
 
@@ -42,12 +62,13 @@ class LinearModel(StandardLinearModel):
         MI = 0.5 * (np.log(self.var + np.array(pCp)) - np.log(self.var))
         return MI
 
-    def _make_basis(self, X):
 
-        pass
+#
+# Specialisation of revrand's interface to work from the command line with a
+# few curated algorithms
+#
 
-
-class LinearReg(LinearModel):
+class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
 
     def __init__(self, onescol=True, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-8,
@@ -62,17 +83,13 @@ class LinearReg(LinearModel):
                          )
 
 
-class ApproxGP(LinearModel):
+class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
+               MutualInfoMixin):
 
     def __init__(self, kern='rbf', nbases=200, lenscale=1.,
                  var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), tol=1e-8,
                  maxiter=1000):
-
-        self.nbases = nbases
-        self.lenscale = lenscale if np.isscalar(lenscale) \
-            else np.asarray(lenscale)
-        self.kern = kern
 
         super().__init__(basis=None,
                          var=var,
@@ -81,24 +98,10 @@ class ApproxGP(LinearModel):
                          maxiter=maxiter
                          )
 
-    def _make_basis(self, X):
-
-        self.basis = basismap[self.kern](Xdim=X.shape[1],
-                                         nbases=self.nbases,
-                                         lenscale_init=Parameter(self.lenscale,
-                                                                 Positive())
-                                         ) + BiasBasis()
+        self._store_params(kern, nbases, lenscale)
 
 
-class SGDLinearModel(GeneralisedLinearModel):
-
-    def predict_proba(self, X):
-
-        Ey, Vy, _, _ = super().predict_moments(X)
-        return Ey, Vy
-
-
-class SGDLinearReg(SGDLinearModel):
+class SGDLinearReg(GeneralisedLinearModel, PredictProbaMixin):
 
     def __init__(self, onescol=True, var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), maxiter=3000,
@@ -112,39 +115,21 @@ class SGDLinearReg(SGDLinearModel):
                          )
 
 
-class SGDApproxGP(SGDLinearModel):
+class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel, PredictProbaMixin):
 
     def __init__(self, kern='rbf', nbases=200, lenscale=1.,
                  var=Parameter(1., Positive()),
                  regulariser=Parameter(1., Positive()), maxiter=3000,
                  batch_size=10):
 
-        self.nbases = nbases
-        self.lenscale = lenscale if np.isscalar(lenscale) \
-            else np.asarray(lenscale)
-        self.kern = kern
+        self._store_params(kern, nbases, lenscale)
 
-        self.regulariser_init = regulariser
-        self.var_init = var
-        self.batch_size = batch_size
-        self.maxiter = maxiter
-
-        def fit(self, X, y, likelihood_args=()):
-
-            lenscale_init = Parameter(self.lenscale, Positive())
-            basis = basismap[self.kern](Xdim=X.shape[1],
-                                        nbases=self.nbases,
-                                        lenscale_init=lenscale_init,
-                                        ) + BiasBasis()
-
-            super().__init__(likelihood=Gaussian(self.var_init),
-                             basis=basis,
-                             regulariser=self.regulariser_init,
-                             maxiter=maxiter,
-                             batch_size=batch_size
-                             )
-
-            return super().fit(X, y, likelihood_args)
+        super().__init__(likelihood=Gaussian(var),
+                         basis=None,
+                         regulariser=regulariser,
+                         maxiter=maxiter,
+                         batch_size=batch_size
+                         )
 
 
 #
