@@ -49,14 +49,10 @@ def render_partition(model, subchunk, n_subchunks, image_out,
                               axis=1)
         x_out, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
-        log.info("x shape going to pred: {}".format(x_out.shape))
-
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 
         y_star = pipeline.predict(x_out, model, interval=config.quantiles)
-        log.info("y shape coming out of pred: {}".format(y_star.shape))
-
         image_out.write(y_star, subchunk)
 
 
@@ -71,7 +67,6 @@ def run_pipeline(config):
     compose_settings = state_dict["compose_settings"]
     model = state_dict["model"]
 
-    # nchannels = pipeline.predict_channels(model, config.quantiles)
     nchannels = len(model.get_predict_tags())
     print("pipeline says we'll get {} channels".format(nchannels))
 
@@ -90,6 +85,7 @@ def run_pipeline(config):
                                   band_tags=model.get_predict_tags())
 
     for i in range(n_subchunks):
+        log.info("starting to render partition {}".format(i))
         render_partition(model, i, n_subchunks, image_out, image_settings,
                          compose_settings, config)
     log.info("Finished!")

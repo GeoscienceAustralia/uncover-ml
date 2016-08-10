@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-# from scipy.stats import norm
 
 from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df

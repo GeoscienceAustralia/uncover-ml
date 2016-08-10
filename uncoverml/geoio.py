@@ -5,7 +5,6 @@ import logging
 import time
 import json
 import pickle
-from functools import partial
 from abc import ABCMeta, abstractmethod
 
 import rasterio
@@ -423,7 +422,7 @@ def load_shapefile(filename, field):
         raise ValueError("Requested field is not in records!")
 
     vind = fdict[field]
-    vals = np.array([r[vind] for r in sf.records()])
+    vals = np.array([float(r[vind]) for r in sf.records()])
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
@@ -444,9 +443,6 @@ class ImageWriter:
         self.outputdir = outputdir
         self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
-        log.info("Imwriter image shape: {}".format(self.shape))
-        log.info("Imwriter number of subchunks: {}".format(mpiops.chunks
-                                                           * self.n_subchunks))
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
@@ -471,6 +467,8 @@ class ImageWriter:
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
 
+        mpiops.comm.barrier()
+        log.info("Writing partition to output file")
         if mpiops.chunk_index != 0:
             mpiops.comm.send(image, dest=0)
         else:
@@ -482,11 +480,10 @@ class ImageWriter:
                     if node != 0 else image
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                 yend = ystart + data.shape[1]  # this is Y
-                log.info("write data shape: {}".format(data.shape))
                 window = ((ystart, yend), (0, self.shape[0]))
                 index_list = list(range(1, bands + 1))
-                log.info("write data index_list: {}".format(index_list))
                 self.f.write(data, window=window, indexes=index_list)
+        mpiops.comm.barrier()
 
 
 def export_scores(scores, y, Ey, filename):
