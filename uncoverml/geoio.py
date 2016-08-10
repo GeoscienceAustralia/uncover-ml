@@ -432,7 +432,8 @@ def load_shapefile(filename, field):
 
 
 class ImageWriter:
-    def __init__(self, shape, bbox, name, n_subchunks, outputdir):
+    def __init__(self, shape, bbox, name, n_subchunks, outputdir,
+                 band_tags=None):
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
                                          bbox[0, 1], bbox[1, 1],
@@ -445,15 +446,25 @@ class ImageWriter:
         self.n_subchunks = n_subchunks
         log.info("Imwriter image shape: {}".format(self.shape))
         log.info("Imwriter number of subchunks: {}".format(mpiops.chunks
-                                               * self.n_subchunks))
+                                                           * self.n_subchunks))
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
+
+        if band_tags is not None:
+            if len(band_tags) != self.shape[2]:
+                raise ValueError("Number of band tags must equal number of "
+                                 "bands!")
+
         if mpiops.chunk_index == 0:
             self.f = rasterio.open(self.output_filename, 'w', driver='GTiff',
                                    width=self.shape[0], height=self.shape[1],
                                    dtype=np.float64, count=self.shape[2],
                                    transform=self.A)
+
+            if band_tags is not None:
+                for i, tag in enumerate(band_tags):
+                    self.f.update_tags(i + 1, image_type=tag)
 
     def write(self, x, subchunk_index):
         rows = self.shape[0]

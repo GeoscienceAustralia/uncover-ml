@@ -71,7 +71,8 @@ def run_pipeline(config):
     compose_settings = state_dict["compose_settings"]
     model = state_dict["model"]
 
-    nchannels = pipeline.predict_channels(model, config.quantiles)
+    # nchannels = pipeline.predict_channels(model, config.quantiles)
+    nchannels = len(model.get_predict_tags())
     print("pipeline says we'll get {} channels".format(nchannels))
 
     # temp workaround
@@ -85,7 +86,8 @@ def run_pipeline(config):
 
     outfile_tif = config.name + "_output_" + config.algorithm
     image_out = geoio.ImageWriter(eff_shape, eff_bbox, outfile_tif,
-                                  n_subchunks, config.output_dir)
+                                  n_subchunks, config.output_dir,
+                                  band_tags=model.get_predict_tags())
 
     for i in range(n_subchunks):
         render_partition(model, i, n_subchunks, image_out, image_settings,

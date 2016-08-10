@@ -1,6 +1,7 @@
 """Model Spec Objects and ML algorithm serialisation."""
 
 import numpy as np
+from scipy.stats import norm
 
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
@@ -48,10 +49,12 @@ class BasisMakerMixin():
 
 class PredictProbaMixin():
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, interval=0.95, *args):
 
-        Ey, Vy = self.predict_moments(X)
-        return Ey, Vy
+        Ey, Vy = self.predict_moments(X, *args)
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
 
 
 class MutualInfoMixin():
@@ -62,6 +65,20 @@ class MutualInfoMixin():
         pCp = [p.dot(self.covariance).dot(p.T) for p in Phi]
         MI = 0.5 * (np.log(self.var + np.array(pCp)) - np.log(self.var))
         return MI
+
+
+class TagsMixin():
+
+    def get_predict_tags(self):
+
+        tags = ['Prediction']
+        if hasattr(self, 'predict_proba'):
+            tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
+
+        if hasattr(self, 'entropy_reduction'):
+            tags.append('Expected reduction in entropy')
+
+        return tags
 
 
 #
@@ -141,7 +158,7 @@ class RandomForestRegressor(RFR):
     decision tree estimator ouputs.
     """
 
-    def predict_proba(self, X, *args):
+    def predict_proba(self, X, interval=0.95, *args):
         Ey = self.predict(X)
 
         Vy = np.zeros_like(Ey)
@@ -150,7 +167,9 @@ class RandomForestRegressor(RFR):
 
         Vy /= len(self.estimators_)
 
-        return Ey, Vy
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
 
 
 #
@@ -181,18 +200,20 @@ def transform_targets(Learner):
             return Ey
 
         if hasattr(Learner, 'predict_proba'):
-            def predict_proba(self, X, *args):
+            def predict_proba(self, X, interval=0.95, *args):
 
                 Ns = X.shape[0]
                 nsamples = 100
 
                 # Expectation and variance in latent space
-                Ey_t, Sy_t = super().predict_proba(X, *args)
+                Ey_t, Sy_t, ql, qu = super().predict_proba(X, interval, *args)
                 Sy_t = np.sqrt(Sy_t)  # inplace to save mem
 
                 # Now transform expectation, and sample to get transformed
                 # variance
                 Ey = self.ytform.itransform(Ey_t)
+                ql = self.ytform.itransform(ql)
+                qu = self.ytform.itransform(qu)
                 Vy = np.zeros_like(Ey)
 
                 # Do this as much in place as possible for memory conservation
@@ -203,50 +224,55 @@ def transform_targets(Learner):
 
                 Vy /= nsamples
 
-                return Ey, Vy
+                return Ey, Vy, ql, qu
 
     return TransformedLearner
 
 
-# These are purely so we can pickle
+#
+# Construct compatible classes for the pipeline, these need to be module level
+# for pickling...
+#
 
-class SVRTransformed(transform_targets(SVR)):
+class SVRTransformed(transform_targets(SVR), TagsMixin):
     pass
 
 
-class LinearRegTransformed(transform_targets(LinearReg)):
+class LinearRegTransformed(transform_targets(LinearReg), TagsMixin):
     pass
 
 
-class RandomForestTransformed(transform_targets(RandomForestRegressor)):
+class RandomForestTransformed(transform_targets(RandomForestRegressor),
+                              TagsMixin):
     pass
 
 
-class ApproxGPTransformed(transform_targets(ApproxGP)):
+class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
     pass
 
 
-class KernelRidgeTransformed(transform_targets(KernelRidge)):
+class KernelRidgeTransformed(transform_targets(KernelRidge), TagsMixin):
     pass
 
 
-class ARDRegressionTransformed(transform_targets(ARDRegression)):
+class ARDRegressionTransformed(transform_targets(ARDRegression), TagsMixin):
     pass
 
 
-class DecisionTreeTransformed(transform_targets(DecisionTreeRegressor)):
+class DecisionTreeTransformed(transform_targets(DecisionTreeRegressor),
+                              TagsMixin):
     pass
 
 
-class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor)):
+class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor), TagsMixin):
     pass
 
 
-class SGDLinearRegTransformed(transform_targets(SGDLinearReg)):
+class SGDLinearRegTransformed(transform_targets(SGDLinearReg), TagsMixin):
     pass
 
 
-class SGDApproxGPTransformed(transform_targets(SGDApproxGP)):
+class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
     pass
 
 

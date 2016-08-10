@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from scipy.stats import norm
+# from scipy.stats import norm
 
 from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df
@@ -125,37 +125,22 @@ def join_dicts(dicts):
     return d
 
 
-def predict_channels(model, interval):
-    nchannels = 1
-
-    if hasattr(model, 'predict_proba'):
-        nchannels += 3 if interval is not None else 1
-
-    if hasattr(model, 'entropy_reduction'):
-        nchannels += 1
-
-    return nchannels
-
-
 def predict(data, model, interval=None):
 
     def pred(X):
 
         if hasattr(model, 'predict_proba'):
-            Ey, Vy = model.predict_proba(X)
-            predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis]))
-
-            if interval is not None:
-                ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-                predres = np.hstack((predres, ql[:, np.newaxis],
-                                     qu[:, np.newaxis]))
-
-            if hasattr(model, 'entropy_reduction'):
-                H = model.entropy_reduction(X)
-                predres = np.hstack((predres, H[:, np.newaxis]))
+            args = [interval] if interval is not None else []
+            Ey, Vy, ql, qu = model.predict_proba(X, *args)
+            predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
+                                 ql[:, np.newaxis], qu[:, np.newaxis]))
 
         else:
-            predres = model.predict(X).flatten()[:, np.newaxis]
+            predres = np.reshape(model.predict(X), newshape=(len(X), 1))
+
+        if hasattr(model, 'entropy_reduction'):
+            MI = model.entropy_reduction(X)
+            predres = np.hstack((predres, MI[:, np.newaxis]))
 
         return predres
 

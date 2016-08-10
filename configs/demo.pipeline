@@ -75,8 +75,8 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {'target_transform': 'standardise'},
-    "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
+    "bayesreg": {'target_transform': 'standardise'},
+    # "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {
@@ -119,10 +119,10 @@ memory_fraction = 1.0
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-# algorithm = 'bayesreg'
+algorithm = 'bayesreg'
 # algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
-algorithm = 'sgdapproxgp'
+# algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
