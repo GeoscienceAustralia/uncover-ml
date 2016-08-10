@@ -423,7 +423,7 @@ def load_shapefile(filename, field):
         raise ValueError("Requested field is not in records!")
 
     vind = fdict[field]
-    vals = np.array([r[vind] for r in sf.records()])
+    vals = np.array([float(r[vind]) for r in sf.records()])
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))

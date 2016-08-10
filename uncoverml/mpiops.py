@@ -194,7 +194,7 @@ def compute_unique_values(x, max_onehot_dims):
 
 
 def sum_axis_0(x, y, dtype):
-    s = np.sum(np.array([x, y]), axis=0)
+    s = np.ma.sum(np.ma.vstack((x, y)), axis=0)
     return s
 
 sum0_op = MPI.Op.Create(sum_axis_0, commute=True)
@@ -216,6 +216,11 @@ def compose_transform(x, settings):
 def _count(x, comm):
     x_n_local = np.ma.count(x, axis=0)
     x_n = comm.allreduce(x_n_local, op=sum0_op)
+    still_masked = np.ma.count_masked(x_n)
+    if still_masked != 0:
+        raise ValueError("Can't compute count: subcounts are still masked")
+    if hasattr(x_n, 'mask'):
+        x_n = x_n.data
     return x_n
 
 
@@ -230,10 +235,12 @@ def _impute(x, settings, comm):
 def _mean(x, comm):
     x_n = _count(x, comm)
     x_sum_local = np.ma.sum(x, axis=0)
-    if np.ma.count_masked(x_sum_local) != 0:
-        raise ValueError("Too many missing values to compute sum")
-    x_sum_local = x_sum_local.data
     x_sum = comm.allreduce(x_sum_local, op=sum0_op)
+    still_masked = np.ma.count_masked(x_sum)
+    if still_masked != 0:
+        raise ValueError("Can't compute mean: At least 1 column has no data")
+    if hasattr(x_sum, 'mask'):
+        x_sum = x_sum.data
     mean = x_sum / x_n
     return mean
 
