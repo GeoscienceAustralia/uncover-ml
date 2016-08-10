@@ -14,13 +14,17 @@ chunks = comm.Get_size()
 chunk_index = comm.Get_rank()
 
 n_samples = 10000
-n_features = 4
+n_features = 2
 k_true = 5
 k = 5
-l = 1.0
+l = 10.0
 maxit = 10000
 
 np.random.seed(1)
+
+
+# TODO make semi-supervised
+# TODO handle 'missing' data
 
 
 def sum_axis_0(x, y, dtype):
