@@ -49,11 +49,14 @@ def render_partition(model, subchunk, n_subchunks, image_out,
                               axis=1)
         x_out, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
-        alg = config.algorithm
         log.info("x shape going to pred: {}".format(x_out.shape))
+
+        alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
+
         y_star = pipeline.predict(x_out, model, interval=config.quantiles)
         log.info("y shape coming out of pred: {}".format(y_star.shape))
+
         image_out.write(y_star, subchunk)
 
 

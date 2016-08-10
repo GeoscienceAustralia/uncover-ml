@@ -8,6 +8,7 @@ from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
 from revrand.likelihoods import Gaussian
 from revrand.btypes import Parameter, Positive
 from revrand.utils import atleast_list
+from revrand.optimize import Adam
 
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
@@ -70,14 +71,13 @@ class MutualInfoMixin():
 
 class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
 
-    def __init__(self, onescol=True, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-8,
+    def __init__(self, onescol=True, var=1., regulariser=1., tol=1e-8,
                  maxiter=1000):
 
         basis = LinearBasis(onescol=onescol)
         super().__init__(basis=basis,
-                         var=var,
-                         regulariser=regulariser,
+                         var=Parameter(var, Positive()),
+                         regulariser=Parameter(regulariser, Positive()),
                          tol=tol,
                          maxiter=maxiter
                          )
@@ -86,14 +86,12 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
 class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                MutualInfoMixin):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=1.,
-                 var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-8,
-                 maxiter=1000):
+    def __init__(self, kern='rbf', nbases=200, lenscale=1., var=1.,
+                 regulariser=1., tol=1e-8, maxiter=1000):
 
         super().__init__(basis=None,
-                         var=var,
-                         regulariser=regulariser,
+                         var=Parameter(var, Positive()),
+                         regulariser=Parameter(regulariser, Positive()),
                          tol=tol,
                          maxiter=maxiter
                          )
@@ -103,32 +101,33 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
 
 class SGDLinearReg(GeneralisedLinearModel, PredictProbaMixin):
 
-    def __init__(self, onescol=True, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), maxiter=3000,
-                 batch_size=10):
+    def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
+                 batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
+                 epsilon=1e-8):
 
-        super().__init__(likelihood=Gaussian(var),
+        super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=LinearBasis(onescol),
-                         regulariser=regulariser,
+                         regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
-                         batch_size=batch_size
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon)
                          )
 
 
 class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel, PredictProbaMixin):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=1.,
-                 var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), maxiter=3000,
-                 batch_size=10):
+    def __init__(self, kern='rbf', nbases=200, lenscale=1., var=1.,
+                 regulariser=1., maxiter=3000, batch_size=10, alpha=0.01,
+                 beta1=0.9, beta2=0.99, epsilon=1e-8):
 
         self._store_params(kern, nbases, lenscale)
 
-        super().__init__(likelihood=Gaussian(var),
+        super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
-                         regulariser=regulariser,
+                         regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
-                         batch_size=batch_size
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon)
                          )
 
 
@@ -189,7 +188,7 @@ def transform_targets(Learner):
 
                 # Expectation and variance in latent space
                 Ey_t, Sy_t = super().predict_proba(X, *args)
-                Sy_t = np.sqrt(Sy_t)  # inplace to same mem
+                Sy_t = np.sqrt(Sy_t)  # inplace to save mem
 
                 # Now transform expectation, and sample to get transformed
                 # variance

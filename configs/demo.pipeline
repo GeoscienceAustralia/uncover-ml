@@ -76,7 +76,7 @@ algdict = {
 
     # Bayesian linear regression
     # "bayesreg": {'target_transform': 'standardise'},
-    "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 3000},
+    "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {
@@ -89,11 +89,9 @@ algdict = {
     #              'target_transform': 'standardise',
     #              'kern': 'matern52',
     #              'lenscale': [100.] * 87,
-    #              # 'lenscale': 100.,
     #              'nbases': 50},
 
     # Support vector machine (regressor)
-    # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
     # "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
@@ -122,9 +120,9 @@ memory_fraction = 1.0
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
-algorithm = 'sgdbayesreg'
+# algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
-# algorithm = 'sgdapproxgp'
+algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
 
 # Quantiles

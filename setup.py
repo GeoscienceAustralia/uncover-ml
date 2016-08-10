@@ -71,7 +71,7 @@ setup(
         'pyshp == 1.2.3',
         'click_log == 0.1.4',
         'click == 6.6',
-        'revrand >= 0.6',
+        'revrand >= 0.6.1',
         'scikit-learn == 0.17.1',
         'scikit-image >= 0.12.3',
         'mpi4py == 2.0.0',
