@@ -71,6 +71,8 @@ def run_pipeline(config):
                               folds=config.folds,
                               seed=config.crossval_seed)
 
+    # import IPython; IPython.embed(); exit()
+
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")

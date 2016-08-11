@@ -38,26 +38,38 @@ class Standardise(Identity):
 
 class Sqrt(Identity):
 
-    def transform(self, y):
-
-        ysqrt = np.sqrt(y)
-        return ysqrt
-
-    def itransform(self, y_transformed):
-
-        return y_transformed**2
-
-
-class Log(Identity):
-
     def __init__(self, offset=0.):
 
         self.offset = offset
 
     def transform(self, y):
 
-        ylog = np.log(y + self.offset)
-        return ylog
+        ysqrt = np.sqrt(y + self.offset)
+        return ysqrt
+
+    def itransform(self, y_transformed):
+
+        return y_transformed**2 - self.offset
+
+
+class Log(Identity):
+
+    def __init__(self, offset=0., replace_zeros=True):
+
+        self.offset = offset
+        self.replace_zeros = replace_zeros
+
+    def fit(self, y):
+
+        self.ymin = y[(y + self.offset) > 0].min()
+
+    def transform(self, y):
+
+        y += self.offset
+        if self.replace_zeros:
+            y[y == 0] = self.ymin / 10.
+
+        return np.log(y)
 
     def itransform(self, y_transformed):
 

@@ -9,7 +9,7 @@ import numpy as np
 import shapefile as shp
 # import rasterio
 
-timg = np.reshape(np.arange(1, 17), (4, 4))
+timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ def make_patch_31():
                         [13, 14, 15]],
                        [[6, 7, 8],
                         [10, 11, 12],
-                        [14, 15, 16]]])
+                        [14, 15, 16]]])[:, :, :, np.newaxis]
 
     tx = np.array([1, 1, 2, 2])
     ty = np.array([1, 2, 1, 2])
@@ -66,7 +66,7 @@ def make_patch_11():
     pwidth = 0
 
     # Test output patches, patch centres
-    tpatch = np.array([[timg.flatten()]]).T
+    tpatch = np.array([[[timg.flatten()]]]).T
 
     tx, ty = [g.flatten() for g in np.meshgrid(np.arange(3), np.arange(3))]
 
@@ -86,7 +86,7 @@ def make_points():
                         [13, 14, 15]],
                        [[6, 7, 8],
                         [10, 11, 12],
-                        [14, 15, 16]]])
+                        [14, 15, 16]]])[:, :, :, np.newaxis]
 
     return timg, pwidth, points, tpatch
 
@@ -161,3 +161,20 @@ def shapefile(random_filename, request):
     w.save(filename)
 
     return lonlats, filename
+
+
+@pytest.fixture
+def linear_data():
+
+    Nt = 800
+    Ns = 200
+    x = np.linspace(-2, 2, Nt + Ns)
+    y = 3 + 2 * x
+    X = x[:, np.newaxis]
+
+    trind = np.random.choice(Nt + Ns, Nt, replace=False)
+    tsind = np.zeros_like(x, dtype=bool)
+    tsind[trind] = True
+    tsind = np.where(~tsind)[0]
+
+    return y[trind], X[trind], y[tsind], X[tsind]

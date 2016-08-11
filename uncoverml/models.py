@@ -1,4 +1,4 @@
-"""Model Spec Objects and ML algorithm serialisation."""
+"""Model Objects and ML algorithm serialisation."""
 
 import numpy as np
 from scipy.stats import norm
@@ -14,7 +14,6 @@ from revrand.optimize import Adam
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
 from sklearn.linear_model import ARDRegression
-from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 import uncoverml.transforms as transforms
@@ -52,6 +51,17 @@ class PredictProbaMixin():
     def predict_proba(self, X, interval=0.95, *args):
 
         Ey, Vy = self.predict_moments(X, *args)
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
+
+class GLMPredictProbaMixin():
+
+    def predict_proba(self, X, interval=0.95, *args):
+
+        Ey, Vy = self.predict_moments(X, *args)
+        Vy += self.like_hypers
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
         return Ey, Vy, ql, qu
@@ -103,7 +113,7 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
 class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                MutualInfoMixin):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=1., var=1.,
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., tol=1e-8, maxiter=1000):
 
         super().__init__(basis=None,
@@ -116,7 +126,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
         self._store_params(kern, nbases, lenscale)
 
 
-class SGDLinearReg(GeneralisedLinearModel, PredictProbaMixin):
+class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
 
     def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
@@ -131,9 +141,10 @@ class SGDLinearReg(GeneralisedLinearModel, PredictProbaMixin):
                          )
 
 
-class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel, PredictProbaMixin):
+class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
+                  GLMPredictProbaMixin):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=1., var=1.,
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., maxiter=3000, batch_size=10, alpha=0.01,
                  beta1=0.9, beta2=0.99, epsilon=1e-8):
 
@@ -166,6 +177,8 @@ class RandomForestRegressor(RFR):
             Vy += (dt.predict(X, *args) - Ey)**2
 
         Vy /= len(self.estimators_)
+
+        # FIXME what if elements of Vy are zero?
 
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
@@ -248,10 +261,6 @@ class RandomForestTransformed(transform_targets(RandomForestRegressor),
 
 
 class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
-    pass
-
-
-class KernelRidgeTransformed(transform_targets(KernelRidge), TagsMixin):
     pass
 
 
@@ -344,7 +353,6 @@ modelmaps = {'randomforest': RandomForestTransformed,
              'approxgp': ApproxGPTransformed,
              'sgdapproxgp': SGDApproxGPTransformed,
              'svr': SVRTransformed,
-             'kernelridge': KernelRidgeTransformed,
              'ardregression': ARDRegressionTransformed,
              'decisiontree': DecisionTreeTransformed,
              'extratree': ExtraTreeTransformed,

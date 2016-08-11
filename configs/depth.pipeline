@@ -21,7 +21,8 @@ data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
 output_dir = "."
 
 # Shape file with target variable info
-target_file = "Targets_V_final_inside.shp"
+# target_file = "Targets_V_final_inside.shp"
+target_file = "Targets_shallow_filtered.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
@@ -29,6 +30,7 @@ target_var = "depth"
 export_targets = True
 
 cross_validate = True
+
 folds = 5
 
 
@@ -66,30 +68,22 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {},
+    # "bayesreg": {'target_transform': 'log'}
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
-    # "approxgp": {'kern': 'matern52', 'lenscale': 100., 'nbases': 50},
+    "sgdapproxgp": {
+                 'target_transform': 'log',
+                 'kern': 'matern52',
+                 'lenscale': [100.] * 77,
+                 'nbases': 50,
+                 'maxiter': 3000},
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {},
+    "svr": {'target_transform': 'log'},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 100},
-
-    # ARD Linear regression
-    # "ardregression": {},
-
-    # Kernel ridge regression
-    # 'kernelridge': {'kernel': 'rbf'},
-
-    # Decision tree regressor
-    # 'decisiontree': {},
-
-    # Extra tree regressor
-    # 'extratree': {},
+    "randomforest": {'target_transform': 'log', 'n_estimators': 50},
 }
 
 #
@@ -97,12 +91,13 @@ algdict = {
 #
 
 # How much data to keep in memory at a time
-memory_fraction = 1./20
+memory_fraction = 1./40
 
 # Name of the prediction algorithm
-algorithm = 'svr'
+# algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
+algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
