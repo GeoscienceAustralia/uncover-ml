@@ -89,12 +89,8 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
-    # all nodes need to agree on the order of iteration
-    X = gather_data(extracted_chunks, compose_settings)
-
     for algorithm in sorted(config.algdict.keys()):
         args = config.algdict[algorithm]
-
         if config.rank_features:
             measures, features, scores = rank_features(extracted_chunks,
                                                        targets, algorithm,
@@ -102,6 +98,12 @@ def run_pipeline(config):
                                                        config)
             mpiops.run_once(export_feature_ranks, measures,
                             features, scores, algorithm, config)
+
+    # all nodes need to agree on the order of iteration
+    X = gather_data(extracted_chunks, compose_settings)
+
+    for algorithm in sorted(config.algdict.keys()):
+        args = config.algdict[algorithm]
 
         if config.cross_validate:
             crossval_results = pipeline.cross_validate(X, targets, algorithm,
