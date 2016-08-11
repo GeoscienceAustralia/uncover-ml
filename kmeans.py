@@ -19,6 +19,8 @@ k_true = 5
 k = 5
 l = 10.0
 maxit = 10000
+n_supervised_classes = 2
+n_supervised_samples = 5
 
 np.random.seed(1)
 
@@ -38,6 +40,13 @@ def generate_data():
     X, y = sklearn.datasets.make_blobs(n_samples=n_samples,
                                        n_features=n_features,
                                        centers=k_true)
+    # get some semi-supervised labels
+    training_data = {}
+    if chunk_index == 0:
+        for k in range(n_supervised_classes):
+            training_data[k] = X[y == k][0:n_supervised_samples]
+    training_data = comm.
+
     my_X = np.array_split(X, chunks)[chunk_index]
     my_y = np.array_split(y, chunks)[chunk_index]
     return my_X, my_y
