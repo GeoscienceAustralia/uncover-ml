@@ -410,7 +410,7 @@ def load_attributes(filename_dict):
     return shape, bbox
 
 
-def load_shapefile(filename, field):
+def load_shapefile(filename, targetfield, otherfields):
     """
     TODO
     """
@@ -418,16 +418,24 @@ def load_shapefile(filename, field):
     sf = shapefile.Reader(filename)
     fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
 
-    if field not in fdict:
-        raise ValueError("Requested field is not in records!")
+    def getfield(field):
 
-    vind = fdict[field]
-    vals = np.array([float(r[vind]) for r in sf.records()])
+        if targetfield not in fdict:
+            raise ValueError("Requested field, {}, is not in records!"
+                             .format(field))
+
+        vind = fdict[field]
+        vals = np.array([float(r[vind]) for r in sf.records()])
+        return vals
+
+    val = getfield(targetfield)
+    othervals = {f: getfield(f) for f in otherfields}
+
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
-    return label_coords, vals
+    return label_coords, val, othervals
 
 
 class ImageWriter:
