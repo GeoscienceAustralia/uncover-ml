@@ -45,11 +45,11 @@ def generate_data():
     if chunk_index == 0:
         for k in range(n_supervised_classes):
             training_data[k] = X[y == k][0:n_supervised_samples]
-    training_data = comm.
+    training_data = comm.bcast(training_data, root=0)
 
     my_X = np.array_split(X, chunks)[chunk_index]
     my_y = np.array_split(y, chunks)[chunk_index]
-    return my_X, my_y
+    return my_X, my_y, training_data
 
 
 def kmean_distance2(x, C):
