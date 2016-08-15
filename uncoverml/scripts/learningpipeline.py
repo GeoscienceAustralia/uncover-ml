@@ -2,23 +2,23 @@
 A pipeline for learning and validating models.
 """
 
-import pickle
-from collections import OrderedDict
-import importlib.machinery
-import logging
-from os import path, mkdir, listdir
-from glob import glob
-import sys
-import json
 import copy
-from itertools import product
+import importlib.machinery
+import json
+import logging
+import pickle
+import sys
+from collections import OrderedDict
+from glob import glob
+from os import mkdir, path
 
 import numpy as np
 
-from uncoverml import geoio
-from uncoverml import pipeline
-from uncoverml import mpiops
 from uncoverml import datatypes
+from uncoverml import geoio
+from uncoverml import mpiops
+from uncoverml import pipeline
+from uncoverml.validation import lower_is_better
 
 # Logging
 log = logging.getLogger(__name__)
@@ -70,9 +70,6 @@ def run_pipeline(config):
                               fieldname=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
-
-    # import IPython; IPython.embed(); exit()
-
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")
@@ -127,8 +124,8 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
         del dict_missing[name]
 
         fname = name.rstrip(".tif")
-        log.info("Computing {} feature importance of {}".format(algorithm,
-                                                                fname))
+        log.info("Computing {} feature importance of {}"
+                 .format(algorithm, fname))
 
         compose_missing = copy.deepcopy(compose_settings)
         X = gather_data(dict_missing, compose_missing)
@@ -171,6 +168,8 @@ def export_feature_ranks(measures, features, scores, algorithm, config):
         # Sort the scores
         scores = sorted(zip(features, measure_scores),
                         key=lambda s: s[1])
+        if measure in lower_is_better:
+            scores.reverse()
         sorted_features, sorted_scores = zip(*scores)
 
         # Store the results
