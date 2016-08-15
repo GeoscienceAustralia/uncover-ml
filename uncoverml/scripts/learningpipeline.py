@@ -29,10 +29,10 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def get_targets(shapefile, targetfield, folds, seed, otherfields):
+def get_targets(shapefile, targetfield, folds, seed, otherfields, parsers):
     shape_infile = path.abspath(shapefile)
     lonlat, vals, othervals = geoio.load_shapefile(shape_infile, targetfield,
-                                                   otherfields)
+                                                   otherfields, parsers)
     targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True,
                                         othervals=othervals)
     return targets
@@ -70,6 +70,7 @@ def run_pipeline(config):
                               shapefile=shapefile,
                               targetfield=config.target_var,
                               otherfields=config.other_fields,
+                              parsers=config.field_parsers,
                               folds=config.folds,
                               seed=config.crossval_seed)
 

@@ -410,7 +410,7 @@ def load_attributes(filename_dict):
     return shape, bbox
 
 
-def load_shapefile(filename, targetfield, otherfields):
+def load_shapefile(filename, targetfield, otherfields, fieldparsers):
     """
     TODO
     """
@@ -418,22 +418,19 @@ def load_shapefile(filename, targetfield, otherfields):
     sf = shapefile.Reader(filename)
     fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
 
-    def getfield(field, valtype=None):
+    def getfield(field, parser):
 
         if targetfield not in fdict:
             raise ValueError("Requested field, {}, is not in records!"
                              .format(field))
 
         vind = fdict[field]
-        vals = np.array([r[vind] for r in sf.records()])
-
-        if valtype is not None:
-            vals = vals.astype(valtype)
+        vals = np.array([parser(r[vind]) for r in sf.records()])
 
         return vals
 
-    val = getfield(targetfield, valtype=float)
-    othervals = {f: getfield(f) for f in otherfields}
+    val = getfield(targetfield, parser=float)
+    othervals = {f: getfield(f, p) for f, p in zip(otherfields, fieldparsers)}
 
     coords = []
     for shape in sf.iterShapes():

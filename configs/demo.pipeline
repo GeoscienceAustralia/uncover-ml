@@ -32,6 +32,8 @@ target_file = "geochem_sites.shp"
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 # target_var = "depth"
+other_fields = []
+field_parsers = []
 
 export_targets = True
 
@@ -76,7 +78,7 @@ algdict = {
 
     # Bayesian linear regression
     "bayesreg": {'target_transform': 'standardise'},
-    "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
+    # "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
 
     # Approximate Gaussian process, for large scale data
     # "approxgp": {
@@ -92,10 +94,10 @@ algdict = {
     #              'nbases': 50},
 
     # Support vector machine (regressor)
-    "svr": {'target_transform': 'standardise'},
+    # "svr": {'target_transform': 'standardise'},
 
     # Random forest regressor
-    "randomforest": {'n_estimators': 100},
+    # "randomforest": {'n_estimators': 100},
 
 }
 
