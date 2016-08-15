@@ -168,11 +168,8 @@ def export_feature_ranks(measures, features, scores, algorithm, config):
         # Sort the scores
         scores = sorted(zip(features, measure_scores),
                         key=lambda s: s[1])
-
-        # if measure in lower_is_better:
-        #     scores.reverse()
-
-
+        if measure in lower_is_better:
+            scores.reverse()
         sorted_features, sorted_scores = zip(*scores)
 
         # Store the results
