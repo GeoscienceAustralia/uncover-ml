@@ -8,9 +8,6 @@ from uncoverml import mpiops
 log = logging.getLogger(__name__)
 
 
-# TODO handle 'missing' data
-
-
 def sum_axis_0(x, y, dtype):
     s = np.sum(np.vstack((x, y)), axis=0)
     return s
@@ -57,7 +54,7 @@ def weighted_starting_candidates(X, k, l):
     phi_x_c_local = np.sum(d2_x)
     phi_x_c = mpiops.comm.allreduce(phi_x_c_local, op=mpiops.MPI.SUM)
     psi = int(round(np.log(phi_x_c)))
-    log.info("kmeans || using {} sampling iterations".format(psi))
+    log.info("kmeans|| using {} sampling iterations".format(psi))
     for i in range(psi):
         d2_x = kmean_distance2(X, C)
         phi_x_c_local = np.sum(d2_x)
@@ -67,7 +64,7 @@ def weighted_starting_candidates(X, k, l):
         hits = draws <= probs
         new_c = X[hits]
         C = np.concatenate([C] + mpiops.comm.allgather(new_c), axis=0)
-        log.info("iteration {} candidates: {}".format(i, C.shape[0]))
+        log.info("it {}\tcandidates: {}".format(i, C.shape[0]))
 
     w = compute_weights(X, C)
     return w, C
@@ -102,6 +99,7 @@ def centroid(X, weights=None):
 
 
 def reseed_point(X, C, index):
+    """ find the point furthest away from the the current centres"""
     log.info("Reseeding class with no members")
     idx = np.ones(C.shape[0], dtype=bool)
     idx[index] = False
@@ -119,7 +117,8 @@ def kmeans_step(X, C, classes, weights=None):
     C_new = np.zeros_like(C)
     for i in range(C.shape[0]):
         indices = classes == i
-        if np.sum(indices) == 0:
+        n_members = mpiops.comm.allreduce(np.sum(indices), op=mpiops.MPI.SUM)
+        if n_members == 0:
             C_new[i] = reseed_point(X, C, i)
         else:
             X_ind = X[indices]
@@ -138,7 +137,8 @@ def run_kmeans(X, C, k, weights=None, training_data=None, max_iterations=1000):
         delta_local = np.sum(classes != classes_new)
         delta = mpiops.comm.allreduce(delta_local, op=mpiops.MPI.SUM)
         if mpiops.chunk_index == 0:
-            log.info("kmeans it: {} cost:{} delta: {}".format(i, cost, delta))
+            log.info("kmeans it: {}\tcost:{:.3f}\tdelta: {}".format(
+                i, cost, delta))
         C = C_new
         classes = classes_new
         if delta == 0:
@@ -153,6 +153,7 @@ def initialise_centres(X, k, l, training_data=None, max_iterations=1000):
                        if mpiops.chunk_index == 0 else None)
     Ck_init_indices = mpiops.comm.bcast(Ck_init_indices, root=0)
     Ck_init = C[Ck_init_indices]
+    log.info("Running K-means on candidate samples")
     C_init, _ = run_kmeans(C, Ck_init, k, weights=w,
                            training_data=None,
                            max_iterations=max_iterations)
@@ -167,7 +168,6 @@ def initialise_centres(X, k, l, training_data=None, max_iterations=1000):
                 x_indices = training_data.indices[k_indices]
                 X_data = X[x_indices]
                 C_init[i] = centroid(X_data)
-
     return C_init
 
 
@@ -182,7 +182,7 @@ def plot(X, classes, C):
 def generate_data():
     n_samples = 1000 * mpiops.chunks
     n_features = 20
-    k_true = 5
+    k_true = 20
     n_supervised_classes = 1
     n_supervised_samples = 5
     import sklearn.datasets
@@ -207,7 +207,7 @@ def generate_data():
 
 
 def main():
-    k = 10
+    k = 20
     l = 100.0 / np.sqrt(mpiops.chunks)
     maxit = 10000
     np.random.seed(1)
@@ -226,4 +226,5 @@ def main():
     if mpiops.chunk_index == 0:
         plot(X, assignments, C_final)
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

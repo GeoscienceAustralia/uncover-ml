@@ -81,6 +81,7 @@ def run_pipeline(config):
     l = config.oversampling_factor
     training_data = cluster.TrainingData(indices, classes)
     C_init = cluster.initialise_centres(X, k, l, training_data)
+    log.info("Clustering image")
     C_final, assignments = cluster.run_kmeans(X, C_init, k,
                                               training_data=training_data)
     export_model(C_final, image_settings, compose_settings, config)

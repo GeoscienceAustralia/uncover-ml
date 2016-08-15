@@ -48,11 +48,18 @@ def render_partition(centres, subchunk, n_subchunks, image_out,
                                    image_settings, config)
         x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
                               axis=1)
-        x_out, compose_settings = pipeline.compose_features(x,
+        x, compose_settings = pipeline.compose_features(x,
                                                             compose_settings)
 
-        y_star = cluster.compute_class(
-            x_out, centres)[:, np.newaxis].astype(float)
+        mask = x.mask
+        # we have to fully mask any rows with missing data
+        out_mask = (np.sum(mask, axis=1) > 0)[:, np.newaxis]
+        x = x.data
+        log.info("Computing class assignments")
+        y_star, _ = cluster.compute_class(x, centres)
+        y_star = y_star[:, np.newaxis].astype(float)
+        y_star = np.ma.MaskedArray(data=y_star, mask=out_mask)
+        log.info("Writing prediction to disk")
         image_out.write(y_star, subchunk)
 
 
