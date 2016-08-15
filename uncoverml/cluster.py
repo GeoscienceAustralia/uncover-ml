@@ -1,29 +1,22 @@
 import logging
 
 import numpy as np
-from mpi4py import MPI
-import sklearn.datasets
 import scipy.spatial
-import matplotlib.pyplot as pl
+
+from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 
-comm = MPI.COMM_WORLD
 
-chunks = comm.Get_size()
-
-chunk_index = comm.Get_rank()
-
-n_samples = 1000 * chunks
-n_features = 10
-k_true = 5
-k = 5
-l = 100.0 / np.sqrt(chunks)
-maxit = 10000
-n_supervised_classes = 1
-n_supervised_samples = 5
-
-np.random.seed(1)
+# n_samples = 1000 * chunks
+# n_features = 10
+# k_true = 5
+# k = 5
+# l = 100.0 / np.sqrt(chunks)
+# maxit = 10000
+# n_supervised_classes = 1
+# n_supervised_samples = 5
+# np.random.seed(1)
 
 # TODO handle 'missing' data
 
@@ -32,34 +25,35 @@ def sum_axis_0(x, y, dtype):
     s = np.sum(np.vstack((x, y)), axis=0)
     return s
 
-sum0_op = MPI.Op.Create(sum_axis_0, commute=True)
+sum0_op = mpiops.MPI.Op.Create(sum_axis_0, commute=True)
+
+
+# def generate_data():
+#     import sklearn.datasets
+#     X, y = sklearn.datasets.make_blobs(n_samples=n_samples,
+#                                        n_features=n_features,
+#                                        centers=k_true)
+#     # get some semi-supervised labels
+#     indices = []
+#     classes = []
+#     my_X = np.array_split(X, chunks)[chunk_index]
+#     my_y = np.array_split(y, chunks)[chunk_index]
+#     for k in range(n_supervised_classes):
+#         indices.append(np.argwhere(my_y == k)[0:n_supervised_samples])
+#         classes.append(np.zeros(n_supervised_samples, dtype=int) + k)
+#     indices = np.concatenate(indices, axis=0)
+#     classes = np.concatenate(classes, axis=0)
+#     if chunk_index == 1:  # no training data on some nodes
+#         indices = np.array([], dtype=int)
+#         classes = np.array([], dtype=int)
+#     training_data = TrainingData(indices, classes)
+#     return my_X, my_y, training_data
 
 
 class TrainingData:
     def __init__(self, indices, classes):
         self.indices = indices
         self.classes = classes
-
-
-def generate_data():
-    X, y = sklearn.datasets.make_blobs(n_samples=n_samples,
-                                       n_features=n_features,
-                                       centers=k_true)
-    # get some semi-supervised labels
-    indices = []
-    classes = []
-    my_X = np.array_split(X, chunks)[chunk_index]
-    my_y = np.array_split(y, chunks)[chunk_index]
-    for k in range(n_supervised_classes):
-        indices.append(np.argwhere(my_y == k)[0:n_supervised_samples])
-        classes.append(np.zeros(n_supervised_samples, dtype=int) + k)
-    indices = np.concatenate(indices, axis=0)
-    classes = np.concatenate(classes, axis=0)
-    if chunk_index == 1:  # no training data on some nodes
-        indices = np.array([], dtype=int)
-        classes = np.array([], dtype=int)
-    training_data = TrainingData(indices, classes)
-    return my_X, my_y, training_data
 
 
 def kmean_distance2(x, C):
@@ -87,14 +81,15 @@ def compute_weights(x, C):
 def weighted_starting_candidates(X, k, l):
     # sample uniformly 1 point from X
     C = None
-    if chunk_index == 0:
+    if mpiops.chunk_index == 0:
         idx = np.random.choice(X.shape[0])
         C = [X[idx]]
-    C = comm.bcast(C, root=0)
+    C = mpiops.comm.bcast(C, root=0)
     d2_x = kmean_distance2(X, C)
     phi_x_c_local = np.sum(d2_x)
-    phi_x_c = comm.allreduce(phi_x_c_local, op=MPI.SUM)
+    phi_x_c = mpiops.comm.allreduce(phi_x_c_local, op=mpiops.MPI.SUM)
     psi = int(round(np.log(phi_x_c)))
+    log.info("kmeans || using {} sampling iterations".format(psi))
     for i in range(psi):
         d2_x = kmean_distance2(X, C)
         phi_x_c_local = np.sum(d2_x)
@@ -102,7 +97,8 @@ def weighted_starting_candidates(X, k, l):
         draws = np.random.rand(probs.shape[0])
         hits = draws <= probs
         new_c = X[hits]
-        C = np.concatenate([C] + comm.allgather(new_c), axis=0)
+        C = np.concatenate([C] + mpiops.comm.allgather(new_c), axis=0)
+        log.info("iteration {} candidates: {}".format(i, C.shape[0]))
 
     w = compute_weights(X, C)
     return w, C
@@ -126,11 +122,11 @@ def centroid(X, weights=None):
         local_count = X.shape[0]
         local_sum = np.sum(X, axis=0)
 
-    full_count = comm.reduce(local_count, op=MPI.SUM, root=0)
-    full_sum = comm.reduce(local_sum, op=sum0_op, root=0)
-    if chunk_index == 0:
+    full_count = mpiops.comm.reduce(local_count, op=mpiops.MPI.SUM, root=0)
+    full_sum = mpiops.comm.reduce(local_sum, op=sum0_op, root=0)
+    if mpiops.chunk_index == 0:
         centroid = full_sum / full_count
-    centroid = comm.bcast(centroid, root=0)
+    centroid = mpiops.comm.bcast(centroid, root=0)
     return centroid
 
 
@@ -154,9 +150,9 @@ def run_kmeans(X, C, k, weights=None, training_data=None, max_iterations=1000):
         C_new = kmeans_step(X, C, classes, weights=weights)
         classes_new = compute_class(X, C_new)
         delta_local = np.sum(classes != classes_new)
-        delta = comm.allreduce(delta_local, op=MPI.SUM)
-        if chunk_index == 0:
-            print("kmeans it: {} delta: {}".format(i, delta))
+        delta = mpiops.comm.allreduce(delta_local, op=mpiops.MPI.SUM)
+        if mpiops.chunk_index == 0:
+            log.info("kmeans it: {} delta: {}".format(i, delta))
         C = C_new
         classes = classes_new
         if delta == 0:
@@ -164,22 +160,23 @@ def run_kmeans(X, C, k, weights=None, training_data=None, max_iterations=1000):
     return C, classes
 
 
-def initialise_centres(X, k, l, training_data=None):
-
+def initialise_centres(X, k, l, training_data=None, max_iterations=1000):
+    log.info("Initialising K-means centres from samples and training data")
     w, C = weighted_starting_candidates(X, k, l)
     Ck_init_indices = (np.random.choice(C.shape[0], size=k, replace=False)
-                       if chunk_index == 0 else None)
-    Ck_init_indices = comm.bcast(Ck_init_indices, root=0)
+                       if mpiops.chunk_index == 0 else None)
+    Ck_init_indices = mpiops.comm.bcast(Ck_init_indices, root=0)
     Ck_init = C[Ck_init_indices]
     C_init, _ = run_kmeans(C, Ck_init, k, weights=w,
-                           training_data=training_data,
-                           max_iterations=maxit)
+                           training_data=None,
+                           max_iterations=max_iterations)
 
     # Force centres to use training data if available
     if training_data:
         for i in range(k):
             k_indices = training_data.classes == i
-            has_training = comm.allreduce(np.sum(k_indices), op=MPI.SUM) > 0
+            has_training = mpiops.comm.allreduce(np.sum(k_indices),
+                                                 op=mpiops.MPI.SUM) > 0
             if has_training:
                 x_indices = training_data.indices[k_indices]
                 X_data = X[x_indices]
@@ -188,27 +185,26 @@ def initialise_centres(X, k, l, training_data=None):
     return C_init
 
 
-def plot(X, classes, C):
-    pl.figure()
-    pl.scatter(X[:, 0], X[:, 1], c=classes)
-    pl.plot(C[:, 0], C[:, 1], 'ro', ms=10)
-    pl.show()
+# def plot(X, classes, C):
+#     pl.figure()
+#     pl.scatter(X[:, 0], X[:, 1], c=classes)
+#     pl.plot(C[:, 0], C[:, 1], 'ro', ms=10)
+#     pl.show()
 
-
-def main():
-    if chunk_index == 0:
-        print("finding initialiser set...")
-    X, y, training_data = generate_data()
-    # get the initial centres
-    C_init = initialise_centres(X, k, l, training_data)
-    # now cluster the candidates
-    comm.barrier()
-    if chunk_index == 0:
-        print("running full k-means:")
-    C_final, assignments = run_kmeans(X, C_init, k,
-                                      training_data=training_data,
-                                      max_iterations=maxit)
-    if chunk_index == 0:
-        plot(X, assignments, C_final)
-if __name__ == "__main__":
-    main()
+# def main():
+#     if chunk_index == 0:
+#         print("finding initialiser set...")
+#     X, y, training_data = generate_data()
+#     # get the initial centres
+#     C_init = initialise_centres(X, k, l, training_data)
+#     # now cluster the candidates
+#     comm.barrier()
+#     if chunk_index == 0:
+#         print("running full k-means:")
+#     C_final, assignments = run_kmeans(X, C_init, k,
+#                                       training_data=training_data,
+#                                       max_iterations=maxit)
+#     if chunk_index == 0:
+#         plot(X, assignments, C_final)
+# if __name__ == "__main__":
+#     main()
