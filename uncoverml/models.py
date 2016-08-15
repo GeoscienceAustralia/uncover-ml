@@ -1,5 +1,7 @@
 """Model Objects and ML algorithm serialisation."""
 
+from itertools import chain
+
 import numpy as np
 from scipy.stats import norm
 
@@ -290,6 +292,7 @@ class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
 #
 
 def apply_masked(func, data, args=()):
+    # Single predicitve output
 
     # No masked data
     if np.ma.count_masked(data) == 0:
@@ -317,6 +320,7 @@ def apply_masked(func, data, args=()):
 
 
 def apply_multiple_masked(func, data, args=()):
+    # For when we have multiple predictive outputs
 
     datastack = []
     dims = []
@@ -335,10 +339,11 @@ def apply_multiple_masked(func, data, args=()):
 
     # Decorate functions to work on stacked data
     dims = np.cumsum(dims[:-1])  # dont split by last dim
+
     unstack = lambda catdata: [d.flatten() if f else d for d, f
                                in zip(np.hsplit(catdata, dims), flat)]
-    unstackfunc = lambda catdata, *nargs: \
-        func(*(unstack(catdata) + list(nargs)))
+
+    unstackfunc = lambda catdata, *nargs: func(*chain(unstack(catdata), nargs))
 
     return apply_masked(unstackfunc, np.ma.hstack(datastack), args)
 

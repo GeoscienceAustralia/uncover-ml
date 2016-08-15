@@ -418,23 +418,28 @@ def load_shapefile(filename, targetfield, otherfields):
     sf = shapefile.Reader(filename)
     fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
 
-    def getfield(field):
+    def getfield(field, valtype=None):
 
         if targetfield not in fdict:
             raise ValueError("Requested field, {}, is not in records!"
                              .format(field))
 
         vind = fdict[field]
-        vals = np.array([float(r[vind]) for r in sf.records()])
+        vals = np.array([r[vind] for r in sf.records()])
+
+        if valtype is not None:
+            vals = vals.astype(valtype)
+
         return vals
 
-    val = getfield(targetfield)
+    val = getfield(targetfield, valtype=float)
     othervals = {f: getfield(f) for f in otherfields}
 
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
+
     return label_coords, val, othervals
 
 
