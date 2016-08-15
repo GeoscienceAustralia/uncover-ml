@@ -61,7 +61,8 @@ def weighted_starting_candidates(X, k, l):
     for i in range(psi):
         d2_x = kmean_distance2(X, C)
         phi_x_c_local = np.sum(d2_x)
-        probs = l*d2_x/phi_x_c_local
+        probs = (l*d2_x/phi_x_c_local if phi_x_c_local > 0
+                 else np.ones(d2_x.shape[0]) / float(d2_x.shape[0]))
         draws = np.random.rand(probs.shape[0])
         hits = draws <= probs
         new_c = X[hits]
@@ -105,9 +106,12 @@ def reseed_point(X, C, index):
     idx = np.ones(C.shape[0], dtype=bool)
     idx[index] = False
     D2_x = scipy.spatial.distance.cdist(X, C, metric='sqeuclidean')
-    local_cost = np.sum(D2_x[:, idx], axis=1)
-    full_cost = mpiops.comm.allreduce(local_cost)
-    new_point = X[np.argmax(full_cost)]
+    costs = np.sum(D2_x[:, idx], axis=1)
+    local_candidate = np.argmax(costs)
+    local_cost = costs[local_candidate]
+    best_pernode = mpiops.comm.allgather(local_cost)
+    best_node = np.argmax(best_pernode)
+    new_point = mpiops.comm.bcast(X[local_candidate], root=best_node)
     return new_point
 
 
