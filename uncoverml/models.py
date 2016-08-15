@@ -292,7 +292,7 @@ class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
 #
 
 def apply_masked(func, data, args=()):
-    # Single predicitve output
+    # Data is just a matrix (i.e. X for prediction)
 
     # No masked data
     if np.ma.count_masked(data) == 0:
@@ -320,7 +320,7 @@ def apply_masked(func, data, args=()):
 
 
 def apply_multiple_masked(func, data, args=()):
-    # For when we have multiple predictive outputs
+    # Data is a sequence of arrays (i.e. X, y pairs for training)
 
     datastack = []
     dims = []
