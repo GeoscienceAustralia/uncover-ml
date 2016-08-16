@@ -8,7 +8,8 @@ from os import path
 #
 
 # Location of data
-data_dir = "/short/ge3/jrw547/Murray_datasets"
+# data_dir = "/short/ge3/jrw547/Murray_datasets"
+data_dir = "/short/ge3/dms599/Murray_datasets"
 
 output_dir = "."
 
@@ -19,12 +20,13 @@ output_dir = "."
 
 # Shape file with target variable info
 # target_file = "Targets_V_final_inside.shp"
-target_file = "Targets_shallow_filtered.shp"
+# target_file = "Targets_shallow_filtered.shp"
+target_file = "Targets_V6_inside.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
-other_fields = []
-field_parsers = []
+other_fields = ["censored"]
+field_parsers = [lambda f: True if f == 'no' else False]
 
 export_targets = True
 
@@ -34,7 +36,6 @@ export_targets = True
 cross_validate = True
 folds = 5
 crossval_seed = 1
-
 
 
 #
@@ -60,9 +61,11 @@ pca_frac = 0.5
 # Estimate the relative importance of each feature
 rank_features = False
 
+
 #
 # Algorithm settings
 #
+
 
 # Iterate through this dictionary of algorithm name and arguments:
 algdict = {
@@ -75,12 +78,22 @@ algdict = {
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Approximate Gaussian process, for large scale data
-    "sgdapproxgp": {
-                 'target_transform': 'rank',
+    # "sgdapproxgp": {
+    #              'target_transform': 'rank',
+    #              'kern': 'matern52',
+    #              'lenscale': [100.] * 77,
+    #              'nbases': 50,
+    #              'maxiter': 3000},
+
+    "depthregress": {
                  'kern': 'matern52',
                  'lenscale': [100.] * 77,
-                 'nbases': 50,
-                 'maxiter': 3000},
+                 'nbases': 100,
+                 'maxiter': 10000,
+                 'falloff': 0.1,
+                 'beta1': 0.3,
+                 'beta2': 0.5},
+    
 
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
@@ -112,11 +125,10 @@ memory_fraction = 0.05
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
-algorithm = "sgdapproxgp"
+# algorithm = "sgdapproxgp"
+algorithm = 'depthregress'
 # algorithm = 'approxgp'
 # algorithm = 'randomforest'
 
 # Quantiles
 quantiles = 0.95
-
-
