@@ -64,7 +64,7 @@ def learn_model(X, targets, algorithm, algorithm_params=None):
     y = targets.observations
 
     if mpiops.chunk_index == 0:
-        apply_multiple_masked(model.fit, (X, y))
+        apply_multiple_masked(model.fit, (X, y), kwargs=targets.fields)
     model = mpiops.comm.bcast(model, root=0)
     return model
 
@@ -89,8 +89,15 @@ def cross_validate(X, targets, algorithm, algorithm_params=None):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
-        apply_multiple_masked(model.fit, (X[train_mask], y_k_train))
-        y_k_pred = predict(X[test_mask], model)
+
+        # Extra fields
+        kwargs_tr = {f: v[train_mask] for f, v in targets.fields.items()}
+        kwargs_ts = {f: v[train_mask] for f, v in targets.fields.items()}
+
+        # Train on this fold
+        apply_multiple_masked(model.fit, data=(X[train_mask], y_k_train),
+                              kwargs=kwargs_tr)
+        y_k_pred = predict(X[test_mask], model, kwargs=kwargs_ts)
         y_k_test = y[test_mask]
 
         y_pred[fold] = y_k_pred
@@ -124,18 +131,18 @@ def join_dicts(dicts):
     return d
 
 
-def predict(data, model, interval=None):
+def predict(data, model, interval=0.95, **kwargs):
 
     def pred(X):
 
         if hasattr(model, 'predict_proba'):
-            args = [interval] if interval is not None else []
-            Ey, Vy, ql, qu = model.predict_proba(X, *args)
+            Ey, Vy, ql, qu = model.predict_proba(X, interval, **kwargs)
             predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
                                  ql[:, np.newaxis], qu[:, np.newaxis]))
 
         else:
-            predres = np.reshape(model.predict(X), newshape=(len(X), 1))
+            predres = np.reshape(model.predict(X, **kwargs),
+                                 newshape=(len(X), 1))
 
         if hasattr(model, 'entropy_reduction'):
             MI = model.entropy_reduction(X)

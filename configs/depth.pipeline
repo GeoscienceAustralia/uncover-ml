@@ -16,16 +16,20 @@ from os import path
 
 # Location of data
 data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
+# data_dir = path.join(path.expanduser("~"), "data/Murray-small")
 
 # Location of outputs
 output_dir = "."
 
 # Shape file with target variable info
 # target_file = "Targets_V_final_inside.shp"
-target_file = "Targets_shallow_filtered.shp"
+# target_file = "Targets_shallow_filtered.shp"
+target_file = "Targets_V6_reduced_cols.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
+# other_fields = ["censored"]
+# field_parsers = [lambda f: True if f == 'no' else False]
 
 export_targets = True
 
@@ -68,22 +72,31 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {'target_transform': 'log'}
+    # "bayesreg": {'target_transform': 'rank'}
 
     # Approximate Gaussian process, for large scale data
-    "sgdapproxgp": {
-                 'target_transform': 'log',
-                 'kern': 'matern52',
-                 'lenscale': [100.] * 77,
-                 'nbases': 50,
-                 'maxiter': 3000},
+    # "sgdapproxgp": {
+    #              'target_transform': 'rank',
+    #              'kern': 'matern52',
+    #              'nbases': 50,
+    #              'maxiter': 3000},
 
+    "depthregress": {
+                 'kern': 'matern52',
+                 'ard': True,
+                 'lenscale': 1000.,
+                 'nbases': 100,
+                 'maxiter': 10000,
+                 'falloff': 0.1,
+                 'beta1': 0.3,
+                 'beta2': 0.5},
+    
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    "svr": {'target_transform': 'log'},
+    # "svr": {'target_transform': 'log'},
 
     # Random forest regressor
-    "randomforest": {'target_transform': 'log', 'n_estimators': 50},
+    # "randomforest": {'target_transform': 'log', 'n_estimators': 50},
 }
 
 #
@@ -97,7 +110,8 @@ memory_fraction = 1./40
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
-algorithm = 'sgdapproxgp'
+# algorithm = 'sgdapproxgp'
+algorithm = 'depthregress'
 # algorithm = 'randomforest'
 
 # Quantiles

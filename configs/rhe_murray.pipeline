@@ -19,6 +19,8 @@ target_file = "Targets_V_final_inside.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
+other_fields = []
+field_parsers = []
 
 folds = 5
 

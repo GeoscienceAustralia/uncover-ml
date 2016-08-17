@@ -1,5 +1,7 @@
 """Model Objects and ML algorithm serialisation."""
 
+from itertools import chain
+
 import numpy as np
 from scipy.stats import norm
 
@@ -17,6 +19,7 @@ from sklearn.linear_model import ARDRegression
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 import uncoverml.transforms as transforms
+from uncoverml.likelihoods import Switching
 
 
 #
@@ -25,21 +28,26 @@ import uncoverml.transforms as transforms
 
 class BasisMakerMixin():
 
-    def fit(self, X, y, *args):
+    def fit(self, X, y, **kwargs):
 
         self._make_basis(X)
-        return super().fit(X, y, *args)
+        return super().fit(X, y, **kwargs)
 
-    def _store_params(self, kern, nbases, lenscale):
+    def _store_params(self, kern, nbases, lenscale, ard):
 
         self.kern = kern
         self.nbases = nbases
+        self.ard = ard
         self.lenscale = lenscale if np.isscalar(lenscale) \
             else np.asarray(lenscale)
 
     def _make_basis(self, X):
 
-        lenscale_init = Parameter(self.lenscale, Positive())
+        lenscale = self.lenscale
+        if self.ard:
+            lenscale = np.ones(X.shape[1]) * lenscale
+
+        lenscale_init = Parameter(lenscale, Positive())
         gpbasis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
                                       lenscale_init=lenscale_init)
 
@@ -48,9 +56,9 @@ class BasisMakerMixin():
 
 class PredictProbaMixin():
 
-    def predict_proba(self, X, interval=0.95, *args):
+    def predict_proba(self, X, interval=0.95, **kwargs):
 
-        Ey, Vy = self.predict_moments(X, *args)
+        Ey, Vy = self.predict_moments(X, **kwargs)
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
         return Ey, Vy, ql, qu
@@ -58,9 +66,9 @@ class PredictProbaMixin():
 
 class GLMPredictProbaMixin():
 
-    def predict_proba(self, X, interval=0.95, *args):
+    def predict_proba(self, X, interval=0.95, **kwargs):
 
-        Ey, Vy = self.predict_moments(X, *args)
+        Ey, Vy = self.predict_moments(X, **kwargs)
         Vy += self.like_hypers
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
@@ -114,7 +122,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                MutualInfoMixin):
 
     def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
-                 regulariser=1., tol=1e-8, maxiter=1000):
+                 regulariser=1., ard=True, tol=1e-8, maxiter=1000):
 
         super().__init__(basis=None,
                          var=Parameter(var, Positive()),
@@ -123,7 +131,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                          maxiter=maxiter
                          )
 
-        self._store_params(kern, nbases, lenscale)
+        self._store_params(kern, nbases, lenscale, ard)
 
 
 class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
@@ -145,10 +153,8 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
                   GLMPredictProbaMixin):
 
     def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
-                 regulariser=1., maxiter=3000, batch_size=10, alpha=0.01,
-                 beta1=0.9, beta2=0.99, epsilon=1e-8):
-
-        self._store_params(kern, nbases, lenscale)
+                 regulariser=1., ard=True, maxiter=3000, batch_size=10,
+                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8):
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
@@ -157,6 +163,50 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon)
                          )
+
+        self._store_params(kern, nbases, lenscale, ard)
+
+
+# Bespoke regressor for basin-depth problems
+class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel,
+                     GLMPredictProbaMixin, TagsMixin):
+
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1., falloff=1.,
+                 regulariser=1., ard=True, largsfield='censored', maxiter=3000,
+                 batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
+                 epsilon=1e-8):
+
+        self.largsfield = largsfield
+        self._store_params(kern, nbases, lenscale, ard)
+
+        lhood = Switching(lenscale=falloff,
+                          var_init=Parameter(var, Positive()))
+
+        super().__init__(likelihood=lhood,
+                         basis=None,
+                         regulariser=Parameter(regulariser, Positive()),
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon)
+                         )
+
+    def fit(self, X, y, **kwargs):
+
+        largs = self._parse_largs(kwargs[self.largsfield])
+        return super().fit(X, y, likelihood_args=(largs,))
+
+    def predict_proba(self, X, interval=0.95, **kwargs):
+
+        if self.largsfield in kwargs:
+            largs = self._parse_largs(kwargs[self.largsfield])
+        else:
+            largs = np.ones(len(X), dtype=bool)
+
+        return super().predict_proba(X, interval, likelihood_args=(largs,))
+
+    def _parse_largs(self, largs):
+
+        return np.array([v == 'no' for v in largs], dtype=bool)
 
 
 #
@@ -169,12 +219,12 @@ class RandomForestRegressor(RFR):
     decision tree estimator ouputs.
     """
 
-    def predict_proba(self, X, interval=0.95, *args):
+    def predict_proba(self, X, interval=0.95, **kwargs):
         Ey = self.predict(X)
 
         Vy = np.zeros_like(Ey)
         for dt in self.estimators_:
-            Vy += (dt.predict(X, *args) - Ey)**2
+            Vy += (dt.predict(X) - Ey)**2
 
         Vy /= len(self.estimators_)
 
@@ -192,34 +242,38 @@ class RandomForestRegressor(RFR):
 def transform_targets(Learner):
 
     class TransformedLearner(Learner):
+        # NOTE: All of these explicitly ignore **kwargs on purpose. All generic
+        # revrand and scikit learn algorithms don't need them. Custom models
+        # probably shouldn't be using this factory
 
         def __init__(self, target_transform='identity', *args, **kwargs):
 
             super().__init__(*args, **kwargs)
             self.ytform = transforms.transforms[target_transform]()
 
-        def fit(self, X, y, *args, **kwargs):
+        def fit(self, X, y, **kwargs):
 
             self.ytform.fit(y)
             y_t = self.ytform.transform(y)
 
-            return super().fit(X, y_t, *args, **kwargs)
+            return super().fit(X, y_t)
 
-        def predict(self, X, *args):
+        def predict(self, X, **kwargs):
 
-            Ey_t = super().predict(X, *args)
+            Ey_t = super().predict(X)
             Ey = self.ytform.itransform(Ey_t)
 
             return Ey
 
         if hasattr(Learner, 'predict_proba'):
-            def predict_proba(self, X, interval=0.95, *args):
+            def predict_proba(self, X, interval=0.95, **kwargs):
 
                 Ns = X.shape[0]
                 nsamples = 100
 
                 # Expectation and variance in latent space
-                Ey_t, Sy_t, ql, qu = super().predict_proba(X, interval, *args)
+                Ey_t, Sy_t, ql, qu = super().predict_proba(X, interval)
+
                 Sy_t = np.sqrt(Sy_t)  # inplace to save mem
 
                 # Now transform expectation, and sample to get transformed
@@ -289,15 +343,16 @@ class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
 # Helper functions for multiple outputs and missing/masked data
 #
 
-def apply_masked(func, data, args=()):
+def apply_masked(func, data, args=(), kwargs={}):
+    # Data is just a matrix (i.e. X for prediction)
 
     # No masked data
     if np.ma.count_masked(data) == 0:
-        return func(data.data, *args)
+        return func(data.data, *args, **kwargs)
 
     # Prediction with missing inputs
     okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
-    res = func(data.data[okdata], *args)
+    res = func(data.data[okdata], *args, **kwargs)
 
     # For training/fitting that returns nothing
     if not isinstance(res, np.ndarray):
@@ -316,7 +371,8 @@ def apply_masked(func, data, args=()):
     return np.ma.array(mres, mask=mask)
 
 
-def apply_multiple_masked(func, data, args=()):
+def apply_multiple_masked(func, data, args=(), kwargs={}):
+    # Data is a sequence of arrays (i.e. X, y pairs for training)
 
     datastack = []
     dims = []
@@ -335,12 +391,14 @@ def apply_multiple_masked(func, data, args=()):
 
     # Decorate functions to work on stacked data
     dims = np.cumsum(dims[:-1])  # dont split by last dim
+
     unstack = lambda catdata: [d.flatten() if f else d for d, f
                                in zip(np.hsplit(catdata, dims), flat)]
-    unstackfunc = lambda catdata, *nargs: \
-        func(*(unstack(catdata) + list(nargs)))
 
-    return apply_masked(unstackfunc, np.ma.hstack(datastack), args)
+    unstackfunc = lambda catdata, *nargs, **nkwargs: \
+        func(*chain(unstack(catdata), nargs), **nkwargs)
+
+    return apply_masked(unstackfunc, np.ma.hstack(datastack), args, kwargs)
 
 
 #
@@ -356,6 +414,7 @@ modelmaps = {'randomforest': RandomForestTransformed,
              'ardregression': ARDRegressionTransformed,
              'decisiontree': DecisionTreeTransformed,
              'extratree': ExtraTreeTransformed,
+             'depthregress': DepthRegressor,
              }
 
 

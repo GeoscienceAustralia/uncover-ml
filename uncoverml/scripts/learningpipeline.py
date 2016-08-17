@@ -6,11 +6,11 @@ import copy
 import importlib.machinery
 import json
 import logging
-import pickle
 import sys
+import pickle
 from collections import OrderedDict
+from os import path, mkdir
 from glob import glob
-from os import mkdir, path
 
 import numpy as np
 
@@ -30,10 +30,11 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def get_targets(shapefile, fieldname, folds, seed):
+def get_targets(shapefile, targetfield, folds, seed):
     shape_infile = path.abspath(shapefile)
-    lonlat, vals = geoio.load_shapefile(shape_infile, fieldname)
-    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True)
+    lonlat, vals, othervals = geoio.load_shapefile(shape_infile, targetfield)
+    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True,
+                                        othervals=othervals)
     return targets
 
 
@@ -67,9 +68,10 @@ def run_pipeline(config):
     shapefile = path.join(config.data_dir, config.target_file)
     targets = mpiops.run_once(get_targets,
                               shapefile=shapefile,
-                              fieldname=config.target_var,
+                              targetfield=config.target_var,
                               folds=config.folds,
                               seed=config.crossval_seed)
+
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")
