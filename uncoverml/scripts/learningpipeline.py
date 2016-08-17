@@ -30,10 +30,9 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def get_targets(shapefile, targetfield, folds, seed, otherfields, parsers):
+def get_targets(shapefile, targetfield, folds, seed):
     shape_infile = path.abspath(shapefile)
-    lonlat, vals, othervals = geoio.load_shapefile(shape_infile, targetfield,
-                                                   otherfields, parsers)
+    lonlat, vals, othervals = geoio.load_shapefile(shape_infile, targetfield)
     targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True,
                                         othervals=othervals)
     return targets
@@ -70,10 +69,9 @@ def run_pipeline(config):
     targets = mpiops.run_once(get_targets,
                               shapefile=shapefile,
                               targetfield=config.target_var,
-                              otherfields=config.other_fields,
-                              parsers=config.field_parsers,
                               folds=config.folds,
                               seed=config.crossval_seed)
+
     if config.export_targets:
         outfile_targets = path.join(config.output_dir,
                                     config.name + "_targets.hdf5")

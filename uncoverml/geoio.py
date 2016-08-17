@@ -410,17 +410,18 @@ def load_attributes(filename_dict):
     return shape, bbox
 
 
-def load_shapefile(filename, targetfield, otherfields, fieldparsers):
+def load_shapefile(filename, targetfield):
     """
     TODO
     """
 
     sf = shapefile.Reader(filename)
-    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
+    shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
+    fdict = {f: i for i, f in enumerate(shapefields)}
 
     def getfield(field, parser):
 
-        if targetfield not in fdict:
+        if field not in fdict:
             raise ValueError("Requested field, {}, is not in records!"
                              .format(field))
 
@@ -429,9 +430,14 @@ def load_shapefile(filename, targetfield, otherfields, fieldparsers):
 
         return vals
 
+    # Read in target field
     val = getfield(targetfield, parser=float)
-    othervals = {f: getfield(f, p) for f, p in zip(otherfields, fieldparsers)}
 
+    # Read in all other fields
+    othervals = {f: getfield(f, lambda x: x)
+                 for f in shapefields if f != targetfield}
+
+    # Get coordinates
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))

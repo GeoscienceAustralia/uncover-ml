@@ -21,8 +21,6 @@ target_file = "geochem_sites.shp"
 
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
-other_fields = []
-field_parsers = []
 
 export_targets = False
 
@@ -66,7 +64,6 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)

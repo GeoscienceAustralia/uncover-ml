@@ -32,8 +32,6 @@ target_file = "geochem_sites.shp"
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 # target_var = "depth"
-other_fields = []
-field_parsers = []
 
 export_targets = True
 
@@ -84,13 +82,12 @@ algdict = {
     # "approxgp": {
     #              'target_transform': 'standardise',
     #              'kern': 'matern52',
-    #              # 'lenscale': [100.] * 87,
     #              'lenscale': 100.,
     #              'nbases': 50},
     # "sgdapproxgp": {
     #              'target_transform': 'standardise',
     #              'kern': 'matern52',
-    #              'lenscale': [100.] * 87,
+    #              'lenscale': 100.,
     #              'nbases': 50},
 
     # Support vector machine (regressor)
@@ -110,10 +107,10 @@ memory_fraction = 1.0
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-# algorithm = 'bayesreg'
+algorithm = 'bayesreg'
 # algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
-algorithm = 'sgdapproxgp'
+# algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
 
 # Quantiles

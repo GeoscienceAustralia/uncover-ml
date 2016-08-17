@@ -3,12 +3,10 @@
 from __future__ import division
 
 import matplotlib as pl
-
 import numpy as np
 
-from revrand.metrics import lins_ccc, mll, msll, smse
-
 from sklearn.metrics import explained_variance_score, r2_score
+from revrand.metrics import lins_ccc, mll, msll, smse
 
 from uncoverml.models import apply_multiple_masked
 

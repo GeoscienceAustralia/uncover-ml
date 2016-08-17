@@ -50,6 +50,8 @@ class CrossValTargets:
                  sort=False, othervals=None):
         self.nfolds = folds
         N = len(lonlat)
+        self.fields = {}
+
         # we may be given folds already
         if type(folds) == int:
             _, cvassigns = validation.split_cfold(N, folds, seed)
@@ -70,7 +72,6 @@ class CrossValTargets:
                 self.fields = {k: v[ordind] for k, v in othervals.items()}
                 self._fields_unsorted = othervals
         else:
-            self.fields = vals
             self.observations = vals
             self.positions = lonlat
             self.folds = cvassigns
