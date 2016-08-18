@@ -24,12 +24,11 @@ output_dir = "."
 # Shape file with target variable info
 # target_file = "Targets_V_final_inside.shp"
 # target_file = "Targets_shallow_filtered.shp"
-target_file = "Targets_V6_reduced_cols.shp"
+# target_file = "Targets_V6_reduced_cols.shp"
+target_file = "targets_zero_filtered_small.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
-# other_fields = ["censored"]
-# field_parsers = [lambda f: True if f == 'no' else False]
 
 export_targets = True
 
@@ -84,12 +83,13 @@ algdict = {
     "depthregress": {
                  'kern': 'matern52',
                  'ard': True,
-                 'lenscale': 1000.,
+                 'lenscale': 1.,
                  'nbases': 100,
-                 'maxiter': 10000,
+                 'maxiter': 24000,
                  'falloff': 0.1,
                  'beta1': 0.3,
-                 'beta2': 0.5},
+                 'beta2': 0.5
+                 },
     
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},

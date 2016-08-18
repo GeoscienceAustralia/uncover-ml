@@ -138,14 +138,15 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
 
     def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
-                 epsilon=1e-8):
+                 epsilon=1e-8, random_state=None):
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=LinearBasis(onescol),
                          regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
                          batch_size=batch_size,
-                         updater=Adam(alpha, beta1, beta2, epsilon)
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
                          )
 
 
@@ -154,27 +155,29 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
 
     def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
-                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8):
+                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
+                 random_state=None):
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
                          regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
                          batch_size=batch_size,
-                         updater=Adam(alpha, beta1, beta2, epsilon)
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
                          )
 
         self._store_params(kern, nbases, lenscale, ard)
 
 
 # Bespoke regressor for basin-depth problems
-class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel,
-                     GLMPredictProbaMixin, TagsMixin):
+class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
+                     GLMPredictProbaMixin):
 
     def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1., falloff=1.,
                  regulariser=1., ard=True, largsfield='censored', maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
-                 epsilon=1e-8):
+                 epsilon=1e-8, random_state=None):
 
         self.largsfield = largsfield
         self._store_params(kern, nbases, lenscale, ard)
@@ -187,7 +190,8 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel,
                          regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
                          batch_size=batch_size,
-                         updater=Adam(alpha, beta1, beta2, epsilon)
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
                          )
 
     def fit(self, X, y, **kwargs):
