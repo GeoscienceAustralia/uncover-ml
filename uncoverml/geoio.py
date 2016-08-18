@@ -414,28 +414,16 @@ def load_shapefile(filename, targetfield):
     """
     TODO
     """
-
     sf = shapefile.Reader(filename)
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
-    fdict = {f: i for i, f in enumerate(shapefields)}
-
-    def getfield(field, parser):
-
-        if field not in fdict:
-            raise ValueError("Requested field, {}, is not in records!"
-                             .format(field))
-
-        vind = fdict[field]
-        vals = np.array([parser(r[vind]) for r in sf.records()])
-
-        return vals
-
-    # Read in target field
-    val = getfield(targetfield, parser=float)
-
-    # Read in all other fields
-    othervals = {f: getfield(f, lambda x: x)
-                 for f in shapefields if f != targetfield}
+    dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
+    dtypes = ['float' if k[0] == 'N' else '<U{}'.format(k[1])
+              for k in dtype_flags]
+    records = np.array(sf.records()).T
+    record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
+        shapefields, records, dtypes)}
+    val = record_dict.pop(targetfield)
+    othervals = record_dict
 
     # Get coordinates
     coords = []
