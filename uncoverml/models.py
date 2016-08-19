@@ -65,14 +65,15 @@ class PredictProbaMixin():
         return Ey, Vy, ql, qu
 
 
-class GLMPredictProbaMixin(PredictProbaMixin):
+class GLMPredictProbaMixin():
 
     def predict_proba(self, X, interval=0.95, *args, **kwargs):
 
-        Ey, Vy, ql, qu = super().predict_proba(X, interval=interval, *args,
-                                               **kwargs)
+        Ey, Vy = self.predict_moments(X, *args, **kwargs)
+        Vy += self.like_hypers
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
-        return Ey, Vy + self.like_hypers, ql, qu
+        return Ey, Vy, ql, qu
 
 
 class MutualInfoMixin():
