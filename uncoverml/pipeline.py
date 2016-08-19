@@ -6,7 +6,7 @@ from uncoverml import mpiops, patch, stats
 import uncoverml.defaults as df
 from uncoverml.image import Image
 from uncoverml.models import apply_masked, apply_multiple_masked, modelmaps
-from uncoverml.validation import calculate_validation_scores
+from uncoverml.validation import calculate_validation_scores, split_cfold
 
 
 log = logging.getLogger(__name__)
@@ -30,18 +30,35 @@ def extract_subchunks(image_source, subchunk_index, n_subchunks, settings):
     return x
 
 
-def extract_features(image_source, targets, settings):
+def extract_features(image_source, targets, settings, n_subchunks):
+    """
+    each node gets its own share of the targets, so all nodes
+    will always have targets
+    """
+    equiv_chunks = n_subchunks * mpiops.chunks
+    image_chunks = [Image(image_source, k, equiv_chunks, settings.patchsize)
+                    for k in range(equiv_chunks)]
+    # figure out which chunks I need to consider
+    y_min = targets.positions[0, 1]
+    y_max = targets.positions[-1, 1]
 
-    image = Image(image_source, mpiops.chunk_index,
-                  mpiops.chunks, settings.patchsize)
+    def has_targets(im):
+        encompass = im.ymin <= y_min and im.ymax >= y_max
+        edge_low = im.ymax >= y_min and im.ymax <= y_max
+        edge_high = im.ymin >= y_min and im.ymin <= y_max
+        inside = encompass or edge_low or edge_high
+        return inside
 
-    x = patch.load(image, settings.patchsize, targets)
+    my_image_chunks = [k for k in image_chunks if has_targets(k)]
+    my_x = [patch._patches_at_target(im, settings.patchsize, targets)
+            for im in my_image_chunks]
+    x = np.ma.concatenate(my_x, axis=0)
+    assert x.shape[0] == targets.observations.shape[0]
 
     if settings.onehot and not settings.x_sets:
         settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
 
-    if x is not None:
-        x = extract_transform(x, settings.x_sets)
+    x = extract_transform(x, settings.x_sets)
 
     return x, settings
 
@@ -70,13 +87,14 @@ def learn_model(X, targets, algorithm, algorithm_params=None):
     return model
 
 
-def cross_validate(X, targets, algorithm, algorithm_params=None):
+def cross_validate(X, targets, algorithm, nfolds=10, algorithm_params=None,
+                   seed=None):
     model = modelmaps[algorithm](**algorithm_params)
     y = targets.observations
-    cv_indices = targets.folds
+    _, cv_indices = split_cfold(y.shape[0], nfolds, seed)
 
     # Split folds over workers
-    fold_list = np.arange(targets.nfolds)
+    fold_list = np.arange(nfolds)
     fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
 
     y_pred = {}
@@ -112,8 +130,8 @@ def cross_validate(X, targets, algorithm, algorithm_params=None):
     scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
     result = None
     if mpiops.chunk_index == 0:
-        y_true = np.concatenate([y_true[i] for i in range(targets.nfolds)])
-        y_pred = np.concatenate([y_pred[i] for i in range(targets.nfolds)])
+        y_true = np.concatenate([y_true[i] for i in range(nfolds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(nfolds)])
         valid_metrics = scores[0].keys()
         scores = {m: np.mean([d[m] for d in scores.values()])
                   for m in valid_metrics}

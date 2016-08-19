@@ -138,16 +138,6 @@ def write_targets(targets, filename):
     points_to_hdf(filename, fielddict)
 
 
-def load_targets(filename):
-    fields = ['Targets_sorted', 'Positions_sorted', 'FoldIndices_sorted']
-    fielddict = points_from_hdf(filename, fields)
-    positions = fielddict['Positions_sorted']
-    observations = fielddict['Targets_sorted']
-    folds = fielddict['FoldIndices_sorted']
-    result = datatypes.CrossValTargets(positions, observations, folds)
-    return result
-
-
 class ImageSource(metaclass=ABCMeta):
 
     @abstractmethod
@@ -432,6 +422,31 @@ def load_shapefile(filename, targetfield):
     label_coords = np.array(coords)
 
     return label_coords, val, othervals
+
+
+def load_targets(shapefile, targetfield):
+    """
+    Loads the shapefile onto node 0 then distributes it across all
+    available nodes
+    """
+    if mpiops.chunk_index == 0:
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield)
+        lonlat = np.array_split(lonlat, mpiops.chunks)
+        vals = np.array_split(vals, mpiops.chunks)
+        split_othervals = {k: np.array_split(v, mpiops.chunks)
+                           for k, v in othervals.items()}
+        othervals = [{k: v[i] for k, v in split_othervals.items()}
+                     for i in range(mpiops.chunks)]
+    else:
+        lonlat, vals, othervals = None, None, None
+
+    lonlat = mpiops.comm.scatter(lonlat, root=0)
+    vals = mpiops.comm.scatter(vals, root=0)
+    othervals = mpiops.comm.scatter(othervals, root=0)
+    log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
+                                                           lonlat.shape[0]))
+    targets = datatypes.Targets(lonlat, vals, othervals=othervals)
+    return targets
 
 
 class ImageWriter:

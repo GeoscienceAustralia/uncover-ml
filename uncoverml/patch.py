@@ -125,12 +125,12 @@ def _all_patches(image, patchsize):
     return result
 
 
-def load(image, patchsize, targets=None):
-    if targets is None:
-        result = _all_patches(image, patchsize)
-    else:
-        result = _patches_at_target(image, patchsize, targets)
-    return result
+# def load(image, patchsize, targets=None):
+#     if targets is None:
+#         result = _all_patches(image, patchsize)
+#     else:
+#         result = _patches_at_target(image, patchsize, targets)
+#     return result
 
 
 def _patches_at_target(image, patchsize, targets):
@@ -148,6 +148,10 @@ def _patches_at_target(image, patchsize, targets):
         patch_array = np.ma.masked_array(data=patches, mask=patch_mask)
 
     else:
-        patch_array = None
+        patchwidth = 2 * patchsize + 1
+        shp = (0, patchwidth, patchwidth, data.shape[2])
+        patch_data = np.zeros(shp, dtype=data_dtype)
+        patch_mask = np.zeros(shp, dtype=bool)
+        patch_array = np.ma.masked_array(data=patch_data, mask=patch_mask)
 
     return patch_array

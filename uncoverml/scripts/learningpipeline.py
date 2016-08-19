@@ -30,16 +30,9 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def get_targets(shapefile, targetfield, folds, seed):
-    shape_infile = path.abspath(shapefile)
-    lonlat, vals, othervals = geoio.load_shapefile(shape_infile, targetfield)
-    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True,
-                                        othervals=othervals)
-    return targets
-
-
 def extract(targets, config):
     # Extract feats for training
+    n_subchunks = max(1, round(1.0 / config.memory_fraction))
     tifs = glob(path.join(config.data_dir, "*.tif"))
     if len(tifs) == 0:
         log.fatal("No geotiffs found in {}!".format(config.data_dir))
@@ -55,30 +48,36 @@ def extract(targets, config):
                                       patchsize=config.patchsize)
         image_source = geoio.RasterioImageSource(tif)
         # x may be none, but everyone gets the same settings object
-        x, s = pipeline.extract_features(image_source, targets, s)
+        x, s = pipeline.extract_features(image_source, targets, s, n_subchunks)
         extracted_chunks[name] = x
         settings[name] = s
     result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
     return result, settings
 
 
+def gather_targets(targets):
+    y = np.ma.concatenate(mpiops.comm.allgather(targets.observations), axis=0)
+    p = np.ma.concatenate(mpiops.comm.allgather(targets.positions), axis=0)
+    d = {}
+    keys = sorted(list(targets.fields.keys()))
+    for k in keys:
+        d[k] = np.ma.concatenate(mpiops.comm.allgather(targets.fields[k]),
+                                 axis=0)
+    result = datatypes.Targets(p, y, othervals=d)
+    return result
+
+
 def run_pipeline(config):
 
     # Make the targets
     shapefile = path.join(config.data_dir, config.target_file)
-    targets = mpiops.run_once(get_targets,
-                              shapefile=shapefile,
-                              targetfield=config.target_var,
-                              folds=config.folds,
-                              seed=config.crossval_seed)
-
-    if config.export_targets:
-        outfile_targets = path.join(config.output_dir,
-                                    config.name + "_targets.hdf5")
-        mpiops.run_once(geoio.write_targets, targets, outfile_targets)
+    targets = geoio.load_targets(shapefile=shapefile,
+                                 targetfield=config.target_var)
 
     # keys for these two are the filenames
     extracted_chunks, image_settings = extract(targets, config)
+
+    targets = gather_targets(targets)
 
     compose_settings = datatypes.ComposeSettings(
         impute=config.impute,
@@ -107,8 +106,9 @@ def run_pipeline(config):
         args = config.algdict[algorithm]
 
         if config.cross_validate:
-            crossval_results = pipeline.cross_validate(X, targets, algorithm,
-                                                       args)
+            crossval_results = pipeline.cross_validate(X, targets,
+                config.algorithm, nfolds=config.folds, algorithm_params=args,
+                seed=config.crossval_seed)
             mpiops.run_once(export_scores, crossval_results, algorithm, config)
 
         model = pipeline.learn_model(X, targets, algorithm, args)
