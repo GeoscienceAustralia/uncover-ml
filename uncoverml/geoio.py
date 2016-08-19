@@ -414,28 +414,16 @@ def load_shapefile(filename, targetfield):
     """
     TODO
     """
-
     sf = shapefile.Reader(filename)
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
-    fdict = {f: i for i, f in enumerate(shapefields)}
-
-    def getfield(field, parser):
-
-        if field not in fdict:
-            raise ValueError("Requested field, {}, is not in records!"
-                             .format(field))
-
-        vind = fdict[field]
-        vals = np.array([parser(r[vind]) for r in sf.records()])
-
-        return vals
-
-    # Read in target field
-    val = getfield(targetfield, parser=float)
-
-    # Read in all other fields
-    othervals = {f: getfield(f, lambda x: x)
-                 for f in shapefields if f != targetfield}
+    dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
+    dtypes = ['float' if k[0] == 'N' else '<U{}'.format(k[1])
+              for k in dtype_flags]
+    records = np.array(sf.records()).T
+    record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
+        shapefields, records, dtypes)}
+    val = record_dict.pop(targetfield)
+    othervals = record_dict
 
     # Get coordinates
     coords = []
@@ -457,26 +445,30 @@ class ImageWriter:
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
-        self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
 
-        if band_tags is not None:
-            if len(band_tags) != self.shape[2]:
-                raise ValueError("Number of band tags must equal number of "
-                                 "bands!")
+        # file tags don't have spaces
+        if band_tags:
+            file_tags = ["_".join(k.lower().split()) for k in band_tags]
+        else:
+            file_tags = [str(k) for k in range(shape[2])]
+            band_tags = file_tags
 
         if mpiops.chunk_index == 0:
-            self.f = rasterio.open(self.output_filename, 'w', driver='GTiff',
-                                   width=self.shape[0], height=self.shape[1],
-                                   dtype=np.float64, count=self.shape[2],
-                                   transform=self.A)
-
-            if band_tags is not None:
-                for i, tag in enumerate(band_tags):
-                    self.f.update_tags(i + 1, image_type=tag)
+            # create a file for each band
+            self.files = []
+            for band in range(self.shape[2]):
+                output_filename = os.path.join(outputdir, name + "_" +
+                                               file_tags[band] + ".tif")
+                f = rasterio.open(output_filename, 'w', driver='GTiff',
+                                  width=self.shape[0], height=self.shape[1],
+                                  dtype=np.float64, count=1,
+                                  transform=self.A)
+                f.update_tags(1, image_type=band_tags[band])
+                self.files.append(f)
 
     def write(self, x, subchunk_index):
         rows = self.shape[0]
@@ -497,8 +489,9 @@ class ImageWriter:
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                 yend = ystart + data.shape[1]  # this is Y
                 window = ((ystart, yend), (0, self.shape[0]))
-                index_list = list(range(1, bands + 1))
-                self.f.write(data, window=window, indexes=index_list)
+                # write each band separately
+                for i, f in enumerate(self.files):
+                    f.write(data[i:i+1], window=window)
         mpiops.comm.barrier()
 
 
