@@ -106,6 +106,22 @@ class TagsMixin():
 #
 
 class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
+    """
+    Bayesian Standard linear model.
+
+    Parameters
+    ----------
+    onescol: bool, optional
+        If true, prepend a column of ones onto X (i.e. a bias term)
+    var: Parameter, optional
+        observation variance initial value.
+    regulariser: Parameter, optional
+        weight regulariser (variance) initial value.
+    tol: float, optional
+        optimiser function tolerance convergence criterion.
+    maxiter: int, optional
+        maximum number of iterations for the optimiser.
+    """
 
     def __init__(self, onescol=True, var=1., regulariser=1., tol=1e-8,
                  maxiter=1000):
@@ -121,6 +137,35 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
 
 class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                MutualInfoMixin):
+    """
+    An approximate Gaussian Process for medium scale data.
+
+    Parameters
+    ----------
+    kern: str, optional
+        the (approximate) kernel to use with this Gaussian process. Have a look
+        at :code:`basismap` dictionary for appropriate kernel approximations.
+    nbases: int
+        how many unique random bases to create (twice this number will be
+        actually created, i.e. real and imaginary components for each base).
+        The higher this number, the more accurate the kernel approximation, but
+        the longer the runtime of the algorithm. Usually if X is high
+        dimensional, this will have to also be high dimensional.
+    lenscale: float, optional
+        the initial value for the kernel length scale to be learned.
+    ard: bool, optional
+        Whether to use a different length scale for each dimension of X or a
+        single length scale. This will result in a longer run time, but
+        potentially better results.
+    var: Parameter, optional
+        observation variance initial value.
+    regulariser: Parameter, optional
+        weight regulariser (variance) initial value.
+    tol: float, optional
+        optimiser function tolerance convergence criterion.
+    maxiter: int, optional
+        maximum number of iterations for the optimiser.
+    """
 
     def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, tol=1e-8, maxiter=1000):
