@@ -64,7 +64,8 @@ def learn_model(X, targets, algorithm, algorithm_params=None):
     y = targets.observations
 
     if mpiops.chunk_index == 0:
-        apply_multiple_masked(model.fit, (X, y), kwargs=targets.fields)
+        apply_multiple_masked(model.fit, (X, y),
+                              kwargs={'fields': targets.fields})
     model = mpiops.comm.bcast(model, root=0)
     return model
 
@@ -91,13 +92,13 @@ def cross_validate(X, targets, algorithm, algorithm_params=None):
         y_k_train = y[train_mask]
 
         # Extra fields
-        kwargs_tr = {f: v[train_mask] for f, v in targets.fields.items()}
-        kwargs_ts = {f: v[train_mask] for f, v in targets.fields.items()}
+        fields_train = {f: v[train_mask] for f, v in targets.fields.items()}
+        fields_pred = {f: v[test_mask] for f, v in targets.fields.items()}
 
         # Train on this fold
         apply_multiple_masked(model.fit, data=(X[train_mask], y_k_train),
-                              kwargs=kwargs_tr)
-        y_k_pred = predict(X[test_mask], model, kwargs=kwargs_ts)
+                              kwargs={'fields': fields_train})
+        y_k_pred = predict(X[test_mask], model, fields=fields_pred)
         y_k_test = y[test_mask]
 
         y_pred[fold] = y_k_pred

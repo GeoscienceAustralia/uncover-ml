@@ -4,7 +4,7 @@ from sklearn.metrics import r2_score
 from uncoverml.models import modelmaps
 
 
-@pytest.fixture(params=list(modelmaps.keys()))
+@pytest.fixture(params=[k for k in modelmaps.keys() if k != 'depthregress'])
 def get_models(request):
     return modelmaps[request.param]
 

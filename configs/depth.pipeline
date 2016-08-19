@@ -15,8 +15,8 @@ from os import path
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
-# data_dir = path.join(path.expanduser("~"), "data/Murray-small")
+# data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
+data_dir = path.join(path.expanduser("~"), "data/Murray-small")
 
 # Location of outputs
 output_dir = "."
@@ -24,8 +24,8 @@ output_dir = "."
 # Shape file with target variable info
 # target_file = "Targets_V_final_inside.shp"
 # target_file = "Targets_shallow_filtered.shp"
-# target_file = "Targets_V6_reduced_cols.shp"
-target_file = "targets_zero_filtered_small.shp"
+target_file = "Targets_V6_reduced_cols.shp"
+# target_file = "targets_zero_filtered_small.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
@@ -85,7 +85,7 @@ algdict = {
                  'ard': True,
                  'lenscale': 1.,
                  'nbases': 100,
-                 'maxiter': 24000,
+                 'maxiter': 18000,
                  'falloff': 0.1,
                  'beta1': 0.3,
                  'beta2': 0.5

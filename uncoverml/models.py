@@ -28,10 +28,10 @@ from uncoverml.likelihoods import Switching
 
 class BasisMakerMixin():
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y, *args, **kwargs):
 
         self._make_basis(X)
-        return super().fit(X, y, **kwargs)
+        return super().fit(X, y, *args, **kwargs)  # args for GLMs
 
     def _store_params(self, kern, nbases, lenscale, ard):
 
@@ -43,9 +43,10 @@ class BasisMakerMixin():
 
     def _make_basis(self, X):
 
+        D = X.shape[1]
         lenscale = self.lenscale
-        if self.ard:
-            lenscale = np.ones(X.shape[1]) * lenscale
+        if self.ard and D > 1:
+            lenscale = np.ones(D) * lenscale
 
         lenscale_init = Parameter(lenscale, Positive())
         gpbasis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
@@ -56,23 +57,22 @@ class BasisMakerMixin():
 
 class PredictProbaMixin():
 
-    def predict_proba(self, X, interval=0.95, **kwargs):
+    def predict_proba(self, X, interval=0.95, *args, **kwargs):
 
-        Ey, Vy = self.predict_moments(X, **kwargs)
+        Ey, Vy = self.predict_moments(X, *args, **kwargs)
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
         return Ey, Vy, ql, qu
 
 
-class GLMPredictProbaMixin():
+class GLMPredictProbaMixin(PredictProbaMixin):
 
-    def predict_proba(self, X, interval=0.95, **kwargs):
+    def predict_proba(self, X, interval=0.95, *args, **kwargs):
 
-        Ey, Vy = self.predict_moments(X, **kwargs)
-        Vy += self.like_hypers
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+        Ey, Vy, ql, qu = super().predict_proba(X, interval=interval, *args,
+                                               **kwargs)
 
-        return Ey, Vy, ql, qu
+        return Ey, Vy + self.like_hypers, ql, qu
 
 
 class MutualInfoMixin():
@@ -179,9 +179,6 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
                  epsilon=1e-8, random_state=None):
 
-        self.largsfield = largsfield
-        self._store_params(kern, nbases, lenscale, ard)
-
         lhood = Switching(lenscale=falloff,
                           var_init=Parameter(var, Positive()))
 
@@ -194,15 +191,18 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
                          random_state=random_state
                          )
 
-    def fit(self, X, y, **kwargs):
+        self.largsfield = largsfield
+        self._store_params(kern, nbases, lenscale, ard)
 
-        largs = self._parse_largs(kwargs[self.largsfield])
+    def fit(self, X, y, fields={}):
+
+        largs = self._parse_largs(fields[self.largsfield])
         return super().fit(X, y, likelihood_args=(largs,))
 
-    def predict_proba(self, X, interval=0.95, **kwargs):
+    def predict_proba(self, X, interval=0.95, fields={}):
 
-        if self.largsfield in kwargs:
-            largs = self._parse_largs(kwargs[self.largsfield])
+        if self.largsfield in fields:
+            largs = self._parse_largs(fields[self.largsfield])
         else:
             largs = np.ones(len(X), dtype=bool)
 
@@ -223,7 +223,7 @@ class RandomForestRegressor(RFR):
     decision tree estimator ouputs.
     """
 
-    def predict_proba(self, X, interval=0.95, **kwargs):
+    def predict_proba(self, X, interval=0.95):
         Ey = self.predict(X)
 
         Vy = np.zeros_like(Ey)
@@ -255,14 +255,14 @@ def transform_targets(Learner):
             super().__init__(*args, **kwargs)
             self.ytform = transforms.transforms[target_transform]()
 
-        def fit(self, X, y, **kwargs):
+        def fit(self, X, y, *args, **kwargs):
 
             self.ytform.fit(y)
             y_t = self.ytform.transform(y)
 
             return super().fit(X, y_t)
 
-        def predict(self, X, **kwargs):
+        def predict(self, X, *args, **kwargs):
 
             Ey_t = super().predict(X)
             Ey = self.ytform.itransform(Ey_t)
@@ -270,7 +270,7 @@ def transform_targets(Learner):
             return Ey
 
         if hasattr(Learner, 'predict_proba'):
-            def predict_proba(self, X, interval=0.95, **kwargs):
+            def predict_proba(self, X, interval=0.95, *args, **kwargs):
 
                 Ns = X.shape[0]
                 nsamples = 100
