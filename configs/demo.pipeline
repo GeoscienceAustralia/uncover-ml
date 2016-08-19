@@ -71,32 +71,31 @@ rank_features = False
 # Algorithm settings
 #
 
-# Iterate through this dictionary of algorithm name and arguments:
-algdict = {
 
-    # Bayesian linear regression
-    "bayesreg": {'target_transform': 'standardise'},
-    # "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
+# Bayesian linear regression
+# "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
 
-    # Approximate Gaussian process, for large scale data
-    # "approxgp": {
-    #              'target_transform': 'standardise',
-    #              'kern': 'matern52',
-    #              'lenscale': 100.,
-    #              'nbases': 50},
-    # "sgdapproxgp": {
-    #              'target_transform': 'standardise',
-    #              'kern': 'matern52',
-    #              'lenscale': 100.,
-    #              'nbases': 50},
+# Approximate Gaussian process, for large scale data
+# "approxgp": {
+#              'target_transform': 'standardise',
+#              'kern': 'matern52',
+#              'lenscale': 100.,
+#              'nbases': 50},
+# "sgdapproxgp": {
+#              'target_transform': 'standardise',
+#              'kern': 'matern52',
+#              'lenscale': 100.,
+#              'nbases': 50},
 
-    # Support vector machine (regressor)
-    # "svr": {'target_transform': 'standardise'},
+# Support vector machine (regressor)
+# "svr": {'target_transform': 'standardise'},
 
-    # Random forest regressor
-    # "randomforest": {'n_estimators': 100},
+# Random forest regressor
+# "randomforest": {'n_estimators': 100},
 
-}
+
+algorithm = 'bayesreg'
+algorithm_options = {'target_transform': 'standardise'}
 
 #
 # Prediction settings
@@ -107,7 +106,6 @@ memory_fraction = 1.0
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-algorithm = 'bayesreg'
 # algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'sgdapproxgp'

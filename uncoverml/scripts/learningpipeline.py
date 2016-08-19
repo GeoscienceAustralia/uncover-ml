@@ -89,31 +89,29 @@ def run_pipeline(config):
         eigvals=None,
         eigvecs=None)
 
-    for algorithm in sorted(config.algdict.keys()):
-        args = config.algdict[algorithm]
-        if config.rank_features:
-            measures, features, scores = rank_features(extracted_chunks,
-                                                       targets, algorithm,
-                                                       compose_settings,
-                                                       config)
-            mpiops.run_once(export_feature_ranks, measures,
-                            features, scores, algorithm, config)
+    algorithm = config.algorithm
+    args = config.algorithm_options
+
+    if config.rank_features:
+        measures, features, scores = rank_features(extracted_chunks,
+                                                   targets, algorithm,
+                                                   compose_settings,
+                                                   config)
+        mpiops.run_once(export_feature_ranks, measures,
+                        features, scores, algorithm, config)
 
     # all nodes need to agree on the order of iteration
     X = gather_data(extracted_chunks, compose_settings)
 
-    for algorithm in sorted(config.algdict.keys()):
-        args = config.algdict[algorithm]
+    if config.cross_validate:
+        crossval_results = pipeline.cross_validate(X, targets,
+            config.algorithm, nfolds=config.folds, algorithm_params=args,
+            seed=config.crossval_seed)
+        mpiops.run_once(export_scores, crossval_results, algorithm, config)
 
-        if config.cross_validate:
-            crossval_results = pipeline.cross_validate(X, targets,
-                config.algorithm, nfolds=config.folds, algorithm_params=args,
-                seed=config.crossval_seed)
-            mpiops.run_once(export_scores, crossval_results, algorithm, config)
-
-        model = pipeline.learn_model(X, targets, algorithm, args)
-        mpiops.run_once(export_model, model, image_settings,
-                        compose_settings, algorithm, config)
+    model = pipeline.learn_model(X, targets, algorithm, args)
+    mpiops.run_once(export_model, model, image_settings,
+                    compose_settings, algorithm, config)
 
 
 def rank_features(extracted_chunks, targets, algorithm, compose_settings,
