@@ -5,18 +5,18 @@ Learn the Parameters of a machine learning model
 """
 
 import logging
-import sys
 import os.path
 import pickle
+import sys
 import json
+
+import numpy as np
 import click as cl
 import click_log as cl_log
-import numpy as np
-from mpi4py import MPI
 
 from uncoverml import geoio
-# from uncoverml.validation import input_cvindex, input_targets
-from uncoverml.models import modelmaps, apply_multiple_masked
+from uncoverml import mpiops, pipeline
+from uncoverml.models import modelmaps
 
 
 log = logging.getLogger(__name__)
@@ -25,26 +25,22 @@ log = logging.getLogger(__name__)
 @cl.command()
 @cl_log.simple_verbosity_option()
 @cl_log.init(__name__)
-@cl.option('--cvindex', type=int, default=None,
-           help="Optional cross validation index to hold out.")
+@cl.option('--crossvalidate', default=False,
+           help="Trains K cross validation models")
 @cl.option('--outputdir', type=cl.Path(exists=True), default=os.getcwd())
 @cl.option('--algopts', type=str, default=None, help="JSON string of optional "
            "parameters to pass to the learning algorithm.")
 @cl.option('--algorithm', type=cl.Choice(list(modelmaps.keys())),
            default='bayesreg', help="algorithm to learn.")
 @cl.argument('files', type=cl.Path(exists=True), nargs=-1)
-@cl.argument('targets', type=cl.Path(exists=True))
-def main(targets, files, algorithm, algopts, outputdir, cvindex):
+@cl.argument('targetsfile', type=cl.Path(exists=True))
+def main(targetsfile, files, algorithm, algopts, outputdir, crossvalidate):
     """
     Learn the Parameters of a machine learning model.
     """
 
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    chunk_index = comm.Get_rank()
-    # This runs on the root node only
-    if chunk_index != 0:
-        return
+    score_outfile = os.path.join(outputdir, "{}.json".format(algorithm))
+    model_outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
 
     # build full filenames
     full_filenames = [os.path.abspath(f) for f in files]
@@ -58,7 +54,6 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
 
     # build the images
     filename_dict = geoio.files_by_chunk(full_filenames)
-    nchunks = len(filename_dict)
 
     # Parse algorithm
     if algorithm not in modelmaps:
@@ -72,28 +67,22 @@ def main(targets, files, algorithm, algopts, outputdir, cvindex):
         args = {}
 
     # Load targets file
-    ydict = geoio.points_from_hdf(targets, ['targets_sorted',
-                                            'FoldIndices_sorted'])
-    y = ydict['targets_sorted']
+    targets = geoio.load_targets(targetsfile)
 
     # Read ALL the features in here, and learn on a single machine
-    data_vectors = [geoio.load_and_cat(filename_dict[i])
-                    for i in range(nchunks)]
-    # Remove the missing data
-    data_vectors = [x for x in data_vectors if x is not None]
-    X = np.ma.concatenate(data_vectors, axis=0)
+    X_node = geoio.load_and_cat(filename_dict[mpiops.chunk_index])
+    X_list = mpiops.comm.allgather(X_node)
+    X = np.ma.vstack(X_list)
 
-    # Optionally subset the data for cross validation
-    if cvindex is not None:
-        cv_ind = ydict['FoldIndices_sorted']
-        y = y[cv_ind != cvindex]
-        X = X[cv_ind != cvindex]
+    model, scores, Ys, EYs = pipeline.learn_model(X,
+                                                  targets,
+                                                  algorithm,
+                                                  crossvalidate,
+                                                  args)
 
-    # Train the model
-    mod = modelmaps[algorithm](**args)
-    apply_multiple_masked(mod.fit, (X, y))
+    if mpiops.chunk_index == 0:
+        geoio.export_scores(scores, Ys, EYs, score_outfile)
 
-    # Pickle the model
-    outfile = os.path.join(outputdir, "{}.pk".format(algorithm))
-    with open(outfile, 'wb') as f:
-        pickle.dump(mod, f)
+        # Pickle and store the models
+        with open(model_outfile, 'wb') as f:
+            pickle.dump(model, f)

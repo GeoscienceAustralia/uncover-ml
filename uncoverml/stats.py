@@ -2,41 +2,34 @@
 import numpy as np
 
 
-def count(x):
-    """
-    note that this is a vector per dimension because x is masked
-    """
-    return x.count(axis=0)
+# def count(x):
+#     """
+#     note that this is a vector per dimension because x is masked
+#     """
+#     return np.ma.count(x, axis=0)
 
 
-def full_count(x):
-    """
-    total number of points including missing
-    """
-    return x.shape[0]
+# def full_count(x):
+#     """
+#     total number of points including missing
+#     """
+#     return x.shape[0]
 
 
-def sum(x):
-    result = np.ma.sum(x, axis=0)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute sum")
-    return result
+# def sum(x):
+#     s = np.ma.sum(x, axis=0)
+#     if np.ma.count_masked(s) != 0:
+#         raise ValueError("Too many missing values to compute sum")
+#     result = s.data
+#     return result
 
 
-def var(x, mean):
-    delta = x - mean
-    result = np.ma.sum(delta * delta, axis=0)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute variance")
-    return result.data
-
-
-def outer(x, mean):
-    delta = x - mean
-    result = np.ma.dot(delta.T, delta)
-    if np.ma.count_masked(result) != 0:
-        raise ValueError("Too many missing values to compute outer product")
-    return result.data
+# def outer(x, mean):
+#     delta = x - mean
+#     result = np.ma.dot(delta.T, delta)
+#     if np.ma.count_masked(result) != 0:
+#         raise ValueError("Too many missing values to compute outer product")
+#     return result.data
 
 
 def sets(x):
@@ -47,28 +40,24 @@ def sets(x):
     return sets
 
 
-def centre(x, mean):
-    x -= mean
+# def centre(x, mean):
+#     x -= mean
 
 
-def standardise(x, x_sd, mean):
-    centre(x, mean)
-    x /= x_sd
+# def standardise(x, x_sd, mean):
+#     centre(x, mean)
+#     x /= x_sd
 
 
 def impute_with_mean(x, mean):
-    
-    for i, r in enumerate(x):
-        x.data[i][x.mask[i]] = mean[x.mask[i]]
 
+    # No missing data
+    if np.ma.count_masked(x) == 0:
+        return
+
+    for i, m in enumerate(mean):
+        x.data[:, i][x.mask[:, i]] = m
     x.mask *= False
-
-    # xi = np.ma.masked_array(data=np.copy(x.data), mask=False)
-    # tilemean = np.tile(mean, reps=(xi.shape[0], 1))
-    # xi.data[x.mask] = tilemean[x.mask]
-    # xi.mask = np.zeros_like(xi, dtype=bool)
-    # xi.data[x.mask] = np.broadcast_to(mean, x.shape)[x.mask]
-    # return x
 
 
 def one_hot(x, x_set):
@@ -92,3 +81,11 @@ def one_hot(x, x_set):
             dim_out[:, i][dim_in == val] = 0.5
     result = np.ma.array(data=out, mask=out_mask)
     return result
+
+
+def unique(sets1, sets2, dtype):
+    per_dim = zip(sets1, sets2)
+    out_sets = [np.unique(np.concatenate(k, axis=0)) for k in per_dim]
+    return out_sets
+
+

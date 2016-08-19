@@ -1,95 +1,221 @@
-""" Model Spec Objects and ML algorithm serialisation. """
+"""Model Objects and ML algorithm serialisation."""
+
+from itertools import chain
 
 import numpy as np
+from scipy.stats import norm
 
-from revrand.skl import StandardLinearModel
-from revrand.basis_functions import LinearBasis, RandomRBF, RandomLaplace, \
-    RandomCauchy, RandomMatern32, RandomMatern52
-from revrand.likelihoods import Gaussian, Bernoulli, Poisson
+from revrand import StandardLinearModel, GeneralisedLinearModel
+from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
+    RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
+from revrand.likelihoods import Gaussian
 from revrand.btypes import Parameter, Positive
+from revrand.utils import atleast_list
+from revrand.optimize import Adam
 
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.svm import SVR
 from sklearn.linear_model import ARDRegression
-from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
+import uncoverml.transforms as transforms
+from uncoverml.likelihoods import Switching
 
-class LinearModel(StandardLinearModel):
 
-    def __init__(self, basis, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=1000,
-                 centretargets=True):
+#
+# Mixin classes for providing pipeline compatibility to revrand
+#
 
-        self.centretargets = centretargets
-        super(LinearModel, self).__init__(basis, var, regulariser, tol, maxit)
+class BasisMakerMixin():
 
-    def fit(self, X, y):
-
-        if self.centretargets:
-            self.ymean = y.mean()
-            y -= self.ymean
+    def fit(self, X, y, *args, **kwargs):
 
         self._make_basis(X)
-        return super(LinearModel, self).fit(X, y)
+        return super().fit(X, y, *args, **kwargs)  # args for GLMs
 
-    def predict(self, X):
+    def _store_params(self, kern, nbases, lenscale, ard):
 
-        Ey = super(LinearModel, self).predict(X)
+        self.kern = kern
+        self.nbases = nbases
+        self.ard = ard
+        self.lenscale = lenscale if np.isscalar(lenscale) \
+            else np.asarray(lenscale)
 
-        if self.centretargets:
-            Ey += self.ymean
+    def _make_basis(self, X):
 
-        return Ey
+        D = X.shape[1]
+        lenscale = self.lenscale
+        if self.ard and D > 1:
+            lenscale = np.ones(D) * lenscale
 
-    def predict_proba(self, X):
+        lenscale_init = Parameter(lenscale, Positive())
+        gpbasis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
+                                      lenscale_init=lenscale_init)
 
-        Ey, _, Vy = super(LinearModel, self).predict_proba(X)
+        self.basis = gpbasis + BiasBasis()
 
-        if self.centretargets:
-            Ey += self.ymean
 
-        return Ey, Vy
+class PredictProbaMixin():
+
+    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+
+        Ey, Vy = self.predict_moments(X, *args, **kwargs)
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
+
+class GLMPredictProbaMixin(PredictProbaMixin):
+
+    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+
+        Ey, Vy, ql, qu = super().predict_proba(X, interval=interval, *args,
+                                               **kwargs)
+
+        return Ey, Vy + self.like_hypers, ql, qu
+
+
+class MutualInfoMixin():
 
     def entropy_reduction(self, X):
 
-        Phi = self.basis(X, *self.hypers)
-        pCp = [p.dot(self.C).dot(p.T) for p in Phi]
-        return 0.5 * (np.log(self.optvar + np.array(pCp))
-                      - np.log(self.optvar))
-
-    def _make_basis(self, X):
-
-        pass
+        Phi = self.basis.transform(X, *atleast_list(self.hypers))
+        pCp = [p.dot(self.covariance).dot(p.T) for p in Phi]
+        MI = 0.5 * (np.log(self.var + np.array(pCp)) - np.log(self.var))
+        return MI
 
 
-class LinearReg(LinearModel):
+class TagsMixin():
 
-    def __init__(self, onescol=True, var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
+    def get_predict_tags(self):
+
+        tags = ['Prediction']
+        if hasattr(self, 'predict_proba'):
+            tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
+
+        if hasattr(self, 'entropy_reduction'):
+            tags.append('Expected reduction in entropy')
+
+        return tags
+
+
+#
+# Specialisation of revrand's interface to work from the command line with a
+# few curated algorithms
+#
+
+class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
+
+    def __init__(self, onescol=True, var=1., regulariser=1., tol=1e-8,
+                 maxiter=1000):
 
         basis = LinearBasis(onescol=onescol)
-        super(LinearReg, self).__init__(basis, var, regulariser, tol, maxit)
+        super().__init__(basis=basis,
+                         var=Parameter(var, Positive()),
+                         regulariser=Parameter(regulariser, Positive()),
+                         tol=tol,
+                         maxiter=maxiter
+                         )
 
 
-class ApproxGP(LinearModel):
+class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
+               MutualInfoMixin):
 
-    def __init__(self, kern='rbf', nbases=200, lenscale=.1,
-                 var=Parameter(1., Positive()),
-                 regulariser=Parameter(1., Positive()), tol=1e-6, maxit=500):
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
+                 regulariser=1., ard=True, tol=1e-8, maxiter=1000):
 
-        self.nbases = nbases
-        self.lenscale = lenscale if np.isscalar(lenscale) \
-            else np.asarray(lenscale)
-        self.kern = kern
-        super(ApproxGP, self).__init__(None, var, regulariser, tol, maxit)
+        super().__init__(basis=None,
+                         var=Parameter(var, Positive()),
+                         regulariser=Parameter(regulariser, Positive()),
+                         tol=tol,
+                         maxiter=maxiter
+                         )
 
-    def _make_basis(self, X):
+        self._store_params(kern, nbases, lenscale, ard)
 
-        self.basis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
-                                         lenscale_init=Parameter(self.lenscale,
-                                                                 Positive()))
 
+class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
+
+    def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
+                 batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
+                 epsilon=1e-8, random_state=None):
+
+        super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
+                         basis=LinearBasis(onescol),
+                         regulariser=Parameter(regulariser, Positive()),
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
+                         )
+
+
+class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
+                  GLMPredictProbaMixin):
+
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
+                 regulariser=1., ard=True, maxiter=3000, batch_size=10,
+                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
+                 random_state=None):
+
+        super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
+                         basis=None,
+                         regulariser=Parameter(regulariser, Positive()),
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
+                         )
+
+        self._store_params(kern, nbases, lenscale, ard)
+
+
+# Bespoke regressor for basin-depth problems
+class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
+                     GLMPredictProbaMixin):
+
+    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1., falloff=1.,
+                 regulariser=1., ard=True, largsfield='censored', maxiter=3000,
+                 batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
+                 epsilon=1e-8, random_state=None):
+
+        lhood = Switching(lenscale=falloff,
+                          var_init=Parameter(var, Positive()))
+
+        super().__init__(likelihood=lhood,
+                         basis=None,
+                         regulariser=Parameter(regulariser, Positive()),
+                         maxiter=maxiter,
+                         batch_size=batch_size,
+                         updater=Adam(alpha, beta1, beta2, epsilon),
+                         random_state=random_state
+                         )
+
+        self.largsfield = largsfield
+        self._store_params(kern, nbases, lenscale, ard)
+
+    def fit(self, X, y, fields={}):
+
+        largs = self._parse_largs(fields[self.largsfield])
+        return super().fit(X, y, likelihood_args=(largs,))
+
+    def predict_proba(self, X, interval=0.95, fields={}):
+
+        if self.largsfield in fields:
+            largs = self._parse_largs(fields[self.largsfield])
+        else:
+            largs = np.ones(len(X), dtype=bool)
+
+        return super().predict_proba(X, interval, likelihood_args=(largs,))
+
+    def _parse_largs(self, largs):
+
+        return np.array([v == 'no' for v in largs], dtype=bool)
+
+
+#
+# Approximate probabilistic output for Random Forest
+#
 
 class RandomForestRegressor(RFR):
     """
@@ -97,30 +223,140 @@ class RandomForestRegressor(RFR):
     decision tree estimator ouputs.
     """
 
-    def predict_proba(self, X, *args):
+    def predict_proba(self, X, interval=0.95):
         Ey = self.predict(X)
 
         Vy = np.zeros_like(Ey)
         for dt in self.estimators_:
-            Vy += (dt.predict(X, *args) - Ey)**2
+            Vy += (dt.predict(X) - Ey)**2
 
-        Vy /= len(self.estimators_) 
+        Vy /= len(self.estimators_)
 
-        return Ey, Vy
+        # FIXME what if elements of Vy are zero?
+
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
 
 #
-# Helper functions
+# Target Transformer factory
 #
 
-def apply_masked(func, data, args=()):
+def transform_targets(Learner):
+
+    class TransformedLearner(Learner):
+        # NOTE: All of these explicitly ignore **kwargs on purpose. All generic
+        # revrand and scikit learn algorithms don't need them. Custom models
+        # probably shouldn't be using this factory
+
+        def __init__(self, target_transform='identity', *args, **kwargs):
+
+            super().__init__(*args, **kwargs)
+            self.ytform = transforms.transforms[target_transform]()
+
+        def fit(self, X, y, *args, **kwargs):
+
+            self.ytform.fit(y)
+            y_t = self.ytform.transform(y)
+
+            return super().fit(X, y_t)
+
+        def predict(self, X, *args, **kwargs):
+
+            Ey_t = super().predict(X)
+            Ey = self.ytform.itransform(Ey_t)
+
+            return Ey
+
+        if hasattr(Learner, 'predict_proba'):
+            def predict_proba(self, X, interval=0.95, *args, **kwargs):
+
+                Ns = X.shape[0]
+                nsamples = 100
+
+                # Expectation and variance in latent space
+                Ey_t, Sy_t, ql, qu = super().predict_proba(X, interval)
+
+                Sy_t = np.sqrt(Sy_t)  # inplace to save mem
+
+                # Now transform expectation, and sample to get transformed
+                # variance
+                Ey = self.ytform.itransform(Ey_t)
+                ql = self.ytform.itransform(ql)
+                qu = self.ytform.itransform(qu)
+                Vy = np.zeros_like(Ey)
+
+                # Do this as much in place as possible for memory conservation
+                for _ in range(nsamples):
+                    ys = self.ytform.itransform(Ey_t + np.random.randn(Ns)
+                                                * Sy_t)
+                    Vy += (Ey - ys)**2
+
+                Vy /= nsamples
+
+                return Ey, Vy, ql, qu
+
+    return TransformedLearner
+
+
+#
+# Construct compatible classes for the pipeline, these need to be module level
+# for pickling...
+#
+
+class SVRTransformed(transform_targets(SVR), TagsMixin):
+    pass
+
+
+class LinearRegTransformed(transform_targets(LinearReg), TagsMixin):
+    pass
+
+
+class RandomForestTransformed(transform_targets(RandomForestRegressor),
+                              TagsMixin):
+    pass
+
+
+class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
+    pass
+
+
+class ARDRegressionTransformed(transform_targets(ARDRegression), TagsMixin):
+    pass
+
+
+class DecisionTreeTransformed(transform_targets(DecisionTreeRegressor),
+                              TagsMixin):
+    pass
+
+
+class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor), TagsMixin):
+    pass
+
+
+class SGDLinearRegTransformed(transform_targets(SGDLinearReg), TagsMixin):
+    pass
+
+
+class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
+    pass
+
+
+#
+# Helper functions for multiple outputs and missing/masked data
+#
+
+def apply_masked(func, data, args=(), kwargs={}):
+    # Data is just a matrix (i.e. X for prediction)
 
     # No masked data
     if np.ma.count_masked(data) == 0:
-        return func(data.data, *args)
+        return func(data.data, *args, **kwargs)
 
     # Prediction with missing inputs
     okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
-    res = func(data.data[okdata], *args)
+    res = func(data.data[okdata], *args, **kwargs)
 
     # For training/fitting that returns nothing
     if not isinstance(res, np.ndarray):
@@ -139,7 +375,8 @@ def apply_masked(func, data, args=()):
     return np.ma.array(mres, mask=mask)
 
 
-def apply_multiple_masked(func, data, args=()):
+def apply_multiple_masked(func, data, args=(), kwargs={}):
+    # Data is a sequence of arrays (i.e. X, y pairs for training)
 
     datastack = []
     dims = []
@@ -158,32 +395,30 @@ def apply_multiple_masked(func, data, args=()):
 
     # Decorate functions to work on stacked data
     dims = np.cumsum(dims[:-1])  # dont split by last dim
+
     unstack = lambda catdata: [d.flatten() if f else d for d, f
                                in zip(np.hsplit(catdata, dims), flat)]
-    unstackfunc = lambda catdata, *nargs: \
-        func(*(unstack(catdata) + list(nargs)))
 
-    return apply_masked(unstackfunc, np.ma.hstack(datastack), args)
+    unstackfunc = lambda catdata, *nargs, **nkwargs: \
+        func(*chain(unstack(catdata), nargs), **nkwargs)
+
+    return apply_masked(unstackfunc, np.ma.hstack(datastack), args, kwargs)
 
 
 #
 # Static module properties
 #
 
-modelmaps = {'randomforest': RandomForestRegressor,
-             'bayesreg': LinearReg,
-             'approxgp': ApproxGP,
-             'svr': SVR,
-             'kernelridge': KernelRidge,
-             'ardregression': ARDRegression,
-             'decisiontree': DecisionTreeRegressor,
-             'extratree': ExtraTreeRegressor
-             }
-
-
-lhoodmaps = {'Gaussian': Gaussian,
-             'Bernoulli': Bernoulli,
-             'Poisson': Poisson
+modelmaps = {'randomforest': RandomForestTransformed,
+             'bayesreg': LinearRegTransformed,
+             'sgdbayesreg': SGDLinearRegTransformed,
+             'approxgp': ApproxGPTransformed,
+             'sgdapproxgp': SGDApproxGPTransformed,
+             'svr': SVRTransformed,
+             'ardregression': ARDRegressionTransformed,
+             'decisiontree': DecisionTreeTransformed,
+             'extratree': ExtraTreeTransformed,
+             'depthregress': DepthRegressor,
              }
 
 

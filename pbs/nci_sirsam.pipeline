@@ -10,12 +10,7 @@ from os import path
 # Location of data
 data_dir = "/short/ge3/jrw547/GA-cover"
 
-# Location of processed files (features, predictions etc)
-proc_dir = "/short/ge3/jrw547/GA-cover_processed"
-
-# Location of the prediction output from this script
-pred_dir = path.join(proc_dir, "prediction")
-
+output_dir = "."
 
 #
 # Target Settings
@@ -27,18 +22,19 @@ target_file = "geochem_sites.shp"
 # Target variable name (in shape file)
 target_var = "Na_ppm_i_1"  # "Cr_ppm_i_1"
 
-# Where to save processed targets
-target_hdf = path.join(proc_dir, "{}_{}.hdf5"
-                       .format(path.splitext(target_file)[0], target_var))
+export_targets = False
 
+
+# Crossval settings
+
+cross_validate = True
 folds = 5
+crossval_seed = 1
+
 
 #
 # Feature settings
 #
-
-# Allows deternministic cross-val. Set to None for a random seed
-crossval_seed = 1
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False
@@ -49,18 +45,13 @@ patchsize = 0
 # Impute missing values?
 impute = True
 
-# Starndardise each input dimension? (0 mean, 1 std)
-standardise = True  # standardise all of the extracted features?
-
-# Whiten all inputs?
-whiten = False  # whiten all of the extracted features?
+transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.5
 
-# Composite feature names (prefixes)
-compos_file = "composite"
-
+# Estimate the relative importance of each feature
+rank_features = False
 
 #
 # Algorithm settings
@@ -73,7 +64,6 @@ algdict = {
     # "bayesreg": {},
 
     # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'matern52', 'lenscale': [100.] * 87, 'nbases': 50},
     # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
 
     # Support vector machine (regressor)
@@ -100,34 +90,15 @@ algdict = {
 # Prediction settings
 #
 
+# How much data to keep in memory at a time. 
+memory_fraction = 1.0
+
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
 # algorithm = 'approxgp'
 algorithm = 'randomforest'
 
-# Prediction file names (prefix)
-predict_file = "prediction"
-
 # Quantiles
 quantiles = 0.95
-
-
-#
-# Visualisation/Geotiff settings
-#
-
-# Name of the prediction output tif
-gtiffname = "prediction_image"
-gtiffname_ent = "entropy_reduction_image"
-
-# Make the image RGB?
-makergbtif = True
-
-
-# Prediction file names (prefix)
-predict_file = "prediction_file"
-
-# Output suffix files for validation metrics
-valoutput = "validation"
 

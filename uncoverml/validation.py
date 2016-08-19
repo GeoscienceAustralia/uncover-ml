@@ -2,93 +2,23 @@
 
 from __future__ import division
 
+import matplotlib as pl
 import numpy as np
 
+from sklearn.metrics import explained_variance_score, r2_score
+from revrand.metrics import lins_ccc, mll, msll, smse
 
-#
-# Data Partitioning
-#
-
-def gen_cfold_data(X, Y, k=5):
-    """
-    Generator to divide a dataset k non-overlapping folds.
-
-    Parameters
-    ----------
-        X: ndarray
-            (D, N) array where D is the dimensionality, and N is the number
-            of samples (X can also be a 1-d vector).
-        Y: ndarray
-            (N,) training target data vector of length N.
-        k: int, optional
-            the number of folds for testing and training.
-
-    Yields
-    ------
-        Xr: ndarray
-            (D, ((k-1) * N / k)) array of training input data
-        Yr: ndarray
-            ((k-1) * N / k,) array of training target data
-        Xs: ndarray
-            (D, N / k) array of testing input data
-        Ys: ndarray
-            (N / k,) array of testing target data
-
-    Note
-    ----
-        All of these are randomly split (but non-overlapping per call)
-
-    """
-
-    X = np.atleast_2d(X)
-    random_indices = np.random.permutation(X.shape[1])
-    X = X[:, random_indices]
-    Y = Y[random_indices]
-    X_groups = np.array_split(X, k, axis=1)
-    Y_groups = np.array_split(Y, k)
-
-    for i in range(k):
-        X_s = X_groups[i]
-        Y_s = Y_groups[i]
-        X_r = np.hstack(X_groups[0:i] + X_groups[i + 1:])
-        Y_r = np.concatenate(Y_groups[0:i] + Y_groups[i + 1:])
-        yield (X_r, Y_r, X_s, Y_s)
+from uncoverml.models import apply_multiple_masked
 
 
-# def gen_cfold_ind(nsamples, k=5, seed=None):
-#     """
-#     Generator to return random test and training indices for cross fold
-#     validation.
+metrics = {'r2_score': r2_score,
+           'expvar': explained_variance_score,
+           'smse': smse,
+           'lins_ccc': lins_ccc,
+           'mll': mll,
+           'msll': msll}
 
-#     Parameters
-#     ----------
-#         nsamples: int
-#             the number of samples in the dataset
-#         k: int, optional
-#             the number of folds
-#         seed: int, optional
-#             random seed for numpy permutation
-
-#     Yields
-#     ------
-#         rind: ndarray
-#             training indices of shape (nsamples * (k-1)/k,)
-#         sind: ndarray
-#             testing indices of shape (nsamples * 1/k,)
-
-#     Note
-#     ----
-#         Each call to this generator returns a random but non-overlapping
-#         split of data.
-
-#     """
-
-#     cvinds, _ = split_cfold(nsamples, k, seed)
-
-#     for i in range(k):
-#         sind = cvinds[i]
-#         rind = np.concatenate(cvinds[0:i] + cvinds[i + 1:])
-#         yield (rind, sind)
+lower_is_better = ['mll', 'msll', 'smse']
 
 
 def split_cfold(nsamples, k=5, seed=None):
@@ -125,3 +55,56 @@ def split_cfold(nsamples, k=5, seed=None):
         cvassigns[inds] = n
 
     return cvinds, cvassigns
+
+
+def get_first_dim(y):
+    return y[:, 0] if y.ndim > 1 else y
+
+
+# Decorator to deal with probabilistic output for non-probabilistic scores
+def score_first_dim(func):
+    def newscore(y_true, y_pred, *args, **kwargs):
+        return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
+    return newscore
+
+
+def calculate_validation_scores(ys, yt, eys):
+
+    probscores = ['msll', 'mll']
+
+    scores = {}
+    for m in metrics:
+
+        if m not in probscores:
+            score = apply_multiple_masked(score_first_dim(metrics[m]),
+                                          (ys, eys))
+        elif eys.ndim == 2:
+            if m == 'mll' and eys.shape[1] > 1:
+                score = apply_multiple_masked(mll, (ys, eys[:, 0], eys[:, 1]))
+            elif m == 'msll' and eys.shape[1] > 1:
+                score = apply_multiple_masked(msll, (ys, eys[:, 0], eys[:, 1]),
+                                              (yt,))
+            else:
+                continue
+        else:
+            continue
+
+        scores[m] = score
+    return scores
+
+
+def y_y_plot(y1, y2, y_label=None, y_exp_label=None, title=None,
+             outfile=None, display=None):
+    fig = pl.figure()
+    maxy = max(y1.max(), get_first_dim(y2).max())
+    miny = min(y1.min(), get_first_dim(y2).min())
+    apply_multiple_masked(pl.plot, (y1, get_first_dim(y2)), ('k.',))
+    pl.plot([miny, maxy], [miny, maxy], 'r')
+    pl.grid(True)
+    pl.xlabel(y_label)
+    pl.ylabel(y_exp_label)
+    pl.title(title)
+    if outfile is not None:
+        fig.savefig(outfile + ".png")
+    if display:
+        pl.show()

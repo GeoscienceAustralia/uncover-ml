@@ -21,7 +21,6 @@ Contents:
    projectreport
 
    geoio
-   parallel
    patch
    stats
    models

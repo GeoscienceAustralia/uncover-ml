@@ -7,39 +7,42 @@ from os import path
 # Path Settings
 #
 
+# As this is set now, it assumes a folder structure like the following:
+# ~/data/GA-cover   << location of data (all tif and shp files)
+# ~/data/GA-cover/processed     << location of all output files
+# ~/data/GA-cover/soilcrossvalindices.hdf5   << cross val hdf5 file from us
+
+# please change the following paths to suit your needs
+
 # Location of data
-# data_dir = "/short/ge3/jrw547/Murray_datasets"
-data_dir = "/short/ge3/dms599/Murray_datasets"
+# data_dir = path.join(path.expanduser("~"), "data/Murray_datasets")
+data_dir = path.join(path.expanduser("~"), "data/Murray-small")
 
+# Location of outputs
 output_dir = "."
-
-
-#
-# Target Settings
-#
 
 # Shape file with target variable info
 # target_file = "Targets_V_final_inside.shp"
 # target_file = "Targets_shallow_filtered.shp"
-target_file = "Targets_V6_inside.shp"
+target_file = "Targets_V6_reduced_cols.shp"
+# target_file = "targets_zero_filtered_small.shp"
 
 # Target variable name (in shape file)
 target_var = "depth"
 
 export_targets = True
 
-
-# Crossval settings
-
 cross_validate = True
+
 folds = 5
-crossval_seed = 1
 
 
 #
 # Feature settings
 #
 
+# Allows deternministic cross-val. Set to None for a random seed
+crossval_seed = 1
 
 # Automatically detect integer-valued files and use one-hot encoding?
 onehot = False
@@ -50,11 +53,11 @@ patchsize = 0
 # Impute missing values?
 impute = True
 
-# Starndardise each input dimension? (0 mean, 1 std)
+# Transform the data? options are {whiten, standardise, centre, None}
 transform = 'standardise'
 
 # Fraction of dimensions to keep *if* whitening
-pca_frac = 0.5
+pca_frac = 0.8
 
 # Estimate the relative importance of each feature
 rank_features = False
@@ -64,52 +67,36 @@ rank_features = False
 # Algorithm settings
 #
 
-
 # Iterate through this dictionary of algorithm name and arguments:
 algdict = {
 
     # Bayesian linear regression
-    # "bayesreg": {},
-
-    # Approximate Gaussian process, for large scale data
-    # "approxgp": {'kern': 'rbf', 'lenscale': 100., 'nbases': 50},
+    # "bayesreg": {'target_transform': 'rank'}
 
     # Approximate Gaussian process, for large scale data
     # "sgdapproxgp": {
     #              'target_transform': 'rank',
     #              'kern': 'matern52',
-    #              'lenscale': 100.,
     #              'nbases': 50,
     #              'maxiter': 3000},
 
     "depthregress": {
                  'kern': 'matern52',
-                 'lenscale': 100.,
+                 'ard': True,
+                 'lenscale': 1.,
                  'nbases': 100,
-                 'maxiter': 10000,
+                 'maxiter': 18000,
                  'falloff': 0.1,
                  'beta1': 0.3,
-                 'beta2': 0.5},
+                 'beta2': 0.5
+                 },
     
-
     # Support vector machine (regressor)
     # "svr": {'gamma': 1. / 300, 'epsilon': 0.05},
-    # "svr": {},
+    # "svr": {'target_transform': 'log'},
 
     # Random forest regressor
-    # "randomforest": {'n_estimators': 500},
-
-    # ARD Linear regression
-    # "ardregression": {},
-
-    # Kernel ridge regression
-    # 'kernelridge': {'kernel': 'rbf'},
-
-    # Decision tree regressor
-    # 'decisiontree': {},
-
-    # Extra tree regressor
-    # 'extratree': {},
+    # "randomforest": {'target_transform': 'log', 'n_estimators': 50},
 }
 
 #
@@ -117,14 +104,14 @@ algdict = {
 #
 
 # How much data to keep in memory at a time
-memory_fraction = 0.05
+memory_fraction = 1./40
 
 # Name of the prediction algorithm
 # algorithm = 'svr'
 # algorithm = 'bayesreg'
-# algorithm = "sgdapproxgp"
-algorithm = 'depthregress'
 # algorithm = 'approxgp'
+# algorithm = 'sgdapproxgp'
+algorithm = 'depthregress'
 # algorithm = 'randomforest'
 
 # Quantiles
