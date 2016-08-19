@@ -145,13 +145,8 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
 
 
 def gather_data(extracted_chunks, compose_settings):
-    has_data = not (True in [k is None for k in extracted_chunks.values()])
-    if has_data:
-        x = np.ma.concatenate(extracted_chunks.values(), axis=1)
-    else:
-        x = None
+    x = np.ma.concatenate(extracted_chunks.values(), axis=1)
     x_out, compose_settings = pipeline.compose_features(x, compose_settings)
-
     X_list = mpiops.comm.allgather(x_out)
     X = np.ma.vstack([k for k in X_list if k is not None])
     return X
