@@ -18,6 +18,7 @@ from uncoverml import datatypes
 from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml import pipeline
+from uncoverml.transforms import TransformSet
 from uncoverml.validation import lower_is_better
 
 # Logging
@@ -65,68 +66,6 @@ def gather_targets(targets):
 def gather_features(x):
     x_all = np.ma.vstack(mpiops.comm.allgather(x))
     return x_all
-
-
-def build_feature_vector(image_chunks):
-    # flatten image patches
-    image_chunks = {k: v.reshape(v.shape[0], -1)
-                    for k, v in image_chunks.items()}
-
-    # size up x
-    image_0 = next(iter(image_chunks.keys()))
-    n_features = image_chunks[image_0].shape[0]
-    ndims = np.sum([x.shape[1] for x in image_chunks.values()])
-    # create the memory
-    x = np.empty((n_features, ndims), dtype=float)
-    mask = np.empty((n_features, ndims), dtype=bool)
-    # transfer in the data
-    start_idx = 0
-    for k, im in image_chunks.items():
-        ndims_im = im.shape[1]
-        end_idx = start_idx + ndims_im
-        x[:, start_idx:end_idx] = im.data
-        mask[:, start_idx:end_idx] = im.mask
-        start_idx += ndims_im
-    result = np.ma.MaskedArray(data=x, mask=mask)
-    return result
-
-
-class TransformSet:
-    def __init__(self, image_transforms=None, imputer=None,
-                 global_transforms=None):
-            self.image_transforms = (image_transforms if image_transforms
-                                     else [])
-            self.imputer = imputer if imputer else lambda x: x
-            self.global_transforms = (global_transforms if global_transforms
-                                      else [])
-
-    def __call__(self, image_chunks):
-        # TODO per-image transforms
-        # settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
-        # if x_sets:
-        #     x = stats.one_hot(x, x_sets)
-        # def extract_transform(x, x_sets):
-        #     x = x.reshape(x.shape[0], -1)
-        #     x = x.astype(float)
-        #     return x
-
-        transformed_chunks = copy.copy(image_chunks)
-        # apply the per-image transforms
-        for lbl in image_chunks:
-            for t in self.image_transforms:
-                transformed_chunks[lbl] = t(transformed_chunks[lbl])
-
-        # concatenate and floating point
-        x = build_feature_vector(transformed_chunks)
-
-        # impute
-        x = self.imputer(x)
-
-        # global transforms
-        for t in self.global_transforms:
-            x = t(x)
-
-        return x
 
 
 def run_pipeline(config):

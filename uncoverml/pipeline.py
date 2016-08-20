@@ -2,8 +2,7 @@ import logging
 
 import numpy as np
 
-from uncoverml import mpiops, patch, stats
-import uncoverml.defaults as df
+from uncoverml import mpiops, patch
 from uncoverml.image import Image
 from uncoverml.models import apply_masked, apply_multiple_masked, modelmaps
 from uncoverml.validation import calculate_validation_scores, split_cfold
@@ -46,14 +45,7 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
             for im in my_image_chunks]
     x = np.ma.concatenate(my_x, axis=0)
     assert x.shape[0] == targets.observations.shape[0]
-    # x = extract_transform(x, settings.x_sets)
     return x
-
-
-def compose_features(x, settings):
-    # verify the files are all present
-    x, settings = mpiops.compose_transform(x, settings)
-    return x, settings
 
 
 class CrossvalInfo:
