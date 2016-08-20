@@ -137,7 +137,7 @@ def run_pipeline(config):
         mpiops.run_once(export_scores, crossval_results, config)
 
     model = pipeline.local_learn_model(x, targets, config)
-    mpiops.run_once(export_model, model, config)
+    mpiops.run_once(export_model, model, transform_sets, config)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
@@ -203,10 +203,11 @@ def export_feature_ranks(measures, features, scores, config):
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 
-def export_model(model, config):
+def export_model(model, transform_sets, config):
     outfile_state = path.join(config.output_dir,
                               config.name + "_" + config.algorithm + ".state")
-    state_dict = {"model": model}
+    state_dict = {"model": model,
+                  "transform_sets": transform_sets}
 
     with open(outfile_state, 'wb') as f:
         pickle.dump(state_dict, f)
