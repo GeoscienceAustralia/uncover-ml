@@ -31,24 +31,55 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def image_features(targets, config):
-    # Extract feats for training
-    n_subchunks = max(1, round(1.0 / config.memory_fraction))
-    tifs = glob(path.join(config.data_dir, "*.tif"))
-    if len(tifs) == 0:
-        log.fatal("No geotiffs found in {}!".format(config.data_dir))
-        sys.exit(-1)
+def image_transform_sets(config):
+    transform_sets = []
+    for i in range(2):
+        # fake it for now
+        # load the transforms
+        transform_set = transforms.TransformSet()
 
-    extracted_chunks = {}
-    for tif in tifs:
-        name = path.basename(tif)
-        log.info("Processing {}.".format(name))
-        image_source = geoio.RasterioImageSource(tif)
-        x = pipeline.extract_features(image_source, targets, n_subchunks,
-                                      config.patchsize)
-        extracted_chunks[name] = x
-    result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
-    return result
+        # transform_set.image_transforms.append(transforms.OneHotTransform())
+        transform_set.imputer = transforms.MeanImputer()
+        transform_set.global_transforms.append(transforms.CentreTransform())
+        transform_set.global_transforms.append(
+            transforms.StandardiseTransform())
+        # transform_set.global_transforms.append(
+        # transforms.WhitenTransform(keep_fraction=0.5))
+        transform_sets.append(transform_set)
+    return transform_sets
+
+
+def image_feature_sets(targets, config):
+    n_subchunks = max(1, round(1.0 / config.memory_fraction))
+
+    # fake it for the moment
+    results = []
+    for i in range(2):
+        # Extract feats for training
+        tifs = glob(path.join(config.data_dir, "*.tif"))
+        n_on_2 = int(round(len(tifs)/2))
+        if i == 0:
+            tifs = tifs[0:n_on_2]
+        else:
+            tifs = tifs[n_on_2:]
+
+        if len(tifs) == 0:
+            log.fatal("No geotiffs found in {}!".format(config.data_dir))
+            sys.exit(-1)
+
+        extracted_chunks = {}
+        for tif in tifs:
+            name = path.basename(tif)
+            log.info("Processing {}.".format(name))
+            image_source = geoio.RasterioImageSource(tif)
+            x = pipeline.extract_features(image_source, targets, n_subchunks,
+                                          config.patchsize)
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
 
 
 def gather_targets(targets):
@@ -68,6 +99,13 @@ def gather_features(x):
     return x_all
 
 
+def transform_features(feature_sets, transform_sets):
+    # apply feature transforms
+    transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
+    x = np.ma.concatenate(transformed_vectors, axis=1)
+    return x
+
+
 def run_pipeline(config):
 
     # Make the targets
@@ -78,29 +116,18 @@ def run_pipeline(config):
     targets_all = gather_targets(targets)
 
     # keys for these two are the filenames
-    image_chunks = image_features(targets, config)
-
-    # load the transforms
-    transform_set = transforms.TransformSet()
-
-    transform_set.image_transforms.append(transforms.OneHotTransform())
-    transform_set.imputer = transforms.MeanImputer()
-    transform_set.global_transforms.append(transforms.CentreTransform())
-    transform_set.global_transforms.append(transforms.StandardiseTransform())
-    # transform_set.global_transforms.append(transforms.WhitenTransform(
-    #    keep_fraction=0.5))
+    image_chunk_sets = image_feature_sets(targets, config)
+    transform_sets = image_transform_sets(config)
 
     if config.rank_features:
-        measures, features, scores = local_rank_features(image_chunks,
+        measures, features, scores = local_rank_features(image_chunk_sets,
+                                                         transform_sets,
                                                          targets_all,
-                                                         transform_set,
                                                          config)
         mpiops.run_once(export_feature_ranks, measures, features,
                         scores, config)
 
-    # apply feature transforms
-    x = transform_set(image_chunks)
-
+    x = transform_features(image_chunk_sets, transform_sets)
     # learn the model
     # local models need all data
     x_all = gather_features(x)
@@ -113,20 +140,29 @@ def run_pipeline(config):
     mpiops.run_once(export_model, model, config)
 
 
-def local_rank_features(image_chunks, targets_all, transform_set, config):
+def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
 
     # Determine the importance of each feature
     feature_scores = {}
-    for name in image_chunks:
-        transform_set_leaveout = copy.deepcopy(transform_set)
-        image_chunks_leaveout = copy.copy(image_chunks)  # shallow copy
-        del image_chunks_leaveout[name]
+    # get all the images
+    all_names = []
+    for c in image_chunk_sets:
+        all_names.extend(list(c.keys()))
+    all_names = sorted(list(set(all_names)))  # make unique
+
+    for name in all_names:
+        transform_sets_leaveout = copy.deepcopy(transform_sets)
+        image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
+        for c in image_chunks_leaveout:
+            if name in c:
+                c.pop(name)
 
         fname = name.rstrip(".tif")
         log.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
 
-        x = transform_set_leaveout(image_chunks_leaveout)
+        x = transform_features(image_chunks_leaveout,
+                               transform_sets_leaveout)
         x_all = gather_features(x)
 
         results = pipeline.local_crossval(x_all, targets_all, config)
