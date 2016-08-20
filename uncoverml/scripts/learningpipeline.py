@@ -91,29 +91,45 @@ def build_feature_vector(image_chunks):
     return result
 
 
-def transform(image_chunks):
-    # TODO per-image transforms
-    # settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
-    # if x_sets:
-    #     x = stats.one_hot(x, x_sets)
-    # def extract_transform(x, x_sets):
-    #     x = x.reshape(x.shape[0], -1)
-    #     x = x.astype(float)
-    #     return x
+class TransformSet:
+    def __init__(self, image_transforms=None, imputer=None,
+                 global_transforms=None):
+            self.image_transforms = (image_transforms if image_transforms
+                                     else [])
+            self.imputer = imputer if imputer else lambda x: x
+            self.global_transforms = (global_transforms if global_transforms
+                                      else [])
 
-    # concatenate and floating point
-    x = build_feature_vector(image_chunks)
+    def __call__(self, image_chunks):
+        # TODO per-image transforms
+        # settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
+        # if x_sets:
+        #     x = stats.one_hot(x, x_sets)
+        # def extract_transform(x, x_sets):
+        #     x = x.reshape(x.shape[0], -1)
+        #     x = x.astype(float)
+        #     return x
 
-    # TODO imputation
+        transformed_chunks = copy.copy(image_chunks)
+        # apply the per-image transforms
+        for lbl in image_chunks:
+            for t in self.image_transforms:
+                transformed_chunks[lbl] = t(transformed_chunks[lbl])
 
-    # TODO whole-of-vector transforms
+        # concatenate and floating point
+        x = build_feature_vector(transformed_chunks)
 
-    return x
+        # impute
+        x = self.imputer(x)
+
+        # global transforms
+        for t in self.global_transforms:
+            x = t(x)
+
+        return x
 
 
 def run_pipeline(config):
-    algorithm = config.algorithm
-    args = config.algorithm_options
 
     # Make the targets
     shapefile = path.join(config.data_dir, config.target_file)
@@ -125,14 +141,17 @@ def run_pipeline(config):
     # keys for these two are the filenames
     image_chunks = image_features(targets, config)
 
+    # load the transforms
+    transform_set = TransformSet()
+
     if config.rank_features:
         measures, features, scores = local_rank_features(image_chunks, targets,
-                                                         config)
+                                                         transform_set, config)
         mpiops.run_once(export_feature_ranks, measures, features,
                         scores, config)
 
     # apply feature transforms
-    x = transform(image_chunks)
+    x = transform_set(image_chunks)
 
     # learn the model
     # local models need all data
@@ -140,17 +159,18 @@ def run_pipeline(config):
 
     if config.cross_validate:
         crossval_results = pipeline.local_crossval(x_all, targets_all, config)
-        mpiops.run_once(export_scores, crossval_results, algorithm, config)
+        mpiops.run_once(export_scores, crossval_results, config)
 
     model = pipeline.local_learn_model(x, targets, config)
     mpiops.run_once(export_model, model, config)
 
 
-def local_rank_features(image_chunks, targets_all, config):
+def local_rank_features(image_chunks, targets_all, transform_set, config):
 
     # Determine the importance of each feature
     feature_scores = {}
     for name in image_chunks:
+        transform_set_leaveout = copy.deepcopy(transform_set)
         image_chunks_leaveout = copy.copy(image_chunks)  # shallow copy
         del image_chunks_leaveout[name]
 
@@ -158,7 +178,7 @@ def local_rank_features(image_chunks, targets_all, config):
         log.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
 
-        x = transform(image_chunks_leaveout)
+        x = transform_set_leaveout(image_chunks_leaveout)
         x_all = gather_features(x)
 
         results = pipeline.local_crossval(x_all, targets_all, config)
@@ -208,10 +228,10 @@ def export_model(model, config):
         pickle.dump(state_dict, f)
 
 
-def export_scores(crossval_output, algorithm, config):
+def export_scores(crossval_output, config):
 
     outfile_scores = path.join(config.output_dir,
-                               config.name + "_" + algorithm +
+                               config.name + "_" + config.algorithm +
                                "_scores.json")
     geoio.export_scores(crossval_output.scores,
                         crossval_output.y_true,
