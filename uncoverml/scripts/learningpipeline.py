@@ -83,15 +83,18 @@ def run_pipeline(config):
     # load the transforms
     transform_set = transforms.TransformSet()
 
-    # transform_set.image_transforms.append(transforms.OneHotTransform())
-    # transform_set.imputer = transforms.MeanImputer()
-    # transform_set.global_transforms.append(transforms.CentreTransform())
-    # transform_set.global_transforms.append(transforms.StandardiseTransform())
-    # try out some transforms, see if they actually work
+    transform_set.image_transforms.append(transforms.OneHotTransform())
+    transform_set.imputer = transforms.MeanImputer()
+    transform_set.global_transforms.append(transforms.CentreTransform())
+    transform_set.global_transforms.append(transforms.StandardiseTransform())
+    # transform_set.global_transforms.append(transforms.WhitenTransform(
+    #    keep_fraction=0.5))
 
     if config.rank_features:
-        measures, features, scores = local_rank_features(image_chunks, targets,
-                                                         transform_set, config)
+        measures, features, scores = local_rank_features(image_chunks,
+                                                         targets_all,
+                                                         transform_set,
+                                                         config)
         mpiops.run_once(export_feature_ranks, measures, features,
                         scores, config)
 

@@ -41,7 +41,7 @@ class WhitenTransform:
         self.eigvecs = None
         self.keep_fraction = keep_fraction
 
-    def call(self, x):
+    def __call__(self, x):
 
         if self.eigvals is None or self.eigvecs is None:
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)

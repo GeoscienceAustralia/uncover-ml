@@ -67,6 +67,7 @@ def local_learn_model(x_all, targets_all, config):
 
 
 def local_crossval(x_all, targets_all, config):
+    log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_options)
     y = targets_all.observations
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
@@ -113,6 +114,10 @@ def local_crossval(x_all, targets_all, config):
         valid_metrics = scores[0].keys()
         scores = {m: np.mean([d[m] for d in scores.values()])
                   for m in valid_metrics}
+        score_string = "Validation complete:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+        log.info(score_string)
         result = CrossvalInfo(scores, y_true, y_pred)
     result = mpiops.comm.bcast(result, root=0)
     return result

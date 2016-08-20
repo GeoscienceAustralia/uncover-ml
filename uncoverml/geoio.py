@@ -431,6 +431,13 @@ def load_targets(shapefile, targetfield):
     """
     if mpiops.chunk_index == 0:
         lonlat, vals, othervals = load_shapefile(shapefile, targetfield)
+        # sort by y then x
+        ordind = np.lexsort(lonlat.T)
+        vals = vals[ordind]
+        lonlat = lonlat[ordind]
+        for k, v in othervals.items():
+            othervals[k] = v[ordind]
+
         lonlat = np.array_split(lonlat, mpiops.chunks)
         vals = np.array_split(vals, mpiops.chunks)
         split_othervals = {k: np.array_split(v, mpiops.chunks)
@@ -512,9 +519,6 @@ class ImageWriter:
 
 def export_scores(scores, y, Ey, filename):
 
-    log.info("{} Scores".format(filename.rstrip(".json")))
-    for metric, score in scores.items():
-        log.info("{} = {}".format(metric, score))
 
     with open(filename, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)

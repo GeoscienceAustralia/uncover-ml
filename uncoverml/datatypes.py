@@ -48,18 +48,10 @@ class Targets:
 
     def __init__(self, lonlat, vals, othervals=None):
         self.fields = {}
-
-        ordind = np.lexsort(lonlat.T)
-        if not np.all(ordind == 0):
-            self.observations = vals[ordind]
-            self.positions = lonlat[ordind]
-            if othervals is not None:
-                self.fields = {k: v[ordind] for k, v in othervals.items()}
-        else:
-            self.observations = vals
-            self.positions = lonlat
-            if othervals is not None:
-                self.fields = othervals
+        self.observations = vals
+        self.positions = lonlat
+        if othervals is not None:
+            self.fields = othervals
 
 
 class CrossValTargets:
