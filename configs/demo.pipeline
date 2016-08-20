@@ -65,7 +65,7 @@ transform = 'standardise'
 pca_frac = 0.8
 
 # Estimate the relative importance of each feature
-rank_features = False
+rank_features = True
 
 #
 # Algorithm settings

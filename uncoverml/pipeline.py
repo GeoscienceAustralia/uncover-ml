@@ -12,31 +12,23 @@ from uncoverml.validation import calculate_validation_scores, split_cfold
 log = logging.getLogger(__name__)
 
 
-def extract_transform(x, x_sets):
-    x = x.reshape(x.shape[0], -1)
-    if x_sets:
-        x = stats.one_hot(x, x_sets)
-    x = x.astype(float)
-    return x
-
-
 def extract_subchunks(image_source, subchunk_index, n_subchunks, settings):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = n_subchunks * mpiops.chunk_index + subchunk_index
     image = Image(image_source, equiv_chunk_index,
                   equiv_chunks, settings.patchsize)
     x = patch.all_patches(image, settings.patchsize)
-    x = extract_transform(x, settings.x_sets)
+    # x = extract_transform(x, settings.x_sets)
     return x
 
 
-def extract_features(image_source, targets, settings, n_subchunks):
+def extract_features(image_source, targets, n_subchunks, patchsize):
     """
     each node gets its own share of the targets, so all nodes
     will always have targets
     """
     equiv_chunks = n_subchunks * mpiops.chunks
-    image_chunks = [Image(image_source, k, equiv_chunks, settings.patchsize)
+    image_chunks = [Image(image_source, k, equiv_chunks, patchsize)
                     for k in range(equiv_chunks)]
     # figure out which chunks I need to consider
     y_min = targets.positions[0, 1]
@@ -50,17 +42,12 @@ def extract_features(image_source, targets, settings, n_subchunks):
         return inside
 
     my_image_chunks = [k for k in image_chunks if has_targets(k)]
-    my_x = [patch.patches_at_target(im, settings.patchsize, targets)
+    my_x = [patch.patches_at_target(im, patchsize, targets)
             for im in my_image_chunks]
     x = np.ma.concatenate(my_x, axis=0)
     assert x.shape[0] == targets.observations.shape[0]
-
-    if settings.onehot and not settings.x_sets:
-        settings.x_sets = mpiops.compute_unique_values(x, df.max_onehot_dims)
-
-    x = extract_transform(x, settings.x_sets)
-
-    return x, settings
+    # x = extract_transform(x, settings.x_sets)
+    return x
 
 
 def compose_features(x, settings):
@@ -76,25 +63,24 @@ class CrossvalInfo:
         self.y_pred = y_pred
 
 
-def learn_model(X, targets, algorithm, algorithm_params=None):
-    model = modelmaps[algorithm](**algorithm_params)
-    y = targets.observations
+def local_learn_model(x_all, targets_all, config):
+    model = modelmaps[config.algorithm](**config.algorithm_options)
+    y = targets_all.observations
 
     if mpiops.chunk_index == 0:
-        apply_multiple_masked(model.fit, (X, y),
-                              kwargs={'fields': targets.fields})
+        apply_multiple_masked(model.fit, (x_all, y),
+                              kwargs={'fields': targets_all.fields})
     model = mpiops.comm.bcast(model, root=0)
     return model
 
 
-def cross_validate(X, targets, algorithm, nfolds=10, algorithm_params=None,
-                   seed=None):
-    model = modelmaps[algorithm](**algorithm_params)
-    y = targets.observations
-    _, cv_indices = split_cfold(y.shape[0], nfolds, seed)
+def local_crossval(x_all, targets_all, config):
+    model = modelmaps[config.algorithm](**config.algorithm_options)
+    y = targets_all.observations
+    _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
 
     # Split folds over workers
-    fold_list = np.arange(nfolds)
+    fold_list = np.arange(config.folds)
     fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
 
     y_pred = {}
@@ -110,13 +96,13 @@ def cross_validate(X, targets, algorithm, nfolds=10, algorithm_params=None,
         y_k_train = y[train_mask]
 
         # Extra fields
-        fields_train = {f: v[train_mask] for f, v in targets.fields.items()}
-        fields_pred = {f: v[test_mask] for f, v in targets.fields.items()}
+        fields_train = {f: v[train_mask] for f, v in targets_all.fields.items()}
+        fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
 
         # Train on this fold
-        apply_multiple_masked(model.fit, data=(X[train_mask], y_k_train),
+        apply_multiple_masked(model.fit, data=(x_all[train_mask], y_k_train),
                               kwargs={'fields': fields_train})
-        y_k_pred = predict(X[test_mask], model, fields=fields_pred)
+        y_k_pred = predict(x_all[test_mask], model, fields=fields_pred)
         y_k_test = y[test_mask]
 
         y_pred[fold] = y_k_pred
@@ -130,8 +116,8 @@ def cross_validate(X, targets, algorithm, nfolds=10, algorithm_params=None,
     scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
     result = None
     if mpiops.chunk_index == 0:
-        y_true = np.concatenate([y_true[i] for i in range(nfolds)])
-        y_pred = np.concatenate([y_pred[i] for i in range(nfolds)])
+        y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
         scores = {m: np.mean([d[m] for d in scores.values()])
                   for m in valid_metrics}
