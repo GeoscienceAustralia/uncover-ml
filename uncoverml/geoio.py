@@ -225,12 +225,12 @@ class RasterioImageSource(ImageSource):
         m = np.ma.MaskedArray(data=np.ascontiguousarray(d.data),
                               mask=np.ascontiguousarray(d.mask))
 
-        # uniform mask format
-        if np.ma.count_masked(m) == 0:
-            m = np.ma.masked_array(data=m.data,
-                                   mask=np.zeros_like(m.data, dtype=bool))
+        # # uniform mask format
+        # if np.ma.count_masked(m) == 0:
+        #     m = np.ma.masked_array(data=m.data,
+        #                            mask=np.zeros_like(m.data, dtype=bool))
         assert m.data.ndim == 3
-        assert m.mask.ndim == 3
+        assert m.mask.ndim == 3 or m.mask.ndim == 0
         return m
 
 

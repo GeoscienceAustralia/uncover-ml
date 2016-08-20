@@ -18,7 +18,7 @@ from uncoverml import datatypes
 from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml import pipeline
-from uncoverml.transforms import TransformSet
+from uncoverml import transforms
 from uncoverml.validation import lower_is_better
 
 # Logging
@@ -81,7 +81,13 @@ def run_pipeline(config):
     image_chunks = image_features(targets, config)
 
     # load the transforms
-    transform_set = TransformSet()
+    transform_set = transforms.TransformSet()
+
+    # transform_set.image_transforms.append(transforms.OneHotTransform())
+    # transform_set.imputer = transforms.MeanImputer()
+    # transform_set.global_transforms.append(transforms.CentreTransform())
+    # transform_set.global_transforms.append(transforms.StandardiseTransform())
+    # try out some transforms, see if they actually work
 
     if config.rank_features:
         measures, features, scores = local_rank_features(image_chunks, targets,

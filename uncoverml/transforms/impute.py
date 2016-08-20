@@ -2,6 +2,8 @@ import logging
 
 import numpy as np
 
+from uncoverml import mpiops
+
 log = logging.getLogger(__name__)
 
 
@@ -9,11 +11,11 @@ def impute_with_mean(x, mean):
 
     # No missing data
     if np.ma.count_masked(x) == 0:
-        return
+        return x
 
     for i, m in enumerate(mean):
         x.data[:, i][x.mask[:, i]] = m
-    x.mask *= False
+    x = np.ma.MaskedArray(data=x.data, mask=False)
     return x
 
 

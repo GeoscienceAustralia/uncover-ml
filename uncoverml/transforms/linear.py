@@ -29,6 +29,8 @@ class StandardiseTransform:
         if zero_mask.sum() > 0:
             x = x[:, ~zero_mask]
             sd = self.sd[~zero_mask]
+        else:
+            sd = self.sd
         x /= sd
         return x
 

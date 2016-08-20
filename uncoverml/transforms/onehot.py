@@ -39,40 +39,51 @@ def compute_unique_values(x, max_onehot_dims):
     x_sets = None
     # check data is okay
     if x.dtype == np.dtype('float32') or x.dtype == np.dtype('float64'):
-        log.warn("Cannot use one-hot for floating point data -- ignoring")
+        log.info("Ignoring float data")
     else:
         local_sets = sets(x)
         full_sets = mpiops.comm.allreduce(local_sets, op=mpiops.unique_op)
         total_dims = np.sum([len(k) for k in full_sets])
-        log.info("Total features from one-hot encoding: {}".format(
-            total_dims))
+        log.info("Total features: {}".format(total_dims))
         if total_dims <= max_onehot_dims:
             x_sets = full_sets
         else:
-            log.warn("Too many distinct values for one-hot encoding.")
+            log.warn("Too many unique features: ignoring")
     return x_sets
 
 
 def one_hot(x, x_set):
-    assert x.data.shape == x.mask.shape
+    assert x.ndim == 4  # points, patch_x, patch_y, channel
     out_dim_sizes = np.array([k.shape[0] for k in x_set])
     # The index points in the output array for each input dimension
     indices = np.hstack((np.array([0]), np.cumsum(out_dim_sizes)))
     total_dims = np.sum(out_dim_sizes)
-    n = x.shape[0]
-    out = np.empty((n, total_dims), dtype=float)
+    out_shape = x.shape[0:3] + (total_dims,)
+    out = np.empty(out_shape, dtype=float)
     out.fill(-0.5)
-    out_mask = np.zeros((n, total_dims), dtype=bool)
 
     for dim_idx, dim_set in enumerate(x_set):
-        dim_in = x[:, dim_idx]
-        dim_mask = x.mask[:, dim_idx]
-        dim_out = out[:, indices[dim_idx]:indices[dim_idx + 1]]
-        dim_out_mask = out_mask[:, indices[dim_idx]:indices[dim_idx + 1]]
-        dim_out_mask[:] = dim_mask[:, np.newaxis]
+        # input data
+        dim_in = x.data[..., dim_idx]
+
+        # appropriate parts of the output_array
+        dim_out = out[..., indices[dim_idx]:indices[dim_idx + 1]]
+
+        # compute the one-hot values
         for i, val in enumerate(dim_set):
-            dim_out[:, i][dim_in == val] = 0.5
-    result = np.ma.array(data=out, mask=out_mask)
+            dim_out[..., i][dim_in == val] = 0.5
+
+    if x.mask.ndim != 0:  # all false
+        out_mask = np.zeros(out_shape, dtype=bool)
+        for dim_idx, dim_set in enumerate(x_set):
+            dim_mask = x.mask[..., dim_idx]
+            dim_out_mask = out_mask[..., indices[dim_idx]:indices[dim_idx + 1]]
+            # broadcast the mask
+            dim_out_mask[:] = dim_mask[..., np.newaxis]
+    else:
+        out_mask = False
+
+    result = np.ma.MaskedArray(data=out, mask=out_mask)
     return result
 
 
@@ -83,5 +94,7 @@ class OneHotTransform:
     def __call__(self, x):
         if self.x_sets is None:
             self.x_sets = compute_unique_values(x, df.max_onehot_dims)
-        x = one_hot(x, self.x_sets)
+        # x_sets may still be none becasue there are too many unique values
+        if self.x_sets is not None:
+            x = one_hot(x, self.x_sets)
         return x

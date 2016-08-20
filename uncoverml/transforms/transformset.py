@@ -8,28 +8,35 @@ from uncoverml import mpiops
 log = logging.getLogger(__name__)
 
 
-def build_feature_vector(image_chunks):
-    # flatten image patches
-    image_chunks = {k: v.reshape(v.shape[0], -1)
-                    for k, v in image_chunks.items()}
+# def build_feature_vector(image_chunks):
+#     # flatten image patches
+#     image_chunks = {k: v.reshape(v.shape[0], -1)
+#                     for k, v in image_chunks.items()}
 
-    # size up x
-    image_0 = next(iter(image_chunks.keys()))
-    n_features = image_chunks[image_0].shape[0]
-    ndims = np.sum([x.shape[1] for x in image_chunks.values()])
-    # create the memory
-    x = np.empty((n_features, ndims), dtype=float)
-    mask = np.empty((n_features, ndims), dtype=bool)
-    # transfer in the data
-    start_idx = 0
+#     # size up x
+#     image_0 = next(iter(image_chunks.keys()))
+#     n_features = image_chunks[image_0].shape[0]
+#     ndims = np.sum([x.shape[1] for x in image_chunks.values()])
+#     # create the memory
+#     x = np.empty((n_features, ndims), dtype=float)
+#     mask = np.empty((n_features, ndims), dtype=bool)
+#     # transfer in the data
+#     start_idx = 0
+#     for k, im in image_chunks.items():
+#         ndims_im = im.shape[1]
+#         end_idx = start_idx + ndims_im
+#         x[:, start_idx:end_idx] = im.data
+#         mask[:, start_idx:end_idx] = im.mask
+#         start_idx += ndims_im
+#     result = np.ma.MaskedArray(data=x, mask=mask)
+#     return result
+
+
+def build_feature_vector(image_chunks):
     for k, im in image_chunks.items():
-        ndims_im = im.shape[1]
-        end_idx = start_idx + ndims_im
-        x[:, start_idx:end_idx] = im.data
-        mask[:, start_idx:end_idx] = im.mask
-        start_idx += ndims_im
-    result = np.ma.MaskedArray(data=x, mask=mask)
-    return result
+        image_chunks[k] = im.reshape(im.shape[0], -1)
+    x = np.ma.concatenate(image_chunks.values(), axis=1)
+    return x
 
 
 def missing_percentage(x):
