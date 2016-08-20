@@ -25,7 +25,7 @@ def extract_subchunks(image_source, subchunk_index, n_subchunks, settings):
     equiv_chunk_index = n_subchunks * mpiops.chunk_index + subchunk_index
     image = Image(image_source, equiv_chunk_index,
                   equiv_chunks, settings.patchsize)
-    x = patch.load(image, settings.patchsize, targets=None)
+    x = patch.all_patches(image, settings.patchsize)
     x = extract_transform(x, settings.x_sets)
     return x
 
@@ -50,7 +50,7 @@ def extract_features(image_source, targets, settings, n_subchunks):
         return inside
 
     my_image_chunks = [k for k in image_chunks if has_targets(k)]
-    my_x = [patch._patches_at_target(im, settings.patchsize, targets)
+    my_x = [patch.patches_at_target(im, settings.patchsize, targets)
             for im in my_image_chunks]
     x = np.ma.concatenate(my_x, axis=0)
     assert x.shape[0] == targets.observations.shape[0]

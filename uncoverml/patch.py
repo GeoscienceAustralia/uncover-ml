@@ -117,7 +117,7 @@ def _image_to_data(image):
     return data, mask, data_dtype
 
 
-def _all_patches(image, patchsize):
+def all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
     patches = grid_patches(data, patchsize)
     patch_mask = grid_patches(mask, patchsize)
@@ -133,7 +133,7 @@ def _all_patches(image, patchsize):
 #     return result
 
 
-def _patches_at_target(image, patchsize, targets):
+def patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
     lonlats = targets.positions
