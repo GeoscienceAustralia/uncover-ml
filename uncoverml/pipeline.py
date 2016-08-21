@@ -11,13 +11,12 @@ from uncoverml.validation import calculate_validation_scores, split_cfold
 log = logging.getLogger(__name__)
 
 
-def extract_subchunks(image_source, subchunk_index, n_subchunks, settings):
+def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = n_subchunks * mpiops.chunk_index + subchunk_index
     image = Image(image_source, equiv_chunk_index,
-                  equiv_chunks, settings.patchsize)
-    x = patch.all_patches(image, settings.patchsize)
-    # x = extract_transform(x, settings.x_sets)
+                  equiv_chunks, patchsize)
+    x = patch.all_patches(image, patchsize)
     return x
 
 
@@ -45,6 +44,13 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
             for im in my_image_chunks]
     x = np.ma.concatenate(my_x, axis=0)
     assert x.shape[0] == targets.observations.shape[0]
+    return x
+
+
+def transform_features(feature_sets, transform_sets):
+    # apply feature transforms
+    transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
+    x = np.ma.concatenate(transformed_vectors, axis=1)
     return x
 
 

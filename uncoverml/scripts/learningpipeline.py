@@ -99,13 +99,6 @@ def gather_features(x):
     return x_all
 
 
-def transform_features(feature_sets, transform_sets):
-    # apply feature transforms
-    transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
-    x = np.ma.concatenate(transformed_vectors, axis=1)
-    return x
-
-
 def run_pipeline(config):
 
     # Make the targets
@@ -127,7 +120,7 @@ def run_pipeline(config):
         mpiops.run_once(export_feature_ranks, measures, features,
                         scores, config)
 
-    x = transform_features(image_chunk_sets, transform_sets)
+    x = pipeline.transform_features(image_chunk_sets, transform_sets)
     # learn the model
     # local models need all data
     x_all = gather_features(x)

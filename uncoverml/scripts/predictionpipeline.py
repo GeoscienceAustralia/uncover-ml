@@ -10,8 +10,6 @@ from os import path
 from glob import glob
 import sys
 
-import numpy as np
-
 from uncoverml import image
 from uncoverml import geoio
 from uncoverml import pipeline
@@ -20,39 +18,52 @@ from uncoverml import pipeline
 log = logging.getLogger(__name__)
 
 
-def extract(subchunk_index, n_subchunks, image_settings, config):
-    # Extract feats for training
-    tifs = glob(path.join(config.data_dir, "*.tif"))
-    if len(tifs) == 0:
-        log.fatal("No geotiffs found in {}!".format(config.data_dir))
-        sys.exit(-1)
+def image_subchunks(subchunk_index, n_subchunks, config):
+    # fake it for the moment
+    results = []
+    for i in range(2):
+        # Extract feats for training
+        tifs = glob(path.join(config.data_dir, "*.tif"))
+        n_on_2 = int(round(len(tifs)/2))
+        if i == 0:
+            tifs = tifs[0:n_on_2]
+        else:
+            tifs = tifs[n_on_2:]
 
-    extracted_chunks = {}
-    for tif in tifs:
-        name = path.basename(tif)
-        settings = image_settings[name]
-        log.info("Processing {}.".format(name))
-        image_source = geoio.RasterioImageSource(tif)
-        x = pipeline.extract_subchunks(image_source, subchunk_index,
-                                       n_subchunks, settings)
-        d = {"x": x}
-        extracted_chunks[name] = d
-    result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
-    return result
+        extracted_chunks = {}
+        for tif in tifs:
+            name = path.basename(tif)
+            log.info("Processing {}.".format(name))
+            image_source = geoio.RasterioImageSource(tif)
+            x = pipeline.extract_subchunks(image_source, subchunk_index,
+                                           n_subchunks, config.patchsize)
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(extracted_chunks.items(),
+                                              key=lambda t: t[0]))
+        results.append(extracted_chunks)
+    return results
+
+
+def get_image_spec(model, config):
+    # temp workaround, we should have an image spec to check against
+    nchannels = len(model.get_predict_tags())
+    imagelike = glob(path.join(config.data_dir, "*.tif"))[0]
+    template_image = image.Image(geoio.RasterioImageSource(imagelike))
+    eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
+    eff_bbox = template_image.patched_bbox(config.patchsize)
+    return eff_shape, eff_bbox
 
 
 def render_partition(model, subchunk, n_subchunks, image_out,
-                     image_settings, compose_settings, config):
-        extracted_chunks = extract(subchunk, n_subchunks,
-                                   image_settings, config)
-        x = np.ma.concatenate([v["x"] for v in extracted_chunks.values()],
-                              axis=1)
-        x_out, compose_settings = pipeline.compose_features(x,
-                                                            compose_settings)
+                     transform_sets, config):
+
+        extracted_chunk_sets = image_subchunks(subchunk, n_subchunks, config)
+        x = pipeline.transform_features(extracted_chunk_sets, transform_sets)
+
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 
-        y_star = pipeline.predict(x_out, model, interval=config.quantiles)
+        y_star = pipeline.predict(x, model, interval=config.quantiles)
         image_out.write(y_star, subchunk)
 
 
@@ -63,31 +74,22 @@ def run_pipeline(config):
     with open(outfile_state, 'rb') as f:
         state_dict = pickle.load(f)
 
-    image_settings = state_dict["image_settings"]
-    compose_settings = state_dict["compose_settings"]
     model = state_dict["model"]
-
-    nchannels = len(model.get_predict_tags())
-    print("pipeline says we'll get {} channels".format(nchannels))
-
-    # temp workaround
-    imagelike = glob(path.join(config.data_dir, "*.tif"))[0]
-    template_image = image.Image(geoio.RasterioImageSource(imagelike))
-    eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
-    eff_bbox = template_image.patched_bbox(config.patchsize)
+    transform_sets = state_dict["transform_sets"]
+    image_shape, image_bbox = get_image_spec(model, config)
 
     n_subchunks = max(1, round(1.0 / config.memory_fraction))
     log.info("Dividing node data into {} partitions".format(n_subchunks))
 
     outfile_tif = config.name + "_output_" + config.algorithm
-    image_out = geoio.ImageWriter(eff_shape, eff_bbox, outfile_tif,
+    image_out = geoio.ImageWriter(image_shape, image_bbox, outfile_tif,
                                   n_subchunks, config.output_dir,
                                   band_tags=model.get_predict_tags())
 
     for i in range(n_subchunks):
-        log.info("starting to render partition {}".format(i))
-        render_partition(model, i, n_subchunks, image_out, image_settings,
-                         compose_settings, config)
+        log.info("starting to render partition {}".format(i+1))
+        render_partition(model, i, n_subchunks, image_out, transform_sets,
+                         config)
     log.info("Finished!")
 
 
