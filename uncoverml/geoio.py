@@ -6,6 +6,7 @@ import time
 import json
 import pickle
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 
 import rasterio
 import numpy as np
@@ -138,16 +139,6 @@ def write_targets(targets, filename):
     points_to_hdf(filename, fielddict)
 
 
-def load_targets(filename):
-    fields = ['Targets_sorted', 'Positions_sorted', 'FoldIndices_sorted']
-    fielddict = points_from_hdf(filename, fields)
-    positions = fielddict['Positions_sorted']
-    observations = fielddict['Targets_sorted']
-    folds = fielddict['FoldIndices_sorted']
-    result = datatypes.CrossValTargets(positions, observations, folds)
-    return result
-
-
 class ImageSource(metaclass=ABCMeta):
 
     @abstractmethod
@@ -235,12 +226,12 @@ class RasterioImageSource(ImageSource):
         m = np.ma.MaskedArray(data=np.ascontiguousarray(d.data),
                               mask=np.ascontiguousarray(d.mask))
 
-        # uniform mask format
-        if np.ma.count_masked(m) == 0:
-            m = np.ma.masked_array(data=m.data,
-                                   mask=np.zeros_like(m.data, dtype=bool))
+        # # uniform mask format
+        # if np.ma.count_masked(m) == 0:
+        #     m = np.ma.masked_array(data=m.data,
+        #                            mask=np.zeros_like(m.data, dtype=bool))
         assert m.data.ndim == 3
-        assert m.mask.ndim == 3
+        assert m.mask.ndim == 3 or m.mask.ndim == 0
         return m
 
 
@@ -434,6 +425,38 @@ def load_shapefile(filename, targetfield):
     return label_coords, val, othervals
 
 
+def load_targets(shapefile, targetfield):
+    """
+    Loads the shapefile onto node 0 then distributes it across all
+    available nodes
+    """
+    if mpiops.chunk_index == 0:
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield)
+        # sort by y then x
+        ordind = np.lexsort(lonlat.T)
+        vals = vals[ordind]
+        lonlat = lonlat[ordind]
+        for k, v in othervals.items():
+            othervals[k] = v[ordind]
+
+        lonlat = np.array_split(lonlat, mpiops.chunks)
+        vals = np.array_split(vals, mpiops.chunks)
+        split_othervals = {k: np.array_split(v, mpiops.chunks)
+                           for k, v in othervals.items()}
+        othervals = [{k: v[i] for k, v in split_othervals.items()}
+                     for i in range(mpiops.chunks)]
+    else:
+        lonlat, vals, othervals = None, None, None
+
+    lonlat = mpiops.comm.scatter(lonlat, root=0)
+    vals = mpiops.comm.scatter(vals, root=0)
+    othervals = mpiops.comm.scatter(othervals, root=0)
+    log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
+                                                           lonlat.shape[0]))
+    targets = datatypes.Targets(lonlat, vals, othervals=othervals)
+    return targets
+
+
 class ImageWriter:
     def __init__(self, shape, bbox, name, n_subchunks, outputdir,
                  band_tags=None):
@@ -495,11 +518,25 @@ class ImageWriter:
         mpiops.comm.barrier()
 
 
+def _iterate_sources(f, config):
+
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = os.path.basename(tif)
+            log.info("Processing {}.".format(name))
+            image_source = RasterioImageSource(tif)
+            x = f(image_source)
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
+
 def export_scores(scores, y, Ey, filename):
 
-    log.info("{} Scores".format(filename.rstrip(".json")))
-    for metric, score in scores.items():
-        log.info("{} = {}".format(metric, score))
 
     with open(filename, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)
