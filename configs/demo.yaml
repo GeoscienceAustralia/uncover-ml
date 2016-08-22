@@ -1,5 +1,4 @@
 
-experiment: my_run
 patchsize: 0
 memory_fraction: 0.5
 
