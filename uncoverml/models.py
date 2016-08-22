@@ -28,6 +28,11 @@ from uncoverml.cubist import Cubist
 #
 
 class BasisMakerMixin():
+    """
+    Mixin class for easily creating approximate kernel functions for revrand.
+
+    This is primarily used for the approximate Gaussian process algorithms.
+    """
 
     def fit(self, X, y, *args, **kwargs):
 
@@ -144,8 +149,31 @@ class GLMPredictProbaMixin():
 
 
 class MutualInfoMixin():
+    """
+    Mixin class for providing predictive entropy reduction functionality to the
+    StandardLinearModel class (only).
+    """
 
     def entropy_reduction(self, X):
+        """
+        Predictice entropy reduction (a.k.a mutual information).
+
+        Estimate the reduction in the posterior distribution's entropy (i.e.
+        model uncertainty reduction) as a result of including a particular
+        observation.
+
+        Parameters
+        ----------
+        X: ndarray
+            (Ns, d) array query dataset (Ns samples, d dimensions).
+
+        Returns
+        -------
+        MI: ndarray
+            Prediction of mutual information (expected reduiction in posterior
+            entrpy) assocated with each query input. The units are 'nats', and
+            the shape of the returned array is (Ns,).
+        """
 
         Phi = self.basis.transform(X, *atleast_list(self.hypers))
         pCp = [p.dot(self.covariance).dot(p.T) for p in Phi]
@@ -573,6 +601,18 @@ class RandomForestRegressor(RFR):
 #
 
 def transform_targets(Learner):
+    """
+    Factory function that add's target transformation capabiltiy to compatible
+    scikit learn objects.
+
+    Look at the ``transformers.py`` module for more information on valid target
+    transformers.
+
+    Example
+    -------
+    >>> svr = transform_targets(SVR)(target_transform='Standardise', gamma=0.1)
+
+    """
 
     class TransformedLearner(Learner):
         # NOTE: All of these explicitly ignore **kwargs on purpose. All generic
@@ -635,44 +675,94 @@ def transform_targets(Learner):
 #
 
 class SVRTransformed(transform_targets(SVR), TagsMixin):
+    """
+    Support vector machine.
+
+    http://scikit-learn.org/dev/modules/svm.html#svm
+    """
     pass
 
 
 class LinearRegTransformed(transform_targets(LinearReg), TagsMixin):
+    """
+    Bayesian linear regression.
+
+    http://nicta.github.io/revrand/slm.html
+    """
     pass
 
 
 class RandomForestTransformed(transform_targets(RandomForestRegressor),
                               TagsMixin):
+    """
+    Random forest regression.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor
+    """
     pass
 
 
 class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
+    """
+    Approximate Gaussian process.
+
+    http://nicta.github.io/revrand/slm.html
+    """
     pass
 
 
 class ARDRegressionTransformed(transform_targets(ARDRegression), TagsMixin):
+    """
+    ARD regression.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.linear_model.ARDRegression.html#sklearn.linear_model.ARDRegression
+    """
     pass
 
 
 class DecisionTreeTransformed(transform_targets(DecisionTreeRegressor),
                               TagsMixin):
+    """
+    Decision tree regression.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.tree.DecisionTreeRegressor.html#sklearn.tree.DecisionTreeRegressor
+    """
     pass
 
 
 class ExtraTreeTransformed(transform_targets(ExtraTreeRegressor), TagsMixin):
+    """
+    Extremely randomised tree regressor.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.tree.ExtraTreeRegressor.html#sklearn.tree.ExtraTreeRegressor
+    """
     pass
 
 
 class SGDLinearRegTransformed(transform_targets(SGDLinearReg), TagsMixin):
+    """
+    Baysian linear regression with stochastic gradients.
+
+    http://nicta.github.io/revrand/glm.html
+    """
     pass
 
 
 class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
+    """
+    Approximate Gaussian processes with stochastic gradients.
+
+    http://nicta.github.io/revrand/glm.html
+    """
     pass
 
 
 class CubistTransformed(transform_targets(Cubist), TagsMixin):
+    """
+    Cubist regression (wrapper).
+
+    https://www.rulequest.com/cubist-info.html
+    """
     pass
 
 
@@ -742,6 +832,7 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 # Static module properties
 #
 
+# Add all models available to the learning pipeline here!
 modelmaps = {'randomforest': RandomForestTransformed,
              'bayesreg': LinearRegTransformed,
              'sgdbayesreg': SGDLinearRegTransformed,
@@ -756,6 +847,7 @@ modelmaps = {'randomforest': RandomForestTransformed,
              }
 
 
+# Add all kernels for the approximate Gaussian processes here!
 basismap = {'rbf': RandomRBF,
             'laplace': RandomLaplace,
             'cauchy': RandomCauchy,
