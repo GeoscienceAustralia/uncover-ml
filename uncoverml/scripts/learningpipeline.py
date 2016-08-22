@@ -7,9 +7,7 @@ import json
 import logging
 import sys
 import pickle
-from collections import OrderedDict
-from os import path, mkdir
-from glob import glob
+from os import path
 
 import numpy as np
 
@@ -25,48 +23,14 @@ from uncoverml.config import Config
 log = logging.getLogger(__name__)
 
 
-def make_proc_dir(dirname):
-    if not path.exists(dirname):
-        mkdir(dirname)
-        log.info("Made processed dir")
-
-
-# def image_transform_sets(config):
-#     transform_sets = []
-#     for i in range(2):
-#         # fake it for now
-#         # load the transforms
-#         transform_set = transforms.TransformSet()
-
-#         # transform_set.image_transforms.append(transforms.OneHotTransform())
-#         transform_set.imputer = transforms.MeanImputer()
-#         transform_set.global_transforms.append(transforms.CentreTransform())
-#         transform_set.global_transforms.append(
-#             transforms.StandardiseTransform())
-#         # transform_set.global_transforms.append(
-#         # transforms.WhitenTransform(keep_fraction=0.5))
-#         transform_sets.append(transform_set)
-#     return transform_sets
-
-
 def image_feature_sets(targets, config):
 
-    results = []
-    for s in config.feature_sets:
-        extracted_chunks = {}
-        for tif in s.files:
-            name = path.basename(tif)
-            log.info("Processing {}.".format(name))
-            image_source = geoio.RasterioImageSource(tif)
-            x = pipeline.extract_features(image_source, targets,
-                                          config.n_subchunks,
-                                          config.patchsize)
-            extracted_chunks[name] = x
-        extracted_chunks = OrderedDict(sorted(
-            extracted_chunks.items(), key=lambda t: t[0]))
-
-        results.append(extracted_chunks)
-    return results
+    def f(image_source):
+        r = pipeline.extract_features(image_source, targets,
+                                      config.n_subchunks, config.patchsize)
+        return r
+    result = geoio._iterate_sources(f, config)
+    return result
 
 
 def gather_targets(targets):
@@ -117,7 +81,7 @@ def run_pipeline(config):
         mpiops.run_once(export_scores, crossval_results, config)
 
     model = pipeline.local_learn_model(x, targets, config)
-    mpiops.run_once(export_model, model, transform_sets, config)
+    mpiops.run_once(export_model, model, config)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
@@ -185,12 +149,11 @@ def export_feature_ranks(measures, features, scores, config):
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 
-def export_model(model, transform_sets, config):
+def export_model(model, config):
     outfile_state = path.join(config.output_dir,
-                              config.name + "_" + config.algorithm + ".state")
+                              config.name + ".model")
     state_dict = {"model": model,
-                  "transform_sets": transform_sets}
-
+                  "config": config}
     with open(outfile_state, 'wb') as f:
         pickle.dump(state_dict, f)
 
@@ -198,8 +161,7 @@ def export_model(model, transform_sets, config):
 def export_scores(crossval_output, config):
 
     outfile_scores = path.join(config.output_dir,
-                               config.name + "_" + config.algorithm +
-                               "_scores.json")
+                               config.name + "_scores.json")
     geoio.export_scores(crossval_output.scores,
                         crossval_output.y_true,
                         crossval_output.y_pred,

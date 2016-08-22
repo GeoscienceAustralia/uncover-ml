@@ -6,6 +6,7 @@ import time
 import json
 import pickle
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 
 import rasterio
 import numpy as np
@@ -516,6 +517,23 @@ class ImageWriter:
                     f.write(data[i:i+1], window=window)
         mpiops.comm.barrier()
 
+
+def _iterate_sources(f, config):
+
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = os.path.basename(tif)
+            log.info("Processing {}.".format(name))
+            image_source = RasterioImageSource(tif)
+            x = f(image_source)
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
 
 def export_scores(scores, y, Ey, filename):
 

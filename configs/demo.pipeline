@@ -9,6 +9,7 @@ features:
     files:
       - directory: /home/lb/data/GA-cover
     transforms:
+      - centre
       - standardise
     imputation: none
 
