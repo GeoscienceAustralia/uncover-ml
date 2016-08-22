@@ -28,7 +28,6 @@ Contents:
    mpiops
    patch
    pipeline
-   stats
    transforms
    validation
 
