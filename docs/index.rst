@@ -20,10 +20,16 @@ Contents:
 
    projectreport
 
+   datatypes
    geoio
-   patch
-   stats
+   image
+   likelihoods
    models
+   mpiops
+   patch
+   pipeline
+   stats
+   transforms
    validation
 
    scripts
