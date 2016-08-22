@@ -20,6 +20,7 @@ from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 import uncoverml.transforms as transforms
 from uncoverml.likelihoods import Switching
+from uncoverml.cubist import Cubist
 
 
 #
@@ -671,6 +672,10 @@ class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
     pass
 
 
+class CubistTransformed(transform_targets(Cubist), TagsMixin):
+    pass
+
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -746,6 +751,7 @@ modelmaps = {'randomforest': RandomForestTransformed,
              'ardregression': ARDRegressionTransformed,
              'decisiontree': DecisionTreeTransformed,
              'extratree': ExtraTreeTransformed,
+             'cubist': CubistTransformed,
              'depthregress': DepthRegressor,
              }
 

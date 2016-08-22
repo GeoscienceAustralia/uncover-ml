@@ -15,7 +15,8 @@ from os import path
 # please change the following paths to suit your needs
 
 # Location of data
-data_dir = path.join(path.expanduser("~"), "data/GA-cover")
+data_dir = path.relpath('../GA-cover')
+# data_dir = path.join(path.expanduser("~"), "data/GA-cover")
 # data_dir = path.join(path.expanduser("~"), "data/GA-depth")
 # data_dir = "/short/ge3/jrw547/Murray_datasets"
 # data_dir = "/short/ge3/jrw547/GA-cover"
@@ -59,7 +60,7 @@ patchsize = 0
 impute = True
 
 # Transform the data? options are {whiten, standardise, centre, None}
-transform = 'None'
+transform = None
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.8
@@ -95,12 +96,14 @@ algdict = {
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 100},
+
+    # Cubist Linear regression trees
     'cubist': {
-        'invocation': "~/Code/uncover-ml/uncoverml/cubist/cubist",
+        'invocation': "~/Documents/spatial-inference/cubist/Cubist/cubist",
         'print_output': False,
         'unbiased': True,
         'max_rules': None,
-        'committee_members': 10,
+        'committee_members': 5,
     }
 }
 
@@ -109,16 +112,15 @@ algdict = {
 #
 
 # How much data to keep in memory at a time
-memory_fraction = 1. / 4
- 
+memory_fraction = 1.0
+
 # Name of the prediction algorithm
 # algorithm = 'svr'
-# algorithm = 'bayesreg'
+algorithm = 'bayesreg'
 # algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
-algorithm = 'cubist'
 
 # Quantiles
 quantiles = 0.95
