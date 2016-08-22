@@ -3,7 +3,6 @@ A pipeline for learning and validating models.
 """
 
 import copy
-import importlib.machinery
 import json
 import logging
 import sys
@@ -18,8 +17,9 @@ from uncoverml import datatypes
 from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml import pipeline
-from uncoverml import transforms
+# from uncoverml import transforms
 from uncoverml.validation import lower_is_better
+from uncoverml.config import Config
 
 # Logging
 log = logging.getLogger(__name__)
@@ -31,48 +31,35 @@ def make_proc_dir(dirname):
         log.info("Made processed dir")
 
 
-def image_transform_sets(config):
-    transform_sets = []
-    for i in range(2):
-        # fake it for now
-        # load the transforms
-        transform_set = transforms.TransformSet()
+# def image_transform_sets(config):
+#     transform_sets = []
+#     for i in range(2):
+#         # fake it for now
+#         # load the transforms
+#         transform_set = transforms.TransformSet()
 
-        # transform_set.image_transforms.append(transforms.OneHotTransform())
-        transform_set.imputer = transforms.MeanImputer()
-        transform_set.global_transforms.append(transforms.CentreTransform())
-        transform_set.global_transforms.append(
-            transforms.StandardiseTransform())
-        # transform_set.global_transforms.append(
-        # transforms.WhitenTransform(keep_fraction=0.5))
-        transform_sets.append(transform_set)
-    return transform_sets
+#         # transform_set.image_transforms.append(transforms.OneHotTransform())
+#         transform_set.imputer = transforms.MeanImputer()
+#         transform_set.global_transforms.append(transforms.CentreTransform())
+#         transform_set.global_transforms.append(
+#             transforms.StandardiseTransform())
+#         # transform_set.global_transforms.append(
+#         # transforms.WhitenTransform(keep_fraction=0.5))
+#         transform_sets.append(transform_set)
+#     return transform_sets
 
 
 def image_feature_sets(targets, config):
-    n_subchunks = max(1, round(1.0 / config.memory_fraction))
 
-    # fake it for the moment
     results = []
-    for i in range(2):
-        # Extract feats for training
-        tifs = glob(path.join(config.data_dir, "*.tif"))
-        n_on_2 = int(round(len(tifs)/2))
-        if i == 0:
-            tifs = tifs[0:n_on_2]
-        else:
-            tifs = tifs[n_on_2:]
-
-        if len(tifs) == 0:
-            log.fatal("No geotiffs found in {}!".format(config.data_dir))
-            sys.exit(-1)
-
+    for s in config.feature_sets:
         extracted_chunks = {}
-        for tif in tifs:
+        for tif in s.files:
             name = path.basename(tif)
             log.info("Processing {}.".format(name))
             image_source = geoio.RasterioImageSource(tif)
-            x = pipeline.extract_features(image_source, targets, n_subchunks,
+            x = pipeline.extract_features(image_source, targets,
+                                          config.n_subchunks,
                                           config.patchsize)
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
@@ -102,15 +89,14 @@ def gather_features(x):
 def run_pipeline(config):
 
     # Make the targets
-    shapefile = path.join(config.data_dir, config.target_file)
-    targets = geoio.load_targets(shapefile=shapefile,
-                                 targetfield=config.target_var)
+    targets = geoio.load_targets(shapefile=config.target_file,
+                                 targetfield=config.target_property)
     # We're doing local models at the moment
     targets_all = gather_targets(targets)
 
-    # keys for these two are the filenames
+    # Get the image chunks and their associated transforms
     image_chunk_sets = image_feature_sets(targets, config)
-    transform_sets = image_transform_sets(config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
 
     if config.rank_features:
         measures, features, scores = local_rank_features(image_chunk_sets,
@@ -120,7 +106,8 @@ def run_pipeline(config):
         mpiops.run_once(export_feature_ranks, measures, features,
                         scores, config)
 
-    x = pipeline.transform_features(image_chunk_sets, transform_sets)
+    x = pipeline.transform_features(image_chunk_sets, transform_sets,
+                                    config.final_transform)
     # learn the model
     # local models need all data
     x_all = gather_features(x)
@@ -145,6 +132,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
 
     for name in all_names:
         transform_sets_leaveout = copy.deepcopy(transform_sets)
+        final_transform_leaveout = copy.deepcopy(config.final_transform)
         image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
         for c in image_chunks_leaveout:
             if name in c:
@@ -154,8 +142,9 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         log.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
 
-        x = transform_features(image_chunks_leaveout,
-                               transform_sets_leaveout)
+        x = pipeline.transform_features(image_chunks_leaveout,
+                                        transform_sets_leaveout,
+                                        final_transform_leaveout)
         x_all = gather_features(x)
 
         results = pipeline.local_crossval(x_all, targets_all, config)
@@ -222,12 +211,7 @@ def main():
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
-    name = path.basename(config_filename).rstrip(".pipeline")
-    config = importlib.machinery.SourceFileLoader(
-        'config', config_filename).load_module()
-    if not hasattr(config, 'name'):
-        config.name = name
-    config.output_dir = path.abspath(config.output_dir)
+    config = Config(config_filename)
     run_pipeline(config)
 
 if __name__ == "__main__":

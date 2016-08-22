@@ -48,13 +48,30 @@ def missing_percentage(x):
 
 
 class TransformSet:
+    def __init__(self, imputer=None, transforms=None):
+            self.transforms = (transforms if transforms else [])
+            self.imputer = imputer
+
+    def __call__(self, x):
+        # impute
+        if self.imputer:
+            missing_percent = missing_percentage(x)
+            log.info("Imputing {}% missing data".format(missing_percent))
+            x = self.imputer(x)
+
+        # transforms
+        for t in self.transforms:
+            x = t(x)
+
+        return x
+
+
+class ImageTransformSet(TransformSet):
     def __init__(self, image_transforms=None, imputer=None,
                  global_transforms=None):
             self.image_transforms = (image_transforms if image_transforms
                                      else [])
-            self.imputer = imputer
-            self.global_transforms = (global_transforms if global_transforms
-                                      else [])
+            super().__init__(imputer, global_transforms)
 
     def __call__(self, image_chunks):
         transformed_chunks = copy.copy(image_chunks)
@@ -66,14 +83,5 @@ class TransformSet:
         # concatenate and floating point
         x = build_feature_vector(transformed_chunks)
 
-        # impute
-        if self.imputer:
-            missing_percent = missing_percentage(x)
-            log.info("Imputing {}% missing data".format(missing_percent))
-            x = self.imputer(x)
-
-        # global transforms
-        for t in self.global_transforms:
-            x = t(x)
-
+        x = super().__call__(x)
         return x

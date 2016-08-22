@@ -47,10 +47,11 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
     return x
 
 
-def transform_features(feature_sets, transform_sets):
+def transform_features(feature_sets, transform_sets, final_transform):
     # apply feature transforms
     transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
     x = np.ma.concatenate(transformed_vectors, axis=1)
+    x = final_transform(x)
     return x
 
 
@@ -62,7 +63,7 @@ class CrossvalInfo:
 
 
 def local_learn_model(x_all, targets_all, config):
-    model = modelmaps[config.algorithm](**config.algorithm_options)
+    model = modelmaps[config.algorithm](**config.algorithm_args)
     y = targets_all.observations
 
     if mpiops.chunk_index == 0:
@@ -74,7 +75,7 @@ def local_learn_model(x_all, targets_all, config):
 
 def local_crossval(x_all, targets_all, config):
     log.info("Validating with {} folds".format(config.folds))
-    model = modelmaps[config.algorithm](**config.algorithm_options)
+    model = modelmaps[config.algorithm](**config.algorithm_args)
     y = targets_all.observations
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
 
