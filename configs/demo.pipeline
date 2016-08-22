@@ -59,7 +59,7 @@ patchsize = 0
 impute = True
 
 # Transform the data? options are {whiten, standardise, centre, None}
-transform = 'standardise'
+transform = 'None'
 
 # Fraction of dimensions to keep *if* whitening
 pca_frac = 0.8
@@ -75,7 +75,7 @@ rank_features = False
 algdict = {
 
     # Bayesian linear regression
-    "bayesreg": {'target_transform': 'standardise'},
+    # "bayesreg": {'target_transform': 'standardise'},
     # "sgdbayesreg": {'target_transform': 'standardise', 'maxiter': 5000},
 
     # Approximate Gaussian process, for large scale data
@@ -95,7 +95,13 @@ algdict = {
 
     # Random forest regressor
     # "randomforest": {'n_estimators': 100},
-
+    'cubist': {
+        'invocation': "~/Code/uncover-ml/uncoverml/cubist/cubist",
+        'print_output': False,
+        'unbiased': True,
+        'max_rules': None,
+        'committee_members': 10,
+    }
 }
 
 #
@@ -103,15 +109,16 @@ algdict = {
 #
 
 # How much data to keep in memory at a time
-memory_fraction = 1.0
-
+memory_fraction = 1. / 4
+ 
 # Name of the prediction algorithm
 # algorithm = 'svr'
-algorithm = 'bayesreg'
+# algorithm = 'bayesreg'
 # algorithm = 'sgdbayesreg'
 # algorithm = 'approxgp'
 # algorithm = 'sgdapproxgp'
 # algorithm = 'randomforest'
+algorithm = 'cubist'
 
 # Quantiles
 quantiles = 0.95
