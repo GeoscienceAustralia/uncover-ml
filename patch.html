@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="Statistics Module" href="stats.html" />
-    <link rel="prev" title="Geometry file I/O Module" href="geoio.html" />
+    <link rel="next" title="Validation Module" href="validation.html" />
+    <link rel="prev" title="Models Module" href="models.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,10 +46,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="stats.html" title="Statistics Module"
+          <a href="validation.html" title="Validation Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="geoio.html" title="Geometry file I/O Module"
+          <a href="models.html" title="Models Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -65,7 +65,7 @@
 <p>Image patch extraction and windowing utilities.</p>
 <dl class="function">
 <dt id="uncoverml.patch.grid_patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">grid_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em>, <em>pstride=1</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.grid_patches" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">uncoverml.patch.</code><code class="descname">grid_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.grid_patches" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate (overlapping) patches from an image. This function extracts square
 patches from an image in an overlapping, dense grid.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -78,12 +78,14 @@ patches from an image in an overlapping, dense grid.</p>
 pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
 = 2 gives a 5x5 patch etc. The formula for calculating the full
 patch width is pwidth * 2 + 1.</li>
-<li><strong>pstride</strong> (<em>int, optional</em>) &#8211; the stride (in pixels) between successive patches.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><strong>patch</strong> (<em>ndarray</em>) &#8211; An image patch of shape (psize, psize, channels,), where
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patch</strong> &#8211; An image of shape (x, y, channels*psize*psize), where
 psize = pwidth * 2 + 1</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
 </td>
 </tr>
 </tbody>
@@ -99,18 +101,21 @@ psize = pwidth * 2 + 1</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>image</strong> (<em>ndarray</em>) &#8211; an array of shape (x, y) or (x, y, channels).</li>
-<li><strong>points</strong> (<em>ndarray</em>) &#8211; of shape (N, 2) where there are N points, each with an x and y
-coordinate of the patch centre within the image.</li>
+<li><strong>image</strong> (<em>ndarray</em>) &#8211; an array of shape (x, y, channels).</li>
 <li><strong>pwidth</strong> (<em>int</em>) &#8211; the half-width of the square patches to extract, in pixels. E.g.
 pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
 = 2 gives a 5x5 patch etc. The formula for calculating the full
 patch width is pwidth * 2 + 1.</li>
+<li><strong>points</strong> (<em>ndarray</em>) &#8211; of shape (N, 2) where there are N points, each with an x and y
+coordinate of the patch centre within the image.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><strong>patch</strong> (<em>ndarray</em>) &#8211; An image patch of shape (psize, psize, channels,), where
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patches</strong> &#8211; An image patch array of shape (N, psize, psize, channels), where
 psize = pwidth * 2 + 1</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
 </td>
 </tr>
 </tbody>
@@ -126,11 +131,11 @@ psize = pwidth * 2 + 1</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="geoio.html"
-                        title="previous chapter">Geometry file I/O Module</a></p>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter">Models Module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="stats.html"
-                        title="next chapter">Statistics Module</a></p>
+  <p class="topless"><a href="validation.html"
+                        title="next chapter">Validation Module</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -155,10 +160,10 @@ psize = pwidth * 2 + 1</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="stats.html" title="Statistics Module"
+          <a href="validation.html" title="Validation Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="geoio.html" title="Geometry file I/O Module"
+          <a href="models.html" title="Models Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>

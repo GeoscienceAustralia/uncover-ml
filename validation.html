@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
     <link rel="next" title="Command Line Scripts" href="scripts.html" />
-    <link rel="prev" title="Models Module" href="models.html" />
+    <link rel="prev" title="Image Patch Module" href="patch.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -49,7 +49,7 @@
           <a href="scripts.html" title="Command Line Scripts"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="patch.html" title="Image Patch Module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -63,38 +63,6 @@
   <div class="section" id="module-uncoverml.validation">
 <span id="validation-module"></span><h1>Validation Module<a class="headerlink" href="#module-uncoverml.validation" title="Permalink to this headline">¶</a></h1>
 <p>Scripts for validation</p>
-<dl class="function">
-<dt id="uncoverml.validation.gen_cfold_data">
-<code class="descclassname">uncoverml.validation.</code><code class="descname">gen_cfold_data</code><span class="sig-paren">(</span><em>X</em>, <em>Y</em>, <em>k=5</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.gen_cfold_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generator to divide a dataset k non-overlapping folds.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (<em>ndarray</em>) &#8211; (D, N) array where D is the dimensionality, and N is the number
-of samples (X can also be a 1-d vector).</li>
-<li><strong>Y</strong> (<em>ndarray</em>) &#8211; (N,) training target data vector of length N.</li>
-<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds for testing and training.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><ul class="first last simple">
-<li><strong>Xr</strong> (<em>ndarray</em>) &#8211; (D, ((k-1) * N / k)) array of training input data</li>
-<li><strong>Yr</strong> (<em>ndarray</em>) &#8211; ((k-1) * N / k,) array of training target data</li>
-<li><strong>Xs</strong> (<em>ndarray</em>) &#8211; (D, N / k) array of testing input data</li>
-<li><strong>Ys</strong> (<em>ndarray</em>) &#8211; (N / k,) array of testing target data</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">All of these are randomly split (but non-overlapping per call)</p>
-</div>
-</dd></dl>
-
 <dl class="function">
 <dt id="uncoverml.validation.split_cfold">
 <code class="descclassname">uncoverml.validation.</code><code class="descname">split_cfold</code><span class="sig-paren">(</span><em>nsamples</em>, <em>k=5</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.split_cfold" title="Permalink to this definition">¶</a></dt>
@@ -134,8 +102,8 @@ cvinds.</li>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="models.html"
-                        title="previous chapter">Models Module</a></p>
+  <p class="topless"><a href="patch.html"
+                        title="previous chapter">Image Patch Module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="scripts.html"
                         title="next chapter">Command Line Scripts</a></p>
@@ -166,7 +134,7 @@ cvinds.</li>
           <a href="scripts.html" title="Command Line Scripts"
              >next</a> |</li>
         <li class="right" >
-          <a href="models.html" title="Models Module"
+          <a href="patch.html" title="Image Patch Module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>

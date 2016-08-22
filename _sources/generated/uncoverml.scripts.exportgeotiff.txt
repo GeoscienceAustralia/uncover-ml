@@ -5,23 +5,9 @@ uncoverml.scripts.exportgeotiff
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      max_axis_0
-      min_axis_0
-      transform
-   
    
 
    
-   
-   .. rubric:: Classes
-
-   .. autosummary::
-   
-      partial
    
    
 

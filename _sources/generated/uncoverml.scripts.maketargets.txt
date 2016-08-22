@@ -5,12 +5,6 @@ uncoverml.scripts.maketargets
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      split_cfold
-   
    
 
    
