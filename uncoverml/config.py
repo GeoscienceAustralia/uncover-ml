@@ -56,7 +56,7 @@ class Config:
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
             s = yaml.load(f)
-        self.name = path.basename(yaml_file).rstrip(".pipeline")
+        self.name = path.basename(yaml_file).rstrip(".yaml")
         self.patchsize = s['patchsize']
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
         final_transform = s['preprocessing']
