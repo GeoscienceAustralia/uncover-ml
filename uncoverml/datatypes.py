@@ -44,6 +44,16 @@ class ComposeSettings(Settings):
         self.eigvecs = eigvecs
 
 
+class Targets:
+
+    def __init__(self, lonlat, vals, othervals=None):
+        self.fields = {}
+        self.observations = vals
+        self.positions = lonlat
+        if othervals is not None:
+            self.fields = othervals
+
+
 class CrossValTargets:
 
     def __init__(self, lonlat, vals, folds=10, seed=None,

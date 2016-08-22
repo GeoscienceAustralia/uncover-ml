@@ -76,35 +76,6 @@ def point_patches(image, pwidth, points):
     return output
 
 
-def _spacing(dimension, psize, pstride):
-    """
-    Calculate the patch spacings along a dimension of an image.
-    Returns the lowest-index corner of the patches for a given
-    dimension,  size and stride. Always returns at least 1 patch index
-    """
-    assert dimension >= psize  # otherwise a single patch won't fit
-    assert psize > 0
-    assert pstride > 0  # otherwise we'll never move along the image
-
-    offset = int(np.floor(float((dimension - psize) % pstride) / 2))
-    return range(offset, dimension - psize + 1, pstride)
-
-
-def _checkim(image):
-    if image.ndim == 3:
-        (Ih, Iw, Ic) = image.shape
-    elif image.ndim == 2:
-        (Ih, Iw) = image.shape
-        Ic = 1
-    else:
-        raise ValueError('image must be a 2D or 3D array')
-
-    if (Ih < 1) or (Iw < 1):
-        raise ValueError('image must be a 2D or 3D array')
-
-    return Ih, Iw, Ic
-
-
 def _image_to_data(image):
     """
     breaks up an image object into arrays suitable for sending to the
@@ -117,7 +88,7 @@ def _image_to_data(image):
     return data, mask, data_dtype
 
 
-def _all_patches(image, patchsize):
+def all_patches(image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
     patches = grid_patches(data, patchsize)
     patch_mask = grid_patches(mask, patchsize)
@@ -125,15 +96,7 @@ def _all_patches(image, patchsize):
     return result
 
 
-def load(image, patchsize, targets=None):
-    if targets is None:
-        result = _all_patches(image, patchsize)
-    else:
-        result = _patches_at_target(image, patchsize, targets)
-    return result
-
-
-def _patches_at_target(image, patchsize, targets):
+def patches_at_target(image, patchsize, targets):
     data, mask, data_dtype = _image_to_data(image)
 
     lonlats = targets.positions
@@ -148,6 +111,10 @@ def _patches_at_target(image, patchsize, targets):
         patch_array = np.ma.masked_array(data=patches, mask=patch_mask)
 
     else:
-        patch_array = None
+        patchwidth = 2 * patchsize + 1
+        shp = (0, patchwidth, patchwidth, data.shape[2])
+        patch_data = np.zeros(shp, dtype=data_dtype)
+        patch_mask = np.zeros(shp, dtype=bool)
+        patch_array = np.ma.masked_array(data=patch_data, mask=patch_mask)
 
     return patch_array
