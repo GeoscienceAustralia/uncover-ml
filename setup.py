@@ -78,6 +78,7 @@ setup(
         'scipy >= 0.15.1',
         'numpy >= 1.9.2',
         'wheel >= 0.29.0',
+        'PyYAML >= 3.11',
     ],
     extras_require={
         'demos': [
