@@ -17,12 +17,17 @@ class CentreTransform:
 
 class StandardiseTransform:
     def __init__(self):
+        self.mean = None
         self.sd = None
 
     def __call__(self, x):
 
-        if self.sd is None:
+        if self.sd is None or self.mean is None:
+            self.mean = mpiops.mean(x)
             self.sd = mpiops.sd(x)
+
+        # Centre
+        x -= self.mean
 
         # remove dimensions with no st. dev. (and hence no info)
         zero_mask = self.sd == 0.

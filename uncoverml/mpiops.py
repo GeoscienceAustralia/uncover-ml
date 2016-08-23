@@ -119,13 +119,18 @@ def sd(x):
 def outer(x):
     x_outer_local = np.ma.dot(x.T, x)
     out = comm.allreduce(x_outer_local)
+    still_masked = np.ma.count_masked(out)
+    if still_masked != 0:
+        raise ValueError("Can't compute outer product:"
+                         " completely missing columns!")
+    if hasattr(out, 'mask'):
+        out = out.data
     return out
 
 
 def covariance(x):
     x_mean = mean(x)
-    x_norm = (x - x_mean)
-    cov = outer(x_norm) / outer_count(x)
+    cov = outer(x - x_mean) / outer_count(x)
     return cov
 
 

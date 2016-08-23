@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from scipy.linalg import pinv
+from scipy.linalg import pinv, solve
 
 from uncoverml import mpiops
 
@@ -42,11 +42,28 @@ class GaussImputer:
         if self.mean is None or self.prec is None:
             self._make_impute_stats(x)
 
+        for i in range(len(x)):
+            x[i].mask = False
+            self._gaus_condition(x[i])
+
     def _make_impute_stats(self, x):
 
         self.mean = mpiops.mean(x)
         cov = mpiops.covariance(x)
-        self.prec = pinv(cov.data)  # SVD pseudo inverse
+        self.prec = pinv(cov)  # SVD pseudo inverse
 
     def _gaus_condition(self, xi):
-        pass
+
+        if np.ma.count_masked(xi) == 0:
+            return
+
+        a = xi.mask
+        b = ~xi.mask
+
+        xb = xi[b].data
+        ma = self.mean[a]
+        mb = self.mean[b]
+        Laa = self.prec[np.ix_(a, a)]
+        Lab = self.prec[np.ix_(a, b)]
+
+        xi[a] = ma - solve(Laa, Lab.dot(xb - mb), sym_pos=True)
