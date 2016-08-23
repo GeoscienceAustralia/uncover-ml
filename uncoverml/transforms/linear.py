@@ -37,19 +37,22 @@ class StandardiseTransform:
 
 class WhitenTransform:
     def __init__(self, keep_fraction):
+        self.mean = None
         self.eigvals = None
         self.eigvecs = None
         self.keep_fraction = keep_fraction
 
     def __call__(self, x):
 
-        if self.eigvals is None or self.eigvecs is None:
+        if self.mean is None or self.eigvals is None or self.eigvecs is None:
+            self.mean = mpiops.mean(x)
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)
+
         ndims = x.shape[1]
         # make sure 1 <= keepdims <= ndims
         keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
         mat = self.eigvecs[:, -keepdims:]
         vec = self.eigvals[np.newaxis, -keepdims:]
-        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+        x = np.ma.dot(x - self.mean, mat, strict=True) / np.sqrt(vec)
 
         return x

@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from scipy.linalg import pinv
 
 from uncoverml import mpiops
 
@@ -28,3 +29,24 @@ class MeanImputer:
             self.mean = mpiops.mean(x)
         x = impute_with_mean(x, self.mean)
         return x
+
+
+class GaussImputer:
+
+    def __init__(self):
+        self.mean = None
+        self.prec = None
+
+    def __call__(self, x):
+
+        if self.mean is None or self.prec is None:
+            self._make_impute_stats(x)
+
+    def _make_impute_stats(self, x):
+
+        self.mean = mpiops.mean(x)
+        cov = mpiops.covariance(x)
+        self.prec = pinv(cov.data)  # SVD pseudo inverse
+
+    def _gaus_condition(self, xi):
+        pass

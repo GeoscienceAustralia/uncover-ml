@@ -87,6 +87,15 @@ def count(x):
     return x_n
 
 
+def outer_count(x):
+
+    xnotmask = (~x.mask).astype(float)
+    x_n_outer_local = np.dot(xnotmask.T, xnotmask)
+    x_n_outer = comm.allreduce(x_n_outer_local)
+
+    return x_n_outer
+
+
 def mean(x):
     x_n = count(x)
     x_sum_local = np.ma.sum(x, axis=0)
@@ -107,11 +116,19 @@ def sd(x):
     return sd
 
 
-def eigen_decomposition(x):
-    x_n = count(x)
+def outer(x):
     x_outer_local = np.ma.dot(x.T, x)
-    outer = comm.allreduce(x_outer_local)
-    cov = outer / x_n
-    eigvals, eigvecs = np.linalg.eigh(cov)
-    return eigvals, eigvecs
+    out = comm.allreduce(x_outer_local)
+    return out
 
+
+def covariance(x):
+    x_mean = mean(x)
+    x_norm = (x - x_mean)
+    cov = outer(x_norm) / outer_count(x)
+    return cov
+
+
+def eigen_decomposition(x):
+    eigvals, eigvecs = np.linalg.eigh(covariance(x))
+    return eigvals, eigvecs
