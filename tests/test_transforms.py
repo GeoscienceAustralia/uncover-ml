@@ -1,5 +1,8 @@
+from scipy.stats import bernoulli
+
 from uncoverml.transforms.onehot import sets, one_hot
-from uncoverml.transforms.impute import impute_with_mean
+from uncoverml.transforms.impute import impute_with_mean, GaussImputer, \
+    NearestNeighboursImputer
 from uncoverml.transforms import target
 import numpy as np
 
@@ -29,6 +32,50 @@ def test_transform(get_transform_names):
 def test_sets(int_masked_array):
     r = sets(int_masked_array)
     assert(np.all(r == np.array([[2, 3, 4], [1, 3, 5]], dtype=int)))
+
+
+@pytest.fixture
+def make_missing_data():
+
+    N = 100
+
+    Xdata = np.random.randn(N, 2)
+    Xmask = bernoulli.rvs(p=0.3, size=(N, 2)).astype(bool)
+    Xmask[Xmask[:, 0], 1] = False  # Make sure we don't have all missing rows
+
+    X = np.ma.array(data=Xdata, mask=Xmask)
+
+    return X
+
+
+def test_GaussImputer(make_missing_data):
+
+    X = make_missing_data
+    Xcopy = X.copy()
+    imputer = GaussImputer()
+    Ximp = imputer(X)
+
+    assert np.all(~np.isnan(Ximp))
+    assert np.all(~np.isinf(Ximp))
+    assert Ximp.shape == Xcopy.shape
+    assert np.ma.count_masked(Ximp) == 0
+
+
+def test_NearestNeighbourImputer(make_missing_data):
+
+    X = make_missing_data
+    Xcopy = X.copy()
+    nn = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=False)
+
+    imputer = NearestNeighboursImputer(nodes=100)
+    imputer(nn)
+
+    Ximp = imputer(X)
+
+    assert np.all(~np.isnan(Ximp))
+    assert np.all(~np.isinf(Ximp))
+    assert Ximp.shape == Xcopy.shape
+    assert np.ma.count_masked(Ximp) == 0
 
 
 # def test_impute_with_mean(masked_array):

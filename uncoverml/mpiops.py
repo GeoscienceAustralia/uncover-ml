@@ -87,6 +87,15 @@ def count(x):
     return x_n
 
 
+def outer_count(x):
+
+    xnotmask = (~x.mask).astype(float)
+    x_n_outer_local = np.dot(xnotmask.T, xnotmask)
+    x_n_outer = comm.allreduce(x_n_outer_local)
+
+    return x_n_outer
+
+
 def mean(x):
     x_n = count(x)
     x_sum_local = np.ma.sum(x, axis=0)
@@ -107,11 +116,48 @@ def sd(x):
     return sd
 
 
-def eigen_decomposition(x):
-    x_n = count(x)
+def outer(x):
     x_outer_local = np.ma.dot(x.T, x)
-    outer = comm.allreduce(x_outer_local)
-    cov = outer / x_n
-    eigvals, eigvecs = np.linalg.eigh(cov)
+    out = comm.allreduce(x_outer_local)
+    still_masked = np.ma.count_masked(out)
+    if still_masked != 0:
+        raise ValueError("Can't compute outer product:"
+                         " completely missing columns!")
+    if hasattr(out, 'mask'):
+        out = out.data
+    return out
+
+
+def covariance(x):
+    x_mean = mean(x)
+    cov = outer(x - x_mean) / outer_count(x)
+    return cov
+
+
+def eigen_decomposition(x):
+    eigvals, eigvecs = np.linalg.eigh(covariance(x))
     return eigvals, eigvecs
 
+
+def random_full_points(x, Napprox):
+
+    Napprox = min(Napprox, len(x))  # Make sure whole dataset is upper bound
+    npernode = int(np.round(Napprox / chunks))
+    rinds = np.random.permutation(len(x))  # random choice of indices
+
+    # Get random points per node
+    x_p_node = []
+    count = 0
+    for i in rinds:
+        if np.ma.count_masked(x[i]) > 0:
+            continue
+        if count >= npernode:
+            break
+        x_p_node.append(x[i])
+        count += 1
+
+    x_p_node = np.vstack(x_p_node)
+
+    # Gather all random points
+    x_p = np.vstack(comm.allgather(x_p_node))
+    return x_p

@@ -96,24 +96,28 @@ def local_crossval(x_all, targets_all, config):
         y_k_train = y[train_mask]
 
         # Extra fields
-        fields_train = {f: v[train_mask] for f, v in targets_all.fields.items()}
+        fields_train = {f: v[train_mask]
+                        for f, v in targets_all.fields.items()}
         fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
 
         # Train on this fold
         apply_multiple_masked(model.fit, data=(x_all[train_mask], y_k_train),
                               kwargs={'fields': fields_train})
+
+        # Testing
         y_k_pred = predict(x_all[test_mask], model, fields=fields_pred)
         y_k_test = y[test_mask]
-
         y_pred[fold] = y_k_pred
         y_true[fold] = y_k_test
 
         fold_scores[fold] = calculate_validation_scores(y_k_test,
                                                         y_k_train,
                                                         y_k_pred)
+
     y_pred = join_dicts(mpiops.comm.gather(y_pred, root=0))
     y_true = join_dicts(mpiops.comm.gather(y_true, root=0))
     scores = join_dicts(mpiops.comm.gather(fold_scores, root=0))
+
     result = None
     if mpiops.chunk_index == 0:
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])

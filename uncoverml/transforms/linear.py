@@ -17,12 +17,17 @@ class CentreTransform:
 
 class StandardiseTransform:
     def __init__(self):
+        self.mean = None
         self.sd = None
 
     def __call__(self, x):
 
-        if self.sd is None:
+        if self.sd is None or self.mean is None:
+            self.mean = mpiops.mean(x)
             self.sd = mpiops.sd(x)
+
+        # Centre
+        x -= self.mean
 
         # remove dimensions with no st. dev. (and hence no info)
         zero_mask = self.sd == 0.
@@ -37,19 +42,22 @@ class StandardiseTransform:
 
 class WhitenTransform:
     def __init__(self, keep_fraction):
+        self.mean = None
         self.eigvals = None
         self.eigvecs = None
         self.keep_fraction = keep_fraction
 
     def __call__(self, x):
 
-        if self.eigvals is None or self.eigvecs is None:
+        if self.mean is None or self.eigvals is None or self.eigvecs is None:
+            self.mean = mpiops.mean(x)
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)
+
         ndims = x.shape[1]
         # make sure 1 <= keepdims <= ndims
         keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
         mat = self.eigvecs[:, -keepdims:]
         vec = self.eigvals[np.newaxis, -keepdims:]
-        x = np.ma.dot(x, mat, strict=True) / np.sqrt(vec)
+        x = np.ma.dot(x - self.mean, mat, strict=True) / np.sqrt(vec)
 
         return x

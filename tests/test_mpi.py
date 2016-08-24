@@ -1,11 +1,11 @@
-import copy
+# import copy
 
 import numpy as np
 import pytest
 
 from uncoverml import mpiops
-from uncoverml import pipeline
-from uncoverml import transforms
+# from uncoverml import pipeline
+# from uncoverml import transforms
 
 
 # Make sure all MPI tests use this fixure
@@ -64,6 +64,13 @@ def test_mean(mpisync, masked_array):
     assert np.allclose(m_true, m)
 
 
+def test_covariance(mpisync, masked_array):
+    x, x_all = masked_array
+    c = mpiops.covariance(x)
+    c_true = np.ma.cov(x_all.T, bias=True).data
+    assert np.allclose(c_true, c)
+
+
 class DummySettings:
     def __init__(self):
         pass
@@ -75,6 +82,23 @@ def test_sd(mpisync, masked_array):
     sd_true = np.ma.std(x_all, axis=0, ddof=0).data
     assert np.allclose(sd, sd_true)
 
+
+def test_random_full_points():
+
+    Xd = np.random.randn(100, 3)
+    Xm = np.zeros_like(Xd, dtype=bool)
+    Xm[30, 1] = True
+    Xm[67, 2] = True
+    X = np.ma.MaskedArray(data=Xd, mask=Xm)
+
+    Xp = mpiops.random_full_points(X, 80)
+
+    assert Xp.shape[1] == 3
+    assert np.ma.count_masked(Xp) == 0
+
+    Xp = mpiops.random_full_points(X, 200)
+
+    assert Xp.shape[0] <= 100
 
 # def test_impute(mpisync, masked_array):
 #     x, x_all = masked_array
