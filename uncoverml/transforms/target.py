@@ -106,8 +106,8 @@ class RankGaussian(Identity):
     def transform(self, y):
         return np.interp(y, self.s, self.y)
 
-    def itransform(self, y):
-        return np.interp(y, self.y, self.s)
+    def itransform(self, y_transformed):
+        return np.interp(y_transformed, self.y, self.s)
 
 
 class KDE(Identity):
@@ -120,12 +120,14 @@ class KDE(Identity):
 
     def transform(self, y):
 
+        # FIXME: Interpolate rather than solve for speed?
         ycdf = [self.kde.integrate_box_1d(-np.inf, yi) for yi in y]
         ygauss = norm.isf(1 - np.array(ycdf))
         return ygauss
 
     def itransform(self, y_transformed):
 
+        # FIXME: Interpolate rather than solve for speed?
         ycdf = norm.cdf(y_transformed)
         y = [brentq(self._obj, a=self.lb, b=self.ub, args=(yi,))
              for yi in ycdf]
