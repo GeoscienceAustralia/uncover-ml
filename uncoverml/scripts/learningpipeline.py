@@ -15,7 +15,6 @@ from uncoverml import datatypes
 from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml import pipeline
-# from uncoverml import transforms
 from uncoverml.validation import lower_is_better
 from uncoverml.config import Config
 

@@ -5,7 +5,9 @@ import yaml
 
 from uncoverml import transforms
 
-_imputers = {'mean': transforms.MeanImputer}
+_imputers = {'mean': transforms.MeanImputer,
+             'gaus': transforms.GaussImputer,
+             'nn': transforms.NearestNeighboursImputer}
 _image_transforms = {'onehot': transforms.OneHotTransform}
 _global_transforms = {'centre': transforms.CentreTransform,
                       'standardise': transforms.StandardiseTransform,

@@ -83,6 +83,23 @@ def test_sd(mpisync, masked_array):
     assert np.allclose(sd, sd_true)
 
 
+def test_random_full_points():
+
+    Xd = np.random.randn(100, 3)
+    Xm = np.zeros_like(Xd, dtype=bool)
+    Xm[30, 1] = True
+    Xm[67, 2] = True
+    X = np.ma.MaskedArray(data=Xd, mask=Xm)
+
+    Xp = mpiops.random_full_points(X, 80)
+
+    assert Xp.shape[1] == 3
+    assert np.ma.count_masked(Xp) == 0
+
+    Xp = mpiops.random_full_points(X, 200)
+
+    assert Xp.shape[0] <= 100
+
 # def test_impute(mpisync, masked_array):
 #     x, x_all = masked_array
 #     settings = DummySettings()

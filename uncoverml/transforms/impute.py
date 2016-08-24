@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 from scipy.linalg import pinv, solve
+from scipy.spatial import cKDTree
 
 from uncoverml import mpiops
 
@@ -21,6 +22,13 @@ def impute_with_mean(x, mean):
 
 
 class MeanImputer:
+    """
+    Simple mean imputation.
+
+    Replaces the missing values in x, with the mean of x.
+
+    """
+
     def __init__(self):
         self.mean = None
 
@@ -32,6 +40,21 @@ class MeanImputer:
 
 
 class GaussImputer:
+    """
+    Gaussian Imputer.
+
+    This imputer fits a Gaussian to the data, then conditions on this Gaussian
+    to interpolate missing data. This is effectively the same as using a linear
+    regressor to impute the missing data, given all of the non-missing
+    dimensions.
+
+    Have a look at:
+        https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+
+    We use the precision (inverse covariance) form of the Gaussian for
+    computational efficiency.
+
+    """
 
     def __init__(self):
         self.mean = None
@@ -43,27 +66,82 @@ class GaussImputer:
             self._make_impute_stats(x)
 
         for i in range(len(x)):
-            x[i].mask = False
-            self._gaus_condition(x[i])
+            x.data[i] = self._gaus_condition(x[i])
+
+        return np.ma.MaskedArray(data=x.data, mask=False)
 
     def _make_impute_stats(self, x):
 
         self.mean = mpiops.mean(x)
         cov = mpiops.covariance(x)
-        self.prec = pinv(cov)  # SVD pseudo inverse
+        self.prec, rank = pinv(cov, return_rank=True)  # stable pseudo inverse
+
+        # if rank < len(self.mean):
+        #     raise RuntimeError("This imputation method does not work on low "
+        #                        "rank problems!")
 
     def _gaus_condition(self, xi):
 
         if np.ma.count_masked(xi) == 0:
-            return
+            return xi
 
         a = xi.mask
         b = ~xi.mask
 
         xb = xi[b].data
-        ma = self.mean[a]
-        mb = self.mean[b]
         Laa = self.prec[np.ix_(a, a)]
         Lab = self.prec[np.ix_(a, b)]
 
-        xi[a] = ma - solve(Laa, Lab.dot(xb - mb), sym_pos=True)
+        xfill = np.empty_like(xi)
+        xfill[b] = xb
+        xfill[a] = self.mean[a] - solve(Laa, Lab.dot(xb - self.mean[b]))
+        return xfill
+
+
+class NearestNeighboursImputer:
+    """
+    Nearest neighbour imputation.
+
+    This builds up a KD tree using random points (without missing data), then
+    fills in the missing data in query points with values from thier average
+    nearest neighbours.
+
+    Parameters
+    ----------
+    nodes: int, optional
+        maximum number of points to use as nearest neightbours.
+    k: int, optional
+        number of neighbours to average for missing values.
+    """
+
+    def __init__(self, nodes=500, k=3):
+        self.k = k
+        self.nodes = nodes
+        self.kdtree = None
+
+    def __call__(self, x):
+
+        if self.kdtree is None:
+            self._make_kdtree(x)
+
+        # impute with neighbours
+        missing_ind = np.ma.count_masked(x, axis=1) > 0
+        if missing_ind.sum() > 0:
+            missing_mask = x.mask[missing_ind]
+            nn = self._av_neigbours(x[missing_ind])
+            x.data[x.mask] = nn[missing_mask]
+
+        return np.ma.MaskedArray(data=x.data, mask=False)
+
+    def _make_kdtree(self, x):
+        self.kdtree = cKDTree(mpiops.random_full_points(x, Napprox=self.nodes))
+
+    def _get_neighbour(self, xq):
+        _, neighbourind = self.kdtree.query(xq)
+        return self.kdtree.data[neighbourind]
+
+    def _av_neigbours(self, xq):
+
+        xnn = [self.kdtree.data[self.kdtree.query(x, k=self.k)[1]].mean(axis=0)
+               for x in xq]
+        return np.vstack(xnn)

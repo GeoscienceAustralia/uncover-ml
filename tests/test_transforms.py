@@ -1,7 +1,8 @@
 from scipy.stats import bernoulli
 
 from uncoverml.transforms.onehot import sets, one_hot
-from uncoverml.transforms.impute import impute_with_mean, GaussImputer
+from uncoverml.transforms.impute import impute_with_mean, GaussImputer, \
+    NearestNeighboursImputer
 from uncoverml.transforms import target
 import numpy as np
 
@@ -50,9 +51,30 @@ def make_missing_data():
 def test_GaussImputer(make_missing_data):
 
     X = make_missing_data
+    Xcopy = X.copy()
     imputer = GaussImputer()
     Ximp = imputer(X)
 
+    assert np.all(~np.isnan(Ximp))
+    assert np.all(~np.isinf(Ximp))
+    assert Ximp.shape == Xcopy.shape
+    assert np.ma.count_masked(Ximp) == 0
+
+
+def test_NearestNeighbourImputer(make_missing_data):
+
+    X = make_missing_data
+    Xcopy = X.copy()
+    nn = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=False)
+
+    imputer = NearestNeighboursImputer(nodes=100)
+    imputer(nn)
+
+    Ximp = imputer(X)
+
+    assert np.all(~np.isnan(Ximp))
+    assert np.all(~np.isinf(Ximp))
+    assert Ximp.shape == Xcopy.shape
     assert np.ma.count_masked(Ximp) == 0
 
 

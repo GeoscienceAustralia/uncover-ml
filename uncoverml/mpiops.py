@@ -137,3 +137,27 @@ def covariance(x):
 def eigen_decomposition(x):
     eigvals, eigvecs = np.linalg.eigh(covariance(x))
     return eigvals, eigvecs
+
+
+def random_full_points(x, Napprox):
+
+    Napprox = min(Napprox, len(x))  # Make sure whole dataset is upper bound
+    npernode = int(np.round(Napprox / chunks))
+    rinds = np.random.permutation(len(x))  # random choice of indices
+
+    # Get random points per node
+    x_p_node = []
+    count = 0
+    for i in rinds:
+        if np.ma.count_masked(x[i]) > 0:
+            continue
+        if count >= npernode:
+            break
+        x_p_node.append(x[i])
+        count += 1
+
+    x_p_node = np.vstack(x_p_node)
+
+    # Gather all random points
+    x_p = np.vstack(comm.allgather(x_p_node))
+    return x_p
