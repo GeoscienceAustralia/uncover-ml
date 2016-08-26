@@ -3,9 +3,11 @@ import logging
 import numpy as np
 
 from uncoverml import mpiops
-from uncoverml import defaults as df
 
 log = logging.getLogger(__name__)
+
+
+MAX_ONEHOT_DIMS = 25
 
 
 def sets(x):
@@ -93,7 +95,7 @@ class OneHotTransform:
 
     def __call__(self, x):
         if self.x_sets is None:
-            self.x_sets = compute_unique_values(x, df.max_onehot_dims)
+            self.x_sets = compute_unique_values(x, MAX_ONEHOT_DIMS)
         # x_sets may still be none becasue there are too many unique values
         if self.x_sets is not None:
             x = one_hot(x, self.x_sets)
