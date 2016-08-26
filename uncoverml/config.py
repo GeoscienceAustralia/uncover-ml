@@ -1,6 +1,6 @@
 from os import path
 import glob
-
+import csv
 import yaml
 
 from uncoverml import transforms
@@ -47,6 +47,14 @@ class FeatureSetConfig:
                 glob_string = path.join(path.abspath(source[key]), "*.tif")
                 f_list = glob.glob(glob_string)
                 files.extend(f_list)
+            elif key == 'list':
+                csvfile = path.abspath(source[key])
+                with open(csvfile, 'r') as f:
+                    reader = csv.reader(f)
+                    tifs = list(reader)
+                for f in tifs:
+                    files.append(path.abspath(f[0]))
+
         self.files = sorted(files)
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
