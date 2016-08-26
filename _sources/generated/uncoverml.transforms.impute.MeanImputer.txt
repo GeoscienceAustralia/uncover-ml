@@ -1,0 +1,22 @@
+uncoverml.transforms.impute.MeanImputer
+=======================================
+
+.. currentmodule:: uncoverml.transforms.impute
+
+.. autoclass:: MeanImputer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MeanImputer.__init__
+   
+   
+
+   
+   
+   

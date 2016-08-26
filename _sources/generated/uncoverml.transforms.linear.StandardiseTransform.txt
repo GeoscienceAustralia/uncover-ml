@@ -1,0 +1,22 @@
+uncoverml.transforms.linear.StandardiseTransform
+================================================
+
+.. currentmodule:: uncoverml.transforms.linear
+
+.. autoclass:: StandardiseTransform
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~StandardiseTransform.__init__
+   
+   
+
+   
+   
+   

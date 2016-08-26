@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Validation Module &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Cubist Python Wrapper &mdash; uncover ML 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="Command Line Scripts" href="scripts.html" />
-    <link rel="prev" title="uncoverml.transforms.target.KDE" href="generated/uncoverml.transforms.target.KDE.html" />
+    <link rel="next" title="Geometry file I/O Module" href="geoio.html" />
+    <link rel="prev" title="Configuration file parsing" href="config.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,10 +46,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="scripts.html" title="Command Line Scripts"
+          <a href="geoio.html" title="Geometry file I/O Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="generated/uncoverml.transforms.target.KDE.html" title="uncoverml.transforms.target.KDE"
+          <a href="config.html" title="Configuration file parsing"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -60,39 +60,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.validation">
-<span id="validation-module"></span><h1>Validation Module<a class="headerlink" href="#module-uncoverml.validation" title="Permalink to this headline">¶</a></h1>
-<p>Scripts for validation</p>
-<dl class="function">
-<dt id="uncoverml.validation.split_cfold">
-<code class="descclassname">uncoverml.validation.</code><code class="descname">split_cfold</code><span class="sig-paren">(</span><em>nsamples</em>, <em>k=5</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validation.split_cfold" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function that returns indices for splitting data into random folds.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nsamples</strong> (<em>int</em>) &#8211; the number of samples in the dataset</li>
-<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds</li>
-<li><strong>seed</strong> (<em>int, optional</em>) &#8211; random seed to provide to numpy</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>cvinds</strong> (<em>list</em>) &#8211; list of arrays of length k, each with approximate shape (nsamples /
-k,) of indices. These indices are randomly permuted (without
-replacement) of assignments to each fold.</li>
-<li><strong>cvassigns</strong> (<em>ndarray</em>) &#8211; array of shape (nsamples,) with each element in [0, k), that can be
-used to assign data to a fold. This corresponds to the indices of
-cvinds.</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+  <div class="section" id="module-uncoverml.cubist">
+<span id="cubist-python-wrapper"></span><h1>Cubist Python Wrapper<a class="headerlink" href="#module-uncoverml.cubist" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -102,11 +71,11 @@ cvinds.</li>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="generated/uncoverml.transforms.target.KDE.html"
-                        title="previous chapter">uncoverml.transforms.target.KDE</a></p>
+  <p class="topless"><a href="config.html"
+                        title="previous chapter">Configuration file parsing</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="scripts.html"
-                        title="next chapter">Command Line Scripts</a></p>
+  <p class="topless"><a href="geoio.html"
+                        title="next chapter">Geometry file I/O Module</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -131,10 +100,10 @@ cvinds.</li>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="scripts.html" title="Command Line Scripts"
+          <a href="geoio.html" title="Geometry file I/O Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="generated/uncoverml.transforms.target.KDE.html" title="uncoverml.transforms.target.KDE"
+          <a href="config.html" title="Configuration file parsing"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
       </ul>

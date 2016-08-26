@@ -1,0 +1,22 @@
+uncoverml.transforms.impute.GaussImputer
+========================================
+
+.. currentmodule:: uncoverml.transforms.impute
+
+.. autoclass:: GaussImputer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GaussImputer.__init__
+   
+   
+
+   
+   
+   

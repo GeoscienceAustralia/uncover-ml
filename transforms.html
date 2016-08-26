@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Transforms Module &mdash; uncover ML 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="uncoverml.transforms.impute.MeanImputer" href="generated/uncoverml.transforms.impute.MeanImputer.html" />
+    <link rel="prev" title="Pipeline library routines" href="pipeline.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/uncoverml.transforms.impute.MeanImputer.html" title="uncoverml.transforms.impute.MeanImputer"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipeline library routines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="transforms-module">
+<h1>Transforms Module<a class="headerlink" href="#transforms-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.impute.MeanImputer.html#uncoverml.transforms.impute.MeanImputer" title="uncoverml.transforms.impute.MeanImputer"><code class="xref py py-obj docutils literal"><span class="pre">impute.MeanImputer</span></code></a>()</td>
+<td>Simple mean imputation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.impute.GaussImputer.html#uncoverml.transforms.impute.GaussImputer" title="uncoverml.transforms.impute.GaussImputer"><code class="xref py py-obj docutils literal"><span class="pre">impute.GaussImputer</span></code></a>()</td>
+<td>Gaussian Imputer.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.impute.NearestNeighboursImputer.html#uncoverml.transforms.impute.NearestNeighboursImputer" title="uncoverml.transforms.impute.NearestNeighboursImputer"><code class="xref py py-obj docutils literal"><span class="pre">impute.NearestNeighboursImputer</span></code></a>([nodes,&nbsp;k])</td>
+<td>Nearest neighbour imputation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.linear.CentreTransform.html#uncoverml.transforms.linear.CentreTransform" title="uncoverml.transforms.linear.CentreTransform"><code class="xref py py-obj docutils literal"><span class="pre">linear.CentreTransform</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.linear.StandardiseTransform.html#uncoverml.transforms.linear.StandardiseTransform" title="uncoverml.transforms.linear.StandardiseTransform"><code class="xref py py-obj docutils literal"><span class="pre">linear.StandardiseTransform</span></code></a>()</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.linear.WhitenTransform.html#uncoverml.transforms.linear.WhitenTransform" title="uncoverml.transforms.linear.WhitenTransform"><code class="xref py py-obj docutils literal"><span class="pre">linear.WhitenTransform</span></code></a>(keep_fraction)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.target.Identity.html#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-obj docutils literal"><span class="pre">target.Identity</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.target.Standardise.html#uncoverml.transforms.target.Standardise" title="uncoverml.transforms.target.Standardise"><code class="xref py py-obj docutils literal"><span class="pre">target.Standardise</span></code></a></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.target.Sqrt.html#uncoverml.transforms.target.Sqrt" title="uncoverml.transforms.target.Sqrt"><code class="xref py py-obj docutils literal"><span class="pre">target.Sqrt</span></code></a>([offset])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.target.Log.html#uncoverml.transforms.target.Log" title="uncoverml.transforms.target.Log"><code class="xref py py-obj docutils literal"><span class="pre">target.Log</span></code></a>([offset,&nbsp;replace_zeros])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.target.Logistic.html#uncoverml.transforms.target.Logistic" title="uncoverml.transforms.target.Logistic"><code class="xref py py-obj docutils literal"><span class="pre">target.Logistic</span></code></a>([scale])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.transforms.target.RankGaussian.html#uncoverml.transforms.target.RankGaussian" title="uncoverml.transforms.target.RankGaussian"><code class="xref py py-obj docutils literal"><span class="pre">target.RankGaussian</span></code></a></td>
+<td>Forces the marginal histogram to be Gaussian.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.transforms.target.KDE.html#uncoverml.transforms.target.KDE" title="uncoverml.transforms.target.KDE"><code class="xref py py-obj docutils literal"><span class="pre">target.KDE</span></code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pipeline.html"
+                        title="previous chapter">Pipeline library routines</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/uncoverml.transforms.impute.MeanImputer.html"
+                        title="next chapter">uncoverml.transforms.impute.MeanImputer</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/uncoverml.transforms.impute.MeanImputer.html" title="uncoverml.transforms.impute.MeanImputer"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipeline library routines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
