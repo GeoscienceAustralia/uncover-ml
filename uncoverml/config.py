@@ -52,8 +52,9 @@ class FeatureSetConfig:
                 with open(csvfile, 'r') as f:
                     reader = csv.reader(f)
                     tifs = list(reader)
+                    tifs = [f[0] for f in tifs if len(f) > 0]
                 for f in tifs:
-                    files.append(path.abspath(f[0]))
+                    files.append(path.abspath(f))
 
         self.files = sorted(files)
 
