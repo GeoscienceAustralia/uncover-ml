@@ -20,6 +20,8 @@ Contents:
 
    projectreport
 
+   config
+   cubist
    datatypes
    geoio
    image
