@@ -173,10 +173,10 @@ def make_ground(xyz, pad, res, frame):
 
 
 @cache
-def get_flightlines():
+def get_flightlines(fname='crop_flightlines.shp'):
     """Collect aerial survey points."""
     log.info('Extracting flight lines...')
-    sf = shapefile.Reader(data_root + 'airborne_flightlines.shp')
+    sf = shapefile.Reader(data_root + 'crop_flightlines.shp')
     survey_points = np.vstack([s.points for s in sf.shapes()])
     data = np.array(sf.records(), dtype=float)
     field = {k[0]: v for v, k in enumerate(sf.fields[1:])}

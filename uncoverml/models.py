@@ -19,7 +19,7 @@ from sklearn.svm import SVR
 from sklearn.linear_model import ARDRegression
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
-import uncoverml.transforms.target as transforms
+from uncoverml.transforms import target as transforms
 from uncoverml.likelihoods import Switching
 from uncoverml.cubist import Cubist
 

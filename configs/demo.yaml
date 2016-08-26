@@ -6,6 +6,8 @@ features:
   - name: my features
     type: continuous
     files:
+      - path: /home/lb/data/GA-cover/Th_v1.tif
+      - list: configs/test.csv
       - directory: /home/lb/data/GA-cover
     transforms:
       - centre
