@@ -7,7 +7,6 @@ features:
     type: continuous
     files:
       - path: /home/lb/data/GA-cover/Th_v1.tif
-      - list: configs/test.csv
       - directory: /home/lb/data/GA-cover
     transforms:
       - centre
@@ -15,9 +14,9 @@ features:
     imputation: none
 
 preprocessing:
-  imputation: mean
+  # imputation: mean
   # imputation: gaus
-  # imputation: nn
+  imputation: nn
   transforms:
     - whiten:
         keep_fraction: 0.8
