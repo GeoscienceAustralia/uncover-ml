@@ -354,51 +354,51 @@ def output_features(feature_vector, outfile, featname="features",
     return True
 
 
-def load_and_cat(hdf5_vectors):
-    data_shapes = []
-    # pass one to get the shapes
-    for filename in hdf5_vectors:
-        with hdf.open_file(filename, mode='r') as f:
-            if f.root._v_attrs["blank"]:  # no data in this chunk
-                return None
-            data_shapes.append(f.root.features.shape)
+# def load_and_cat(hdf5_vectors):
+#     data_shapes = []
+#     # pass one to get the shapes
+#     for filename in hdf5_vectors:
+#         with hdf.open_file(filename, mode='r') as f:
+#             if f.root._v_attrs["blank"]:  # no data in this chunk
+#                 return None
+#             data_shapes.append(f.root.features.shape)
 
-    # allocate memory
-    x_shps, y_shps = zip(*data_shapes)
-    x_shp = set(x_shps).pop()
-    y_shp = np.sum(np.array(y_shps))
+#     # allocate memory
+#     x_shps, y_shps = zip(*data_shapes)
+#     x_shp = set(x_shps).pop()
+#     y_shp = np.sum(np.array(y_shps))
 
-    log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
-                                                  x_shp * y_shp * 72. / 1e9))
+#     log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
+#                                                   x_shp * y_shp * 72. / 1e9))
 
-    all_data = np.empty((x_shp, y_shp), dtype=float)
-    all_mask = np.empty((x_shp, y_shp), dtype=bool)
+#     all_data = np.empty((x_shp, y_shp), dtype=float)
+#     all_mask = np.empty((x_shp, y_shp), dtype=bool)
 
-    # read files in
-    start_idx = 0
-    end_idx = -1
-    for filename in hdf5_vectors:
-        with hdf.open_file(filename, mode='r') as f:
-            end_idx = start_idx + f.root.features.shape[1]
-            all_data[:, start_idx:end_idx] = f.root.features[:]
-            all_mask[:, start_idx:end_idx] = f.root.mask[:]
-            start_idx = end_idx
+#     # read files in
+#     start_idx = 0
+#     end_idx = -1
+#     for filename in hdf5_vectors:
+#         with hdf.open_file(filename, mode='r') as f:
+#             end_idx = start_idx + f.root.features.shape[1]
+#             all_data[:, start_idx:end_idx] = f.root.features[:]
+#             all_mask[:, start_idx:end_idx] = f.root.mask[:]
+#             start_idx = end_idx
 
-    result = np.ma.masked_array(data=all_data, mask=all_mask)
-    return result
+#     result = np.ma.masked_array(data=all_data, mask=all_mask)
+#     return result
 
 
-def load_attributes(filename_dict):
-    # Only bother loading the first one as they're all the same for now
-    fname = filename_dict[0][0]
-    shape = None
-    bbox = None
-    with hdf.open_file(fname, mode='r') as f:
-        if 'image_shape' in f.root._v_attrs:
-            shape = f.root._v_attrs.image_shape
-        if 'image_bbox' in f.root._v_attrs:
-            bbox = f.root._v_attrs.image_bbox
-    return shape, bbox
+# def load_attributes(filename_dict):
+#     # Only bother loading the first one as they're all the same for now
+#     fname = filename_dict[0][0]
+#     shape = None
+#     bbox = None
+#     with hdf.open_file(fname, mode='r') as f:
+#         if 'image_shape' in f.root._v_attrs:
+#             shape = f.root._v_attrs.image_shape
+#         if 'image_bbox' in f.root._v_attrs:
+#             bbox = f.root._v_attrs.image_bbox
+#     return shape, bbox
 
 
 def load_shapefile(filename, targetfield):
@@ -535,8 +535,8 @@ def _iterate_sources(f, config):
         results.append(extracted_chunks)
     return results
 
-def export_scores(scores, y, Ey, filename):
 
+def export_scores(scores, y, Ey, filename):
 
     with open(filename, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)

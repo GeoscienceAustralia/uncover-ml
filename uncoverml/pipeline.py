@@ -20,31 +20,42 @@ def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
     return x
 
 
+def _image_has_targets(y_min, y_max, im):
+    encompass = im.ymin <= y_min and im.ymax >= y_max
+    edge_low = im.ymax >= y_min and im.ymax <= y_max
+    edge_high = im.ymin >= y_min and im.ymin <= y_max
+    inside = encompass or edge_low or edge_high
+    return inside
+
+
+def _extract_from_chunk(image_source, targets, chunk_index, total_chunks,
+                        patchsize):
+    image_chunk = Image(image_source, chunk_index, total_chunks, patchsize)
+    # figure out which chunks I need to consider
+    y_min = targets.positions[0, 1]
+    y_max = targets.positions[-1, 1]
+    if _image_has_targets(y_min, y_max, image_chunk):
+        x = patch.patches_at_target(image_chunk, patchsize, targets)
+    else:
+        x = None
+    return x
+
+
 def extract_features(image_source, targets, n_subchunks, patchsize):
     """
     each node gets its own share of the targets, so all nodes
     will always have targets
     """
     equiv_chunks = n_subchunks * mpiops.chunks
-    image_chunks = [Image(image_source, k, equiv_chunks, patchsize)
-                    for k in range(equiv_chunks)]
-    # figure out which chunks I need to consider
-    y_min = targets.positions[0, 1]
-    y_max = targets.positions[-1, 1]
-
-    def has_targets(im):
-        encompass = im.ymin <= y_min and im.ymax >= y_max
-        edge_low = im.ymax >= y_min and im.ymax <= y_max
-        edge_high = im.ymin >= y_min and im.ymin <= y_max
-        inside = encompass or edge_low or edge_high
-        return inside
-
-    my_image_chunks = [k for k in image_chunks if has_targets(k)]
-    my_x = [patch.patches_at_target(im, patchsize, targets)
-            for im in my_image_chunks]
-    x = np.ma.concatenate(my_x, axis=0)
-    assert x.shape[0] == targets.observations.shape[0]
-    return x
+    x_all = []
+    for i in range(equiv_chunks):
+        x = _extract_from_chunk(image_source, targets, i, equiv_chunks,
+                                patchsize)
+        if x is not None:
+            x_all.append(x)
+    x_all = np.ma.concatenate(x_all, axis=0)
+    assert x_all.shape[0] == targets.observations.shape[0]
+    return x_all
 
 
 def transform_features(feature_sets, transform_sets, final_transform):
