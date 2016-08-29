@@ -16,7 +16,9 @@ features:
 preprocessing:
   # imputation: none
   # imputation: gaus
-  imputation: nn
+  # imputation: nn
+  imputation: mean
+
   transforms:
     # - whiten:
         # keep_fraction: 0.8
