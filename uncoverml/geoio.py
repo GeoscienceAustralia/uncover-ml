@@ -458,6 +458,9 @@ def load_targets(shapefile, targetfield):
 
 
 class ImageWriter:
+
+    nodata_value = -1e23
+
     def __init__(self, shape, bbox, name, n_subchunks, outputdir,
                  band_tags=None):
         # affine
@@ -489,7 +492,8 @@ class ImageWriter:
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float64, count=1,
-                                  transform=self.A)
+                                  transform=self.A,
+                                  nodata=self.nodata_value)
                 f.update_tags(1, image_type=band_tags[band])
                 self.files.append(f)
 
@@ -497,6 +501,8 @@ class ImageWriter:
         rows = self.shape[0]
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
+        # make sure we're writing nodatavals
+        x[x.mask] = self.nodata_value
 
         mpiops.comm.barrier()
         log.info("Writing partition to output file")
