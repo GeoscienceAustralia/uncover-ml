@@ -21,6 +21,33 @@ class TrainingData:
         self.classes = classes
 
 
+class KMeans:
+    """
+    model object for purposes of using the prediction pipeline
+    """
+    def __init__(self, k, oversample_factor):
+        self.k = k
+        self.oversample_factor = oversample_factor
+
+    def learn(self, x, indices, classes):
+        training_data = TrainingData(indices, classes)
+        C_init = initialise_centres(x, self.k, self.oversample_factor,
+                                    training_data)
+        C_final, _ = run_kmeans(x, C_init, self.k,
+                                training_data=training_data)
+        self.centres = C_final
+
+    def predict(self, x):
+        y_star, _ = compute_class(x, self.centres)
+        # y_star = y_star[:, np.newaxis].astype(float)
+        y_star = y_star.astype(float)
+        return y_star
+
+    def get_predict_tags(self):
+        tags = ['class']
+        return tags
+
+
 def kmean_distance2(x, C):
     """
     squared euclidian distance to the nearest cluster centre

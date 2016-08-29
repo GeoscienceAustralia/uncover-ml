@@ -14,16 +14,24 @@ features:
     imputation: none
 
 preprocessing:
-  # imputation: mean
+  # imputation: none
   # imputation: gaus
   imputation: nn
   transforms:
-    - whiten:
-        keep_fraction: 0.8
+    # - whiten:
+        # keep_fraction: 0.8
 
 targets:
   file: /home/lb/data/GA-cover/geochem_sites.shp
   property: Na_ppm_i_1
+
+clustering:
+  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+  property: class
+  algorithm: kmeans
+  arguments:
+    n_classes: 12
+    oversample_factor: 1
 
 learning:
     # algorithm: sgdapproxgp

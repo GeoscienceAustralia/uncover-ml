@@ -52,9 +52,8 @@ setup(
     entry_points={
         'console_scripts': [
             'learningpipeline = uncoverml.scripts.learningpipeline:main',
-            'clearningpipeline = uncoverml.scripts.clearningpipeline:main',
             'predictionpipeline = uncoverml.scripts.predictionpipeline:main',
-            'cpredictionpipeline = uncoverml.scripts.cpredictionpipeline:main',
+            'clusterpipeline = uncoverml.scripts.clusterpipeline:main',
             'maketargets = uncoverml.scripts.maketargets:main',
             'extractfeats = uncoverml.scripts.extractfeats:main',
             'composefeats = uncoverml.scripts.composefeats:main',
