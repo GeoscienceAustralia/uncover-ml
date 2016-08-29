@@ -31,7 +31,7 @@ clustering:
   algorithm: kmeans
   arguments:
     n_classes: 12
-    oversample_factor: 1
+    oversample_factor: 5
 
 learning:
     # algorithm: sgdapproxgp
