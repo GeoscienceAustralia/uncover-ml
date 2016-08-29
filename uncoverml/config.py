@@ -21,14 +21,15 @@ def _parse_transform_set(transform_dict, imputer_string):
         imputer = _imputers[imputer_string]()
     else:
         imputer = None
-    for t in transform_dict:
-        if type(t) is str:
-            t = {t: {}}
-        key, params = list(t.items())[0]
-        if key in _image_transforms:
-            image_transforms.append(_image_transforms[key](**params))
-        elif key in _global_transforms:
-            global_transforms.append(_global_transforms[key](**params))
+    if transform_dict is not None:
+        for t in transform_dict:
+            if type(t) is str:
+                t = {t: {}}
+            key, params = list(t.items())[0]
+            if key in _image_transforms:
+                image_transforms.append(_image_transforms[key](**params))
+            elif key in _global_transforms:
+                global_transforms.append(_global_transforms[key](**params))
     return image_transforms, imputer, global_transforms
 
 
@@ -92,3 +93,11 @@ class Config:
                     self.crossval_seed = i['k-fold']['random_seed']
                     break
         self.output_dir = s['output']['directory']
+
+        if 'clustering' in s:
+            self.clustering_algorithm = s['clustering']['algorithm']
+            cluster_args = s['clustering']['arguments']
+            self.n_classes = cluster_args['n_classes']
+            self.oversample_factor = cluster_args['oversample_factor']
+            self.class_file = s['clustering']['file']
+            self.class_property = s['clustering']['property']

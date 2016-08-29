@@ -805,7 +805,7 @@ def apply_masked(func, data, args=(), kwargs={}):
 
     # No masked data
     if np.ma.count_masked(data) == 0:
-        return func(data.data, *args, **kwargs)
+        return np.ma.array(func(data.data, *args, **kwargs), mask=False)
 
     # Prediction with missing inputs
     okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
