@@ -502,7 +502,8 @@ class ImageWriter:
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
         # make sure we're writing nodatavals
-        x[x.mask] = self.nodata_value
+        if x.mask is not False:
+            x.data[x.mask] = self.nodata_value
 
         mpiops.comm.barrier()
         log.info("Writing partition to output file")
