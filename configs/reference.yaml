@@ -1,0 +1,53 @@
+
+experiment: my_run
+patchsize: 0
+memory_fraction: 0.5
+
+features:
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: /home/lb/data/GA-cover/Th_v1.tif
+      - directory: /home/lb/data/GA-cover
+    transforms:
+      - standardise
+      - whiten:
+          keep_fraction: 0.8
+    imputation: none
+
+  - name: my discrete features
+    type: categorical
+    files:
+      - path: /home/lb/data/GA-cover/tot15.tif
+      - directory: /home/lb/data/GA-cover
+    transforms:
+      - onehot
+    imputation: none
+
+preprocessing:
+  imputation: mean
+  transforms:
+    - whiten:
+        keep_fraction: 0.8
+
+targets:
+  file: /home/lb/data/GA-cover/geochem_sites.shp
+  property: Na_ppm_i_1
+
+learning:
+    algorithm: svr
+    arguments:
+      target_transform: rank
+
+prediction:
+  quantiles: 0.95
+
+validation:
+  #- feature_rank
+  - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: /some/output/dir
+

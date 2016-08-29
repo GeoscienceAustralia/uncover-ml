@@ -6,6 +6,7 @@ import time
 import json
 import pickle
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 
 import rasterio
 import numpy as np
@@ -138,16 +139,6 @@ def write_targets(targets, filename):
     points_to_hdf(filename, fielddict)
 
 
-def load_targets(filename):
-    fields = ['Targets_sorted', 'Positions_sorted', 'FoldIndices_sorted']
-    fielddict = points_from_hdf(filename, fields)
-    positions = fielddict['Positions_sorted']
-    observations = fielddict['Targets_sorted']
-    folds = fielddict['FoldIndices_sorted']
-    result = datatypes.CrossValTargets(positions, observations, folds)
-    return result
-
-
 class ImageSource(metaclass=ABCMeta):
 
     @abstractmethod
@@ -235,12 +226,12 @@ class RasterioImageSource(ImageSource):
         m = np.ma.MaskedArray(data=np.ascontiguousarray(d.data),
                               mask=np.ascontiguousarray(d.mask))
 
-        # uniform mask format
-        if np.ma.count_masked(m) == 0:
-            m = np.ma.masked_array(data=m.data,
-                                   mask=np.zeros_like(m.data, dtype=bool))
+        # # uniform mask format
+        # if np.ma.count_masked(m) == 0:
+        #     m = np.ma.masked_array(data=m.data,
+        #                            mask=np.zeros_like(m.data, dtype=bool))
         assert m.data.ndim == 3
-        assert m.mask.ndim == 3
+        assert m.mask.ndim == 3 or m.mask.ndim == 0
         return m
 
 
@@ -363,71 +354,107 @@ def output_features(feature_vector, outfile, featname="features",
     return True
 
 
-def load_and_cat(hdf5_vectors):
-    data_shapes = []
-    # pass one to get the shapes
-    for filename in hdf5_vectors:
-        with hdf.open_file(filename, mode='r') as f:
-            if f.root._v_attrs["blank"]:  # no data in this chunk
-                return None
-            data_shapes.append(f.root.features.shape)
+# def load_and_cat(hdf5_vectors):
+#     data_shapes = []
+#     # pass one to get the shapes
+#     for filename in hdf5_vectors:
+#         with hdf.open_file(filename, mode='r') as f:
+#             if f.root._v_attrs["blank"]:  # no data in this chunk
+#                 return None
+#             data_shapes.append(f.root.features.shape)
 
-    # allocate memory
-    x_shps, y_shps = zip(*data_shapes)
-    x_shp = set(x_shps).pop()
-    y_shp = np.sum(np.array(y_shps))
+#     # allocate memory
+#     x_shps, y_shps = zip(*data_shapes)
+#     x_shp = set(x_shps).pop()
+#     y_shp = np.sum(np.array(y_shps))
 
-    log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
-                                                  x_shp * y_shp * 72. / 1e9))
+#     log.info("Allocating shape {}, mem {}".format((x_shp, y_shp),
+#                                                   x_shp * y_shp * 72. / 1e9))
 
-    all_data = np.empty((x_shp, y_shp), dtype=float)
-    all_mask = np.empty((x_shp, y_shp), dtype=bool)
+#     all_data = np.empty((x_shp, y_shp), dtype=float)
+#     all_mask = np.empty((x_shp, y_shp), dtype=bool)
 
-    # read files in
-    start_idx = 0
-    end_idx = -1
-    for filename in hdf5_vectors:
-        with hdf.open_file(filename, mode='r') as f:
-            end_idx = start_idx + f.root.features.shape[1]
-            all_data[:, start_idx:end_idx] = f.root.features[:]
-            all_mask[:, start_idx:end_idx] = f.root.mask[:]
-            start_idx = end_idx
+#     # read files in
+#     start_idx = 0
+#     end_idx = -1
+#     for filename in hdf5_vectors:
+#         with hdf.open_file(filename, mode='r') as f:
+#             end_idx = start_idx + f.root.features.shape[1]
+#             all_data[:, start_idx:end_idx] = f.root.features[:]
+#             all_mask[:, start_idx:end_idx] = f.root.mask[:]
+#             start_idx = end_idx
 
-    result = np.ma.masked_array(data=all_data, mask=all_mask)
-    return result
-
-
-def load_attributes(filename_dict):
-    # Only bother loading the first one as they're all the same for now
-    fname = filename_dict[0][0]
-    shape = None
-    bbox = None
-    with hdf.open_file(fname, mode='r') as f:
-        if 'image_shape' in f.root._v_attrs:
-            shape = f.root._v_attrs.image_shape
-        if 'image_bbox' in f.root._v_attrs:
-            bbox = f.root._v_attrs.image_bbox
-    return shape, bbox
+#     result = np.ma.masked_array(data=all_data, mask=all_mask)
+#     return result
 
 
-def load_shapefile(filename, field):
+# def load_attributes(filename_dict):
+#     # Only bother loading the first one as they're all the same for now
+#     fname = filename_dict[0][0]
+#     shape = None
+#     bbox = None
+#     with hdf.open_file(fname, mode='r') as f:
+#         if 'image_shape' in f.root._v_attrs:
+#             shape = f.root._v_attrs.image_shape
+#         if 'image_bbox' in f.root._v_attrs:
+#             bbox = f.root._v_attrs.image_bbox
+#     return shape, bbox
+
+
+def load_shapefile(filename, targetfield):
     """
     TODO
     """
-
     sf = shapefile.Reader(filename)
-    fdict = {f[0]: i for i, f in enumerate(sf.fields[1:])}  # Skip DeletionFlag
+    shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
+    dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
+    dtypes = ['float' if k[0] == 'N' else '<U{}'.format(k[1])
+              for k in dtype_flags]
+    records = np.array(sf.records()).T
+    record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
+        shapefields, records, dtypes)}
+    val = record_dict.pop(targetfield)
+    othervals = record_dict
 
-    if field not in fdict:
-        raise ValueError("Requested field is not in records!")
-
-    vind = fdict[field]
-    vals = np.array([float(r[vind]) for r in sf.records()])
+    # Get coordinates
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
-    return label_coords, vals
+
+    return label_coords, val, othervals
+
+
+def load_targets(shapefile, targetfield):
+    """
+    Loads the shapefile onto node 0 then distributes it across all
+    available nodes
+    """
+    if mpiops.chunk_index == 0:
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield)
+        # sort by y then x
+        ordind = np.lexsort(lonlat.T)
+        vals = vals[ordind]
+        lonlat = lonlat[ordind]
+        for k, v in othervals.items():
+            othervals[k] = v[ordind]
+
+        lonlat = np.array_split(lonlat, mpiops.chunks)
+        vals = np.array_split(vals, mpiops.chunks)
+        split_othervals = {k: np.array_split(v, mpiops.chunks)
+                           for k, v in othervals.items()}
+        othervals = [{k: v[i] for k, v in split_othervals.items()}
+                     for i in range(mpiops.chunks)]
+    else:
+        lonlat, vals, othervals = None, None, None
+
+    lonlat = mpiops.comm.scatter(lonlat, root=0)
+    vals = mpiops.comm.scatter(vals, root=0)
+    othervals = mpiops.comm.scatter(othervals, root=0)
+    log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
+                                                           lonlat.shape[0]))
+    targets = datatypes.Targets(lonlat, vals, othervals=othervals)
+    return targets
 
 
 class ImageWriter:
@@ -441,26 +468,30 @@ class ImageWriter:
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
-        self.output_filename = os.path.join(outputdir, name + ".tif")
         self.n_subchunks = n_subchunks
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
 
-        if band_tags is not None:
-            if len(band_tags) != self.shape[2]:
-                raise ValueError("Number of band tags must equal number of "
-                                 "bands!")
+        # file tags don't have spaces
+        if band_tags:
+            file_tags = ["_".join(k.lower().split()) for k in band_tags]
+        else:
+            file_tags = [str(k) for k in range(shape[2])]
+            band_tags = file_tags
 
         if mpiops.chunk_index == 0:
-            self.f = rasterio.open(self.output_filename, 'w', driver='GTiff',
-                                   width=self.shape[0], height=self.shape[1],
-                                   dtype=np.float64, count=self.shape[2],
-                                   transform=self.A)
-
-            if band_tags is not None:
-                for i, tag in enumerate(band_tags):
-                    self.f.update_tags(i + 1, image_type=tag)
+            # create a file for each band
+            self.files = []
+            for band in range(self.shape[2]):
+                output_filename = os.path.join(outputdir, name + "_" +
+                                               file_tags[band] + ".tif")
+                f = rasterio.open(output_filename, 'w', driver='GTiff',
+                                  width=self.shape[0], height=self.shape[1],
+                                  dtype=np.float64, count=1,
+                                  transform=self.A)
+                f.update_tags(1, image_type=band_tags[band])
+                self.files.append(f)
 
     def write(self, x, subchunk_index):
         rows = self.shape[0]
@@ -481,16 +512,31 @@ class ImageWriter:
                 data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                 yend = ystart + data.shape[1]  # this is Y
                 window = ((ystart, yend), (0, self.shape[0]))
-                index_list = list(range(1, bands + 1))
-                self.f.write(data, window=window, indexes=index_list)
+                # write each band separately
+                for i, f in enumerate(self.files):
+                    f.write(data[i:i+1], window=window)
         mpiops.comm.barrier()
 
 
-def export_scores(scores, y, Ey, filename):
+def _iterate_sources(f, config):
 
-    log.info("{} Scores".format(filename.rstrip(".json")))
-    for metric, score in scores.items():
-        log.info("{} = {}".format(metric, score))
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = os.path.basename(tif)
+            log.info("Processing {}.".format(name))
+            image_source = RasterioImageSource(tif)
+            x = f(image_source)
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
+
+
+def export_scores(scores, y, Ey, filename):
 
     with open(filename, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)

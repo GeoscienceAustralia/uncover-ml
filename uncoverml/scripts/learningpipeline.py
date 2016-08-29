@@ -2,138 +2,115 @@
 A pipeline for learning and validating models.
 """
 
-import pickle
-from collections import OrderedDict
-import importlib.machinery
-import logging
-from os import path, mkdir, listdir
-from glob import glob
-import sys
-import json
 import copy
-from itertools import product
+import json
+import logging
+import sys
+import pickle
+from os import path
 
 import numpy as np
 
-from uncoverml import geoio
-from uncoverml import pipeline
-from uncoverml import mpiops
 from uncoverml import datatypes
+from uncoverml import geoio
+from uncoverml import mpiops
+from uncoverml import pipeline
+from uncoverml.validation import lower_is_better
+from uncoverml.config import Config
 
 # Logging
 log = logging.getLogger(__name__)
 
 
-def make_proc_dir(dirname):
-    if not path.exists(dirname):
-        mkdir(dirname)
-        log.info("Made processed dir")
+def image_feature_sets(targets, config):
+
+    def f(image_source):
+        r = pipeline.extract_features(image_source, targets,
+                                      config.n_subchunks, config.patchsize)
+        return r
+    result = geoio._iterate_sources(f, config)
+    return result
 
 
-def get_targets(shapefile, fieldname, folds, seed):
-    shape_infile = path.abspath(shapefile)
-    lonlat, vals = geoio.load_shapefile(shape_infile, fieldname)
-    targets = datatypes.CrossValTargets(lonlat, vals, folds, seed, sort=True)
-    return targets
+def gather_targets(targets):
+    y = np.ma.concatenate(mpiops.comm.allgather(targets.observations), axis=0)
+    p = np.ma.concatenate(mpiops.comm.allgather(targets.positions), axis=0)
+    d = {}
+    keys = sorted(list(targets.fields.keys()))
+    for k in keys:
+        d[k] = np.ma.concatenate(mpiops.comm.allgather(targets.fields[k]),
+                                 axis=0)
+    result = datatypes.Targets(p, y, othervals=d)
+    return result
 
 
-def extract(targets, config):
-    # Extract feats for training
-    tifs = glob(path.join(config.data_dir, "*.tif"))
-    if len(tifs) == 0:
-        log.fatal("No geotiffs found in {}!".format(config.data_dir))
-        sys.exit(-1)
-
-    extracted_chunks = {}
-    settings = {}
-    for tif in tifs:
-        name = path.basename(tif)
-        log.info("Processing {}.".format(name))
-        s = datatypes.ExtractSettings(onehot=config.onehot,
-                                      x_sets=None,
-                                      patchsize=config.patchsize)
-        image_source = geoio.RasterioImageSource(tif)
-        # x may be none, but everyone gets the same settings object
-        x, s = pipeline.extract_features(image_source, targets, s)
-        extracted_chunks[name] = x
-        settings[name] = s
-    result = OrderedDict(sorted(extracted_chunks.items(), key=lambda t: t[0]))
-    return result, settings
+def gather_features(x):
+    x_all = np.ma.vstack(mpiops.comm.allgather(x))
+    return x_all
 
 
 def run_pipeline(config):
 
     # Make the targets
-    shapefile = path.join(config.data_dir, config.target_file)
-    targets = mpiops.run_once(get_targets,
-                              shapefile=shapefile,
-                              fieldname=config.target_var,
-                              folds=config.folds,
-                              seed=config.crossval_seed)
+    targets = geoio.load_targets(shapefile=config.target_file,
+                                 targetfield=config.target_property)
+    # We're doing local models at the moment
+    targets_all = gather_targets(targets)
 
-    # import IPython; IPython.embed(); exit()
+    # Get the image chunks and their associated transforms
+    image_chunk_sets = image_feature_sets(targets, config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
 
-    if config.export_targets:
-        outfile_targets = path.join(config.output_dir,
-                                    config.name + "_targets.hdf5")
-        mpiops.run_once(geoio.write_targets, targets, outfile_targets)
+    if config.rank_features:
+        measures, features, scores = local_rank_features(image_chunk_sets,
+                                                         transform_sets,
+                                                         targets_all,
+                                                         config)
+        mpiops.run_once(export_feature_ranks, measures, features,
+                        scores, config)
 
-    # keys for these two are the filenames
-    extracted_chunks, image_settings = extract(targets, config)
+    x = pipeline.transform_features(image_chunk_sets, transform_sets,
+                                    config.final_transform)
+    # learn the model
+    # local models need all data
+    x_all = gather_features(x)
 
-    compose_settings = datatypes.ComposeSettings(
-        impute=config.impute,
-        transform=config.transform,
-        featurefraction=config.pca_frac,
-        impute_mean=None,
-        mean=None,
-        sd=None,
-        eigvals=None,
-        eigvecs=None)
+    if config.cross_validate:
+        crossval_results = pipeline.local_crossval(x_all, targets_all, config)
+        mpiops.run_once(export_scores, crossval_results, config)
 
-    for algorithm in sorted(config.algdict.keys()):
-        args = config.algdict[algorithm]
-        if config.rank_features:
-            measures, features, scores = rank_features(extracted_chunks,
-                                                       targets, algorithm,
-                                                       compose_settings,
-                                                       config)
-            mpiops.run_once(export_feature_ranks, measures,
-                            features, scores, algorithm, config)
-
-    # all nodes need to agree on the order of iteration
-    X = gather_data(extracted_chunks, compose_settings)
-
-    for algorithm in sorted(config.algdict.keys()):
-        args = config.algdict[algorithm]
-
-        if config.cross_validate:
-            crossval_results = pipeline.cross_validate(X, targets, algorithm,
-                                                       args)
-            mpiops.run_once(export_scores, crossval_results, algorithm, config)
-
-        model = pipeline.learn_model(X, targets, algorithm, args)
-        mpiops.run_once(export_model, model, image_settings,
-                        compose_settings, algorithm, config)
+    model = pipeline.local_learn_model(x, targets, config)
+    mpiops.run_once(export_model, model, config)
 
 
-def rank_features(extracted_chunks, targets, algorithm, compose_settings,
-                  config):
+def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
 
     # Determine the importance of each feature
     feature_scores = {}
-    for name in extracted_chunks:
-        dict_missing = dict(extracted_chunks)
-        del dict_missing[name]
+    # get all the images
+    all_names = []
+    for c in image_chunk_sets:
+        all_names.extend(list(c.keys()))
+    all_names = sorted(list(set(all_names)))  # make unique
+
+    for name in all_names:
+        transform_sets_leaveout = copy.deepcopy(transform_sets)
+        final_transform_leaveout = copy.deepcopy(config.final_transform)
+        image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
+        for c in image_chunks_leaveout:
+            if name in c:
+                c.pop(name)
 
         fname = name.rstrip(".tif")
-        log.info("Computing {} feature importance of {}".format(algorithm,
-                                                                fname))
+        log.info("Computing {} feature importance of {}"
+                 .format(config.algorithm, fname))
 
-        compose_missing = copy.deepcopy(compose_settings)
-        X = gather_data(dict_missing, compose_missing)
-        results = pipeline.cross_validate(X, targets, algorithm,
-                                          config.algdict[algorithm])
+        x = pipeline.transform_features(image_chunks_leaveout,
+                                        transform_sets_leaveout,
+                                        final_transform_leaveout)
+        x_all = gather_features(x)
+
+        results = pipeline.local_crossval(x_all, targets_all, config)
         feature_scores[fname] = results
 
     # Get the different types of score from one of the outputs
@@ -147,22 +124,9 @@ def rank_features(extracted_chunks, targets, algorithm, compose_settings,
     return measures, features, scores
 
 
-def gather_data(extracted_chunks, compose_settings):
-    has_data = not (True in [k is None for k in extracted_chunks.values()])
-    if has_data:
-        x = np.ma.concatenate(extracted_chunks.values(), axis=1)
-    else:
-        x = None
-    x_out, compose_settings = pipeline.compose_features(x, compose_settings)
-
-    X_list = mpiops.comm.allgather(x_out)
-    X = np.ma.vstack([k for k in X_list if k is not None])
-    return X
-
-
-def export_feature_ranks(measures, features, scores, algorithm, config):
+def export_feature_ranks(measures, features, scores, config):
     outfile_ranks = path.join(config.output_dir,
-                              config.name + "_" + algorithm +
+                              config.name + "_" + config.algorithm +
                               "_featureranks.json")
 
     score_listing = dict(scores={}, ranks={})
@@ -171,6 +135,8 @@ def export_feature_ranks(measures, features, scores, algorithm, config):
         # Sort the scores
         scores = sorted(zip(features, measure_scores),
                         key=lambda s: s[1])
+        if measure in lower_is_better:
+            scores.reverse()
         sorted_features, sorted_scores = zip(*scores)
 
         # Store the results
@@ -182,22 +148,19 @@ def export_feature_ranks(measures, features, scores, algorithm, config):
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 
-def export_model(model, image_settings, compose_settings, algorithm, config):
+def export_model(model, config):
     outfile_state = path.join(config.output_dir,
-                              config.name + "_" + algorithm + ".state")
+                              config.name + ".model")
     state_dict = {"model": model,
-                  "image_settings": image_settings,
-                  "compose_settings": compose_settings}
-
+                  "config": config}
     with open(outfile_state, 'wb') as f:
         pickle.dump(state_dict, f)
 
 
-def export_scores(crossval_output, algorithm, config):
+def export_scores(crossval_output, config):
 
     outfile_scores = path.join(config.output_dir,
-                               config.name + "_" + algorithm +
-                               "_scores.json")
+                               config.name + "_scores.json")
     geoio.export_scores(crossval_output.scores,
                         crossval_output.y_true,
                         crossval_output.y_pred,
@@ -209,12 +172,7 @@ def main():
         sys.exit(-1)
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
-    name = path.basename(config_filename).rstrip(".pipeline")
-    config = importlib.machinery.SourceFileLoader(
-        'config', config_filename).load_module()
-    if not hasattr(config, 'name'):
-        config.name = name
-    config.output_dir = path.abspath(config.output_dir)
+    config = Config(config_filename)
     run_pipeline(config)
 
 if __name__ == "__main__":

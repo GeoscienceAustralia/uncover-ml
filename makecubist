@@ -1,0 +1,7 @@
+#!/bin/bash
+mkdir uncoverml/cubist
+cd uncoverml/cubist
+curl -Ok https://www.rulequest.com/GPL/Cubist.tgz
+tar -xvzf Cubist.tgz
+sed -i.bak '/csh/d' Makefile
+make

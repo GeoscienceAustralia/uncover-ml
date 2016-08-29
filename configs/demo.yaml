@@ -1,0 +1,53 @@
+
+patchsize: 0
+memory_fraction: 0.5
+
+features:
+  - name: my features
+    type: continuous
+    files:
+      - path: /home/lb/data/GA-cover/Th_v1.tif
+      - directory: /home/lb/data/GA-cover
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+
+preprocessing:
+  # imputation: mean
+  # imputation: gaus
+  imputation: nn
+  transforms:
+    - whiten:
+        keep_fraction: 0.8
+
+targets:
+  file: /home/lb/data/GA-cover/geochem_sites.shp
+  property: Na_ppm_i_1
+
+learning:
+    # algorithm: sgdapproxgp
+    # arguments:
+    #     target_transform: standardise
+    #     kern: rbf
+    #     lenscale: 1000
+    #     ard: True
+    #     maxiter: 5000
+    #     nbases: 50
+    #     random_state: 1
+    algorithm: svr
+    arguments:
+      target_transform: rank
+
+prediction:
+  quantiles: 0.95
+
+validation:
+  #- feature_rank
+  - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: .
+
