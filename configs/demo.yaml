@@ -1,5 +1,7 @@
 
-patchsize: 0
+# not currently implemented
+# patchsize: 0
+
 memory_fraction: 0.5
 
 features:

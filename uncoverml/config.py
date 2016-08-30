@@ -1,9 +1,12 @@
+import logging
 from os import path
 import glob
 import csv
 import yaml
 
 from uncoverml import transforms
+
+log = logging.getLogger(__name__)
 
 _imputers = {'mean': transforms.MeanImputer,
              'gaus': transforms.GaussImputer,
@@ -69,7 +72,12 @@ class Config:
         with open(yaml_file, 'r') as f:
             s = yaml.load(f)
         self.name = path.basename(yaml_file).rstrip(".yaml")
-        self.patchsize = s['patchsize']
+
+        # TODO expose this option when fixed
+        if 'patchsize' in s:
+            log.info("Patchsize currently fixed at 0 -- ignoring")
+        self.patchsize = 0
+
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
         final_transform = s['preprocessing']
         _, im, trans_g = _parse_transform_set(final_transform['transforms'],
