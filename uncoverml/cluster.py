@@ -29,10 +29,16 @@ class KMeans:
         self.k = k
         self.oversample_factor = oversample_factor
 
-    def learn(self, x, indices, classes):
-        training_data = TrainingData(indices, classes)
+    def learn(self, x, indices=None, classes=None):
+        if indices is not None and classes is not None:
+            log.info("Class labels found. Using semi-supervised k-means")
+            training_data = TrainingData(indices, classes)
+        else:
+            log.info("No class labels found. Using unsupervised k-means")
+            training_data = None
         C_init = initialise_centres(x, self.k, self.oversample_factor,
                                     training_data)
+        log.info("Initialising full K-means with k-means|| output")
         C_final, _ = run_kmeans(x, C_init, self.k,
                                 training_data=training_data)
         self.centres = C_final

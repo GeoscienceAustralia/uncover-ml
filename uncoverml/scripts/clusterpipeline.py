@@ -20,7 +20,7 @@ from uncoverml.config import Config
 log = logging.getLogger(__name__)
 
 
-def all_feature_sets(targets, config):
+def semisupervised_feature_sets(targets, config):
 
     def f(image_source):
         r_t = pipeline.extract_features(image_source, targets, n_subchunks=1,
@@ -34,16 +34,29 @@ def all_feature_sets(targets, config):
     return result
 
 
-def remove_missing(targets, x):
+def unsupervised_feature_sets(config):
+
+    def f(image_source):
+        r = pipeline.extract_subchunks(image_source, subchunk_index=0,
+                                       n_subchunks=1,
+                                       patchsize=config.patchsize)
+        return r
+    result = geoio._iterate_sources(f, config)
+    return result
+
+
+def remove_missing(x, targets=None):
     log.info("Stripping out missing data")
     no_missing_x = np.sum(x.mask, axis=1) == 0
     x = x.data[no_missing_x]
 
     # remove labels that correspond to data missing in x
-    classes = targets.observations
-    no_missing_y = no_missing_x[0:(classes.shape[0])]
-    classes = classes[:, np.newaxis][no_missing_y]
-    classes = classes.flatten()
+    classes = None
+    if targets is not None:
+        classes = targets.observations
+        no_missing_y = no_missing_x[0:(classes.shape[0])]
+        classes = classes[:, np.newaxis][no_missing_y]
+        classes = classes.flatten()
     return x, classes
 
 
@@ -53,7 +66,7 @@ def compute_n_classes(classes, config):
     return k
 
 
-def run_pipeline(config):
+def semisupervised_pipeline(config):
 
     # make sure we're clear that we're clustering
     config.algorithm = config.clustering_algorithm
@@ -62,19 +75,37 @@ def run_pipeline(config):
                                  targetfield=config.class_property)
 
     # Get the image chunks and their associated transforms
-    image_chunk_sets = all_feature_sets(targets, config)
+    image_chunk_sets = semisupervised_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     x = pipeline.transform_features(image_chunk_sets, transform_sets,
                                     config.final_transform)
 
-    x, classes = remove_missing(targets, x)
+    x, classes = remove_missing(x, targets)
     indices = np.arange(classes.shape[0], dtype=int)
 
     k = compute_n_classes(classes, config)
     model = cluster.KMeans(k, config.oversample_factor)
     log.info("Clustering image")
     model.learn(x, indices, classes)
+    mpiops.run_once(export_model, model, config)
+
+
+def unsupervised_pipeline(config):
+    # make sure we're clear that we're clustering
+    config.algorithm = config.clustering_algorithm
+    # Get the image chunks and their associated transforms
+    image_chunk_sets = unsupervised_feature_sets(config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
+
+    x = pipeline.transform_features(image_chunk_sets, transform_sets,
+                                    config.final_transform)
+
+    x, _ = remove_missing(x)
+    k = config.n_classes
+    model = cluster.KMeans(k, config.oversample_factor)
+    log.info("Clustering image")
+    model.learn(x)
     mpiops.run_once(export_model, model, config)
 
 
@@ -93,7 +124,10 @@ def main():
     logging.basicConfig(level=logging.INFO)
     config_filename = sys.argv[1]
     config = Config(config_filename)
-    run_pipeline(config)
+    if config.semi_supervised:
+        semisupervised_pipeline(config)
+    else:
+        unsupervised_pipeline(config)
 
 if __name__ == "__main__":
     main()

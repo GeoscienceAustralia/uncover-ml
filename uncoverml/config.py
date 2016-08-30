@@ -107,5 +107,9 @@ class Config:
             cluster_args = s['clustering']['arguments']
             self.n_classes = cluster_args['n_classes']
             self.oversample_factor = cluster_args['oversample_factor']
-            self.class_file = s['clustering']['file']
-            self.class_property = s['clustering']['property']
+            if 'file' in s['clustering'] and s['clustering']['file']:
+                self.semi_supervised = True
+                self.class_file = s['clustering']['file']
+                self.class_property = s['clustering']['property']
+            else:
+                self.semi_supervised = False
