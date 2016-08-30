@@ -1,7 +1,9 @@
 #!/bin/bash
-mkdir uncoverml/cubist
-cd uncoverml/cubist
+# mkdir uncoverml/cubist
+INSTALL_DIR=$1
+cd $INSTALL_DIR
 curl -Ok https://www.rulequest.com/GPL/Cubist.tgz
 tar -xvzf Cubist.tgz
 sed -i.bak '/csh/d' Makefile
 make
+echo "cubist_path = $INSTALL_DIR/cubist" > uncoverml/cubist_path.py
