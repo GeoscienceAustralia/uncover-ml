@@ -77,7 +77,7 @@ def run_pipeline(config):
 
     if config.cross_validate:
         crossval_results = pipeline.local_crossval(x_all, targets_all, config)
-        mpiops.run_once(export_scores, crossval_results, config)
+        mpiops.run_once(export_crossval, crossval_results, config)
 
     model = pipeline.local_learn_model(x, targets, config)
     mpiops.run_once(export_model, model, config)
@@ -157,14 +157,21 @@ def export_model(model, config):
         pickle.dump(state_dict, f)
 
 
-def export_scores(crossval_output, config):
-
+def export_crossval(crossval_output, config):
+    import tables as hdf
     outfile_scores = path.join(config.output_dir,
                                config.name + "_scores.json")
-    geoio.export_scores(crossval_output.scores,
-                        crossval_output.y_true,
-                        crossval_output.y_pred,
-                        outfile_scores)
+    with open(outfile_scores, 'w') as f:
+        json.dump(crossval_output.scores, f, sort_keys=True, indent=4)
+
+    outfile_results = path.join(config.output_dir,
+                                config.name + "_results.hdf5")
+    with hdf.open_file(outfile_results, 'w') as f:
+        for fld, v in crossval_output.y_pred.items():
+            label = "_".join(fld.split())
+            f.create_array("/", label, obj=v.data)
+            f.create_array("/", label + "_mask", obj=v.mask)
+        f.create_array("/", "y_true", obj=crossval_output.y_true)
 
 
 def main():
