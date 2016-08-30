@@ -541,9 +541,3 @@ def _iterate_sources(f, config):
 
         results.append(extracted_chunks)
     return results
-
-
-def export_scores(scores, y, Ey, filename):
-
-    with open(filename, 'w') as f:
-        json.dump(scores, f, sort_keys=True, indent=4)
