@@ -1,6 +1,9 @@
 import click
 import logging
 
+# landshark
+import uncoverml as ls
+
 
 @click.group()
 def cli():
@@ -10,38 +13,40 @@ def cli():
 @cli.command()
 @click.argument('pipeline_file')
 def learn(pipeline_file):
-    config = Config(pipeline_file)
+    config = ls.config.Config(pipeline_file)
 
     # Make the targets
-    targets = geoio.load_targets(shapefile=config.target_file,
-                                 targetfield=config.target_property)
+    targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                    targetfield=config.target_property)
     # We're doing local models at the moment
-    targets_all = gather_targets(targets)
+    targets_all = ls.targets.gather_targets(targets)
 
     # Get the image chunks and their associated transforms
-    image_chunk_sets = image_feature_sets(targets, config)
+    image_chunk_sets = ls.features.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     if config.rank_features:
-        measures, features, scores = local_rank_features(image_chunk_sets,
-                                                         transform_sets,
-                                                         targets_all,
-                                                         config)
-        mpiops.run_once(geoio.export_feature_ranks, measures, features,
-                        scores, config)
+        measures, features, scores = ls.learn.local_rank_features(
+            image_chunk_sets,
+            transform_sets,
+            targets_all,
+            config)
+        ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features,
+                           scores, config)
 
-    x = pipeline.transform_features(image_chunk_sets, transform_sets,
-                                    config.final_transform)
+    x = ls.features.transform_features(image_chunk_sets, transform_sets,
+                                       config.final_transform)
     # learn the model
     # local models need all data
-    x_all = gather_features(x)
+    x_all = ls.features.gather_features(x)
 
     if config.cross_validate:
-        crossval_results = pipeline.local_crossval(x_all, targets_all, config)
-        mpiops.run_once(geoio.export_crossval, crossval_results, config)
+        crossval_results = ls.validate.local_crossval(x_all,
+                                                      targets_all, config)
+        ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
-    model = pipeline.local_learn_model(x, targets, config)
-    mpiops.run_once(geoio.export_model, model, config)
+    model = ls.learn.local_learn_model(x, targets, config)
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
 
 
 @cli.command()
