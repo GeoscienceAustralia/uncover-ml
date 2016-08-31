@@ -1,9 +1,27 @@
 #!/bin/bash
-# mkdir uncoverml/cubist
-INSTALL_DIR=$1
-cd $INSTALL_DIR
-curl -Ok https://www.rulequest.com/GPL/Cubist.tgz
-tar -xvzf Cubist.tgz
-sed -i.bak '/csh/d' Makefile
-make
-echo "cubist_path = $INSTALL_DIR/cubist" > uncoverml/cubist_path.py
+
+if [ -z "$1" ]; then
+    
+    echo "Usage makecubist <install directory>"
+
+else
+
+    # Get the required location for the installation and make it if it doesn't exist
+    INSTALL_DIR=$1
+    LAST_DIR=$(pwd)
+    mkdir -p $INSTALL_DIR/cubist
+    cd $INSTALL_DIR/cubist
+
+    # Download the cubist source and strip out the csh dependency
+    curl -Ok https://www.rulequest.com/GPL/Cubist.tgz
+    tar -xvzf Cubist.tgz
+    sed -i.bak '/csh/d' Makefile
+
+    # Make cubist in the old directory
+    make
+
+    # Write out the cubist path to a python config file
+    cd $LAST_DIR
+    echo "path = \"$INSTALL_DIR/cubist\"" > ./uncoverml/cubist_config.py
+
+fi
