@@ -65,3 +65,6 @@ data/
 
 # HDF5 install (Arch workaround
 hdf5-1.8.*
+
+# Cubist Configuration
+/uncoverml/cubist_config.py
