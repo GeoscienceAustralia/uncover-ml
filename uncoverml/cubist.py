@@ -6,6 +6,7 @@ import operator
 from copy import deepcopy
 from subprocess import PIPE, Popen
 from shlex import split as parse
+from uncoverml.cubist_config import invocation
 
 import numpy as np
 from scipy.stats import norm
@@ -56,8 +57,8 @@ def variance_with_mean(mean):
 
 class Cubist:
 
-    def __init__(self, invocation=None, name='temp', print_output=False,
-                 unbiased=True, max_rules=None, committee_members=20):
+    def __init__(self, name='temp', print_output=False, unbiased=True,
+                 max_rules=None, committee_members=20):
         self._trained = False
         self._models = []
         self._filename = name + str(time.time()) + str(random.random())
@@ -166,6 +167,7 @@ class Cubist:
                    (' -C ' + str(self.committee_members)
                     if self.committee_members else '') +
                    (' -f ' + self._filename))
+
         process = Popen(command, shell=True, stdout=PIPE)
         stdout, stderr = process.communicate()
         process.wait()

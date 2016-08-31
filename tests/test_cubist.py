@@ -29,8 +29,7 @@ def test_correct_range():
                   16.50, 18.90, 15.00, 18.90, 21.70, 20.40, 18.2])
 
     # Fit the data
-    predictor = Cubist(invocation='uncoverml/cubist/cubist',
-                       print_output=True)  # FIXME: paths
+    predictor = Cubist(print_output=False)
     predictor.fit(x, y)
 
     # Predict the output

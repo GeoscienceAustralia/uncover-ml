@@ -22,6 +22,7 @@ else
 
     # Write out the cubist path to a python config file
     cd $LAST_DIR
-    echo "path = \"$INSTALL_DIR/cubist\"" > ./uncoverml/cubist_config.py
+    echo "invocation = \"$INSTALL_DIR/cubist/cubist\"" > \
+        ./uncoverml/cubist_config.py
 
 fi
