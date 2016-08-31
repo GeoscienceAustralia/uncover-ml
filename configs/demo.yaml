@@ -4,7 +4,7 @@
 
 # Estimate of total memory use as a fraction of input data.
 # Can be higher than one. For aggressive memory use set to none or comment
-# out
+# Note clustering ignores this value, and requires 4 * (data_size) total
 memory_threshold: 1.0 
 # memory_threshold: none
 
@@ -12,8 +12,10 @@ features:
   - name: my features
     type: continuous
     files:
-      - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
       - directory: /home/lb/data/GA-cover
+    # transforms are performed in order
     transforms:
       - centre
       - standardise
