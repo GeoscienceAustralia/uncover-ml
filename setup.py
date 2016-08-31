@@ -51,16 +51,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'learningpipeline = uncoverml.scripts.learningpipeline:main',
-            'predictionpipeline = uncoverml.scripts.predictionpipeline:main',
-            'clusterpipeline = uncoverml.scripts.clusterpipeline:main',
-            'maketargets = uncoverml.scripts.maketargets:main',
-            'extractfeats = uncoverml.scripts.extractfeats:main',
-            'composefeats = uncoverml.scripts.composefeats:main',
-            'learnmodel = uncoverml.scripts.learnmodel:main',
-            'predict = uncoverml.scripts.predict:main',
-            'validatemodel = uncoverml.scripts.validatemodel:main',
-            'exportgeotiff = uncoverml.scripts.exportgeotiff:main',
+            'landshark = uncoverml.scripts.landshark:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main'
         ]
     },

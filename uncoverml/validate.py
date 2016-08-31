@@ -108,3 +108,82 @@ def y_y_plot(y1, y2, y_label=None, y_exp_label=None, title=None,
         fig.savefig(outfile + ".png")
     if display:
         pl.show()
+
+
+
+class CrossvalInfo:
+    def __init__(self, scores, y_true, y_pred):
+        self.scores = scores
+        self.y_true = y_true
+        self.y_pred = y_pred
+
+def _join_dicts(dicts):
+    if dicts is None:
+        return
+    d = {k: v for D in dicts for k, v in D.items()}
+    return d
+
+
+def local_crossval(x_all, targets_all, config):
+    log.info("Validating with {} folds".format(config.folds))
+    model = modelmaps[config.algorithm](**config.algorithm_args)
+    y = targets_all.observations
+    _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
+
+    # Split folds over workers
+    fold_list = np.arange(config.folds)
+    fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+
+    y_pred = {}
+    y_true = {}
+    fold_scores = {}
+
+    # Train and score on each fold
+    for fold in fold_node:
+
+        train_mask = cv_indices != fold
+        test_mask = ~ train_mask
+
+        y_k_train = y[train_mask]
+
+        # Extra fields
+        fields_train = {f: v[train_mask]
+                        for f, v in targets_all.fields.items()}
+        fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
+
+        # Train on this fold
+        apply_multiple_masked(model.fit, data=(x_all[train_mask], y_k_train),
+                              kwargs={'fields': fields_train})
+
+        # Testing
+        y_k_pred = predict(x_all[test_mask], model, fields=fields_pred)
+        y_k_test = y[test_mask]
+        y_pred[fold] = y_k_pred
+        y_true[fold] = y_k_test
+
+        fold_scores[fold] = calculate_validation_scores(y_k_test,
+                                                        y_k_train,
+                                                        y_k_pred)
+
+    y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
+    y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
+    scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
+
+    result = None
+    if mpiops.chunk_index == 0:
+        y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
+        valid_metrics = scores[0].keys()
+        scores = {m: np.mean([d[m] for d in scores.values()])
+                  for m in valid_metrics}
+        score_string = "Validation complete:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+        log.info(score_string)
+
+        result_tags = model.get_predict_tags()
+        y_pred_dict = dict(zip(result_tags, y_pred.T))
+        result = CrossvalInfo(scores, y_true, y_pred_dict)
+    result = mpiops.comm.bcast(result, root=0)
+    return result
+

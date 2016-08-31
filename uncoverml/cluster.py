@@ -204,60 +204,8 @@ def initialise_centres(X, k, l, training_data=None, max_iterations=1000):
     return C_init
 
 
-def plot(X, classes, C):
-    import matplotlib.pyplot as pl
-    pl.figure()
-    pl.scatter(X[:, 0], X[:, 1], c=classes)
-    pl.plot(C[:, 0], C[:, 1], 'ro', ms=10)
-    pl.show()
+def compute_n_classes(classes, config):
+    k = mpiops.comm.allreduce(np.amax(classes), op=mpiops.MPI.MAX)
+    k = max(k, config.n_classes)
+    return k
 
-
-def generate_data():
-    n_samples = 1000 * mpiops.chunks
-    n_features = 20
-    k_true = 20
-    n_supervised_classes = 1
-    n_supervised_samples = 5
-    import sklearn.datasets
-    X, y = sklearn.datasets.make_blobs(n_samples=n_samples,
-                                       n_features=n_features,
-                                       centers=k_true)
-    # get some semi-supervised labels
-    indices = []
-    classes = []
-    my_X = np.array_split(X, mpiops.chunks)[mpiops.chunk_index]
-    my_y = np.array_split(y, mpiops.chunks)[mpiops.chunk_index]
-    for k in range(n_supervised_classes):
-        indices.append(np.argwhere(my_y == k)[0:n_supervised_samples])
-        classes.append(np.zeros(n_supervised_samples, dtype=int) + k)
-    indices = np.concatenate(indices, axis=0)
-    classes = np.concatenate(classes, axis=0)
-    if mpiops.chunk_index == 1:  # no training data on some nodes
-        indices = np.array([], dtype=int)
-        classes = np.array([], dtype=int)
-    training_data = TrainingData(indices, classes)
-    return my_X, my_y, training_data
-
-
-def main():
-    k = 20
-    l = 100.0 / np.sqrt(mpiops.chunks)
-    maxit = 10000
-    np.random.seed(1)
-
-    if mpiops.chunk_index == 0:
-        print("finding initialiser set...")
-    X, y, training_data = generate_data()
-    # get the initial centres
-    C_init = initialise_centres(X, k, l, training_data)
-    # now cluster the candidates
-    if mpiops.chunk_index == 0:
-        print("running full k-means:")
-    C_final, assignments = run_kmeans(X, C_init, k,
-                                      training_data=training_data,
-                                      max_iterations=maxit)
-    if mpiops.chunk_index == 0:
-        plot(X, assignments, C_final)
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    main()
