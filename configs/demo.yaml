@@ -2,7 +2,11 @@
 # not currently implemented
 # patchsize: 0
 
-memory_fraction: 0.5
+# Estimate of total memory use as a fraction of input data.
+# Can be higher than one. For aggressive memory use set to none or comment
+# out
+memory_threshold: 1.0 
+# memory_threshold: none
 
 features:
   - name: my features
