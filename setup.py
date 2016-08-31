@@ -51,7 +51,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'landshark = uncoverml.scripts.landshark:cli',
+            'uncoverml = uncoverml.scripts.uncoverml:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main'
         ]
     },
