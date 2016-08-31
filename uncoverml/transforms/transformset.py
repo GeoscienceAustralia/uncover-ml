@@ -56,7 +56,7 @@ class TransformSet:
         # impute
         if self.imputer:
             missing_percent = missing_percentage(x)
-            log.info("Imputing {}% missing data".format(missing_percent))
+            log.info("Imputing {:2.2f}% missing data".format(missing_percent))
             x = self.imputer(x)
 
         # transforms
