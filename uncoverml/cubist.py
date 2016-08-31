@@ -6,7 +6,6 @@ import operator
 from copy import deepcopy
 from subprocess import PIPE, Popen
 from shlex import split as parse
-from uncoverml.cubist_config import invocation
 
 import numpy as np
 from scipy.stats import norm
@@ -59,6 +58,8 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20):
+        # don't let the fact that someone doesn't have cubist break the code
+        from uncoverml.cubist_config import invocation
         self._trained = False
         self._models = []
         self._filename = name + str(time.time()) + str(random.random())
