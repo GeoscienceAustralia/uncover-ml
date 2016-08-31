@@ -4,14 +4,18 @@ import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
+import json
+import pickle
 
 import rasterio
 import numpy as np
 import shapefile
+import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
-from uncoverml import datatypes
+from uncoverml import validate
+from uncoverml.targets import Targets
 
 
 log = logging.getLogger(__name__)
@@ -195,8 +199,18 @@ def load_targets(shapefile, targetfield):
     othervals = mpiops.comm.scatter(othervals, root=0)
     log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
                                                            lonlat.shape[0]))
-    targets = datatypes.Targets(lonlat, vals, othervals=othervals)
+    targets = Targets(lonlat, vals, othervals=othervals)
     return targets
+
+
+def get_image_spec(model, config):
+    # temp workaround, we should have an image spec to check against
+    nchannels = len(model.get_predict_tags())
+    imagelike = config.feature_sets[0].files[0]
+    template_image = image.Image(RasterioImageSource(imagelike))
+    eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
+    eff_bbox = template_image.patched_bbox(config.patchsize)
+    return eff_shape, eff_bbox
 
 
 class ImageWriter:
@@ -283,3 +297,61 @@ def _iterate_sources(f, config):
 
         results.append(extracted_chunks)
     return results
+
+
+def export_feature_ranks(measures, features, scores, config):
+    outfile_ranks = os.path.join(config.output_dir,
+                                 config.name + "_" + config.algorithm +
+                                 "_featureranks.json")
+
+    score_listing = dict(scores={}, ranks={})
+    for measure, measure_scores in zip(measures, scores):
+
+        # Sort the scores
+        scores = sorted(zip(features, measure_scores),
+                        key=lambda s: s[1])
+        if measure in validate.lower_is_better:
+            scores.reverse()
+        sorted_features, sorted_scores = zip(*scores)
+
+        # Store the results
+        score_listing['scores'][measure] = sorted_scores
+        score_listing['ranks'][measure] = sorted_features
+
+    # Write the results out to a file
+    with open(outfile_ranks, 'w') as output_file:
+        json.dump(score_listing, output_file, sort_keys=True, indent=4)
+
+
+def export_model(model, config):
+    outfile_state = os.path.join(config.output_dir,
+                                 config.name + ".model")
+    state_dict = {"model": model,
+                  "config": config}
+    with open(outfile_state, 'wb') as f:
+        pickle.dump(state_dict, f)
+
+
+def export_cluster_model(model, config):
+    outfile_state = os.path.join(config.output_dir,
+                                 config.name + ".cluster")
+    state_dict = {"model": model,
+                  "config": config}
+    with open(outfile_state, 'wb') as f:
+        pickle.dump(state_dict, f)
+
+
+def export_crossval(crossval_output, config):
+    outfile_scores = os.path.join(config.output_dir,
+                                  config.name + "_scores.json")
+    with open(outfile_scores, 'w') as f:
+        json.dump(crossval_output.scores, f, sort_keys=True, indent=4)
+
+    outfile_results = os.path.join(config.output_dir,
+                                   config.name + "_results.hdf5")
+    with hdf.open_file(outfile_results, 'w') as f:
+        for fld, v in crossval_output.y_pred.items():
+            label = "_".join(fld.split())
+            f.create_array("/", label, obj=v.data)
+            f.create_array("/", label + "_mask", obj=v.mask)
+        f.create_array("/", "y_true", obj=crossval_output.y_true)
