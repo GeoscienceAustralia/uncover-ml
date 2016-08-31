@@ -1,4 +1,13 @@
+import logging
 
+import numpy as np
+
+from uncoverml import geoio
+from uncoverml import mpiops
+from uncoverml.image import Image
+from uncoverml import patch
+
+log = logging.getLogger(__name__)
 
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
@@ -59,7 +68,7 @@ def transform_features(feature_sets, transform_sets, final_transform):
 def image_feature_sets(targets, config):
 
     def f(image_source):
-        r = pipeline.extract_features(image_source, targets,
+        r = extract_features(image_source, targets,
                                       config.n_subchunks, config.patchsize)
         return r
     result = geoio._iterate_sources(f, config)
@@ -74,9 +83,9 @@ def gather_features(x):
 def semisupervised_feature_sets(targets, config):
 
     def f(image_source):
-        r_t = pipeline.extract_features(image_source, targets, n_subchunks=1,
+        r_t = extract_features(image_source, targets, n_subchunks=1,
                                         patchsize=config.patchsize)
-        r_a = pipeline.extract_subchunks(image_source, subchunk_index=0,
+        r_a = extract_subchunks(image_source, subchunk_index=0,
                                          n_subchunks=1,
                                          patchsize=config.patchsize)
         r = np.ma.concatenate([r_t, r_a], axis=0)
@@ -88,7 +97,7 @@ def semisupervised_feature_sets(targets, config):
 def unsupervised_feature_sets(config):
 
     def f(image_source):
-        r = pipeline.extract_subchunks(image_source, subchunk_index=0,
+        r = extract_subchunks(image_source, subchunk_index=0,
                                        n_subchunks=1,
                                        patchsize=config.patchsize)
         return r
@@ -114,8 +123,8 @@ def remove_missing(x, targets=None):
 def image_subchunks(subchunk_index, config):
 
     def f(image_source):
-        r = pipeline.extract_subchunks(image_source, subchunk_index,
-                                       config.n_subchunks, config.patchsize)
+        r = extract_subchunks(image_source, subchunk_index,
+                              config.n_subchunks, config.patchsize)
         return r
     result = geoio._iterate_sources(f, config)
     return result

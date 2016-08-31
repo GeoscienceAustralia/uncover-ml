@@ -14,8 +14,8 @@ import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
-from uncoverml import datatypes
-from uncoverml import validation
+from uncoverml import validate
+from uncoverml.targets import Targets
 
 
 log = logging.getLogger(__name__)
@@ -199,7 +199,7 @@ def load_targets(shapefile, targetfield):
     othervals = mpiops.comm.scatter(othervals, root=0)
     log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
                                                            lonlat.shape[0]))
-    targets = datatypes.Targets(lonlat, vals, othervals=othervals)
+    targets = Targets(lonlat, vals, othervals=othervals)
     return targets
 
 
@@ -310,7 +310,7 @@ def export_feature_ranks(measures, features, scores, config):
         # Sort the scores
         scores = sorted(zip(features, measure_scores),
                         key=lambda s: s[1])
-        if measure in validation.lower_is_better:
+        if measure in validate.lower_is_better:
             scores.reverse()
         sorted_features, sorted_scores = zip(*scores)
 

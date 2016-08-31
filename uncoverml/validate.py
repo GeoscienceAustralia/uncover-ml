@@ -1,6 +1,8 @@
 """ Scripts for validation """
 
 from __future__ import division
+import logging
+import copy
 
 import matplotlib as pl
 import numpy as np
@@ -8,8 +10,12 @@ import numpy as np
 from sklearn.metrics import explained_variance_score, r2_score
 from revrand.metrics import lins_ccc, mll, msll, smse
 
-from uncoverml.models import apply_multiple_masked
+from uncoverml.models import apply_multiple_masked, modelmaps
+from uncoverml import mpiops
+from uncoverml import predict
+from uncoverml import features as feat
 
+log = logging.getLogger(__name__)
 
 metrics = {'r2_score': r2_score,
            'expvar': explained_variance_score,
@@ -110,12 +116,53 @@ def y_y_plot(y1, y2, y_label=None, y_exp_label=None, title=None,
         pl.show()
 
 
-
 class CrossvalInfo:
     def __init__(self, scores, y_true, y_pred):
         self.scores = scores
         self.y_true = y_true
         self.y_pred = y_pred
+
+
+def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
+
+    # Determine the importance of each feature
+    feature_scores = {}
+    # get all the images
+    all_names = []
+    for c in image_chunk_sets:
+        all_names.extend(list(c.keys()))
+    all_names = sorted(list(set(all_names)))  # make unique
+
+    for name in all_names:
+        transform_sets_leaveout = copy.deepcopy(transform_sets)
+        final_transform_leaveout = copy.deepcopy(config.final_transform)
+        image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
+        for c in image_chunks_leaveout:
+            if name in c:
+                c.pop(name)
+
+        fname = name.rstrip(".tif")
+        log.info("Computing {} feature importance of {}"
+                 .format(config.algorithm, fname))
+
+        x = feat.transform_features(image_chunks_leaveout,
+                                    transform_sets_leaveout,
+                                    final_transform_leaveout)
+        x_all = feat.gather_features(x)
+
+        results = local_crossval(x_all, targets_all, config)
+        feature_scores[fname] = results
+
+    # Get the different types of score from one of the outputs
+    # TODO make this not suck
+    measures = list(next(feature_scores.values().__iter__()).scores.keys())
+    features = sorted(feature_scores.keys())
+    scores = np.empty((len(measures), len(features)))
+    for m, measure in enumerate(measures):
+        for f, feature in enumerate(features):
+            scores[m, f] = feature_scores[feature].scores[measure]
+    return measures, features, scores
+
 
 def _join_dicts(dicts):
     if dicts is None:
@@ -156,7 +203,7 @@ def local_crossval(x_all, targets_all, config):
                               kwargs={'fields': fields_train})
 
         # Testing
-        y_k_pred = predict(x_all[test_mask], model, fields=fields_pred)
+        y_k_pred = predict.predict(x_all[test_mask], model, fields=fields_pred)
         y_k_test = y[test_mask]
         y_pred[fold] = y_k_pred
         y_true[fold] = y_k_test
@@ -186,4 +233,3 @@ def local_crossval(x_all, targets_all, config):
         result = CrossvalInfo(scores, y_true, y_pred_dict)
     result = mpiops.comm.bcast(result, root=0)
     return result
-

@@ -1,5 +1,11 @@
+import logging
 
+import numpy as np
 
+from uncoverml import features
+from uncoverml.models import apply_masked
+
+log = logging.getLogger(__name__)
 
 
 def predict(data, model, interval=0.95, **kwargs):
@@ -23,16 +29,15 @@ def predict(data, model, interval=0.95, **kwargs):
 
     return apply_masked(pred, data)
 
+
 def render_partition(model, subchunk, image_out, config):
 
-        extracted_chunk_sets = image_subchunks(subchunk, config)
+        extracted_chunk_sets = features.image_subchunks(subchunk, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
-        x = pipeline.transform_features(extracted_chunk_sets, transform_sets,
+        x = features.transform_features(extracted_chunk_sets, transform_sets,
                                         config.final_transform)
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 
-        y_star = pipeline.predict(x, model, interval=config.quantiles)
+        y_star = predict(x, model, interval=config.quantiles)
         image_out.write(y_star, subchunk)
-
-

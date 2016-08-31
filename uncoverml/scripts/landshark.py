@@ -3,6 +3,10 @@ import logging
 
 # landshark
 import uncoverml as ls
+import uncoverml.config
+import uncoverml.geoio
+import uncoverml.features
+import uncoverml.learn
 
 
 @click.group()

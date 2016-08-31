@@ -1,3 +1,7 @@
+import numpy as np
+
+from uncoverml import mpiops
+
 
 class Targets:
 
@@ -17,6 +21,5 @@ def gather_targets(targets):
     for k in keys:
         d[k] = np.ma.concatenate(mpiops.comm.allgather(targets.fields[k]),
                                  axis=0)
-    result = datatypes.Targets(p, y, othervals=d)
+    result = Targets(p, y, othervals=d)
     return result
-
