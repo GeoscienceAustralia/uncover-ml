@@ -61,7 +61,6 @@ setup(
         'rasterio == 0.36.0',
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
-        'click_log == 0.1.4',
         'click == 6.6',
         'revrand >= 0.6.3',
         'scikit-learn == 0.17.1',
