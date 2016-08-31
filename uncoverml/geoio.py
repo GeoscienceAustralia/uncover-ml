@@ -332,6 +332,15 @@ def export_model(model, config):
         pickle.dump(state_dict, f)
 
 
+def export_cluster_model(model, config):
+    outfile_state = os.path.join(config.output_dir,
+                                 config.name + ".cluster")
+    state_dict = {"model": model,
+                  "config": config}
+    with open(outfile_state, 'wb') as f:
+        pickle.dump(state_dict, f)
+
+
 def export_crossval(crossval_output, config):
     outfile_scores = os.path.join(config.output_dir,
                                   config.name + "_scores.json")
