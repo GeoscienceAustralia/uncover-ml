@@ -58,12 +58,11 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20):
-        # don't let the fact that someone doesn't have cubist break the code
-        from uncoverml.cubist_config import invocation
+
+        # Setting up the user details
         self._trained = False
         self._models = []
         self._filename = name + str(time.time()) + str(random.random())
-        self._process = invocation
 
         # Setting the user options
         self.print_output = print_output
@@ -160,8 +159,17 @@ class Cubist:
 
     def _run_cubist(self):
 
+        try:
+            from uncoverml.cubist_config import invocation
+
+        except ImportError:
+            self._remove_files(['.tmp', '.names', '.data', '.model'])
+            print('\nCubist not installed, please run makecubist first')
+            import sys
+            sys.exit()
+
         # Start the script and wait until it has yeilded
-        command = (self._process +
+        command = (invocation +
                    (' -u' if self.unbiased else '') +
                    (' -r ' + str(self.max_rules)
                     if self.max_rules else '') +
@@ -179,7 +187,8 @@ class Cubist:
 
     def _remove_files(self, extensions):
         for extension in extensions:
-            os.remove(self._filename + extension)
+            if os.path.exists(self._filename + extension):
+                os.remove(self._filename + extension)
 
 
 class Rule:
