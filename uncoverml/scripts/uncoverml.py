@@ -12,6 +12,7 @@ import uncoverml.learn
 import uncoverml.cluster
 import uncoverml.predict
 import uncoverml.mpiops
+import uncoverml.validate
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def learn(pipeline_file):
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     if config.rank_features:
-        measures, features, scores = ls.learn.local_rank_features(
+        measures, features, scores = ls.validate.local_rank_features(
             image_chunk_sets,
             transform_sets,
             targets_all,
