@@ -2,12 +2,6 @@
 # not currently implemented
 # patchsize: 0
 
-# Estimate of total memory use as a fraction of input data.
-# Can be higher than one. For aggressive memory use set to none or comment
-# Note clustering ignores this value, and requires 4 * (data_size) total
-memory_threshold: 1.0 
-# memory_threshold: none
-
 features:
   - name: my features
     type: continuous

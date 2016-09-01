@@ -19,7 +19,6 @@ _global_transforms = {'centre': transforms.CentreTransform,
 
 # multiplicative factor relating to input data. x2 for masks, x2 for
 # concatenate
-_memory_overhead = 4.0
 
 
 def _parse_transform_set(transform_dict, imputer_string):
@@ -72,15 +71,6 @@ class FeatureSetConfig:
         self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g)
 
 
-def compute_n_subchunks(memory_threshold):
-    per_node_threshold = memory_threshold / float(mpiops.chunks)
-    overhead_threshold = per_node_threshold / float(_memory_overhead)
-    n_subchunks = max(1, round(1.0 / overhead_threshold))
-    log.info("Memory contstraint forcing {} iterations through data".format(
-        n_subchunks))
-    return n_subchunks
-
-
 class Config:
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
@@ -101,10 +91,6 @@ class Config:
         self.target_property = s['targets']['property']
         self.algorithm = s['learning']['algorithm']
         self.algorithm_args = s['learning']['arguments']
-        if 'memory_threshold' in s and s['memory_threshold'] != 'none':
-                self.n_subchunks = compute_n_subchunks(s['memory_threshold'])
-        else:
-            self.n_subchunks = 1
         self.quantiles = s['prediction']['quantiles']
 
         # TODO pipeline this better
