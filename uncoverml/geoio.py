@@ -322,12 +322,16 @@ def image_feature_sets(targets, config):
 
 def semisupervised_feature_sets(targets, config):
 
+    frac = 1.0/config.n_subchunks
+
     def f(image_source):
         r_t = features.extract_features(image_source, targets, n_subchunks=1,
                                         patchsize=config.patchsize)
         r_a = features.extract_subchunks(image_source, subchunk_index=0,
                                          n_subchunks=1,
                                          patchsize=config.patchsize)
+        np.random.seed(1)
+        r_a = r_a[np.random.rand(r_a.shape[0]) < frac]
         r = np.ma.concatenate([r_t, r_a], axis=0)
         return r
     result = _iterate_sources(f, config)
@@ -336,10 +340,14 @@ def semisupervised_feature_sets(targets, config):
 
 def unsupervised_feature_sets(config):
 
+    frac = 1.0/config.n_subchunks
+
     def f(image_source):
         r = features.extract_subchunks(image_source, subchunk_index=0,
                                        n_subchunks=1,
                                        patchsize=config.patchsize)
+        np.random.seed(1)
+        r = r[np.random.rand(r.shape[0]) < frac]
         return r
     result = _iterate_sources(f, config)
     return result

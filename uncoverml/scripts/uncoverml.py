@@ -23,10 +23,7 @@ def compute_n_subchunks(memory_threshold, overhead):
     if memory_threshold is not None:
         overhead_threshold = memory_threshold / float(overhead)
         n_subchunks = max(1, round(1.0 / overhead_threshold))
-        log.info("Memory contstraint forcing {} iterations "
-                 "through data".format(n_subchunks))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
         n_subchunks = 1
     return n_subchunks
 
@@ -74,6 +71,11 @@ def learn(pipeline_file, memlimit):
     config = ls.config.Config(pipeline_file)
     config.memory_overhead = 4
     config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    if config.n_subchunks > 1:
+        log.info("Memory contstraint forcing {} iterations "
+                 "through data".format(config.n_subchunks))
+    else:
+        log.info("Using memory aggressively: dividing all data between nodes")
 
     # Make the targets
     targets = ls.geoio.load_targets(shapefile=config.target_file,
@@ -111,8 +113,18 @@ def learn(pipeline_file, memlimit):
 
 @cli.command()
 @click.argument('pipeline_file')
-def cluster(pipeline_file):
+@click.option('-m', '--memlimit', type=float, default=None,
+              help='Try to less memory than this fraction of the input data')
+def cluster(pipeline_file, memlimit):
     config = ls.config.Config(pipeline_file)
+    config.memory_overhead = 4
+    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    if config.n_subchunks > 1:
+        log.info("Memory contstraint: using {:2.2f}%"
+                 " of pixels".format(1.0/config.n_subchunks*100))
+    else:
+        log.info("Using memory aggressively: dividing all data between nodes")
+
     if config.semi_supervised:
         semisupervised(config)
     else:
@@ -175,6 +187,11 @@ def predict(model_or_cluster_file, memlimit):
     config = state_dict["config"]
     config.memory_overhead = 10
     config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    if config.n_subchunks > 1:
+        log.info("Memory contstraint forcing {} iterations "
+                 "through data".format(config.n_subchunks))
+    else:
+        log.info("Using memory aggressively: dividing all data between nodes")
 
     image_shape, image_bbox = ls.geoio.get_image_spec(model, config)
 
