@@ -5,9 +5,9 @@ import numpy as np
 import click
 
 import uncoverml as ls
-import uncoverml.config
 import uncoverml.geoio
 import uncoverml.features
+import uncoverml.config
 import uncoverml.learn
 import uncoverml.cluster
 import uncoverml.predict
@@ -64,7 +64,7 @@ def learn(pipeline_file):
     targets_all = ls.targets.gather_targets(targets)
 
     # Get the image chunks and their associated transforms
-    image_chunk_sets = ls.features.image_feature_sets(targets, config)
+    image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     if config.rank_features:
@@ -110,7 +110,7 @@ def semisupervised(config):
                                     targetfield=config.class_property)
 
     # Get the image chunks and their associated transforms
-    image_chunk_sets = ls.features.semisupervised_feature_sets(targets, config)
+    image_chunk_sets = ls.geoio.semisupervised_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     x = ls.features.transform_features(image_chunk_sets, transform_sets,
@@ -130,7 +130,7 @@ def unsupervised(config):
     # make sure we're clear that we're clustering
     config.algorithm = config.clustering_algorithm
     # Get the image chunks and their associated transforms
-    image_chunk_sets = ls.features.unsupervised_feature_sets(config)
+    image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     x = ls.features.transform_features(image_chunk_sets, transform_sets,

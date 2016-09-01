@@ -15,6 +15,7 @@ import tables as hdf
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import validate
+from uncoverml import features
 from uncoverml.targets import Targets
 
 
@@ -299,7 +300,52 @@ def _iterate_sources(f, config):
     return results
 
 
-def export_feature_ranks(measures, features, scores, config):
+def image_subchunks(subchunk_index, config):
+
+    def f(image_source):
+        r = features.extract_subchunks(image_source, subchunk_index,
+                                       config.n_subchunks, config.patchsize)
+        return r
+    result = _iterate_sources(f, config)
+    return result
+
+
+def image_feature_sets(targets, config):
+
+    def f(image_source):
+        r = features.extract_features(image_source, targets,
+                                      config.n_subchunks, config.patchsize)
+        return r
+    result = _iterate_sources(f, config)
+    return result
+
+
+def semisupervised_feature_sets(targets, config):
+
+    def f(image_source):
+        r_t = features.extract_features(image_source, targets, n_subchunks=1,
+                                        patchsize=config.patchsize)
+        r_a = features.extract_subchunks(image_source, subchunk_index=0,
+                                         n_subchunks=1,
+                                         patchsize=config.patchsize)
+        r = np.ma.concatenate([r_t, r_a], axis=0)
+        return r
+    result = _iterate_sources(f, config)
+    return result
+
+
+def unsupervised_feature_sets(config):
+
+    def f(image_source):
+        r = features.extract_subchunks(image_source, subchunk_index=0,
+                                       n_subchunks=1,
+                                       patchsize=config.patchsize)
+        return r
+    result = _iterate_sources(f, config)
+    return result
+
+
+def export_feature_ranks(measures, feats, scores, config):
     outfile_ranks = os.path.join(config.output_dir,
                                  config.name + "_" + config.algorithm +
                                  "_featureranks.json")
@@ -308,7 +354,7 @@ def export_feature_ranks(measures, features, scores, config):
     for measure, measure_scores in zip(measures, scores):
 
         # Sort the scores
-        scores = sorted(zip(features, measure_scores),
+        scores = sorted(zip(feats, measure_scores),
                         key=lambda s: s[1])
         if measure in validate.lower_is_better:
             scores.reverse()

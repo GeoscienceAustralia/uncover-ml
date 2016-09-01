@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from uncoverml import features
+from uncoverml import geoio
 from uncoverml.models import apply_masked
 
 log = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def predict(data, model, interval=0.95, **kwargs):
 
 def render_partition(model, subchunk, image_out, config):
 
-        extracted_chunk_sets = features.image_subchunks(subchunk, config)
+        extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
         x = features.transform_features(extracted_chunk_sets, transform_sets,
                                         config.final_transform)

@@ -1,6 +1,8 @@
 import logging
 
 from uncoverml import mpiops
+from uncoverml import geoio
+from uncoverml import features
 from uncoverml.models import modelmaps, apply_multiple_masked
 
 log = logging.getLogger(__name__)

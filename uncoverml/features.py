@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 
-from uncoverml import geoio
 from uncoverml import mpiops
 from uncoverml.image import Image
 from uncoverml import patch
@@ -65,44 +64,9 @@ def transform_features(feature_sets, transform_sets, final_transform):
     return x
 
 
-def image_feature_sets(targets, config):
-
-    def f(image_source):
-        r = extract_features(image_source, targets,
-                                      config.n_subchunks, config.patchsize)
-        return r
-    result = geoio._iterate_sources(f, config)
-    return result
-
-
 def gather_features(x):
     x_all = np.ma.vstack(mpiops.comm.allgather(x))
     return x_all
-
-
-def semisupervised_feature_sets(targets, config):
-
-    def f(image_source):
-        r_t = extract_features(image_source, targets, n_subchunks=1,
-                                        patchsize=config.patchsize)
-        r_a = extract_subchunks(image_source, subchunk_index=0,
-                                         n_subchunks=1,
-                                         patchsize=config.patchsize)
-        r = np.ma.concatenate([r_t, r_a], axis=0)
-        return r
-    result = geoio._iterate_sources(f, config)
-    return result
-
-
-def unsupervised_feature_sets(config):
-
-    def f(image_source):
-        r = extract_subchunks(image_source, subchunk_index=0,
-                                       n_subchunks=1,
-                                       patchsize=config.patchsize)
-        return r
-    result = geoio._iterate_sources(f, config)
-    return result
 
 
 def remove_missing(x, targets=None):
@@ -119,13 +83,4 @@ def remove_missing(x, targets=None):
         classes = classes.flatten()
     return x, classes
 
-
-def image_subchunks(subchunk_index, config):
-
-    def f(image_source):
-        r = extract_subchunks(image_source, subchunk_index,
-                              config.n_subchunks, config.patchsize)
-        return r
-    result = geoio._iterate_sources(f, config)
-    return result
 

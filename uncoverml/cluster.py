@@ -4,6 +4,8 @@ import numpy as np
 import scipy.spatial
 
 from uncoverml import mpiops
+from uncoverml import geoio
+from uncoverml import features
 
 log = logging.getLogger(__name__)
 
@@ -208,4 +210,5 @@ def compute_n_classes(classes, config):
     k = mpiops.comm.allreduce(np.amax(classes), op=mpiops.MPI.MAX)
     k = max(k, config.n_classes)
     return k
+
 
