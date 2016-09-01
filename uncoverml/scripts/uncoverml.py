@@ -117,7 +117,7 @@ def learn(pipeline_file, memlimit):
               help='Try to less memory than this fraction of the input data')
 def cluster(pipeline_file, memlimit):
     config = ls.config.Config(pipeline_file)
-    config.memory_overhead = 4
+    config.memory_overhead = 2
     config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
     if config.n_subchunks > 1:
         log.info("Memory contstraint: using {:2.2f}%"
