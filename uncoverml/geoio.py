@@ -247,13 +247,14 @@ class ImageWriter:
                                                file_tags[band] + ".tif")
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
-                                  dtype=np.float64, count=1,
+                                  dtype=np.float32, count=1,
                                   transform=self.A,
                                   nodata=self.nodata_value)
                 f.update_tags(1, image_type=band_tags[band])
                 self.files.append(f)
 
     def write(self, x, subchunk_index):
+        x = x.astype(np.float32)
         rows = self.shape[0]
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
@@ -321,12 +322,17 @@ def image_feature_sets(targets, config):
 
 def semisupervised_feature_sets(targets, config):
 
+    frac = 1.0/config.n_subchunks
+
     def f(image_source):
         r_t = features.extract_features(image_source, targets, n_subchunks=1,
                                         patchsize=config.patchsize)
         r_a = features.extract_subchunks(image_source, subchunk_index=0,
                                          n_subchunks=1,
                                          patchsize=config.patchsize)
+        if frac < 1.0:
+            np.random.seed(1)
+            r_a = r_a[np.random.rand(r_a.shape[0]) < frac]
         r = np.ma.concatenate([r_t, r_a], axis=0)
         return r
     result = _iterate_sources(f, config)
@@ -335,10 +341,15 @@ def semisupervised_feature_sets(targets, config):
 
 def unsupervised_feature_sets(config):
 
+    frac = 1.0/config.n_subchunks
+
     def f(image_source):
         r = features.extract_subchunks(image_source, subchunk_index=0,
                                        n_subchunks=1,
                                        patchsize=config.patchsize)
+        if frac < 1.0:
+            np.random.seed(1)
+            r = r[np.random.rand(r.shape[0]) < frac]
         return r
     result = _iterate_sources(f, config)
     return result
