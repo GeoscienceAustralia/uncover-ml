@@ -24,8 +24,6 @@ metrics = {'r2_score': r2_score,
            'mll': mll,
            'msll': msll}
 
-lower_is_better = ['mll', 'msll', 'smse']
-
 
 def split_cfold(nsamples, k=5, seed=None):
     """

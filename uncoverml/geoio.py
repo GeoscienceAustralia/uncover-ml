@@ -14,7 +14,6 @@ import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
-from uncoverml import validate
 from uncoverml import features
 from uncoverml.targets import Targets
 
@@ -344,6 +343,8 @@ def unsupervised_feature_sets(config):
     result = _iterate_sources(f, config)
     return result
 
+_lower_is_better = ['mll', 'msll', 'smse']
+
 
 def export_feature_ranks(measures, feats, scores, config):
     outfile_ranks = os.path.join(config.output_dir,
@@ -356,7 +357,7 @@ def export_feature_ranks(measures, feats, scores, config):
         # Sort the scores
         scores = sorted(zip(feats, measure_scores),
                         key=lambda s: s[1])
-        if measure in validate.lower_is_better:
+        if measure in _lower_is_better:
             scores.reverse()
         sorted_features, sorted_scores = zip(*scores)
 
