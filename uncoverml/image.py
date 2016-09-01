@@ -230,28 +230,3 @@ def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
     return A, pixsize_x, pixsize_y
 
-
-def to_image_transform(x, rows, x_min, x_max, band, separatebands):
-    x = x.reshape((rows, -1, x.shape[1]))
-    if band is not None:
-        x = x[:, :, band:band + 1]
-        x_min = x_min[band]
-        x_max = x_max[band]
-
-    images = []
-    if x_min is not None and x_max is not None:
-        x = np.ma.asarray(x, dtype=float)
-        x = ((x - x_min) / (x_max - x_min))
-        cmap = pl.cm.inferno if hasattr(pl.cm, 'inferno') else pl.cm.afmhot
-        cmap.set_bad(alpha=0)
-        for i in range(x.shape[2]):
-            rgba = cmap(x[:, :, i])
-            rgba = (rgba * 255.0).astype(np.uint8)
-            images.append(rgba)
-    else:
-        if separatebands:
-            for i in range(x.shape[2]):
-                images.append(x[:, :, i:i + 1])
-        else:
-            images.append(x)
-    return images

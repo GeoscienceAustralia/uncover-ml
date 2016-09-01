@@ -19,9 +19,9 @@ log = logging.getLogger(__name__)
 _memory_overhead = 4.0
 
 
-def compute_n_subchunks(memory_threshold):
+def compute_n_subchunks(memory_threshold, overhead):
     if memory_threshold is not None:
-        overhead_threshold = memory_threshold / float(_memory_overhead)
+        overhead_threshold = memory_threshold / float(overhead)
         n_subchunks = max(1, round(1.0 / overhead_threshold))
         log.info("Memory contstraint forcing {} iterations "
                  "through data".format(n_subchunks))
@@ -72,7 +72,8 @@ def cli(verbosity):
               help='Try to less memory than this fraction of the input data')
 def learn(pipeline_file, memlimit):
     config = ls.config.Config(pipeline_file)
-    config.n_subchunks = compute_n_subchunks(memlimit)
+    config.memory_overhead = 4
+    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
 
     # Make the targets
     targets = ls.geoio.load_targets(shapefile=config.target_file,
@@ -172,7 +173,8 @@ def predict(model_or_cluster_file, memlimit):
 
     model = state_dict["model"]
     config = state_dict["config"]
-    config.n_subchunks = compute_n_subchunks(memlimit)
+    config.memory_overhead = 10
+    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
 
     image_shape, image_bbox = ls.geoio.get_image_spec(model, config)
 

@@ -247,13 +247,14 @@ class ImageWriter:
                                                file_tags[band] + ".tif")
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
-                                  dtype=np.float64, count=1,
+                                  dtype=np.float32, count=1,
                                   transform=self.A,
                                   nodata=self.nodata_value)
                 f.update_tags(1, image_type=band_tags[band])
                 self.files.append(f)
 
     def write(self, x, subchunk_index):
+        x = x.astype(np.float32)
         rows = self.shape[0]
         bands = x.shape[1]
         image = x.reshape((rows, -1, bands))
