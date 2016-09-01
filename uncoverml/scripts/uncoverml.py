@@ -16,6 +16,21 @@ import uncoverml.validate
 
 log = logging.getLogger(__name__)
 
+_memory_overhead = 4.0
+
+
+def compute_n_subchunks(memory_threshold):
+    if memory_threshold is not None:
+        per_node_threshold = memory_threshold / float(ls.mpiops.chunks)
+        overhead_threshold = per_node_threshold / float(_memory_overhead)
+        n_subchunks = max(1, round(1.0 / overhead_threshold))
+        log.info("Memory contstraint forcing {} iterations through data".format(
+            n_subchunks))
+    else:
+        log.info("Using memory aggressively: loading all data into each node")
+        n_subchunks = 1
+    return n_subchunks
+
 
 class MPIStreamHandler(logging.StreamHandler):
     """
@@ -54,8 +69,11 @@ def cli(verbosity):
 
 @cli.command()
 @click.argument('pipeline_file')
-def learn(pipeline_file):
+@click.option('-m', '--memlimit', type=float, default=None,
+              help='Try to less memory than this fraction of the input data')
+def learn(pipeline_file, memlimit):
     config = ls.config.Config(pipeline_file)
+    config.n_subchunks = compute_n_subchunks(memlimit)
 
     # Make the targets
     targets = ls.geoio.load_targets(shapefile=config.target_file,
@@ -146,13 +164,16 @@ def unsupervised(config):
 
 @cli.command()
 @click.argument('model_or_cluster_file')
-def predict(model_or_cluster_file):
+@click.option('-m', '--memlimit', type=float, default=None,
+              help='Try to less memory than this fraction of the input data')
+def predict(model_or_cluster_file, memlimit):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
+    config.n_subchunks = compute_n_subchunks(memlimit)
 
     image_shape, image_bbox = ls.geoio.get_image_spec(model, config)
 
