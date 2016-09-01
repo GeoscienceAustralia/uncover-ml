@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from uncoverml import features
+from uncoverml import mpiops
 from uncoverml import geoio
 from uncoverml.models import apply_masked
 
@@ -31,12 +32,20 @@ def predict(data, model, interval=0.95, **kwargs):
     return apply_masked(pred, data)
 
 
-def render_partition(model, subchunk, image_out, config):
+def _get_data(subchunk, config):
+    extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
+    log.info("Applying feature transforms")
+    x = features.transform_features(extracted_chunk_sets, transform_sets,
+                                    config.final_transform)
+    return x
 
-        extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
-        transform_sets = [k.transform_set for k in config.feature_sets]
-        x = features.transform_features(extracted_chunk_sets, transform_sets,
-                                        config.final_transform)
+
+def render_partition(model, subchunk, image_out, config):
+        x = _get_data(subchunk, config)
+        log.info("Loaded {:2.4f}GB of image data".format(x.nbytes/1e9))
+        log.info("Estimate of total (max) memory usage:"
+                 " {:2.4f}GB".format(x.nbytes/1e9 * mpiops.chunks * 4))
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 

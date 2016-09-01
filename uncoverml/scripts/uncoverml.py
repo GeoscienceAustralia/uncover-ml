@@ -21,13 +21,12 @@ _memory_overhead = 4.0
 
 def compute_n_subchunks(memory_threshold):
     if memory_threshold is not None:
-        per_node_threshold = memory_threshold / float(ls.mpiops.chunks)
-        overhead_threshold = per_node_threshold / float(_memory_overhead)
+        overhead_threshold = memory_threshold / float(_memory_overhead)
         n_subchunks = max(1, round(1.0 / overhead_threshold))
-        log.info("Memory contstraint forcing {} iterations through data".format(
-            n_subchunks))
+        log.info("Memory contstraint forcing {} iterations "
+                 "through data".format(n_subchunks))
     else:
-        log.info("Using memory aggressively: loading all data into each node")
+        log.info("Using memory aggressively: dividing all data between nodes")
         n_subchunks = 1
     return n_subchunks
 
