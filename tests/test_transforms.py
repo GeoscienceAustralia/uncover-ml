@@ -1,8 +1,8 @@
 from scipy.stats import bernoulli
 
 from uncoverml.transforms.onehot import sets, one_hot
-from uncoverml.transforms.impute import impute_with_mean, GaussImputer, \
-    NearestNeighboursImputer
+from uncoverml.transforms.impute import GaussImputer, \
+    NearestNeighboursImputer, MeanImputer
 from uncoverml.transforms import target
 import numpy as np
 
@@ -46,6 +46,17 @@ def make_missing_data():
     X = np.ma.array(data=Xdata, mask=Xmask)
 
     return X
+
+
+def test_MeanImputer(make_missing_data):
+    X = make_missing_data
+    Xcopy = X.copy()
+    imputer = MeanImputer()
+    Ximp = imputer(X)
+    assert np.all(~np.isnan(Ximp))
+    assert np.all(~np.isinf(Ximp))
+    assert Ximp.shape == Xcopy.shape
+    assert np.ma.count_masked(Ximp) == 0
 
 
 def test_GaussImputer(make_missing_data):
