@@ -73,6 +73,31 @@ def score_first_dim(func):
 
 
 def calculate_validation_scores(ys, yt, eys):
+    """ Calculates the validation scores for a prediction
+    Given the test and training data, as well as the outputs from every model,
+    this function calculates all of the applicable metrics in the following
+    list, and returns a dictionary with the following (possible) keys:
+        + r2_score
+        + expvar
+        + smse
+        + lins_ccc
+        + mll
+        + msll
+
+    Parameters
+    ----------
+    ys: numpy.array
+        The test data that was used to corresponding outputs
+    yt: numpy.array
+        The training data's corresponding outputs
+    yt: numpy.array
+        The predictions made by the trained model
+
+    Returns
+    -------
+    scores: dict
+        A dictionary containing all of the evaluated scores.
+    """
 
     probscores = ['msll', 'mll']
 
@@ -99,6 +124,29 @@ def calculate_validation_scores(ys, yt, eys):
 
 def y_y_plot(y1, y2, y_label=None, y_exp_label=None, title=None,
              outfile=None, display=None):
+    """ Makes a y-y plot from two corresponding vectors
+    This function makes a y-y plot given two y vectors (y1, y2). This plot can
+    be used to evaluate the performance of the machine learning models.
+
+    Parameters
+    ----------
+    y1: numpy.array
+        The first input vector
+    y2: numpy.array
+        The second input vector, of the same size as y1
+    y_label: string
+        The axis label for the first vector
+    y_exp_label: string
+        The axis label for the second vector
+    title: string
+        The plot title
+    outfile: string
+        The location to save an image of the plot
+    display: boolean
+        If true, a matplotlib graph will display in a window, note that this
+        pauses the execution of the main program till this window is suspended.
+    """
+
     fig = pl.figure()
     maxy = max(y1.max(), get_first_dim(y2).max())
     miny = min(y1.min(), get_first_dim(y2).min())
@@ -122,10 +170,27 @@ class CrossvalInfo:
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
+    """ Ranks the importance of the features based on their performance.
+    This function trains and cross-validates a model with each individual
+    feature removed and then measures the performance of the model with that
+    feature removed. The most important feature is the one which; when removed,
+    causes the greatest degradation in the performance of the model.
 
-    # Determine the importance of each feature
+    Parameters
+    ----------
+    image_chunk_sets: dict
+        A dictionary used to get the set of images to test on.
+    transform_sets: dict
+        A dictionary containing the applied transformations
+    targets_all: dict
+        The targets used in the cross validation
+    config: dict
+        The global config file
+    """
+
     feature_scores = {}
-    # get all the images
+
+    # Get all the images
     all_names = []
     for c in image_chunk_sets:
         all_names.extend(list(c.keys()))
@@ -170,6 +235,29 @@ def _join_dicts(dicts):
 
 
 def local_crossval(x_all, targets_all, config):
+    """ Performs K-fold cross validation to test the applicability of a model.
+    Given a set of inputs and outputs, this function will evaluate the
+    effectiveness of a model at predicting the targets, by splitting all of
+    the known data. A model is trained on a subset of the total data, and then
+    this model is used to predict all of the unseen targets, its performance
+    can provide a benchmark to evaluate the effectiveness of a model.
+
+    Parameters
+    ----------
+    x_all: numpy.array
+        A 2D array containing all of the training inputs
+    targets_all: numpy.array
+        A 1D vector containing all of the training outputs
+    config: dict
+        The global config object, which is used to choose the model to train.
+
+    Return
+    ------
+    result: dict
+        A dictionary containing all of the cross validation metrics, evaluated
+        on the unseen data subset.
+    """
+
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     y = targets_all.observations
