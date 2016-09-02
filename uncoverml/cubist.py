@@ -56,13 +56,14 @@ def variance_with_mean(mean):
 
 class Cubist:
     """
-
+    This class wraps the cubist command line tools in a scikit-learn interface.
+    The learning phase relies on the cubist command line tools, whereas the
+    predictions themselves are executed directly in python.
     """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20):
-        """
-        Instantiate the cubist class with a number of invocation parameters
+        """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
         ----------
@@ -109,7 +110,7 @@ class Cubist:
             values, where x.shape[0] = n, where n is the number of
             available training points.
         y: numpy.array
-            y contains the output target variables for each corresponding 
+            y contains the output target variables for each corresponding
             input vector. Again we expect y.shape[0] = n.
         """
 
@@ -224,8 +225,18 @@ class Cubist:
 
     def predict(self, x):
         """ Predicts the y values that correspond to each input
-        
+        Just like predict_proba, this predicts the output value, given a
+        list of inputs contained in x.
 
+        Parameters
+        ----------
+        x: numpy.array
+            The inputs for which the model should be evaluated
+
+        Returns
+        -------
+        y_mean: numpy.array
+            An array of expected output values given the inputs
         """
 
         mean, _, _, _ = self.predict_proba(x)
