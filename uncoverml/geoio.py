@@ -322,7 +322,7 @@ def image_feature_sets(targets, config):
 
 def semisupervised_feature_sets(targets, config):
 
-    frac = 1.0/config.n_subchunks
+    frac = config.subsample_fraction
 
     def f(image_source):
         r_t = features.extract_features(image_source, targets, n_subchunks=1,
@@ -341,7 +341,7 @@ def semisupervised_feature_sets(targets, config):
 
 def unsupervised_feature_sets(config):
 
-    frac = 1.0/config.n_subchunks
+    frac = config.subsample_fraction
 
     def f(image_source):
         r = features.extract_subchunks(image_source, subchunk_index=0,

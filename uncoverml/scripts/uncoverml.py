@@ -65,12 +65,11 @@ def cli(verbosity):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def learn(pipeline_file, memlimit):
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
-    config.memory_overhead = 4
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    config.n_subchunks = partitions
     if config.n_subchunks > 1:
         log.info("Memory contstraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
@@ -113,15 +112,14 @@ def learn(pipeline_file, memlimit):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def cluster(pipeline_file, memlimit):
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help='only use this fraction of the data for learning classes')
+def cluster(pipeline_file, subsample_fraction):
     config = ls.config.Config(pipeline_file)
-    config.memory_overhead = 2
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
-    if config.n_subchunks > 1:
+    config.subsample_fraction = subsample_fraction
+    if config.subsample_fraction < 1:
         log.info("Memory contstraint: using {:2.2f}%"
-                 " of pixels".format(1.0/config.n_subchunks*100))
+                 " of pixels".format(config.subsample_fraction * 100))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
@@ -176,17 +174,16 @@ def unsupervised(config):
 
 @cli.command()
 @click.argument('model_or_cluster_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def predict(model_or_cluster_file, memlimit):
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def predict(model_or_cluster_file, partitions):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
-    config.memory_overhead = 10
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    config.n_subchunks = partitions
     if config.n_subchunks > 1:
         log.info("Memory contstraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
