@@ -1,9 +1,13 @@
 """ Image patch extraction and windowing utilities. """
 
 from __future__ import division
+import logging
 
 import numpy as np
 import skimage
+
+
+log = logging.getLogger(__name__)
 
 
 def grid_patches(image, pwidth):
