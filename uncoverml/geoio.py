@@ -15,6 +15,7 @@ import tables as hdf
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
+from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
 
@@ -289,9 +290,13 @@ def _iterate_sources(f, config):
         extracted_chunks = {}
         for tif in s.files:
             name = os.path.basename(tif)
-            log.info("Processing {}.".format(name))
             image_source = RasterioImageSource(tif)
             x = f(image_source)
+            # TODO this may hurt performance. Consider removal
+            missing_percent = missing_percentage(x)
+            t_missing = mpiops.comm.allreduce(missing_percent)/mpiops.chunks
+            log.info("{}: ({},{}) {:2.2f}% missing".format(
+                name, x.shape[0], x.shape[3], t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
