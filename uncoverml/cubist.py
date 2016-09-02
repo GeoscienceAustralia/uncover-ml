@@ -55,9 +55,34 @@ def variance_with_mean(mean):
 
 
 class Cubist:
+    """
+
+    """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20):
+        """
+        Instantiate the cubist class with a number of invocation parameters
+
+        Parameters
+        ----------
+        name: String
+            The prefix of the output files (extra data is appended),
+            these files should be removed automatically during training
+            and after testing.
+        print_output: boolean
+            If true, print cubist's stdout direclty to the python console.
+        unbiased: boolean
+            If true, ask cubist to generate unbiased models
+        max_rules: int | None
+            If none, cubist can generate as many rules as it sees fit,
+            otherwise; an integer limit can be added with this parameter.
+        committee_members: int
+            The number of cubist models to generate. Committee models can
+            greatly reduce the result variance, so this should be used
+            whenever possible.
+        """
+
         # don't let the fact that someone doesn't have cubist break the code
         from uncoverml.cubist_config import invocation
         self._trained = False
@@ -72,6 +97,21 @@ class Cubist:
         self.max_rules = max_rules
 
     def fit(self, x, y):
+        """ Train the Cubist model
+        Given a matrix of values (X) and an output vector of values (y), this
+        method will train the cubist model and then read the training files
+        directly as parameters of this class.
+
+        Parameters
+        ----------
+        x: numpy.array
+            X contains all of the training inputs, This should be a matrix of
+            values, where x.shape[0] = n, where n is the number of
+            available training points.
+        y: numpy.array
+            y contains the output target variables for each corresponding 
+            input vector. Again we expect y.shape[0] = n.
+        """
 
         n, m = x.shape
 
@@ -123,6 +163,34 @@ class Cubist:
         )
 
     def predict_proba(self, x, interval=0.95):
+        """ Predict the outputs and variances of the inputs
+        This method predicts the output values that would correspond to
+        each input in X. This method also returns the certainty of the
+        model in each case, which is only sensible when the number of
+        commitee members is greater than one.
+
+        This method also outputs quantile information along with the
+        variance to establish the probability distribution clearly.
+
+        Parameters
+        ----------
+        x: numpy.array
+            The inputs for which the model should be evaluated
+        interval: float
+            The probability threshold for which the quantiles should
+            be output.
+
+        Returns
+        -------
+        y_mean: numpy.array
+            An array of expected output values given the inputs
+        y_var: numpy.array
+            The variance of the outputs
+        ql: numpy.array
+            The lower quantiles for each input
+        qu: numpy.array
+            The upper quantiles for each input
+        """
 
         n, m = x.shape
 
@@ -155,6 +223,11 @@ class Cubist:
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
+        """ Predicts the y values that correspond to each input
+        
+
+        """
+
         mean, _, _, _ = self.predict_proba(x)
         return mean
 
