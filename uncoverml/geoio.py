@@ -293,16 +293,27 @@ def _iterate_sources(f, config):
             image_source = RasterioImageSource(tif)
             x = f(image_source)
             # TODO this may hurt performance. Consider removal
-            missing_percent = missing_percentage(x)
-            t_missing = mpiops.comm.allreduce(missing_percent)/mpiops.chunks
-            log.info("{}: ({},{}) {:2.2f}% missing".format(
-                name, x.shape[0], x.shape[3], t_missing))
+            if type(x) is np.ma.MaskedArray:
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: ({},{}) {:2.2f}% missing".format(
+                    name, x.shape[0], x.shape[3], t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
     return results
+
+
+def image_resolutions(config):
+    def f(image_source):
+        r = image_source._full_res
+        return r
+
+    result = _iterate_sources(f, config)
+    return result
 
 
 def image_subchunks(subchunk_index, config):

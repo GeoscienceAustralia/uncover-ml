@@ -1,3 +1,4 @@
+import sys
 import pickle
 import logging
 
@@ -25,6 +26,62 @@ log = logging.getLogger(__name__)
 def cli(verbosity):
     ls.logging.configure(verbosity)
 
+
+@cli.command()
+@click.argument('pipeline_file')
+@click.option('-o', '--overhead', type=int, default=2,
+              help='Estimate of memory overhead as multiplier')
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help='only use this fraction of the data for clustering')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def memory(pipeline_file, overhead, subsample_fraction, partitions):
+    if ls.mpiops.chunks > 1:
+        log.error("Please run this utility without MPI")
+        sys.exit()
+
+    config = ls.config.Config(pipeline_file)
+    targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                    targetfield=config.target_property)
+
+    n_targets = targets.observations.shape[0]
+    chunksets = ls.geoio.image_resolutions(config)
+    res = np.array(next(iter(chunksets[0].values()))[0:2], dtype=float)
+    band_pixels = np.product(res)
+    n_input_bands = 0
+    max_input_bands = 0
+    for c in chunksets:
+        n_input_bands += np.sum([float(v[2]) for v in c.values()])
+        max_input_bands = max(np.amax([v[2] for v in c.values()]),
+                              max_input_bands)
+
+    model = ls.models.modelmaps[config.algorithm]()
+    n_output_bands = len(model.get_predict_tags())
+    bytes_per_pixel = 8 + 1  # float64 values + boolean mask
+
+    # learning (extraction stage and learning stage)
+    nbytes_l1 = max_input_bands * band_pixels * bytes_per_pixel
+    nbytes_l2 = (n_input_bands + n_output_bands) * n_targets * bytes_per_pixel
+    nbytes_l = nbytes_l1 + nbytes_l2
+    ngigs_l = nbytes_l * overhead / 1e9 / partitions
+    # prediction
+    nbytes_p = (n_input_bands + n_output_bands) * band_pixels * bytes_per_pixel
+    ngigs_p = nbytes_p * overhead / 1e9 / partitions
+    # clustering
+    nbytes_c = (n_input_bands + 1) * band_pixels * bytes_per_pixel
+    ngigs_c = nbytes_c * overhead / 1e9 * subsample_fraction
+
+    def fm(x, y):
+        return x + ": {:2.2f}GB".format(y)
+
+    output_string = ("\nMaximum Memory Usage Estimates" +
+                     " with {} Partitions and {} cluster subsampling".format(
+                     partitions, subsample_fraction) + ":\n" +
+                     fm("Learning", ngigs_l) + "\n" +
+                     fm("Prediction", ngigs_p) + "\n" +
+                     fm("Clustering", ngigs_c) + "\n" +
+                     "NOTE: Use partitions to decrease memory usage\n")
+    print(output_string)
 
 @cli.command()
 @click.argument('pipeline_file')
