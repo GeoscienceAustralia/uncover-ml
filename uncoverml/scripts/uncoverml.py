@@ -13,54 +13,17 @@ import uncoverml.cluster
 import uncoverml.predict
 import uncoverml.mpiops
 import uncoverml.validate
+import uncoverml.logging
 
 log = logging.getLogger(__name__)
 
-_memory_overhead = 4.0
-
-
-def compute_n_subchunks(memory_threshold, overhead):
-    if memory_threshold is not None:
-        overhead_threshold = memory_threshold / float(overhead)
-        n_subchunks = max(1, round(1.0 / overhead_threshold))
-    else:
-        n_subchunks = 1
-    return n_subchunks
-
-
-class MPIStreamHandler(logging.StreamHandler):
-    """
-    Only logs messages from Node 0
-    """
-    def emit(self, record):
-        if ls.mpiops.chunk_index == 0:
-            super().emit(record)
-
-
-class ElapsedFormatter():
-
-    def format(self, record):
-        lvl = record.levelname
-        name = record.name
-        t = int(round(record.relativeCreated/1000.0))
-        msg = record.getMessage()
-        return "+{}s {}:{} {}".format(t, name, lvl, msg)
-
-
-def configure_logging(verbosity):
-    log = logging.getLogger("")
-    log.setLevel(verbosity)
-    ch = logging.StreamHandler()
-    ch = MPIStreamHandler()
-    formatter = ElapsedFormatter()
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
-
 
 @click.group()
-@click.option('-v', '--verbosity', default='INFO', help='Level of logging')
+@click.option('-v', '--verbosity',
+              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
+              default='INFO', help='Level of logging')
 def cli(verbosity):
-    configure_logging(verbosity)
+    ls.logging.configure(verbosity)
 
 
 @cli.command()

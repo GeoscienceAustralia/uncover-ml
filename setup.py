@@ -52,6 +52,7 @@ setup(
     entry_points={
         'console_scripts': [
             'uncoverml = uncoverml.scripts.uncoverml:cli',
+            'gammasensor = uncoverml.scripts.gamma:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main'
         ]
     },
