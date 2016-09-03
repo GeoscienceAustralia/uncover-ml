@@ -76,11 +76,14 @@ def memory(pipeline_file, overhead, subsample_fraction, partitions):
 
     output_string = ("\nMaximum Memory Usage Estimates" +
                      " with {} Partitions and {} cluster subsampling".format(
-                     partitions, subsample_fraction) + ":\n" +
+                     partitions, subsample_fraction) + ":\n\n" +
                      fm("Learning", ngigs_l) + "\n" +
                      fm("Prediction", ngigs_p) + "\n" +
                      fm("Clustering", ngigs_c) + "\n" +
-                     "NOTE: Use partitions to decrease memory usage\n")
+                     "\nNOTE:\n- Use more partitions to " +
+                     "decrease memory usage for learning and prediction.\n"+
+                     "- Use a lower subsampling fraction to decrease memory" +
+                     " usage for clustering.")
     print(output_string)
 
 @cli.command()
