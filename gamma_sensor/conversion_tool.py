@@ -18,9 +18,11 @@ def main():
     mu_air = mass_attenuation_air * density_air
     res_x = 20.0  # metres
     res_y = 20.0
-    img0 = np.mean(imread(test_file), axis=2).T
+    img0 = imread(test_file)  # sideways but who cares
     img = img0
-    img_w, img_h = img.shape
+
+    # This should just work?
+    img_w, img_h, ch = img.shape
     height = 100  # metres
 
     # Compute a sensor footprint of the same shape as the image:
@@ -32,15 +34,16 @@ def main():
     out2 = filtering.inv_filter(out1, S)
 
     pl.subplot(131)
-    pl.imshow(img.T, interpolation='none', cmap=pl.cm.gray)
+    pl.imshow(img, interpolation='none', cmap=pl.cm.gray)
     pl.title('Original')
     pl.subplot(132)
-    pl.imshow(out1.T, interpolation='none', cmap=pl.cm.gray)
+    pl.imshow(out1/out1.max(), interpolation='none', cmap=pl.cm.gray)
     pl.title('Forward Sensored')
     pl.subplot(133)
-    pl.imshow(out2.T, interpolation='none', cmap=pl.cm.gray)
+    pl.imshow(out2.astype(np.uint8), interpolation='none', cmap=pl.cm.gray)
     pl.title('Inverse Sensored')
     pl.show()
+    import IPython; IPython.embed(); import sys; sys.exit()
 
 
 

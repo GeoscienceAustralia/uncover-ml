@@ -13,29 +13,30 @@ def pad2(img):
 
 
 def fwd_filter(img, S):
-    
-    img_w, img_h = img.shape
+    img = img.astype(float) 
+    img_w, img_h, ch = img.shape
     F = pad2(img)
+
     # Forward transform
-    specF = np.fft.fft2(F)
+    specF = np.fft.fft2(F, axes=(0,1))
     specS = np.fft.fft2(S[::-1, ::-1])
-    out = np.real(np.fft.ifft2(specF * specS))
+    out = np.real(np.fft.ifft2(specF * specS[:, :, np.newaxis], axes=(0,1)))
     out = out[-img_w:, -img_h:]
     return out
 
 
 def inv_filter(img, S):
-    img_w, img_h = img.shape
+    img = img.astype(float) 
+    img_w, img_h, ch = img.shape
     # Reverse transform - Edge padding unknown might make tiny differences?
     F = pad2(img)
-    specF = np.fft.fft2(F)
+    specF = np.fft.fft2(F, axes=(0,1))
     specS = np.fft.fft2(S[::-1, ::-1])
     # Is this sensible? maybe gaining energy from outside
-    out = np.real(np.fft.ifft2(specF / specS))
+    out = np.real(np.fft.ifft2(specF / specS[:, :, np.newaxis], axes=(0,1)))
     out = out[-img_w:, -img_h:]
     # out = out[:img_w, :img_h]
     return out 
-
 
 
 def sensor_footprint(img_w, img_h, res_x, res_y, height, mu_air, gain):
@@ -48,4 +49,3 @@ def sensor_footprint(img_w, img_h, res_x, res_y, height, mu_air, gain):
     r = np.sqrt(xx**2 + yy**2 + height**2)
     sens = gain * np.exp(-mu_air*r) / r**2
     return sens
-
