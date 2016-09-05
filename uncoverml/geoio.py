@@ -15,6 +15,7 @@ import tables as hdf
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
+from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
 
@@ -289,15 +290,30 @@ def _iterate_sources(f, config):
         extracted_chunks = {}
         for tif in s.files:
             name = os.path.basename(tif)
-            log.info("Processing {}.".format(name))
             image_source = RasterioImageSource(tif)
             x = f(image_source)
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: ({},{}) {:2.2f}% missing".format(
+                    name, x.shape[0], x.shape[3], t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
     return results
+
+
+def image_resolutions(config):
+    def f(image_source):
+        r = image_source._full_res
+        return r
+
+    result = _iterate_sources(f, config)
+    return result
 
 
 def image_subchunks(subchunk_index, config):
@@ -322,7 +338,7 @@ def image_feature_sets(targets, config):
 
 def semisupervised_feature_sets(targets, config):
 
-    frac = 1.0/config.n_subchunks
+    frac = config.subsample_fraction
 
     def f(image_source):
         r_t = features.extract_features(image_source, targets, n_subchunks=1,
@@ -341,7 +357,7 @@ def semisupervised_feature_sets(targets, config):
 
 def unsupervised_feature_sets(config):
 
-    frac = 1.0/config.n_subchunks
+    frac = config.subsample_fraction
 
     def f(image_source):
         r = features.extract_subchunks(image_source, subchunk_index=0,

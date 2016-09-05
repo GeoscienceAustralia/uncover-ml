@@ -1,3 +1,4 @@
+import sys
 import pickle
 import logging
 
@@ -13,64 +14,27 @@ import uncoverml.cluster
 import uncoverml.predict
 import uncoverml.mpiops
 import uncoverml.validate
+import uncoverml.logging
+import uncoverml.memory
 
 log = logging.getLogger(__name__)
 
-_memory_overhead = 4.0
-
-
-def compute_n_subchunks(memory_threshold, overhead):
-    if memory_threshold is not None:
-        overhead_threshold = memory_threshold / float(overhead)
-        n_subchunks = max(1, round(1.0 / overhead_threshold))
-    else:
-        n_subchunks = 1
-    return n_subchunks
-
-
-class MPIStreamHandler(logging.StreamHandler):
-    """
-    Only logs messages from Node 0
-    """
-    def emit(self, record):
-        if ls.mpiops.chunk_index == 0:
-            super().emit(record)
-
-
-class ElapsedFormatter():
-
-    def format(self, record):
-        lvl = record.levelname
-        name = record.name
-        t = int(round(record.relativeCreated/1000.0))
-        msg = record.getMessage()
-        return "+{}s {}:{} {}".format(t, name, lvl, msg)
-
-
-def configure_logging(verbosity):
-    log = logging.getLogger("")
-    log.setLevel(verbosity)
-    ch = logging.StreamHandler()
-    ch = MPIStreamHandler()
-    formatter = ElapsedFormatter()
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
-
 
 @click.group()
-@click.option('-v', '--verbosity', default='INFO', help='Level of logging')
+@click.option('-v', '--verbosity',
+              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
+              default='INFO', help='Level of logging')
 def cli(verbosity):
-    configure_logging(verbosity)
+    ls.logging.configure(verbosity)
 
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def learn(pipeline_file, memlimit):
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
-    config.memory_overhead = 4
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    config.n_subchunks = partitions
     if config.n_subchunks > 1:
         log.info("Memory contstraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
@@ -113,15 +77,14 @@ def learn(pipeline_file, memlimit):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def cluster(pipeline_file, memlimit):
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help='only use this fraction of the data for learning classes')
+def cluster(pipeline_file, subsample_fraction):
     config = ls.config.Config(pipeline_file)
-    config.memory_overhead = 2
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
-    if config.n_subchunks > 1:
+    config.subsample_fraction = subsample_fraction
+    if config.subsample_fraction < 1:
         log.info("Memory contstraint: using {:2.2f}%"
-                 " of pixels".format(1.0/config.n_subchunks*100))
+                 " of pixels".format(config.subsample_fraction * 100))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
@@ -176,17 +139,16 @@ def unsupervised(config):
 
 @cli.command()
 @click.argument('model_or_cluster_file')
-@click.option('-m', '--memlimit', type=float, default=None,
-              help='Try to less memory than this fraction of the input data')
-def predict(model_or_cluster_file, memlimit):
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def predict(model_or_cluster_file, partitions):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
-    config.memory_overhead = 10
-    config.n_subchunks = compute_n_subchunks(memlimit, config.memory_overhead)
+    config.n_subchunks = partitions
     if config.n_subchunks > 1:
         log.info("Memory contstraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
@@ -207,8 +169,33 @@ def predict(model_or_cluster_file, memlimit):
 
 
 @cli.command()
-@click.option('--count', default=1, help='number of greetings')
-@click.argument('name')
-def hello(count, name):
-    for x in range(count):
-        click.echo('Hello %s!' % name)
+@click.argument('pipeline_file')
+@click.option('-o', '--overhead', type=int, default=2,
+              help='Estimate of memory overhead as multiplier')
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help='only use this fraction of the data for clustering')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def memory(pipeline_file, overhead, subsample_fraction, partitions):
+    if ls.mpiops.chunks > 1:
+        log.error("Please run this utility without MPI")
+        sys.exit()
+
+    config = ls.config.Config(pipeline_file)
+    results = ls.memory.estimate(config, partitions,
+                                 subsample_fraction, overhead)
+
+    def fm(x, y):
+        return x + ": {:2.2f}GB".format(y)
+
+    output_string = ("\nMaximum Memory Usage Estimates" +
+                     " with {} Partitions and {} cluster subsampling".format(
+                        partitions, subsample_fraction) + ":\n\n" +
+                     fm("Learning", results['learning']) + "\n" +
+                     fm("Prediction", results['prediction']) + "\n" +
+                     fm("Clustering", results['clustering']) + "\n" +
+                     "\nNOTE:\n- Use more partitions to " +
+                     "decrease memory usage for learning and prediction.\n" +
+                     "- Use a lower subsampling fraction to decrease memory" +
+                     " usage for clustering.")
+    print(output_string)

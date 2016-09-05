@@ -44,9 +44,6 @@ def _get_data(subchunk, config):
 def render_partition(model, subchunk, image_out, config):
         x = _get_data(subchunk, config)
         log.info("Loaded {:2.4f}GB of image data".format(x.nbytes/1e9))
-        log.info("Estimate of total (max) memory usage:"
-                 " {:2.4f}GB".format(x.nbytes/1e9 * mpiops.chunks *
-                                     config.memory_overhead))
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 
