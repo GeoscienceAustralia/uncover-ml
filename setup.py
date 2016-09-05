@@ -53,7 +53,8 @@ setup(
         'console_scripts': [
             'uncoverml = uncoverml.scripts.uncoverml:cli',
             'gammasensor = uncoverml.scripts.gammasensor:cli',
-            'tiff2kmz = uncoverml.scripts.tiff2kmz:main'
+            'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
+            'subsampletargets = uncoverml.scripts.subsampletargets:cli'
         ]
     },
     install_requires=[
