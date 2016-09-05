@@ -1,5 +1,6 @@
 import logging
 import os.path
+import glob
 
 import click
 
@@ -38,23 +39,34 @@ def write_data(data, name, in_image, outputdir, forward):
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
 def cli(verbosity, geotiff, height, absorption, gain, forward, outputdir):
     uncoverml.logging.configure(verbosity)
-    name = os.path.basename(geotiff).rsplit(".", 1)[0]
-    image_source = geoio.RasterioImageSource(geotiff)
-    image = Image(image_source)
-    data = image.data()
 
-    # apply transforms here
-    assert(data.ndim == 2)
-    img_w, img_h = img.shape
-    S = filtering.sensor_footprint(img_w, img_h,
-                                   image.pixsize_x, image.pixsize_y,
-                                   height, absorption, gain)
-   
-    # Apply and unapply the filter (mirrored boundary conditions)
-    if forward:
-        t_data = filtering.fwd_filter(data, S)
-    else
-        t_data = filtering.inv_filter(data, S)
+    log.info("{} simulating gamma sensor model".format(
+        "Forward" if forward else "Backward"))
+    if os.path.isdir(geotiff):
+        geotiff = os.path.join(geotiff, "*.tif")
+    files = glob.glob(geotiff)
+    for f in files:
+        name = os.path.basename(f).rsplit(".", 1)[0]
+        log.info("Loading {}".format(name))
+        image_source = geoio.RasterioImageSource(f)
+        image = Image(image_source)
+        data = image.data()
 
-    # Write output:
-    write_data(t_data, name, image, outputdir, forward)
+        # apply transforms here
+        log.info("Computing sensor footprint")
+        assert(data.ndim == 2)
+        img_w, img_h = data.shape
+        S = filtering.sensor_footprint(img_w, img_h,
+                                       image.pixsize_x, image.pixsize_y,
+                                       height, absorption, gain)
+        # Apply and unapply the filter (mirrored boundary conditions)
+        log.info("Applying transform to array of shape {}".format(data.shape))
+        if forward:
+            t_data = filtering.fwd_filter(data, S)
+        else:
+            t_data = filtering.inv_filter(data, S)
+
+        # Write output:
+        log.info("Writing output to disk")
+        write_data(t_data, name, image, outputdir, forward)
+    log.info("All files transformed successfully")
