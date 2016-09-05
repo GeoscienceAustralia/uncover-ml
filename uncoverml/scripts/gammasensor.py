@@ -5,6 +5,7 @@ import click
 
 from uncoverml import geoio
 from uncoverml.image import Image
+from uncoverml import filtering
 import uncoverml.logging
 
 log = logging.getLogger(__name__)
@@ -43,6 +44,17 @@ def cli(verbosity, geotiff, height, absorption, gain, forward, outputdir):
     data = image.data()
 
     # apply transforms here
-    t_data = data * 2
+    assert(data.ndim == 2)
+    img_w, img_h = img.shape
+    S = filtering.sensor_footprint(img_w, img_h,
+                                   image.pixsize_x, image.pixsize_y,
+                                   height, absorption, gain)
+   
+    # Apply and unapply the filter (mirrored boundary conditions)
+    if forward:
+        t_data = filtering.fwd_filter(data, S)
+    else
+        t_data = filtering.inv_filter(data, S)
 
+    # Write output:
     write_data(t_data, name, image, outputdir, forward)
