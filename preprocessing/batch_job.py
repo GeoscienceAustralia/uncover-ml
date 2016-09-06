@@ -66,7 +66,7 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
 
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_dir -o output_dir'
-                                ' -e extents\n'
+                                ' -e extents (optional)\n'
                                 ' -r resampling (optional)\n'
                                 ' -m mask_file (optional)\n'
                                 ' -j jpeg_file (optional)\n'
@@ -82,10 +82,13 @@ if __name__ == '__main__':
                       help='name of mask file')
 
     parser.add_option('-e', '--extents', type=str, dest='extents',
-                      help='extents to be used for the cropped file.\n'
+                      help='extents (in target coordinates)'
+                           'to be used for the cropped file.\n'
                            'needs to be a list of 4 floats with spaces\n'
                            'example: '
-                           "-e '150.91 -34.229999976 150.949166651 -34.17'")
+                           "-e '150.91 -34.229999976 150.949166651 -34.17'. \n"
+                           "If no extents is provided, use whole image")
+
     parser.add_option('-r', '--resampling', type=str, dest='resampling',
                       help='optional resampling algorithm to use')
 
@@ -110,23 +113,24 @@ if __name__ == '__main__':
     if not options.resampling:  # if sampling is not given
         options.resampling = 'near'
 
-    if not options.extents:  # if extents is not given
-        parser.error('Crop extents must be provided')
-
     if not options.jpeg:  # if jpeg is not given
         options.jpeg = False
     else:
         options.jpeg = True
 
-    extents = [float(t) for t in options.extents.split()]
-    if len(extents) != 4:
-        raise AttributeError('extents to be used for the cropped file.\n'
-                             'needs to be a list or tuples of 4 floats\n'
-                             "example:"
-                             "--extents '-2362974.47956 -5097641.80634 "
-                             "2251415.52044 -1174811.80634'")
+    if options.extents:
+        extents = [float(t) for t in options.extents.split()]
+        if len(extents) != 4:
+            raise AttributeError('extents to be used for the cropped file.\n'
+                                 'needs to be a list or tuples of 4 floats\n'
+                                 "example:"
+                                 "--extents '-2362974.47956 -5097641.80634 "
+                                 "2251415.52044 -1174811.80634'")
+        options.extents = [str(s) for s in extents]
+    else:
+        logging.info('No extents specified. Using whole image for projection')
+        options.extents = None
 
-    options.extents = [str(s) for s in extents]
     files_to_convert = return_file_list(options.input_dir, '*.tif')
 
     convert_files(files_to_convert,

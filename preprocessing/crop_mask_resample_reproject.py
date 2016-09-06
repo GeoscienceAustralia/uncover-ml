@@ -134,7 +134,7 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
 
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_file -o output_file'
-                                ' -e extents\n'
+                                ' -e extents (optional) \n'
                                 ' -r resampling (optional)\n'
                                 ' -m mask_file (optional)\n'
                                 ' -j jpeg_file (optional)\n'
@@ -155,7 +155,8 @@ if __name__ == '__main__':
                       help='extents to be used for the cropped file.\n'
                            'needs to be a list of 4 floats with spaces\n'
                            'example: '
-                           "-e '150.91 -34.229999976 150.949166651 -34.17'")
+                           "-e '150.91 -34.229999976 150.949166651 -34.17'. \n"
+                           "If no extents is provided, use whole image")
     parser.add_option('-r', '--resampling', type=str, dest='resampling',
                       help='optional resampling algorithm to use')
 
@@ -188,7 +189,7 @@ if __name__ == '__main__':
                                  "2251415.52044 -1174811.80634'")
         options.extents = [str(s) for s in extents]
     else:
-        print('no extents specified')
+        logging.info('Oo extents specified. Using whole image for projection')
         options.extents = None
 
     if options.mask_file:
