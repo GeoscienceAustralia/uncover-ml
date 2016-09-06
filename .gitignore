@@ -68,3 +68,6 @@ hdf5-1.8.*
 
 # Cubist Configuration
 /uncoverml/cubist_config.py
+
+# Cubist install dir
+cubist/
