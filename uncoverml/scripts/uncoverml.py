@@ -170,7 +170,7 @@ def predict(model_or_cluster_file, partitions):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-o', '--overhead', type=int, default=2,
+@click.option('-o', '--overhead', type=int, default=4,
               help='Estimate of memory overhead as multiplier')
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help='only use this fraction of the data for clustering')
