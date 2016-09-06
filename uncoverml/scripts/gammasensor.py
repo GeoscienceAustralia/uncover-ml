@@ -3,6 +3,7 @@ import os.path
 import glob
 
 import click
+import numpy as np
 
 from uncoverml import geoio
 from uncoverml.image import Image
@@ -32,12 +33,11 @@ def write_data(data, name, in_image, outputdir, forward):
               help='Apply forward sensor model')
 @click.option('--height', type=float, help='height of sensor')
 @click.option('--absorption', type=float, help='absorption coeff')
-@click.option('--gain', type=float, help='sensor gain')
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
-def cli(verbosity, geotiff, height, absorption, gain, forward, outputdir):
+def cli(verbosity, geotiff, height, absorption, forward, outputdir):
     uncoverml.logging.configure(verbosity)
 
     log.info("{} simulating gamma sensor model".format(
@@ -54,11 +54,10 @@ def cli(verbosity, geotiff, height, absorption, gain, forward, outputdir):
 
         # apply transforms here
         log.info("Computing sensor footprint")
-        assert(data.ndim == 2)
-        img_w, img_h = data.shape
+        img_w, img_h, _ = data.shape
         S = filtering.sensor_footprint(img_w, img_h,
                                        image.pixsize_x, image.pixsize_y,
-                                       height, absorption, gain)
+                                       height, absorption)
         # Apply and unapply the filter (mirrored boundary conditions)
         log.info("Applying transform to array of shape {}".format(data.shape))
         if forward:
