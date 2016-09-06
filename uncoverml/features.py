@@ -71,18 +71,16 @@ def gather_features(x):
 
 def remove_missing(x, targets=None):
     log.info("Stripping out missing data")
+    classes = targets.observations if targets else None
     if np.ma.count_masked(x) > 0:
         no_missing_x = np.sum(x.mask, axis=1) == 0
         x = x.data[no_missing_x]
         # remove labels that correspond to data missing in x
-        classes = None
         if targets is not None:
-            classes = targets.observations
             no_missing_y = no_missing_x[0:(classes.shape[0])]
             classes = classes[:, np.newaxis][no_missing_y]
             classes = classes.flatten()
     else:
-        classes = targets.observations
         x = x.data
 
     return x, classes
