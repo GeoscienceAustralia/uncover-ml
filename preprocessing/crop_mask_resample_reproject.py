@@ -50,9 +50,10 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
           COMMON + TILES + \
           ['-t_srs'] + [TSRS] + \
           ['-tr'] + OUTPUT_RES +  \
-          ['-te'] + extents + \
           ['-r'] + [sampling] + \
           ['-wm'] + ['200']
+    if extents:
+        cmd += ['-te'] + extents
     cmd += [input_file, output_file]
     subprocess.check_call(cmd)
     log.info('Finished crop/resample/reproject of {}'.format(input_file))
@@ -172,21 +173,23 @@ if __name__ == '__main__':
     if not options.resampling:  # if sampling is not given
         options.resampling = 'near'
 
-    if not options.extents:  # if extents is not given
-        parser.error('Crop extents must be provided')
-
     if not options.jpeg:  # if jpeg is not given
         options.jpeg = False
     else:
         options.jpeg = True
 
-    extents = [float(t) for t in options.extents.split()]
-    if len(extents) != 4:
-        raise AttributeError('extents to be used for the cropped file.\n'
-                             'needs to be a list or tuples of 4 floats\n'
-                             "example:"
-                             "--extents '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'")
-    options.extents = [str(s) for s in extents]
+    if options.extents:
+        extents = [float(t) for t in options.extents.split()]
+        if len(extents) != 4:
+            raise AttributeError('extents to be used for the cropped file.\n'
+                                 'needs to be a list or tuples of 4 floats\n'
+                                 "example:"
+                                 "--extents '-2362974.47956 -5097641.80634 "
+                                 "2251415.52044 -1174811.80634'")
+        options.extents = [str(s) for s in extents]
+    else:
+        print('no extents specified')
+        options.extents = None
 
     if options.mask_file:
         # temporary cropped mask file
