@@ -31,8 +31,12 @@ def estimate(config, partitions, subsample_fraction, overhead=2):
     nbytes_p = (n_input_bands + n_output_bands) * band_pixels * bytes_per_pixel
     ngigs_p = nbytes_p * overhead / 1e9 / partitions
     # clustering
-    nbytes_c = (n_input_bands + 1) * band_pixels * bytes_per_pixel
-    ngigs_c = nbytes_c * overhead / 1e9 * subsample_fraction
+    nbytes_c1 = max_input_bands * band_pixels * bytes_per_pixel
+    nbytes_c2 = (n_input_bands + 1) * band_pixels * bytes_per_pixel
+    ngigs_c1 = nbytes_c1 * overhead / 1e9
+    ngigs_c2 = nbytes_c2 * overhead / 1e9 * subsample_fraction
 
-    result = {'learning': ngigs_l, 'prediction': ngigs_p, 'clustering': ngigs_c}
+    result = {'learning': ngigs_l, 'prediction': ngigs_p,
+              'clustering-extraction': ngigs_c1,
+              'clustering-iteration': ngigs_c2}
     return result

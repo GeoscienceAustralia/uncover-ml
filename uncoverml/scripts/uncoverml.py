@@ -193,9 +193,14 @@ def memory(pipeline_file, overhead, subsample_fraction, partitions):
                         partitions, subsample_fraction) + ":\n\n" +
                      fm("Learning", results['learning']) + "\n" +
                      fm("Prediction", results['prediction']) + "\n" +
-                     fm("Clustering", results['clustering']) + "\n" +
+                     fm("Clustering (extraction)",
+                        results['clustering-extraction']) + "\n" +
+                     fm("Clustering (iteration)",
+                        results['clustering-iteration']) + "\n" +
                      "\nNOTE:\n- Use more partitions to " +
                      "decrease memory usage for learning and prediction.\n" +
                      "- Use a lower subsampling fraction to decrease memory" +
-                     " usage for clustering.")
+                     " usage for clustering (iteration).\n" +
+                     "- Total memory usage for clustering (extraction) " +
+                     "cannot be decreased.")
     print(output_string)
