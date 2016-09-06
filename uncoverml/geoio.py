@@ -160,7 +160,11 @@ def load_shapefile(filename, targetfield):
     records = np.array(sf.records()).T
     record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
         shapefields, records, dtypes)}
-    val = record_dict.pop(targetfield)
+    if targetfield in record_dict:
+        val = record_dict.pop(targetfield)
+    else:
+        raise ValueError("Can't find target property in shapefile." +
+                         "Candidates: {}".format(record_dict.keys()))
     othervals = record_dict
 
     # Get coordinates
@@ -168,7 +172,8 @@ def load_shapefile(filename, targetfield):
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
-
+    # val *must* be float type
+    val = val.astype(float)
     return label_coords, val, othervals
 
 
