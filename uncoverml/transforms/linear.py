@@ -9,6 +9,7 @@ class CentreTransform:
         self.mean = None
 
     def __call__(self, x):
+        x = x.astype(float)
         if self.mean is None:
             self.mean = mpiops.mean(x)
         x -= self.mean
@@ -21,7 +22,7 @@ class StandardiseTransform:
         self.sd = None
 
     def __call__(self, x):
-
+        x = x.astype(float)
         if self.sd is None or self.mean is None:
             self.mean = mpiops.mean(x)
             self.sd = mpiops.sd(x)
@@ -48,7 +49,7 @@ class WhitenTransform:
         self.keep_fraction = keep_fraction
 
     def __call__(self, x):
-
+        x = x.astype(float)
         if self.mean is None or self.eigvals is None or self.eigvecs is None:
             self.mean = mpiops.mean(x)
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)
