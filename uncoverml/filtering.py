@@ -29,7 +29,7 @@ def fwd_filter(img, S):
     out /= norm
     out = out[-img_w:, -img_h:]
     out[img.mask] = 0.
-    return np.ma.masked_array(out, mask=img.mask)
+    return np.ma.MaskedArray(data=out, mask=img.mask)
 
 
 def kernel_impute(img, S):
@@ -50,7 +50,8 @@ def kernel_impute(img, S):
 
     # img = img.copy()
     image[img.mask] = fill[img.mask]
-    return np.ma.masked_array(image, mask=False)
+    mask = np.zeros_like(img.mask, dtype=bool)
+    return np.ma.MaskedArray(data=image, mask=mask)
 
 
 def inv_filter(img, S, noise=0.001):

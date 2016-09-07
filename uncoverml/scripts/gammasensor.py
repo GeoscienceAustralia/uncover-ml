@@ -53,7 +53,6 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir):
         geotiff = os.path.join(geotiff, "*.tif")
     files = glob.glob(geotiff)
     my_files = np.array_split(files, mpiops.chunks)[mpiops.chunk_index]
-    print(my_files)
     for f in my_files:
         name = os.path.basename(f).rsplit(".", 1)[0]
         log.info("Loading {}".format(name))

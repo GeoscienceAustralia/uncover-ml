@@ -221,7 +221,7 @@ def get_image_spec(model, config):
 
 class ImageWriter:
 
-    nodata_value = -1e23
+    nodata_value = np.array(-1e20, dtype='float32')
 
     def __init__(self, shape, bbox, name, n_subchunks, outputdir,
                  band_tags=None):
