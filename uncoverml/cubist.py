@@ -4,7 +4,7 @@ import random
 import time
 import operator
 from copy import deepcopy
-from subprocess import PIPE, run
+from subprocess import check_output
 from shlex import split as parse
 
 import numpy as np
@@ -259,12 +259,10 @@ class Cubist:
                    (' -C ' + str(self.committee_members)
                     if self.committee_members else '') +
                    (' -f ' + self._filename))
-
-        results = run(command, shell=True, stdout=PIPE, check=True)
-
+        results = check_output(command, shell=True)
         # Print the program output directly
         if self.print_output:
-            print(results.stdout.decode())
+            print(results.decode())
 
     def _remove_files(self, extensions):
         for extension in extensions:
