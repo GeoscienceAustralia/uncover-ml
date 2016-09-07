@@ -58,7 +58,7 @@ def inv_filter(img, S, noise=0.001):
 
     # If you want to call inv_filter, you have to impute first to avoid
     # spectral artifacts
-    assert(np.max(img.mask) == False)
+    assert(np.all(img.mask == False))
 
     # unfortunately scipy deconvolution messes with our scale...
     F = pad2(img)

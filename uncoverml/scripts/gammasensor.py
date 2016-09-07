@@ -71,7 +71,11 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir):
         if forward:
             t_data = filtering.fwd_filter(data, S)
         else:
+            orig_mask = data.mask
+            if np.ma.count_masked(data) > 0:
+                data = filtering.kernel_impute(data, S)
             t_data = filtering.inv_filter(data, S)
+            t_data = np.ma.MaskedArray(data=t_data.data, mask=orig_mask)
 
         # Write output:
         log.info("Writing output to disk")
