@@ -29,7 +29,7 @@ def fwd_filter(img, S):
     out /= norm
     out = out[-img_w:, -img_h:]
     out[img.mask] = 0.
-    return np.ma.masked_array(out/np.max(out), mask=img.mask)
+    return np.ma.masked_array(out, mask=img.mask)
 
 
 def kernel_impute(img, S):
@@ -55,21 +55,30 @@ def kernel_impute(img, S):
 
 def inv_filter(img, S, noise=0.001):
 
+    # If you want to call inv_filter, you have to impute first to avoid
+    # spectral artifacts
     assert(np.max(img.mask) == False)
 
     # unfortunately scipy deconvolution messes with our scale...
     F = pad2(img)
-    specF = np.fft.fft2(F.data.astype(float), axes=(0,1))
+
+    # Do my scaling here to keep scipy happy!
+    machine_scale = F.max()
+    F /= machine_scale
+
+    S = S / S.sum()  # avoids any scaling effects
+
     img_w, img_h, img_ch = img.shape
-    F /= F.max()
-    S = S / S.sum()
     out = np.zeros_like(F)
     for ch in range(img_ch):
         out[:,:,ch] = deconvolution.wiener(F[:,:,ch].data.astype(float), S, 
                                            noise)
-    out = out[:img_w, :img_h]
+    
+    print('Fix your scales!')
+
+    out = machine_scale * out[:img_w, :img_h]
     # out[img.mask] = 0.
-    return np.ma.masked_array(out/np.max(out), mask=img.mask)
+    return np.ma.masked_array(out, mask=img.mask)
 
 
 def sensor_footprint(img_w, img_h, res_x, res_y, height, mu_air):
@@ -80,4 +89,8 @@ def sensor_footprint(img_w, img_h, res_x, res_y, height, mu_air):
     yy, xx = np.meshgrid(y, x)
     r = np.sqrt(xx**2 + yy**2 + height**2)
     sens = np.exp(-mu_air*r) / r**2
+
+    # Unknown gain problem
+    sens /= sens.max()
+
     return sens
