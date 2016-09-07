@@ -8,6 +8,7 @@ import numpy as np
 from uncoverml import geoio
 from uncoverml.image import Image
 from uncoverml import filtering
+from uncoverml import mpiops
 import uncoverml.logging
 
 log = logging.getLogger(__name__)
@@ -15,7 +16,12 @@ log = logging.getLogger(__name__)
 
 def write_data(data, name, in_image, outputdir, forward):
     data = data.reshape(-1, data.shape[2])
-    tags = ["convolved"] if forward else ["deconvolved"]
+    tag = "convolved" if forward else "deconvolved"
+    nbands = data.shape[1]
+    if nbands > 1:
+        tags = [tag + "_band{}".format(k+1) for k in range(data.shape[1])]
+    else:
+        tags = [tag]
     n_subchunks = 1
     nchannels = in_image.resolution[2]
     eff_shape = in_image.patched_shape(0) + (nchannels,)
@@ -43,9 +49,12 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir):
     log.info("{} simulating gamma sensor model".format(
         "Forward" if forward else "Backward"))
     if os.path.isdir(geotiff):
+        log.info("Globbing directory input for tif files")
         geotiff = os.path.join(geotiff, "*.tif")
     files = glob.glob(geotiff)
-    for f in files:
+    my_files = np.array_split(files, mpiops.chunks)[mpiops.chunk_index]
+    print(my_files)
+    for f in my_files:
         name = os.path.basename(f).rsplit(".", 1)[0]
         log.info("Loading {}".format(name))
         image_source = geoio.RasterioImageSource(f)
