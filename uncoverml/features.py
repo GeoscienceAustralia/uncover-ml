@@ -51,7 +51,10 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
                                 patchsize)
         if x is not None:
             x_all.append(x)
-    x_all = np.ma.concatenate(x_all, axis=0)
+    if len(x_all) > 0:
+        x_all = np.ma.concatenate(x_all, axis=0)
+    else:
+        raise ValueError("All targets lie outside image boundaries")
     assert x_all.shape[0] == targets.observations.shape[0]
     return x_all
 
