@@ -1,6 +1,7 @@
 import logging
 import os.path
 import glob
+import sys
 
 import click
 import numpy as np
@@ -57,6 +58,9 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise):
         geotiff = os.path.join(geotiff, "*.tif")
     files = glob.glob(geotiff)
     my_files = np.array_split(files, mpiops.chunks)[mpiops.chunk_index]
+    if len(my_files) == 0:
+        log.critical("No files found. Exiting")
+        sys.exit()
     for f in my_files:
         name = os.path.basename(f).rsplit(".", 1)[0]
         log.info("Loading {}".format(name))
@@ -79,6 +83,7 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise):
             if np.ma.count_masked(data) > 0:
                 data = filtering.kernel_impute(data, S)
             t_data = filtering.inv_filter(data, S, noise=noise)
+            orig_mask = np.zeros_like(orig_mask, dtype=bool)
             t_data = np.ma.MaskedArray(data=t_data.data, mask=orig_mask)
 
         # Write output:
