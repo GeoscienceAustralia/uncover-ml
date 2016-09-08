@@ -83,7 +83,6 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise):
             if np.ma.count_masked(data) > 0:
                 data = filtering.kernel_impute(data, S)
             t_data = filtering.inv_filter(data, S, noise=noise)
-            orig_mask = np.zeros_like(orig_mask, dtype=bool)
             t_data = np.ma.MaskedArray(data=t_data.data, mask=orig_mask)
 
         # Write output:
