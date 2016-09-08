@@ -44,7 +44,8 @@ class TransformSet:
 
 class ImageTransformSet(TransformSet):
     def __init__(self, image_transforms=None, imputer=None,
-                 global_transforms=None):
+                 global_transforms=None, feature_type='ordinal'):
+            self.feature_type = feature_type
             self.image_transforms = (image_transforms if image_transforms
                                      else [])
             super().__init__(imputer, global_transforms)

@@ -210,7 +210,8 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
 
         x = feat.transform_features(image_chunks_leaveout,
                                     transform_sets_leaveout,
-                                    final_transform_leaveout)
+                                    final_transform_leaveout,
+                                    config)
         x_all = feat.gather_features(x)
 
         results = local_crossval(x_all, targets_all, config)

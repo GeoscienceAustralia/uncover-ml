@@ -4,7 +4,7 @@
 
 features:
   - name: my features
-    type: continuous
+    type: ordinal
     files:
       # - path: /home/lb/data/GA-cover/Th_v1.tif
       # - list: /path/to/csv_file.csv
@@ -14,6 +14,19 @@ features:
       - centre
       - standardise
     imputation: none
+  
+  - name: my features
+    type: categorical
+    files:
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
+      - directory: /home/lb/data/GA-cover
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+
 
 preprocessing:
   # imputation: none
@@ -55,10 +68,10 @@ prediction:
   quantiles: 0.95
 
 validation:
-  #- feature_rank
-  - k-fold:
-      folds: 5
-      random_seed: 1
+  # - feature_rank
+  # - k-fold:
+  #     folds: 5
+  #     random_seed: 1
   
 output:
   directory: .

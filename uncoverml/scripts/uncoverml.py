@@ -60,8 +60,9 @@ def learn(pipeline_file, partitions):
         ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features,
                            scores, config)
 
+    # need to add cubist cols to config.algorithm_args
     x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform)
+                                       config.final_transform, config)
     # learn the model
     # local models need all data
     x_all = ls.features.gather_features(x)
@@ -98,6 +99,7 @@ def semisupervised(config):
 
     # make sure we're clear that we're clustering
     config.algorithm = config.clustering_algorithm
+    config.cubist = False
     # Get the taregts
     targets = ls.geoio.load_targets(shapefile=config.class_file,
                                     targetfield=config.class_property)
@@ -107,7 +109,7 @@ def semisupervised(config):
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform)
+                                       config.final_transform, config)
 
     x, classes = ls.features.remove_missing(x, targets)
     indices = np.arange(classes.shape[0], dtype=int)
@@ -122,12 +124,13 @@ def semisupervised(config):
 def unsupervised(config):
     # make sure we're clear that we're clustering
     config.algorithm = config.clustering_algorithm
+    config.cubist = False
     # Get the image chunks and their associated transforms
     image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
     x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform)
+                                       config.final_transform, config)
 
     x, _ = ls.features.remove_missing(x)
     k = config.n_classes

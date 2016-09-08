@@ -62,7 +62,7 @@ class Cubist:
     """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
-                 max_rules=None, committee_members=20):
+                 max_rules=None, committee_members=20, feature_type=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -94,6 +94,7 @@ class Cubist:
         self.committee_members = committee_members
         self.unbiased = unbiased
         self.max_rules = max_rules
+        self.feature_type = feature_type
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -120,8 +121,15 @@ class Cubist:
         '''
 
         # Prepare and write the namefile expected by cubist
+        # TODO replace continuous with discrete for discrete data
+        if self.feature_type is None:
+            self.feature_type = np.zeros(m)
+
+        d = {0: 'continuous', 1: 'categorical'}
+        types = [d[k] for k in self.feature_type]
+
         names = ['t'] \
-            + ['f{}: continuous.'.format(j) for j in range(m)]\
+            + ['f{}: {}.'.format(j, t) for j, t in enumerate(types)]\
             + ['t: continuous.']
         namefile_string = '\n'.join(names)
         save_data(self._filename + '.names', namefile_string)

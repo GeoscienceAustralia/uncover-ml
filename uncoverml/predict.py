@@ -37,7 +37,7 @@ def _get_data(subchunk, config):
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
-                                    config.final_transform)
+                                    config.final_transform, config)
     return x
 
 
