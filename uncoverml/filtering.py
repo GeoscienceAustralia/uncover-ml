@@ -19,11 +19,11 @@ def fwd_filter(img, S):
     F.data[F.mask] = 0.  # make sure its zero-filled!
 
     # Forward transform
-    specF = np.fft.fft2(F.data.astype(float), axes=(0,1))
-    specN = np.fft.fft2(1. - F.mask.astype(float), axes=(0,1))
+    specF = np.fft.fft2(F.data.astype(float), axes=(0, 1))
+    specN = np.fft.fft2(1. - F.mask.astype(float), axes=(0, 1))
     specS = np.fft.fft2(S[::-1, ::-1])
-    out = np.real(np.fft.ifft2(specF * specS[:, :, np.newaxis], axes=(0,1)))
-    norm = np.real(np.fft.ifft2(specN * specS[:, :, np.newaxis], axes=(0,1)))
+    out = np.real(np.fft.ifft2(specF * specS[:, :, np.newaxis], axes=(0, 1)))
+    norm = np.real(np.fft.ifft2(specN * specS[:, :, np.newaxis], axes=(0, 1)))
     eps = 1e-15
     norm = np.maximum(norm, eps)
     out /= norm
@@ -37,15 +37,15 @@ def kernel_impute(img, S):
     F.data[F.mask] = 0.  # make sure its zero-filled!
     img_w, img_h, img_ch = img.shape
     Q = S
-    specF = np.fft.fft2(F.data.astype(float), axes=(0,1))
-    specN = np.fft.fft2(1. - F.mask.astype(float), axes=(0,1))
+    specF = np.fft.fft2(F.data.astype(float), axes=(0, 1))
+    specN = np.fft.fft2(1. - F.mask.astype(float), axes=(0, 1))
     specQ = np.fft.fft2(Q[::-1, ::-1])
-    numer = np.real(np.fft.ifft2(specF * specQ[:, :, np.newaxis], axes=(0,1)))
-    denom = np.real(np.fft.ifft2(specN * specQ[:, :, np.newaxis], axes=(0,1)))
+    numer = np.real(np.fft.ifft2(specF * specQ[:, :, np.newaxis], axes=(0, 1)))
+    denom = np.real(np.fft.ifft2(specN * specQ[:, :, np.newaxis], axes=(0, 1)))
     eps = 1e-15
     fill = numer/(denom+eps)
     fill = fill[-img_w:, -img_h:]
-    
+
     image = img.data.copy()
 
     # img = img.copy()
@@ -72,10 +72,8 @@ def inv_filter(img, S, noise=0.001):
     img_w, img_h, img_ch = img.shape
     out = np.zeros_like(F)
     for ch in range(img_ch):
-        out[:,:,ch] = deconvolution.wiener(F[:,:,ch].data.astype(float), S, 
-                                           noise)
-    
-    print('Fix your scales!')
+        out[:, :, ch] = deconvolution.wiener(F[:, :, ch].data.astype(float),
+                                             S, noise)
 
     out = machine_scale * out[:img_w, :img_h]
     # out[img.mask] = 0.
@@ -83,7 +81,7 @@ def inv_filter(img, S, noise=0.001):
 
 
 def sensor_footprint(img_w, img_h, res_x, res_y, height, mu_air):
-    
+
     x = np.arange(-img_w+1, img_w) * res_x
     y = np.arange(-img_h+1, img_h) * res_y
 
