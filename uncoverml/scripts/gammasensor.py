@@ -39,11 +39,15 @@ def write_data(data, name, in_image, outputdir, forward):
               help='Apply forward sensor model')
 @click.option('--height', type=float, help='height of sensor')
 @click.option('--absorption', type=float, help='absorption coeff')
+@click.option('--noise', type=float, default=0.001,
+              help='noise coeff for the inverse'
+              ' transform. Increasing this will remove missing data artifacts'
+              ' at the cost of image sharpness')
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
-def cli(verbosity, geotiff, height, absorption, forward, outputdir):
+def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise):
     uncoverml.logging.configure(verbosity)
 
     log.info("{} simulating gamma sensor model".format(
@@ -74,7 +78,7 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir):
             orig_mask = data.mask
             if np.ma.count_masked(data) > 0:
                 data = filtering.kernel_impute(data, S)
-            t_data = filtering.inv_filter(data, S)
+            t_data = filtering.inv_filter(data, S, noise=noise)
             t_data = np.ma.MaskedArray(data=t_data.data, mask=orig_mask)
 
         # Write output:
