@@ -9,6 +9,10 @@ from uncoverml import features
 
 log = logging.getLogger(__name__)
 
+# never use more than this many x's to compute a distance matrix
+# (save memory!)
+distance_partition_size = 10000
+
 
 def sum_axis_0(x, y, dtype):
     s = np.sum(np.vstack((x, y)), axis=0)
@@ -64,16 +68,30 @@ def kmean_distance2(x, C):
     outputs:
     d - n length array of distances
     """
-    D2_x = scipy.spatial.distance.cdist(x, C, metric='sqeuclidean')
-    d2_x = np.amin(D2_x, axis=1)
+    nsplits = max(1, int(x.shape[0]/distance_partition_size))
+    splits = np.array_split(x, nsplits)
+    d2_x = np.empty(x.shape[0])
+    idx = 0
+    for x_i in splits:
+        n_i = x_i.shape[0]
+        D2_x = scipy.spatial.distance.cdist(x_i, C, metric='sqeuclidean')
+        d2_x[idx:idx + n_i] = np.amin(D2_x, axis=1)
+        idx += n_i
     return d2_x
 
 
 def compute_weights(x, C):
     """ for each c in C, return number of points in x closer to c
     than any other point in C """
-    D2_x = scipy.spatial.distance.cdist(x, C, metric='sqeuclidean')
-    closests = np.argmin(D2_x, axis=1)
+    nsplits = max(1, int(x.shape[0]/distance_partition_size))
+    splits = np.array_split(x, nsplits)
+    closests = np.empty(x.shape[0], dtype=int)
+    idx = 0
+    for x_i in splits:
+        n_i = x_i.shape[0]
+        D2_x = scipy.spatial.distance.cdist(x_i, C, metric='sqeuclidean')
+        closests[idx: idx+n_i] = np.argmin(D2_x, axis=1)
+        idx += n_i
     weights = np.bincount(closests, minlength=C.shape[0])
     return weights
 
@@ -106,10 +124,23 @@ def weighted_starting_candidates(X, k, l):
 
 
 def compute_class(X, C, training_data=None):
-    D2_x = scipy.spatial.distance.cdist(X, C, metric='sqeuclidean')
-    classes = np.argmin(D2_x, axis=1)
+
+    nsplits = max(1, int(X.shape[0]/distance_partition_size))
+    splits = np.array_split(X, nsplits)
+    classes = np.empty(X.shape[0], dtype=int)
+    idx = 0
+    local_cost = 0
+    for x_i in splits:
+        n_i = x_i.shape[0]
+        D2_x = scipy.spatial.distance.cdist(x_i, C, metric='sqeuclidean')
+        classes_i = np.argmin(D2_x, axis=1)
+        classes[idx:idx+n_i] = classes_i
+        x_indices = np.arange(classes_i.shape[0])
+        local_cost += np.mean(D2_x[x_indices, classes_i])
+        idx += n_i
     x_indices = np.arange(classes.shape[0])
-    cost = mpiops.comm.allreduce(np.mean(D2_x[x_indices, classes]))
+
+    cost = mpiops.comm.allreduce(local_cost)
     # force assignment of the training data
     if training_data:
         classes[training_data.indices] = training_data.classes

@@ -160,7 +160,11 @@ def load_shapefile(filename, targetfield):
     records = np.array(sf.records()).T
     record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
         shapefields, records, dtypes)}
-    val = record_dict.pop(targetfield)
+    if targetfield in record_dict:
+        val = record_dict.pop(targetfield)
+    else:
+        raise ValueError("Can't find target property in shapefile." +
+                         "Candidates: {}".format(record_dict.keys()))
     othervals = record_dict
 
     # Get coordinates
@@ -168,7 +172,8 @@ def load_shapefile(filename, targetfield):
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords)
-
+    # val *must* be float type
+    val = val.astype(float)
     return label_coords, val, othervals
 
 
@@ -216,7 +221,7 @@ def get_image_spec(model, config):
 
 class ImageWriter:
 
-    nodata_value = -1e23
+    nodata_value = np.array(-1e20, dtype='float32')
 
     def __init__(self, shape, bbox, name, n_subchunks, outputdir,
                  band_tags=None):
@@ -294,11 +299,16 @@ def _iterate_sources(f, config):
             x = f(image_source)
             # TODO this may hurt performance. Consider removal
             if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                if not np.all(count > 0):
+                    s = ("{} has no data in at least one band.".format(name) +
+                         " Valid_pixel_count: {}".format(tuple(count)))
+                    raise ValueError(s)
                 missing_percent = missing_percentage(x)
                 t_missing = mpiops.comm.allreduce(
                     missing_percent) / mpiops.chunks
-                log.info("{}: ({},{}) {:2.2f}% missing".format(
-                    name, x.shape[0], x.shape[3], t_missing))
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, tuple(count), t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))

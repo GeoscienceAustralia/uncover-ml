@@ -1,6 +1,7 @@
 import logging
 import os.path
 import glob
+import sys
 
 import click
 import numpy as np
@@ -8,6 +9,7 @@ import numpy as np
 from uncoverml import geoio
 from uncoverml.image import Image
 from uncoverml import filtering
+from uncoverml import mpiops
 import uncoverml.logging
 
 log = logging.getLogger(__name__)
@@ -15,7 +17,12 @@ log = logging.getLogger(__name__)
 
 def write_data(data, name, in_image, outputdir, forward):
     data = data.reshape(-1, data.shape[2])
-    tags = ["convolved"] if forward else ["deconvolved"]
+    tag = "convolved" if forward else "deconvolved"
+    nbands = data.shape[1]
+    if nbands > 1:
+        tags = [tag + "_band{}".format(k+1) for k in range(data.shape[1])]
+    else:
+        tags = [tag]
     n_subchunks = 1
     nchannels = in_image.resolution[2]
     eff_shape = in_image.patched_shape(0) + (nchannels,)
@@ -33,19 +40,31 @@ def write_data(data, name, in_image, outputdir, forward):
               help='Apply forward sensor model')
 @click.option('--height', type=float, help='height of sensor')
 @click.option('--absorption', type=float, help='absorption coeff')
+@click.option('--impute', is_flag=True, help='Use the sensor model to impute'
+              ' missing values in the deconvolution')
+@click.option('--noise', type=float, default=0.001,
+              help='noise coeff for the inverse'
+              ' transform. Increasing this will remove missing data artifacts'
+              ' at the cost of image sharpness')
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
-def cli(verbosity, geotiff, height, absorption, forward, outputdir):
+def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise,
+        impute):
     uncoverml.logging.configure(verbosity)
 
     log.info("{} simulating gamma sensor model".format(
         "Forward" if forward else "Backward"))
     if os.path.isdir(geotiff):
+        log.info("Globbing directory input for tif files")
         geotiff = os.path.join(geotiff, "*.tif")
     files = glob.glob(geotiff)
-    for f in files:
+    my_files = np.array_split(files, mpiops.chunks)[mpiops.chunk_index]
+    if len(my_files) == 0:
+        log.critical("No files found. Exiting")
+        sys.exit()
+    for f in my_files:
         name = os.path.basename(f).rsplit(".", 1)[0]
         log.info("Loading {}".format(name))
         image_source = geoio.RasterioImageSource(f)
@@ -63,7 +82,13 @@ def cli(verbosity, geotiff, height, absorption, forward, outputdir):
         if forward:
             t_data = filtering.fwd_filter(data, S)
         else:
-            t_data = filtering.inv_filter(data, S)
+            orig_mask = data.mask
+            if np.ma.count_masked(data) > 0:
+                data = filtering.kernel_impute(data, S)
+            t_data = filtering.inv_filter(data, S, noise=noise)
+            if impute:
+                orig_mask = np.zeros_like(orig_mask, dtype=bool)
+            t_data = np.ma.MaskedArray(data=t_data.data, mask=orig_mask)
 
         # Write output:
         log.info("Writing output to disk")

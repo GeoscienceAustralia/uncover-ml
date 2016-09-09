@@ -51,7 +51,10 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
                                 patchsize)
         if x is not None:
             x_all.append(x)
-    x_all = np.ma.concatenate(x_all, axis=0)
+    if len(x_all) > 0:
+        x_all = np.ma.concatenate(x_all, axis=0)
+    else:
+        raise ValueError("All targets lie outside image boundaries")
     assert x_all.shape[0] == targets.observations.shape[0]
     return x_all
 
@@ -71,16 +74,18 @@ def gather_features(x):
 
 def remove_missing(x, targets=None):
     log.info("Stripping out missing data")
-    no_missing_x = np.sum(x.mask, axis=1) == 0
-    x = x.data[no_missing_x]
+    classes = targets.observations if targets else None
+    if np.ma.count_masked(x) > 0:
+        no_missing_x = np.sum(x.mask, axis=1) == 0
+        x = x.data[no_missing_x]
+        # remove labels that correspond to data missing in x
+        if targets is not None:
+            no_missing_y = no_missing_x[0:(classes.shape[0])]
+            classes = classes[:, np.newaxis][no_missing_y]
+            classes = classes.flatten()
+    else:
+        x = x.data
 
-    # remove labels that correspond to data missing in x
-    classes = None
-    if targets is not None:
-        classes = targets.observations
-        no_missing_y = no_missing_x[0:(classes.shape[0])]
-        classes = classes[:, np.newaxis][no_missing_y]
-        classes = classes.flatten()
     return x, classes
 
 

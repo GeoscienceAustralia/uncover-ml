@@ -170,7 +170,7 @@ def predict(model_or_cluster_file, partitions):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-o', '--overhead', type=int, default=2,
+@click.option('-o', '--overhead', type=int, default=4,
               help='Estimate of memory overhead as multiplier')
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help='only use this fraction of the data for clustering')
@@ -193,9 +193,14 @@ def memory(pipeline_file, overhead, subsample_fraction, partitions):
                         partitions, subsample_fraction) + ":\n\n" +
                      fm("Learning", results['learning']) + "\n" +
                      fm("Prediction", results['prediction']) + "\n" +
-                     fm("Clustering", results['clustering']) + "\n" +
+                     fm("Clustering (extraction)",
+                        results['clustering-extraction']) + "\n" +
+                     fm("Clustering (iteration)",
+                        results['clustering-iteration']) + "\n" +
                      "\nNOTE:\n- Use more partitions to " +
                      "decrease memory usage for learning and prediction.\n" +
                      "- Use a lower subsampling fraction to decrease memory" +
-                     " usage for clustering.")
+                     " usage for clustering (iteration).\n" +
+                     "- Total memory usage for clustering (extraction) " +
+                     "cannot be decreased.")
     print(output_string)
