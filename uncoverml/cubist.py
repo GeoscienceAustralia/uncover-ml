@@ -335,7 +335,7 @@ class Rule:
                  operand_index=int(condition[1][1:]),
                  operand_b=float(condition[2]))
 
-            if condition[0] == CONTINUOUS else
+            if int(condition[0]) == CONTINUOUS else
 
             dict(type=CATEGORICAL,
                  operand_index=int(condition[1][1:]),
@@ -358,9 +358,10 @@ class Rule:
                     return False
 
             elif condition['type'] == CATEGORICAL:
+
                 test_value = row[condition['operand_index']]
                 allowed = condition['values']
-                if not np.isclose(allowed, test_value, atol=0.01).any():
+                if not np.isclose(allowed, test_value, rtol=0.0001).any():
                     return False
 
         # If none of the conditions failed, the rule is satisfied
