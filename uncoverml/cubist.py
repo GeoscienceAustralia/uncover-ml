@@ -10,6 +10,9 @@ from shlex import split as parse
 import numpy as np
 from scipy.stats import norm
 
+CONTINUOUS = 2
+CATEGORICAL = 3
+
 
 def save_data(filename, data):
     with open(filename, 'w') as new_file:
@@ -52,6 +55,11 @@ def variance_with_mean(mean):
         return variance
 
     return variance
+
+
+def parse_float_array(arraystring):
+    array = [float(n) for n in arraystring.split(',')]
+    return array
 
 
 class Cubist:
@@ -319,10 +327,20 @@ class Rule:
         '''
         Compute and store the condition evaluation variables
         '''
+
         self.conditions = [
-            dict(operator=condition[3],
+
+            dict(type=CONTINUOUS,
+                 operator=condition[3],
                  operand_index=int(condition[1][1:]),
                  operand_b=float(condition[2]))
+
+            if condition[0] == CONTINUOUS else
+
+            dict(type=CATEGORICAL,
+                 operand_index=int(condition[1][1:]),
+                 values=parse_float_array(condition[2]))
+
             for condition in
             map(arguments, conditions)
         ]
@@ -331,11 +349,19 @@ class Rule:
 
         # Test that all of the conditions pass
         for condition in self.conditions:
-            comparison = self.comparator[condition['operator']]
-            operand_a = row[condition['operand_index']]
-            operand_b = condition['operand_b']
-            if not comparison(operand_a, operand_b):
-                return False
+
+            if condition['type'] == CONTINUOUS:
+                comparison = self.comparator[condition['operator']]
+                operand_a = row[condition['operand_index']]
+                operand_b = condition['operand_b']
+                if not comparison(operand_a, operand_b):
+                    return False
+
+            elif condition['type'] == CATEGORICAL:
+                test_value = row[condition['operand_index']]
+                allowed = condition['values']
+                if not np.isclose(allowed, test_value, atol=0.01).any():
+                    return False
 
         # If none of the conditions failed, the rule is satisfied
         return True
