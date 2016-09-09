@@ -9,19 +9,40 @@ from uncoverml import features
 
 log = logging.getLogger(__name__)
 
-# never use more than this many x's to compute a distance matrix
-# (save memory!)
+"""
+Never use more than this many x's to compute a distance matrix
+(save memory!)
+"""
 distance_partition_size = 10000
 
 
 def sum_axis_0(x, y, dtype):
+    """
+    Reduce operation that sums 2 arrays on axis zero
+    """
     s = np.sum(np.vstack((x, y)), axis=0)
     return s
 
+"""
+MPI reduce operation for summing over axis 0
+"""
 sum0_op = mpiops.MPI.Op.Create(sum_axis_0, commute=True)
 
 
 class TrainingData:
+    """
+    Light wrapper for the indices and values of training data
+
+    Parameters
+    ----------
+    indices : ndarray
+        length N array of the indices of the input data that have classes
+        assigned
+
+    classes : ndarray
+        length N int array of the class values at locations specified by
+        indices
+    """
     def __init__(self, indices, classes):
         self.indices = indices
         self.classes = classes
@@ -29,13 +50,48 @@ class TrainingData:
 
 class KMeans:
     """
-    model object for purposes of using the prediction pipeline
+    Model object implementing learn and predict with K-means
+
+    Parameters
+    ----------
+    k : int > 0
+        The number of classes to cluster the data into
+
+    oversample_factor: int > 1
+        Controls the number of samples draws as part of [1] in the
+        initialisation step. More mpi nodes will increase the total number
+        of points. Consider values of 1 for more than about 16 nodes
+    
+    References 
+    ---------- 
+    .. [1] Bahmani, Bahman, Benjamin Moseley, Andrea
+    Vattani, Ravi Kumar, and Sergei Vassilvitskii. "Scalable k-means++."
+    Proceedings of the VLDB Endowment 5, no. 7 (2012): 622-633.
+    
     """
     def __init__(self, k, oversample_factor):
         self.k = k
         self.oversample_factor = oversample_factor
 
     def learn(self, x, indices=None, classes=None):
+        """
+        Find the cluster centres using k-means||
+
+        Parameters
+        ----------
+        x : ndarray
+            (n_samples, n_dimensions) length array containing the training
+            samples to cluster
+
+        indices : ndarray
+            (n_samples) length integer array giving the locations in `x`
+            where labels exist
+
+        classes : ndarray
+            (n_samples) length integer array giving the class assignments
+            of points in x in locations given by `indices`
+
+        """
         if indices is not None and classes is not None:
             log.info("Class labels found. Using semi-supervised k-means")
             training_data = TrainingData(indices, classes)
