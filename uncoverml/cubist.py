@@ -62,7 +62,8 @@ class Cubist:
     """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
-                 max_rules=None, committee_members=20, feature_type=None):
+                 max_rules=None, committee_members=20, max_categories=5000,
+                 feature_type=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -82,6 +83,12 @@ class Cubist:
             The number of cubist models to generate. Committee models can
             greatly reduce the result variance, so this should be used
             whenever possible.
+        max_categories: int
+            The maximum number of categories cubist will search for in the
+            data when creating a categorical variable.
+        feature_type:  numpy array
+            An array of length equal to the number of features, 0 if
+            that feature is continuous and 1 if it is categorical.
         """
 
         # Setting up the user details
@@ -95,6 +102,7 @@ class Cubist:
         self.unbiased = unbiased
         self.max_rules = max_rules
         self.feature_type = feature_type
+        self.max_categories = max_categories
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -125,7 +133,7 @@ class Cubist:
         if self.feature_type is None:
             self.feature_type = np.zeros(m)
 
-        d = {0: 'continuous', 1: 'categorical'}
+        d = {0: 'continuous', 1: 'discrete {}'.format(self.max_categories)}
         types = [d[k] for k in self.feature_type]
 
         names = ['t'] \

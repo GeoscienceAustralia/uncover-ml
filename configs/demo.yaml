@@ -60,8 +60,12 @@ learning:
     #     maxiter: 5000
     #     nbases: 50
     #     random_state: 1
-    algorithm: svr
+    algorithm: cubist
     arguments:
+      max_rules: 500
+      committee_members: 20
+      unbiased: False
+      max_categories: 5000
       target_transform: rank
 
 prediction:

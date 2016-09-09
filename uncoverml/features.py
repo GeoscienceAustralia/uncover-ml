@@ -77,7 +77,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if final_transform and not config.cubist:
         x = final_transform(x)
-    return x, feature_vec
+    return x
 
 
 def gather_features(x):
