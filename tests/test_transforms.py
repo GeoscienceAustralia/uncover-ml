@@ -1,8 +1,12 @@
 from scipy.stats import bernoulli
+from functools import reduce
+from operator import mul
 
-from uncoverml.transforms.onehot import sets, one_hot
+from uncoverml.transforms.onehot import sets
 from uncoverml.transforms.impute import GaussImputer, \
     NearestNeighboursImputer, MeanImputer
+from uncoverml.transforms.linear import CentreTransform, \
+    StandardiseTransform, WhitenTransform
 from uncoverml.transforms import target
 import numpy as np
 
@@ -48,6 +52,17 @@ def make_missing_data():
     return X
 
 
+@pytest.fixture()
+def make_random_data(n=10, m=3):
+
+    data = np.random.randn(n, m) + 5.0 * np.ones((n, m))
+    x = np.ma.masked_array(data)
+    mean = np.mean(data, axis=0)
+    standard_deviation = np.std(data, axis=0)
+
+    return x, mean, standard_deviation
+
+
 def test_MeanImputer(make_missing_data):
     X = make_missing_data
     Xcopy = X.copy()
@@ -88,144 +103,110 @@ def test_NearestNeighbourImputer(make_missing_data):
     assert Ximp.shape == Xcopy.shape
     assert np.ma.count_masked(Ximp) == 0
 
-# def test_impute(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.impute_mean = None
-#     x_im = mpiops._impute(x, settings, mpiops.comm)
 
-#     x_mean = np.ma.mean(x_all, axis=0).data
-#     x_im_true = np.ma.copy(x)
-#     transforms.impute_with_mean(x_im_true, x_mean)
+def test_CentreTransform(make_random_data):
 
-#     assert np.allclose(x_im_true, x_im)
-#     assert np.allclose(x_mean, settings.impute_mean)
-#     print(settings.impute_mean)
+    # Generate the expected data
+    x, mu, std = make_random_data
+    x_expected = x - mu
 
+    # Apply the CentreTransform
+    center_transformer = CentreTransform()
+    x_produced = center_transformer(x)
 
-# def test_impute_params(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.impute_mean = np.ones(x.shape[1])
-#     x_im = mpiops._impute(x, settings, mpiops.comm)
-#     x_im_true = np.ma.copy(x)
-#     transforms.impute_with_mean(x_im_true, np.ones(x.shape[1]))
-#     assert np.allclose(x_im_true, x_im)
-#     assert np.all(settings.impute_mean == np.ones(x.shape[1]))
-
-# def test_centre(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.mean = None
-#     x_centre = copy.deepcopy(x)
-#     x_centre = mpiops.centre(x_centre, settings, mpiops.comm)
-#     true_mean = np.ma.mean(x_all, axis=0)
-#     x_true = x - true_mean
-#     assert(np.allclose(x_true, x_centre))
-#     assert(np.allclose(true_mean, settings.mean))
+    # Check that the values are the same
+    assert np.array_equal(x_expected, x_produced)
 
 
-# def test_centre_param(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.mean = np.ones(x.shape[1])
-#     x_centre = copy.deepcopy(x)
-#     x_centre = mpiops.centre(x_centre, settings, mpiops.comm)
-#     x_true = x - np.ones(x.shape[1])
-#     assert(np.allclose(x_true, x_centre))
+def test_CentreTransform_caching(make_random_data):
+
+    # Generate an initial set of data
+    x, mu, std = make_random_data
+
+    # Apply the CentreTransform to the first dataset to preserve the mean
+    x_copy = x.copy()
+    center_transformer = CentreTransform()
+    center_transformer(x_copy)
+
+    # Now apply the center transform to a matrix that has been translated
+    x_translated = x + 3.0 * mu
+    x_expected = x_translated - mu
+    x_produced = center_transformer(x_translated)
+
+    # Check that the transformer used the mean mu instead of the translated
+    # mean which was 3 * mu in this case above
+    assert np.array_equal(x_expected, x_produced)
 
 
-# def test_standardise(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.sd = None
-#     settings.mean = None
-#     x_stand = copy.deepcopy(x)
-#     x_stand = mpiops.standardise(x_stand, settings, mpiops.comm)
-#     x_demean = (x - np.ma.mean(x_all, axis=0))
-#     sd_true = np.ma.std(x_all, axis=0)
-#     x_true = x_demean / sd_true
-#     assert np.allclose(x_true, x_stand)
-#     assert np.allclose(sd_true, settings.sd)
+def test_StandardiseTransform(make_random_data):
+
+    # Generate the expected data
+    x, mu, std = make_random_data
+    x_expected = (x - mu) / std
+
+    # Apply the StandardiseTransform
+    standardiser = StandardiseTransform()
+    x_produced = standardiser(x)
+
+    # Check that the values are the same
+    assert np.array_equal(x_expected, x_produced)
 
 
-# def test_standardise_param(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.sd = np.ones(x.shape[1]) * 2
-#     settings.mean = np.ones(x.shape[1])
-#     x_stand = copy.deepcopy(x)
-#     x_stand = mpiops.standardise(x_stand, settings, mpiops.comm)
-#     x_demean = (x - 1)
-#     x_true = x_demean / 2.0
-#     assert np.allclose(x_true, x_stand)
+def test_StandardiseTransform_caching(make_random_data):
+
+    # Generate an initial set of data
+    x, mu, std = make_random_data
+
+    # Apply the CentreTransform to the first dataset to preserve the mean
+    x_copy = x.copy()
+    center_transformer = CentreTransform()
+    center_transformer(x_copy)
+
+    # Now apply the center transform to a matrix translated by 2 * mu
+    x_translated = x + 3.0 * mu
+    x_expected = x_translated - mu
+    x_produced = center_transformer(x_translated)
+
+    # Check that the transformer used the mean mu instead of the translated
+    # mean which was 4 * mu in this case above
+    assert np.array_equal(x_expected, x_produced)
 
 
-# def test_whiten(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.mean = None
-#     settings.sd = None
-#     settings.eigvals = None
-#     settings.eigvecs = None
-#     settings.featurefraction = 0.5
-#     x_white = copy.deepcopy(x)
-#     x_white = mpiops.whiten(x_white, settings, mpiops.comm)
+def test_WhitenTransform(make_random_data):
 
-#     x_true_mean = np.ma.mean(x_all, axis=0)
-#     x_demean = x_all - x_true_mean
-#     true_cov = np.ma.dot(x_demean.T, x_demean)/np.ma.count(x_demean, axis=0)
-#     eigvals, eigvecs = np.linalg.eigh(true_cov)
+    # Perform the whitening directly to the expected data
+    x, mu, std = make_random_data
 
-#     keepdims = 1
-#     mat = eigvecs[:, -keepdims:]
-#     vec = eigvals[-keepdims:]
-#     x_true = np.ma.dot(x - x_true_mean, mat, strict=True) / np.sqrt(vec)
-#     assert np.allclose(x_white, x_true)
-#     assert np.allclose(eigvals, settings.eigvals)
-#     assert np.allclose(eigvecs, settings.eigvecs)
+    # Apply the Whitening using the test function
+    whitener = WhitenTransform(1.0)
+    x_produced = whitener(x)
+
+    # Check that the covariance is orthonormal by checking that the
+    # determinant of the covariance matrix forms an n-rectangular prism
+    # IE: abs(det(x_cov)) = prod()
+    x_cov = np.cov(x_produced, rowvar=False)
+    column_products = abs(x_cov[~np.eye(len(x_cov), dtype=bool)])
+    assert np.all(np.less(column_products, 1e-5))
 
 
-# def test_whiten_params(mpisync, masked_array):
-#     x, x_all = masked_array
-#     settings = DummySettings()
-#     settings.mean = np.ones(2)
-#     settings.sd = np.ones(2)*2
-#     settings.eigvals = np.ones(2)*3
-#     settings.eigvecs = np.eye(2)*4
-#     settings.featurefraction = 0.5
-#     x_white = copy.deepcopy(x)
-#     x_white = mpiops.whiten(x_white, settings, mpiops.comm)
+def test_WhitenTransform_caching():
 
-#     x_true_mean = settings.mean
+    # Prestandardise and center an initial dataset
+    x, mu, std = make_random_data(6, 3)
+    x = (x - mu) / std
 
-#     keepdims = 1
-#     mat = settings.eigvecs[:, -keepdims:]
-#     vec = settings.eigvals[-keepdims:]
-#     x_true = np.ma.dot(x - x_true_mean, mat, strict=True) / np.sqrt(vec)
-#     assert np.allclose(x_white, x_true)
+    # Make a matrix with zero variance and zero mean
+    x_zero = np.ma.array(np.vstack([np.eye(3), -np.eye(3)])) * (2 ** (-1/2))
+    whitener = WhitenTransform(1.0)
+    x_zero_white = whitener(x_zero)
 
+    # Compute the transformation
+    trans = x_zero_white.dot( np.linalg.pinv(x_zero) )
 
-# def test_impute_with_mean(masked_array):
-#     t = np.ma.copy(masked_array)
-#     mean = np.ma.mean(t, axis=0)
-#     trueval = np.array([[3.0,  1.0], [2.0, 3.0], [4.0, 5.0]])
-#     impute_with_mean(t, mean)
-#     assert np.all(t.data == trueval)
-#     assert np.all(np.logical_not(t.mask))
+    # Verify that the whitener applies the same transformation
+    x_produced = whitener(x)
+    x_trans = trans.dot(x_produced)
+    x_expected = trans.dot(x)
 
+    assert np.all(np.equal(x_trans, x_expected))
 
-# def test_one_hot(int_masked_array):
-#     x_set = np.array([[2, 3, 4], [1, 3, 5]], dtype=int)
-#     r = one_hot(int_masked_array,  x_set)
-#     ans = np.array([[-0.5,  -0.5,  -0.5,   0.5,  -0.5,  -0.5],
-#                    [0.5,  -0.5,  -0.5,  -0.5,  -0.5,  -0.5],
-#                    [-0.5,  -0.5,   0.5,  -0.5,  -0.5,   0.5],
-#                    [-0.5,   0.5,  -0.5,  -0.5,   0.5,  -0.5]])
-#     ans_mask = np.array(
-#         [[True,   True,   True,  False,  False,  False],
-#          [False,  False,  False,   True,   True,   True],
-#          [False,  False,  False,  False,  False,  False],
-#          [False,  False,  False,  False,  False,  False]],  dtype=bool)
-#     assert np.all(r.data == ans)
-#     assert np.all(r.mask == ans_mask)
