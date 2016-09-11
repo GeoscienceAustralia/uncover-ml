@@ -1,0 +1,101 @@
+
+
+# possible transforms:
+#
+mean
+gauss
+nn
+
+onehot
+centre
+standardise
+whiten
+
+features:
+
+  - name: featureset_1
+    type: continuous
+    files:
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
+      - directory: /home/lb/data/GA-cover
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+  
+  - name: featureset_2
+    type: continuous
+    files:
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
+      - directory: /home/lb/data/GA-cover
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+  
+  - name: featureset_3
+    type: discrete
+    files:
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
+      - directory: /home/lb/data/GA-cover
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+
+
+
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation: mean
+
+  transforms:
+    # - whiten:
+        # keep_fraction: 0.8
+
+targets:
+  file: /home/lb/data/GA-cover/geochem_sites.shp
+  property: Na_ppm_i_1
+
+clustering:
+  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+  property: class
+  algorithm: kmeans
+  arguments:
+    n_classes: 12
+    oversample_factor: 5
+
+learning:
+    # algorithm: sgdapproxgp
+    # arguments:
+    #     target_transform: standardise
+    #     kern: rbf
+    #     lenscale: 1000
+    #     ard: True
+    #     maxiter: 5000
+    #     nbases: 50
+    #     random_state: 1
+    algorithm: svr
+    arguments:
+      target_transform: rank
+
+prediction:
+  quantiles: 0.95
+
+validation:
+  #- feature_rank
+  - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: .
+
