@@ -77,7 +77,7 @@ min0_op = MPI.Op.Create(min_axis_0, commute=True)
 
 
 def count(x):
-    x_n_local = np.ma.count(x, axis=0)
+    x_n_local = np.ma.count(x, axis=0).ravel()
     x_n = comm.allreduce(x_n_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_n)
     if still_masked != 0:

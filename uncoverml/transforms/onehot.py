@@ -7,9 +7,6 @@ from uncoverml import mpiops
 log = logging.getLogger(__name__)
 
 
-MAX_ONEHOT_DIMS = 25
-
-
 def sets(x):
     """
     works on a masked x
@@ -18,7 +15,7 @@ def sets(x):
     return sets
 
 
-def compute_unique_values(x, max_onehot_dims):
+def compute_unique_values(x):
     """compute per-dimension unique values over a data vector
 
     This function computes the set of unique values for each dimension in
@@ -29,29 +26,19 @@ def compute_unique_values(x, max_onehot_dims):
     x : ndarray (n x m)
         The array over which to compute unique values. The set is over
         the first dimension
-    max_onehot_dims : int
-        The maximum number of unique values to accept. If exceeded returns
-        None
 
     Returns
     -------
     x_sets : list of ndarray or None
         A list of m sets of unique values for each dimension in x
     """
-    x_sets = None
     # check data is okay
     if x.dtype == np.dtype('float32') or x.dtype == np.dtype('float64'):
-        log.info("Ignoring float data")
+        raise ValueError("Can't do one-hot on float data")
     else:
         local_sets = sets(x)
         full_sets = mpiops.comm.allreduce(local_sets, op=mpiops.unique_op)
-        total_dims = np.sum([len(k) for k in full_sets])
-        log.info("Total features: {}".format(total_dims))
-        if total_dims <= max_onehot_dims:
-            x_sets = full_sets
-        else:
-            log.warn("Too many unique features: ignoring")
-    return x_sets
+    return full_sets
 
 
 def one_hot(x, x_set):
@@ -94,9 +81,11 @@ class OneHotTransform:
         self.x_sets = None
 
     def __call__(self, x):
+        x = x.astype(int)
         if self.x_sets is None:
-            self.x_sets = compute_unique_values(x, MAX_ONEHOT_DIMS)
-        # x_sets may still be none becasue there are too many unique values
-        if self.x_sets is not None:
-            x = one_hot(x, self.x_sets)
+            self.x_sets = compute_unique_values(x)
+
+        d = [len(s) for s in self.x_sets]
+        log.info("One-hot encoding with {} dimensions".format(d))
+        x = one_hot(x, self.x_sets)
         return x
