@@ -20,6 +20,7 @@ Contents:
 
    projectreport
 
+   cluster
    config
    cubist
    features
