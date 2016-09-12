@@ -2,26 +2,53 @@ import logging
 from os import path
 import glob
 import csv
+
 import yaml
 
 from uncoverml import transforms
-from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 
+"""The strings associated with each imputation option
+"""
 _imputers = {'mean': transforms.MeanImputer,
              'gaus': transforms.GaussImputer,
              'nn': transforms.NearestNeighboursImputer}
+
+"""These transforms operate individually on each image before concatenation
+"""
 _image_transforms = {'onehot': transforms.OneHotTransform}
+
+"""Post-concatenation transforms: operate on whole data vector
+"""
 _global_transforms = {'centre': transforms.CentreTransform,
                       'standardise': transforms.StandardiseTransform,
                       'whiten': transforms.WhitenTransform}
 
-# multiplicative factor relating to input data. x2 for masks, x2 for
-# concatenate
-
 
 def _parse_transform_set(transform_dict, imputer_string, n_images=None):
+    """Parse a dictionary read from yaml into a TransformSet object
+
+    Parameters
+    ----------
+    transform_dict : dictionary
+        The dictionary as read from the yaml config file containing config
+        key-value pairs
+    imputer_string : string
+        The name of the imputer (could be None)
+    n_images : int > 0
+        The number of images being read in. Required because we need to create
+        a new image transform for each image
+
+    Returns
+    -------
+    image_transforms : list
+        A list of image Transform objects
+    imputer : Imputer
+        An Imputer object
+    global_transforms : list
+        A list of global Transform objects
+    """
     image_transforms = []
     global_transforms = []
     if imputer_string in _imputers:
@@ -42,6 +69,13 @@ def _parse_transform_set(transform_dict, imputer_string, n_images=None):
 
 
 class FeatureSetConfig:
+    """Config class representing a 'feature set' in the config file
+
+    Parameters
+    ----------
+    d : dictionary
+        The section of the yaml file for a feature set
+    """
     def __init__(self, d):
         self.name = d['name']
         self.type = d['type']
@@ -81,6 +115,17 @@ class FeatureSetConfig:
 
 
 class Config:
+    """Class representing the global configuration of the uncoverml scripts
+
+    This class is *mostly* read-only, but it does also contain the Transform
+    objects which have state. TODO: separate these out!
+
+    Parameters
+    ----------
+    yaml_file : string
+        The path to the yaml config file. For details on the yaml schema
+        see the uncoverml documentation
+    """
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
             s = yaml.load(f)
