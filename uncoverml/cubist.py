@@ -10,6 +10,9 @@ from shlex import split as parse
 import numpy as np
 from scipy.stats import norm
 
+CONTINUOUS = 2
+CATEGORICAL = 3
+
 
 def save_data(filename, data):
     with open(filename, 'w') as new_file:
@@ -54,6 +57,11 @@ def variance_with_mean(mean):
     return variance
 
 
+def parse_float_array(arraystring):
+    array = [float(n) for n in arraystring.split(',')]
+    return array
+
+
 class Cubist:
     """
     This class wraps the cubist command line tools in a scikit-learn interface.
@@ -62,7 +70,8 @@ class Cubist:
     """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
-                 max_rules=None, committee_members=20):
+                 max_rules=None, committee_members=20, max_categories=5000,
+                 feature_type=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -82,6 +91,12 @@ class Cubist:
             The number of cubist models to generate. Committee models can
             greatly reduce the result variance, so this should be used
             whenever possible.
+        max_categories: int
+            The maximum number of categories cubist will search for in the
+            data when creating a categorical variable.
+        feature_type:  numpy array
+            An array of length equal to the number of features, 0 if
+            that feature is continuous and 1 if it is categorical.
         """
 
         # Setting up the user details
@@ -94,6 +109,8 @@ class Cubist:
         self.committee_members = committee_members
         self.unbiased = unbiased
         self.max_rules = max_rules
+        self.feature_type = feature_type
+        self.max_categories = max_categories
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -120,8 +137,15 @@ class Cubist:
         '''
 
         # Prepare and write the namefile expected by cubist
+        # TODO replace continuous with discrete for discrete data
+        if self.feature_type is None:
+            self.feature_type = np.zeros(m)
+
+        d = {0: 'continuous', 1: 'discrete {}'.format(self.max_categories)}
+        types = [d[k] for k in self.feature_type]
+
         names = ['t'] \
-            + ['f{}: continuous.'.format(j) for j in range(m)]\
+            + ['f{}: {}.'.format(j, t) for j, t in enumerate(types)]\
             + ['t: continuous.']
         namefile_string = '\n'.join(names)
         save_data(self._filename + '.names', namefile_string)
@@ -142,12 +166,16 @@ class Cubist:
         # Get and store the output model and the required data
         modelfile = read_data(self._filename + '.model')
 
+        # Define a function that assigns the number of rows to the rule
+        def new_rule(model):
+            return Rule(model, m)
+
         # Split the modelfile into an array of models, where each model
         # contains some number of rules, hence the format:
         #   [[<Rule>, <Rule>, ...], [<Rule>, <Rule>, ...], ... ]
         models = map(remove_first_line, modelfile.split('rules')[1:])
         rules_split = [model.split('conds')[1:] for model in models]
-        self._models = [list(map(Rule, model)) for model in rules_split]
+        self._models = [list(map(new_rule, model)) for model in rules_split]
 
         '''
         Complete the training by cleaning up after ourselves
@@ -198,22 +226,21 @@ class Cubist:
             print('Train first')
             return
 
-        # Run the rule list on each row of x one-by-one, incrementally
-        #  calculating mean and variance
-        y_mean = np.zeros(n)
-        y_var = np.zeros(n)
-        for j, model in enumerate(self._models):
-            # FIXME: Can we vectorise this operation over n? It is quite slow
-            for i, row in enumerate(x):
-                for rule in model:
-                    if rule.satisfied(row):
-                        row_prediction = rule.regress(row)
-                        delta = row_prediction - y_mean[i]
-                        y_mean[i] += delta / (j + 1)
-                        y_var[i] += delta * (row_prediction - y_mean[i])
-                        break
+        # Determine which rule to run on each row and then run the regression
+        # on each row of x to get the regression output.
+        y_pred = np.zeros((n, len(self._models)))
+        for m, model in enumerate(self._models):
+            for rule in model:
 
-        y_var /= len(self._models)
+                # Determine which rows satisfy this rule
+                mask = rule.satisfied(x)
+
+                # Make the prediction for the whole matrix, and keep only the
+                # rows that are correctly sized
+                y_pred[mask, m] += rule.regress(x, mask)
+
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
@@ -273,14 +300,14 @@ class Cubist:
 class Rule:
 
     comparator = {
-        "<": operator.lt,
-        ">": operator.gt,
-        "=": operator.eq,
-        ">=": operator.ge,
-        "<=": operator.le
+        "<": np.less,
+        ">": np.greater,
+        "=": np.equal,
+        ">=": np.greater_equal,
+        "<=": np.less_equal
     }
 
-    def __init__(self, rule):
+    def __init__(self, rule, m):
 
         # Split the parts of the string so that they can be manipulated
         header, *conditions, polynomial = rule.split('\n')[:-1]
@@ -288,43 +315,66 @@ class Rule:
         '''
         Compute and store the regression variables
         '''
+
         # Split and parse the coefficients into variable/row indices,
         # coefficients and a bias unit for the regression
         bias, *splits = arguments(polynomial)
-        variables, coefficients = (zip(*pairwise(splits))
-                                   if len(splits)
-                                   else ([], []))
+        v, c = (zip(*pairwise(splits))
+                if len(splits)
+                else ([], []))
 
-        # Convert the regression values to numbers and store them
+        # Convert the regression values to a coefficient vector
         self.bias = float(bias)
-        self.variables = np.array([v[1:] for v in variables], dtype=int)
-        self.coefficients = np.array(coefficients, dtype=float)
+        variables = np.array([v[1:] for v in v], dtype=int)
+        coefficients = np.array(c, dtype=float)
+        self.coefficients = np.zeros(m)
+        self.coefficients[variables] = coefficients
 
         '''
         Compute and store the condition evaluation variables
         '''
+
         self.conditions = [
-            dict(operator=condition[3],
+
+            dict(type=CONTINUOUS,
+                 operator=condition[3],
                  operand_index=int(condition[1][1:]),
-                 operand_b=float(condition[2]))
+                 operand=float(condition[2]))
+
+            if int(condition[0]) == CONTINUOUS else
+
+            dict(type=CATEGORICAL,
+                 operand_index=int(condition[1][1:]),
+                 values=parse_float_array(condition[2]))
+
             for condition in
             map(arguments, conditions)
         ]
 
-    def satisfied(self, row):
+    def satisfied(self, x):
+
+        # Define a mask for each row in x
+        mask = np.ones(len(x), dtype=bool)
 
         # Test that all of the conditions pass
         for condition in self.conditions:
-            comparison = self.comparator[condition['operator']]
-            operand_a = row[condition['operand_index']]
-            operand_b = condition['operand_b']
-            if not comparison(operand_a, operand_b):
-                return False
 
-        # If none of the conditions failed, the rule is satisfied
-        return True
+            if condition['type'] == CONTINUOUS:
+                comparison = self.comparator[condition['operator']]
+                x_column = x[:, condition['operand_index']]
+                operand = condition['operand']
+                mask &= comparison(x_column, operand)
 
-    def regress(self, row):
+            elif condition['type'] == CATEGORICAL:
+                allowed = condition['values']
+                x_column = x[:, [condition['operand_index']]]
+                mask &= np.isclose(allowed, x_column).any(axis=1)
 
-        prediction = self.bias + row[self.variables].dot(self.coefficients)
+        # If all of the conditions passed for a single row, we can conclude
+        # that this row satisfies this rule
+        return mask
+
+    def regress(self, x, mask=None):
+
+        prediction = self.bias + x[mask].dot(self.coefficients)
         return prediction

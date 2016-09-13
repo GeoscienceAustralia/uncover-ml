@@ -137,20 +137,28 @@ class Config:
         self.patchsize = 0
 
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
-        final_transform = s['preprocessing']
-        _, im, trans_g = _parse_transform_set(final_transform['transforms'],
-                                              final_transform['imputation'])
-        self.final_transform = transforms.TransformSet(im, trans_g)
+        if 'preprocessing' in s:
+            final_transform = s['preprocessing']
+            _, im, trans_g = _parse_transform_set(
+                final_transform['transforms'], final_transform['imputation'])
+            self.final_transform = transforms.TransformSet(im, trans_g)
+        else:
+            self.final_transform = None
+
         self.target_file = s['targets']['file']
         self.target_property = s['targets']['property']
         self.algorithm = s['learning']['algorithm']
+        self.cubist = self.algorithm == 'cubist'
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
 
         # TODO pipeline this better
-        self.rank_features = 'feature_rank' in s['validation']
+        self.rank_features = False
         self.cross_validate = False
-        for i in s['validation']:
+        if s['validation']:
+            for i in s['validation']:
+                if i == 'feature_rank':
+                    self.rank_features = True
                 if type(i) is dict and 'k-fold' in i:
                     self.cross_validate = True
                     self.folds = i['k-fold']['folds']

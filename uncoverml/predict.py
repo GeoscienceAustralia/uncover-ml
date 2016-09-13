@@ -37,13 +37,14 @@ def _get_data(subchunk, config):
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
-                                    config.final_transform)
+                                    config.final_transform, config)
     return x
 
 
 def render_partition(model, subchunk, image_out, config):
         x = _get_data(subchunk, config)
-        log.info("Loaded {:2.4f}GB of image data".format(x.nbytes/1e9))
+        total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+        log.info("Loaded {:2.4f}GB of image data".format(total_gb))
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
 
