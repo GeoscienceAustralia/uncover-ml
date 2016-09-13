@@ -166,12 +166,16 @@ class Cubist:
         # Get and store the output model and the required data
         modelfile = read_data(self._filename + '.model')
 
+        # Define a function that assigns the number of rows to the rule
+        def new_rule(model):
+            return Rule(model, m)
+
         # Split the modelfile into an array of models, where each model
         # contains some number of rules, hence the format:
         #   [[<Rule>, <Rule>, ...], [<Rule>, <Rule>, ...], ... ]
         models = map(remove_first_line, modelfile.split('rules')[1:])
         rules_split = [model.split('conds')[1:] for model in models]
-        self._models = [list(map(Rule, model)) for model in rules_split]
+        self._models = [list(map(new_rule, model)) for model in rules_split]
 
         '''
         Complete the training by cleaning up after ourselves
@@ -222,22 +226,21 @@ class Cubist:
             print('Train first')
             return
 
-        # Run the rule list on each row of x one-by-one, incrementally
-        #  calculating mean and variance
-        y_mean = np.zeros(n)
-        y_var = np.zeros(n)
-        for j, model in enumerate(self._models):
-            # FIXME: Can we vectorise this operation over n? It is quite slow
-            for i, row in enumerate(x):
-                for rule in model:
-                    if rule.satisfied(row):
-                        row_prediction = rule.regress(row)
-                        delta = row_prediction - y_mean[i]
-                        y_mean[i] += delta / (j + 1)
-                        y_var[i] += delta * (row_prediction - y_mean[i])
-                        break
+        # Determine which rule to run on each row and then run the regression
+        # on each row of x to get the regression output.
+        y_pred = np.zeros((n, len(self._models)))
+        for m, model in enumerate(self._models):
+            for rule in model:
 
-        y_var /= len(self._models)
+                # Determine which rows satisfy this rule
+                mask = rule.satisfied(x)
+
+                # Make the prediction for the whole matrix, and keep only the
+                # rows that are correctly sized
+                y_pred[mask, m] += rule.regress(x, mask)
+
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
@@ -297,14 +300,14 @@ class Cubist:
 class Rule:
 
     comparator = {
-        "<": operator.lt,
-        ">": operator.gt,
-        "=": operator.eq,
-        ">=": operator.ge,
-        "<=": operator.le
+        "<": np.less,
+        ">": np.greater,
+        "=": np.equal,
+        ">=": np.greater_equal,
+        "<=": np.less_equal
     }
 
-    def __init__(self, rule):
+    def __init__(self, rule, m):
 
         # Split the parts of the string so that they can be manipulated
         header, *conditions, polynomial = rule.split('\n')[:-1]
@@ -312,17 +315,20 @@ class Rule:
         '''
         Compute and store the regression variables
         '''
+
         # Split and parse the coefficients into variable/row indices,
         # coefficients and a bias unit for the regression
         bias, *splits = arguments(polynomial)
-        variables, coefficients = (zip(*pairwise(splits))
-                                   if len(splits)
-                                   else ([], []))
+        v, c = (zip(*pairwise(splits))
+                if len(splits)
+                else ([], []))
 
-        # Convert the regression values to numbers and store them
+        # Convert the regression values to a coefficient vector
         self.bias = float(bias)
-        self.variables = np.array([v[1:] for v in variables], dtype=int)
-        self.coefficients = np.array(coefficients, dtype=float)
+        variables = np.array([v[1:] for v in v], dtype=int)
+        coefficients = np.array(c, dtype=float)
+        self.coefficients = np.zeros(m)
+        self.coefficients[variables] = coefficients
 
         '''
         Compute and store the condition evaluation variables
@@ -333,7 +339,7 @@ class Rule:
             dict(type=CONTINUOUS,
                  operator=condition[3],
                  operand_index=int(condition[1][1:]),
-                 operand_b=float(condition[2]))
+                 operand=float(condition[2]))
 
             if int(condition[0]) == CONTINUOUS else
 
@@ -345,29 +351,30 @@ class Rule:
             map(arguments, conditions)
         ]
 
-    def satisfied(self, row):
+    def satisfied(self, x):
+
+        # Define a mask for each row in x
+        mask = np.ones(len(x), dtype=bool)
 
         # Test that all of the conditions pass
         for condition in self.conditions:
 
             if condition['type'] == CONTINUOUS:
                 comparison = self.comparator[condition['operator']]
-                operand_a = row[condition['operand_index']]
-                operand_b = condition['operand_b']
-                if not comparison(operand_a, operand_b):
-                    return False
+                x_column = x[:, condition['operand_index']]
+                operand = condition['operand']
+                mask &= comparison(x_column, operand)
 
             elif condition['type'] == CATEGORICAL:
-
-                test_value = row[condition['operand_index']]
                 allowed = condition['values']
-                if not np.isclose(allowed, test_value, rtol=0.0001).any():
-                    return False
+                x_column = x[:, [condition['operand_index']]]
+                mask &= np.isclose(allowed, x_column).any(axis=1)
 
-        # If none of the conditions failed, the rule is satisfied
-        return True
+        # If all of the conditions passed for a single row, we can conclude
+        # that this row satisfies this rule
+        return mask
 
-    def regress(self, row):
+    def regress(self, x, mask=None):
 
-        prediction = self.bias + row[self.variables].dot(self.coefficients)
+        prediction = self.bias + x[mask].dot(self.coefficients)
         return prediction
