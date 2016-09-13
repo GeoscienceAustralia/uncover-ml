@@ -11,7 +11,6 @@ from osgeo import gdal
 import os
 import tempfile
 import shutil
-import gc
 import logging
 
 TSRS = 'EPSG:3112'
@@ -193,7 +192,7 @@ if __name__ == '__main__':
     else:
         options.jpeg = True
 
-    if not options.jpeg:  # if jpeg is not given
+    if not options.reproject:  # if reproject is not supplied
         options.reproject = False
     else:
         options.reproject = True
