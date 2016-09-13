@@ -29,7 +29,8 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-def crop_reproject_resample(input_file, output_file, sampling, extents):
+def crop_reproject_resample(input_file, output_file, sampling, extents,
+                            reproject):
     """
     The -wm flag sets the amount of memory used for the
     big working buffers (the chunks) when warping.  But down within GDAL
@@ -48,12 +49,15 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     log.info('Crop/resample/reproject of {}'.format(input_file))
     cmd = ['gdalwarp', '-overwrite', '-multi'] + \
           COMMON + TILES + \
-          ['-t_srs'] + [TSRS] + \
-          ['-tr'] + OUTPUT_RES +  \
           ['-r'] + [sampling] + \
           ['-wm'] + ['200']
     if extents:
         cmd += ['-te'] + extents
+
+    if reproject:
+        cmd += ['-t_srs'] + [TSRS] + \
+           ['-tr'] + OUTPUT_RES
+
     cmd += [input_file, output_file]
     subprocess.check_call(cmd)
     log.info('Finished crop/resample/reproject of {}'.format(input_file))
@@ -109,7 +113,8 @@ def get_mask(mask_file):
     return mask
 
 
-def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
+def do_work(input_file, mask_file, output_file, resampling, extents, jpeg,
+            reproject):
     # if we are going to use the mask, create the intermediate output
     # file locally, else create the final output file
     # also create the cropped mask file here, instead of inside apply_mask so
@@ -121,7 +126,8 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
         crop_reproject_resample(input_file=input_file,
                                 output_file=temp_output_file,
                                 sampling=resampling,
-                                extents=extents)
+                                extents=extents,
+                                reproject=reproject)
 
         # apply mask and optional y convert to jpeg
         apply_mask(mask_file=mask_file,
@@ -132,7 +138,8 @@ def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
         crop_reproject_resample(input_file=input_file,
                                 output_file=output_file,
                                 sampling=resampling,
-                                extents=extents)
+                                extents=extents,
+                                reproject=reproject)
 
 
 if __name__ == '__main__':
@@ -141,6 +148,7 @@ if __name__ == '__main__':
                                 ' -r resampling (optional)\n'
                                 ' -m mask_file (optional)\n'
                                 ' -j jpeg_file (optional)\n'
+                                ' -p reproject (optional)\n'
                                 'Crop, resample, reproject and '
                                 'optionally mask a larger '
                                 'interferrogram into smaller ones.'
@@ -164,7 +172,10 @@ if __name__ == '__main__':
                       help='optional resampling algorithm to use')
 
     parser.add_option('-j', '--jpeg', type=int, dest='jpeg',
-                      help='optional jpeg conversion. 0=no jpeg, 1=jpeg')
+                      help='optional jpeg conversion.')
+
+    parser.add_option('-p', '--reproject', type=int, dest='reproject',
+                      help='optional reprojection to Lambart Conic. ')
 
     options, args = parser.parse_args()
 
@@ -181,6 +192,11 @@ if __name__ == '__main__':
         options.jpeg = False
     else:
         options.jpeg = True
+
+    if not options.jpeg:  # if jpeg is not given
+        options.reproject = False
+    else:
+        options.reproject = True
 
     if options.extents:
         extents = [float(t) for t in options.extents.split()]
@@ -201,8 +217,9 @@ if __name__ == '__main__':
 
         # crop/reproject/resample the mask
         crop_reproject_resample(options.mask_file, cropped_mask_file,
-                            sampling='near',
-                            extents=options.extents)
+                                sampling='near',
+                                extents=options.extents,
+                                reproject=options.reproject)
     else:
         cropped_mask_file = options.mask_file
 
@@ -211,7 +228,8 @@ if __name__ == '__main__':
             output_file=options.output_file,
             resampling=options.resampling,
             extents=options.extents,
-            jpeg=options.jpeg)
+            jpeg=options.jpeg,
+            reproject=options.reproject)
 
     if options.mask_file:
         os.remove(cropped_mask_file)
