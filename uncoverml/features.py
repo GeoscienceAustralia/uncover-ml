@@ -66,7 +66,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     if config.cubist:
         log.warning("Cubist: ignoring preprocessing transform")
         # 0 is ordinal 1 is categorical
-        flags = [int(k.feature_type == 'categorical') for k in transform_sets]
+        flags = [int(k.is_categorical) for k in transform_sets]
         feature = [np.zeros(v.shape[1]) + f
                    for v, f in zip(transformed_vectors, flags)]
         feature_vec = np.concatenate(feature)

@@ -20,18 +20,24 @@ Contents:
 
    projectreport
 
+   cluster
    config
    cubist
-   datatypes
+   features
+   filtering
    geoio
    image
+   learn
    likelihoods
+   logging
+   memory
    models
    mpiops
    patch
-   pipeline
+   predict
+   targets
    transforms
-   validation
+   validate
 
    scripts
 
@@ -40,7 +46,7 @@ Feedback
 --------
 
 If you have any suggestions or questions about **uncover ML** feel free to
-email me at daniel.steinberg@nicta.com.au.
+email me at daniel.steinberg@data61.csiro.au
 
 If you encounter any errors or problems with **uncover ML**, please let me
 know!  Open an Issue at the GitHub http://github.com/NICTA/uncover-ml main

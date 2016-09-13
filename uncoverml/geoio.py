@@ -302,13 +302,13 @@ def _iterate_sources(f, config):
                 count = mpiops.count(x)
                 if not np.all(count > 0):
                     s = ("{} has no data in at least one band.".format(name) +
-                         " Valid_pixel_count: {}".format(tuple(count)))
+                         " Valid_pixel_count: {}".format(count))
                     raise ValueError(s)
                 missing_percent = missing_percentage(x)
                 t_missing = mpiops.comm.allreduce(
                     missing_percent) / mpiops.chunks
                 log.info("{}: {}px {:2.2f}% missing".format(
-                    name, tuple(count), t_missing))
+                    name, count, t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))

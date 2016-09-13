@@ -8,9 +8,10 @@ from uncoverml import mpiops
 log = logging.getLogger(__name__)
 
 
-def build_feature_vector(image_chunks):
+def build_feature_vector(image_chunks, is_categorical):
+    dtype = int if is_categorical else float
     for k, im in image_chunks.items():
-        image_chunks[k] = im.reshape(im.shape[0], -1)
+        image_chunks[k] = im.reshape(im.shape[0], -1).astype(dtype)
     x = np.ma.concatenate(image_chunks.values(), axis=1)
     return x
 
@@ -44,21 +45,21 @@ class TransformSet:
 
 class ImageTransformSet(TransformSet):
     def __init__(self, image_transforms=None, imputer=None,
-                 global_transforms=None, feature_type='ordinal'):
-            self.feature_type = feature_type
+                 global_transforms=None, is_categorical=False):
             self.image_transforms = (image_transforms if image_transforms
                                      else [])
+            self.is_categorical = is_categorical
             super().__init__(imputer, global_transforms)
 
     def __call__(self, image_chunks):
         transformed_chunks = copy.copy(image_chunks)
         # apply the per-image transforms
-        for lbl in image_chunks:
+        for i, lbl in enumerate(image_chunks):
             for t in self.image_transforms:
-                transformed_chunks[lbl] = t(transformed_chunks[lbl])
+                transformed_chunks[lbl] = t[i](transformed_chunks[lbl])
 
         # concatenate and floating point
-        x = build_feature_vector(transformed_chunks)
+        x = build_feature_vector(transformed_chunks, self.is_categorical)
 
         x = super().__call__(x)
         return x

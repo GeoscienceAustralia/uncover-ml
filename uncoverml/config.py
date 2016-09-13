@@ -2,26 +2,53 @@ import logging
 from os import path
 import glob
 import csv
+
 import yaml
 
 from uncoverml import transforms
-from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 
+"""The strings associated with each imputation option
+"""
 _imputers = {'mean': transforms.MeanImputer,
              'gaus': transforms.GaussImputer,
              'nn': transforms.NearestNeighboursImputer}
+
+"""These transforms operate individually on each image before concatenation
+"""
 _image_transforms = {'onehot': transforms.OneHotTransform}
+
+"""Post-concatenation transforms: operate on whole data vector
+"""
 _global_transforms = {'centre': transforms.CentreTransform,
                       'standardise': transforms.StandardiseTransform,
                       'whiten': transforms.WhitenTransform}
 
-# multiplicative factor relating to input data. x2 for masks, x2 for
-# concatenate
 
+def _parse_transform_set(transform_dict, imputer_string, n_images=None):
+    """Parse a dictionary read from yaml into a TransformSet object
 
-def _parse_transform_set(transform_dict, imputer_string):
+    Parameters
+    ----------
+    transform_dict : dictionary
+        The dictionary as read from the yaml config file containing config
+        key-value pairs
+    imputer_string : string
+        The name of the imputer (could be None)
+    n_images : int > 0
+        The number of images being read in. Required because we need to create
+        a new image transform for each image
+
+    Returns
+    -------
+    image_transforms : list
+        A list of image Transform objects
+    imputer : Imputer
+        An Imputer object
+    global_transforms : list
+        A list of global Transform objects
+    """
     image_transforms = []
     global_transforms = []
     if imputer_string in _imputers:
@@ -34,16 +61,29 @@ def _parse_transform_set(transform_dict, imputer_string):
                 t = {t: {}}
             key, params = list(t.items())[0]
             if key in _image_transforms:
-                image_transforms.append(_image_transforms[key](**params))
+                image_transforms.append([_image_transforms[key](**params)
+                                         for k in range(n_images)])
             elif key in _global_transforms:
                 global_transforms.append(_global_transforms[key](**params))
     return image_transforms, imputer, global_transforms
 
 
 class FeatureSetConfig:
+    """Config class representing a 'feature set' in the config file
+
+    Parameters
+    ----------
+    d : dictionary
+        The section of the yaml file for a feature set
+    """
     def __init__(self, d):
         self.name = d['name']
         self.type = d['type']
+        if d['type'] not in {'ordinal', 'categorical'}:
+            log.warning("Feature set type must be ordinal or categorical: "
+                        "Unknown option "
+                        "{} (assuming ordinal)".format(d['type']))
+        is_categorical = d['type'] == 'categorical'
 
         # get list of all the files
         files = []
@@ -64,15 +104,28 @@ class FeatureSetConfig:
                 for f in tifs:
                     files.append(path.abspath(f))
 
-        self.files = sorted(files)
+        self.files = sorted(files, key=str.lower)
+        n_files = len(self.files)
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
-                                                    d['imputation'])
-        self.transform_set = transforms.ImageTransformSet(
-            trans_i, im, trans_g, feature_type=self.type)
+                                                    d['imputation'],
+                                                    n_files)
+        self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g,
+                                                          is_categorical)
 
 
 class Config:
+    """Class representing the global configuration of the uncoverml scripts
+
+    This class is *mostly* read-only, but it does also contain the Transform
+    objects which have state. TODO: separate these out!
+
+    Parameters
+    ----------
+    yaml_file : string
+        The path to the yaml config file. For details on the yaml schema
+        see the uncoverml documentation
+    """
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
             s = yaml.load(f)

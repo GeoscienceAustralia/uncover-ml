@@ -3,7 +3,7 @@
 # patchsize: 0
 
 features:
-  - name: my features
+  - name: my features 1
     type: ordinal
     files:
       # - path: /home/lb/data/GA-cover/Th_v1.tif
@@ -15,16 +15,15 @@ features:
       - standardise
     imputation: none
   
-  - name: my features
+  - name: my features 2
     type: categorical
     files:
       # - path: /home/lb/data/GA-cover/Th_v1.tif
       # - list: /path/to/csv_file.csv
-      - directory: /home/lb/data/GA-cover
+      - directory: /home/lb/data/GA-cover/cat_datasets
     # transforms are performed in order
     transforms:
-      - centre
-      - standardise
+      - onehot
     imputation: none
 
 
