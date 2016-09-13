@@ -70,12 +70,7 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
     -------
 
     """
-    mask_ds = gdal.Open(mask_file, gdal.GA_ReadOnly)
-    mask_data = mask_ds.GetRasterBand(1).ReadAsArray()
-    mask = mask_data != MASK_VALUES_TO_KEEP
-    mask_ds = None  # close dataset
-    del mask_data
-    gc.collect()
+    mask = get_mask(mask_file)
 
     out_ds = gdal.Open(tmp_output_file, gdal.GA_Update)
     out_band = out_ds.GetRasterBand(1)
@@ -104,6 +99,14 @@ def apply_mask(mask_file, tmp_output_file, output_file, jpeg):
                    jpeg_file] + COMMON
         subprocess.check_call(cmd_jpg)
         log.info('Created {}'.format(jpeg_file))
+
+
+def get_mask(mask_file):
+    mask_ds = gdal.Open(mask_file, gdal.GA_ReadOnly)
+    mask_data = mask_ds.GetRasterBand(1).ReadAsArray()
+    mask = mask_data != MASK_VALUES_TO_KEEP
+    mask_ds = None  # close dataset
+    return mask
 
 
 def do_work(input_file, mask_file, output_file, resampling, extents, jpeg):
