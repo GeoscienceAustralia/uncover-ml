@@ -41,15 +41,17 @@ def compute_unique_values(x):
     return full_sets
 
 
-def one_hot(x, x_set):
+def one_hot(x, x_set, matrices=None):
     assert x.ndim == 4  # points, patch_x, patch_y, channel
-    out_dim_sizes = np.array([k.shape[0] for k in x_set])
+    if matrices:
+        out_dim_sizes = np.array([m.shape[1] for m in matrices])
+    else:
+        out_dim_sizes = np.array([k.shape[0] for k in x_set])
     # The index points in the output array for each input dimension
     indices = np.hstack((np.array([0]), np.cumsum(out_dim_sizes)))
     total_dims = np.sum(out_dim_sizes)
     out_shape = x.shape[0:3] + (total_dims,)
-    out = np.empty(out_shape, dtype=float)
-    out.fill(-0.5)
+    out = np.zeros(out_shape, dtype=float)
 
     for dim_idx, dim_set in enumerate(x_set):
         # input data
@@ -60,7 +62,11 @@ def one_hot(x, x_set):
 
         # compute the one-hot values
         for i, val in enumerate(dim_set):
-            dim_out[..., i][dim_in == val] = 0.5
+            if matrices:
+                proj = matrices[dim_idx]
+                dim_out[dim_in == val] = proj[i]
+            else:
+                dim_out[..., i][dim_in == val] = 0.5
 
     if x.mask.ndim != 0:  # all false
         out_mask = np.zeros(out_shape, dtype=bool)
@@ -85,7 +91,29 @@ class OneHotTransform:
         if self.x_sets is None:
             self.x_sets = compute_unique_values(x)
 
-        d = [len(s) for s in self.x_sets]
-        log.info("One-hot encoding with {} dimensions".format(d))
+        for s in self.x_sets:
+            log.info("One-hot encoding to d={}".format(len(s)))
         x = one_hot(x, self.x_sets)
+        return x
+
+
+class RandomHotTransform:
+    def __init__(self, n_features, seed):
+        self.n_features = n_features
+        self.seed = seed
+        self.matrices = None
+
+    def __call__(self, x):
+        x = x.astype(int)
+        if self.matrices is None:
+            np.random.seed(self.seed)
+            self.x_sets = compute_unique_values(x)
+            nbands = [len(s) for s in self.x_sets]
+            self.matrices = [np.random.randn(k, self.n_features)
+                             for k in nbands]
+        for s in self.x_sets:
+            log.info("One-hot encoding to "
+                     "d={} space then projecting to d={}".format(
+                         len(s), self.n_features))
+        x = one_hot(x, self.x_sets, self.matrices)
         return x

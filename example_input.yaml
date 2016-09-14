@@ -21,6 +21,14 @@ features:
     transforms:
       ## "one-hot" encoding -- only works on categorical type features
       # - onehot 
+
+      ## "one-hot" encoding with random projection to a lower dimensional
+      ## subspace. Useful for the case of a covariate with many categories
+      # - randomhot
+      ## number of dimensions to project down to
+      #     n_features: 10
+      ## the random seed used to generate the projection
+      #     seed: 1
       
       ## transform data to have mean 0
       - centre

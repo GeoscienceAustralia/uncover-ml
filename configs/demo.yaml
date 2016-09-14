@@ -23,7 +23,10 @@ features:
       - directory: /home/lb/data/GA-cover/cat_datasets
     # transforms are performed in order
     transforms:
-      - onehot
+      - randomhot:
+          n_features: 10
+          seed: 1
+
     imputation: none
 
 

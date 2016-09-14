@@ -17,7 +17,8 @@ _imputers = {'mean': transforms.MeanImputer,
 
 """These transforms operate individually on each image before concatenation
 """
-_image_transforms = {'onehot': transforms.OneHotTransform}
+_image_transforms = {'onehot': transforms.OneHotTransform,
+                     'randomhot': transforms.RandomHotTransform}
 
 """Post-concatenation transforms: operate on whole data vector
 """

@@ -9,3 +9,4 @@ from uncoverml.transforms.linear import CentreTransform
 from uncoverml.transforms.linear import StandardiseTransform
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms.onehot import OneHotTransform
+from uncoverml.transforms.onehot import RandomHotTransform
