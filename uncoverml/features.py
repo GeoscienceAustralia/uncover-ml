@@ -80,8 +80,11 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     return x
 
 
-def gather_features(x):
-    x_all = np.ma.vstack(mpiops.comm.allgather(x))
+def gather_features(x, node=None):
+    if node:
+        x_all = np.ma.vstack(mpiops.comm.gather(x, root=node))
+    else:
+        x_all = np.ma.vstack(mpiops.comm.allgather(x))
     return x_all
 
 

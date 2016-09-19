@@ -212,27 +212,22 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
                                     transform_sets_leaveout,
                                     final_transform_leaveout,
                                     config)
-        x_all = feat.gather_features(x)
+        x_all = feat.gather_features(x, node=0)
 
         results = local_crossval(x_all, targets_all, config)
         feature_scores[fname] = results
 
     # Get the different types of score from one of the outputs
-    # TODO make this not suck
-    measures = list(next(feature_scores.values().__iter__()).scores.keys())
-    features = sorted(feature_scores.keys())
-    scores = np.empty((len(measures), len(features)))
-    for m, measure in enumerate(measures):
-        for f, feature in enumerate(features):
-            scores[m, f] = feature_scores[feature].scores[measure]
-    return measures, features, scores
-
-
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
+    if mpiops.chunk_index == 0:
+        measures = list(next(feature_scores.values().__iter__()).scores.keys())
+        features = sorted(feature_scores.keys())
+        scores = np.empty((len(measures), len(features)))
+        for m, measure in enumerate(measures):
+            for f, feature in enumerate(features):
+                scores[m, f] = feature_scores[feature].scores[measure]
+        return measures, features, scores
+    else:
+        return None, None, None
 
 
 def local_crossval(x_all, targets_all, config):
@@ -258,6 +253,8 @@ def local_crossval(x_all, targets_all, config):
         A dictionary containing all of the cross validation metrics, evaluated
         on the unseen data subset.
     """
+    if mpiops.chunk_index != 0:
+        return
 
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
@@ -266,14 +263,16 @@ def local_crossval(x_all, targets_all, config):
 
     # Split folds over workers
     fold_list = np.arange(config.folds)
-    fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+    # fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
 
     y_pred = {}
     y_true = {}
-    fold_scores = {}
+    scores = {}
 
     # Train and score on each fold
-    for fold in fold_node:
+    for fold_i, fold in enumerate(fold_list):
+
+        log.info("Training fold {} of {}".format(fold_i + 1, config.folds))
 
         train_mask = cv_indices != fold
         test_mask = ~ train_mask
@@ -295,28 +294,20 @@ def local_crossval(x_all, targets_all, config):
         y_pred[fold] = y_k_pred
         y_true[fold] = y_k_test
 
-        fold_scores[fold] = calculate_validation_scores(y_k_test,
-                                                        y_k_train,
-                                                        y_k_pred)
+        scores[fold] = calculate_validation_scores(y_k_test, y_k_train,
+                                                   y_k_pred)
 
-    y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
-    y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
-    scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
+    y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+    y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
+    valid_metrics = scores[0].keys()
+    scores = {m: np.mean([d[m] for d in scores.values()])
+                for m in valid_metrics}
+    score_string = "Validation complete:\n"
+    for metric, score in scores.items():
+        score_string += "{}\t= {}\n".format(metric, score)
+    log.info(score_string)
 
-    result = None
-    if mpiops.chunk_index == 0:
-        y_true = np.concatenate([y_true[i] for i in range(config.folds)])
-        y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
-        valid_metrics = scores[0].keys()
-        scores = {m: np.mean([d[m] for d in scores.values()])
-                  for m in valid_metrics}
-        score_string = "Validation complete:\n"
-        for metric, score in scores.items():
-            score_string += "{}\t= {}\n".format(metric, score)
-        log.info(score_string)
-
-        result_tags = model.get_predict_tags()
-        y_pred_dict = dict(zip(result_tags, y_pred.T))
-        result = CrossvalInfo(scores, y_true, y_pred_dict)
-    result = mpiops.comm.bcast(result, root=0)
+    result_tags = model.get_predict_tags()
+    y_pred_dict = dict(zip(result_tags, y_pred.T))
+    result = CrossvalInfo(scores, y_true, y_pred_dict)
     return result

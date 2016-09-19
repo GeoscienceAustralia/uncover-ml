@@ -45,7 +45,7 @@ def learn(pipeline_file, partitions):
     targets = ls.geoio.load_targets(shapefile=config.target_file,
                                     targetfield=config.target_property)
     # We're doing local models at the moment
-    targets_all = ls.targets.gather_targets(targets)
+    targets_all = ls.targets.gather_targets(targets, node=0)
 
     # Get the image chunks and their associated transforms
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
@@ -65,15 +65,17 @@ def learn(pipeline_file, partitions):
                                        config.final_transform, config)
     # learn the model
     # local models need all data
-    x_all = ls.features.gather_features(x)
+    x_all = ls.features.gather_features(x, node=0)
 
     if config.cross_validate:
         crossval_results = ls.validate.local_crossval(x_all,
                                                       targets_all, config)
         ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
-    model = ls.learn.local_learn_model(x, targets, config)
+    log.info("Learning full {} model".format(config.algorithm))
+    model = ls.learn.local_learn_model(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
+    log.info("Learning complete!")
 
 
 @cli.command()
