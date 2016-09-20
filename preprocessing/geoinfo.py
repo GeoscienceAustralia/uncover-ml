@@ -39,6 +39,7 @@ def write_rows(t, writer):
         log.info('Found single band geotif {}'.format(basename(t)))
     l = get_stats(ds, t)
     writer.writerow([str(a) for a in l])
+    ds = None   # close dataset
 
 
 def get_stats(ds, t):
