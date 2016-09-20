@@ -28,6 +28,12 @@ def cli(verbosity):
     ls.logging.configure(verbosity)
 
 
+def run_crossval(x_all, targets_all, config):
+    crossval_results = ls.validate.local_crossval(x_all,
+                                                      targets_all, config)
+    ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
+
+
 @cli.command()
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
@@ -68,9 +74,7 @@ def learn(pipeline_file, partitions):
     x_all = ls.features.gather_features(x, node=0)
 
     if config.cross_validate:
-        crossval_results = ls.validate.local_crossval(x_all,
-                                                      targets_all, config)
-        ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
+        run_crossval(x_all, targets_all, config)
 
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
