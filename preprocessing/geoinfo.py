@@ -42,6 +42,6 @@ def inspect(input_dir, report_file):
                  ds.RasterYSize, ds.RasterXSize,
                  np.max(data), np.min(data),
                  np.mean(data), np.std(data)]
-            writer.writerow(str(a) for a in l)
+            writer.writerow([str(a) for a in l])
 
 
