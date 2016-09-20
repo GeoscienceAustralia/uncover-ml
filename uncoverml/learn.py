@@ -14,5 +14,4 @@ def local_learn_model(x_all, targets_all, config):
         model = modelmaps[config.algorithm](**config.algorithm_args)
         apply_multiple_masked(model.fit, (x_all, y),
                               kwargs={'fields': targets_all.fields})
-    model = mpiops.comm.bcast(model, root=0)
     return model
