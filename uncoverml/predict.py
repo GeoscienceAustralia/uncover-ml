@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 def predict(data, model, interval=0.95, **kwargs):
 
     def pred(X):
-
         if hasattr(model, 'predict_proba'):
             Ey, Vy, ql, qu = model.predict_proba(X, interval, **kwargs)
             predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
@@ -28,8 +27,8 @@ def predict(data, model, interval=0.95, **kwargs):
             predres = np.hstack((predres, MI[:, np.newaxis]))
 
         return predres
-
-    return apply_masked(pred, data)
+    result = apply_masked(pred, data)
+    return result
 
 
 def _get_data(subchunk, config):

@@ -589,7 +589,10 @@ class RandomForestRegressor(RFR):
     """
 
     def predict_proba(self, X, interval=0.95):
-        Ey = self.predict(X)
+        if hasattr(self, "_notransform_predict"):
+            Ey = self._notransform_predict(X)
+        else:
+            Ey = self.predict(X)
 
         Vy = np.zeros_like(Ey)
         for dt in self.estimators_:
@@ -638,6 +641,10 @@ def transform_targets(Learner):
             y_t = self.ytform.transform(y)
 
             return super().fit(X, y_t)
+
+        def _notransform_predict(self, X, *args, **kwargs):
+            Ey = super().predict(X)
+            return Ey
 
         def predict(self, X, *args, **kwargs):
 

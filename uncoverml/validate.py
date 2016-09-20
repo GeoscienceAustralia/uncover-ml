@@ -301,7 +301,7 @@ def local_crossval(x_all, targets_all, config):
     y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
     valid_metrics = scores[0].keys()
     scores = {m: np.mean([d[m] for d in scores.values()])
-                for m in valid_metrics}
+              for m in valid_metrics}
     score_string = "Validation complete:\n"
     for metric, score in scores.items():
         score_string += "{}\t= {}\n".format(metric, score)

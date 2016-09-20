@@ -21,18 +21,15 @@ class Identity():
 class Standardise(Identity):
 
     def fit(self, y):
-
         self.ymean = y.mean()
-        self.ystd = y.std()
+        self.ystd = (y - self.ymean).std()
 
     def transform(self, y):
-
         y_transformed = (y - self.ymean) / self.ystd
         return y_transformed
 
     def itransform(self, y_transformed):
-
-        y = y_transformed * self.ystd + self.ymean
+        y = (y_transformed * self.ystd) + self.ymean
         return y
 
 
