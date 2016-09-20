@@ -54,7 +54,8 @@ setup(
             'uncoverml = uncoverml.scripts.uncoverml:cli',
             'gammasensor = uncoverml.scripts.gammasensor:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
-            'subsampletargets = uncoverml.scripts.subsampletargets:cli'
+            'subsampletargets = uncoverml.scripts.subsampletargets:cli',
+            'geoinfo = preprocessing.geoinfo:cli'
         ]
     },
     install_requires=[
@@ -72,6 +73,7 @@ setup(
         'numpy >= 1.9.2',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
+        'GDAL == 2.0.0',
     ],
     extras_require={
         'demos': [
