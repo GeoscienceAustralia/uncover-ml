@@ -65,8 +65,8 @@ def get_numpy_stats(t):
         log.info('Please inspect bands individually')
     else:
         log.info('Found single band geotif {}'.format(basename(t)))
-    data = ds.ReadAsArray()
     band = ds.GetRasterBand(1)
+    data = band.ReadAsArray()
     no_data_val = band.GetNoDataValue()
     mask_data = ma.masked_where(data == no_data_val, data)
     l = [basename(t), no_data_val,

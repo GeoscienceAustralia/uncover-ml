@@ -14,7 +14,6 @@ class Geoinfo(unittest.TestCase):
     def setUpClass(cls):
         mocks = os.path.join(UNCOVER, 'preprocessing', 'mocks')
         cls.tifs = glob.glob(os.path.join(mocks, '*.tif'))
-        print(cls.tifs)
 
     def test_gdal_vs_numpy(self):
         for t in self.tifs:
