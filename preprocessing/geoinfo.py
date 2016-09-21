@@ -71,7 +71,7 @@ def get_numpy_stats(t):
     mask_data = ma.masked_where(data == no_data_val, data)
     l = [basename(t), no_data_val,
          ds.RasterYSize, ds.RasterXSize,
-         np.max(mask_data), np.min(mask_data),
+         np.min(mask_data), np.max(mask_data),
          np.mean(mask_data), np.std(mask_data)]
     ds = None
     return [str(a) for a in l]
