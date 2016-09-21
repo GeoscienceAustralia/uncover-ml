@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ge3
 #PBS -q express
-#PBS -l walltime=20:00:00,mem=32GB,ncpus=2,jobfs=50GB
+#PBS -l walltime=20:00:00,mem=128GB,ncpus=32,jobfs=50GB
 #PBS -l wd
 #PBS -j oe
 
@@ -21,4 +21,5 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 # start the virtualenv
 workon uncoverml
 
-gammasensor -o /path/to/convolved/output/dir/ --apply --height 100 --absorption 0.01  /path/to/input/covariates
+# this initiates 4 jobs per node
+mpirun -map-by ppr:4:node gammasensor -o /g/data/ge3/sudipta/jobs/gamma_fill/gamma_covariates_concolved/ --apply --height 100 --absorption 0.01  /g/data/ge3/gamma_fill_in/subset_datasets/
