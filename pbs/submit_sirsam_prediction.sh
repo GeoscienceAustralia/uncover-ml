@@ -11,7 +11,7 @@ source $HOME/.profile
 # start the virtualenv
 workon uncoverml
 
-# run command
-mpirun --mca mpi_warn_on_fork 0 predictionpipeline $HOME/uncover-ml/pbs/nci_sirsam.pipeline &> log.sirsam.prediction.txt
+# this initiates 4 jobs per node
+mpirun -map-by ppr:4:node --mca mpi_warn_on_fork 0 predictionpipeline $HOME/uncover-ml/pbs/nci_sirsam.pipeline &> log.sirsam.prediction.txt
 
 
