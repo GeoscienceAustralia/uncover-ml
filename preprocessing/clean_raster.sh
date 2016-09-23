@@ -5,7 +5,8 @@
 # output.tif: output geotiff name
 # Only keep values above '0'
 # NoDataValue used for output geotiff: -3.40282346638528E+038
-gdal_calc.py -A $1 --outfile=bool.tif --calc="A>=$3"
+input=$(basename "$1")
+gdal_calc.py -A $1 --outfile=bool_$input --calc="A>=$3"
 rm -f $2
-gdal_calc.py -A $1 -B bool.tif --outfile=$2 --calc="A*B" --NoDataValue=$4
-rm bool.tif
+gdal_calc.py -A $1 -B bool_$input --outfile=$2 --calc="A*B" --NoDataValue=$4
+rm bool_$input
