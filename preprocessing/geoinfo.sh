@@ -15,5 +15,8 @@ export LC_ALL=en_AU.UTF-8
 export LANG=en_AU.UTF-8
 source $HOME/.local/bin/virtualenvwrapper.sh
 
+# start the virtualenv
+workon uncoverml
+
 # the python command needs full path of the python script
 geoinfo inspect /g/data/ge3/covariates/national_cat_LCC/ national_geoinfo.csv
