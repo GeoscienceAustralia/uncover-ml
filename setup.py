@@ -46,7 +46,8 @@ setup(
     author='NICTA Spatial Inference Systems Team',
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/NICTA/uncover-ml',
-    packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms'],
+    packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms',
+              'preprocessing'],
     package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={

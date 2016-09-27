@@ -3,6 +3,7 @@
 #PBS -q express
 #PBS -l walltime=00:20:00,mem=20GB,ncpus=1,jobfs=30GB
 #PBS -l wd
+#PBS -j oe
 
 module unload intel-cc
 module unload intel-fc
