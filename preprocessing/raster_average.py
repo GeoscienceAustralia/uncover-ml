@@ -6,6 +6,7 @@ from os.path import abspath, join, basename
 import glob
 from osgeo import gdal, gdalconst
 from subprocess import check_call
+from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
@@ -65,9 +66,11 @@ def gdalaverage(input_dir, out_dir, size):
     log.info('Reading tifs from {}'.format(input_dir))
     tifs = glob.glob(join(input_dir, '*.tif'))
 
-    for t in tifs:
+    process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
+
+    for t in process_tifs:
         ds = gdal.Open(t, gdal.GA_ReadOnly)
-        band = ds.GetRasterBand(1)
+        # band = ds.GetRasterBand(1)
         # data_type = gdal.GetDataTypeName(band.DataType)
         # data = band.ReadAsArray()
         # no_data_val = band.GetNoDataValue()
@@ -76,10 +79,10 @@ def gdalaverage(input_dir, out_dir, size):
 
         output_file = join(out_dir, 'average_' + basename(t))
         src_gt = ds.GetGeoTransform()
-        tmp_file = '/tmp/tmp12121.tif'
+        tmp_file = '/tmp/tmp_{}.tif'.format(mpiops.chunk_index)
         resample_cmd = [TRANSLATE] + [t, tmp_file] + \
-            ['-tr', str(size*src_gt[1]), str(size*src_gt[1])] + \
-            ['-r', 'average']
+            ['-tr', str(src_gt[1]*size), str(src_gt[1]*size)] + \
+            ['-r', 'bilinear']
         check_call(resample_cmd)
         rollback_cmd = [TRANSLATE] + [tmp_file, output_file] + \
             ['-tr', str(src_gt[1]), str(src_gt[1])]
