@@ -5,9 +5,12 @@ import click
 from os.path import abspath, join, basename
 import glob
 from osgeo import gdal, gdalconst
+from subprocess import check_call
 
 log = logging.getLogger(__name__)
-
+COMMON = ['--config', 'GDAL_CACHEMAX', '200']
+TILES = ['-co', 'TILED=YES']
+TRANSLATE = 'gdal_translate'
 
 @click.group()
 def cli():
@@ -51,13 +54,27 @@ def average(input_dir, out_dir, size):
 
 
 def filter_data(data, size, no_data_val=None):
+    """
+    This does not work with masked array.
+    ndimage.uniform_filter does not respect masked array
+    Parameters
+    ----------
+    data
+    size
+    no_data_val
+
+    Returns
+    -------
+
+    """
     if no_data_val:
-        masked_data = np.ma.masked_where(data == no_data_val, data)
-    else:
-        masked_data = data
-    averaged_data = ndimage.uniform_filter(masked_data,
-                                           size=size,
-                                           mode='reflect')
+        mask = data == no_data_val
+        data[mask] = np.nan
+    averaged_data = np.zeros_like(data)
+    ndimage.uniform_filter(data,
+                           output=averaged_data,
+                           size=size,
+                           mode='reflect')
     return averaged_data
 
 
