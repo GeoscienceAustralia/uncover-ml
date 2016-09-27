@@ -16,7 +16,7 @@ import logging
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
-MASK_VALUES_TO_KEEP = 1
+MASK_VALUES_TO_KEEP = 0
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
 
@@ -49,7 +49,7 @@ def crop_reproject_resample(input_file, output_file, sampling, extents):
     cmd = ['gdalwarp', '-overwrite', '-multi'] + \
           COMMON + TILES + \
           ['-t_srs'] + [TSRS] + \
-          ['-tr'] + OUTPUT_RES +  \
+          ['-tr'] + OUTPUT_RES + \
           ['-r'] + [sampling] + \
           ['-wm'] + ['200']
     if extents:
@@ -189,7 +189,7 @@ if __name__ == '__main__':
                                  "2251415.52044 -1174811.80634'")
         options.extents = [str(s) for s in extents]
     else:
-        logging.info('Oo extents specified. Using whole image for projection')
+        logging.info('No extents specified. Using whole image for projection')
         options.extents = None
 
     if options.mask_file:
@@ -213,4 +213,3 @@ if __name__ == '__main__':
     if options.mask_file:
         os.remove(cropped_mask_file)
         print('removed intermediate cropped mask file', cropped_mask_file)
-
