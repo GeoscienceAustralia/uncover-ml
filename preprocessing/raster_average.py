@@ -118,7 +118,7 @@ def filter_data(data, size, no_data_val=None):
     return averaged_data
 
 
-def filter_broadcast(A, size=3, no_data_val=None):
+def filter_center(A, size=3, no_data_val=None):
     """
     Parameters
     ----------
