@@ -3,7 +3,7 @@ from numpy.lib.stride_tricks import as_strided
 from scipy import ndimage
 import logging
 import click
-from os.path import abspath, join, basename
+from os.path import abspath, join, basename, isdir, isfile
 import glob
 from osgeo import gdal, gdalconst
 from subprocess import check_call
@@ -118,13 +118,14 @@ def filter_data(data, size, no_data_val=None):
     return averaged_data
 
 
-def filter_center(A, size=3, no_data_val=None):
+def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     """
     Parameters
     ----------
     A = input data
     size = odd number uniform filtering kernel size
     no_data_val = value in matrix that is treated as no data value
+    func: function to use, choose from np.nanmean/median/max/min etc.
 
     Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
     -------
@@ -160,7 +161,7 @@ def filter_center(A, size=3, no_data_val=None):
     B = as_strided(padded_A, (N, N, size, size),
                    padded_A.strides+padded_A.strides)
     B = B.copy().reshape((N, N, size**2))
-    return np.nanmean(B, axis=2)
+    return func(B, axis=2)
 
 
 def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
@@ -206,3 +207,53 @@ def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
     B = B.copy().reshape((N, N, size**2))
 
     return np.nanmean(B, axis=2)
+
+
+@cli.command()
+@click.argument('input_dir')
+@click.argument('out_dir')
+@click.option('-s', '--size', type=int, default=3,
+              help='size of the uniform filter to '
+                   'perform 2d average with the uniform kernel '
+                   'centered around the target pixel for continuous data. '
+                   'For categorical data median is calculated instead.')
+def mean(input_dir, out_dir, size):
+    input_dir = abspath(input_dir)
+    if isdir(input_dir):
+        log.info('Reading tifs from {}'.format(input_dir))
+        tifs = glob.glob(join(input_dir, '*.tif'))
+    else:
+        assert isfile(input_dir)
+        tifs = [input_dir]
+
+    process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
+
+    for t in process_tifs:
+        log.info('Starting to average {}'.format(basename(t)))
+        ds = gdal.Open(t, gdal.GA_ReadOnly)
+        band = ds.GetRasterBand(1)
+        data = band.ReadAsArray().astype(np.float32)
+        no_data_val = band.GetNoDataValue()
+
+        if band.DataType == 1:
+            func = np.nanmedian
+        else:
+            func = np.nanmean
+        averaged_data = filter_center(data, size, no_data_val, func)
+
+        log.info('Calculated average for {}'.format(basename(t)))
+
+
+        output_file = join(out_dir, 'average_' + basename(t))
+        out_ds = gdal.GetDriverByName('GTiff').Create(
+            output_file, ds.RasterXSize, ds.RasterYSize,
+            1, band.DataType)
+        out_band = out_ds.GetRasterBand(1)
+        out_band.WriteArray(averaged_data)
+        out_ds.SetGeoTransform(ds.GetGeoTransform())
+        out_ds.SetProjection(ds.GetProjection())
+        out_band.FlushCache()  # Write data to disc
+        out_ds = None  # close out_ds
+        ds = None  # close dataset
+
+        log.info('Finished averaging {}'.format(basename(t)))
