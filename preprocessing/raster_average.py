@@ -124,18 +124,14 @@ def filter_broadcast(A, size=3, no_data_val=None):
     ----------
     A = input data
     size = odd number uniform filtering kernel size
-    no_data_val = value in matrix a that is treated as no data val
+    no_data_val = value in matrix that is treated as no data value
 
-    Returns: nanmean of the A filtered by a uniform kernel of size=size
+    Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
     -------
     Adapted from: http://stackoverflow.com/questions/23829097/python-numpy-fastest-method-for-2d-kernel-rank-filtering-on-masked-arrays-and-o?rq=1
 
     Notes:
-        padded_A = np.empty(shape=(rows + size-1,
-                               cols + size-1),
-                        dtype=A.dtype)
-
-    The above makes the averaging based around the target pixel.
+    This function `centers` the kernel at the target pixel.
     This is slightly different from scipy.ndimage.uniform_filter application.
     In scipy.ndimage.uniform_filter, a convolution approach is implemented.
     An equivalent is scipy.ndimage.uniform_filter like convolution approach with
@@ -167,3 +163,47 @@ def filter_broadcast(A, size=3, no_data_val=None):
     return np.nanmean(B, axis=2)
 
 
+def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
+    """
+    Parameters
+    ----------
+    A = input data
+    size = odd number uniform filtering kernel size
+    no_data_val = value in matrix that is treated as no data value
+
+    Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
+    -------
+    Adapted from: http://stackoverflow.com/questions/23829097/python-numpy-fastest-method-for-2d-kernel-rank-filtering-on-masked-arrays-and-o?rq=1
+
+    Notes:
+    This is equivalent to scipy.ndimage.uniform_filter, but can handle nan's,
+    and can use numpy nanmean/median/max/min functions.
+
+    no_data_val/nan handling can be found in filter_broadcast_uniform_filter in
+    this module.
+
+    Change function to nanmeadian, nanmax, nanmin as required.
+    """
+
+    assert size % 2 == 1, 'Please supply an odd size'
+    rows, cols = A.shape
+
+    padded_A = np.empty(shape=(rows + size-1,
+                               cols + size-1),
+                        dtype=A.dtype)
+    padded_A[:] = np.nan
+    rows_pad, cols_pad = padded_A.shape
+
+    if no_data_val:
+        mask = A == no_data_val
+        A[mask] = np.nan
+
+    padded_A[size-1: rows_pad, size - 1: cols_pad] = A.copy()
+
+
+    N = A.shape[0]
+    B = as_strided(padded_A, (N, N, size, size),
+                   padded_A.strides+padded_A.strides)
+    B = B.copy().reshape((N, N, size**2))
+
+    return np.nanmean(B, axis=2)
