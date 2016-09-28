@@ -200,7 +200,6 @@ def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
 
     padded_A[size-1: rows_pad, size - 1: cols_pad] = A.copy()
 
-
     N = A.shape[0]
     B = as_strided(padded_A, (N, N, size, size),
                    padded_A.strides+padded_A.strides)
