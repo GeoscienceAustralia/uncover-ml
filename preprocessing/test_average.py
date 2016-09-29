@@ -62,14 +62,14 @@ class TestUniformFilterWithNoData(unittest.TestCase):
                                             1.4125, 1.5047619]])
 
     def test_average_size3(self):
-        averaged_data = raster_average.filter_broadcast_uniform_filter(
-            self.data, size=3, no_data_val=1000.0)
+        averaged_data = raster_average.filter_uniform_filter(
+            self.data, size=3, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_3)
 
     def test_average_size5(self):
-        averaged_data = raster_average.filter_broadcast_uniform_filter(
-            self.data, size=5, no_data_val=1000.0)
+        averaged_data = raster_average.filter_uniform_filter(
+            self.data, size=5, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_5)
 
@@ -99,13 +99,13 @@ class TestFilterCenterWithNoData(unittest.TestCase):
 
     def test_average_size3(self):
         averaged_data = raster_average.filter_center(
-            self.data, size=3, no_data_val=1000.0)
+            self.data, size=3, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_3)
 
     def test_average_size5(self):
         averaged_data = raster_average.filter_center(
-            self.data, size=5, no_data_val=1000.0)
+            self.data, size=5, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_5)
 

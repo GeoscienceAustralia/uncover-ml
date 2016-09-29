@@ -16,6 +16,11 @@ log = logging.getLogger(__name__)
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
 TRANSLATE = 'gdal_translate'
+func_map = {'nanmean': np.nanmean,
+            'nanmax': np.nanmax,
+            'nanmin': np.nanmin,
+            'nanmedian': np.nanmedian}
+
 
 @click.group()
 def cli():
@@ -165,7 +170,8 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     return func(B, axis=2)
 
 
-def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
+def filter_uniform_filter(A, size=3, no_data_val=None,
+                          func=np.nanmean):
     """
     Parameters
     ----------
@@ -207,18 +213,22 @@ def filter_broadcast_uniform_filter(A, size=3, no_data_val=None):
                    padded_A.strides+padded_A.strides)
     B = B.copy().reshape((N, N, size**2))
 
-    return np.nanmean(B, axis=2)
+    return func(B, axis=2)
 
 
 @cli.command()
 @click.argument('input_dir')
 @click.argument('out_dir')
+@click.option('-f', '--func',
+              type=click.Choice(['nanmean', 'nanmedian',
+                                 'nanmax', 'nanmin']),
+              default='nanmean', help='Level of logging')
 @click.option('-s', '--size', type=int, default=3,
               help='size of the uniform filter to '
                    'perform 2d average with the uniform kernel '
                    'centered around the target pixel for continuous data. '
                    'Categorical data are copied unchanged.')
-def mean(input_dir, out_dir, size):
+def mean(input_dir, out_dir, size, func):
     input_dir = abspath(input_dir)
     if isdir(input_dir):
         log.info('Reading tifs from {}'.format(input_dir))
@@ -244,9 +254,7 @@ def mean(input_dir, out_dir, size):
             shutil.copy(t, output_file)
             ds = None
             continue
-        else:
-            func = np.nanmean
-        averaged_data = filter_center(data, size, no_data_val, func)
+        averaged_data = filter_center(data, size, no_data_val, func_map[func])
 
         log.info('Calculated average for {}'.format(basename(t)))
 
