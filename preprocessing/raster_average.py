@@ -8,7 +8,6 @@ import shutil
 import glob
 from osgeo import gdal, gdalconst
 from subprocess import check_call
-from PIL import ImageFilter, Image
 from uncoverml import mpiops
 
 
@@ -137,7 +136,8 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     -------
     Adapted from: http://stackoverflow.com/questions/23829097/python-numpy-fastest-method-for-2d-kernel-rank-filtering-on-masked-arrays-and-o?rq=1
 
-    Notes:
+    Notes
+    -----
     This function `centers` the kernel at the target pixel.
     This is slightly different from scipy.ndimage.uniform_filter application.
     In scipy.ndimage.uniform_filter, a convolution approach is implemented.
@@ -145,7 +145,7 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     no_data_val/nan handling can be found in filter_broadcast_uniform_filter in
     this module.
 
-    Change function to nanmeadian, nanmax, nanmin as required.
+    Change function to nanmedian, nanmax, nanmin as required.
     """
 
     assert size % 2 == 1, 'Please supply an odd size'
@@ -163,10 +163,11 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
 
     padded_A[size//2:rows_pad - size//2, size//2: cols_pad - size//2] = A.copy()
 
-    N = A.shape[0]
-    B = as_strided(padded_A, (N, N, size, size),
+    N, M = A.shape
+
+    B = as_strided(padded_A, (N, M, size, size),
                    padded_A.strides+padded_A.strides)
-    B = B.copy().reshape((N, N, size**2))
+    B = B.copy().reshape((N, M, size**2))
     return func(B, axis=2)
 
 
@@ -208,10 +209,10 @@ def filter_uniform_filter(A, size=3, no_data_val=None,
 
     padded_A[size-1: rows_pad, size - 1: cols_pad] = A.copy()
 
-    N = A.shape[0]
-    B = as_strided(padded_A, (N, N, size, size),
+    N, M = A.shape
+    B = as_strided(padded_A, (N, M, size, size),
                    padded_A.strides+padded_A.strides)
-    B = B.copy().reshape((N, N, size**2))
+    B = B.copy().reshape((N, M, size**2))
 
     return func(B, axis=2)
 

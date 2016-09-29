@@ -2,6 +2,7 @@ import unittest
 import os
 import numpy as np
 from numpy import nan
+from scipy import ndimage
 from preprocessing import raster_average
 
 UNCOVER = os.environ['UNCOVER']
@@ -97,11 +98,29 @@ class TestFilterCenterWithNoData(unittest.TestCase):
              [1.34285714, 1.42, 1.50769231, 1.50909091, 1.625]]
             )
 
+        self.data_5x4 = np.array([[1000.0, 1.2, 1.4, 1.6],
+                              [1000.0, 1.2, 1.4, 1.6],
+                              [1.0, 1.2, 1000.0, 1.6],
+                              [2.0, 1.2, 1.4, 1.6],
+                              [1000.0, 1.2, 1.4, 1.6]])
+        self.expected_average_3_5x4 = np.array([[1.2, 1.3, 1.4, 1.5],
+                                            [1.15, 1.23333333, 1.4, 1.52],
+                                            [1.32, 1.34285714, 1.4, 1.52],
+                                            [1.32, 1.34285714, 1.4, 1.52],
+                                            [1.46666667, 1.44, 1.4, 1.5]])
+
     def test_average_size3(self):
         averaged_data = raster_average.filter_center(
             self.data, size=3, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_3)
+
+    def test_average_size3_5x4(self):
+        averaged_data = raster_average.filter_center(
+            self.data_5x4, size=3, no_data_val=1000.0, func=np.nanmean)
+
+        np.testing.assert_array_almost_equal(averaged_data,
+                                             self.expected_average_3_5x4)
 
     def test_average_size5(self):
         averaged_data = raster_average.filter_center(
