@@ -8,9 +8,11 @@ import shutil
 import glob
 from osgeo import gdal, gdalconst
 from subprocess import check_call
+from itertools import product
+import warnings
 from uncoverml import mpiops
 
-
+warnings.filterwarnings('ignore')
 log = logging.getLogger(__name__)
 COMMON = ['--config', 'GDAL_CACHEMAX', '200']
 TILES = ['-co', 'TILED=YES']
@@ -123,6 +125,21 @@ def filter_data(data, size, no_data_val=None):
     return averaged_data
 
 
+def make_tiles(data, nrows, ncols):
+    """
+    If arr is a 2D array, the returned list contains nrowsXncols numpy arrays
+    with each array preserving the "physical" layout of arr.
+
+    When the array shape (rows, cols) are not divisible by (nrows, ncols) then
+    some of the array dimensions can change according to numpy.array_split.
+    """
+    rows, cols = data.shape
+    col_arr = np.array_split(range(cols), ncols)
+    row_arr = np.array_split(range(rows), nrows)
+    return [data[r[0]: r[-1] + 1, c[0]: c[-1] + 1]
+            for r, c in product(row_arr, col_arr)]
+
+
 def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     """
     Parameters
@@ -218,18 +235,20 @@ def filter_uniform_filter(A, size=3, no_data_val=None,
 
 
 @cli.command()
-@click.argument('input_dir')
-@click.argument('out_dir')
+@click.argument('input_dir', type=click.Path(exists=True))
+@click.argument('out_dir',  type=click.Path(exists=True))
 @click.option('-f', '--func',
               type=click.Choice(['nanmean', 'nanmedian',
                                  'nanmax', 'nanmin']),
               default='nanmean', help='Level of logging')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='Number of partitions for calculating 2d statistics')
 @click.option('-s', '--size', type=int, default=3,
               help='size of the uniform filter to '
-                   'perform 2d average with the uniform kernel '
+                   'calculate 2d stats with the uniform kernel '
                    'centered around the target pixel for continuous data. '
                    'Categorical data are copied unchanged.')
-def mean(input_dir, out_dir, size, func):
+def mean(input_dir, out_dir, size, func, partitions):
     input_dir = abspath(input_dir)
     if isdir(input_dir):
         log.info('Reading tifs from {}'.format(input_dir))
@@ -238,37 +257,65 @@ def mean(input_dir, out_dir, size, func):
         assert isfile(input_dir)
         tifs = [input_dir]
 
-    process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
-
-    for t in process_tifs:
+    for t in tifs:
         log.info('Starting to average {}'.format(basename(t)))
-        ds = gdal.Open(t, gdal.GA_ReadOnly)
-        band = ds.GetRasterBand(1)
-        data = band.ReadAsArray().astype(np.float32)
-        no_data_val = band.GetNoDataValue()
-        if not no_data_val:
-            log.debug('NoDataValue was not found in input image {} \n'
-                      'and this file was skipped'.format(basename(t)))
-            continue
-        output_file = join(out_dir, basename(t))
-        if band.DataType == 1:
-            shutil.copy(t, output_file)
-            ds = None
-            continue
-        averaged_data = filter_center(data, size, no_data_val, func_map[func])
+        treat_file(t, out_dir, size, func, partitions)
+        log.info('Finished averaging {}'.format(basename(t)))
 
-        log.info('Calculated average for {}'.format(basename(t)))
 
+def treat_file(t, out_dir, size, func, partitions):
+    ds = gdal.Open(t, gdal.GA_ReadOnly)
+    band = ds.GetRasterBand(1)
+    no_data_val = band.GetNoDataValue()
+    print(no_data_val)
+    output_file = join(out_dir, basename(t))
+    if not no_data_val:
+        log.error('NoDataValue was not found in input image {} \n'
+                  'and this file was skipped'.format(basename(t)))
+        return
+    if band.DataType == 1:
+        shutil.copy(t, output_file)
+        ds = None
+        return
+    if mpiops.chunk_index == 0:
         out_ds = gdal.GetDriverByName('GTiff').Create(
             output_file, ds.RasterXSize, ds.RasterYSize,
             1, band.DataType)
         out_band = out_ds.GetRasterBand(1)
-        out_band.WriteArray(averaged_data)
+
+    tif_rows = ds.RasterYSize
+    partition_rows = np.array_split(range(tif_rows), partitions)
+
+    for p in range(partitions):
+        p_rows = partition_rows[p]
+        # all rows in this partition
+        all_rows = np.array_split(p_rows, mpiops.chunks)
+
+        # now split all_rows into number of processes
+        rows = all_rows[mpiops.chunk_index]
+        data = band.ReadAsArray(xoff=0, yoff=int(rows[0]),
+                                win_xsize=ds.RasterXSize, win_ysize=len(rows)
+                                )
+        # print(data)
+        averaged_data = filter_center(data, size, no_data_val, func_map[func])
+
+        if mpiops.chunk_index != 0:
+            mpiops.comm.send(averaged_data, dest=0)
+        else:
+            for node in range(mpiops.chunks):
+                averaged_data = mpiops.comm.recv(source=node) \
+                    if node != 0 else averaged_data
+                out_band.WriteArray(averaged_data,
+                    xoff=0, yoff=int(all_rows[node][0]))
+                out_band.FlushCache()  # Write data to disc
+        log.info('Calculated average for {} for '
+                 'partition {}'.format(basename(t), p))
+
+    if mpiops.chunk_index == 0:
         out_band.SetNoDataValue(no_data_val)
         out_ds.SetGeoTransform(ds.GetGeoTransform())
         out_ds.SetProjection(ds.GetProjection())
-        out_band.FlushCache()  # Write data to disc
-        out_ds = None  # close out_ds
-        ds = None  # close dataset
 
-        log.info('Finished averaging {}'.format(basename(t)))
+    out_ds = None  # close out_ds
+    band = None
+    ds = None  # close dataset
