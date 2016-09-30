@@ -264,6 +264,23 @@ def mean(input_dir, out_dir, size, func, partitions):
 
 
 def treat_file(t, out_dir, size, func, partitions):
+    """
+    Parameters
+    ----------
+    t
+    out_dir
+    size
+    func
+    partitions
+
+    Returns
+    -------
+
+    Notes
+    -------
+    This still will have edge effect at partitions and mpi processes
+
+    """
     ds = gdal.Open(t, gdal.GA_ReadOnly)
     band = ds.GetRasterBand(1)
     no_data_val = band.GetNoDataValue()
@@ -272,7 +289,7 @@ def treat_file(t, out_dir, size, func, partitions):
         log.error('NoDataValue was not found in input image {} \n'
                   'and this file was skipped'.format(basename(t)))
         return
-    if band.DataType == 1 or band.DataType == 3:
+    if band.DataType <= 4:
         if mpiops.chunk_index == 0:
             shutil.copy(t, output_file)
         ds = None
@@ -307,8 +324,8 @@ def treat_file(t, out_dir, size, func, partitions):
                 out_band.WriteArray(averaged_data,
                     xoff=0, yoff=int(all_rows[node][0]))
                 out_band.FlushCache()  # Write data to disc
-        log.info('Calculated average for {} for '
-                 'partition {}'.format(basename(t), p))
+            log.info('Calculated average for {} for '
+                     'partition {}'.format(basename(t), p))
 
     if mpiops.chunk_index == 0:
         out_band.SetNoDataValue(no_data_val)
