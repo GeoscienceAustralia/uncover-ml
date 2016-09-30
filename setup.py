@@ -56,7 +56,8 @@ setup(
             'gammasensor = uncoverml.scripts.gammasensor:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
-            'geoinfo = preprocessing.geoinfo:cli'
+            'geoinfo = preprocessing.geoinfo:cli',
+            'rasteraverage = preprocessing.raster_average:cli'
         ]
     },
     install_requires=[
