@@ -267,14 +267,14 @@ def treat_file(t, out_dir, size, func, partitions):
     ds = gdal.Open(t, gdal.GA_ReadOnly)
     band = ds.GetRasterBand(1)
     no_data_val = band.GetNoDataValue()
-    print(no_data_val)
     output_file = join(out_dir, basename(t))
     if not no_data_val:
         log.error('NoDataValue was not found in input image {} \n'
                   'and this file was skipped'.format(basename(t)))
         return
-    if band.DataType == 1:
-        shutil.copy(t, output_file)
+    if band.DataType == 1 or band.DataType == 3:
+        if mpiops.chunk_index == 0:
+            shutil.copy(t, output_file)
         ds = None
         return
     if mpiops.chunk_index == 0:
@@ -294,9 +294,8 @@ def treat_file(t, out_dir, size, func, partitions):
         # now split all_rows into number of processes
         rows = all_rows[mpiops.chunk_index]
         data = band.ReadAsArray(xoff=0, yoff=int(rows[0]),
-                                win_xsize=ds.RasterXSize, win_ysize=len(rows)
-                                )
-        # print(data)
+                                win_xsize=ds.RasterXSize, win_ysize=len(rows))
+
         averaged_data = filter_center(data, size, no_data_val, func_map[func])
 
         if mpiops.chunk_index != 0:
