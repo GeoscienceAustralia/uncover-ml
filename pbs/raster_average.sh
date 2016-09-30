@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ge3
 #PBS -q express
-#PBS -l walltime=20:00:00,mem=128GB,ncpus=32,jobfs=50GB
+#PBS -l walltime=4:00:00,mem=64GB,ncpus=16,jobfs=50GB
 #PBS -l wd
 #PBS -j oe
 
@@ -22,4 +22,4 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 workon uncoverml
 
 # this initiates 4 jobs per node
-mpirun -np 4 rasteraverage mean /g/data/ge3/gamma_fill_in/subset_datasets/ /g/data/ge3/sudipta/jobs/gamma_fill/gamma_covariates_concolved/
+mpirun -np 16 rasteraverage mean /g/data/ge3/covariates/national/ /g/data/ge3/covariates/national_averaged/ -p 4 -s 3
