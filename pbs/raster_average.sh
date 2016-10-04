@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #PBS -P ge3
-#PBS -q normal
-#PBS -l walltime=20:00:00,mem=64GB,ncpus=16,jobfs=30GB
+#PBS -q express
+#PBS -l walltime=4:00:00,mem=64GB,ncpus=16,jobfs=50GB
 #PBS -l wd
 #PBS -j oe
 
@@ -21,5 +21,5 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 # start the virtualenv
 workon uncoverml
 
-# the python command needs full path of the python script
-mpirun -np 4 python batch_job.py -i /g/data/ge3/covariates/national -o /g/data/ge3/covariates/national_masked -m /g/data/ge3/covariates/masks/Mask_National_LL_nan_to_keep.tif -r bilinear
+# this initiates 4 jobs per node
+mpirun -np 16 rasteraverage mean /g/data/ge3/covariates/national/ /g/data/ge3/covariates/national_averaged/ -p 4 -s 3

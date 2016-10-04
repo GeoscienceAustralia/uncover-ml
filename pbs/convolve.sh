@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #PBS -P ge3
-#PBS -q normal
-#PBS -l walltime=20:00:00,mem=64GB,ncpus=16,jobfs=30GB
+#PBS -q express
+#PBS -l walltime=20:00:00,mem=128GB,ncpus=32,jobfs=50GB
 #PBS -l wd
 #PBS -j oe
 
@@ -21,5 +21,5 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 # start the virtualenv
 workon uncoverml
 
-# the python command needs full path of the python script
-mpirun -np 4 python batch_job.py -i /g/data/ge3/covariates/national -o /g/data/ge3/covariates/national_masked -m /g/data/ge3/covariates/masks/Mask_National_LL_nan_to_keep.tif -r bilinear
+# this initiates 4 jobs per node
+mpirun -map-by ppr:4:node gammasensor -o /g/data/ge3/sudipta/jobs/gamma_fill/gamma_covariates_concolved/ --apply --height 100 --absorption 0.01  /g/data/ge3/gamma_fill_in/subset_datasets/

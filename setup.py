@@ -46,7 +46,8 @@ setup(
     author='NICTA Spatial Inference Systems Team',
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/NICTA/uncover-ml',
-    packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms'],
+    packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms',
+              'preprocessing'],
     package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={
@@ -54,7 +55,9 @@ setup(
             'uncoverml = uncoverml.scripts.uncoverml:cli',
             'gammasensor = uncoverml.scripts.gammasensor:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
-            'subsampletargets = uncoverml.scripts.subsampletargets:cli'
+            'subsampletargets = uncoverml.scripts.subsampletargets:cli',
+            'geoinfo = preprocessing.geoinfo:cli',
+            'rasteraverage = preprocessing.raster_average:cli'
         ]
     },
     install_requires=[
@@ -72,6 +75,7 @@ setup(
         'numpy >= 1.9.2',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
+        'GDAL == 2.0.0',
     ],
     extras_require={
         'demos': [

@@ -139,11 +139,14 @@ source $HOME/.profile
 workon uncoverml
 
 # run command
-mpirun $HOME/uncover-ml/demos/demo_learning_pipeline.py
+mpirun --mca mpi_warn_on_fork 0 uncoverml learn national_gamma_no_zeros.yaml -p 10
+mpirun --mca mpi_warn_on_fork 0 uncoverml predict national_gamma_no_zeros.model -p 40
 ```
 
 where in this case mpirun is able to determine the number of available
-cores via PBS.
+cores via PBS. This job submits the `learn`ing and `predict`ion jobs one 
+after the other. The `-p 10` or `-p 40` options partitions the input 
+covariates into 10/40 partitions during learning/prediction jobs.  
 
 ### Running the demos
 In the pbs folder there are two scripts called  `submit_demo_predicion.sh`
