@@ -276,10 +276,6 @@ def treat_file(t, out_dir, size, func, partitions):
     Returns
     -------
 
-    Notes
-    -------
-    This still will have edge effect at partitions and mpi processes
-
     """
     ds = gdal.Open(t, gdal.GA_ReadOnly)
     band = ds.GetRasterBand(1)
@@ -303,6 +299,9 @@ def treat_file(t, out_dir, size, func, partitions):
     tif_rows = ds.RasterYSize
     partition_rows = np.array_split(range(tif_rows), partitions)
 
+    xoff = 0
+    win_xsize = ds.RasterXSize
+
     for p in range(partitions):
         p_rows = partition_rows[p]
         # all rows in this partition
@@ -310,8 +309,26 @@ def treat_file(t, out_dir, size, func, partitions):
 
         # now split all_rows into number of processes
         rows = all_rows[mpiops.chunk_index]
-        data = band.ReadAsArray(xoff=0, yoff=int(rows[0]),
-                                win_xsize=ds.RasterXSize, win_ysize=len(rows))
+
+        # The following if else is to make sure we are not having
+        # partition and mpi splitting effects
+        # when p=0 and for the first chunk, don't look back
+        if p == 0 and mpiops.chunk_index == 0:
+            yoff = int(rows[0])
+            win_ysize = len(rows) + size // 2
+        elif (p == partitions - 1) and (mpiops.chunk_index == mpiops.chunks - 1):
+            yoff = int(rows[0]) - size // 2
+            win_ysize = len(rows) + size // 2
+        else:
+            yoff = int(rows[0]) - size // 2
+            win_ysize = len(rows) + (size // 2) * 2
+
+        if partitions == 1 and mpiops.chunks == 1:
+            yoff = int(rows[0])
+            win_ysize = len(rows)
+
+        data = band.ReadAsArray(xoff=xoff, yoff=yoff,
+                                win_xsize=win_xsize, win_ysize=win_ysize)
 
         averaged_data = filter_center(data, size, no_data_val, func_map[func])
 
@@ -319,13 +336,13 @@ def treat_file(t, out_dir, size, func, partitions):
             mpiops.comm.send(averaged_data, dest=0)
         else:
             for node in range(mpiops.chunks):
-                averaged_data = mpiops.comm.recv(source=node) \
-                    if node != 0 else averaged_data
+                averaged_data = mpiops.comm.recv(source=node)[size//2:-size//2] \
+                    if node != 0 else averaged_data[:-size//2]
                 out_band.WriteArray(averaged_data,
                     xoff=0, yoff=int(all_rows[node][0]))
                 out_band.FlushCache()  # Write data to disc
-            log.info('Calculated average for {} for '
-                     'partition {}'.format(basename(t), p))
+            log.info('Calculated average for {} partition {}'.format(
+                basename(t), p))
 
     if mpiops.chunk_index == 0:
         out_band.SetNoDataValue(no_data_val)
