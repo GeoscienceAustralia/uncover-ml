@@ -7,27 +7,27 @@ features:
     type: ordinal
     files:
       # - path: /home/lb/data/GA-cover/Th_v1.tif
-      - list: /home/lb/data/GA_Cover2_sirsam_LLC/sirsam_covariates_convolved.txt
-      # - directory: /home/lb/data/GA-cover
+      # - list: /home/lb/data/GA_Cover2_sirsam_LLC/sirsam_covariates_convolved.txt
+      - directory: /home/lb/data/GA-cover
     # transforms are performed in order
     transforms:
       - centre
       - standardise
     imputation: none
   
-  # - name: my features 2
-  #   type: categorical
-  #   files:
-  #     # - path: /home/lb/data/GA-cover/Th_v1.tif
-  #     # - list: /path/to/csv_file.csv
-  #     - directory: /home/lb/data/GA-cover/cat_datasets
-  #   # transforms are performed in order
-  #   transforms:
-  #     - randomhot:
-  #         n_features: 10
-  #         seed: 1
+  - name: my features 2
+    type: categorical
+    files:
+      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - list: /path/to/csv_file.csv
+      - directory: /home/lb/data/GA-cover/cat_datasets
+    # transforms are performed in order
+    transforms:
+      - randomhot:
+          n_features: 10
+          seed: 1
 
-  #   imputation: none
+    imputation: none
 
 
 preprocessing:
@@ -41,8 +41,8 @@ preprocessing:
         # keep_fraction: 0.8
 
 targets:
-  file: /home/lb/data/GA_Cover2_sirsam_LLC/air_K_Th_U_LCC_reduced1.shp
-  property: potassium_
+  file: /home/lb/data/GA-cover/geochem_sites.shp
+  property: K_ppm_imp_
 
 clustering:
   file: /home/lb/data/GA-cover/geochem_sites_class1.shp
