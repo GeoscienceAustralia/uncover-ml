@@ -67,7 +67,7 @@ setup(
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
         'click == 6.6',
-        'revrand >= 0.6.3',
+        'revrand >= 0.6.5',
         'scikit-learn == 0.17.1',
         'scikit-image >= 0.12.3',
         'mpi4py == 2.0.0',
@@ -76,6 +76,7 @@ setup(
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
         'GDAL == 2.0.0',
+        'psutil == 4.3.1'
     ],
     extras_require={
         'demos': [
