@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to the documentation of uncover-ml! &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Welcome to the documentation of uncover-ml! &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncover ML 0.1.0 documentation" href="#" />
-    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="#" />
+    <link rel="next" title="Installation" href="installation.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -45,9 +45,9 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="installation.html" title="Installation"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,7 +62,15 @@
 <h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#cubist">Cubist</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#running-locally">Running locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#running-on-nci">Running on NCI</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html#types-of-contributions">Types of Contributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html#get-started">Get Started!</a></li>
@@ -85,35 +93,30 @@
 <li class="toctree-l2"><a class="reference internal" href="projectreport.html#references">References</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
-<li class="toctree-l1"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline library routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transforms.html">Transforms Module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.MeanImputer.html">uncoverml.transforms.impute.MeanImputer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.GaussImputer.html">uncoverml.transforms.impute.GaussImputer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.NearestNeighboursImputer.html">uncoverml.transforms.impute.NearestNeighboursImputer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.CentreTransform.html">uncoverml.transforms.linear.CentreTransform</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.StandardiseTransform.html">uncoverml.transforms.linear.StandardiseTransform</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.WhitenTransform.html">uncoverml.transforms.linear.WhitenTransform</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Identity.html">uncoverml.transforms.target.Identity</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Standardise.html">uncoverml.transforms.target.Standardise</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Sqrt.html">uncoverml.transforms.target.Sqrt</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Log.html">uncoverml.transforms.target.Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Logistic.html">uncoverml.transforms.target.Logistic</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.RankGaussian.html">uncoverml.transforms.target.RankGaussian</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.KDE.html">uncoverml.transforms.target.KDE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validate.html">Validation Module</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.maketargets.html">uncoverml.scripts.maketargets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.exportgeotiff.html">uncoverml.scripts.exportgeotiff</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
 </ul>
 </li>
@@ -123,7 +126,7 @@
 <div class="section" id="feedback">
 <h2>Feedback<a class="headerlink" href="#feedback" title="Permalink to this headline">¶</a></h2>
 <p>If you have any suggestions or questions about <strong>uncover ML</strong> feel free to
-email me at <a class="reference external" href="mailto:daniel&#46;steinberg&#37;&#52;&#48;nicta&#46;com&#46;au">daniel<span>&#46;</span>steinberg<span>&#64;</span>nicta<span>&#46;</span>com<span>&#46;</span>au</a>.</p>
+email the developers.</p>
 <p>If you encounter any errors or problems with <strong>uncover ML</strong>, please let me
 know!  Open an Issue at the GitHub <a class="reference external" href="http://github.com/NICTA/uncover-ml">http://github.com/NICTA/uncover-ml</a> main
 repository.</p>
@@ -136,18 +139,28 @@ repository.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to the documentation of uncover-ml!</a><ul>
-<li><a class="reference internal" href="#contents">Contents:</a></li>
-<li><a class="reference internal" href="#feedback">Feedback</a></li>
-</ul>
-</li>
+<h3><a href="#">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Pipeline Python Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
 </ul>
 
   <h4>Next topic</h4>
-  <p class="topless"><a href="usage.html"
-                        title="next chapter">Usage</a></p>
+  <p class="topless"><a href="installation.html"
+                        title="next chapter">Installation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -172,13 +185,13 @@ repository.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="usage.html" title="Usage"
+          <a href="installation.html" title="Installation"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command Line Scripts &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Command Line Scripts &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
-    <link rel="next" title="uncoverml.scripts.maketargets" href="generated/uncoverml.scripts.maketargets.html" />
-    <link rel="prev" title="Validation Module" href="validation.html" />
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="uncoverml.scripts.uncoverml" href="generated/uncoverml.scripts.uncoverml.html" />
+    <link rel="prev" title="Validation Module" href="validate.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -46,12 +46,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="generated/uncoverml.scripts.maketargets.html" title="uncoverml.scripts.maketargets"
+          <a href="generated/uncoverml.scripts.uncoverml.html" title="uncoverml.scripts.uncoverml"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="validate.html" title="Validation Module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -68,13 +68,16 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.maketargets.html#module-uncoverml.scripts.maketargets" title="uncoverml.scripts.maketargets"><code class="xref py py-obj docutils literal"><span class="pre">maketargets</span></code></a></td>
-<td>Make output target file with cross-validation indices.</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html#module-uncoverml.scripts.uncoverml" title="uncoverml.scripts.uncoverml"><code class="xref py py-obj docutils literal"><span class="pre">uncoverml</span></code></a></td>
+<td>Run the uncoverml pipeline for clustering, supervised learning and prediction.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.exportgeotiff.html#module-uncoverml.scripts.exportgeotiff" title="uncoverml.scripts.exportgeotiff"><code class="xref py py-obj docutils literal"><span class="pre">exportgeotiff</span></code></a></td>
-<td>Output a geotiff from a set of HDF5 chunked features</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.subsampletargets.html#module-uncoverml.scripts.subsampletargets" title="uncoverml.scripts.subsampletargets"><code class="xref py py-obj docutils literal"><span class="pre">subsampletargets</span></code></a></td>
+<td>Subsample the targets from a shapefile to a new shapefile.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html#module-uncoverml.scripts.tiff2kmz" title="uncoverml.scripts.tiff2kmz"><code class="xref py py-obj docutils literal"><span class="pre">tiff2kmz</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html#module-uncoverml.scripts.gammasensor" title="uncoverml.scripts.gammasensor"><code class="xref py py-obj docutils literal"><span class="pre">gammasensor</span></code></a></td>
+<td>Run the Gamma sensor prediction/super-resolution pipeline.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html#module-uncoverml.scripts.tiff2kmz" title="uncoverml.scripts.tiff2kmz"><code class="xref py py-obj docutils literal"><span class="pre">tiff2kmz</span></code></a></td>
 <td>Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.</td>
 </tr>
 </tbody>
@@ -87,12 +90,36 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Pipeline Python Modules</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="validation.html"
+  <p class="topless"><a href="validate.html"
                         title="previous chapter">Validation Module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="generated/uncoverml.scripts.maketargets.html"
-                        title="next chapter">uncoverml.scripts.maketargets</a></p>
+  <p class="topless"><a href="generated/uncoverml.scripts.uncoverml.html"
+                        title="next chapter">uncoverml.scripts.uncoverml</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scripts.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -117,16 +144,16 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="generated/uncoverml.scripts.maketargets.html" title="uncoverml.scripts.maketargets"
+          <a href="generated/uncoverml.scripts.uncoverml.html" title="uncoverml.scripts.uncoverml"
              >next</a> |</li>
         <li class="right" >
-          <a href="validation.html" title="Validation Module"
+          <a href="validate.html" title="Validation Module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>

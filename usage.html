@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Usage &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Usage &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
     <link rel="next" title="Contributing" href="contributing.html" />
-    <link rel="prev" title="Welcome to the documentation of uncover-ml!" href="index.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -49,9 +49,9 @@
           <a href="contributing.html" title="Contributing"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to the documentation of uncover-ml!"
+          <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,9 +62,43 @@
             
   <div class="section" id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
-<p>To use uncover ML in a project:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">uncover</span><span class="o">-</span><span class="n">ml</span>
+<div class="section" id="running-locally">
+<h2>Running locally<a class="headerlink" href="#running-locally" title="Permalink to this headline">¶</a></h2>
+<p>Uncover-ML uses MPI for parallelization on localhosts and on clusters/high
+performance computers. Here is an example of running the pipeline from the
+command line,</p>
+<div class="code console highlight-default"><div class="highlight"><pre><span></span>$ mpirun -n 4 uncoverml learn -p 10 config.yaml
 </pre></div>
+</div>
+<p>Breaking this down,</p>
+<ul class="simple">
+<li><cite>mpirun -n 4</cite> instructs MPI to use four processors for the pipeline</li>
+<li><cite>uncoverml learn -p 10 config.yaml</cite> runs the learning pipeline (i.e. learns a
+machine learning model). The <cite>-p 10</cite> flag makes 10 chunks of work for the
+four workers (this is to limit memory usage, more chunks, less memory usage),
+and the <cite>config.yaml</cite> is the configuration file for the pipeline.</li>
+</ul>
+<p>Similarly, there are two more options,
+.. code:: console</p>
+<blockquote>
+<div>$ mpirun -n 4 uncoverml predict -p 10 config.yaml</div></blockquote>
+<p>Which uses the learned model from the previous command to predict target values
+for all query points, and
+.. code:: console</p>
+<blockquote>
+<div>$ mpirun -n 4 uncoverml cluster config.yaml</div></blockquote>
+<p>Which clusters (unsupervised) all of the data.</p>
+<p>See also:</p>
+<ul class="simple">
+<li><a class="reference internal" href="scripts.html"><span class="doc">Scripts</span></a> for details on the script options</li>
+<li><a class="reference internal" href="config.html"><span class="doc">Configuration</span></a> for how to create a configuration file</li>
+<li><a class="reference internal" href="models.html"><span class="doc">Models</span></a> for an overview of the available supervised
+algorithm</li>
+</ul>
+</div>
+<div class="section" id="running-on-nci">
+<h2>Running on NCI<a class="headerlink" href="#running-on-nci" title="Permalink to this headline">¶</a></h2>
+<p>Please see <a class="reference external" href="https://github.com/NICTA/uncover-ml/blob/master/pbs/README.md">The PBS Readme</a> .</p>
 </div>
 </div>
 
@@ -74,12 +108,35 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#running-locally">Running locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-on-nci">Running on NCI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Pipeline Python Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Welcome to the documentation of uncover-ml!</a></p>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="contributing.html"
                         title="next chapter">Contributing</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -107,13 +164,13 @@
           <a href="contributing.html" title="Contributing"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="Welcome to the documentation of uncover-ml!"
+          <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>

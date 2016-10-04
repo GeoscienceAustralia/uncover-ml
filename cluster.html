@@ -1,0 +1,528 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Clustering &mdash; uncoverml 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
+    <link rel="next" title="Configuration file parsing" href="config.html" />
+    <link rel="prev" title="Pipeline Python Modules" href="modules.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="Configuration file parsing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="Pipeline Python Modules"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-uncoverml.cluster">
+<span id="clustering"></span><h1>Clustering<a class="headerlink" href="#module-uncoverml.cluster" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="uncoverml.cluster.KMeans">
+<em class="property">class </em><code class="descclassname">uncoverml.cluster.</code><code class="descname">KMeans</code><span class="sig-paren">(</span><em>k</em>, <em>oversample_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.KMeans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model object implementing learn and predict with K-means</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>k</strong> (<em>int &gt; 0</em>) &#8211; The number of classes to cluster the data into</li>
+<li><strong>oversample_factor</strong> (<em>int &gt; 1</em>) &#8211; Controls the number of samples draws as part of [1] in the
+initialisation step. More mpi nodes will increase the total number
+of points. Consider values of 1 for more than about 16 nodes</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<table class="docutils footnote" frame="void" id="id1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td>Bahmani, Bahman, Benjamin Moseley, Andrea</td></tr>
+</tbody>
+</table>
+<p>Vattani, Ravi Kumar, and Sergei Vassilvitskii. &#8220;Scalable k-means++.&#8221;
+Proceedings of the VLDB Endowment 5, no. 7 (2012): 622-633.</p>
+<dl class="method">
+<dt id="uncoverml.cluster.KMeans.learn">
+<code class="descname">learn</code><span class="sig-paren">(</span><em>x</em>, <em>indices=None</em>, <em>classes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.KMeans.learn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the cluster centres using k-means||</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>ndarray</em>) &#8211; (n_samples, n_dimensions) length array containing the training
+samples to cluster</li>
+<li><strong>indices</strong> (<em>ndarray</em>) &#8211; (n_samples) length integer array giving the locations in <cite>x</cite>
+where labels exist</li>
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; (n_samples) length integer array giving the class assignments
+of points in x in locations given by <cite>indices</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.cluster.TrainingData">
+<em class="property">class </em><code class="descclassname">uncoverml.cluster.</code><code class="descname">TrainingData</code><span class="sig-paren">(</span><em>indices</em>, <em>classes</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.TrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Light wrapper for the indices and values of training data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>indices</strong> (<em>ndarray</em>) &#8211; length N array of the indices of the input data that have classes
+assigned</li>
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; length N int array of the class values at locations specified by
+indices</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.centroid">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">centroid</code><span class="sig-paren">(</span><em>X</em>, <em>weights=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.centroid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the centroid of a set of points X</p>
+<p>The points X may have repetitons given by the weights.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array of n d-dimensional points</li>
+<li><strong>weights</strong> (<em>ndarray (optional)</em>) &#8211; (n,) array of weights giving the repetition (or mass?) of each X</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>centroid</strong> &#8211; (d,) length array, the d-dimensial centroid point of all x in X.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.compute_class">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">compute_class</code><span class="sig-paren">(</span><em>X</em>, <em>C</em>, <em>training_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.compute_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the closest cluster centre for each x in X</p>
+<p>This returns which cluster centre each X belongs to, with optional
+semi-supervised training data that will force an assignment of a point
+to a particular class</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array of n d-dimensional points to be evaluated</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of cluster centres, associated with classes 0..k-1</li>
+<li><strong>training_data</strong> (<em>TrainingData (optional)</em>) &#8211; instance of TrainingData containing fixed class assignments for
+particular points</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; (n,) int array of class assignments (0..k-1) for each x in X</li>
+<li><strong>cost</strong> (<em>float</em>) &#8211; The total &#8216;cost&#8217; of the assignment, which is the average
+distance of all points to their assigned centre</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.compute_n_classes">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">compute_n_classes</code><span class="sig-paren">(</span><em>classes</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.compute_n_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of cluster centres to use for K-means</p>
+<p>Just handles the case where someone specifies k=5 but labels 10 classes
+in the training data. This will return k=10.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; an array of hard class assignments given as training data</li>
+<li><strong>config</strong> (<a class="reference internal" href="config.html#uncoverml.config.Config" title="uncoverml.config.Config"><em>Config</em></a>) &#8211; The app config class holding the number of classes asked for</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>k</strong> &#8211; The max of k and the number of classes referenced in the training data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">int &gt; 0</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.compute_weights">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">compute_weights</code><span class="sig-paren">(</span><em>x</em>, <em>C</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.compute_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of points in x assigned to each centre c in C</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>ndarray</em>) &#8211; (n, d) array of n d-dimensional points</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of k cluster centres</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>weights</strong> &#8211; (k,) length array giving number of x closest to each c in C</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.initialise_centres">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">initialise_centres</code><span class="sig-paren">(</span><em>X</em>, <em>k</em>, <em>l</em>, <em>training_data=None</em>, <em>max_iterations=1000</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.initialise_centres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use Kmeans|| to find initial cluster centres</p>
+<p>This algorithm finds generates log(n) candidate samples efficiently,
+then uses k-means to cluster them into k initial starting centres
+used in the main algorithm (clustering X)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n,d) array of points to cluster</li>
+<li><strong>k</strong> (<em>int &gt; 0</em>) &#8211; number of clusters</li>
+<li><strong>l</strong> (<em>float &gt; 0</em>) &#8211; Oversample factor. See weighted_starting_candidates.</li>
+<li><strong>training_data</strong> (<em>TrainingData (optional)</em>) &#8211; Optional hard assignments of certain points in X</li>
+<li><strong>max_iterations</strong> (<em>int &gt; 0</em>) &#8211; The algorithm will terminate after this many iterations even
+if it hasn&#8217;t converged.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>C_init</strong> &#8211; (k, d) array of starting cluster centres for clustering X with k-means.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.kmean_distance2">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">kmean_distance2</code><span class="sig-paren">(</span><em>x</em>, <em>C</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.kmean_distance2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute squared euclidian distance to the nearest cluster centre</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>ndarray</em>) &#8211; (n, d) array of n d-dimensional points</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of k cluster centres</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>d2_x</strong> &#8211; (n,) length array of distances from each x to the nearest centre</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.kmeans_step">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">kmeans_step</code><span class="sig-paren">(</span><em>X</em>, <em>C</em>, <em>classes</em>, <em>weights=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.kmeans_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single step of the k-means algorithm.</p>
+<p>Assigns every point in X a centre, then computes the centroid of all
+x assigned to each centre, then updates that centre to be the new
+centroid.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array of points to be clustered</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of initial cluster centres</li>
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; (n,) array of initial class assignments</li>
+<li><strong>weights</strong> (<em>ndarray (optional)</em>) &#8211; weights for points x in X that allow for different &#8216;masses&#8217; or
+repetitions in the centroid calculation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>C_new</strong> &#8211; (k, d) array of new cluster centres</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="data">
+<dt id="uncoverml.cluster.log">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">log</code><em class="property"> = &lt;logging.Logger object&gt;</em><a class="headerlink" href="#uncoverml.cluster.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Never use more than this many x&#8217;s to compute a distance matrix
+(save memory!)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.reseed_point">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">reseed_point</code><span class="sig-paren">(</span><em>X</em>, <em>C</em>, <em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.reseed_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-initalise the centre of a class if it loses all its members</p>
+<p>This should almest never happen. If it does, find the point furthest
+from all the other cluster centres and use that. Maybe a bad idea but
+a decent first pass</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array of points</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of cluster centres</li>
+<li><strong>index</strong> (<em>int &gt;= 0</em>) &#8211; index between 0..k-1 of the cluster that has lost it&#8217;s points</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>new_point</strong> &#8211; d-dimensional point for replacing the empty cluster centre.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.run_kmeans">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">run_kmeans</code><span class="sig-paren">(</span><em>X</em>, <em>C</em>, <em>k</em>, <em>weights=None</em>, <em>training_data=None</em>, <em>max_iterations=1000</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.run_kmeans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cluster points into k clusters using K-means</p>
+<p>This is a distributed implementation of Johnson&#8217;s algorithm that performs
+a convex optimization to find the locally optimal assignment of points
+and cluster centres. It depends heavily on the inital cluster centres C</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array n d-dimensional of points to cluster</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of initial cluster centres</li>
+<li><strong>k</strong> (<em>int &gt; 0</em>) &#8211; number of clusters</li>
+<li><strong>weights</strong> (<em>ndarray (optional)</em>) &#8211; (n,) array of optional repetition weights for points in X,
+A weight of 2. implies there are 2 points at that location</li>
+<li><strong>training_data</strong> (<em>TrainingData (optional)</em>) &#8211; An instance of the TrainingData class  containing fixed cluster
+assignments for some of the x in X</li>
+<li><strong>max_iterations</strong> (<em>int &gt; 0 (optional)</em>) &#8211; The algorithm will return after this many iterations, even if it
+hasn&#8217;t converged</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; (k, d) array of final cluster centres, ordered (0..k-1)</li>
+<li><strong>classes</strong> (<em>ndarray</em>) &#8211; (n,) array of class assignments (0..k-1) for each x in X</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.sum_axis_0">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">sum_axis_0</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>dtype</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.sum_axis_0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce operation that sums 2 arrays on axis zero</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.cluster.weighted_starting_candidates">
+<code class="descclassname">uncoverml.cluster.</code><code class="descname">weighted_starting_candidates</code><span class="sig-paren">(</span><em>X</em>, <em>k</em>, <em>l</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.cluster.weighted_starting_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate (weighted) candidates to initialise the full k-means</p>
+<p>See the kmeans|| algorithm/paper for details. The goal is to find
+points that are good starting cluster centres for a full kmeans using
+only log(n) passes through the data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; (n, d) array of n d-dimensional points to be clustered</li>
+<li><strong>k</strong> (<em>int &gt; 0</em>) &#8211; number of clusters</li>
+<li><strong>l</strong> (<em>float &gt; 0</em>) &#8211; The &#8216;oversample factor&#8217; that controls how many candidates are found.
+Candidates are found independently on each node so this can be smaller
+with a bigger computation.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>w</strong> (<em>ndarray</em>) &#8211; The &#8216;weights&#8217; of the cluster centres, which are the number of points
+in X closest to each centre</li>
+<li><strong>C</strong> (<em>ndarray</em>) &#8211; The cluster centres themselves. The total candidates is not known
+beforehand so the array will be shaped (z, d) where z is some number
+that increases with l.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Clustering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validate.html">Validation Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="modules.html"
+                        title="previous chapter">Pipeline Python Modules</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="config.html"
+                        title="next chapter">Configuration file parsing</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/cluster.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="Configuration file parsing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="Pipeline Python Modules"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

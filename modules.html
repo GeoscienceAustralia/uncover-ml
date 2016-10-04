@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Image Patch Module &mdash; uncoverml 0.1.0 documentation</title>
+    <title>Pipeline Python Modules &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,9 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
-    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
-    <link rel="next" title="Pipeline Prediction Module" href="predict.html" />
-    <link rel="prev" title="Special Statistical MPI operations" href="mpiops.html" />
+    <link rel="next" title="Clustering" href="cluster.html" />
+    <link rel="prev" title="Uncover-ML project report" href="projectreport.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -47,13 +46,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="predict.html" title="Pipeline Prediction Module"
+          <a href="cluster.html" title="Clustering"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="mpiops.html" title="Special Statistical MPI operations"
+          <a href="projectreport.html" title="Uncover-ML project report"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,68 +60,44 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.patch">
-<span id="image-patch-module"></span><h1>Image Patch Module<a class="headerlink" href="#module-uncoverml.patch" title="Permalink to this headline">¶</a></h1>
-<p>Image patch extraction and windowing utilities.</p>
-<dl class="function">
-<dt id="uncoverml.patch.grid_patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">grid_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.grid_patches" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate (overlapping) patches from an image. This function extracts square
-patches from an image in an overlapping, dense grid.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>image</strong> (<em>ndarray</em>) &#8211; an array of shape (x, y) or (x, y, channels).</li>
-<li><strong>pwidth</strong> (<em>int</em>) &#8211; the half-width of the square patches to extract, in pixels. E.g.
-pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
-= 2 gives a 5x5 patch etc. The formula for calculating the full
-patch width is pwidth * 2 + 1.</li>
+  <div class="section" id="pipeline-python-modules">
+<h1>Pipeline Python Modules<a class="headerlink" href="#pipeline-python-modules" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">Transforms Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.MeanImputer.html">uncoverml.transforms.impute.MeanImputer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.GaussImputer.html">uncoverml.transforms.impute.GaussImputer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.impute.NearestNeighboursImputer.html">uncoverml.transforms.impute.NearestNeighboursImputer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.CentreTransform.html">uncoverml.transforms.linear.CentreTransform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.StandardiseTransform.html">uncoverml.transforms.linear.StandardiseTransform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.linear.WhitenTransform.html">uncoverml.transforms.linear.WhitenTransform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Identity.html">uncoverml.transforms.target.Identity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Standardise.html">uncoverml.transforms.target.Standardise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Sqrt.html">uncoverml.transforms.target.Sqrt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Log.html">uncoverml.transforms.target.Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.Logistic.html">uncoverml.transforms.target.Logistic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.RankGaussian.html">uncoverml.transforms.target.RankGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.transforms.target.KDE.html">uncoverml.transforms.target.KDE</a></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patch</strong> &#8211; An image of shape (x, y, channels*psize*psize), where
-psize = pwidth * 2 + 1</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.patch.point_patches">
-<code class="descclassname">uncoverml.patch.</code><code class="descname">point_patches</code><span class="sig-paren">(</span><em>image</em>, <em>pwidth</em>, <em>points</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.patch.point_patches" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract patches from an image at specified points.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>image</strong> (<em>ndarray</em>) &#8211; an array of shape (x, y, channels).</li>
-<li><strong>pwidth</strong> (<em>int</em>) &#8211; the half-width of the square patches to extract, in pixels. E.g.
-pwidth = 0 gives a 1x1 patch, pwidth = 1 gives a 3x3 patch, pwidth
-= 2 gives a 5x5 patch etc. The formula for calculating the full
-patch width is pwidth * 2 + 1.</li>
-<li><strong>points</strong> (<em>ndarray</em>) &#8211; of shape (N, 2) where there are N points, each with an x and y
-coordinate of the patch centre within the image.</li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="validate.html">Validation Module</a></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patches</strong> &#8211; An image patch array of shape (N, psize, psize, channels), where
-psize = pwidth * 2 + 1</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+</div>
 </div>
 
 
@@ -134,12 +108,13 @@ psize = pwidth * 2 + 1</p>
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">Table Of Contents</a></h3>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pipeline Python Modules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
@@ -152,7 +127,7 @@ psize = pwidth * 2 + 1</p>
 <li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
 <li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
@@ -163,15 +138,15 @@ psize = pwidth * 2 + 1</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="mpiops.html"
-                        title="previous chapter">Special Statistical MPI operations</a></p>
+  <p class="topless"><a href="projectreport.html"
+                        title="previous chapter">Uncover-ML project report</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="predict.html"
-                        title="next chapter">Pipeline Prediction Module</a></p>
+  <p class="topless"><a href="cluster.html"
+                        title="next chapter">Clustering</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/patch.txt"
+      <li><a href="_sources/modules.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -199,13 +174,12 @@ psize = pwidth * 2 + 1</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="predict.html" title="Pipeline Prediction Module"
+          <a href="cluster.html" title="Clustering"
              >next</a> |</li>
         <li class="right" >
-          <a href="mpiops.html" title="Special Statistical MPI operations"
+          <a href="projectreport.html" title="Uncover-ML project report"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

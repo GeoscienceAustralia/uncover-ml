@@ -6,6 +6,7 @@ Command Line Scripts
 .. autosummary::
    :toctree: generated/
 
-   maketargets
-   exportgeotiff
+   uncoverml
+   subsampletargets
+   gammasensor
    tiff2kmz

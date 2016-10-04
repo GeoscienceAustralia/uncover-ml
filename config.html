@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Configuration file parsing &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Configuration file parsing &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,9 +24,10 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
     <link rel="next" title="Cubist Python Wrapper" href="cubist.html" />
-    <link rel="prev" title="Uncover-ML project report" href="projectreport.html" />
+    <link rel="prev" title="Clustering" href="cluster.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -49,9 +50,10 @@
           <a href="cubist.html" title="Cubist Python Wrapper"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="projectreport.html" title="Uncover-ML project report"
+          <a href="cluster.html" title="Clustering"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -65,7 +67,314 @@
 <p>TODO: Give an example of a <cite>yaml</cite> file here, also perhaps list all of the
 options dictionaries scattered throughout the code? I.e. models.py, transforms,
 etc.</p>
-<span class="target" id="module-uncoverml.config"></span></div>
+<div class="highlight-yaml"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="c1">## This is a list of &quot;feature sets&quot;, which are groups of tif files</span>
+<span class="c1">## that can have different transforms</span>
+<span class="l l-Scalar l-Scalar-Plain">features</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">featureset_1</span>
+
+    <span class="c1">## The type of the feature can be ordinal or categorical</span>
+    <span class="c1"># type: categorical</span>
+    <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+
+    <span class="c1">## The sources of the files. Can be a directory (and all tifs in that </span>
+    <span class="c1">## directory will be taken, a CSV list of paths, or a single path</span>
+    <span class="l l-Scalar l-Scalar-Plain">files</span><span class="p p-Indicator">:</span>
+      <span class="c1"># - path: /path/to/some/file.tif</span>
+      <span class="c1"># - list: /path/to/some/csv_file.csv</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">directory</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/home/lb/data/GA-cover</span>
+
+
+    <span class="c1">## A list of transforms to apply to this featureset. They are </span>
+    <span class="c1">## applied in order. See all possibilites below. Can be empty.</span>
+    <span class="l l-Scalar l-Scalar-Plain">transforms</span><span class="p p-Indicator">:</span>
+      <span class="c1">## &quot;one-hot&quot; encoding -- only works on categorical type features</span>
+      <span class="c1"># - onehot </span>
+
+      <span class="c1">## &quot;one-hot&quot; encoding with random projection to a lower dimensional</span>
+      <span class="c1">## subspace. Useful for the case of a covariate with many categories</span>
+      <span class="c1"># - randomhot</span>
+      <span class="c1">## number of dimensions to project down to</span>
+      <span class="c1">#     n_features: 10</span>
+      <span class="c1">## the random seed used to generate the projection</span>
+      <span class="c1">#     seed: 1</span>
+      
+      <span class="c1">## transform data to have mean 0</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">centre</span>
+
+      <span class="c1">## tranform data to have mean zero and std deviation 1 on all axes</span>
+      <span class="c1"># - standardise</span>
+
+      <span class="c1">## transform data to have covariance matrix be the identity</span>
+      <span class="c1">## Also, only use the first keep_fraction of columns with the largest</span>
+      <span class="c1">## variance to reduce noise</span>
+      <span class="c1"># - whiten:</span>
+      <span class="c1">#   keep_fraction: 0.8</span>
+    
+    <span class="c1">## The method used to impute missing data.</span>
+    <span class="c1">## No imputation</span>
+    <span class="l l-Scalar l-Scalar-Plain">imputation</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">none</span>
+
+    <span class="c1">## Impute by replacing missing data with the mean of that band</span>
+    <span class="c1"># imputation: mean</span>
+
+    <span class="c1">## Use a Gaussian (ie linear) model to predict the missing values</span>
+    <span class="c1"># imputation: gauss</span>
+
+    <span class="c1">## Fill with values from the nearest-neighbour in *feature space*</span>
+    <span class="c1"># imputation: nn</span>
+
+
+  <span class="c1">## Have as many feature-sets as you like</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">featureset_2</span>
+    <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">categorical</span>
+    <span class="l l-Scalar l-Scalar-Plain">files</span><span class="p p-Indicator">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">directory</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/some/other/data</span>
+    <span class="l l-Scalar l-Scalar-Plain">transforms</span><span class="p p-Indicator">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">onehot</span>
+    <span class="l l-Scalar l-Scalar-Plain">imputation</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">none</span>
+  
+
+<span class="c1">## These are another set of transforms that are applied to all the feature</span>
+<span class="c1">## sets together after they have been concatenated into a single feature vector.</span>
+<span class="c1">## Makes a lot of sense to do imputation at this stage. The same transforms</span>
+<span class="c1">## are available (except one-hot encoding, which has to happen in the inital</span>
+<span class="c1">## feature sets</span>
+<span class="l l-Scalar l-Scalar-Plain">preprocessing</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">imputation</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">nn</span>
+  <span class="l l-Scalar l-Scalar-Plain">transforms</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">whiten</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">keep_fraction</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">0.8</span>
+
+<span class="l l-Scalar l-Scalar-Plain">targets</span><span class="p p-Indicator">:</span>
+  <span class="c1">## Path the target shapefile</span>
+  <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/shapefile.shp</span>
+  <span class="c1">## the property to model from the above shapefile</span>
+  <span class="l l-Scalar l-Scalar-Plain">property</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">calcium_level</span>
+
+<span class="c1">## Options for clustering. This is an unsupersised or semi-supervised </span>
+<span class="c1">## alternative to (supervised) regression</span>
+<span class="l l-Scalar l-Scalar-Plain">clustering</span><span class="p p-Indicator">:</span>
+  <span class="c1">## OPTIONAL path to class data for the semi-supervised case</span>
+  <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/home/lb/data/GA-cover/geochem_sites_class1.shp</span>
+  <span class="c1">## The property with class data in the above file. Expecting integer classes</span>
+  <span class="c1">## greater than 0</span>
+  <span class="l l-Scalar l-Scalar-Plain">property</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">class</span>
+  <span class="c1">## Algorithm for clustering: Currently only kmeans implemented</span>
+  <span class="l l-Scalar l-Scalar-Plain">algorithm</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">kmeans</span>
+  <span class="l l-Scalar l-Scalar-Plain">arguments</span><span class="p p-Indicator">:</span>
+    <span class="c1">## The number of classes to cluster the data into</span>
+    <span class="l l-Scalar l-Scalar-Plain">n_classes</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">12</span>
+    <span class="c1">## Parameter of the initialisation algorithm. See doco for more details</span>
+    <span class="c1">## but a high number means slower/more memory, but better initialisation.</span>
+    <span class="c1">## Scales with nodes so set to one for &gt; 16 nodes or so.</span>
+    <span class="l l-Scalar l-Scalar-Plain">oversample_factor</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+
+<span class="c1">## Options for supervised learning</span>
+<span class="l l-Scalar l-Scalar-Plain">learning</span><span class="p p-Indicator">:</span>
+    <span class="c1">## Algorithm used for learning. See the documentation for the many </span>
+    <span class="c1">## possible options here</span>
+    <span class="l l-Scalar l-Scalar-Plain">algorithm</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">svr</span>
+    <span class="c1">## Arguments to the algorithms -- these change for each algorithm</span>
+    <span class="c1">## so you&#39;ll need to check the documentation to see what you need here</span>
+    <span class="l l-Scalar l-Scalar-Plain">arguments</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">target_transform</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">rank</span>
+
+<span class="c1">## Options for the prediction step</span>
+<span class="c1">## Applies to both clustering and regression</span>
+<span class="l l-Scalar l-Scalar-Plain">prediction</span><span class="p p-Indicator">:</span>
+  <span class="c1">## IF you&#39;ve selected a probabilistic algorithm, this will provide the</span>
+  <span class="c1">## upper and lower quantiles specificed as additional outputs</span>
+  <span class="l l-Scalar l-Scalar-Plain">quantiles</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
+
+<span class="c1">## Validation options in the learning phase</span>
+<span class="l l-Scalar l-Scalar-Plain">validation</span><span class="p p-Indicator">:</span>
+  <span class="c1">## rank each feature via a subtractive leave-one-out method</span>
+  <span class="c1">#- feature_rank</span>
+  <span class="c1">## compute a variety of performance scores using k-fold cross-validation</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">k-fold</span><span class="p p-Indicator">:</span>
+      <span class="c1">## number of folds into which the data is split</span>
+      <span class="l l-Scalar l-Scalar-Plain">folds</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+      <span class="c1">## The seed for generating the folds. Keep constant so different runs</span>
+      <span class="c1">## get exactly the same folds</span>
+      <span class="l l-Scalar l-Scalar-Plain">random_seed</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+  
+<span class="l l-Scalar l-Scalar-Plain">output</span><span class="p p-Indicator">:</span>
+  <span class="c1">## Directory to output results</span>
+  <span class="l l-Scalar l-Scalar-Plain">directory</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
+</pre></div>
+</td></tr></table></div>
+<p>And now the docstrings:</p>
+<span class="target" id="module-uncoverml.config"></span><dl class="class">
+<dt id="uncoverml.config.Config">
+<em class="property">class </em><code class="descclassname">uncoverml.config.</code><code class="descname">Config</code><span class="sig-paren">(</span><em>yaml_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class representing the global configuration of the uncoverml scripts</p>
+<p>This class is <em>mostly</em> read-only, but it does also contain the Transform
+objects which have state. TODO: separate these out!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>yaml_file</strong> (<em>string</em>) &#8211; The path to the yaml config file. For details on the yaml schema
+see the uncoverml documentation</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.config.FeatureSetConfig">
+<em class="property">class </em><code class="descclassname">uncoverml.config.</code><code class="descname">FeatureSetConfig</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.FeatureSetConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config class representing a &#8216;feature set&#8217; in the config file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>d</strong> (<em>dictionary</em>) &#8211; The section of the yaml file for a feature set</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="data">
+<dt id="uncoverml.config.log">
+<code class="descclassname">uncoverml.config.</code><code class="descname">log</code><em class="property"> = &lt;logging.Logger object&gt;</em><a class="headerlink" href="#uncoverml.config.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>The strings associated with each imputation option</p>
+</dd></dl>
+
+</div>
 
 
           </div>
@@ -73,12 +382,50 @@ etc.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Configuration file parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validate.html">Validation Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="projectreport.html"
-                        title="previous chapter">Uncover-ML project report</a></p>
+  <p class="topless"><a href="cluster.html"
+                        title="previous chapter">Clustering</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="cubist.html"
                         title="next chapter">Cubist Python Wrapper</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/config.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -106,13 +453,14 @@ etc.</p>
           <a href="cubist.html" title="Cubist Python Wrapper"
              >next</a> |</li>
         <li class="right" >
-          <a href="projectreport.html" title="Uncover-ML project report"
+          <a href="cluster.html" title="Clustering"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>

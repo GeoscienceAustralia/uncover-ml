@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Validation Module &mdash; uncoverml 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
+    <link rel="next" title="Command Line Scripts" href="scripts.html" />
+    <link rel="prev" title="uncoverml.transforms.target.KDE" href="generated/uncoverml.transforms.target.KDE.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scripts.html" title="Command Line Scripts"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="generated/uncoverml.transforms.target.KDE.html" title="uncoverml.transforms.target.KDE"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-uncoverml.validate">
+<span id="validation-module"></span><h1>Validation Module<a class="headerlink" href="#module-uncoverml.validate" title="Permalink to this headline">¶</a></h1>
+<p>Scripts for validation</p>
+<dl class="function">
+<dt id="uncoverml.validate.calculate_validation_scores">
+<code class="descclassname">uncoverml.validate.</code><code class="descname">calculate_validation_scores</code><span class="sig-paren">(</span><em>ys</em>, <em>yt</em>, <em>eys</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.calculate_validation_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the validation scores for a prediction
+Given the test and training data, as well as the outputs from every model,
+this function calculates all of the applicable metrics in the following
+list, and returns a dictionary with the following (possible) keys:</p>
+<blockquote>
+<div><ul class="simple">
+<li>r2_score</li>
+<li>expvar</li>
+<li>smse</li>
+<li>lins_ccc</li>
+<li>mll</li>
+<li>msll</li>
+</ul>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ys</strong> (<em>numpy.array</em>) &#8211; The test data that was used to corresponding outputs</li>
+<li><strong>yt</strong> (<em>numpy.array</em>) &#8211; The training data&#8217;s corresponding outputs</li>
+<li><strong>yt</strong> &#8211; The predictions made by the trained model</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>scores</strong> &#8211; A dictionary containing all of the evaluated scores.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validate.local_crossval">
+<code class="descclassname">uncoverml.validate.</code><code class="descname">local_crossval</code><span class="sig-paren">(</span><em>x_all</em>, <em>targets_all</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.local_crossval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs K-fold cross validation to test the applicability of a model.
+Given a set of inputs and outputs, this function will evaluate the
+effectiveness of a model at predicting the targets, by splitting all of
+the known data. A model is trained on a subset of the total data, and then
+this model is used to predict all of the unseen targets, its performance
+can provide a benchmark to evaluate the effectiveness of a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x_all</strong> (<em>numpy.array</em>) &#8211; A 2D array containing all of the training inputs</li>
+<li><strong>targets_all</strong> (<em>numpy.array</em>) &#8211; A 1D vector containing all of the training outputs</li>
+<li><strong>config</strong> (<em>dict</em>) &#8211; The global config object, which is used to choose the model to train.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>result</strong> &#8211; A dictionary containing all of the cross validation metrics, evaluated
+on the unseen data subset.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validate.local_rank_features">
+<code class="descclassname">uncoverml.validate.</code><code class="descname">local_rank_features</code><span class="sig-paren">(</span><em>image_chunk_sets</em>, <em>transform_sets</em>, <em>targets_all</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.local_rank_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ranks the importance of the features based on their performance.
+This function trains and cross-validates a model with each individual
+feature removed and then measures the performance of the model with that
+feature removed. The most important feature is the one which; when removed,
+causes the greatest degradation in the performance of the model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>image_chunk_sets</strong> (<em>dict</em>) &#8211; A dictionary used to get the set of images to test on.</li>
+<li><strong>transform_sets</strong> (<em>dict</em>) &#8211; A dictionary containing the applied transformations</li>
+<li><strong>targets_all</strong> (<em>dict</em>) &#8211; The targets used in the cross validation</li>
+<li><strong>config</strong> (<em>dict</em>) &#8211; The global config file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validate.split_cfold">
+<code class="descclassname">uncoverml.validate.</code><code class="descname">split_cfold</code><span class="sig-paren">(</span><em>nsamples</em>, <em>k=5</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.split_cfold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that returns indices for splitting data into random folds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nsamples</strong> (<em>int</em>) &#8211; the number of samples in the dataset</li>
+<li><strong>k</strong> (<em>int, optional</em>) &#8211; the number of folds</li>
+<li><strong>seed</strong> (<em>int, optional</em>) &#8211; random seed to provide to numpy</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>cvinds</strong> (<em>list</em>) &#8211; list of arrays of length k, each with approximate shape (nsamples /
+k,) of indices. These indices are randomly permuted (without
+replacement) of assignments to each fold.</li>
+<li><strong>cvassigns</strong> (<em>ndarray</em>) &#8211; array of shape (nsamples,) with each element in [0, k), that can be
+used to assign data to a fold. This corresponds to the indices of
+cvinds.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validate.y_y_plot">
+<code class="descclassname">uncoverml.validate.</code><code class="descname">y_y_plot</code><span class="sig-paren">(</span><em>y1</em>, <em>y2</em>, <em>y_label=None</em>, <em>y_exp_label=None</em>, <em>title=None</em>, <em>outfile=None</em>, <em>display=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.y_y_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes a y-y plot from two corresponding vectors
+This function makes a y-y plot given two y vectors (y1, y2). This plot can
+be used to evaluate the performance of the machine learning models.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>y1</strong> (<em>numpy.array</em>) &#8211; The first input vector</li>
+<li><strong>y2</strong> (<em>numpy.array</em>) &#8211; The second input vector, of the same size as y1</li>
+<li><strong>y_label</strong> (<em>string</em>) &#8211; The axis label for the first vector</li>
+<li><strong>y_exp_label</strong> (<em>string</em>) &#8211; The axis label for the second vector</li>
+<li><strong>title</strong> (<em>string</em>) &#8211; The plot title</li>
+<li><strong>outfile</strong> (<em>string</em>) &#8211; The location to save an image of the plot</li>
+<li><strong>display</strong> (<em>boolean</em>) &#8211; If true, a matplotlib graph will display in a window, note that this
+pauses the execution of the main program till this window is suspended.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Validation Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="generated/uncoverml.transforms.target.KDE.html"
+                        title="previous chapter">uncoverml.transforms.target.KDE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="scripts.html"
+                        title="next chapter">Command Line Scripts</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/validate.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="scripts.html" title="Command Line Scripts"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="generated/uncoverml.transforms.target.KDE.html" title="uncoverml.transforms.target.KDE"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Geometry file I/O Module &mdash; uncover ML 0.1.0 documentation</title>
+    <title>Geometry file I/O Module &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,9 +24,10 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncover ML 0.1.0 documentation" href="index.html" />
+    <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
+    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
     <link rel="next" title="Distributed Image Operations" href="image.html" />
-    <link rel="prev" title="Cubist Python Wrapper" href="cubist.html" />
+    <link rel="prev" title="Image filtering Module (specifically for Gamma sensors)" href="filtering.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -49,9 +50,10 @@
           <a href="image.html" title="Distributed Image Operations"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="cubist.html" title="Cubist Python Wrapper"
+          <a href="filtering.html" title="Image filtering Module (specifically for Gamma sensors)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -83,13 +85,6 @@ image data.</li>
 </dd></dl>
 
 <dl class="function">
-<dt id="uncoverml.geoio.files_by_chunk">
-<code class="descclassname">uncoverml.geoio.</code><code class="descname">files_by_chunk</code><span class="sig-paren">(</span><em>filenames</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.files_by_chunk" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns a dictionary per-chunk of a <em>sorted</em> list of features
-Note: assumes files_indices_ok returned true</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="uncoverml.geoio.load_shapefile">
 <code class="descclassname">uncoverml.geoio.</code><code class="descname">load_shapefile</code><span class="sig-paren">(</span><em>filename</em>, <em>targetfield</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO</p>
@@ -102,36 +97,6 @@ Note: assumes files_indices_ok returned true</p>
 available nodes</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="uncoverml.geoio.output_features">
-<code class="descclassname">uncoverml.geoio.</code><code class="descname">output_features</code><span class="sig-paren">(</span><em>feature_vector</em>, <em>outfile</em>, <em>featname='features'</em>, <em>shape=None</em>, <em>bbox=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.output_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes a vector of features out to a standard HDF5 format. The function
-assumes that it is only 1 chunk of a larger vector, so outputs a numerical
-suffix to the file as an index.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>feature_vector</strong> (<em>array</em>) &#8211; A 2D numpy array of shape (nPoints, nDims) of type float. This can
-be a masked array.</li>
-<li><strong>outfile</strong> (<em>path</em>) &#8211; The name of the output file</li>
-<li><strong>featname</strong> (<em>str, optional</em>) &#8211; The name of the features.</li>
-<li><strong>shape</strong> (<em>tuple, optional</em>) &#8211; The original shape of the feature for reproducing an image</li>
-<li><strong>bbox</strong> (<em>ndarray, optional</em>) &#8211; The bounding box of the original data for reproducing an image</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.geoio.points_from_hdf">
-<code class="descclassname">uncoverml.geoio.</code><code class="descname">points_from_hdf</code><span class="sig-paren">(</span><em>filename</em>, <em>fieldnames</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.points_from_hdf" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO</p>
-</dd></dl>
-
 </div>
 
 
@@ -140,12 +105,49 @@ be a masked array.</li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Geometry file I/O Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image.html">Distributed Image Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validate.html">Validation Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="cubist.html"
-                        title="previous chapter">Cubist Python Wrapper</a></p>
+  <p class="topless"><a href="filtering.html"
+                        title="previous chapter">Image filtering Module (specifically for Gamma sensors)</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="image.html"
                         title="next chapter">Distributed Image Operations</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/geoio.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -173,13 +175,14 @@ be a masked array.</li>
           <a href="image.html" title="Distributed Image Operations"
              >next</a> |</li>
         <li class="right" >
-          <a href="cubist.html" title="Cubist Python Wrapper"
+          <a href="filtering.html" title="Image filtering Module (specifically for Gamma sensors)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncover ML 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, NICTA Spatial Inference Systems Team.
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>

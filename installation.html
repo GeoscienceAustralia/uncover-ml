@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Distributed Image Operations &mdash; uncoverml 0.1.0 documentation</title>
+    <title>Installation &mdash; uncoverml 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,9 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uncoverml 0.1.0 documentation" href="index.html" />
-    <link rel="up" title="Pipeline Python Modules" href="modules.html" />
-    <link rel="next" title="Pipeline Learning Module" href="learn.html" />
-    <link rel="prev" title="Geometry file I/O Module" href="geoio.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="Welcome to the documentation of uncover-ml!" href="index.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <!--[if lte IE 6]>
@@ -47,13 +46,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="learn.html" title="Pipeline Learning Module"
+          <a href="usage.html" title="Usage"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="geoio.html" title="Geometry file I/O Module"
+          <a href="index.html" title="Welcome to the documentation of uncover-ml!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">Pipeline Python Modules</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,8 +60,42 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-uncoverml.image">
-<span id="distributed-image-operations"></span><h1>Distributed Image Operations<a class="headerlink" href="#module-uncoverml.image" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Before you start, make sure your system has the following packages installed,</p>
+<ul class="simple">
+<li>gdal (libgdal-dev)</li>
+<li>openmpi</li>
+<li>hdf5</li>
+</ul>
+<p>We <strong>strongly</strong> recommend using a virtual environment.
+To install, simply run <code class="docutils literal"><span class="pre">setup.py</span></code>:</p>
+<div class="code console highlight-default"><div class="highlight"><pre><span></span>$ python setup.py install
+</pre></div>
+</div>
+<p>or install with <code class="docutils literal"><span class="pre">pip</span></code>:</p>
+<div class="code console highlight-default"><div class="highlight"><pre><span></span>$ pip install git+https://github.com/nicta/uncover-ml.git@release
+</pre></div>
+</div>
+<p>The python requirements should automatically be built and installed.</p>
+<div class="section" id="cubist">
+<h2>Cubist<a class="headerlink" href="#cubist" title="Permalink to this headline">¶</a></h2>
+<p>In order to use the cubist regressor, you need to first make sure cubist is
+installed. This is easy with our simple installation script, invoke it with:</p>
+<div class="code console highlight-default"><div class="highlight"><pre><span></span>$ ./makecubist &lt;installation-path&gt;
+</pre></div>
+</div>
+<p>Once cubist is installed, it will add a configuration file to the script. If
+you like, you can test that it&#8217;s been installed in the correct place by
+checking the contents of <cite>uncover-ml/cubist_config.py</cite>, its presence indicates
+that the installation completed successfully.</p>
+<p>Next you need to rerun the setup script with:</p>
+<div class="code console highlight-default"><div class="highlight"><pre><span></span>$ python setup.py install
+</pre></div>
+</div>
+<p>Which will ensure the <cite>cubist_config</cite> has been added successfully. Now you
+should be able to use the cubist regressor in the pipeline file.</p>
+</div>
 </div>
 
 
@@ -74,44 +106,29 @@
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">Table Of Contents</a></h3>
 <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cubist">Cubist</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Pipeline Python Modules</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="cluster.html">Clustering</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config.html">Configuration file parsing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cubist.html">Cubist Python Wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="features.html">Pipeline Feature Processing Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="geoio.html">Geometry file I/O Module</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Distributed Image Operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="learn.html">Pipeline Learning Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="likelihoods.html">Specialised Likelihood Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="logging.html">Pipeline Resource Logging Functionality</a></li>
-<li class="toctree-l2"><a class="reference internal" href="models.html">Models Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mpiops.html">Special Statistical MPI operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="patch.html">Image Patch Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="predict.html">Pipeline Prediction Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="targets.html">Pipeline Targets Processing Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transforms.html">Transforms Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="validate.html">Validation Module</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Pipeline Python Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="geoio.html"
-                        title="previous chapter">Geometry file I/O Module</a></p>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to the documentation of uncover-ml!</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="learn.html"
-                        title="next chapter">Pipeline Learning Module</a></p>
+  <p class="topless"><a href="usage.html"
+                        title="next chapter">Usage</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/image.txt"
+      <li><a href="_sources/installation.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -139,13 +156,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="learn.html" title="Pipeline Learning Module"
+          <a href="usage.html" title="Usage"
              >next</a> |</li>
         <li class="right" >
-          <a href="geoio.html" title="Geometry file I/O Module"
+          <a href="index.html" title="Welcome to the documentation of uncover-ml!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="modules.html" >Pipeline Python Modules</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">uncoverml 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
