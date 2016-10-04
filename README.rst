@@ -26,7 +26,7 @@ Before you start, make sure your system has the following packages installed,
 - openmpi
 - hdf5
 
-We strongly recommond using a virtual environment.
+We strongly recommend using a virtual environment.
 To install, simply run ``setup.py``:
 
 .. code:: console
@@ -40,7 +40,6 @@ or install with ``pip``:
    $ pip install git+https://github.com/nicta/uncover-ml.git@release
 
 The python requirements should automatically be built and installed.
-Have a look at some of the `demos <demos/>`_ for how to use these tools.
 
 Cubist
 ------
@@ -69,16 +68,7 @@ should be able to use the cubist regressor in the pipeline file.
 Running 
 -------
 
-Uncover-ML uses MPI for parallelization on localhosts and on clusters.
-*DO NOT RUN ipcluster*, we no longer use ipyparallel. Run the demos and scripts
-using mpirun:
-
-.. code:: console
-
-  $ mpirun -n 4 python demo_learning_pipeline.py
-
-Note that demo_learning_pipeline and demo_prediction_pipeline must be run
-with the same number of CPUs.
+See the `usage <http://nicta.github.io/uncover-ml/usage.html>`_ documentation.
 
 Running on NCI
 --------------

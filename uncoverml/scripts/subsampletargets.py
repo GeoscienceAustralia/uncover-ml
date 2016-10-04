@@ -1,4 +1,8 @@
+"""
+Subsample the targets from a shapefile to a new shapefile.
 
+.. program-output:: subsampletargets --help
+"""
 from random import sample
 import os.path
 

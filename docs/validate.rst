@@ -1,5 +1,5 @@
 Validation Module
 =================
 
-.. automodule:: uncoverml.validation
+.. automodule:: uncoverml.validate
    :members:

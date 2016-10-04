@@ -1,4 +1,8 @@
-import sys
+"""
+Run the uncoverml pipeline for clustering, supervised learning and prediction.
+
+.. program-output:: uncoverml --help
+"""
 import pickle
 import logging
 
@@ -15,7 +19,6 @@ import uncoverml.predict
 import uncoverml.mpiops
 import uncoverml.validate
 import uncoverml.logging
-import uncoverml.memory
 
 log = logging.getLogger(__name__)
 
@@ -175,41 +178,3 @@ def predict(model_or_cluster_file, partitions):
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
     log.info("Finished!")
-
-
-@cli.command()
-@click.argument('pipeline_file')
-@click.option('-o', '--overhead', type=int, default=4,
-              help='Estimate of memory overhead as multiplier')
-@click.option('-s', '--subsample_fraction', type=float, default=1.0,
-              help='only use this fraction of the data for clustering')
-@click.option('-p', '--partitions', type=int, default=1,
-              help='divide each node\'s data into this many partitions')
-def memory(pipeline_file, overhead, subsample_fraction, partitions):
-    if ls.mpiops.chunks > 1:
-        log.error("Please run this utility without MPI")
-        sys.exit()
-
-    config = ls.config.Config(pipeline_file)
-    results = ls.memory.estimate(config, partitions,
-                                 subsample_fraction, overhead)
-
-    def fm(x, y):
-        return x + ": {:2.2f}GB".format(y)
-
-    output_string = ("\nMaximum Memory Usage Estimates" +
-                     " with {} Partitions and {} cluster subsampling".format(
-                        partitions, subsample_fraction) + ":\n\n" +
-                     fm("Learning", results['learning']) + "\n" +
-                     fm("Prediction", results['prediction']) + "\n" +
-                     fm("Clustering (extraction)",
-                        results['clustering-extraction']) + "\n" +
-                     fm("Clustering (iteration)",
-                        results['clustering-iteration']) + "\n" +
-                     "\nNOTE:\n- Use more partitions to " +
-                     "decrease memory usage for learning and prediction.\n" +
-                     "- Use a lower subsampling fraction to decrease memory" +
-                     " usage for clustering (iteration).\n" +
-                     "- Total memory usage for clustering (extraction) " +
-                     "cannot be decreased.")
-    print(output_string)

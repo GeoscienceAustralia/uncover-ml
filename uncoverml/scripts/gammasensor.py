@@ -1,3 +1,8 @@
+"""
+Run the Gamma sensor prediction/super-resolution pipeline.
+
+.. program-output:: gammasensor --help
+"""
 import logging
 import os.path
 import glob
