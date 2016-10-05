@@ -75,8 +75,7 @@ setup(
         'numpy >= 1.9.2',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
-        'GDAL == 2.0.0',
-        'psutil == 4.3.1'
+        'GDAL == 2.0.0'
     ],
     extras_require={
         'demos': [

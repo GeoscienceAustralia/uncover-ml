@@ -426,9 +426,8 @@ def run_kmeans(X, C, k, weights=None, training_data=None, max_iterations=1000):
         classes_new, cost = compute_class(X, C_new)
         delta_local = np.sum(classes != classes_new)
         delta = mpiops.comm.allreduce(delta_local, op=mpiops.MPI.SUM)
-        if mpiops.chunk_index == 0:
-            log.info("kmeans it: {}\tcost:{:.3f}\tdelta: {}".format(
-                i, cost, delta))
+        log.info("kmeans it: {}\tcost:{:.3f}\tdelta: {}".format(
+            i, cost, delta))
         C = C_new
         classes = classes_new
         if delta == 0:

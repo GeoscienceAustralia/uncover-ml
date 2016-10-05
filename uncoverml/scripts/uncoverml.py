@@ -8,6 +8,7 @@ import logging
 
 import numpy as np
 import click
+import resource
 
 import uncoverml as ls
 import uncoverml.geoio
@@ -82,7 +83,7 @@ def learn(pipeline_file, partitions):
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
-    log.info("Learning complete!")
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 @cli.command()
@@ -102,6 +103,7 @@ def cluster(pipeline_file, subsample_fraction):
         semisupervised(config)
     else:
         unsupervised(config)
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 def semisupervised(config):
@@ -177,4 +179,12 @@ def predict(model_or_cluster_file, partitions):
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
-    log.info("Finished!")
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
+def _total_gb():
+    # given in KB so convert
+    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
+    # total_usage = mpiops.comm.reduce(my_usage, root=0)
+    total_usage = ls.mpiops.comm.allreduce(my_usage)
+    return total_usage
