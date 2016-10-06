@@ -2,7 +2,6 @@ import unittest
 import os
 import numpy as np
 from numpy import nan
-from scipy import ndimage
 from preprocessing import raster_average
 
 UNCOVER = os.environ['UNCOVER']

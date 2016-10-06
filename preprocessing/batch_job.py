@@ -14,9 +14,8 @@ from optparse import OptionParser
 from mpi4py import MPI
 import tempfile
 import logging
-from preprocessing.crop_mask_resample_reproject import (do_work,
-                                                        TMPDIR,
-                                                        crop_reproject_resample)
+from preprocessing.crop_mask_resample_reproject import \
+    (do_work, TMPDIR, crop_reproject_resample)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
         in_file = files[i]
         print('============file no: {} of {}==========='.format(i, len(files)))
         log.info("operating on {file} in process {rank}".format(file=in_file,
-                                                             rank=rank))
+                                                                rank=rank))
         out_file = join(output_dir, basename(in_file))
         log.info('Output file: {}'.format(out_file))
         do_work(input_file=in_file,

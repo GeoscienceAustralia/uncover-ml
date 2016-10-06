@@ -1,8 +1,13 @@
 from __future__ import print_function
 """
-python utility to crop, resample, reproject and optionally mask, a larger ifg into smaller ifg if desired.
-example usage: python crop_mask_resample_reproject.py -i slope_fill2.tif -o slope_fill2_out.tif -e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634' -m mack_LCC.tif -r bilinear -j 0
-Also optionally outputs a jpeg file corresponding to the final cropped, resampled, reprojectd and masked geotiff.
+python utility to crop, resample, reproject and optionally mask, a larger ifg
+into smaller ifg if desired. example usage:
+"python crop_mask_resample_reproject.py -i slope_fill2.tif
+-o slope_fill2_out.tif
+-e '-2362974.47956 -5097641.80634 2251415.52044 -1174811.80634'
+-m mack_LCC.tif -r bilinear -j 0"
+Also optionally outputs a jpeg file corresponding to the final cropped,
+resampled, reprojectd and masked geotiff.
 For resampling options see gdal.org/gdalwarp.html.
 """
 from optparse import OptionParser

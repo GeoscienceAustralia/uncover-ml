@@ -6,7 +6,7 @@ import click
 from os.path import abspath, join, basename, isdir, isfile
 import shutil
 import glob
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 from subprocess import check_call
 from itertools import product
 import warnings
@@ -158,9 +158,9 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     This function `centers` the kernel at the target pixel.
     This is slightly different from scipy.ndimage.uniform_filter application.
     In scipy.ndimage.uniform_filter, a convolution approach is implemented.
-    An equivalent is scipy.ndimage.uniform_filter like convolution approach with
-    no_data_val/nan handling can be found in filter_broadcast_uniform_filter in
-    this module.
+    An equivalent is scipy.ndimage.uniform_filter like convolution approach
+    with no_data_val/nan handling can be found in
+    filter_broadcast_uniform_filter in this module.
 
     Change function to nanmedian, nanmax, nanmin as required.
     """
@@ -178,7 +178,8 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
         mask = A == no_data_val
         A[mask] = np.nan
 
-    padded_A[size//2:rows_pad - size//2, size//2: cols_pad - size//2] = A.copy()
+    padded_A[size//2:rows_pad - size//2,
+             size//2: cols_pad - size//2] = A.copy()
 
     N, M = A.shape
 
@@ -316,7 +317,8 @@ def treat_file(t, out_dir, size, func, partitions):
         if p == 0 and mpiops.chunk_index == 0:
             yoff = int(rows[0])
             win_ysize = len(rows) + size // 2
-        elif (p == partitions - 1) and (mpiops.chunk_index == mpiops.chunks - 1):
+        elif (p == partitions - 1) and \
+                (mpiops.chunk_index == mpiops.chunks - 1):
             yoff = int(rows[0]) - size // 2
             win_ysize = len(rows) + size // 2
         else:
@@ -336,10 +338,11 @@ def treat_file(t, out_dir, size, func, partitions):
             mpiops.comm.send(averaged_data, dest=0)
         else:
             for node in range(mpiops.chunks):
-                averaged_data = mpiops.comm.recv(source=node)[size//2:-size//2] \
+                averaged_data = \
+                    mpiops.comm.recv(source=node)[size//2:-size//2] \
                     if node != 0 else averaged_data[:-size//2]
                 out_band.WriteArray(averaged_data,
-                    xoff=0, yoff=int(all_rows[node][0]))
+                                    xoff=0, yoff=int(all_rows[node][0]))
                 out_band.FlushCache()  # Write data to disc
             log.info('Calculated average for {} partition {}'.format(
                 basename(t), p))
