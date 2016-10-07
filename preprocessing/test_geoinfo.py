@@ -2,6 +2,7 @@ import unittest
 import os
 import glob
 import numpy as np
+from osgeo import gdal
 from preprocessing import geoinfo
 
 
@@ -17,8 +18,9 @@ class Geoinfo(unittest.TestCase):
 
     def test_gdal_vs_numpy(self):
         for t in self.tifs:
-            n_list = geoinfo.get_numpy_stats(t)
-            g_list = geoinfo.get_stats(t)
+            ds = gdal.Open(t)
+            n_list = geoinfo.numpy_band_stats(ds, t, 1)
+            g_list = geoinfo.band_stats(ds, t, 1)
             self.assertEqual(n_list[0], g_list[0])
             np.testing.assert_almost_equal(
                 np.array([float(t) for t in n_list[1:]]),
