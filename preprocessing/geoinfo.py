@@ -19,11 +19,14 @@ def cli():
 @cli.command()
 @click.argument('input_dir', type=click.Path(exists=True))
 @click.argument('report_file')
-def inspect(input_dir, report_file):
+@click.option('-e', '--extension',
+              type=str, default='tif',
+              help='geotif extension, e.g., `tif`, or `tiff`')
+def inspect(input_dir, report_file, extension):
     input_dir = abspath(input_dir)
     if isdir(input_dir):
         log.info('Reading tifs from {}'.format(input_dir))
-        tifs = glob.glob(join(input_dir, '*.tif'))
+        tifs = glob.glob(join(input_dir, '*.' + extension))
     else:
         log.info('Reporting geoinfo for {}'.format(input_dir))
         tifs = [input_dir]
