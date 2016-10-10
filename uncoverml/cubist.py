@@ -9,7 +9,6 @@ from shlex import split as parse
 
 import numpy as np
 from scipy.stats import norm
-from uncoverml import mpiops
 
 CONTINUOUS = 2
 CATEGORICAL = 3
