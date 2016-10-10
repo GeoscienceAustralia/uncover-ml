@@ -10,18 +10,19 @@ features:
     transforms:
       - centre
       - standardise
-    imputation: nn
+    imputation: none
   
   - name: my features
     type: categorical
     files:
       - directory: /home/lb/data/GA-cover/cat_datasets
     transforms:
-    imputation: nn 
+    imputation: nn
+
 
 
 targets:
-  file: /home/lb/data/GA-cover/geochem_sites.shp
+  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
   property: Na_ppm_i_1
 
 learning:
@@ -31,16 +32,17 @@ learning:
       committee_members: 20
       unbiased: False
       max_categories: 5000
-      target_transform: rank
+      target_transform: standardise
+      neighbors: 5
 
 prediction:
   quantiles: 0.95
 
 validation:
   # - feature_rank
-  # - k-fold:
-  #     folds: 5
-  #     random_seed: 1
+  - k-fold:
+      folds: 5
+      random_seed: 1
   
 output:
   directory: .

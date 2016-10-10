@@ -9,6 +9,7 @@ from shlex import split as parse
 
 import numpy as np
 from scipy.stats import norm
+from uncoverml import mpiops
 
 CONTINUOUS = 2
 CATEGORICAL = 3
@@ -71,7 +72,7 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
-                 feature_type=None):
+                 neighbors=5, feature_type=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -94,6 +95,9 @@ class Cubist:
         max_categories: int
             The maximum number of categories cubist will search for in the
             data when creating a categorical variable.
+        neighbors: int
+            Number of  nearest–neighbors to adjust the predictions from
+            the rule–based model.
         feature_type:  numpy array
             An array of length equal to the number of features, 0 if
             that feature is continuous and 1 if it is categorical.
@@ -111,6 +115,7 @@ class Cubist:
         self.max_rules = max_rules
         self.feature_type = feature_type
         self.max_categories = max_categories
+        self.neighbors = neighbors
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -285,6 +290,8 @@ class Cubist:
                     if self.max_rules else '') +
                    (' -C ' + str(self.committee_members)
                     if self.committee_members else '') +
+                   (' -n ' + str(self.neighbors)
+                    if self.neighbors else '') +
                    (' -f ' + self._filename))
         results = check_output(command, shell=True)
         # Print the program output directly
