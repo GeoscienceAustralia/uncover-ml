@@ -230,6 +230,13 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         return None, None, None
 
 
+def _join_dicts(dicts):
+    if dicts is None:
+        return
+    d = {k: v for D in dicts for k, v in D.items()}
+    return d
+
+
 def local_crossval(x_all, targets_all, config):
     """ Performs K-fold cross validation to test the applicability of a model.
     Given a set of inputs and outputs, this function will evaluate the
@@ -253,7 +260,7 @@ def local_crossval(x_all, targets_all, config):
         A dictionary containing all of the cross validation metrics, evaluated
         on the unseen data subset.
     """
-    if mpiops.chunk_index != 0:
+    if (mpiops.chunk_index != 0) and (not config.parallel_validate):
         return
 
     log.info("Validating with {} folds".format(config.folds))
@@ -263,17 +270,20 @@ def local_crossval(x_all, targets_all, config):
 
     # Split folds over workers
     fold_list = np.arange(config.folds)
-    # fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+    if config.parallel_validate:
+        fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+    else:
+        fold_node = fold_list
 
     y_pred = {}
     y_true = {}
-    scores = {}
+    fold_scores = {}
 
     # Train and score on each fold
-    for fold_i, fold in enumerate(fold_list):
+    for fold in fold_node:
 
-        log.info("Training fold {} of {}".format(fold_i + 1, config.folds))
-
+        print("Training fold {} of {} using process {}".format(
+            fold + 1, config.folds, mpiops.chunk_index))
         train_mask = cv_indices != fold
         test_mask = ~ train_mask
 
@@ -294,20 +304,29 @@ def local_crossval(x_all, targets_all, config):
         y_pred[fold] = y_k_pred
         y_true[fold] = y_k_test
 
-        scores[fold] = calculate_validation_scores(y_k_test, y_k_train,
+        fold_scores[fold] = calculate_validation_scores(y_k_test, y_k_train,
                                                    y_k_pred)
+    if config.parallel_validate:
+        y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
+        y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
+        scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
+    else:
+        scores = fold_scores
 
-    y_true = np.concatenate([y_true[i] for i in range(config.folds)])
-    y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
-    valid_metrics = scores[0].keys()
-    scores = {m: np.mean([d[m] for d in scores.values()])
-              for m in valid_metrics}
-    score_string = "Validation complete:\n"
-    for metric, score in scores.items():
-        score_string += "{}\t= {}\n".format(metric, score)
-    log.info(score_string)
+    result = None
+    if mpiops.chunk_index == 0:
+        y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
+        valid_metrics = scores[0].keys()
+        scores = {m: np.mean([d[m] for d in scores.values()])
+                  for m in valid_metrics}
+        score_string = "Validation complete:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+        log.info(score_string)
 
-    result_tags = model.get_predict_tags()
-    y_pred_dict = dict(zip(result_tags, y_pred.T))
-    result = CrossvalInfo(scores, y_true, y_pred_dict)
+        result_tags = model.get_predict_tags()
+        y_pred_dict = dict(zip(result_tags, y_pred.T))
+        result = CrossvalInfo(scores, y_true, y_pred_dict)
+    result = mpiops.comm.bcast(result, root=0)
     return result
