@@ -196,6 +196,10 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         all_names.extend(list(c.keys()))
     all_names = sorted(list(set(all_names)))  # make unique
 
+    if len(all_names) <= 1:
+        raise ValueError("Cannot perform feature ranking with only one "
+                         "feature! Try turning off the 'feature_rank' option.")
+
     for name in all_names:
         transform_sets_leaveout = copy.deepcopy(transform_sets)
         final_transform_leaveout = copy.deepcopy(config.final_transform)
