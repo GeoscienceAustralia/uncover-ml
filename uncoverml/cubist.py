@@ -71,6 +71,7 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
+                 sampling=60.0, seed=1,
                  neighbors=5, feature_type=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
@@ -97,6 +98,10 @@ class Cubist:
         neighbors: int
             Number of  nearest–neighbors to adjust the predictions from
             the rule–based model.
+        sampling: float (0.1 - 99.9)
+            percentage of data selected randomly by cubist
+        seed: int
+            random sampling seed
         feature_type:  numpy array
             An array of length equal to the number of features, 0 if
             that feature is continuous and 1 if it is categorical.
@@ -115,6 +120,8 @@ class Cubist:
         self.feature_type = feature_type
         self.max_categories = max_categories
         self.neighbors = neighbors
+        self.sampling = sampling
+        self.seed = seed
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -291,6 +298,10 @@ class Cubist:
                     if self.committee_members else '') +
                    (' -n ' + str(self.neighbors)
                     if self.neighbors else '') +
+                   (' -S ' + str(self.sampling)
+                    if self.sampling else '') +
+                   (' -I ' + str(self.seed)
+                    if self.seed else '') +
                    (' -f ' + self._filename))
         results = check_output(command, shell=True)
         # Print the program output directly

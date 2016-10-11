@@ -34,6 +34,8 @@ learning:
       max_categories: 5000
       target_transform: standardise
       neighbors: 5
+      sampling: 50
+      seed: 2
 
 prediction:
   quantiles: 0.95
