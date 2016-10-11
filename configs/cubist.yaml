@@ -37,6 +37,18 @@ learning:
       sampling: 50
       seed: 2
 
+#    algorithm: multicubist
+#    arguments:
+#      trees: 10
+#      max_rules: 500
+#      committee_members: 20
+#      unbiased: False
+#      max_categories: 5000
+#      target_transform: standardise
+#      neighbors: 5
+#      sampling: 50
+#      seed: 2
+
 prediction:
   quantiles: 0.95
 
