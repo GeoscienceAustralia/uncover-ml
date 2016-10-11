@@ -322,8 +322,7 @@ class MultiCubist:
     def __init__(self, trees=100, print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
                  neighbors=5, feature_type=None,
-                 random_seed=1,
-                 random_fraction=0.6):
+                 sampling=60, seed=1):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -367,8 +366,8 @@ class MultiCubist:
         self.max_categories = max_categories
         self.neighbors = neighbors
         self.trees = trees
-        self.random_seed = random_seed
-        self.random_fraction = random_fraction
+        self.seed = seed
+        self.sampling = sampling
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -386,23 +385,21 @@ class MultiCubist:
             y contains the output target variables for each corresponding
             input vector. Again we expect y.shape[0] = n.
         """
-        np.random.seed(self.random_seed)
-        n, _ = x.shape
-        frac_n = int(n * self.random_fraction)
-        print(frac_n, n)
+        np.random.seed(self.seed)
         for i, t in enumerate(range(self.trees)):
             log.info('Training tree {}'.format(i))
             cube = Cubist(name='temp' + str(t) + '_',
-                          print_output=False,
-                          unbiased=True,
-                          max_rules=None,
-                          committee_members=20,
-                          max_categories=5000,
-                          neighbors=5,
-                          feature_type=None)
+                          print_output=self.print_output,
+                          unbiased=self.unbiased,
+                          max_rules=self.max_rules,
+                          committee_members=self.committee_members,
+                          max_categories=self.max_categories,
+                          neighbors=self.neighbors,
+                          feature_type=self.feature_type,
+                          sampling=self.sampling,
+                          seed=np.random.randint(0, 10000))
             self._cubes.append(cube)
-            selection = np.random.randint(0, n, frac_n)
-            cube.fit(x[selection], y[selection])
+            cube.fit(x, y)
 
         # Mark that we are now trained
         self._trained = True
