@@ -5,6 +5,7 @@ from numpy import nan
 from os.path import join, basename
 import tempfile
 from osgeo import gdal
+import shutil
 
 from preprocessing import raster_average
 
@@ -158,6 +159,8 @@ class TestMPIvsSerial(unittest.TestCase):
         arr2 = gdal.Open(join(tmpdir2, basename(self.test_tif))).ReadAsArray()
 
         np.testing.assert_array_almost_equal(arr1, arr2)
+        shutil.rmtree(tmpdir1)
+        shutil.rmtree(tmpdir2)
 
 if __name__ == '__main__':
     unittest.main()
