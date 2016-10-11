@@ -287,7 +287,7 @@ def treat_file(tif, out_dir, size, func, partitions):
     band = ds.GetRasterBand(1)
     no_data_val = band.GetNoDataValue()
     output_file = join(out_dir, basename(tif))
-    if not no_data_val:
+    if no_data_val is None:
         log.error('NoDataValue was not found in input image {} \n'
                   'and this file was skipped'.format(basename(tif)))
         return
