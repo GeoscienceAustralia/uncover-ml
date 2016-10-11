@@ -144,9 +144,9 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     """
     Parameters
     ----------
-    A = input data
-    size = odd number uniform filtering kernel size
-    no_data_val = value in matrix that is treated as no data value
+    A: input data
+    size: odd number uniform filtering kernel size
+    no_data_val: value in matrix that is treated as no data value
     func: function to use, choose from np.nanmean/median/max/min etc.
 
     Returns: nanmean of the matrix A filtered by a uniform kernel of size=size

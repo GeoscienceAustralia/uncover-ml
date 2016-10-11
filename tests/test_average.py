@@ -6,6 +6,7 @@ from os.path import join, basename
 import tempfile
 from osgeo import gdal
 import shutil
+from itertools import product
 
 from preprocessing import raster_average
 
@@ -133,7 +134,7 @@ class TestFilterCenterWithNoData(unittest.TestCase):
                                              self.expected_average_5)
 
 
-class TestMPIvsSerial(unittest.TestCase):
+class TestPartition(unittest.TestCase):
 
     def setUp(self):
 
@@ -144,23 +145,29 @@ class TestMPIvsSerial(unittest.TestCase):
 
         tmpdir1 = tempfile.mkdtemp()
         tmpdir2 = tempfile.mkdtemp()
-        raster_average.treat_file(self.test_tif,
-                                  out_dir=tmpdir1,
-                                  size=3,
-                                  func='nanmean',
-                                  partitions=1)
 
-        raster_average.treat_file(self.test_tif,
-                                  out_dir=tmpdir2,
-                                  size=3,
-                                  func='nanmean',
-                                  partitions=5)
-        arr1 = gdal.Open(join(tmpdir1, basename(self.test_tif))).ReadAsArray()
-        arr2 = gdal.Open(join(tmpdir2, basename(self.test_tif))).ReadAsArray()
+        for n, partitions in product(range(1, 3), range(2, 100, 10)):
+            size = 2 * n + 1
+            raster_average.treat_file(self.test_tif,
+                                      out_dir=tmpdir1,
+                                      size=size,
+                                      func='nanmean',
+                                      partitions=partitions)
+            arr1 = gdal.Open(
+                join(tmpdir1, basename(self.test_tif))).ReadAsArray()
 
-        np.testing.assert_array_almost_equal(arr1, arr2)
-        shutil.rmtree(tmpdir1)
+            raster_average.treat_file(self.test_tif,
+                                      out_dir=tmpdir2,
+                                      size=size,
+                                      func='nanmean',
+                                      partitions=partitions)
+            arr2 = gdal.Open(join(tmpdir2,
+                                  basename(self.test_tif))).ReadAsArray()
+
+            np.testing.assert_array_almost_equal(arr1, arr2)
+
         shutil.rmtree(tmpdir2)
+        shutil.rmtree(tmpdir1)
 
 if __name__ == '__main__':
     unittest.main()
