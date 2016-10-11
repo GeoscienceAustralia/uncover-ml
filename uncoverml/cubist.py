@@ -420,10 +420,10 @@ class MultiCubist:
             print('Train first')
             return
 
-        # Determine which rule to run on each row and then run the regression
-        # on each row of x to get the regression output.
+        # allocate space for predictions from each cubist tree
         y_pred = np.zeros((n, len(self._cubes)))
 
+        # gather prediction from each tree
         for i, c in enumerate(self._cubes):
             y_pred[:, i] = c.predict(x)
 
