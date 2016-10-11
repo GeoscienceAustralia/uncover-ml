@@ -258,7 +258,9 @@ def mean(input_dir, out_dir, size, func, partitions):
         assert isfile(input_dir)
         tifs = [input_dir]
 
-    for t in tifs:
+    process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
+
+    for t in process_tifs:
         log.info('Starting to average {}'.format(basename(t)))
         treat_file(t, out_dir, size, func, partitions)
         log.info('Finished averaging {}'.format(basename(t)))
