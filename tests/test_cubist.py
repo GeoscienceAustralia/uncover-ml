@@ -29,7 +29,23 @@ y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
 def test_correct_range():
 
     # Fit the data
-    predictor = Cubist(print_output=False)
+    predictor = Cubist(print_output=False,
+                       sampling=0, seed=0)
+    predictor.fit(x, y)
+
+    # Predict the output
+    y_pred = predictor.predict(x)
+
+    # Assert that the true y is similar to the prediction
+    score = r2_score(y, y_pred)
+    assert 0.68 < score < 0.73
+
+
+def test_correct_range_with_sampling():
+
+    # Fit the data
+    predictor = Cubist(print_output=False,
+                       sampling=90, seed=10)
     predictor.fit(x, y)
 
     # Predict the output
@@ -42,8 +58,9 @@ def test_correct_range():
 
 def test_multicubist():
     predictor = MultiCubist(print_output=False,
-                            trees=10,
-                            random_fraction=1,
+                            trees=5,
+                            sampling=90,
+                            seed=1,
                             neighbors=1)
     predictor.fit(x, y)
 
@@ -52,6 +69,5 @@ def test_multicubist():
 
     # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
-
-    assert 0.73 < score < 0.76
+    assert 0.68 < score < 0.72
 
