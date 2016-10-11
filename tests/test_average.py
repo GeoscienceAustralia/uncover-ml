@@ -2,6 +2,10 @@ import unittest
 import os
 import numpy as np
 from numpy import nan
+from os.path import join, basename
+import tempfile
+from osgeo import gdal
+
 from preprocessing import raster_average
 
 UNCOVER = os.environ['UNCOVER']
@@ -126,6 +130,34 @@ class TestFilterCenterWithNoData(unittest.TestCase):
             self.data, size=5, no_data_val=1000.0, func=np.nanmean)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_5)
+
+
+class TestMPIvsSerial(unittest.TestCase):
+
+    def setUp(self):
+
+        std2000 = join(UNCOVER, 'preprocessing', 'mocks', 'std2000.tif')
+        self.test_tif = std2000
+
+    def test_mpi_vs_serial(self):
+
+        tmpdir1 = tempfile.mkdtemp()
+        tmpdir2 = tempfile.mkdtemp()
+        raster_average.treat_file(self.test_tif,
+                                  out_dir=tmpdir1,
+                                  size=3,
+                                  func='nanmean',
+                                  partitions=1)
+
+        raster_average.treat_file(self.test_tif,
+                                  out_dir=tmpdir2,
+                                  size=3,
+                                  func='nanmean',
+                                  partitions=5)
+        arr1 = gdal.Open(join(tmpdir1, basename(self.test_tif))).ReadAsArray()
+        arr2 = gdal.Open(join(tmpdir2, basename(self.test_tif))).ReadAsArray()
+
+        np.testing.assert_array_almost_equal(arr1, arr2)
 
 if __name__ == '__main__':
     unittest.main()

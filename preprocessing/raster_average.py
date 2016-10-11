@@ -264,93 +264,86 @@ def mean(input_dir, out_dir, size, func, partitions):
         log.info('Finished averaging {}'.format(basename(t)))
 
 
-def treat_file(t, out_dir, size, func, partitions):
+def treat_file(tif, out_dir, size, func, partitions):
     """
     Parameters
     ----------
-    t
-    out_dir
-    size
-    func
-    partitions
+    tif: input geotif
+    out_dir: output dir
+    size: odd int (2n+1)
+        size of kernel, has to be odd
+    func: str
+        one of nanmean, nanmedian, nanmax, nanmin
+    partitions: int
+        number of partitions for calculating 2d statistics
 
     Returns
     -------
-
+        None
     """
-    ds = gdal.Open(t, gdal.GA_ReadOnly)
+    ds = gdal.Open(tif, gdal.GA_ReadOnly)
     band = ds.GetRasterBand(1)
     no_data_val = band.GetNoDataValue()
-    output_file = join(out_dir, basename(t))
+    output_file = join(out_dir, basename(tif))
     if not no_data_val:
         log.error('NoDataValue was not found in input image {} \n'
-                  'and this file was skipped'.format(basename(t)))
+                  'and this file was skipped'.format(basename(tif)))
         return
     if band.DataType <= 4:
-        if mpiops.chunk_index == 0:
-            shutil.copy(t, output_file)
+        shutil.copy(tif, output_file)
         ds = None
         return
-    if mpiops.chunk_index == 0:
-        out_ds = gdal.GetDriverByName('GTiff').Create(
-            output_file, ds.RasterXSize, ds.RasterYSize,
-            1, band.DataType)
-        out_band = out_ds.GetRasterBand(1)
+    out_ds = gdal.GetDriverByName('GTiff').Create(
+        output_file, ds.RasterXSize, ds.RasterYSize,
+        1, band.DataType)
+    out_band = out_ds.GetRasterBand(1)
 
     tif_rows = ds.RasterYSize
     partition_rows = np.array_split(range(tif_rows), partitions)
 
     xoff = 0
     win_xsize = ds.RasterXSize
+    pad_width = size//2
 
     for p in range(partitions):
-        p_rows = partition_rows[p]
-        # all rows in this partition
-        all_rows = np.array_split(p_rows, mpiops.chunks)
-
-        # now split all_rows into number of processes
-        rows = all_rows[mpiops.chunk_index]
+        rows = partition_rows[p]
 
         # The following if else is to make sure we are not having
         # partition and mpi splitting effects
         # when p=0 and for the first chunk, don't look back
-        if p == 0 and mpiops.chunk_index == 0:
+        if p == 0:
             yoff = int(rows[0])
-            win_ysize = len(rows) + size // 2
-        elif (p == partitions - 1) and \
-                (mpiops.chunk_index == mpiops.chunks - 1):
-            yoff = int(rows[0]) - size // 2
-            win_ysize = len(rows) + size // 2
+            win_ysize = len(rows) + pad_width
+            _ysize = 0
+        elif p == partitions - 1:
+            yoff = int(rows[0]) - pad_width
+            win_ysize = len(rows) + pad_width
+            _ysize = pad_width
         else:
-            yoff = int(rows[0]) - size // 2
-            win_ysize = len(rows) + (size // 2) * 2
+            yoff = int(rows[0]) - pad_width
+            win_ysize = len(rows) + pad_width * 2
+            _ysize = pad_width
 
-        if partitions == 1 and mpiops.chunks == 1:
+        if partitions == 1:
             yoff = int(rows[0])
             win_ysize = len(rows)
+            _ysize = 0
 
         data = band.ReadAsArray(xoff=xoff, yoff=yoff,
                                 win_xsize=win_xsize, win_ysize=win_ysize)
 
         averaged_data = filter_center(data, size, no_data_val, func_map[func])
 
-        if mpiops.chunk_index != 0:
-            mpiops.comm.send(averaged_data, dest=0)
-        else:
-            for node in range(mpiops.chunks):
-                averaged_data = \
-                    mpiops.comm.recv(source=node)[size//2:-size//2] \
-                    if node != 0 else averaged_data[:-size//2]
-                out_band.WriteArray(averaged_data,
-                                    xoff=0, yoff=int(all_rows[node][0]))
-                out_band.FlushCache()  # Write data to disc
-            log.info('Calculated average for {} partition {}'.format(
-                basename(t), p))
+        averaged_data = averaged_data[_ysize: len(rows) + _ysize]
+        out_band.WriteArray(averaged_data,
+                            xoff=0, yoff=int(rows[0]))
+        out_band.FlushCache()  # Write data to disc
+        log.info('Calculated average for {} partition {}'.format(
+            basename(tif), p))
 
-    if mpiops.chunk_index == 0:
-        out_band.SetNoDataValue(no_data_val)
-        out_ds.SetGeoTransform(ds.GetGeoTransform())
-        out_ds.SetProjection(ds.GetProjection())
+    out_band.SetNoDataValue(no_data_val)
+    out_ds.SetGeoTransform(ds.GetGeoTransform())
+    out_ds.SetProjection(ds.GetProjection())
 
     out_ds = None  # close out_ds
     band = None
