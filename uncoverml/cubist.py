@@ -1,4 +1,3 @@
-
 import os
 import random
 import time
@@ -6,10 +5,11 @@ import operator
 from copy import deepcopy
 from subprocess import check_output
 from shlex import split as parse
-
+import logging
 import numpy as np
 from scipy.stats import norm
 
+log = logging.getLogger(__name__)
 CONTINUOUS = 2
 CATEGORICAL = 3
 
@@ -301,6 +301,171 @@ class Cubist:
         for extension in extensions:
             if os.path.exists(self._filename + extension):
                 os.remove(self._filename + extension)
+
+
+class MultiCubist:
+    """
+    This is a wrapper on Cubist.
+    """
+
+    def __init__(self, trees=100, print_output=False, unbiased=True,
+                 max_rules=None, committee_members=20, max_categories=5000,
+                 neighbors=5, feature_type=None,
+                 random_seed=1,
+                 random_fraction=0.6):
+        """ Instantiate the cubist class with a number of invocation parameters
+
+        Parameters
+        ----------
+        name: String
+            The prefix of the output files (extra data is appended),
+            these files should be removed automatically during training
+            and after testing.
+        print_output: boolean
+            If true, print cubist's stdout direclty to the python console.
+        unbiased: boolean
+            If true, ask cubist to generate unbiased models
+        max_rules: int | None
+            If none, cubist can generate as many rules as it sees fit,
+            otherwise; an integer limit can be added with this parameter.
+        committee_members: int
+            The number of cubist models to generate. Committee models can
+            greatly reduce the result variance, so this should be used
+            whenever possible.
+        max_categories: int
+            The maximum number of categories cubist will search for in the
+            data when creating a categorical variable.
+        neighbors: int
+            Number of  nearest–neighbors to adjust the predictions from
+            the rule–based model.
+        feature_type:  numpy array
+            An array of length equal to the number of features, 0 if
+            that feature is continuous and 1 if it is categorical.
+        """
+
+        # Setting up the user details
+        self._trained = False
+        self._cubes = []
+
+        # Setting the user options
+        self.print_output = print_output
+        self.committee_members = committee_members
+        self.unbiased = unbiased
+        self.max_rules = max_rules
+        self.feature_type = feature_type
+        self.max_categories = max_categories
+        self.neighbors = neighbors
+        self.trees = trees
+        self.random_seed = random_seed
+        self.random_fraction = random_fraction
+
+    def fit(self, x, y):
+        """ Train the Cubist model
+        Given a matrix of values (X) and an output vector of values (y), this
+        method will train the cubist model and then read the training files
+        directly as parameters of this class.
+
+        Parameters
+        ----------
+        x: numpy.array
+            X contains all of the training inputs, This should be a matrix of
+            values, where x.shape[0] = n, where n is the number of
+            available training points.
+        y: numpy.array
+            y contains the output target variables for each corresponding
+            input vector. Again we expect y.shape[0] = n.
+        """
+        np.random.seed(self.random_seed)
+        n, _ = x.shape
+        frac_n = int(n * self.random_fraction)
+        print(frac_n, n)
+        for i, t in enumerate(range(self.trees)):
+            log.info('Training tree {}'.format(i))
+            cube = Cubist(name='temp' + str(t) + '_',
+                          print_output=False,
+                          unbiased=True,
+                          max_rules=None,
+                          committee_members=20,
+                          max_categories=5000,
+                          neighbors=5,
+                          feature_type=None)
+            self._cubes.append(cube)
+            selection = np.random.randint(0, n, frac_n)
+            cube.fit(x[selection], y[selection])
+
+        # Mark that we are now trained
+        self._trained = True
+
+    def predict_proba(self, x, interval=0.95):
+        """ Predict the outputs and variances of the inputs
+        This method predicts the output values that would correspond to
+        each input in X. This method also returns the certainty of the
+        model in each case, which is only sensible when the number of
+        commitee members is greater than one.
+
+        This method also outputs quantile information along with the
+        variance to establish the probability distribution clearly.
+
+        Parameters
+        ----------
+        x: numpy.array
+            The inputs for which the model should be evaluated
+        interval: float
+            The probability threshold for which the quantiles should
+            be output.
+
+        Returns
+        -------
+        y_mean: numpy.array
+            An array of expected output values given the inputs
+        y_var: numpy.array
+            The variance of the outputs
+        ql: numpy.array
+            The lower quantiles for each input
+        qu: numpy.array
+            The upper quantiles for each input
+        """
+
+        n, m = x.shape
+
+        # We can't make predictions until we have trained the model
+        if not self._trained:
+            print('Train first')
+            return
+
+        # Determine which rule to run on each row and then run the regression
+        # on each row of x to get the regression output.
+        y_pred = np.zeros((n, len(self._cubes)))
+
+        for i, c in enumerate(self._cubes):
+            y_pred[:, i] = c.predict(x)
+
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
+
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
+
+        # Convert the prediction to a numpy array and return it
+        return y_mean, y_var, ql, qu
+
+    def predict(self, x):
+        """ Predicts the y values that correspond to each input
+        Just like predict_proba, this predicts the output value, given a
+        list of inputs contained in x.
+
+        Parameters
+        ----------
+        x: numpy.array
+            The inputs for which the model should be evaluated
+
+        Returns
+        -------
+        y_mean: numpy.array
+            An array of expected output values given the inputs
+        """
+        mean, _, _, _ = self.predict_proba(x)
+        return mean
 
 
 class Rule:

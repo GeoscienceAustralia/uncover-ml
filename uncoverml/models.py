@@ -22,6 +22,7 @@ from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from uncoverml.transforms import target as transforms
 from uncoverml.likelihoods import Switching
 from uncoverml.cubist import Cubist
+from uncoverml.cubist import MultiCubist
 
 
 #
@@ -803,6 +804,14 @@ class CubistTransformed(transform_targets(Cubist), TagsMixin):
     pass
 
 
+class CubistMultiTransformed(transform_targets(MultiCubist), TagsMixin):
+    """
+    Cubist regression (wrapper).
+
+    https://www.rulequest.com/cubist-info.html
+    """
+    pass
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -880,6 +889,7 @@ modelmaps = {'randomforest': RandomForestTransformed,
              'decisiontree': DecisionTreeTransformed,
              'extratree': ExtraTreeTransformed,
              'cubist': CubistTransformed,
+             'multicubist': CubistMultiTransformed,
              'depthregress': DepthRegressor,
              }
 
