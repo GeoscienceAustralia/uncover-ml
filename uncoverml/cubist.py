@@ -323,34 +323,13 @@ class MultiCubist:
                  max_rules=None, committee_members=20, max_categories=5000,
                  neighbors=5, feature_type=None,
                  sampling=60, seed=1):
-        """ Instantiate the cubist class with a number of invocation parameters
+        """ Instantiate the multicubist class with a number of invocation parameters
 
         Parameters
         ----------
-        name: String
-            The prefix of the output files (extra data is appended),
-            these files should be removed automatically during training
-            and after testing.
-        print_output: boolean
-            If true, print cubist's stdout direclty to the python console.
-        unbiased: boolean
-            If true, ask cubist to generate unbiased models
-        max_rules: int | None
-            If none, cubist can generate as many rules as it sees fit,
-            otherwise; an integer limit can be added with this parameter.
-        committee_members: int
-            The number of cubist models to generate. Committee models can
-            greatly reduce the result variance, so this should be used
-            whenever possible.
-        max_categories: int
-            The maximum number of categories cubist will search for in the
-            data when creating a categorical variable.
-        neighbors: int
-            Number of  nearest–neighbors to adjust the predictions from
-            the rule–based model.
-        feature_type:  numpy array
-            An array of length equal to the number of features, 0 if
-            that feature is continuous and 1 if it is categorical.
+        trees: int
+            number of Cubist trees
+        Other Parameters definitions can be found in Cubist.
         """
 
         # Setting up the user details
