@@ -2,13 +2,10 @@
 import numpy as np
 from sklearn.metrics import r2_score
 
-from uncoverml.cubist import Cubist
+from uncoverml.cubist import Cubist, MultiCubist
 
-
-def test_correct_range():
-
-    # Declare some test data taken from the boston houses dataset
-    x = np.array([
+# Declare some test data taken from the boston houses dataset
+x = np.array([
         [0.006, 18.00, 2.310, 0.5380, 6.5750, 65.20, 4.0900, 1, 296.0, 15.30],
         [0.027, 0.00, 7.070, 0.4690, 6.4210, 78.90, 4.9671, 2, 242.0, 17.80],
         [0.027, 0.00, 7.070, 0.4690, 7.1850, 61.10, 4.9671, 2, 242.0, 17.80],
@@ -25,8 +22,11 @@ def test_correct_range():
         [0.629, 0.00, 8.140, 0.5380, 5.9490, 61.80, 4.7075, 4, 307.0, 21.00],
         [0.637, 0.00, 8.140, 0.5380, 6.0960, 84.50, 4.4619, 4, 307.0, 21.00]])
 
-    y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
+y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
                   16.50, 18.90, 15.00, 18.90, 21.70, 20.40, 18.2])
+
+
+def test_correct_range():
 
     # Fit the data
     predictor = Cubist(print_output=False)
@@ -38,3 +38,20 @@ def test_correct_range():
     # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
     assert 0.68 < score < 0.73
+
+
+def test_multicubist():
+    predictor = MultiCubist(print_output=False,
+                            trees=10,
+                            random_fraction=1,
+                            neighbors=1)
+    predictor.fit(x, y)
+
+    # Predict the output
+    y_pred = predictor.predict(x)
+
+    # Assert that the true y is similar to the prediction
+    score = r2_score(y, y_pred)
+
+    assert 0.73 < score < 0.76
+
