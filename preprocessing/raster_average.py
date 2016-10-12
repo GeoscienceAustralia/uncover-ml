@@ -140,7 +140,8 @@ def make_tiles(data, nrows, ncols):
             for r, c in product(row_arr, col_arr)]
 
 
-def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
+def filter_center(A, size=3, no_data_val=None, func=np.nanmean,
+                  mask_no_data=False):
     """
     Parameters
     ----------
@@ -148,6 +149,7 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     size: odd number uniform filtering kernel size
     no_data_val: value in matrix that is treated as no data value
     func: function to use, choose from np.nanmean/median/max/min etc.
+    mask_no_data: bool, if True will keep the original no data pixel intact
 
     Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
     -------
@@ -174,7 +176,7 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     padded_A[:] = np.nan
     rows_pad, cols_pad = padded_A.shape
 
-    if no_data_val:
+    if no_data_val is not None:
         mask = A == no_data_val
         A[mask] = np.nan
 
@@ -186,7 +188,14 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean):
     B = as_strided(padded_A, (N, M, size, size),
                    padded_A.strides+padded_A.strides)
     B = B.copy().reshape((N, M, size**2))
-    return func(B, axis=2)
+
+    avg = func(B, axis=2)
+    avg[np.isnan(avg)] = no_data_val
+
+    if mask_no_data:
+        avg[mask] = no_data_val
+
+    return avg
 
 
 def filter_uniform_filter(A, size=3, no_data_val=None,
@@ -331,12 +340,15 @@ def treat_file(tif, out_dir, size, func, partitions):
             win_ysize = len(rows)
             _ysize = 0
 
+        # grab data with pad_width added appropriately
         data = band.ReadAsArray(xoff=xoff, yoff=yoff,
                                 win_xsize=win_xsize, win_ysize=win_ysize)
 
         averaged_data = filter_center(data, size, no_data_val, func_map[func])
 
+        # discard pad_width
         averaged_data = averaged_data[_ysize: len(rows) + _ysize]
+
         out_band.WriteArray(averaged_data,
                             xoff=0, yoff=int(rows[0]))
         out_band.FlushCache()  # Write data to disc
