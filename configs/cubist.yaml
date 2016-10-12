@@ -48,6 +48,7 @@ learning:
 #      neighbors: 5
 #      sampling: 50
 #      seed: 2
+#      parallel: True
 
 prediction:
   quantiles: 0.95
