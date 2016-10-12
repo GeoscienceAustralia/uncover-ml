@@ -323,28 +323,9 @@ def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
     for p in range(partitions):
         rows = partition_rows[p]
 
-        # The following if else is to make sure we are not having
-        # partition and mpi splitting effects
-        # when p=0 and for the first chunk, don't look back
-        if p == 0:
-            yoff = int(rows[0])
-            win_ysize = len(rows) + pad_width
-            _ysize = 0
-        elif p == partitions - 1:
-            yoff = int(rows[0]) - pad_width
-            win_ysize = len(rows) + pad_width
-            _ysize = pad_width
-        else:
-            yoff = int(rows[0]) - pad_width
-            win_ysize = len(rows) + pad_width * 2
-            _ysize = pad_width
-
-        if partitions == 1:
-            yoff = int(rows[0])
-            win_ysize = len(rows)
-            _ysize = 0
-
         # grab data with pad_width added appropriately
+        _ysize, win_ysize, yoff = _edge_adjust(p, pad_width, partitions, rows)
+
         data = band.ReadAsArray(xoff=xoff, yoff=yoff,
                                 win_xsize=win_xsize, win_ysize=win_ysize)
 
@@ -367,3 +348,27 @@ def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
     out_ds = None  # close out_ds
     band = None
     ds = None  # close dataset
+
+
+def _edge_adjust(partition, pad_width, partitions, rows):
+    # The following if else is to make sure we are not having
+    # partition and mpi splitting effects
+    # when p=0 don't look back
+    if partition == 0:
+        yoff = int(rows[0])
+        win_ysize = len(rows) + pad_width
+        _ysize = 0
+    elif partition == partitions - 1:
+        yoff = int(rows[0]) - pad_width
+        win_ysize = len(rows) + pad_width
+        _ysize = pad_width
+    else:
+        yoff = int(rows[0]) - pad_width
+        win_ysize = len(rows) + pad_width * 2
+        _ysize = pad_width
+    if partitions == 1:
+        yoff = int(rows[0])
+        win_ysize = len(rows)
+        _ysize = 0
+
+    return _ysize, win_ysize, yoff
