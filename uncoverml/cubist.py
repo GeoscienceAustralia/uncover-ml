@@ -391,7 +391,8 @@ class MultiCubist:
         cubes_dict = {}
 
         for i, t in enumerate(process_trees):
-            log.info('Training tree {}'.format(t))
+            print('training tree {} using '
+                  'process {}'.format(t, mpiops.chunk_index))
             cube = Cubist(name='temp_' + str(t) + '_',
                           print_output=self.print_output,
                           unbiased=self.unbiased,
