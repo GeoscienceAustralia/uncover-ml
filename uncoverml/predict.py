@@ -41,11 +41,10 @@ def _get_data(subchunk, config):
 
 
 def render_partition(model, subchunk, image_out, config):
-        x = _get_data(subchunk, config)
-        total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
-        log.info("Loaded {:2.4f}GB of image data".format(total_gb))
-        alg = config.algorithm
-        log.info("Predicting targets for {}.".format(alg))
-
-        y_star = predict(x, model, interval=config.quantiles)
-        image_out.write(y_star, subchunk)
+    x = _get_data(subchunk, config)
+    total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+    log.info("Loaded {:2.4f}GB of image data".format(total_gb))
+    alg = config.algorithm
+    log.info("Predicting targets for {}.".format(alg))
+    y_star = predict(x, model, interval=config.quantiles)
+    image_out.write(y_star, subchunk)

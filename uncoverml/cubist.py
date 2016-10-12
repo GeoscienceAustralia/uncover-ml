@@ -1,7 +1,6 @@
 import os
 import random
 import time
-import operator
 from copy import deepcopy
 from subprocess import check_output
 from shlex import split as parse
@@ -111,7 +110,7 @@ class Cubist:
 
         # Setting up the user details
         self._trained = False
-        self._models = []
+        self.models = []
         self._filename = name + str(time.time()) + str(random.random())
 
         # Setting the user options
@@ -188,7 +187,7 @@ class Cubist:
         #   [[<Rule>, <Rule>, ...], [<Rule>, <Rule>, ...], ... ]
         models = map(remove_first_line, modelfile.split('rules')[1:])
         rules_split = [model.split('conds')[1:] for model in models]
-        self._models = [list(map(new_rule, model)) for model in rules_split]
+        self.models = [list(map(new_rule, model)) for model in rules_split]
 
         '''
         Complete the training by cleaning up after ourselves
@@ -241,8 +240,8 @@ class Cubist:
 
         # Determine which rule to run on each row and then run the regression
         # on each row of x to get the regression output.
-        y_pred = np.zeros((n, len(self._models)))
-        for m, model in enumerate(self._models):
+        y_pred = np.zeros((n, len(self.models)))
+        for m, model in enumerate(self.models):
             for rule in model:
 
                 # Determine which rows satisfy this rule
@@ -316,6 +315,13 @@ class Cubist:
                 os.remove(self._filename + extension)
 
 
+def _join_dicts(dicts):
+    if dicts is None:
+        return
+    d = {k: v for D in dicts for k, v in D.items()}
+    return d
+
+
 class MultiCubist:
     """
     This is a wrapper on Cubist.
@@ -342,7 +348,7 @@ class MultiCubist:
 
         # Setting up the user details
         self._trained = False
-        # self._cubes = []
+        self._cubes = {}
 
         # Setting the user options
         self.print_output = print_output
@@ -356,7 +362,6 @@ class MultiCubist:
         self.seed = seed
         self.sampling = sampling
         self.parallel = parallel
-        self._prediction = None
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -382,8 +387,8 @@ class MultiCubist:
                                            mpiops.chunks)[mpiops.chunk_index]
         else:
             process_trees = range(self.trees)
-        n, m = x.shape
-        mean_pred = np.zeros((n, len(process_trees)))
+
+        cubes_dict = {}
 
         for i, t in enumerate(process_trees):
             log.info('Training tree {}'.format(t))
@@ -397,20 +402,10 @@ class MultiCubist:
                           feature_type=self.feature_type,
                           sampling=self.sampling,
                           seed=np.random.randint(0, 10000))
-            # self._cubes.append(cube)
             cube.fit(x, y)
-            mean_pred[:, i] = cube.predict(x)
+            cubes_dict[t] = cube
 
-        mpiops.comm.Barrier()
-        mean_pred = mpiops.comm.gather(mean_pred, root=0)
-
-        if mpiops.chunk_index == 0:
-            pred = np.hstack(mean_pred)
-        else:
-            pred = None
-        pred = mpiops.comm.bcast(pred, root=0)
-        self._prediction = pred
-
+        self._cubes = _join_dicts(mpiops.comm.allgather(cubes_dict))
         # Mark that we are now trained
         self._trained = True
 
@@ -444,22 +439,22 @@ class MultiCubist:
             The upper quantiles for each input
         """
 
-        # n, m = x.shape
-
         # We can't make predictions until we have trained the model
         if not self._trained:
             print('Train first')
             return
-        #
-        # # allocate space for predictions from each cubist tree
-        # y_pred = np.zeros((n, len(self._cubes)))
-        #
-        # # gather prediction from each tree
-        # for i, c in enumerate(self._cubes):
-        #     y_pred[:, i] = c.predict(x)
 
-        y_mean = np.mean(self._prediction, axis=1)
-        y_var = np.var(self._prediction, axis=1)
+        n, _ = x.shape
+
+        # on each row of x to get the regression output.
+        # we have prediction for each x tree/cubes number of times
+        y_pred = np.zeros((n, len(self._cubes)))
+
+        for c in self._cubes:
+            y_pred[:, c] = self._cubes[c].predict(x)
+
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
