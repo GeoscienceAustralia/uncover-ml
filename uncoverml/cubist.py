@@ -9,6 +9,8 @@ import logging
 import numpy as np
 from scipy.stats import norm
 
+from uncoverml import mpiops
+
 log = logging.getLogger(__name__)
 CONTINUOUS = 2
 CATEGORICAL = 3
@@ -322,19 +324,25 @@ class MultiCubist:
     def __init__(self, trees=100, print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
                  neighbors=5, feature_type=None,
-                 sampling=60, seed=1):
-        """ Instantiate the multicubist class with a number of invocation parameters
+                 sampling=60, seed=1,
+                 parallel=False):
+        """
+        Instantiate the multicubist class with a number of invocation
+        parameters
 
         Parameters
         ----------
         trees: int
             number of Cubist trees
+        parallel: bool
+            Whether to use mpi for fitting or not
+
         Other Parameters definitions can be found in Cubist.
         """
 
         # Setting up the user details
         self._trained = False
-        self._cubes = []
+        # self._cubes = []
 
         # Setting the user options
         self.print_output = print_output
@@ -347,6 +355,8 @@ class MultiCubist:
         self.trees = trees
         self.seed = seed
         self.sampling = sampling
+        self.parallel = parallel
+        self._prediction = None
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -364,10 +374,20 @@ class MultiCubist:
             y contains the output target variables for each corresponding
             input vector. Again we expect y.shape[0] = n.
         """
-        np.random.seed(self.seed)
-        for i, t in enumerate(range(self.trees)):
-            log.info('Training tree {}'.format(i))
-            cube = Cubist(name='temp' + str(t) + '_',
+        # set a different random seed for each thread
+        np.random.seed(self.seed + mpiops.chunk_index)
+
+        if self.parallel:
+            process_trees = np.array_split(range(self.trees),
+                                           mpiops.chunks)[mpiops.chunk_index]
+        else:
+            process_trees = range(self.trees)
+        n, m = x.shape
+        mean_pred = np.zeros((n, len(process_trees)))
+
+        for i, t in enumerate(process_trees):
+            log.info('Training tree {}'.format(t))
+            cube = Cubist(name='temp_' + str(t) + '_',
                           print_output=self.print_output,
                           unbiased=self.unbiased,
                           max_rules=self.max_rules,
@@ -377,8 +397,19 @@ class MultiCubist:
                           feature_type=self.feature_type,
                           sampling=self.sampling,
                           seed=np.random.randint(0, 10000))
-            self._cubes.append(cube)
+            # self._cubes.append(cube)
             cube.fit(x, y)
+            mean_pred[:, i] = cube.predict(x)
+
+        mpiops.comm.Barrier()
+        mean_pred = mpiops.comm.gather(mean_pred, root=0)
+
+        if mpiops.chunk_index == 0:
+            pred = np.hstack(mean_pred)
+        else:
+            pred = None
+        pred = mpiops.comm.bcast(pred, root=0)
+        self._prediction = pred
 
         # Mark that we are now trained
         self._trained = True
@@ -413,22 +444,22 @@ class MultiCubist:
             The upper quantiles for each input
         """
 
-        n, m = x.shape
+        # n, m = x.shape
 
         # We can't make predictions until we have trained the model
         if not self._trained:
             print('Train first')
             return
+        #
+        # # allocate space for predictions from each cubist tree
+        # y_pred = np.zeros((n, len(self._cubes)))
+        #
+        # # gather prediction from each tree
+        # for i, c in enumerate(self._cubes):
+        #     y_pred[:, i] = c.predict(x)
 
-        # allocate space for predictions from each cubist tree
-        y_pred = np.zeros((n, len(self._cubes)))
-
-        # gather prediction from each tree
-        for i, c in enumerate(self._cubes):
-            y_pred[:, i] = c.predict(x)
-
-        y_mean = np.mean(y_pred, axis=1)
-        y_var = np.var(y_pred, axis=1)
+        y_mean = np.mean(self._prediction, axis=1)
+        y_var = np.var(self._prediction, axis=1)
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))

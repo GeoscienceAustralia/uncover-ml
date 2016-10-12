@@ -263,6 +263,8 @@ class ImageWriter:
         x = x.astype(np.float32)
         rows = self.shape[0]
         bands = x.shape[1]
+        print('in geoio', x.shape, rows, bands)
+
         image = x.reshape((rows, -1, bands))
         # make sure we're writing nodatavals
         if x.mask is not False:
