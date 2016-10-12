@@ -405,7 +405,7 @@ class MultiCubist:
             cube.fit(x, y)
             cubes_dict[t] = cube
 
-        self._cubes = _join_dicts(mpiops.comm.allgather(cubes_dict))
+        self._cubes = _join_dicts(mpiops.comm.gather(cubes_dict, root=0))
         # Mark that we are now trained
         self._trained = True
 
