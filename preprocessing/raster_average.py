@@ -258,7 +258,9 @@ def filter_uniform_filter(A, size=3, no_data_val=None,
                    'calculate 2d stats with the uniform kernel '
                    'centered around the target pixel for continuous data. '
                    'Categorical data are copied unchanged.')
-def mean(input_dir, out_dir, size, func, partitions):
+@click.option('-m', '--mask', type=bool, default=False,
+              help='whether to keep the original no data pixels intact')
+def mean(input_dir, out_dir, size, func, partitions, mask):
     input_dir = abspath(input_dir)
     if isdir(input_dir):
         log.info('Reading tifs from {}'.format(input_dir))
@@ -271,11 +273,11 @@ def mean(input_dir, out_dir, size, func, partitions):
 
     for t in process_tifs:
         log.info('Starting to average {}'.format(basename(t)))
-        treat_file(t, out_dir, size, func, partitions)
+        treat_file(t, out_dir, size, func, partitions, mask)
         log.info('Finished averaging {}'.format(basename(t)))
 
 
-def treat_file(tif, out_dir, size, func, partitions):
+def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
     """
     Parameters
     ----------
@@ -287,6 +289,8 @@ def treat_file(tif, out_dir, size, func, partitions):
         one of nanmean, nanmedian, nanmax, nanmin
     partitions: int
         number of partitions for calculating 2d statistics
+    mask_no_data: bool
+        whether to keep the original nodatavalues intact
 
     Returns
     -------
@@ -344,7 +348,8 @@ def treat_file(tif, out_dir, size, func, partitions):
         data = band.ReadAsArray(xoff=xoff, yoff=yoff,
                                 win_xsize=win_xsize, win_ysize=win_ysize)
 
-        averaged_data = filter_center(data, size, no_data_val, func_map[func])
+        averaged_data = filter_center(data, size, no_data_val, func_map[func],
+                                      mask_no_data)
 
         # discard pad_width
         averaged_data = averaged_data[_ysize: len(rows) + _ysize]
