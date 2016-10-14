@@ -150,6 +150,7 @@ class Config:
         self.target_property = s['targets']['property']
         self.algorithm = s['learning']['algorithm']
         self.cubist = self.algorithm == 'cubist'
+        self.multicubist = self.algorithm == 'multicubist'
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
 

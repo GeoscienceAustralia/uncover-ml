@@ -332,6 +332,4 @@ def local_crossval(x_all, targets_all, config):
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, y_pred.T))
         result = CrossvalInfo(scores, y_true, y_pred_dict)
-    if config.parallel_validate:
-        result = mpiops.comm.bcast(result, root=0)
     return result
