@@ -380,21 +380,19 @@ class MultiCubist:
             input vector. Again we expect y.shape[0] = n.
         """
         # set a different random seed for each thread
-        np.random.seed(self.seed) #+ mpiops.chunk_index)
+        np.random.seed(self.seed + mpiops.chunk_index)
 
-        # if self.parallel:
-        #     process_trees = np.array_split(range(self.trees),
-        #                                    mpiops.chunks)[mpiops.chunk_index]
-        # else:
-        process_trees = range(self.trees)
+        if self.parallel:
+            process_trees = np.array_split(range(self.trees),
+                                           mpiops.chunks)[mpiops.chunk_index]
+        else:
+            process_trees = range(self.trees)
 
         cubes_dict = {}
 
         for i, t in enumerate(process_trees):
-            print('training tree {} using process {}'.format(
-                i + 1, mpiops.chunk_index))
-            # print('training tree {} using '
-            #       'process {}'.format(t, mpiops.chunk_index))
+            print('training tree {} using '
+                  'process {}'.format(t, mpiops.chunk_index))
             cube = Cubist(name='temp_' + str(t) + '_',
                           print_output=self.print_output,
                           unbiased=self.unbiased,
@@ -407,9 +405,12 @@ class MultiCubist:
                           seed=np.random.randint(0, 10000))
             cube.fit(x, y)
             cubes_dict[t] = cube
-        self._cubes = cubes_dict
 
-        # self._cubes = _join_dicts(mpiops.comm.allgather(cubes_dict))
+        if self.parallel:
+            self._cubes = _join_dicts(mpiops.comm.allgather(cubes_dict))
+        else:
+            self._cubes = cubes_dict
+
         # Mark that we are now trained
         self._trained = True
 

@@ -78,7 +78,15 @@ def learn(pipeline_file, partitions):
     x_all = ls.features.gather_features(x, node=0)
 
     if config.cross_validate:
+        # run cross validation in parallel, but one thread in each fold
+        if config.multicubist:
+            config.algorithm_args['parallel'] = False
+
         run_crossval(x_all, targets_all, config)
+
+        # change back to parallel
+        if config.multicubist:
+            config.algorithm_args['parallel'] = True
 
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
