@@ -62,6 +62,7 @@ class RasterioImageSource(ImageSource):
     def __init__(self, filename):
 
         self._filename = filename
+        assert os.path.isfile(filename), '{} does not exist'.format(filename)
         with rasterio.open(self._filename, 'r') as geotiff:
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
