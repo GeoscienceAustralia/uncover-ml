@@ -163,7 +163,9 @@ def unsupervised(config):
 @click.argument('model_or_cluster_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def predict(model_or_cluster_file, partitions):
+@click.option('-m', '--mask', type=str, default='',
+              help='divide each node\'s data into this many partitions')
+def predict(model_or_cluster_file, partitions, mask):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
@@ -171,7 +173,8 @@ def predict(model_or_cluster_file, partitions):
     model = state_dict["model"]
     config = state_dict["config"]
 
-    mask = config.mask
+    mask = mask if mask else config.mask
+
     if not isfile(mask):
         mask = None
         log.info('A mask was provided, but the file does not exist on disc or '
