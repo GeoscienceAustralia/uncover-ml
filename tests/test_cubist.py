@@ -69,5 +69,28 @@ def test_multicubist():
 
     # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
-    assert 0.68 < score < 0.72
+    assert 0.68 < score < 0.8
+
+
+def test_multicibist_mpi():
+    """
+    run this with something like:
+    "mpirun -np 4 py.test ../tests/test_cubist.py::test_multicubist_mpi"
+
+    """
+
+    predictor = MultiCubist(trees=10,
+                            sampling=60,
+                            seed=1,
+                            neighbors=1,
+                            committee_members=5,
+                            parallel=True)
+    predictor.fit(x, y)
+
+    # Predict the output
+    y_pred_p = predictor.predict(x)
+
+    score = r2_score(y, y_pred_p)
+
+    assert 0.7 < score < 0.8
 
