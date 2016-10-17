@@ -28,6 +28,8 @@ features:
           seed: 1
     imputation: none
 
+mask:
+  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
 
 preprocessing:
   # imputation: none

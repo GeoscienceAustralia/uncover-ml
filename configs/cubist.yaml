@@ -19,6 +19,8 @@ features:
     transforms:
     imputation: nn
 
+mask:
+  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
 
 
 targets:
