@@ -23,7 +23,7 @@ from uncoverml.transforms import target as transforms
 from uncoverml.likelihoods import Switching
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
-
+from uncoverml import mpiops
 
 #
 # Module constants
@@ -608,6 +608,79 @@ class RandomForestRegressor(RFR):
         return Ey, Vy, ql, qu
 
 
+def _join_dicts(dicts):
+    if dicts is None:
+        return
+    d = {k: v for D in dicts for k, v in D.items()}
+    return d
+
+
+class RandomForestRegressorMulti:
+
+    def __init__(self, forests=10,
+                 parallel=True,
+                 n_estimators=10,
+                 random_state=None,
+                 **kwargs):
+        self.forests = forests
+        self.n_estimators = n_estimators
+        self.parallel = parallel
+        self._forests = {}
+        self._trained = False
+        self.kwargs = kwargs
+        self.random_state = random_state
+
+    def fit(self, x, y):
+
+        # set a different random seed for each thread
+        np.random.seed(self.random_state + mpiops.chunk_index)
+
+        if self.parallel:
+            process_rfs = np.array_split(range(self.forests),
+                                         mpiops.chunks)[mpiops.chunk_index]
+        else:
+            process_rfs = range(self.forests)
+
+        forests_dict = {}
+
+        for i, t in enumerate(process_rfs):
+            print('training forest {} using '
+                  'process {}'.format(t, mpiops.chunk_index))
+
+            # change random state in each forest
+            self.kwargs['random_state'] = np.random.randint(0, 10000)
+            rf = RandomForestRegressor(self.n_estimators, self.kwargs)
+            rf.fit(x, y)
+            forests_dict[t] = rf
+
+        if self.parallel:
+            self._forests = _join_dicts(mpiops.comm.allgather(forests_dict))
+        else:
+            self._forests = forests_dict
+
+        # Mark that we are now trained
+        self._trained = True
+
+    def predict_proba(self, x, interval=0.95):
+
+        y_pred = np.zeros(x.shape[0], self.forests * self.n_estimators)
+
+        for k, f in self._forests.items():
+            for m, dt in enumerate(f.estimators_):
+                y_pred[:, k * self.n_estimators + m] = dt.predict(x)
+
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
+
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
+
+        return y_mean, y_var, ql, qu
+
+    def predict(self, x):
+        return self.predict_proba(x)[0]
+
+
 #
 # Target Transformer factory
 #
@@ -740,6 +813,16 @@ class RandomForestTransformed(transform_targets(RandomForestRegressor),
     pass
 
 
+class MultiRandomForestTransformed(
+        transform_targets(RandomForestRegressorMulti), TagsMixin):
+    """
+    Random forest regression.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor
+    """
+    pass
+
+
 class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
     """
     Approximate Gaussian process.
@@ -806,7 +889,7 @@ class CubistTransformed(transform_targets(Cubist), TagsMixin):
 
 class CubistMultiTransformed(transform_targets(MultiCubist), TagsMixin):
     """
-    Cubist regression (wrapper).
+    Parallel Cubist regression (wrapper).
 
     https://www.rulequest.com/cubist-info.html
     """
@@ -880,6 +963,7 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 
 # Add all models available to the learning pipeline here!
 modelmaps = {'randomforest': RandomForestTransformed,
+             'multirandomforest': MultiRandomForestTransformed,
              'bayesreg': LinearRegTransformed,
              'sgdbayesreg': SGDLinearRegTransformed,
              'approxgp': ApproxGPTransformed,

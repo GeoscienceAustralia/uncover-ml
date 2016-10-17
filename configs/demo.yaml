@@ -66,9 +66,9 @@ learning:
     #     maxiter: 5000
     #     nbases: 50
     #     random_state: 1
-    algorithm: randomforest
+    algorithm: multirandomforest
     arguments:
-      n_estimators: 500
+      n_estimators: 10
       target_transform: standardise
 
 prediction:
