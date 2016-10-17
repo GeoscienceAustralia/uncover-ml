@@ -5,7 +5,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 import pickle
 import logging
-
+from os.path import isfile
 import numpy as np
 import click
 import resource
@@ -170,6 +170,13 @@ def predict(model_or_cluster_file, partitions):
 
     model = state_dict["model"]
     config = state_dict["config"]
+
+    mask = config.mask
+    if not isfile(mask):
+        mask = None
+        log.info('A mask was provided, but the file does not exist on disc or '
+                 'is not a file.')
+
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
         log.info("Memory contstraint forcing {} iterations "
@@ -186,7 +193,7 @@ def predict(model_or_cluster_file, partitions):
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(model, i, image_out, config)
+        ls.predict.render_partition(model, i, image_out, config, mask)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 

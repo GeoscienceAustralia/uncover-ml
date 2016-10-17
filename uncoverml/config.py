@@ -154,6 +154,10 @@ class Config:
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
 
+        self.mask = None
+        if s['mask']:
+            self.mask = s['mask']['file']
+
         # TODO pipeline this better
         self.rank_features = False
         self.cross_validate = False
