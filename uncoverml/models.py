@@ -5,6 +5,9 @@ from itertools import chain
 import numpy as np
 from scipy.stats import norm
 from scipy.integrate import fixed_quad
+import pickle
+from os.path import join, isdir, abspath
+from os import mkdir
 
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
@@ -618,6 +621,7 @@ def _join_dicts(dicts):
 class RandomForestRegressorMulti:
 
     def __init__(self,
+                 outdir,
                  forests=10,
                  parallel=True,
                  n_estimators=10,
@@ -628,8 +632,10 @@ class RandomForestRegressorMulti:
         self.parallel = parallel
         self.kwargs = kwargs
         self.random_state = random_state
-        self._forests = {}
         self._trained = False
+        assert isdir(abspath(outdir)), 'Make sure the outdir exists ' \
+                                       'and writeable'
+        self.temp_dir = abspath(outdir)
 
     def fit(self, x, y):
 
@@ -642,9 +648,7 @@ class RandomForestRegressorMulti:
         else:
             process_rfs = range(self.forests)
 
-        forests_dict = {}
-
-        for i, t in enumerate(process_rfs):
+        for t in process_rfs:
             print('training forest {} using '
                   'process {}'.format(t, mpiops.chunk_index))
 
@@ -653,12 +657,14 @@ class RandomForestRegressorMulti:
             rf = RandomForestRegressor(n_estimators=self.n_estimators,
                                        **self.kwargs)
             rf.fit(x, y)
-            forests_dict[t] = rf
-
-        if self.parallel:
-            self._forests = _join_dicts(mpiops.comm.allgather(forests_dict))
-        else:
-            self._forests = forests_dict
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir,
+                            'rf_model_{}.pk'.format(t))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir,
+                            'rf_model_{}_{}.pk'.format(t, mpiops.chunk_index))
+            with open(pk_f, 'wb') as fp:
+                pickle.dump(rf, fp)
 
         # Mark that we are now trained
         self._trained = True
@@ -667,10 +673,18 @@ class RandomForestRegressorMulti:
 
         y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
 
-        for k, f in self._forests.items():
-            for m, dt in enumerate(f.estimators_):
-                nums = dt.predict(x)
-                y_pred[:, k * self.n_estimators + m] = nums
+        for i in range(self.forests):
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir,
+                            'rf_model_{}.pk'.format(i))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir,
+                            'rf_model_{}_{}.pk'.format(i, mpiops.chunk_index))
+            with open(pk_f, 'rb') as fp:
+                f = pickle.load(fp)
+                for m, dt in enumerate(f.estimators_):
+                    nums = dt.predict(x)
+                    y_pred[:, i * self.n_estimators + m] = nums
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)
@@ -967,6 +981,7 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 # Add all models available to the learning pipeline here!
 modelmaps = {'randomforest': RandomForestTransformed,
              'multirandomforest': MultiRandomForestTransformed,
+             # 'multirandomforest': RandomForestRegressorMulti,
              'bayesreg': LinearRegTransformed,
              'sgdbayesreg': SGDLinearRegTransformed,
              'approxgp': ApproxGPTransformed,

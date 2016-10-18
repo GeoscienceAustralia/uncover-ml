@@ -77,6 +77,7 @@ learning:
 #       target_transform: standardise
 #       forests: 10
 #       parallel: True
+#       outdir: .
 
 
 prediction:
