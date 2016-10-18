@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 def local_learn_model(x_all, targets_all, config):
 
     model = None
-    if config.multicubist:
+    if config.multicubist or config.multirandomforest:
         y = targets_all.observations
         model = modelmaps[config.algorithm](**config.algorithm_args)
         apply_multiple_masked(model.fit, (x_all, y),

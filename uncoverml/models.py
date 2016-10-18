@@ -617,18 +617,19 @@ def _join_dicts(dicts):
 
 class RandomForestRegressorMulti:
 
-    def __init__(self, forests=10,
+    def __init__(self,
+                 forests=10,
                  parallel=True,
                  n_estimators=10,
-                 random_state=None,
+                 random_state=1,
                  **kwargs):
         self.forests = forests
         self.n_estimators = n_estimators
         self.parallel = parallel
-        self._forests = {}
-        self._trained = False
         self.kwargs = kwargs
         self.random_state = random_state
+        self._forests = {}
+        self._trained = False
 
     def fit(self, x, y):
 
@@ -649,7 +650,8 @@ class RandomForestRegressorMulti:
 
             # change random state in each forest
             self.kwargs['random_state'] = np.random.randint(0, 10000)
-            rf = RandomForestRegressor(self.n_estimators, self.kwargs)
+            rf = RandomForestRegressor(n_estimators=self.n_estimators,
+                                       **self.kwargs)
             rf.fit(x, y)
             forests_dict[t] = rf
 
@@ -663,11 +665,12 @@ class RandomForestRegressorMulti:
 
     def predict_proba(self, x, interval=0.95):
 
-        y_pred = np.zeros(x.shape[0], self.forests * self.n_estimators)
+        y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
 
         for k, f in self._forests.items():
             for m, dt in enumerate(f.estimators_):
-                y_pred[:, k * self.n_estimators + m] = dt.predict(x)
+                nums = dt.predict(x)
+                y_pred[:, k * self.n_estimators + m] = nums
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)

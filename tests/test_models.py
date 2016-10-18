@@ -5,7 +5,7 @@ from uncoverml.models import modelmaps
 
 
 @pytest.fixture(params=[k for k in modelmaps.keys()
-                        if k not in ['depthregress', 'cubist']])
+                        if k not in ['depthregress', 'cubist', 'multicubist']])
 def get_models(request):
     return modelmaps[request.param]
 

@@ -66,10 +66,18 @@ learning:
     #     maxiter: 5000
     #     nbases: 50
     #     random_state: 1
-    algorithm: multirandomforest
+    algorithm: randomforest
     arguments:
-      n_estimators: 10
+      n_estimators: 500
       target_transform: standardise
+
+#    algorithm: multirandomforest
+#    arguments:
+#       n_estimators: 50
+#       target_transform: standardise
+#       forests: 10
+#       parallel: True
+
 
 prediction:
   quantiles: 0.95
