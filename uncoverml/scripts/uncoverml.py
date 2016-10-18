@@ -165,7 +165,7 @@ def unsupervised(config):
               help='divide each node\'s data into this many partitions')
 @click.option('-m', '--mask', type=str, default='',
               help='mask file used to limit prediction area')
-@click.option('-r', '--retain', type=int, default=0,
+@click.option('-r', '--retain', type=int, default=None,
               help='mask values where to predict')
 def predict(model_or_cluster_file, partitions, mask, retain):
 
@@ -176,7 +176,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     config = state_dict["config"]
 
     config.mask = mask if mask else config.mask
-    config.retain = retain
+    config.retain = retain if retain else config.retain
 
     if not isfile(config.mask):
         config.mask = None
