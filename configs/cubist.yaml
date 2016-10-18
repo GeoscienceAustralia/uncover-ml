@@ -19,9 +19,11 @@ features:
     transforms:
     imputation: nn
 
+# mask file used for masking prediction grid
+# Mask with values=retain will be predicted
 mask:
   file: /home/lb/data/GA-cover/mask/old_mask_test.tif
-
+  retain: 1
 
 targets:
   file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp

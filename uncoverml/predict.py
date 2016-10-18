@@ -31,7 +31,8 @@ def predict(data, model, interval=0.95, **kwargs):
     return result
 
 
-def _get_data(subchunk, config, mask):
+def _get_data(subchunk, config):
+    mask = config.mask
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
@@ -42,15 +43,15 @@ def _get_data(subchunk, config, mask):
         mask_data = features.extract_subchunks(mask_source, subchunk,
                                                config.n_subchunks,
                                                config.patchsize)
-        mask_x = mask_data[:, 0, 0, 0] != 1
-        log.info('Only areas with mask==1 will be predicted')
+        mask_x = mask_data[:, 0, 0, 0] != config.retain
+        log.info('Areas with mask==nodata will not be predicted')
         x[mask_x, 0] = np.nan
 
     return x
 
 
-def render_partition(model, subchunk, image_out, config, mask):
-    x = _get_data(subchunk, config, mask)
+def render_partition(model, subchunk, image_out, config):
+    x = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm

@@ -157,6 +157,7 @@ class Config:
         self.mask = None
         if s['mask']:
             self.mask = s['mask']['file']
+            self.retain = s['mask']['retain']  # mask areas that are predicted
 
         # TODO pipeline this better
         self.rank_features = False

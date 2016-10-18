@@ -28,8 +28,11 @@ features:
           seed: 1
     imputation: none
 
+# mask file used for masking prediction grid
+# Mask with values=retain will be predicted
 mask:
   file: /home/lb/data/GA-cover/mask/old_mask_test.tif
+  retain: 1
 
 preprocessing:
   # imputation: none

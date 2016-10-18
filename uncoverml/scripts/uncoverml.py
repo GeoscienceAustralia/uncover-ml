@@ -164,8 +164,10 @@ def unsupervised(config):
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
 @click.option('-m', '--mask', type=str, default='',
-              help='divide each node\'s data into this many partitions')
-def predict(model_or_cluster_file, partitions, mask):
+              help='mask file used to limit prediction area')
+@click.option('-r', '--retain', type=int, default=0,
+              help='mask values where to predict')
+def predict(model_or_cluster_file, partitions, mask, retain):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
@@ -173,10 +175,11 @@ def predict(model_or_cluster_file, partitions, mask):
     model = state_dict["model"]
     config = state_dict["config"]
 
-    mask = mask if mask else config.mask
+    config.mask = mask if mask else config.mask
+    config.retain = retain
 
-    if not isfile(mask):
-        mask = None
+    if not isfile(config.mask):
+        config.mask = None
         log.info('A mask was provided, but the file does not exist on disc or '
                  'is not a file.')
 
@@ -196,7 +199,7 @@ def predict(model_or_cluster_file, partitions, mask):
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(model, i, image_out, config, mask)
+        ls.predict.render_partition(model, i, image_out, config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
