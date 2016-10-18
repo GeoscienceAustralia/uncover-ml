@@ -176,12 +176,13 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     config = state_dict["config"]
 
     config.mask = mask if mask else config.mask
-    config.retain = retain if retain else config.retain
+    if config.mask:
+        config.retain = retain if retain else config.retain
 
-    if not isfile(config.mask):
-        config.mask = None
-        log.info('A mask was provided, but the file does not exist on disc or '
-                 'is not a file.')
+        if not isfile(config.mask):
+            config.mask = ''
+            log.info('A mask was provided, but the file does not exist on '
+                     'disc or is not a file.')
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:

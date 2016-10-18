@@ -155,7 +155,7 @@ class Config:
         self.quantiles = s['prediction']['quantiles']
 
         self.mask = None
-        if s['mask']:
+        if self.mask:
             self.mask = s['mask']['file']
             self.retain = s['mask']['retain']  # mask areas that are predicted
 
