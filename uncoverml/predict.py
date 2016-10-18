@@ -38,16 +38,24 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)
+    mask_x = mask_rows(config, mask, subchunk)
+    if mask_x is not None:
+        assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
+                                              'mask and inputs'
+        x.mask = np.concatenate(np.array([mask_x for i
+                                          in range(x.shape[1])]).T)
+    return x
+
+
+def mask_rows(config, mask, subchunk):
     if mask:
         mask_source = geoio.RasterioImageSource(mask)
         mask_data = features.extract_subchunks(mask_source, subchunk,
                                                config.n_subchunks,
                                                config.patchsize)
-        mask_x = mask_data[:, 0, 0, 0] != config.retain
-        log.info('Areas with mask==nodata will not be predicted')
-        x[mask_x, 0] = np.nan
-
-    return x
+        mask_x = mask_data.data[:, 0, 0, 0] != config.retain
+        log.info('Areas with mask={} will be predicted'.format(config.retain))
+        return mask_x
 
 
 def render_partition(model, subchunk, image_out, config):
