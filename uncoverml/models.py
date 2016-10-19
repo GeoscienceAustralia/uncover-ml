@@ -665,7 +665,8 @@ class RandomForestRegressorMulti:
                             'rf_model_{}_{}.pk'.format(t, mpiops.chunk_index))
             with open(pk_f, 'wb') as fp:
                 pickle.dump(rf, fp)
-
+        if self.parallel:
+            mpiops.comm.barrier()
         # Mark that we are now trained
         self._trained = True
 
@@ -925,7 +926,15 @@ def apply_masked(func, data, args=(), kwargs={}):
 
     # Prediction with missing inputs
     okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
-    res = func(data.data[okdata], *args, **kwargs)
+
+    if data.data[okdata].shape[0] == 0:  # if all of this chunk is masked
+        # to get dimension of the func return, we create a dummpy res
+        res = func(np.ones_like(data.data[0, :]), *args, **kwargs)
+        mres = np.empty(len(data)) if res.ndim == 1 \
+                        else np.empty((len(data), res.shape[1]))
+        return np.ma.array(mres, mask=False)
+    else:
+        res = func(data.data[okdata], *args, **kwargs)
 
     # For training/fitting that returns nothing
     if not isinstance(res, np.ndarray):
@@ -981,7 +990,6 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 # Add all models available to the learning pipeline here!
 modelmaps = {'randomforest': RandomForestTransformed,
              'multirandomforest': MultiRandomForestTransformed,
-             # 'multirandomforest': RandomForestRegressorMulti,
              'bayesreg': LinearRegTransformed,
              'sgdbayesreg': SGDLinearRegTransformed,
              'approxgp': ApproxGPTransformed,
