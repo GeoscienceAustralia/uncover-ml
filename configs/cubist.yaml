@@ -43,6 +43,7 @@ learning:
 
 #    algorithm: multicubist
 #    arguments:
+#      outdir: .
 #      trees: 10
 #      max_rules: 500
 #      committee_members: 20

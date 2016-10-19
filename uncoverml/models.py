@@ -7,7 +7,6 @@ from scipy.stats import norm
 from scipy.integrate import fixed_quad
 import pickle
 from os.path import join, isdir, abspath
-from os import mkdir
 
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
@@ -621,7 +620,7 @@ def _join_dicts(dicts):
 class RandomForestRegressorMulti:
 
     def __init__(self,
-                 outdir,
+                 outdir='.',
                  forests=10,
                  parallel=True,
                  n_estimators=10,

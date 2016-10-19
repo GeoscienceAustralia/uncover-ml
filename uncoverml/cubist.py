@@ -1,6 +1,8 @@
 import os
 import random
 import time
+from os.path import join
+import pickle
 from copy import deepcopy
 from subprocess import check_output
 from shlex import split as parse
@@ -327,7 +329,7 @@ class MultiCubist:
     This is a wrapper on Cubist.
     """
 
-    def __init__(self, trees=100, print_output=False, unbiased=True,
+    def __init__(self, outdir='.', trees=100, print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
                  neighbors=5, feature_type=None,
                  sampling=60, seed=1,
@@ -348,9 +350,9 @@ class MultiCubist:
 
         # Setting up the user details
         self._trained = False
-        self._cubes = {}
 
         # Setting the user options
+        self.temp_dir = outdir
         self.print_output = print_output
         self.committee_members = committee_members
         self.unbiased = unbiased
@@ -388,11 +390,10 @@ class MultiCubist:
         else:
             process_trees = range(self.trees)
 
-        cubes_dict = {}
-
-        for i, t in enumerate(process_trees):
+        for t in process_trees:
             print('training tree {} using '
                   'process {}'.format(t, mpiops.chunk_index))
+
             cube = Cubist(name='temp_' + str(t) + '_',
                           print_output=self.print_output,
                           unbiased=self.unbiased,
@@ -404,12 +405,17 @@ class MultiCubist:
                           sampling=self.sampling,
                           seed=np.random.randint(0, 10000))
             cube.fit(x, y)
-            cubes_dict[t] = cube
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir,
+                            'cube_{}.pk'.format(t))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir,
+                            'cube_{}_{}.pk'.format(t, mpiops.chunk_index))
+            with open(pk_f, 'wb') as fp:
+                pickle.dump(cube, fp)
 
         if self.parallel:
-            self._cubes = _join_dicts(mpiops.comm.allgather(cubes_dict))
-        else:
-            self._cubes = cubes_dict
+            mpiops.comm.barrier()
 
         # Mark that we are now trained
         self._trained = True
@@ -453,17 +459,27 @@ class MultiCubist:
 
         # on each row of x to get the regression output.
         # we have prediction for each x tree/cubes * len(models) in each tree
-        num_models = len(self._cubes[0].models)
-        y_pred = np.zeros((n, len(self._cubes) * num_models))
 
-        for k, c in self._cubes.items():
-            for m, model in enumerate(c.models):
-                for rule in model:
-                    # Determine which rows satisfy this rule
-                    mask = rule.satisfied(x)
-                    # Make the prediction for the whole matrix,
-                    # and keep only the rows that are correctly sized
-                    y_pred[mask, k * num_models + m] += rule.regress(x, mask)
+        y_pred = np.zeros((n, self.trees * self.committee_members))
+
+        for i in range(self.trees):
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir,
+                            'cube_{}.pk'.format(i))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir,
+                            'cube_{}_{}.pk'.format(i, mpiops.chunk_index))
+            with open(pk_f, 'rb') as fp:
+                c = pickle.load(fp)
+                for m, model in enumerate(c.models):
+                    for rule in model:
+                        # Determine which rows satisfy this rule
+                        mask = rule.satisfied(x)
+                        # Make the prediction for the whole matrix,
+                        # and keep only the rows that are correctly sized
+                        y_pred[mask, i * self.committee_members + m] += \
+                            rule.regress(x, mask)
+
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)
 
