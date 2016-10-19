@@ -916,6 +916,7 @@ class CubistMultiTransformed(transform_targets(MultiCubist), TagsMixin):
 # Helper functions for multiple outputs and missing/masked data
 #
 
+
 def apply_masked(func, data, args=(), kwargs={}):
     # Data is just a matrix (i.e. X for prediction)
 
@@ -928,10 +929,7 @@ def apply_masked(func, data, args=(), kwargs={}):
 
     if data.data[okdata].shape[0] == 0:  # if all of this chunk is masked
         # to get dimension of the func return, we create a dummpy res
-        res = func(np.ones_like(data.data[0, :]), *args, **kwargs)
-        mres = np.empty(len(data)) if res.ndim == 1 \
-                        else np.empty((len(data), res.shape[1]))
-        return np.ma.array(mres, mask=False)
+        res = func(np.ones((1, data.data.shape[1])), *args, **kwargs)
     else:
         res = func(data.data[okdata], *args, **kwargs)
 
@@ -942,7 +940,9 @@ def apply_masked(func, data, args=(), kwargs={}):
     # Fill in a padded array the size of the original
     mres = np.empty(len(data)) if res.ndim == 1 \
         else np.empty((len(data), res.shape[1]))
-    mres[okdata] = res
+
+    if data.data[okdata].shape[0] != 0:  # don't change due to dummy res
+        mres[okdata] = res
 
     # Make sure the mask is consistent with the original array
     mask = ~okdata

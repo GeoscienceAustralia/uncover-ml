@@ -38,12 +38,11 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)
-    mask_x = mask_rows(config, mask, subchunk)
-    if mask_x is not None:
-        assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
+    mask = mask_rows(config, mask, subchunk)
+    if mask is not None:
+        assert x.shape[0] == mask.shape[0], 'shape mismatch of ' \
                                               'mask and inputs'
-        x.mask = np.concatenate(np.array([mask_x for i
-                                          in range(x.shape[1])]).T)
+        x.mask = np.tile(mask, (x.shape[1], 1)).T
     return x
 
 

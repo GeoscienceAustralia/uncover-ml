@@ -394,7 +394,7 @@ class MultiCubist:
             print('training tree {} using '
                   'process {}'.format(t, mpiops.chunk_index))
 
-            cube = Cubist(name='temp_' + str(t) + '_',
+            cube = Cubist(name='temp_{}_'.format(t),
                           print_output=self.print_output,
                           unbiased=self.unbiased,
                           max_rules=self.max_rules,
