@@ -74,8 +74,8 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
-                 sampling=60.0, seed=1,
-                 neighbors=5, feature_type=None,
+                 sampling=None, seed=None,
+                 neighbors=None, feature_type=None,
                  extrapolation=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
@@ -125,6 +125,10 @@ class Cubist:
         self.max_categories = max_categories
         self.neighbors = neighbors
         self.sampling = sampling
+
+        # make sure seed is only used with sampling
+        if (not sampling) and seed:
+            seed = None
         self.seed = seed
         self.extrapolation = extrapolation
 
@@ -365,6 +369,10 @@ class MultiCubist:
         self.max_categories = max_categories
         self.neighbors = neighbors
         self.trees = trees
+
+        # make sure seed is only used with sampling
+        if (not sampling) and seed:
+            seed = None
         self.seed = seed
         self.sampling = sampling
         self.parallel = parallel

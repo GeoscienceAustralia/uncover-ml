@@ -41,6 +41,23 @@ learning:
       sampling: 50
       seed: 2
 
+# neighbors: int, number of nearest neighbors to be used (1-9)
+# nearest-neighbor model: predicts the target value of a new case by finding
+# the n most similar cases in the training data,
+# and averaging their target values.
+
+# max_categories: number of max categories in categorical data
+# max_rules: use this to control overfitting
+# outdir: directory where intermediate model files are stored
+# trees: number of cubist jobs, trees X committee_memebers will be the total
+# number of trees
+# extrapolation: allowed max deviation of predictions from training targets
+# sampling: random sampling expressed in % terms to be  used during training
+# parallel: train cuist jobs in parallel
+# unbiased: whether to train unbiased trees. Use unbiased=True for more skewed
+# target distribution
+#
+
 #    algorithm: multicubist
 #    arguments:
 #      outdir: .
@@ -49,6 +66,7 @@ learning:
 #      committee_members: 20
 #      unbiased: False
 #      max_categories: 5000
+#      extrapolation: 5
 #      target_transform: standardise
 #      neighbors: 5
 #      sampling: 50
