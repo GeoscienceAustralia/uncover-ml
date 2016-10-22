@@ -301,7 +301,7 @@ class Cubist:
             import sys
             sys.exit()
 
-        # Start the script and wait until it has yeilded
+        # Start the script and wait until it has yielded
         command = (invocation +
                    (' -u' if self.unbiased else '') +
                    (' -r ' + str(self.max_rules)
@@ -344,7 +344,7 @@ class MultiCubist:
     def __init__(self, outdir='.', trees=10, print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
                  neighbors=5, feature_type=None,
-                 sampling=60, seed=1, extrapolation=None,
+                 sampling=None, seed=None, extrapolation=None,
                  parallel=False):
         """
         Instantiate the multicubist class with a number of invocation
@@ -399,7 +399,8 @@ class MultiCubist:
             input vector. Again we expect y.shape[0] = n.
         """
         # set a different random seed for each thread
-        np.random.seed(self.seed + mpiops.chunk_index)
+        if self.seed:
+            np.random.seed(self.seed + mpiops.chunk_index)
 
         if self.parallel:
             process_trees = np.array_split(range(self.trees),

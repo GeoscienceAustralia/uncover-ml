@@ -48,9 +48,9 @@ learning:
 
 # max_categories: number of max categories in categorical data
 
-# max_rules: use this to control overfitting
+# max_rules: use this to control overfitting (int: 1-1000000)
 
-# committee_members: number of committees to use
+# committee_members: number of committees to use (int: 1-100)
 
 # outdir: directory where intermediate model files are stored
 
