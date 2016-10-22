@@ -75,7 +75,8 @@ class Cubist:
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
                  sampling=60.0, seed=1,
-                 neighbors=5, feature_type=None):
+                 neighbors=5, feature_type=None,
+                 extrapolation=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -125,6 +126,7 @@ class Cubist:
         self.neighbors = neighbors
         self.sampling = sampling
         self.seed = seed
+        self.extrapolation = extrapolation
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -303,6 +305,8 @@ class Cubist:
                     if self.neighbors else '') +
                    (' -S ' + str(self.sampling)
                     if self.sampling else '') +
+                   (' -e ' + str(self.extrapolation)
+                    if self.extrapolation else '') +
                    (' -I ' + str(self.seed)
                     if self.seed else '') +
                    (' -f ' + self._filename))
@@ -332,7 +336,7 @@ class MultiCubist:
     def __init__(self, outdir='.', trees=100, print_output=False, unbiased=True,
                  max_rules=None, committee_members=20, max_categories=5000,
                  neighbors=5, feature_type=None,
-                 sampling=60, seed=1,
+                 sampling=60, seed=1, extrapolation=None,
                  parallel=False):
         """
         Instantiate the multicubist class with a number of invocation
@@ -364,6 +368,7 @@ class MultiCubist:
         self.seed = seed
         self.sampling = sampling
         self.parallel = parallel
+        self.extrapolation = extrapolation
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -403,6 +408,7 @@ class MultiCubist:
                           neighbors=self.neighbors,
                           feature_type=self.feature_type,
                           sampling=self.sampling,
+                          extrapolation=self.extrapolation,
                           seed=np.random.randint(0, 10000))
             cube.fit(x, y)
             if self.parallel:  # used in training
