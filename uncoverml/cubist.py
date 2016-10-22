@@ -74,9 +74,8 @@ class Cubist:
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
-                 sampling=None, seed=None,
-                 neighbors=None, feature_type=None,
-                 extrapolation=None):
+                 sampling=None, seed=None, neighbors=None, feature_type=None,
+                 composite_model=True, extrapolation=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -129,9 +128,19 @@ class Cubist:
         self.neighbors = neighbors
         self.sampling = sampling
 
+        if composite_model and neighbors:
+            log.info('Supplied neighbors will be used for composite model. '
+                     'To let cubist decide the number of neighbors, do not '
+                     'supply neighbors with config and choose '
+                     'composite_model=True')
+            composite_model = None
+        self.composite_model = composite_model
+
         # make sure seed is only used with sampling
         if (not sampling) and seed:
             seed = None
+            log.info('Supplied random seed was not used as sampling % was not'
+                     'provided')
         self.seed = seed
         self.extrapolation = extrapolation
 
@@ -316,6 +325,8 @@ class Cubist:
                     if self.extrapolation else '') +
                    (' -I ' + str(self.seed)
                     if self.seed else '') +
+                   (' -i'
+                   if self.composite_model else '') +
                    (' -f ' + self._filename))
 
         results = check_output(command, shell=True)
@@ -343,9 +354,9 @@ class MultiCubist:
 
     def __init__(self, outdir='.', trees=10, print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
-                 neighbors=5, feature_type=None,
+                 neighbors=None, feature_type=None,
                  sampling=None, seed=None, extrapolation=None,
-                 parallel=False):
+                 composite_model=True, parallel=False):
         """
         Instantiate the multicubist class with a number of invocation
         parameters
@@ -373,14 +384,11 @@ class MultiCubist:
         self.max_categories = max_categories
         self.neighbors = neighbors
         self.trees = trees
-
-        # make sure seed is only used with sampling
-        if (not sampling) and seed:
-            seed = None
         self.seed = seed
         self.sampling = sampling
         self.parallel = parallel
         self.extrapolation = extrapolation
+        self.composite_model = composite_model
 
     def fit(self, x, y):
         """ Train the Cubist model
