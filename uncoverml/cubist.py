@@ -73,7 +73,7 @@ class Cubist:
     """
 
     def __init__(self, name='temp', print_output=False, unbiased=True,
-                 max_rules=None, committee_members=20, max_categories=5000,
+                 max_rules=None, committee_members=1, max_categories=5000,
                  sampling=None, seed=None,
                  neighbors=None, feature_type=None,
                  extrapolation=None):
@@ -109,6 +109,9 @@ class Cubist:
         feature_type:  numpy array
             An array of length equal to the number of features, 0 if
             that feature is continuous and 1 if it is categorical.
+        extrapolation: float between 0-100
+            allowed max deviation of predictions from training set
+            targets range
         """
 
         # Setting up the user details
@@ -314,6 +317,7 @@ class Cubist:
                    (' -I ' + str(self.seed)
                     if self.seed else '') +
                    (' -f ' + self._filename))
+
         results = check_output(command, shell=True)
         # Print the program output directly
         if self.print_output:
@@ -337,8 +341,8 @@ class MultiCubist:
     This is a wrapper on Cubist.
     """
 
-    def __init__(self, outdir='.', trees=100, print_output=False, unbiased=True,
-                 max_rules=None, committee_members=20, max_categories=5000,
+    def __init__(self, outdir='.', trees=10, print_output=False, unbiased=True,
+                 max_rules=None, committee_members=1, max_categories=5000,
                  neighbors=5, feature_type=None,
                  sampling=60, seed=1, extrapolation=None,
                  parallel=False):

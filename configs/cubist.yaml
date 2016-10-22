@@ -47,16 +47,32 @@ learning:
 # and averaging their target values.
 
 # max_categories: number of max categories in categorical data
+
 # max_rules: use this to control overfitting
+
+# committee_members: number of committees to use
+
 # outdir: directory where intermediate model files are stored
+
 # trees: number of cubist jobs, trees X committee_memebers will be the total
 # number of trees
-# extrapolation: allowed max deviation of predictions from training targets
+
+# extrapolation: allowed max deviation of predictions from
+# training targets float between 0-100.
+
 # sampling: random sampling expressed in % terms to be  used during training
+
 # parallel: train cuist jobs in parallel
+
 # unbiased: whether to train unbiased trees. Use unbiased=True for more skewed
 # target distribution
-#
+
+# composite_model: Use rule based model or composite model?
+# composite_model=True improves on rule based models, but in addition
+# does the equivalent of krigging.
+
+# target_transform: target transform (choice: stardardise, sqrt, log, identity',
+# logistic, rank, kde)
 
 #    algorithm: multicubist
 #    arguments:
@@ -71,6 +87,7 @@ learning:
 #      neighbors: 5
 #      sampling: 50
 #      seed: 2
+#      composite_model: True
 #      parallel: True
 
 prediction:
