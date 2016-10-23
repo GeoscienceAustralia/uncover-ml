@@ -6,7 +6,7 @@ from numpy import ma
 from osgeo import gdal
 from os.path import join, abspath, basename, isdir, isfile
 import csv
-import gc
+from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +14,13 @@ log = logging.getLogger(__name__)
 @click.group()
 def cli():
     logging.basicConfig(level=logging.INFO)
+
+
+def _join_dicts(dicts):
+    if dicts is None:
+        return
+    d = {k: v for D in dicts for k, v in D.items()}
+    return d
 
 
 @cli.command()
@@ -33,27 +40,42 @@ def inspect(input_dir, report_file, extension):
 
     with open(report_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='excel')
-        writer.writerow(['FineName', 'NoDataValue',
+        writer.writerow(['FineName', 'band', 'NoDataValue',
                         'rows', 'cols', 'Min', 'Max', 'Mean', 'Std'])
-        for t in tifs:
-            get_stats(t, writer)
+        process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
+
+        stats = []  # process geotiff stats including multibanded geotif
+        for t in process_tifs:
+            stats.append(get_stats(t))
+
+        # gather all process geotif stats in stats dict
+        stats = _join_dicts(stats)
+
+        # global gather in root
+        stats = _join_dicts(mpiops.comm.gather(stats, root=0))
+
+        if mpiops.chunk_index == 0:
+            for k, v in stats.items():
+                write_rows(v, writer)
 
 
 def write_rows(stats, writer):
     writer.writerow(stats)
 
 
-def get_stats(tif, writer):
+def get_stats(tif):
     ds = gdal.Open(tif, gdal.GA_ReadOnly)
     number_of_bands = ds.RasterCount
 
     if ds.RasterCount > 1:
+        d = {}
         log.info('Found multibanded geotif {}'.format(basename(tif)))
         for b in range(number_of_bands):
-            write_rows(stats=band_stats(ds, tif, b + 1), writer=writer)
+            d['{tif}_{b}'.format(tif=tif, b=b)] = band_stats(ds, tif, b + 1)
+        return d
     else:
         log.info('Found single band geotif {}'.format(basename(tif)))
-        write_rows(stats=band_stats(ds, tif, 1), writer=writer)
+        return {tif: band_stats(ds, tif, 1)}
 
 
 def band_stats(ds, tif, band_no):
@@ -62,7 +84,7 @@ def band_stats(ds, tif, band_no):
     # For statistics calculation
     stats = band.ComputeStatistics(False)
     no_data_val = band.GetNoDataValue()
-    l = [basename(tif), no_data_val,
+    l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          stats[0], stats[1],
          stats[2], stats[3]]
@@ -88,7 +110,7 @@ def numpy_band_stats(ds, tif, band_no):
     data = band.ReadAsArray()
     no_data_val = band.GetNoDataValue()
     mask_data = ma.masked_where(data == no_data_val, data)
-    l = [basename(tif), no_data_val,
+    l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          np.min(mask_data), np.max(mask_data),
          np.mean(mask_data), np.std(mask_data)]
