@@ -75,7 +75,7 @@ class Cubist:
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
                  sampling=None, seed=None, neighbors=None, feature_type=None,
-                 composite_model=True, extrapolation=None):
+                 composite_model=False, auto=False, extrapolation=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -100,7 +100,8 @@ class Cubist:
             data when creating a categorical variable.
         neighbors: int
             Number of  nearest–neighbors to adjust the predictions from
-            the rule–based model.
+            the rule–based model. This option uses a composite model
+            by combining it with an instance-based or nearest-neighbor model.
         sampling: float (0.1 - 99.9)
             percentage of data selected randomly by cubist
         seed: int
@@ -111,6 +112,10 @@ class Cubist:
         extrapolation: float between 0-100
             allowed max deviation of predictions from training set
             targets range
+        composite_model: bool
+            whether to use composite model. False: used rule based model.
+        auto: bool
+            allow cubist to decide whether to use rule based or composite model
         """
 
         # Setting up the user details
@@ -127,14 +132,27 @@ class Cubist:
         self.max_categories = max_categories
         self.neighbors = neighbors
         self.sampling = sampling
+        self.auto = auto
+        self.composite_model = composite_model
+
+        if auto and composite_model:
+            self.auto = False
+            log.info('Both auto and composite model ware chosen. Disabling '
+                     'auto and using composite model instead. To let cubist'
+                     'auto decide, use composite_model=False, or comment out.')
 
         if composite_model and neighbors:
             log.info('Supplied neighbors will be used for composite model. '
                      'To let cubist decide the number of neighbors, do not '
                      'supply neighbors with config and choose '
                      'composite_model=True')
-            composite_model = None
-        self.composite_model = composite_model
+            self.composite_model = False
+
+        if auto and neighbors:
+            log.info('Supplied neighbors will be used for composite model. '
+                     'To let cubist decide the number of neighbors, do not '
+                     'supply neighbors with config.')
+            self.auto = False
 
         # make sure seed is only used with sampling
         if (not sampling) and seed:
@@ -327,6 +345,8 @@ class Cubist:
                     if self.seed else '') +
                    (' -i'
                    if self.composite_model else '') +
+                   (' -a'
+                    if self.auto else '') +
                    (' -f ' + self._filename))
 
         results = check_output(command, shell=True)
@@ -356,7 +376,7 @@ class MultiCubist:
                  max_rules=None, committee_members=1, max_categories=5000,
                  neighbors=None, feature_type=None,
                  sampling=None, seed=None, extrapolation=None,
-                 composite_model=True, parallel=False):
+                 composite_model=False, auto=False, parallel=False):
         """
         Instantiate the multicubist class with a number of invocation
         parameters
@@ -389,6 +409,7 @@ class MultiCubist:
         self.parallel = parallel
         self.extrapolation = extrapolation
         self.composite_model = composite_model
+        self.auto = auto
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -430,6 +451,8 @@ class MultiCubist:
                           feature_type=self.feature_type,
                           sampling=self.sampling,
                           extrapolation=self.extrapolation,
+                          auto=self.auto,
+                          composite_model=self.composite_model,
                           seed=np.random.randint(0, 10000))
             cube.fit(x, y)
             if self.parallel:  # used in training

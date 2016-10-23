@@ -62,7 +62,7 @@ learning:
 
 # sampling: random sampling expressed in % terms to be  used during training
 
-# parallel: train cuist jobs in parallel
+# parallel: train cubist jobs in parallel
 
 # unbiased: whether to train unbiased trees. Use unbiased=True for more skewed
 # target distribution
@@ -71,6 +71,13 @@ learning:
 # composite_model=True improves on rule based models, but in addition
 # does the equivalent of krigging.
 
+# auto: let cubist decide whether to use rule based or composite model.
+# Cubist derives from the training data a heuristic estimate of the accuracy
+# of each type of model, and chooses the form that appears more accurate.
+# The derivation of these estimates requires quite a lot of computation,
+# so leaving the decision to Cubist can result in a noticeable increase
+# in the time required to build a model.
+
 # target_transform: target transform (choice: stardardise, sqrt, log, identity',
 # logistic, rank, kde)
 
@@ -78,16 +85,17 @@ learning:
 #    arguments:
 #      outdir: .
 #      trees: 10
-#      max_rules: 500
+#      max_rules: 5000
 #      committee_members: 20
 #      unbiased: False
 #      max_categories: 5000
 #      extrapolation: 5
 #      target_transform: standardise
-#      neighbors: 5
 #      sampling: 50
 #      seed: 2
 #      composite_model: True
+#      auto: False
+#      neighbors: 5
 #      parallel: True
 
 prediction:
