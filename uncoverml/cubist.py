@@ -395,7 +395,8 @@ class MultiCubist:
         self._trained = False
 
         # Setting the user options
-        self.temp_dir = outdir
+        self.temp_dir = join(outdir, 'results')
+        os.makedirs(self.temp_dir, exist_ok=True)
         self.print_output = print_output
         self.committee_members = committee_members
         self.unbiased = unbiased
@@ -440,7 +441,7 @@ class MultiCubist:
             print('training tree {} using '
                   'process {}'.format(t, mpiops.chunk_index))
 
-            cube = Cubist(name='temp_{}_'.format(t),
+            cube = Cubist(name=join(self.temp_dir, 'temp_{}_'.format(t)),
                           print_output=self.print_output,
                           unbiased=self.unbiased,
                           max_rules=self.max_rules,
