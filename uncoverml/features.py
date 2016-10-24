@@ -65,11 +65,12 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     # TODO remove this when cubist gets removed
     if config.cubist or config.multicubist:
         log.warning("Cubist: ignoring preprocessing transform")
+        names = [k for ec in feature_sets for k in ec]
         # 0 is ordinal 1 is categorical
         flags = [int(k.is_categorical) for k in transform_sets]
         feature = [np.zeros(v.shape[1]) + f
                    for v, f in zip(transformed_vectors, flags)]
-        feature_vec = np.concatenate(feature)
+        feature_vec = {k: v for k, v in zip(names, np.concatenate(feature))}
         config.algorithm_args['feature_type'] = feature_vec
     else:
         feature_vec = None
