@@ -180,11 +180,11 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
     ----------
     image_chunk_sets: dict
         A dictionary used to get the set of images to test on.
-    transform_sets: dict
+    transform_sets: list
         A dictionary containing the applied transformations
     targets_all: dict
         The targets used in the cross validation
-    config: dict
+    config: config class instance
         The global config file
     """
 
