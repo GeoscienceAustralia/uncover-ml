@@ -7,6 +7,7 @@ from scipy.stats import norm
 from scipy.integrate import fixed_quad
 import pickle
 from os.path import join, isdir, abspath
+import os
 
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
@@ -634,7 +635,8 @@ class RandomForestRegressorMulti:
         self._trained = False
         assert isdir(abspath(outdir)), 'Make sure the outdir exists ' \
                                        'and writeable'
-        self.temp_dir = abspath(outdir)
+        self.temp_dir = join(abspath(outdir), 'results')
+        os.makedirs(self.temp_dir, exist_ok=True)
 
     def fit(self, x, y):
 
