@@ -367,8 +367,7 @@ class Cubist:
         if self.calc_usage:
             matched_str = CASES.split(STR1.split(results)[-1])[1]
             matched_str = STR2.split(matched_str)[0]
-            with open(self._filename + '.usg', "w") as usg:
-                usg.write(matched_str)
+            save_data(self._filename + '.usg', matched_str)
 
     def _remove_files(self, extensions):
         for extension in extensions:
