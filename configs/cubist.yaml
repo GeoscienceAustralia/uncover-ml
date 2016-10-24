@@ -11,7 +11,7 @@ features:
       - centre
       - standardise
     imputation: none
-  
+
   - name: my features
     type: categorical
     files:
@@ -19,14 +19,24 @@ features:
     transforms:
     imputation: nn
 
-# mask file used for masking prediction grid
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation: mean
+
+  transforms:
+    # - whiten:
+        # keep_fraction: 0.8
+
 # Mask with values=retain will be predicted
 mask:
   file: /home/lb/data/GA-cover/mask/old_mask_test.tif
   retain: 1
 
+
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  file: /home/lb/data/GA-cover//geochem_sites.shp
   property: Na_ppm_i_1
 
 learning:
@@ -38,7 +48,7 @@ learning:
       max_categories: 5000
       target_transform: standardise
       neighbors: 5
-      sampling: 50
+      sampling: 70
       seed: 2
       extrapolation: 5
       sampling: 50
@@ -47,6 +57,7 @@ learning:
       auto: False
       neighbors: 5
       calc_usage: True
+      print_output: False
 
 # neighbors: int, number of nearest neighbors to be used (1-9)
 # nearest-neighbor model: predicts the target value of a new case by finding
@@ -67,7 +78,9 @@ learning:
 # extrapolation: allowed max deviation of predictions from
 # training targets float between 0-100.
 
-# sampling: random sampling expressed in % terms to be  used during training
+# sampling: random sampling expressed in % terms to be  used during training.
+# defaults to 70. If sampling is is chosen very close to 100%,
+# the trees constructed will be more and more similar
 
 # parallel: train cubist jobs in parallel
 

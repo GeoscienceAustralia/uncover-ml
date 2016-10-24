@@ -127,7 +127,7 @@ class Cubist:
         # Setting up the user details
         self._trained = False
         self.models = []
-        self._filename = name + str(time.time()) + str(random.random())
+        self._filename = name
 
         # Setting the user options
         self.print_output = print_output
@@ -390,7 +390,7 @@ class MultiCubist:
     def __init__(self, outdir='.', trees=10, print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
                  neighbors=None, feature_type=None,
-                 sampling=None, seed=None, extrapolation=None,
+                 sampling=70, seed=None, extrapolation=None,
                  composite_model=False, auto=False, parallel=False,
                  calc_usage=False):
         """
@@ -448,21 +448,21 @@ class MultiCubist:
         # set a different random seed for each thread
         np.random.seed(mpiops.chunk_index)
 
-        if self.parallel:
+        if self.parallel:  # during training
             process_trees = np.array_split(range(self.trees),
                                            mpiops.chunks)[mpiops.chunk_index]
             temp_ = 'temp'
             temp_calc_usage = self.calc_usage
-        else:
+        else:  # during x val
             process_trees = range(self.trees)
-            temp_ = 'temp_{}'.format(mpiops.chunk_index)
+            temp_ = 'temp_x_{}'.format(mpiops.chunk_index)
             temp_calc_usage = False  # dont calc usage stats for x-val
 
         for t in process_trees:
             print('training tree {} using '
                   'process {}'.format(t, mpiops.chunk_index))
 
-            cube = Cubist(name=join(self.temp_dir, temp_ + '_{}_'.format(t)),
+            cube = Cubist(name=join(self.temp_dir, temp_ + '_{}'.format(t)),
                           print_output=self.print_output,
                           unbiased=self.unbiased,
                           max_rules=self.max_rules,
@@ -488,6 +488,9 @@ class MultiCubist:
 
         if self.parallel:
             mpiops.comm.barrier()
+            # calc final usage stats
+            if self.calc_usage and mpiops.chunk_index == 0:
+                self.calculate_usage()
 
         # Mark that we are now trained
         self._trained = True
@@ -578,6 +581,12 @@ class MultiCubist:
         """
         mean, _, _, _ = self.predict_proba(x)
         return mean
+
+    def calculate_usage(self):
+        for t in range(self.trees):
+            name = join(self.temp_dir, 'temp' + '_{}.usg'.format(t))
+            with (open(name, 'r')) as f:
+                print(f.read())
 
 
 class Rule:
