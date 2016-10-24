@@ -1,6 +1,4 @@
 import os
-import random
-import time
 from os.path import join
 import pickle
 from copy import deepcopy
@@ -10,6 +8,7 @@ import logging
 import numpy as np
 from scipy.stats import norm
 import re
+from collections import OrderedDict
 
 from uncoverml import mpiops
 
@@ -198,10 +197,14 @@ class Cubist:
             self.feature_type = np.zeros(m)
 
         d = {0: 'continuous', 1: 'discrete {}'.format(self.max_categories)}
-        types = [d[k] for k in self.feature_type]
+        types = OrderedDict()
+
+        for k, v in self.feature_type.items():
+            types[k] = d[v]
 
         names = ['t'] \
-            + ['f{}: {}.'.format(j, t) for j, t in enumerate(types)]\
+            + ['{}_{}: {}.'.format(k, i, v) for i, (k, v) in
+               enumerate(types.items())]\
             + ['t: continuous.']
         namefile_string = '\n'.join(names)
         save_data(self._filename + '.names', namefile_string)
@@ -241,9 +244,9 @@ class Cubist:
         self._trained = True
 
         # Delete the files used during training
-        self._remove_files(
-            ['.tmp', '.names', '.data', '.model', '.pred']
-        )
+        # self._remove_files(
+        #     ['.tmp', '.names', '.data', '.model', '.pred']
+        # )
 
     def predict_proba(self, x, interval=0.95):
         """ Predict the outputs and variances of the inputs
@@ -580,6 +583,18 @@ class MultiCubist:
         mean, _, _, _ = self.predict_proba(x)
         return mean
 
+    def calculate_usage(self):
+        ON = False
+        conds = []
+        model = []
+        for t in range(self.trees):
+            name = join(self.temp_dir, 'temp' + '_{}.usg'.format(t))
+            with (open(name, 'r')) as f:
+                for n, l in enumerate(f.readlines()):
+                    if n < 9:
+                        continue
+                    print(l.split('%'))
+                    print(n, l)
 
 
 class Rule:
@@ -610,7 +625,7 @@ class Rule:
 
         # Convert the regression values to a coefficient vector
         self.bias = float(bias)
-        variables = np.array([v[1:] for v in v], dtype=int)
+        variables = np.array([v.split('.tif_')[-1] for v in v], dtype=int)
         coefficients = np.array(c, dtype=float)
         self.coefficients = np.zeros(m)
         self.coefficients[variables] = coefficients
@@ -623,13 +638,13 @@ class Rule:
 
             dict(type=CONTINUOUS,
                  operator=condition[3],
-                 operand_index=int(condition[1][1:]),
+                 operand_index=int(condition[1].split('.tif_')[-1]),
                  operand=float(condition[2]))
 
             if int(condition[0]) == CONTINUOUS else
 
             dict(type=CATEGORICAL,
-                 operand_index=int(condition[1][1:]),
+                 operand_index=int(condition[1].split('.tif_')[-1]),
                  values=parse_float_array(condition[2]))
 
             for condition in
