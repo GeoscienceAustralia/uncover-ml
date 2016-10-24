@@ -17,8 +17,7 @@ log = logging.getLogger(__name__)
 CONTINUOUS = 2
 CATEGORICAL = 3
 STR1 = re.compile('^Evaluation on training data', re.MULTILINE)
-STR2 = re.compile('^Evaluation on test data')
-STR3 = re.compile('^Time:', re.MULTILINE)
+STR2 = re.compile('Evaluation on test data')
 CASES = re.compile('cases\):\n')
 
 
@@ -243,7 +242,7 @@ class Cubist:
 
         # Delete the files used during training
         self._remove_files(
-            ['.tmp', '.names', '.data', '.model']
+            ['.tmp', '.names', '.data', '.model', '.pred']
         )
 
     def predict_proba(self, x, interval=0.95):
@@ -365,7 +364,6 @@ class Cubist:
         if self.calc_usage:
             matched_str = CASES.split(STR1.split(results)[-1])[1]
             matched_str = STR2.split(matched_str)[0]
-            matched_str = STR3.split(matched_str)[0]
             with open(self._filename + '.usg', "w") as usg:
                 usg.write(matched_str)
 
@@ -582,11 +580,6 @@ class MultiCubist:
         mean, _, _, _ = self.predict_proba(x)
         return mean
 
-    def calculate_usage(self):
-        for t in range(self.trees):
-            name = join(self.temp_dir, 'temp' + '_{}.usg'.format(t))
-            with (open(name, 'r')) as f:
-                print(f.read())
 
 
 class Rule:
