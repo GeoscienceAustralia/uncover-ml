@@ -63,7 +63,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     # apply feature transforms
     transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
     # TODO remove this when cubist gets removed
-    if config.cubist:
+    if config.cubist or config.multicubist:
         log.warning("Cubist: ignoring preprocessing transform")
         # 0 is ordinal 1 is categorical
         flags = [int(k.is_categorical) for k in transform_sets]
