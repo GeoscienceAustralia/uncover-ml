@@ -9,12 +9,17 @@ from shlex import split as parse
 import logging
 import numpy as np
 from scipy.stats import norm
+import re
 
 from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
 CONTINUOUS = 2
 CATEGORICAL = 3
+STR1 = re.compile('^Evaluation on training data', re.MULTILINE)
+STR2 = re.compile('^Evaluation on test data')
+STR3 = re.compile('^Time:', re.MULTILINE)
+CASES = re.compile('cases\):\n')
 
 
 def save_data(filename, data):
@@ -75,7 +80,8 @@ class Cubist:
     def __init__(self, name='temp', print_output=False, unbiased=True,
                  max_rules=None, committee_members=1, max_categories=5000,
                  sampling=None, seed=None, neighbors=None, feature_type=None,
-                 composite_model=False, auto=False, extrapolation=None):
+                 composite_model=False, auto=False, extrapolation=None,
+                 calc_usage=False):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -134,6 +140,7 @@ class Cubist:
         self.sampling = sampling
         self.auto = auto
         self.composite_model = composite_model
+        self.calc_usage = calc_usage
 
         if auto and composite_model:
             self.auto = False
@@ -349,10 +356,18 @@ class Cubist:
                     if self.auto else '') +
                    (' -f ' + self._filename))
 
-        results = check_output(command, shell=True)
+        results = check_output(command, shell=True).decode()
+
         # Print the program output directly
         if self.print_output:
-            print(results.decode())
+            print(results)
+
+        if self.calc_usage:
+            matched_str = CASES.split(STR1.split(results)[-1])[1]
+            matched_str = STR2.split(matched_str)[0]
+            matched_str = STR3.split(matched_str)[0]
+            with open(self._filename + '.usg', "w") as usg:
+                usg.write(matched_str)
 
     def _remove_files(self, extensions):
         for extension in extensions:
@@ -376,7 +391,8 @@ class MultiCubist:
                  max_rules=None, committee_members=1, max_categories=5000,
                  neighbors=None, feature_type=None,
                  sampling=None, seed=None, extrapolation=None,
-                 composite_model=False, auto=False, parallel=False):
+                 composite_model=False, auto=False, parallel=False,
+                 calc_usage=False):
         """
         Instantiate the multicubist class with a number of invocation
         parameters
@@ -411,6 +427,7 @@ class MultiCubist:
         self.extrapolation = extrapolation
         self.composite_model = composite_model
         self.auto = auto
+        self.calc_usage = calc_usage
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -434,14 +451,18 @@ class MultiCubist:
         if self.parallel:
             process_trees = np.array_split(range(self.trees),
                                            mpiops.chunks)[mpiops.chunk_index]
+            temp_ = 'temp'
+            temp_calc_usage = self.calc_usage
         else:
             process_trees = range(self.trees)
+            temp_ = 'temp_{}'.format(mpiops.chunk_index)
+            temp_calc_usage = False  # dont calc usage stats for x-val
 
         for t in process_trees:
             print('training tree {} using '
                   'process {}'.format(t, mpiops.chunk_index))
 
-            cube = Cubist(name=join(self.temp_dir, 'temp_{}_'.format(t)),
+            cube = Cubist(name=join(self.temp_dir, temp_ + '_{}_'.format(t)),
                           print_output=self.print_output,
                           unbiased=self.unbiased,
                           max_rules=self.max_rules,
@@ -453,14 +474,15 @@ class MultiCubist:
                           extrapolation=self.extrapolation,
                           auto=self.auto,
                           composite_model=self.composite_model,
-                          seed=np.random.randint(0, 10000))
+                          seed=np.random.randint(0, 10000),
+                          calc_usage=temp_calc_usage)
             cube.fit(x, y)
             if self.parallel:  # used in training
                 pk_f = join(self.temp_dir,
                             'cube_{}.pk'.format(t))
             else:  # used when parallel is false, i.e., during x-val
                 pk_f = join(self.temp_dir,
-                            'cube_{}_{}.pk'.format(t, mpiops.chunk_index))
+                            'cube_x_{}_p_{}.pk'.format(t, mpiops.chunk_index))
             with open(pk_f, 'wb') as fp:
                 pickle.dump(cube, fp)
 
@@ -518,7 +540,7 @@ class MultiCubist:
                             'cube_{}.pk'.format(i))
             else:  # used when parallel is false, i.e., during x-val
                 pk_f = join(self.temp_dir,
-                            'cube_{}_{}.pk'.format(i, mpiops.chunk_index))
+                            'cube_x_{}_p_{}.pk'.format(i, mpiops.chunk_index))
             with open(pk_f, 'rb') as fp:
                 c = pickle.load(fp)
                 for m, model in enumerate(c.models):

@@ -40,6 +40,13 @@ learning:
       neighbors: 5
       sampling: 50
       seed: 2
+      extrapolation: 5
+      sampling: 50
+      seed: 2
+      composite_model: True
+      auto: False
+      neighbors: 5
+      calc_usage: True
 
 # neighbors: int, number of nearest neighbors to be used (1-9)
 # nearest-neighbor model: predicts the target value of a new case by finding
@@ -84,6 +91,7 @@ learning:
 #    algorithm: multicubist
 #    arguments:
 #      outdir: .
+#      print_output: False
 #      trees: 10
 #      max_rules: 5000
 #      committee_members: 20
@@ -97,6 +105,7 @@ learning:
 #      auto: False
 #      neighbors: 5
 #      parallel: True
+#      calc_usage: True
 
 prediction:
   quantiles: 0.95
