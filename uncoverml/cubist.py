@@ -202,7 +202,7 @@ class Cubist:
         # Prepare and write the namefile expected by cubist
         # TODO replace continuous with discrete for discrete data
         if self.feature_type is None:
-            self.feature_type = np.zeros(m)
+            self.feature_type = {'f{}.tif'.format(v): 0 for v in range(m)}
 
         d = {0: 'continuous', 1: 'discrete {}'.format(self.max_categories)}
         types = OrderedDict()
