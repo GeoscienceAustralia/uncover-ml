@@ -6,7 +6,9 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import json
 import pickle
-
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pylab as plt
 import rasterio
 import numpy as np
 import shapefile
@@ -441,3 +443,22 @@ def export_crossval(crossval_output, config):
             f.create_array("/", label, obj=v.data)
             f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
+
+    create_scatter_plot(outfile_results, config)
+
+
+def create_scatter_plot(outfile_results, config):
+    true_vs_pred = os.path.join(config.output_dir,
+                                config.name + "_results.csv")
+    true_vs_pred_plot = os.path.join(config.output_dir,
+                                     config.name + "_results.png")
+    with hdf.open_file(outfile_results, 'r') as f:
+        prediction = f.get_node("/", "Prediction").read()
+        y_true = f.get_node("/", "y_true").read()
+        np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T)
+        plt.scatter(y_true, prediction)
+        plt.title('true vs prediction')
+        plt.xlabel('True')
+        plt.ylabel('Prediction')
+        plt.savefig(true_vs_pred_plot)
+
