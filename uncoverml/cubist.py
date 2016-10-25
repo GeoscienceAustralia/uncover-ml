@@ -9,7 +9,8 @@ import numpy as np
 from scipy.stats import norm
 import re
 from collections import OrderedDict
-
+import operator
+import csv
 from uncoverml import mpiops
 
 log = logging.getLogger(__name__)
@@ -42,6 +43,13 @@ def pairwise(iterable):
     iterator = iter(iterable)
     paired = zip(iterator, iterator)
     return paired
+
+
+def write_dict(filename, dict_obj):
+    with open(filename, 'w') as csv_file:
+        writer = csv.writer(csv_file)
+        for key, value in dict_obj.items():
+           writer.writerow([key, value])
 
 
 def arguments(p):
@@ -244,9 +252,9 @@ class Cubist:
         self._trained = True
 
         # Delete the files used during training
-        # self._remove_files(
-        #     ['.tmp', '.names', '.data', '.model', '.pred']
-        # )
+        self._remove_files(
+            ['.tmp', '.names', '.data', '.model', '.pred']
+        )
 
     def predict_proba(self, x, interval=0.95):
         """ Predict the outputs and variances of the inputs
@@ -583,17 +591,66 @@ class MultiCubist:
         return mean
 
     def calculate_usage(self):
-        ON = False
-        conds = []
-        model = []
+        """
+        Averages the Cond and Model statistics of all the cubist runs
+
+        Returns
+        -------
+
+        """
+        results = OrderedDict()
+        four_spaces = '    '
+        three_spaces = '   '
         for t in range(self.trees):
             name = join(self.temp_dir, 'temp' + '_{}.usg'.format(t))
+            covariates = []
             with (open(name, 'r')) as f:
                 for n, l in enumerate(f.readlines()):
-                    if n < 9:
-                        continue
-                    print(l.split('%'))
-                    print(n, l)
+                    l = l.strip().replace('%', '').replace(four_spaces,
+                                                           three_spaces)
+                    if n > 8 and l:  # ignores empty lines too
+                        args = [a.strip() for a in l.split(four_spaces)]
+                        if len(args) == 3:
+                            cube_row = CubistReportRow(*args)
+                        else:
+                            args = [a.strip() for a in l.split(three_spaces)]
+                            cube_row = CubistReportRow(*args)
+
+                        covariates.append(cube_row)
+            results[t] = sorted(covariates, key=operator.attrgetter('feature'))
+
+        ranking_cond = OrderedDict()
+        ranking_model = OrderedDict()
+
+        for i, f in enumerate(self.feature_type):
+            ranking_cond[f + '_{}'.format(i)] = []
+            ranking_model[f + '_{}'.format(i)] = []
+
+        for t in range(self.trees):
+            for k, c in results.items():
+                for cc in c:
+                    ranking_cond[cc.feature].append(int(cc.cond) if cc.cond
+                                                    else 0)
+                    ranking_model[cc.feature].append(int(cc.model) if cc.model
+                                                     else 0)
+        for k, v in ranking_cond.items():
+            ranking_cond[k] = np.nanmean(v)
+
+        for k, v in ranking_model.items():
+            ranking_model[k] = np.nanmean(v)
+
+        write_dict(join(self.temp_dir, 'ranking_cond.csv'), ranking_cond)
+        write_dict(join(self.temp_dir, 'ranking_model.csv'), ranking_model)
+
+
+class CubistReportRow:
+    """
+    convenience class for accumulating cubist report
+    """
+    def __init__(self, cond, model, feature):
+        self.cond = cond
+        self.model = model
+        self.feature = feature
 
 
 class Rule:
