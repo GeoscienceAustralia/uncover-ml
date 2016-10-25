@@ -1,6 +1,9 @@
 import os
-from os.path import join
+from os.path import join, abspath
 import pickle
+import time
+import random
+import glob
 from copy import deepcopy
 from subprocess import check_output
 from shlex import split as parse
@@ -133,7 +136,7 @@ class Cubist:
         # Setting up the user details
         self._trained = False
         self.models = []
-        self._filename = name
+        self._filename = name + '_' + str(time.time()) + str(random.random())
 
         # Setting the user options
         self.print_output = print_output
@@ -419,7 +422,7 @@ class MultiCubist:
         self._trained = False
 
         # Setting the user options
-        self.temp_dir = join(outdir, 'results')
+        self.temp_dir = join(abspath(outdir), 'results')
         os.makedirs(self.temp_dir, exist_ok=True)
         self.print_output = print_output
         self.committee_members = committee_members
@@ -602,9 +605,13 @@ class MultiCubist:
         four_spaces = '    '
         three_spaces = '   '
         for t in range(self.trees):
-            name = join(self.temp_dir, 'temp' + '_{}.usg'.format(t))
+            match = 'temp' + '_{}_'.format(t)
+            usgs = glob.glob(join(self.temp_dir, '*.usg'))
+            names = [f for f in usgs if match in f]
+            names.sort(key=os.path.getctime, reverse=True)
+
             covariates = []
-            with (open(name, 'r')) as f:
+            with (open(names[0], 'r')) as f:
                 for n, l in enumerate(f.readlines()):
                     l = l.strip().replace('%', '').replace(four_spaces,
                                                            three_spaces)
@@ -614,7 +621,11 @@ class MultiCubist:
                             cube_row = CubistReportRow(*args)
                         else:
                             args = [a.strip() for a in l.split(three_spaces)]
-                            cube_row = CubistReportRow(*args)
+                            try:
+                                cube_row = CubistReportRow(*args)
+                            except TypeError:
+                                print(args, 'Parsing error. Cubist '
+                                            'summary wont be created')
 
                         covariates.append(cube_row)
             results[t] = sorted(covariates, key=operator.attrgetter('feature'))

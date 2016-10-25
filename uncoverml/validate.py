@@ -264,6 +264,10 @@ def local_crossval(x_all, targets_all, config):
         A dictionary containing all of the cross validation metrics, evaluated
         on the unseen data subset.
     """
+    # run cross validation in parallel, but one thread for each fold
+    if config.multicubist or config.multirandomforest:
+        config.algorithm_args['parallel'] = False
+
     if (mpiops.chunk_index != 0) and (not config.parallel_validate):
         return
 
@@ -332,4 +336,9 @@ def local_crossval(x_all, targets_all, config):
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, y_pred.T))
         result = CrossvalInfo(scores, y_true, y_pred_dict)
+
+    # change back to parallel
+    if config.multicubist or config.multirandomforest:
+        config.algorithm_args['parallel'] = True
+
     return result
