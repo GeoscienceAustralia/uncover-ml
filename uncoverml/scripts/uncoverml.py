@@ -85,7 +85,7 @@ def learn(pipeline_file, partitions):
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
-    config.target_file = resample_shapefile(config)
+    config.target_file = ls.mpiops.run_once(resample_shapefile, config)
     # Make the targets
     targets = ls.geoio.load_targets(shapefile=config.target_file,
                                     targetfield=config.target_property)
