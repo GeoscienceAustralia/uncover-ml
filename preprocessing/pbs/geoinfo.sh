@@ -7,7 +7,7 @@
 module unload intel-cc
 module unload intel-fc
 module load python3/3.4.3 python3/3.4.3-matplotlib
-module load hdf5/1.8.10 gdal/2.0.0
+module load hdf5/1.8.10 gdal/2.0.0 geos/3.5.0
 module load openmpi/1.8
 
 export PATH=$HOME/.local/bin:$PATH

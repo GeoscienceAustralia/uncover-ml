@@ -23,7 +23,7 @@ $ module unload intel-fc
 2. Load the modules requried for installation and running:
 ```bash
 $ module load python3/3.4.3 python3/3.4.3-matplotlib 
-$ module load hdf5/1.8.10 gdal/2.0.0
+$ module load hdf5/1.8.10 gdal/2.0.0 geos/3.5.0
 ```
 (Alternatively, you may wish to add the above lines to your ~/.profile)
 
