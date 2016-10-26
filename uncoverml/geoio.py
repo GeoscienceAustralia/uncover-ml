@@ -453,7 +453,8 @@ def create_scatter_plot(outfile_results, config):
     with hdf.open_file(outfile_results, 'r') as f:
         prediction = f.get_node("/", "Prediction").read()
         y_true = f.get_node("/", "y_true").read()
-        np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T)
+        np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T,
+                   delimiter=',')
         plt.scatter(y_true, prediction)
         plt.title('true vs prediction')
         plt.xlabel('True')
