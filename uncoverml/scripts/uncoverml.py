@@ -3,25 +3,25 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 .. program-output:: uncoverml --help
 """
-import pickle
 import logging
-from os.path import isfile
-import numpy as np
-import click
+import pickle
 import resource
 import tempfile
+from os.path import isfile
 
+import click
+import numpy as np
 import uncoverml as ls
-import uncoverml.geoio
-import uncoverml.features
-import uncoverml.config
-import uncoverml.learn
 import uncoverml.cluster
-import uncoverml.predict
-import uncoverml.mpiops
-import uncoverml.validate
+import uncoverml.config
+import uncoverml.features
+import uncoverml.geoio
+import uncoverml.learn
 import uncoverml.logging
-from preprocessing import resampling
+import uncoverml.mpiops
+import uncoverml.predict
+import uncoverml.validate
+from uncoverml import resampling
 
 log = logging.getLogger(__name__)
 

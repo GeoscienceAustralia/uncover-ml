@@ -6,9 +6,7 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import json
 import pickle
-import matplotlib
-matplotlib.use('Agg')
-from matplotlib import pylab as plt
+import matplotlib.pyplot as plt
 import rasterio
 import numpy as np
 import shapefile
