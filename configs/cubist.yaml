@@ -33,6 +33,17 @@ preprocessing:
 mask:
   file: /home/lb/data/GA-cover/mask/old_mask_test.tif
   retain: 1
+  resample: value
+  arguments:
+    bins: 10
+    replace: True
+    output_samples: 500
+#  resample: spatial
+#  arguments:
+#    rows: 4
+#    cols: 4
+#    replace: True
+#    output_samples: 500
 
 
 targets:

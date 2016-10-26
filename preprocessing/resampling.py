@@ -51,15 +51,23 @@ def resample_shapefile(input_shapefile, output_shapefile, target_field,
     ----------
     input_shapefile
     output_shapefile
-    target_field: str, target field for sampling
-    bins: number of bins for sampling
-    fields_to_keep: list of strings to store in the output shapefile
-    replace: bool, whether to sample with replacement or not
+    target_field: str
+        target field for sampling
+    bins: int
+        number of bins for sampling
+    fields_to_keep: list
+        of strings to store in the output shapefile
+    replace: bool
+        whether to sample with replacement or not
     output_samples: number of samples in the output shpfile
     Returns
     -------
 
     """
+    if len(fields_to_keep):
+        fields_to_keep.append(target_field)
+    else:
+        fields_to_keep = [target_field]
     gdf_out = filter_fields(fields_to_keep, input_shapefile)
 
     # the idea is stolen from pandas.qcut
@@ -88,6 +96,7 @@ def resample_shapefile(input_shapefile, output_shapefile, target_field,
 
 def resample_shapefile_spatially(input_shapefile,
                                  output_shapefile,
+                                 target_field,
                                  rows=10,
                                  cols=10,
                                  *fields_to_keep,
@@ -98,15 +107,23 @@ def resample_shapefile_spatially(input_shapefile,
     ----------
     input_shapefile
     output_shapefile
-    rows: number of bins in y
-    cols: number of bins in x
+    rows: int
+        number of bins in y
+    cols: int
+        number of bins in x
     fields_to_keep: list of strings to store in the output shapefile
-    replace: bool, whether to sample with replacement or not
+    replace: bool
+        whether to sample with replacement or not
     output_samples: number of samples in the output shpfile
     Returns
     -------
 
     """
+    if len(fields_to_keep):
+        fields_to_keep.append(target_field)
+    else:
+        fields_to_keep = [target_field]
+
     gdf_out = filter_fields(fields_to_keep, input_shapefile)
 
     minx, miny, maxx, maxy = gdf_out[GEOMETRY].total_bounds
@@ -133,17 +150,4 @@ def resample_shapefile_spatially(input_shapefile,
 
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    resample_shapefile(
-        '/g/data/ge3/covariates/Sites/AWAGs/AWAGs2million.shp',
-        '/g/data/ge3/covariates/Sites/AWAGs/uranium_1mil_from_AWAGs2million.shp',
-        'uranium',
-        1000,
-        *['uranium'],
-        replace=True,
-        output_samples=100000
-    )
 

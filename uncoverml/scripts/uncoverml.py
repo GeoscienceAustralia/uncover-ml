@@ -9,6 +9,7 @@ from os.path import isfile
 import numpy as np
 import click
 import resource
+import tempfile
 
 import uncoverml as ls
 import uncoverml.geoio
@@ -20,6 +21,7 @@ import uncoverml.predict
 import uncoverml.mpiops
 import uncoverml.validate
 import uncoverml.logging
+from preprocessing import resampling
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +40,37 @@ def run_crossval(x_all, targets_all, config):
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 
+def resample_shapefile(config):
+    shapefile = config.target_file
+
+    # sample shapefile
+    if not config.resample:
+        return shapefile
+    else:
+        log.info('Stripping shapefile of unnecessary attributes')
+        temp_shapefile = tempfile.mktemp(suffix='.shp')
+
+        if config.resample == 'value':
+            log.info("resampling shape file "
+                     "based on '{}' values".format(config.target_property))
+            resampling.resample_shapefile(shapefile,
+                                          temp_shapefile,
+                                          target_field=config.target_property,
+                                          **config.resample_args
+                                          )
+        else:
+            assert config.resample == 'spatial', \
+                "resample must be 'value' or 'spatial'"
+            log.info("resampling shape file spatially")
+
+            resampling.resample_shapefile_spatially(
+                shapefile, temp_shapefile,
+                target_field=config.target_property,
+                **config.resample_args)
+
+        return temp_shapefile
+
+
 @cli.command()
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
@@ -46,11 +79,12 @@ def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
-        log.info("Memory contstraint forcing {} iterations "
+        log.info("Memory constraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
+    config.target_file = resample_shapefile(config)
     # Make the targets
     targets = ls.geoio.load_targets(shapefile=config.target_file,
                                     targetfield=config.target_property)

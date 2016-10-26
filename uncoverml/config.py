@@ -148,6 +148,13 @@ class Config:
 
         self.target_file = s['targets']['file']
         self.target_property = s['targets']['property']
+
+        self.resample = None
+
+        if 'resample' in s['targets']:
+            self.resample = s['targets']['resample']
+            self.resample_args = s['targets']['arguments']
+
         self.algorithm = s['learning']['algorithm']
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
