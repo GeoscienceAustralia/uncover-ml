@@ -8,6 +8,8 @@ import pickle
 import resource
 import tempfile
 from os.path import isfile
+import matplotlib
+matplotlib.use('Agg')
 
 import click
 import numpy as np

@@ -2,7 +2,6 @@ import numpy as np
 import logging
 
 from affine import Affine
-import matplotlib.pyplot as pl
 
 log = logging.getLogger(__name__)
 
