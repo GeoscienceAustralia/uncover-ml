@@ -75,7 +75,8 @@ setup(
         'numpy >= 1.9.2',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
-        'GDAL == 2.0.0'
+        'GDAL == 2.0.0',
+        'geopandas == 0.2.1'
     ],
     extras_require={
         'demos': [
