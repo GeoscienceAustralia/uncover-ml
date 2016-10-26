@@ -4,17 +4,11 @@ import pandas.core.algorithms as algos
 import numpy as np
 from shapely.geometry import Polygon
 import logging
-import click
 
 
 BIN = 'bin'
 GEOMETRY = 'geometry'
 log = logging.getLogger(__name__)
-
-
-@click.group()
-def cli():
-    logging.basicConfig(level=logging.INFO)
 
 
 def filter_fields(fields_to_keep, input_shapefile):

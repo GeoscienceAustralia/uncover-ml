@@ -45,12 +45,11 @@ def run_crossval(x_all, targets_all, config):
 def resample_shapefile(config):
     shapefile = config.target_file
 
-    # sample shapefile
     if not config.resample:
         return shapefile
-    else:
+    else:  # sample shapefile
         log.info('Stripping shapefile of unnecessary attributes')
-        temp_shapefile = tempfile.mktemp(suffix='.shp')
+        temp_shapefile = tempfile.mktemp(suffix='.shp', dir=config.output_dir)
 
         if config.resample == 'value':
             log.info("resampling shape file "
