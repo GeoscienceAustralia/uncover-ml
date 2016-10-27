@@ -44,19 +44,25 @@ preprocessing:
     # - whiten:
         # keep_fraction: 0.8
 
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+
 targets:
   file: /home/lb/data/GA-cover/geochem_sites.shp
   property: K_ppm_imp_
   resample: value
   arguments:
     bins: 10
-    replace: True
+    bootstrap: True
     output_samples: 500
 #  resample: spatial
 #  arguments:
 #    rows: 4
 #    cols: 4
-#    replace: True
+#    bootstrap: True
 #    output_samples: 500
 
 clustering:

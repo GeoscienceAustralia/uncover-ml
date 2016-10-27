@@ -38,7 +38,7 @@ def strip_shapefile(input_shapefile, output_shapefile, *fields_to_keep):
 
 
 def resample_shapefile(input_shapefile, output_shapefile, target_field,
-                       bins=10, *fields_to_keep, replace=True,
+                       bins=10, *fields_to_keep, bootstrap=True,
                        output_samples=None):
     """
     Parameters
@@ -51,7 +51,7 @@ def resample_shapefile(input_shapefile, output_shapefile, target_field,
         number of bins for sampling
     fields_to_keep: list
         of strings to store in the output shapefile
-    replace: bool
+    bootstrap: bool
         whether to sample with replacement or not
     output_samples: number of samples in the output shpfile
     Returns
@@ -81,7 +81,7 @@ def resample_shapefile(input_shapefile, output_shapefile, target_field,
 
     gb = gdf_out.groupby(BIN)
     for b, gr in gb:
-        dfs_to_concat.append(gr.sample(n=samples_per_bin, replace=replace))
+        dfs_to_concat.append(gr.sample(n=samples_per_bin, replace=bootstrap))
 
     final_df = pd.concat(dfs_to_concat)
     final_df.sort_index(inplace=True)
@@ -94,7 +94,7 @@ def resample_shapefile_spatially(input_shapefile,
                                  rows=10,
                                  cols=10,
                                  *fields_to_keep,
-                                 replace=True,
+                                 bootstrap=True,
                                  output_samples=None):
     """
     Parameters
@@ -106,7 +106,7 @@ def resample_shapefile_spatially(input_shapefile,
     cols: int
         number of bins in x
     fields_to_keep: list of strings to store in the output shapefile
-    replace: bool
+    bootstrap: bool
         whether to sample with replacement or not
     output_samples: number of samples in the output shpfile
     Returns
@@ -138,7 +138,7 @@ def resample_shapefile_spatially(input_shapefile,
         df = gdf_out[gdf_out[GEOMETRY].within(p)]
         # should probably discard if df.shape[0] < 10% of samples_per_group
         if df.shape[0]:
-            df_to_concat.append(df.sample(n=samples_per_group, replace=replace))
+            df_to_concat.append(df.sample(n=samples_per_group, replace=bootstrap))
         else:
             log.info('{} does not contain any sample'.format(p))
 

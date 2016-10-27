@@ -33,22 +33,28 @@ preprocessing:
 mask:
   file: /home/lb/data/GA-cover/mask/old_mask_test.tif
   retain: 1
+
+
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+
+targets:
+  file: /home/lb/data/GA-cover//geochem_sites.shp
+  property: Na_ppm_i_1
   resample: value
   arguments:
     bins: 10
-    replace: True
+    bootstrap: True
     output_samples: 500
 #  resample: spatial
 #  arguments:
 #    rows: 4
 #    cols: 4
-#    replace: True
+#    bootstrap: True
 #    output_samples: 500
-
-
-targets:
-  file: /home/lb/data/GA-cover//geochem_sites.shp
-  property: Na_ppm_i_1
 
 learning:
     algorithm: cubist
