@@ -462,6 +462,7 @@ def create_scatter_plot(outfile_results, config):
         y_true = f.get_node("/", "y_true").read()
         np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T,
                    delimiter=',')
+        plt.figure()
         plt.scatter(y_true, prediction)
         plt.title('true vs prediction')
         plt.xlabel('True')
