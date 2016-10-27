@@ -404,6 +404,13 @@ def export_feature_ranks(measures, feats, scores, config):
         score_listing['scores'][measure] = sorted_scores
         score_listing['ranks'][measure] = sorted_features
 
+        # plot the results
+        plt.figure()
+        plt.plot(range(len(sorted_features)), sorted_scores)
+        plt.xticks(range(len(sorted_features)), sorted_features,
+                   rotation='vertical')
+        plt.savefig('{}.png'.format(measure))
+
     # Write the results out to a file
     with open(outfile_ranks, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)

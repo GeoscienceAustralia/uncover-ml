@@ -4,7 +4,7 @@ from __future__ import division
 import logging
 import copy
 
-import matplotlib as pl
+import matplotlib.pyplot as pl
 import numpy as np
 
 from sklearn.metrics import explained_variance_score, r2_score
