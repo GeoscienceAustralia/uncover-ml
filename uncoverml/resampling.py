@@ -138,10 +138,10 @@ def resample_shapefile_spatially(input_shapefile,
         df = gdf_out[gdf_out[GEOMETRY].within(p)]
         # should probably discard if df.shape[0] < 10% of samples_per_group
         if df.shape[0]:
-            df_to_concat.append(df.sample(n=samples_per_group, replace=bootstrap))
+            df_to_concat.append(df.sample(n=samples_per_group,
+                                          replace=bootstrap))
         else:
             log.info('{} does not contain any sample'.format(p))
-
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
 

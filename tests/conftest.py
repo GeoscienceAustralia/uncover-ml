@@ -128,8 +128,8 @@ def shapefile(random_filename, request):
 
     # File names for test shapefile and test geotiff
     filename = random_filename + ".shp"
-    lons = np.arange(0, 20, 100)
-    lats = np.arange(-10, 30, 100)
+    lons = np.arange(0, 20, 2)
+    lats = np.arange(-10, 30, 2)
 
     # Generate data for shapefile
     nsamples = 100
