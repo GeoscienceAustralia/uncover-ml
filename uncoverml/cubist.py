@@ -418,7 +418,6 @@ class MultiCubist:
         Other Parameters definitions can be found in Cubist.
         """
 
-        # Setting up the user details
         self._trained = False
 
         # Setting the user options
@@ -602,30 +601,26 @@ class MultiCubist:
 
         """
         results = OrderedDict()
-        four_spaces = '    '
-        three_spaces = '   '
         for t in range(self.trees):
             match = 'temp' + '_{}_'.format(t)
+
+            # all usg files in results dir
             usgs = glob.glob(join(self.temp_dir, '*.usg'))
             names = [f for f in usgs if match in f]
+            # sort by creation time
             names.sort(key=os.path.getctime, reverse=True)
-
             covariates = []
-            with (open(names[0], 'r')) as f:
+            with (open(names[0], 'r')) as f:  # use the latest usg
                 for n, l in enumerate(f.readlines()):
-                    l = l.strip().replace('%', '').replace(four_spaces,
-                                                           three_spaces)
+                    l = l.rstrip()
                     if n > 8 and l:  # ignores empty lines too
-                        args = [a.strip() for a in l.split(four_spaces)]
-                        if len(args) == 3:
+                        args = [a.strip().replace('%', '')
+                                for a in [l[:7], l[7:14], l[14:]]]
+                        try:
                             cube_row = CubistReportRow(*args)
-                        else:
-                            args = [a.strip() for a in l.split(three_spaces)]
-                            try:
-                                cube_row = CubistReportRow(*args)
-                            except TypeError:
-                                print(args, 'Parsing error. Cubist '
-                                            'summary wont be created')
+                        except TypeError:
+                            print(args, "Parsing error. Cubist "
+                                        "summary won't be created")
 
                         covariates.append(cube_row)
             results[t] = sorted(covariates, key=operator.attrgetter('feature'))
@@ -634,21 +629,28 @@ class MultiCubist:
         ranking_model = OrderedDict()
 
         for i, f in enumerate(self.feature_type):
-            ranking_cond[f + '_{}'.format(i)] = []
-            ranking_model[f + '_{}'.format(i)] = []
-
+            ranking_cond[f.split('.tif')[0]] = []
+            ranking_model[f.split('.tif')[0]] = []
         for t in range(self.trees):
             for k, c in results.items():
                 for cc in c:
-                    ranking_cond[cc.feature].append(int(cc.cond) if cc.cond
-                                                    else 0)
-                    ranking_model[cc.feature].append(int(cc.model) if cc.model
-                                                     else 0)
+                    ranking_cond[
+                        cc.feature.split('.tif_')[0]].append(
+                        int(cc.cond) if cc.cond else 0)
+                    ranking_model[cc.feature.split('.tif_')[0]].append(
+                        int(cc.model) if cc.model else 0)
+
         for k, v in ranking_cond.items():
-            ranking_cond[k] = np.nanmean(v)
+            if len(v):
+                ranking_cond[k] = np.nanmean(v)
+            else:
+                ranking_cond[k] = 0.0
 
         for k, v in ranking_model.items():
-            ranking_model[k] = np.nanmean(v)
+            if len(v):
+                ranking_model[k] = np.nanmean(v)
+            else:
+                ranking_cond[k] = 0
 
         write_dict(join(self.temp_dir, 'ranking_cond.csv'), ranking_cond)
         write_dict(join(self.temp_dir, 'ranking_model.csv'), ranking_model)
