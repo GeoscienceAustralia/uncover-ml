@@ -73,6 +73,9 @@ clustering:
     n_classes: 12
     oversample_factor: 5
 
+# target_transform: target transform (choice: stardardise, sqrt, log, identity,
+# logistic, rank, kde)
+
 learning:
     # algorithm: sgdapproxgp
     # arguments:

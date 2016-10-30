@@ -115,7 +115,7 @@ learning:
 # so leaving the decision to Cubist can result in a noticeable increase
 # in the time required to build a model.
 
-# target_transform: target transform (choice: stardardise, sqrt, log, identity',
+# target_transform: target transform (choice: stardardise, sqrt, log, identity,
 # logistic, rank, kde)
 
 #    algorithm: multicubist
