@@ -101,7 +101,8 @@ class FeatureSetConfig:
                 with open(csvfile, 'r') as f:
                     reader = csv.reader(f)
                     tifs = list(reader)
-                    tifs = [f[0].strip() for f in tifs if len(f) > 0]
+                    tifs = [f[0].strip() for f in tifs
+                            if (len(f) > 0 and f[0].strip())]
                 for f in tifs:
                     files.append(path.abspath(f))
 
