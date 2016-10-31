@@ -41,7 +41,8 @@ def inspect(input_dir, report_file, extension):
     with open(report_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='excel')
         writer.writerow(['FineName', 'band', 'NoDataValue', 'rows', 'cols',
-                         'Min', 'Max', 'Mean', 'Std', 'DataType'])
+                         'Min', 'Max', 'Mean', 'Std',
+                         'DataType', 'Categories'])
         process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
 
         stats = []  # process geotiff stats including multibanded geotif
@@ -86,11 +87,16 @@ def band_stats(ds, tif, band_no):
     no_data_val = band.GetNoDataValue()
     data_type = get_datatype(band)
 
+    if data_type is 'Categorical':
+        no_categories = stats[1] - stats[0]
+    else:
+        no_categories = np.nan
+
     l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          stats[0], stats[1],
          stats[2], stats[3],
-         data_type]
+         data_type, no_categories]
     ds = None  # close dataset
     return [str(a) for a in l]
 
