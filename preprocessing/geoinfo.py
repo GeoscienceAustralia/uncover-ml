@@ -40,8 +40,8 @@ def inspect(input_dir, report_file, extension):
 
     with open(report_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='excel')
-        writer.writerow(['FineName', 'band', 'NoDataValue',
-                        'rows', 'cols', 'Min', 'Max', 'Mean', 'Std'])
+        writer.writerow(['FineName', 'band', 'NoDataValue', 'rows', 'cols',
+                         'Min', 'Max', 'Mean', 'Std', 'DataType'])
         process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
 
         stats = []  # process geotiff stats including multibanded geotif
@@ -84,12 +84,25 @@ def band_stats(ds, tif, band_no):
     # For statistics calculation
     stats = band.ComputeStatistics(False)
     no_data_val = band.GetNoDataValue()
+    data_type = get_datatype(band)
+
     l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          stats[0], stats[1],
-         stats[2], stats[3]]
+         stats[2], stats[3],
+         data_type]
     ds = None  # close dataset
     return [str(a) for a in l]
+
+
+def get_datatype(band):
+    data_type = band.DataType
+    # from http://www.gdal.org/gdal_8h.html
+    if 0 < data_type < 6:  # data_type 1:5 are int data types
+        data_type = 'Categorical'
+    else:
+        data_type = 'Ordinal'
+    return data_type
 
 
 def get_numpy_stats(tif, writer):
@@ -109,10 +122,13 @@ def numpy_band_stats(ds, tif, band_no):
     band = ds.GetRasterBand(band_no)
     data = band.ReadAsArray()
     no_data_val = band.GetNoDataValue()
+    data_type = get_datatype(band)
+
     mask_data = ma.masked_where(data == no_data_val, data)
     l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          np.min(mask_data), np.max(mask_data),
-         np.mean(mask_data), np.std(mask_data)]
+         np.mean(mask_data), np.std(mask_data),
+         data_type]
     ds = None
     return [str(a) for a in l]
