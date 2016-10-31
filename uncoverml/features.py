@@ -66,7 +66,10 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     if config.cubist or config.multicubist:
         feature_vec = OrderedDict()
         log.warning("Cubist: ignoring preprocessing transform")
-        names = [k for ec in feature_sets for k in ec]
+        names = ['{}_{}'.format(b, k)
+                 for ec in feature_sets
+                 for k in ec
+                 for b in range(ec[k].shape[3])]
         # 0 is ordinal 1 is categorical
         flags = [int(k.is_categorical) for k in transform_sets]
         feature = [np.zeros(v.shape[1]) + f
