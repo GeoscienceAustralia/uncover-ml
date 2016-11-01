@@ -799,6 +799,60 @@ def transform_targets(Learner):
     return TransformedLearner
 
 
+class TransformedForestRegressor(RFR):
+
+    def __init__(self,
+                 target_transform='identity',
+                 n_estimators=10,
+                 bootstrap=True,
+                 oob_score=False,
+                 n_jobs=1,
+                 random_state=None,
+                 verbose=0,
+                 warm_start=False
+                 ):
+
+        super(TransformedForestRegressor, self).__init__(
+            n_estimators=n_estimators,
+            bootstrap=bootstrap,
+            oob_score=oob_score,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose,
+            warm_start=warm_start)
+
+        self.ytform = transforms.transforms[target_transform]()
+
+    def fit(self, X, y, sample_weight=None):
+
+        self.ytform.fit(y)
+        y_t = self.ytform.transform(y)
+
+        return super().fit(X, y_t)
+
+    def _notransform_predict(self, X):
+        Ey = super().predict(X)
+        return Ey
+
+    def predict(self, X):
+
+        Ey_t = super().predict(X)
+        Ey = self.ytform.itransform(Ey_t)
+
+        return Ey
+
+    def __expec_int(self, x, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Ex = self.ytform.itransform(x) * px
+        return Ex
+
+    def __var_int(self, x, Ex, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Vx = (self.ytform.itransform(x) - Ex)**2 * px
+        return Vx
+
 #
 # Construct compatible classes for the pipeline, these need to be module level
 # for pickling...

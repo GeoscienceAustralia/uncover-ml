@@ -1,0 +1,63 @@
+# not currently implemented
+# patchsize: 0
+
+features:
+  - name: my features
+    type: ordinal
+    files:
+      - path: /home/sudipta/GA_data/GA-cover2/k_15v5.tif
+      - path: /home/sudipta/GA_data/GA-cover2/dem_foc2.tif
+#      - directory: /home/sudipta/GA_data/GA-cover2
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+    transforms:
+      - centre
+      - standardise
+    imputation: nn
+
+  - name: my features
+    type: categorical
+    files:
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+    transforms:
+      - randomhot:
+          n_features: 3
+          seed: 1
+    imputation: nn
+
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+
+targets:
+  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  property: K_ppm_imp_
+
+learning:
+  algorithm: randomforest
+  arguments:
+    n_estimators: 10
+#  optimisation:
+#    algorithm:
+#      n_estimators: [10, 20, 30]
+#      criterion: ['mse', 'mae']
+#    pca:
+#      n_components: [2, 5]
+#      whiten: [True, False]
+#    iid: False
+
+
+
+prediction:
+  quantiles: 0.95
+
+
+validation:
+  - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: .
+

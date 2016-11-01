@@ -57,7 +57,8 @@ setup(
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
             'geoinfo = preprocessing.geoinfo:cli',
-            'rasteraverage = preprocessing.raster_average:cli'
+            'rasteraverage = preprocessing.raster_average:cli',
+            'pipeline = uncoverml.pipeline:cli'
         ]
     },
     install_requires=[
