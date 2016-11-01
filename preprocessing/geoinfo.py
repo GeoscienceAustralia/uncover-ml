@@ -88,7 +88,7 @@ def band_stats(ds, tif, band_no):
     data_type = get_datatype(band)
 
     if data_type is 'Categorical':
-        no_categories = stats[1] - stats[0]
+        no_categories = stats[1] - stats[0] + 1
     else:
         no_categories = np.nan
 
