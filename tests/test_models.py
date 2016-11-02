@@ -1,10 +1,12 @@
 import pytest
 from sklearn.metrics import r2_score
 
-from uncoverml.models import modelmaps
+from uncoverml.models import modelmaps, transformed_modelmaps
+
+models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
 
 
-@pytest.fixture(params=[k for k in modelmaps.keys()
+@pytest.fixture(params=[k for k in models
                         if k not in ['depthregress',
                                      'cubist',
                                      'multicubist',

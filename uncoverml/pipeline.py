@@ -15,7 +15,7 @@ import uncoverml.features
 import uncoverml.geoio
 import uncoverml.logging
 import uncoverml.targets
-from uncoverml.models import RandomForestTransformed, TransformedForestRegressor
+from uncoverml.models import TransformedForestRegressor
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ beta1s = [0.1, 0.5, 0.9]
 fit_intercept = [True, False]
 outdir = ['.']
 target_transform = ['identity', 'log']
-criterion = ['mse']  #, 'mae']
+criterion = ['mse', 'mae']
 
 # algos = {'randomforest': RandomForestRegressor,
 #          'randomforesttransformed': RandomForestTransformed,
@@ -49,8 +49,8 @@ def setup_rf_transformed(config):
             randomforesttransformed__n_estimators=n_estimators,
             randomforesttransformed__target_transform=target_transform,
             ),
-            n_jobs=2,
-            iid=False)
+        n_jobs=2,
+        iid=False)
 
     return estimator
 
