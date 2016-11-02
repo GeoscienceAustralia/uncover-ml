@@ -843,18 +843,18 @@ class TransformedForestRegressor(RandomForestRegressor):
         return Ey
 
     def predict_proba(self, X, interval=0.95, *args, **kwargs):
-
+        transform = transforms.transforms[self.target_transform]()
         # Expectation and variance in latent space
         Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
 
         # Save computation if identity transform
-        if type(self.ytform) is transforms.Identity:
+        if type(transform) is transforms.Identity:
             return Ey_t, Vy_t, ql, qu
 
         # Save computation if standardise transform
-        elif type(self.ytform) is transforms.Standardise:
-            Ey = self.ytform.itransform(Ey_t)
-            Vy = Vy_t * self.ytform.ystd ** 2
+        elif type(transform) is transforms.Standardise:
+            Ey = transform.itransform(Ey_t)
+            Vy = Vy_t * transform.ystd ** 2
             ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
             return Ey, Vy, ql, qu
 
