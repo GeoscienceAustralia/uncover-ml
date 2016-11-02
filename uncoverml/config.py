@@ -138,8 +138,26 @@ class Config:
         if 'patchsize' in s:
             log.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
+        self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
+
+        if self.pickle:
+            self.pickle_load = True
+            for n, d in enumerate(s['features']):
+                if d['type'] == 'pickle':
+                    self.pickled_covariates = \
+                        path.abspath(d['files']['covariates'])
+                    self.pickled_targets = d['files']['targets']
+                    if not (path.exists(d['files']['covariates'])
+                            and path.exists(d['files']['targets'])):
+                        self.pickle_load = False
+                        log.info('One or both pickled files were not '
+                                 'found. All targets will be intersected.')
+                    s['features'].pop(n)
+        else:
+            self.pickle_load = False
 
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+
         if 'preprocessing' in s:
             final_transform = s['preprocessing']
             _, im, trans_g = _parse_transform_set(

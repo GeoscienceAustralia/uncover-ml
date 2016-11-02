@@ -3,6 +3,12 @@
 # patchsize: 0
 
 features:
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: /home/sb/data/GA-cover/features.pk
+      targets: /home/sb/data/GA-cover/targets.pk
+
   - name: my features 1
     type: ordinal
     files:

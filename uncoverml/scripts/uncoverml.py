@@ -78,39 +78,49 @@ def resample_shapefile(config):
               help='divide each node\'s data into this many partitions')
 def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
-    config.n_subchunks = partitions
-    if config.n_subchunks > 1:
-        log.info("Memory constraint forcing {} iterations "
-                 "through data".format(config.n_subchunks))
+
+    if config.pickle_load:
+        x_all = pickle.load(open(config.pickled_covariates, 'rb'))
+        targets_all = pickle.load(open(config.pickled_targets, 'rb'))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
+        config.n_subchunks = partitions
+        if config.n_subchunks > 1:
+            log.info("Memory constraint forcing {} iterations "
+                     "through data".format(config.n_subchunks))
+        else:
+            log.info("Using memory aggressively: "
+                     "dividing all data between nodes")
 
-    config.target_file = ls.mpiops.run_once(resample_shapefile, config)
-    # Make the targets
-    targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                    targetfield=config.target_property)
-    # We're doing local models at the moment
-    targets_all = ls.targets.gather_targets(targets, node=0)
+        config.target_file = ls.mpiops.run_once(resample_shapefile, config)
+        # Make the targets
+        targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                        targetfield=config.target_property)
+        # We're doing local models at the moment
+        targets_all = ls.targets.gather_targets(targets, node=0)
 
-    # Get the image chunks and their associated transforms
-    image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
-    transform_sets = [k.transform_set for k in config.feature_sets]
+        # Get the image chunks and their associated transforms
+        image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
+        transform_sets = [k.transform_set for k in config.feature_sets]
 
-    if config.rank_features:
-        measures, features, scores = ls.validate.local_rank_features(
-            image_chunk_sets,
-            transform_sets,
-            targets_all,
-            config)
-        ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features,
-                           scores, config)
+        if config.rank_features:
+            measures, features, scores = ls.validate.local_rank_features(
+                image_chunk_sets,
+                transform_sets,
+                targets_all,
+                config)
+            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
+                               features, scores, config)
 
-    # need to add cubist cols to config.algorithm_args
-    x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform, config)
-    # learn the model
-    # local models need all data
-    x_all = ls.features.gather_features(x, node=0)
+        # need to add cubist cols to config.algorithm_args
+        x = ls.features.transform_features(image_chunk_sets, transform_sets,
+                                           config.final_transform, config)
+        # learn the model
+        # local models need all data
+        x_all = ls.features.gather_features(x, node=0)
+
+        if config.pickle:
+            pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
+            pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
 
     if config.cross_validate:
         run_crossval(x_all, targets_all, config)
