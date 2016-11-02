@@ -88,8 +88,8 @@ def cli(verbosity):
 def optimise(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
 
-    # estimator = setup_rf_transformed(config)
-    estimator = setup_rf(config)
+    estimator = setup_rf_transformed(config)
+    # estimator = setup_rf(config)
     log.info('Running optimisation for {}'.format(config.algorithm))
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
