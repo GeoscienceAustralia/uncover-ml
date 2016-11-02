@@ -131,10 +131,16 @@ def numpy_band_stats(ds, tif, band_no):
     data_type = get_datatype(band)
 
     mask_data = ma.masked_where(data == no_data_val, data)
+
+    if data_type is 'Categorical':
+        no_categories = np.max(mask_data) - np.min(mask_data) + 1
+    else:
+        no_categories = np.nan
+
     l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          np.min(mask_data), np.max(mask_data),
          np.mean(mask_data), np.std(mask_data),
-         data_type]
+         data_type, no_categories]
     ds = None
     return [str(a) for a in l]
