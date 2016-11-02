@@ -61,6 +61,7 @@ setup(
         ]
     },
     install_requires=[
+        'numpy >= 1.9.2',
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio == 0.36.0',
@@ -68,15 +69,16 @@ setup(
         'pyshp == 1.2.3',
         'click == 6.6',
         'revrand >= 0.6.5',
-        'scikit-learn >= 0.17.1',
-        'scikit-image >= 0.12.3',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',
-        'numpy >= 1.9.2',
+        'scikit-learn >= 0.17.1',
+        'scikit-image >= 0.12.3',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
         'GDAL == 2.0.0',
-        'geopandas == 0.2.1'
+        'pandas==0.18.1',
+        'geopandas == 0.2.1',
+        'matplotlib==1.5.1',
     ],
     extras_require={
         'demos': [
