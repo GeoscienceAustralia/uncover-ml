@@ -12,7 +12,11 @@ import uncoverml.features
 import uncoverml.geoio
 import uncoverml.logging
 import uncoverml.targets
-from uncoverml.optimise.models import TransformedForestRegressor
+from uncoverml.optimise.models import (
+    TransformedForestRegressor,
+    TransformedGradientBoost,
+    )
+
 from uncoverml.config import ConfigException
 from uncoverml.transforms import target as transforms
 
@@ -21,6 +25,7 @@ log = logging.getLogger(__name__)
 pca = decomposition.PCA()
 algos = {
          'randomforest': TransformedForestRegressor(),
+         'gradientboost': TransformedGradientBoost(),
          }
 
 

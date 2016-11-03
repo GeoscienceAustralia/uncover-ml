@@ -113,5 +113,72 @@ class TransformedForestRegressor(RandomForestRegressor):
         return Vx
 
 
+class TransformedGradientBoost(GradientBoostingRegressor):
+
+    def __init__(self,
+                 target_transform=transforms.Identity(),
+                 loss='ls', learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 max_depth=3, min_impurity_split=1e-7, init=None,
+                 random_state=None,
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False, presort='auto'):
+
+        super(TransformedGradientBoost, self).__init__(
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
+            subsample=subsample,
+            criterion=criterion,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth,
+            min_impurity_split=min_impurity_split,
+            init=init,
+            random_state=random_state,
+            max_features=max_features,
+            alpha=alpha,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start,
+            presort=presort
+        )
+
+        self.target_transform = target_transform
+
+    def fit(self, X, y, *args, **kwargs):
+
+        self.target_transform.fit(y)
+        y_t = self.target_transform.transform(y)
+
+        return super().fit(X, y_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey = super().predict(X)
+        return Ey
+
+    def predict(self, X, *args, **kwargs):
+
+        Ey_t = super().predict(X)
+        Ey = self.target_transform.itransform(Ey_t)
+
+        return Ey
+
+    def __expec_int(self, x, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Ex = self.target_transform.itransform(x) * px
+        return Ex
+
+    def __var_int(self, x, Ex, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
+        return Vx
+
+
 transformed_modelmaps = {'randomforest': TransformedForestRegressor,
+                         'gradientboost': TransformedGradientBoost,
                          }
