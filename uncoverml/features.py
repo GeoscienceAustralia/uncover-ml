@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict
 import numpy as np
+import pickle
 
 from uncoverml import mpiops
 from uncoverml.image import Image
@@ -77,8 +78,9 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         for k, v in zip(names, np.concatenate(feature)):
             feature_vec[k] = v
         config.algorithm_args['feature_type'] = feature_vec
-    else:
-        feature_vec = None
+        if mpiops.chunk_index == 0 and config.pickle:
+            log.info('Saving featurevec for reuse')
+            pickle.dump(feature_vec, open(config.featurevec, 'wb'))
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if final_transform and not config.cubist:

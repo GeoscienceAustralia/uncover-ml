@@ -9,6 +9,7 @@ features:
     files:
       covariates: /home/sb/data/GA-cover/features.pk
       targets: /home/sb/data/GA-cover/targets.pk
+      featurevec: /home/sb/data/GA-cover/featurevec.pk
 
   - name: my features
     type: ordinal

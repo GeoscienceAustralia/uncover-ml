@@ -138,6 +138,14 @@ class Config:
         if 'patchsize' in s:
             log.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
+
+        self.algorithm = s['learning']['algorithm']
+        self.cubist = self.algorithm == 'cubist'
+        self.multicubist = self.algorithm == 'multicubist'
+        self.multirandomforest = self.algorithm == 'multirandomforest'
+        self.algorithm_args = s['learning']['arguments']
+        self.quantiles = s['prediction']['quantiles']
+
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
         if self.pickle:
@@ -150,11 +158,18 @@ class Config:
                     if not (path.exists(d['files']['covariates'])
                             and path.exists(d['files']['targets'])):
                         self.pickle_load = False
-                        log.info('One or both pickled files were not '
-                                 'found. All targets will be intersected.')
+                    if self.cubist or self.multicubist:
+                        self.featurevec = \
+                            path.abspath(d['files']['featurevec'])
+                        if not path.exists(d['files']['featurevec']):
+                            self.pickle_load = False
                     s['features'].pop(n)
         else:
             self.pickle_load = False
+
+        if not self.pickle_load:
+            log.info('One or both pickled files were not '
+                     'found. All targets will be intersected.')
 
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
 
@@ -175,12 +190,6 @@ class Config:
             self.resample = s['targets']['resample']
             self.resample_args = s['targets']['arguments']
 
-        self.algorithm = s['learning']['algorithm']
-        self.cubist = self.algorithm == 'cubist'
-        self.multicubist = self.algorithm == 'multicubist'
-        self.multirandomforest = self.algorithm == 'multirandomforest'
-        self.algorithm_args = s['learning']['arguments']
-        self.quantiles = s['prediction']['quantiles']
 
         self.mask = None
         if 'mask' in s:

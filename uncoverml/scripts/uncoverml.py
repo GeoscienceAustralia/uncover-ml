@@ -82,6 +82,9 @@ def learn(pipeline_file, partitions):
     if config.pickle_load:
         x_all = pickle.load(open(config.pickled_covariates, 'rb'))
         targets_all = pickle.load(open(config.pickled_targets, 'rb'))
+        if config.cubist or config.multicubist:
+            config.algorithm_args['feature_type'] = \
+                pickle.load(open(config.featurevec, 'rb'))
         log.warning('Using  pickled targets and covariates. Make sure you have'
                     ' not changed targets file and/or covairates.')
     else:
