@@ -211,6 +211,12 @@ class Config:
                     self.folds = i['k-fold']['folds']
                     self.crossval_seed = i['k-fold']['random_seed']
                     break
+
+        if self.rank_features and self.pickle_load:
+            raise ConfigException('Feature ranking does not work with '
+                                  'pickled files. Please turn off either '
+                                  'feature ranking or pickles.')
+
         self.output_dir = s['output']['directory']
 
         if 'clustering' in s:
@@ -224,3 +230,7 @@ class Config:
                 self.class_property = s['clustering']['property']
             else:
                 self.semi_supervised = False
+
+
+class ConfigException(Exception):
+    pass
