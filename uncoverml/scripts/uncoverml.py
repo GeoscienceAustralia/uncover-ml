@@ -23,6 +23,7 @@ import uncoverml.logging
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
+import uncoverml.targets
 from uncoverml import resampling
 
 log = logging.getLogger(__name__)
@@ -79,6 +80,18 @@ def resample_shapefile(config):
 def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
 
+    targets_all, x_all = load_data(config, partitions)
+
+    if config.cross_validate:
+        run_crossval(x_all, targets_all, config)
+
+    log.info("Learning full {} model".format(config.algorithm))
+    model = ls.learn.local_learn_model(x_all, targets_all, config)
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
+def load_data(config, partitions):
     if config.pickle_load:
         x_all = pickle.load(open(config.pickled_covariates, 'rb'))
         targets_all = pickle.load(open(config.pickled_targets, 'rb'))
@@ -126,14 +139,7 @@ def learn(pipeline_file, partitions):
         if config.pickle:
             pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
             pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
-
-    if config.cross_validate:
-        run_crossval(x_all, targets_all, config)
-
-    log.info("Learning full {} model".format(config.algorithm))
-    model = ls.learn.local_learn_model(x_all, targets_all, config)
-    ls.mpiops.run_once(ls.geoio.export_model, model, config)
-    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    return targets_all, x_all
 
 
 @cli.command()

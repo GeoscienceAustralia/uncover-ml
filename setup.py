@@ -58,7 +58,7 @@ setup(
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
             'geoinfo = preprocessing.geoinfo:cli',
             'rasteraverage = preprocessing.raster_average:cli',
-            'pipeline = uncoverml.pipeline:cli'
+            'pipeline = uncoverml.optimise.pipeline:cli'
         ]
     },
     install_requires=[

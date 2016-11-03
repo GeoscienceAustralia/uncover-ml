@@ -1,32 +1,29 @@
 """Model Objects and ML algorithm serialisation."""
 
+import os
+import pickle
 from itertools import chain
+from os.path import join, isdir, abspath
 
 import numpy as np
-from scipy.stats import norm
-from scipy.integrate import fixed_quad
-import pickle
-from os.path import join, isdir, abspath
-import os
-
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
     RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
-from revrand.likelihoods import Gaussian
 from revrand.btypes import Parameter, Positive
-from revrand.utils import atleast_list
+from revrand.likelihoods import Gaussian
 from revrand.optimize import Adam
-
+from revrand.utils import atleast_list
+from scipy.integrate import fixed_quad
+from scipy.stats import norm
 from sklearn.ensemble import RandomForestRegressor as RFR
-from sklearn.svm import SVR
 from sklearn.linear_model import ARDRegression
+from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
-
-from uncoverml.transforms import target as transforms
-from uncoverml.likelihoods import Switching
+from uncoverml import mpiops
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
-from uncoverml import mpiops
+from uncoverml.likelihoods import Switching
+from uncoverml.transforms import target as transforms
 
 #
 # Module constants
@@ -799,115 +796,6 @@ def transform_targets(Learner):
     return TransformedLearner
 
 
-class TransformedForestRegressor(RandomForestRegressor):
-
-    def __init__(self,
-                 target_transform='identity',
-                 n_estimators=10,
-                 criterion="mse",
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.,
-                 max_features="auto",
-                 max_leaf_nodes=None,
-                 min_impurity_split=1e-7,
-                 bootstrap=True,
-                 oob_score=False,
-                 n_jobs=1,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False
-                 ):
-
-        super(TransformedForestRegressor, self).__init__(
-            n_estimators=n_estimators,
-            criterion=criterion,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
-            min_impurity_split=min_impurity_split,
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start)
-
-        self.target_transform = target_transform
-
-    def fit(self, X, y, sample_weight=None):
-        transform = transforms.transforms[self.target_transform]()
-        transform.fit(y)
-        y_t = transform.transform(y)
-
-        return super().fit(X, y_t)
-
-    def _notransform_predict(self, X):
-        Ey = super().predict(X)
-        return Ey
-
-    def predict(self, X):
-
-        Ey_t = super().predict(X)
-        transform = transforms.transforms[self.target_transform]()
-        Ey = transform.itransform(Ey_t)
-
-        return Ey
-
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
-        transform = transforms.transforms[self.target_transform]()
-        # Expectation and variance in latent space
-        Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
-
-        # Save computation if identity transform
-        if type(transform) is transforms.Identity:
-            return Ey_t, Vy_t, ql, qu
-
-        # Save computation if standardise transform
-        elif type(transform) is transforms.Standardise:
-            Ey = transform.itransform(Ey_t)
-            Vy = Vy_t * transform.ystd ** 2
-            ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-            return Ey, Vy, ql, qu
-
-        # All other transforms require quadrature
-        Ey = np.empty_like(Ey_t)
-        Vy = np.empty_like(Vy_t)
-
-        # Used fixed order quadrature to transform prob. estimates
-        for i, (Eyi, Vyi) in enumerate(zip(Ey_t, Vy_t)):
-            # Establish bounds
-            Syi = np.sqrt(Vyi)
-            a, b = Eyi - 3 * Syi, Eyi + 3 * Syi  # approx 99% bounds
-
-            # Quadrature
-            Ey[i], _ = fixed_quad(self.__expec_int, a, b, n=QUADORDER,
-                                  args=(Eyi, Syi))
-            Vy[i], _ = fixed_quad(self.__var_int, a, b, n=QUADORDER,
-                                  args=(Ey[i], Eyi, Syi))
-
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
-
-    def __expec_int(self, x, mu, std):
-
-        px = _normpdf(x, mu, std)
-        transform = transforms.transforms[self.target_transform]()
-        Ex = transform.itransform(x) * px
-        return Ex
-
-    def __var_int(self, x, Ex, mu, std):
-
-        px = _normpdf(x, mu, std)
-        transform = transforms.transforms[self.target_transform]()
-        Vx = (transform.itransform(x) - Ex)**2 * px
-        return Vx
-
 #
 # Construct compatible classes for the pipeline, these need to be module level
 # for pickling...
@@ -1112,10 +1000,6 @@ modelmaps = {'randomforest': RandomForestTransformed,
              'multicubist': CubistMultiTransformed,
              'depthregress': DepthRegressor,
              }
-
-
-transformed_modelmaps = {'randomforest': TransformedForestRegressor,
-                         }
 
 # Add all kernels for the approximate Gaussian processes here!
 basismap = {'rbf': RandomRBF,

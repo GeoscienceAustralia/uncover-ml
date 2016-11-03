@@ -1,7 +1,8 @@
 import pytest
 from sklearn.metrics import r2_score
 
-from uncoverml.models import modelmaps, transformed_modelmaps
+from uncoverml.models import modelmaps
+from uncoverml.optimise.models import transformed_modelmaps
 
 models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
 

@@ -106,6 +106,33 @@ learning:
 #       outdir: .
 
 
+#n_components : int, float, None or string
+#        Number of components to keep.
+#        if n_components is not set all components are kept::
+#        if n_components == 'mle' and svd_solver == 'full', Minka\'s MLE is used
+#        to guess the dimension
+#        if ``0 < n_components < 1`` and svd_solver == 'full', select the number
+#        of components such that the amount of variance that needs to be
+#        explained is greater than the percentage specified by n_components
+#        n_components cannot be equal to n_features for svd_solver == 'arpack'.
+# svd_solver: {'auto', 'full', 'arpack', 'randomized'}
+# iterated power: int > 0 or 'auto'
+# kde transform is not working yet
+
+optimisation:
+  algorithm: randomforest
+  featuretransforms:
+    pca:
+      n_components: [0.5, 0.8]
+      whiten: [False, True]
+      svd_solver: ['auto']
+      iterated_power: ['auto']
+  hyperparameters:
+    n_estimators: [10, 50, 200]
+    target_transform: ['identity', 'standardise', 'log', 'rank', 'logistic']
+  optimisation_output: optimisation.csv
+
+
 prediction:
   quantiles: 0.95
 
