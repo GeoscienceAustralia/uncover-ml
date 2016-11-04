@@ -13,7 +13,10 @@ models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
                                      'multicubist',
                                      'multirandomforest']])
 def get_models(request):
-    return modelmaps[request.param]
+    if request.param in modelmaps:
+        return modelmaps[request.param]
+    elif request.param in transformed_modelmaps:
+        return transformed_modelmaps[request.param]
 
 
 def test_modeltags(get_models):

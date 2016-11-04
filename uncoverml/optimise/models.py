@@ -2,11 +2,12 @@ import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor
-from uncoverml.models import RandomForestRegressor, QUADORDER, _normpdf
+from uncoverml.models import RandomForestRegressor, QUADORDER, \
+    _normpdf, TagsMixin
 from uncoverml.transforms import target as transforms
 
 
-class TransformedForestRegressor(RandomForestRegressor):
+class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform=transforms.Identity(),
@@ -113,7 +114,7 @@ class TransformedForestRegressor(RandomForestRegressor):
         return Vx
 
 
-class TransformedGradientBoost(GradientBoostingRegressor):
+class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform=transforms.Identity(),
@@ -179,6 +180,6 @@ class TransformedGradientBoost(GradientBoostingRegressor):
         return Vx
 
 
-transformed_modelmaps = {'randomforest': TransformedForestRegressor,
+transformed_modelmaps = {'transformedrandomforest': TransformedForestRegressor,
                          'gradientboost': TransformedGradientBoost,
                          }
