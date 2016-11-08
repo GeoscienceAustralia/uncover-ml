@@ -6,6 +6,7 @@ import pickle
 from uncoverml import mpiops
 from uncoverml.image import Image
 from uncoverml import patch
+from uncoverml import transforms
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +62,8 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
 
 
 def transform_features(feature_sets, transform_sets, final_transform, config):
+    rows_to_keep = cull_all_null_rows(feature_sets)
+
     # apply feature transforms
     transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
     # TODO remove this when cubist gets removed
@@ -85,7 +88,24 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if final_transform and not config.cubist:
         x = final_transform(x)
-    return x
+    return x[rows_to_keep], rows_to_keep
+
+
+def cull_all_null_rows(feature_sets):
+    # cull targets with all null values
+    dummy_transform = transforms.ImageTransformSet(image_transforms=None,
+                                                   imputer=None,
+                                                   global_transforms=None,
+                                                   is_categorical=True)
+    transformed_vectors = [t(c)
+                           for c, t in zip(feature_sets,
+                                           [dummy_transform] * len(
+                                               feature_sets))]
+    bool_transformed_vectors = np.ma.concatenate(transformed_vectors,
+                                                 axis=1).mask
+    covaraiates = bool_transformed_vectors.shape[1]
+    rows_to_keep = np.sum(bool_transformed_vectors, axis=1) != covaraiates
+    return rows_to_keep
 
 
 def gather_features(x, node=None):

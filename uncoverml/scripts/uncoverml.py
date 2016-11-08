@@ -39,7 +39,7 @@ def cli(verbosity):
 
 def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all,
-                                                      targets_all, config)
+                                                  targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 
@@ -113,12 +113,22 @@ def load_data(config, partitions):
         # Make the targets
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property)
-        # We're doing local models at the moment
-        targets_all = ls.targets.gather_targets(targets, node=0)
-
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
+
+        # need to add cubist cols to config.algorithm_args
+        # keep: bool array corresponding to rows that are retained
+        x, keep = ls.features.transform_features(image_chunk_sets,
+                                                 transform_sets,
+                                                 config.final_transform,
+                                                 config)
+        # learn the model
+        # local models need all data
+        x_all = ls.features.gather_features(x, node=0)
+
+        # We're doing local models at the moment
+        targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
         if config.rank_features:
             measures, features, scores = ls.validate.local_rank_features(
@@ -128,13 +138,6 @@ def load_data(config, partitions):
                 config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
                                features, scores, config)
-
-        # need to add cubist cols to config.algorithm_args
-        x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                           config.final_transform, config)
-        # learn the model
-        # local models need all data
-        x_all = ls.features.gather_features(x, node=0)
 
         if config.pickle:
             pickle.dump(x_all, open(config.pickled_covariates, 'wb'))

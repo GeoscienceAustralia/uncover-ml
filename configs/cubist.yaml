@@ -65,24 +65,24 @@ targets:
 #    output_samples: 500
 
 learning:
-    algorithm: cubist
-    arguments:
-      max_rules: 500
-      committee_members: 20
-      unbiased: False
-      max_categories: 5000
-      target_transform: standardise
-      bootstrap: 200
-      sampling: 70
-      seed: 2
-      extrapolation: 5
-      sampling: 50
-      seed: 2
-      composite_model: True
-      auto: False
-      neighbors: 5
-      calc_usage: True
-      print_output: False
+  algorithm: cubist
+  arguments:
+    max_rules: 500
+    committee_members: 20
+    unbiased: False
+    max_categories: 5000
+    target_transform: standardise
+    bootstrap: 200
+    sampling: 70
+    seed: 2
+    extrapolation: 5
+    sampling: 50
+    seed: 2
+    composite_model: True
+    auto: False
+    neighbors: 5
+    calc_usage: True
+    print_output: False
 
 # neighbors: int, number of nearest neighbors to be used (1-9)
 # nearest-neighbor model: predicts the target value of a new case by finding

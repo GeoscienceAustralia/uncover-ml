@@ -13,27 +13,30 @@ class Targets:
             self.fields = othervals
 
 
-def gather_targets(targets, node=None):
+def gather_targets(targets, keep, node=None):
+    observations = targets.observations[keep]
+    positions = targets.positions[keep]
     if node:
-        y = np.ma.concatenate(mpiops.comm.gather(targets.observations,
+        y = np.ma.concatenate(mpiops.comm.gather(observations,
                                                  root=node), axis=0)
-        p = np.ma.concatenate(mpiops.comm.gather(targets.positions, root=node),
+        p = np.ma.concatenate(mpiops.comm.gather(positions,
+                                                 root=node),
                               axis=0)
         d = {}
         keys = sorted(list(targets.fields.keys()))
         for k in keys:
-            d[k] = np.ma.concatenate(mpiops.comm.gather(targets.fields[k],
-                                                        root=node), axis=0)
+            d[k] = np.ma.concatenate(
+                mpiops.comm.gather(targets.fields[k][keep], root=node), axis=0)
         result = Targets(p, y, othervals=d)
     else:
-        y = np.ma.concatenate(mpiops.comm.allgather(targets.observations),
-                              axis=0)
-        p = np.ma.concatenate(mpiops.comm.allgather(targets.positions),
+        y = np.ma.concatenate(mpiops.comm.allgather(
+            observations), axis=0)
+        p = np.ma.concatenate(mpiops.comm.allgather(positions),
                               axis=0)
         d = {}
         keys = sorted(list(targets.fields.keys()))
         for k in keys:
-            d[k] = np.ma.concatenate(mpiops.comm.allgather(targets.fields[k]),
-                                     axis=0)
+            d[k] = np.ma.concatenate(
+                mpiops.comm.allgather(targets.fields[k][keep]), axis=0)
         result = Targets(p, y, othervals=d)
     return result
