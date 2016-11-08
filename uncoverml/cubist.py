@@ -412,7 +412,7 @@ class MultiCubist:
                  neighbors=None, feature_type=None,
                  sampling=70, seed=None, extrapolation=None,
                  composite_model=False, auto=False, parallel=False,
-                 calc_usage=False):
+                 calc_usage=False, bootstrap=None):
         """
         Instantiate the multicubist class with a number of invocation
         parameters
@@ -447,6 +447,7 @@ class MultiCubist:
         self.composite_model = composite_model
         self.auto = auto
         self.calc_usage = calc_usage
+        self.bootstrap = bootstrap
 
     def fit(self, x, y):
         """ Train the Cubist model
@@ -494,7 +495,8 @@ class MultiCubist:
                           auto=self.auto,
                           composite_model=self.composite_model,
                           seed=np.random.randint(0, 10000),
-                          calc_usage=temp_calc_usage)
+                          calc_usage=temp_calc_usage,
+                          bootstrap=self.bootstrap)
             cube.fit(x, y)
             if self.parallel:  # used in training
                 pk_f = join(self.temp_dir,

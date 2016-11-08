@@ -87,11 +87,11 @@ def calculate_validation_scores(ys, yt, eys):
     Parameters
     ----------
     ys: numpy.array
-        The test data that was used to corresponding outputs
+        The test data outputs
     yt: numpy.array
-        The training data's corresponding outputs
-    yt: numpy.array
-        The predictions made by the trained model
+        The training data's corresponding predictions
+    eys: numpy.array
+        The predictions made by the trained model on test data
 
     Returns
     -------
@@ -108,7 +108,6 @@ def calculate_validation_scores(ys, yt, eys):
     nans = ~np.isnan(eys[:, 0])
     ys = ys[nans]
     eys = eys[:, 0][nans]
-    yt = yt[nans]
 
     for m in metrics:
 
