@@ -72,7 +72,6 @@ learning:
       unbiased: False
       max_categories: 5000
       target_transform: standardise
-      neighbors: 5
       bootstrap: 200
       sampling: 70
       seed: 2
