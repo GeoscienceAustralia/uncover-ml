@@ -200,6 +200,7 @@ class Cubist:
         Prepare the namefile and the data, then write both to disk,
         then invoke cubist to train a regression tree
         '''
+        n, m = x.shape
 
         # Prepare and write the namefile expected by cubist
         # TODO replace continuous with discrete for discrete data
@@ -227,7 +228,7 @@ class Cubist:
             y = y[chosen]
             x = x[chosen, :]
 
-        n, m = x.shape
+        n, _ = x.shape
 
         # Write the data as a csv file for cubist's training
         y_copy = deepcopy(y)
