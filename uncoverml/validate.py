@@ -102,6 +102,14 @@ def calculate_validation_scores(ys, yt, eys):
     probscores = ['msll', 'mll']
 
     scores = {}
+
+    # cubist can predict nan when a catgeorical variable is not
+    # present in the training data
+    nans = ~np.isnan(eys[:, 0])
+    ys = ys[nans]
+    eys = eys[:, 0][nans]
+    yt = yt[nans]
+
     for m in metrics:
 
         if m not in probscores:
