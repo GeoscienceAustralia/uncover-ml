@@ -73,6 +73,7 @@ learning:
       max_categories: 5000
       target_transform: standardise
       neighbors: 5
+      bootstrap: 200
       sampling: 70
       seed: 2
       extrapolation: 5
@@ -102,6 +103,8 @@ learning:
 
 # extrapolation: allowed max deviation of predictions from
 # training targets float between 0-100.
+
+# bootstrap: use bootstarp (%) to generate samples from input data
 
 # sampling: random sampling expressed in % terms to be  used during training.
 # defaults to 70. If sampling is is chosen very close to 100%,
@@ -137,6 +140,7 @@ learning:
 #      max_categories: 5000
 #      extrapolation: 5
 #      target_transform: standardise
+#      bootstrap: 200
 #      sampling: 50
 #      seed: 2
 #      composite_model: True

@@ -90,7 +90,7 @@ class Cubist:
                  max_rules=None, committee_members=1, max_categories=5000,
                  sampling=None, seed=None, neighbors=None, feature_type=None,
                  composite_model=False, auto=False, extrapolation=None,
-                 calc_usage=False):
+                 calc_usage=False, bootstrap=None):
         """ Instantiate the cubist class with a number of invocation parameters
 
         Parameters
@@ -150,6 +150,7 @@ class Cubist:
         self.auto = auto
         self.composite_model = composite_model
         self.calc_usage = calc_usage
+        self.bootstrap = bootstrap
 
         if auto and composite_model:
             self.auto = False
@@ -195,8 +196,6 @@ class Cubist:
             input vector. Again we expect y.shape[0] = n.
         """
 
-        n, m = x.shape
-
         '''
         Prepare the namefile and the data, then write both to disk,
         then invoke cubist to train a regression tree
@@ -219,6 +218,16 @@ class Cubist:
             + ['t: continuous.']
         namefile_string = '\n'.join(names)
         save_data(self._filename + '.names', namefile_string)
+
+        # bootstrap
+        if self.bootstrap:
+            chosen = np.random.choice(range(len(y)),
+                                      size=int(self.bootstrap/100.*len(y)),
+                                      replace=True)
+            y = y[chosen]
+            x = x[chosen, :]
+
+        n, m = x.shape
 
         # Write the data as a csv file for cubist's training
         y_copy = deepcopy(y)
