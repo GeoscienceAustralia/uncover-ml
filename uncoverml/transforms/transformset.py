@@ -12,7 +12,9 @@ def build_feature_vector(image_chunks, is_categorical):
     dtype = int if is_categorical else float
     for k, im in image_chunks.items():
         image_chunks[k] = im.reshape(im.shape[0], -1).astype(dtype)
-    x = np.ma.concatenate(image_chunks.values(), axis=1)
+    x_data = np.concatenate([a.data for a in image_chunks.values()], axis=1)
+    x_mask = np.concatenate([a.mask for a in image_chunks.values()], axis=1)
+    x = np.ma.masked_array(data=x_data, mask=x_mask)
     return x
 
 
@@ -60,6 +62,5 @@ class ImageTransformSet(TransformSet):
 
         # concatenate and floating point
         x = build_feature_vector(transformed_chunks, self.is_categorical)
-
         x = super().__call__(x)
         return x

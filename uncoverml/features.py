@@ -54,7 +54,9 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
         if x is not None:
             x_all.append(x)
     if len(x_all) > 0:
-        x_all = np.ma.concatenate(x_all, axis=0)
+        x_all_data = np.concatenate([a.data for a in x_all], axis=0)
+        x_all_mask = np.concatenate([a.mask for a in x_all], axis=0)
+        x_all = np.ma.masked_array(x_all_data, mask=x_all_mask)
     else:
         raise ValueError("All targets lie outside image boundaries")
     assert x_all.shape[0] == targets.observations.shape[0]
@@ -86,7 +88,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
             pickle.dump(feature_vec, open(config.featurevec, 'wb'))
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
-    if final_transform and not config.cubist:
+    if final_transform and not (config.cubist or config.multicubist):
         x = final_transform(x)
     return x, rows_to_keep
 
@@ -97,12 +99,10 @@ def cull_all_null_rows(feature_sets):
                                                    imputer=None,
                                                    global_transforms=None,
                                                    is_categorical=True)
-    transformed_vectors = [t(c)
-                           for c, t in zip(feature_sets,
-                                           [dummy_transform] * len(
-                                               feature_sets))]
-    bool_transformed_vectors = np.ma.concatenate(transformed_vectors,
-                                                 axis=1).mask
+    transformed_vectors = [dummy_transform(c) for c in feature_sets]
+
+    bool_transformed_vectors = np.concatenate([t.mask for t in
+                                               transformed_vectors], axis=1)
     covaraiates = bool_transformed_vectors.shape[1]
     rows_to_keep = np.sum(bool_transformed_vectors, axis=1) != covaraiates
     return rows_to_keep
