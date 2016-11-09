@@ -7,7 +7,7 @@ import os.path
 import pytest
 import numpy as np
 import shapefile as shp
-# import rasterio
+from uncoverml import mpiops
 
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 
@@ -95,34 +95,6 @@ def make_points():
 def make_multi_patch(request):
     return request.param()
 
-
-# @pytest.fixture
-# def make_geotiff(random_filename):
-#     filename = random_filename + ".tif"
-#     # # Create grid
-#     # res, x_bound, y_bound, lons, lats, Ao = make_raster()
-#     # Generate data for geotiff
-#     Lons, Lats = np.meshgrid(lons, lats)
-
-#     # Write geotiff
-#     profile = {'driver': "GTiff",
-#                'width': len(lons),
-#                'height': len(lats),
-#                'count': 2,
-#                'dtype': rasterio.float64,
-#                'transform': Ao,
-#                'crs': {'proj': 'longlat',
-#                        'ellps': 'WGS84',
-#                        'datum': 'WGS84',
-#                        'nodefs': True
-#                        }
-#                }
-
-#     with rasterio.open(filename, 'w', **profile) as f:
-#         f.write(np.array([Lons, Lats]))
-#     return filename
-
-
 @pytest.fixture
 def shapefile(random_filename, request):
 
@@ -178,3 +150,14 @@ def linear_data():
     tsind = np.where(~tsind)[0]
 
     return y[trind], X[trind], y[tsind], X[tsind]
+
+
+# Make sure all MPI tests use this fixure
+@pytest.fixture()
+def mpisync(request):
+    mpiops.comm.barrier()
+
+    def fin():
+        mpiops.comm.barrier()
+    request.addfinalizer(fin)
+    return mpiops.comm

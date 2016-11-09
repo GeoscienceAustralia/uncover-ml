@@ -72,7 +72,7 @@ def test_multicubist():
     assert 0.68 < score < 0.8
 
 
-def test_multicibist_mpi():
+def test_multicibist_mpi(mpisync):
     """
     run this with something like:
     "mpirun -np 4 py.test ../tests/test_cubist.py::test_multicubist_mpi"
@@ -93,4 +93,3 @@ def test_multicibist_mpi():
     score = r2_score(y, y_pred_p)
 
     assert 0.7 < score < 0.8
-
