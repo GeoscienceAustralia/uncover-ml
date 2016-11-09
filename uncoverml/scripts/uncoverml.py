@@ -10,9 +10,10 @@ import tempfile
 from os.path import isfile
 import matplotlib
 matplotlib.use('Agg')
-
 import click
 import numpy as np
+import warnings
+
 import uncoverml as ls
 import uncoverml.cluster
 import uncoverml.config
@@ -25,9 +26,10 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 from uncoverml import resampling
+from uncoverml.logging import warn_with_traceback
 
 log = logging.getLogger(__name__)
-
+warnings.showwarning = warn_with_traceback
 
 @click.group()
 @click.option('-v', '--verbosity',
@@ -128,7 +130,7 @@ def load_data(config, partitions):
         x_all = ls.features.gather_features(x, node=0)
 
         # We're doing local models at the moment
-        targets_all = ls.targets.gather_targets(targets, keep, node=0)
+        targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
 
         if config.rank_features:
             measures, features, scores = ls.validate.local_rank_features(

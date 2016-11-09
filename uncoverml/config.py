@@ -1,8 +1,8 @@
 import logging
 from os import path
+from os import makedirs
 import glob
 import csv
-
 import yaml
 
 from uncoverml import transforms
@@ -190,7 +190,6 @@ class Config:
             self.resample = s['targets']['resample']
             self.resample_args = s['targets']['arguments']
 
-
         self.mask = None
         if 'mask' in s:
             self.mask = s['mask']['file']
@@ -218,6 +217,9 @@ class Config:
                                   'feature ranking or pickles.')
 
         self.output_dir = s['output']['directory']
+
+        # create output dir if does not exist
+        makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:
             self.optimisation = s['optimisation']
