@@ -127,7 +127,7 @@ def load_data(config, partitions):
                                                  config)
         # learn the model
         # local models need all data
-        x_all = ls.features.gather_features(x, node=0)
+        x_all = ls.features.gather_features(x[keep], node=0)
 
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)

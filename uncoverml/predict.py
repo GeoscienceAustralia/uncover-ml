@@ -37,7 +37,7 @@ def _get_data(subchunk, config):
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
-                                    config.final_transform, config)
+                                    config.final_transform, config)[0]
     mask = mask_rows(config, mask, subchunk)
     if mask is not None:
         assert x.shape[0] == mask.shape[0], 'shape mismatch of ' \

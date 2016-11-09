@@ -88,7 +88,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if final_transform and not config.cubist:
         x = final_transform(x)
-    return x[rows_to_keep], rows_to_keep
+    return x, rows_to_keep
 
 
 def cull_all_null_rows(feature_sets):
