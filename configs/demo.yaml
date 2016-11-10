@@ -8,6 +8,7 @@ features:
     files:
       covariates: /home/sb/data/GA-cover/features.pk
       targets: /home/sb/data/GA-cover/targets.pk
+      rawcovariates: /home/sb/data/GA-cover/rawcovariates.csv
 
   - name: my features 1
     type: ordinal

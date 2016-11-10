@@ -148,6 +148,7 @@ class Config:
 
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
+        self.rawcovariates = False
         if self.pickle:
             self.pickle_load = True
             for n, d in enumerate(s['features']):
@@ -155,6 +156,8 @@ class Config:
                     self.pickled_covariates = \
                         path.abspath(d['files']['covariates'])
                     self.pickled_targets = d['files']['targets']
+                    if 'rawcovariates' in d['files']:
+                        self.rawcovariates = d['files']['rawcovariates']
                     if not (path.exists(d['files']['covariates'])
                             and path.exists(d['files']['targets'])):
                         self.pickle_load = False

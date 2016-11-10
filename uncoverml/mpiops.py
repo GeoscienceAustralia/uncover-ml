@@ -102,7 +102,7 @@ def mean(x):
     x_sum = comm.allreduce(x_sum_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_sum)
     if still_masked != 0:
-        raise ValueError("Can't compute mean: At least 1 column has no data")
+        raise ValueError("Can't compute mean: At least 1 column has nodata")
     if hasattr(x_sum, 'mask'):
         x_sum = x_sum.data
     mean = x_sum / x_n

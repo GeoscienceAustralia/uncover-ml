@@ -93,6 +93,30 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     return x, rows_to_keep
 
 
+def save_raw_vectors(feature_sets, transform_sets, config):
+    transform_sets_mod = []
+    names = ['{}_{}'.format(b, k)
+             for ec in feature_sets
+             for k in ec
+             for b in range(ec[k].shape[3])]
+
+    header = ', '.join(names)
+    for t in transform_sets:
+        dummy_transform = transforms.ImageTransformSet(
+            image_transforms=None, imputer=None,
+            global_transforms=None, is_categorical=t.is_categorical)
+        transform_sets_mod.append(dummy_transform)
+
+    transformed_vectors = [t(c) for c, t in zip(feature_sets,
+                                                transform_sets_mod)]
+
+    x = np.ma.concatenate(transformed_vectors, axis=1)
+    x_all = gather_features(x, node=0)
+    if mpiops.chunk_index == 0:
+        np.savetxt(config.rawcovariates, X=x_all, delimiter=',', fmt='%.4e',
+                   header=header)
+
+
 def cull_all_null_rows(feature_sets):
     # cull targets with all null values
     dummy_transform = transforms.ImageTransformSet(image_transforms=None,

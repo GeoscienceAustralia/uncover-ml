@@ -141,9 +141,13 @@ def load_data(config, partitions):
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
                                features, scores, config)
 
-        if config.pickle:
+        if config.pickle and ls.mpiops.chunk_index == 0:
             pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
             pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
+
+        if config.rawcovariates:
+            ls.features.save_raw_vectors(image_chunk_sets,
+                                         transform_sets, config)
     return targets_all, x_all
 
 
