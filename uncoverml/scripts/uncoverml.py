@@ -119,6 +119,10 @@ def load_data(config, partitions):
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
 
+        if config.rawcovariates:
+            ls.features.save_raw_vectors(image_chunk_sets,
+                                         transform_sets, config)
+
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
         x, keep = ls.features.transform_features(image_chunk_sets,
@@ -145,9 +149,6 @@ def load_data(config, partitions):
             pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
             pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
 
-        if config.rawcovariates:
-            ls.features.save_raw_vectors(image_chunk_sets,
-                                         transform_sets, config)
     return targets_all, x_all
 
 

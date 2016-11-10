@@ -81,7 +81,7 @@ def count(x):
     x_n = comm.allreduce(x_n_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_n)
     if still_masked != 0:
-        np.savetxt('count_report.csv', x_n, delimiter=',')
+        log.info('Reported subcounts: ' + ', '.join([str(s) for s in x_n]))
         raise ValueError("Can't compute count: subcounts are still masked")
     if hasattr(x_n, 'mask'):
         x_n = x_n.data
@@ -103,7 +103,7 @@ def mean(x):
     x_sum = comm.allreduce(x_sum_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_sum)
     if still_masked != 0:
-        np.savetxt('mean_report.csv', x_sum, delimiter=',')
+        log.info('Reported x_sum: ' + ', '.join([str(s) for s in x_sum]))
         raise ValueError("Can't compute mean: At least 1 column has nodata")
     if hasattr(x_sum, 'mask'):
         x_sum = x_sum.data
@@ -123,7 +123,7 @@ def outer(x):
     out = comm.allreduce(x_outer_local)
     still_masked = np.ma.count_masked(out)
     if still_masked != 0:
-        np.savetxt('outer_report.csv', out, delimiter=',')
+        log.info('Reported out: ' + ', '.join([str(s) for s in out]))
         raise ValueError("Can't compute outer product:"
                          " completely missing columns!")
     if hasattr(out, 'mask'):
