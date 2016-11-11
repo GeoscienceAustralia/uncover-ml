@@ -115,6 +115,8 @@ def save_raw_vectors(feature_sets, transform_sets, config):
     if mpiops.chunk_index == 0:
         np.savetxt(config.rawcovariates, X=x_all, delimiter=',', fmt='%.4e',
                    header=header)
+        np.savetxt(config.rawcovariates_mask, X=x_all.mask.astype(int),
+                   delimiter=',', fmt='%.4e', header=header)
 
 
 def cull_all_null_rows(feature_sets):

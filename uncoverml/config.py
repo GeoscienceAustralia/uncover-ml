@@ -158,6 +158,8 @@ class Config:
                     self.pickled_targets = d['files']['targets']
                     if 'rawcovariates' in d['files']:
                         self.rawcovariates = d['files']['rawcovariates']
+                        self.rawcovariates_mask = \
+                            d['files']['rawcovariates_mask']
                     if not (path.exists(d['files']['covariates'])
                             and path.exists(d['files']['targets'])):
                         self.pickle_load = False

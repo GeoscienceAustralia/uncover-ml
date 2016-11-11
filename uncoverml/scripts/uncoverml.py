@@ -120,6 +120,7 @@ def load_data(config, partitions):
         transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.rawcovariates:
+            log.info('Saving raw data before any processing')
             ls.features.save_raw_vectors(image_chunk_sets,
                                          transform_sets, config)
 

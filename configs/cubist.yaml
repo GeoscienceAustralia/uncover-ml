@@ -11,6 +11,7 @@ features:
       targets: /home/sb/data/GA-cover/targets.pk
       featurevec: /home/sb/data/GA-cover/featurevec.pk
       rawcovariates: /home/sb/data/GA-cover/rawcovariates.csv
+      rawcovariates_mask: rawcovariates_mask.csv
 
   - name: my features
     type: ordinal
