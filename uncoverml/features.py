@@ -64,8 +64,6 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
 
 
 def transform_features(feature_sets, transform_sets, final_transform, config):
-    rows_to_keep = cull_all_null_rows(feature_sets)
-
     # apply feature transforms
     transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
     # TODO remove this when cubist gets removed
@@ -90,10 +88,10 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if final_transform and not (config.cubist or config.multicubist):
         x = final_transform(x)
-    return x, rows_to_keep
+    return x, cull_all_null_rows(feature_sets)
 
 
-def save_raw_vectors(feature_sets, transform_sets, config):
+def save_intersected_features(feature_sets, transform_sets, config):
     transform_sets_mod = []
     names = ['{}_{}'.format(b, k)
              for ec in feature_sets
