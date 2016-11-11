@@ -103,6 +103,12 @@ class RasterioImageSource(ImageSource):
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
 
+        # if nans exist in data, mask them, i.e. convert to nodatavalue
+        # TODO: Consider removal once covariates are fixed
+        nans = np.isnan(d.data)
+        if d.mask.ndim:
+            d.mask[nans] = True
+
         if self._y_flipped:
             d = d[:, ::-1]
 

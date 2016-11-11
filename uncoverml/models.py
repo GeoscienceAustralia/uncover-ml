@@ -670,6 +670,11 @@ class RandomForestRegressorMulti:
 
     def predict_proba(self, x, interval=0.95):
 
+        # We can't make predictions until we have trained the model
+        if not self._trained:
+            print('Train first')
+            return
+
         y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
 
         for i in range(self.forests):

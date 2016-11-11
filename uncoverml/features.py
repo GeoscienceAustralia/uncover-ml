@@ -111,7 +111,8 @@ def save_intersected_features(feature_sets, transform_sets, config):
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
     if mpiops.chunk_index == 0:
-        np.savetxt(config.rawcovariates, X=x_all, delimiter=',', fmt='%.4e',
+        np.savetxt(config.rawcovariates, X=x_all.data, delimiter=',',
+                   fmt='%.4e',
                    header=header)
         np.savetxt(config.rawcovariates_mask, X=x_all.mask.astype(int),
                    delimiter=',', fmt='%.4e', header=header)
