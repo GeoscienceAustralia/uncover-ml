@@ -3,11 +3,76 @@ from scipy.integrate import fixed_quad
 from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin
+    _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
 
 
-class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
+class TransformMixin:
+
+    def __init__(self, target_transform=transforms.Identity()):
+        self.target_transform = target_transform
+
+    def fit(self, X, y, *args, **kwargs):
+
+        self.target_transform.fit(y)
+        y_t = self.target_transform.transform(y)
+
+        return super().fit(X, y_t)
+
+    def _notransform_predict(self, X):
+        Ey = super().predict(X)
+        return Ey
+
+    def predict(self, X, *args, **kwargs):
+
+        Ey_t = super().predict(X)
+        Ey = self.target_transform.itransform(Ey_t)
+
+        return Ey
+
+    def __expec_int(self, x, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Ex = self.target_transform.itransform(x) * px
+        return Ex
+
+    def __var_int(self, x, Ex, mu, std):
+
+        px = _normpdf(x, mu, std)
+        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
+        return Vx
+
+
+class TransformedSGDApproxGP(SGDApproxGP, TagsMixin, TransformMixin):
+
+    def __init__(self,
+                 target_transform=transforms.Identity(),
+                 kern='rbf', nbases=50, lenscale=1., var=1.,
+                 regulariser=1., ard=True, maxiter=3000, batch_size=10,
+                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
+                 random_state=None
+                 ):
+        SGDApproxGP.__init__(
+            self,
+            kern=kern,
+            nbases=nbases,
+            lenscale=lenscale,
+            var=var,
+            regulariser=regulariser,
+            ard=ard,
+            maxiter=maxiter,
+            batch_size=batch_size,
+            alpha=alpha,
+            beta1=beta1,
+            beta2=beta2,
+            epsilon=epsilon,
+            random_state=random_state
+        )
+        TransformMixin.__init__(self, target_transform=target_transform)
+
+
+class TransformedForestRegressor(RandomForestRegressor, TagsMixin,
+                                 TransformMixin):
 
     def __init__(self,
                  target_transform=transforms.Identity(),
@@ -28,7 +93,8 @@ class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
                  warm_start=False
                  ):
 
-        super(TransformedForestRegressor, self).__init__(
+        RandomForestRegressor.__init__(
+            self,
             n_estimators=n_estimators,
             criterion=criterion,
             max_depth=max_depth,
@@ -44,26 +110,7 @@ class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start)
-
-        self.target_transform = target_transform
-
-    def fit(self, X, y, *args, **kwargs):
-
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-
-        return super().fit(X, y_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey = super().predict(X)
-        return Ey
-
-    def predict(self, X, *args, **kwargs):
-
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-
-        return Ey
+        TransformMixin.__init__(self, target_transform=target_transform)
 
     def predict_proba(self, X, interval=0.95, *args, **kwargs):
 
@@ -101,20 +148,9 @@ class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
 
         return Ey, Vy, ql, qu
 
-    def __expec_int(self, x, mu, std):
 
-        px = _normpdf(x, mu, std)
-        Ex = self.target_transform.itransform(x) * px
-        return Ex
-
-    def __var_int(self, x, Ex, mu, std):
-
-        px = _normpdf(x, mu, std)
-        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
-        return Vx
-
-
-class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
+class TransformedGradientBoost(GradientBoostingRegressor, TransformMixin,
+                               TagsMixin):
 
     def __init__(self,
                  target_transform=transforms.Identity(),
@@ -126,7 +162,8 @@ class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
-        super(TransformedGradientBoost, self).__init__(
+        GradientBoostingRegressor.__init__(
+            self,
             loss=loss,
             learning_rate=learning_rate,
             n_estimators=n_estimators,
@@ -144,40 +181,10 @@ class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
             verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start,
-            presort=presort
+            presort=presort,
         )
 
-        self.target_transform = target_transform
-
-    def fit(self, X, y, *args, **kwargs):
-
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-
-        return super().fit(X, y_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey = super().predict(X)
-        return Ey
-
-    def predict(self, X, *args, **kwargs):
-
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-
-        return Ey
-
-    def __expec_int(self, x, mu, std):
-
-        px = _normpdf(x, mu, std)
-        Ex = self.target_transform.itransform(x) * px
-        return Ex
-
-    def __var_int(self, x, Ex, mu, std):
-
-        px = _normpdf(x, mu, std)
-        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
-        return Vx
+        TransformMixin.__init__(self, target_transform=target_transform)
 
 
 transformed_modelmaps = {'transformedrandomforest': TransformedForestRegressor,

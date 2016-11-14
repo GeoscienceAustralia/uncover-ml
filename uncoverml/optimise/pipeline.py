@@ -76,7 +76,7 @@ def optimise(pipeline_file, partitions):
 
     targets_all, x_all = load_data(config, partitions)
 
-    log.info("Optimising {} model".format(config.algorithm))
+    log.info("Optimising {} model".format(config.optimisation['algorithm']))
     estimator.fit(X=x_all, y=targets_all.observations)
 
     pd.DataFrame.from_dict(
