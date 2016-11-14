@@ -103,8 +103,9 @@ def calculate_validation_scores(ys, yt, eys):
 
     scores = {}
 
-    # cubist can predict nan when a catgeorical variable is not
+    # cubist can predict nan when a categorical variable is not
     # present in the training data
+    # TODO: Can be removed except for cubist
     nans = ~np.isnan(eys[:, 0])
     ys = ys[nans]
     eys = eys[:, 0][nans]
