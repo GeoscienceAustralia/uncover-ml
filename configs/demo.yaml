@@ -122,7 +122,19 @@ learning:
 # kde transform is not working yet
 
 optimisation:
-  algorithm: randomforest
+#  algorithm: randomforest
+#  featuretransforms:
+#    pca:
+#      n_components: [0.5, 0.8]
+#      whiten: [False, True]
+#      svd_solver: ['auto']
+#      iterated_power: ['auto']
+#  hyperparameters:
+#    n_estimators: [10, 50, 200]
+#    target_transform: ['identity', 'standardise', 'log', 'rank', 'logistic']
+#  optimisation_output: optimisation.csv
+
+  algorithm: gradientboost
   featuretransforms:
     pca:
       n_components: [0.5, 0.8]

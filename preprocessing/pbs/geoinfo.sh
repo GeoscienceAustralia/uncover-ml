@@ -3,6 +3,7 @@
 #PBS -q express
 #PBS -l walltime=20:00:00,mem=32GB,ncpus=16,jobfs=30GB
 #PBS -l wd
+#PBS -j oe
 
 module unload intel-cc
 module unload intel-fc
@@ -21,4 +22,4 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 workon uncoverml
 
 # the python command needs full path of the python script
-mpirun geoinfo inspect /g/data/ge3/covariates/national_cat_LCC/ national_geoinfo.csv
+mpirun --mca mpi_warn_on_fork 0 geoinfo inspect /g/data/ge3/covariates/national_cat_LCC/ national_geoinfo.csv

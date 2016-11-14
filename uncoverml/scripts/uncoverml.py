@@ -6,8 +6,8 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-import tempfile
 from os.path import isfile
+
 import matplotlib
 matplotlib.use('Agg')
 import click
@@ -24,8 +24,7 @@ import uncoverml.logging
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
-import uncoverml.targets
-from uncoverml import resampling
+from uncoverml.targets import resample_shapefile
 from uncoverml.logging import warn_with_traceback
 
 log = logging.getLogger(__name__)
@@ -43,36 +42,6 @@ def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all,
                                                   targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
-
-
-def resample_shapefile(config):
-    shapefile = config.target_file
-
-    if not config.resample:
-        return shapefile
-    else:  # sample shapefile
-        log.info('Stripping shapefile of unnecessary attributes')
-        temp_shapefile = tempfile.mktemp(suffix='.shp', dir=config.output_dir)
-
-        if config.resample == 'value':
-            log.info("resampling shape file "
-                     "based on '{}' values".format(config.target_property))
-            resampling.resample_shapefile(shapefile,
-                                          temp_shapefile,
-                                          target_field=config.target_property,
-                                          **config.resample_args
-                                          )
-        else:
-            assert config.resample == 'spatial', \
-                "resample must be 'value' or 'spatial'"
-            log.info("resampling shape file spatially")
-
-            resampling.resample_shapefile_spatially(
-                shapefile, temp_shapefile,
-                target_field=config.target_property,
-                **config.resample_args)
-
-        return temp_shapefile
 
 
 @cli.command()

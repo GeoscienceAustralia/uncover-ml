@@ -1,8 +1,11 @@
+import tempfile
+
 import numpy as np
 from os.path import join
+import logging
 
-from uncoverml import mpiops
-
+from uncoverml import mpiops, resampling
+log = logging.getLogger(__name__)
 
 class Targets:
 
@@ -60,3 +63,33 @@ def save_dropped_targets(config, keep, targets):
                             dropped_observations
                             ], axis=1),
                        delimiter=',')
+
+
+def resample_shapefile(config):
+    shapefile = config.target_file
+
+    if not config.resample:
+        return shapefile
+    else:  # sample shapefile
+        log.info('Stripping shapefile of unnecessary attributes')
+        temp_shapefile = tempfile.mktemp(suffix='.shp', dir=config.output_dir)
+
+        if config.resample == 'value':
+            log.info("resampling shape file "
+                     "based on '{}' values".format(config.target_property))
+            resampling.resample_shapefile(shapefile,
+                                          temp_shapefile,
+                                          target_field=config.target_property,
+                                          **config.resample_args
+                                          )
+        else:
+            assert config.resample == 'spatial', \
+                "resample must be 'value' or 'spatial'"
+            log.info("resampling shape file spatially")
+
+            resampling.resample_shapefile_spatially(
+                shapefile, temp_shapefile,
+                target_field=config.target_property,
+                **config.resample_args)
+
+        return temp_shapefile

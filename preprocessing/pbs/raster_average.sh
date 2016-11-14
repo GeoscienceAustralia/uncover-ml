@@ -22,4 +22,4 @@ source $HOME/.local/bin/virtualenvwrapper.sh
 workon uncoverml
 
 # this initiates 4 jobs per node
-mpirun -np 16 rasteraverage mean /g/data/ge3/covariates/national/ /g/data/ge3/covariates/national_averaged/ -p 4 -s 3
+mpirun rasteraverage mean /g/data/ge3/covariates/national/ /g/data/ge3/covariates/national_averaged/ -p 4 -s 3
