@@ -136,12 +136,11 @@ def get_numpy_stats(tif, writer):
         write_rows(stats=number_of_bands(ds, tif, 1), writer=writer)
 
 
-def numpy_band_stats(ds, tif, band_no):
+def numpy_band_stats(ds, tif, band_no, partitions=100):
     band = ds.GetRasterBand(band_no)
     data = band.ReadAsArray()
     no_data_val = band.GetNoDataValue()
     data_type = get_datatype(band)
-
     mask_data = ma.masked_where(data == no_data_val, data)
 
     if data_type is 'Categorical':
@@ -149,11 +148,13 @@ def numpy_band_stats(ds, tif, band_no):
     else:
         no_categories = np.nan
 
+    image_source = geoio.RasterioImageSource(tif)
     l = [basename(tif), band_no, no_data_val,
          ds.RasterYSize, ds.RasterXSize,
          np.min(mask_data), np.max(mask_data),
          np.mean(mask_data), np.std(mask_data),
-         data_type, no_categories]
+         data_type, float(no_categories),
+         image_nans(image_source, partitions)]
     ds = None
     return [str(a) for a in l]
 
