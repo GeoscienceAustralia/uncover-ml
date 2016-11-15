@@ -29,7 +29,8 @@ log = logging.getLogger(__name__)
 pca = decomposition.PCA()
 algos = {'randomforest': TransformedForestRegressor(),
          'gradientboost': TransformedGradientBoost(),
-         'gp': TransformedGPRegressor(n_restarts_optimizer=3),
+         'gp': TransformedGPRegressor(n_restarts_optimizer=3,
+                                      normalize_y=True),
          }
 
 kernels = {'rbf': RBF,
