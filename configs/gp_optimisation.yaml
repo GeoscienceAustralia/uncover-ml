@@ -100,16 +100,24 @@ optimisation:
 #      iterated_power: ['auto']
   hyperparameters:
     # n_estimators: [10, 50, 200]  # use with randomforest and gradientboost
-    kernel: {'rbf': [{length_scale: 0.01},
-                     {length_scale: 0.1},
-                     {length_scale: 1},
-                     {length_scale: 10},
-                     {length_scale: 100},],
-             'matern': [{length_scale: 0.1, nu: 0.5},
-                        {length_scale: 0.1, nu: 1.5},
-                        {length_scale: 0.1, nu: 2.5},
-                        # {length_scale: 0.1, nu: 'inf'},
-                        ],}
+    kernel: {
+    'rbf': {length_scale: [0.01, 0.1, 1]},
+#    'rbf': [{length_scale: 0.01},
+#            {length_scale: 0.1},
+#            {length_scale: 1},
+#            {length_scale: 10},
+#            {length_scale: 100},],
+    'matern': {length_scale: [0.1, 1, 100], nu: [0.5, 1.5, 2.5]}
+#    'matern': [{length_scale: 0.1, nu: 0.5},
+#               {length_scale: 0.1, nu: 1.5},
+#               {length_scale: 0.1, nu: 2.5},
+#               {length_scale: 1, nu: 0.5},
+#               {length_scale: 1, nu: 1.5},
+#               {length_scale: 1, nu: 2.5},
+#               {length_scale: 100, nu: 0.5},
+#               {length_scale: 100, nu: 1.5},
+#               {length_scale: 100, nu: 2.5},],
+               }
     target_transform: ['identity', 'standardise', 'rank', 'logistic', 'sqrt']
   optimisation_output: optimisation.csv
 

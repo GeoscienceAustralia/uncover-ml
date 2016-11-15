@@ -46,6 +46,7 @@ def setup_pipeline(config):
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
     param_dict = {}
+    from itertools import product
     if 'featuretransforms' in config.optimisation:
         config.featuretransform = config.optimisation['featuretransforms']
         if 'pca' in config.featuretransform:
@@ -55,12 +56,25 @@ def setup_pipeline(config):
     if 'hyperparameters' in config.optimisation:
         steps.append((config.optimisation['algorithm'],
                       algos[config.optimisation['algorithm']]))
+        from collections import OrderedDict
         for k, v in config.optimisation['hyperparameters'].items():
             if k == 'target_transform':
                 v = [transforms.transforms[vv]() for vv in v]
             if k == 'kernel':
-                v = [kernels[kk](** vv) for kk, value in v.items()
-                     for vv in value]
+                V = []
+                for kk, value in v.items():
+                    value = OrderedDict(value)
+                    values = [v for v in value.values()]
+                    prod = product(* values)
+                    keys = value.keys()
+                    combinations = []
+                    for p in prod:
+                        d = {}
+                        for kkk, pp in zip(keys, p):
+                            d[kkk] = pp
+                        combinations.append(d)
+                    V += [kernels[kk](** c) for c in combinations]
+                v = V
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
