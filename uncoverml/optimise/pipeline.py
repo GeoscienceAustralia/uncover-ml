@@ -12,8 +12,8 @@ from uncoverml.scripts.uncoverml import load_data
 from uncoverml.optimise.models import (
     TransformedForestRegressor,
     TransformedGradientBoost,
-    )
-
+    TransformedGPRegressor,
+)
 from uncoverml.config import ConfigException
 from uncoverml.transforms import target as transforms
 
@@ -21,13 +21,13 @@ log = logging.getLogger(__name__)
 
 pca = decomposition.PCA()
 algos = {
-         'randomforest': TransformedForestRegressor(),
-         'gradientboost': TransformedGradientBoost(),
-         }
+    'randomforest': TransformedForestRegressor(),
+    'gradientboost': TransformedGradientBoost(),
+    'gp': TransformedGPRegressor(),
+}
 
 
 def setup_pipeline(config):
-
     if config.optimisation['algorithm'] not in algos:
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
@@ -49,7 +49,7 @@ def setup_pipeline(config):
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
                              param_dict,
-                             n_jobs=2,
+                             n_jobs=-1,
                              iid=False
                              )
 
@@ -82,6 +82,3 @@ def optimise(pipeline_file, partitions):
     pd.DataFrame.from_dict(
         estimator.cv_results_).sort_values(by='rank_test_score').to_csv(
         config.optimisation_output)
-
-
-

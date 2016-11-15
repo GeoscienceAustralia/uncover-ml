@@ -2,8 +2,9 @@ import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP
+    _normpdf, TagsMixin
 from uncoverml.transforms import target as transforms
 
 
@@ -43,29 +44,24 @@ class TransformMixin:
         return Vx
 
 
-class TransformedSGDApproxGP(SGDApproxGP, TagsMixin, TransformMixin):
+class TransformedGPRegressor(GaussianProcessRegressor,
+                             TagsMixin,
+                             TransformMixin):
 
     def __init__(self,
                  target_transform=transforms.Identity(),
-                 kern='rbf', nbases=50, lenscale=1., var=1.,
-                 regulariser=1., ard=True, maxiter=3000, batch_size=10,
-                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
-                 random_state=None
+                 kernel=None, alpha=1e-10,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
+                 normalize_y=False, copy_X_train=True, random_state=None
                  ):
-        SGDApproxGP.__init__(
+        GaussianProcessRegressor.__init__(
             self,
-            kern=kern,
-            nbases=nbases,
-            lenscale=lenscale,
-            var=var,
-            regulariser=regulariser,
-            ard=ard,
-            maxiter=maxiter,
-            batch_size=batch_size,
+            kernel=kernel,
             alpha=alpha,
-            beta1=beta1,
-            beta2=beta2,
-            epsilon=epsilon,
+            optimizer=optimizer,
+            n_restarts_optimizer=n_restarts_optimizer,
+            normalize_y=normalize_y,
+            copy_X_train=copy_X_train,
             random_state=random_state
         )
         TransformMixin.__init__(self, target_transform=target_transform)

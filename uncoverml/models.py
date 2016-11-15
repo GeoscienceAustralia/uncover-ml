@@ -378,9 +378,9 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
         Whether to use a different length scale for each dimension of X or a
         single length scale. This will result in a longer run time, but
         potentially better results.
-    var: Parameter, optional
+    var: float, optional
         observation variance initial value.
-    regulariser: Parameter, optional
+    regulariser: float, optional
         weight regulariser (variance) initial value.
     maxiter: int, optional
         Number of iterations to run for the stochastic gradients algorithm.
