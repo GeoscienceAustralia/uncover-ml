@@ -4,6 +4,13 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn import decomposition
 from sklearn.model_selection import GridSearchCV
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel,
+    RBF,
+    Matern,
+    RationalQuadratic,
+    ExpSineSquared,
+)
 
 import uncoverml as ls
 import uncoverml.config
@@ -20,11 +27,18 @@ from uncoverml.transforms import target as transforms
 log = logging.getLogger(__name__)
 
 pca = decomposition.PCA()
-algos = {
-    'randomforest': TransformedForestRegressor(),
-    'gradientboost': TransformedGradientBoost(),
-    'gp': TransformedGPRegressor(),
-}
+algos = {'randomforest': TransformedForestRegressor(),
+         'gradientboost': TransformedGradientBoost(),
+         'gp': TransformedGPRegressor(n_restarts_optimizer=3),
+         }
+
+kernels = {'rbf': RBF,
+           'matern': Matern,
+           'quadratic': RationalQuadratic,
+           'expsinesqauared': ExpSineSquared,
+           }
+LENGTH_SCALE = 'length_scale'
+NU = 'nu'
 
 
 def setup_pipeline(config):
@@ -44,8 +58,10 @@ def setup_pipeline(config):
         for k, v in config.optimisation['hyperparameters'].items():
             if k == 'target_transform':
                 v = [transforms.transforms[vv]() for vv in v]
+            if k == 'kernel':
+                v = [kernels[kk](** vv) for kk, value in v.items()
+                     for vv in value]
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
-
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
                              param_dict,
