@@ -1,10 +1,13 @@
 import logging
 import click
 import pandas as pd
+from collections import OrderedDict
+
 from sklearn.pipeline import Pipeline
 from sklearn import decomposition
 from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process.kernels import (
+    WhiteKernel,
     ConstantKernel,
     RBF,
     Matern,
@@ -57,7 +60,6 @@ def setup_pipeline(config):
     if 'hyperparameters' in config.optimisation:
         steps.append((config.optimisation['algorithm'],
                       algos[config.optimisation['algorithm']]))
-        from collections import OrderedDict
         for k, v in config.optimisation['hyperparameters'].items():
             if k == 'target_transform':
                 v = [transforms.transforms[vv]() for vv in v]
@@ -74,7 +76,8 @@ def setup_pipeline(config):
                         for kkk, pp in zip(keys, p):
                             d[kkk] = pp
                         combinations.append(d)
-                    V += [kernels[kk](** c) for c in combinations]
+                    V += [kernels[kk](** c) + WhiteKernel()
+                          for c in combinations]
                 v = V
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)
