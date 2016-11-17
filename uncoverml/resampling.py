@@ -1,3 +1,5 @@
+import tempfile
+from os.path import abspath
 import geopandas as gpd
 import pandas as pd
 import pandas.core.algorithms as algos
@@ -37,9 +39,10 @@ def strip_shapefile(input_shapefile, output_shapefile, *fields_to_keep):
     gdf_out.to_file(output_shapefile)
 
 
-def resample_shapefile(input_shapefile, output_shapefile, target_field,
-                       bins=10, *fields_to_keep, bootstrap=True,
-                       output_samples=None):
+def resample_by_magnitude(input_shapefile, output_shapefile,
+                          target_field, bins=10,
+                          *fields_to_keep, bootstrap=True,
+                          output_samples=None):
     """
     Parameters
     ----------
@@ -88,14 +91,14 @@ def resample_shapefile(input_shapefile, output_shapefile, target_field,
     final_df.drop(BIN, axis=1).to_file(output_shapefile)
 
 
-def resample_shapefile_spatially(input_shapefile,
-                                 output_shapefile,
-                                 target_field,
-                                 rows=10,
-                                 cols=10,
-                                 *fields_to_keep,
-                                 bootstrap=True,
-                                 output_samples=None):
+def resample_spatially(input_shapefile,
+                       output_shapefile,
+                       target_field,
+                       rows=10,
+                       cols=10,
+                       *fields_to_keep,
+                       bootstrap=True,
+                       output_samples=None):
     """
     Parameters
     ----------
@@ -145,3 +148,36 @@ def resample_shapefile_spatially(input_shapefile,
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
 
+
+def resample_shapefile(config, outfile=None):
+    shapefile = config.target_file
+
+    if not config.resample:
+        return shapefile
+    else:  # sample shapefile
+        log.info('Stripping shapefile of unnecessary attributes')
+        if not outfile:
+            temp_shapefile = tempfile.mktemp(suffix='.shp',
+                                             dir=config.output_dir)
+        else:
+            temp_shapefile = abspath(outfile)
+
+        if config.resample == 'value':
+            log.info("resampling shape file "
+                     "based on '{}' values".format(config.target_property))
+            resample_by_magnitude(shapefile,
+                                  temp_shapefile,
+                                  target_field=config.target_property,
+                                  **config.resample_args
+                                  )
+        else:
+            assert config.resample == 'spatial', \
+                "resample must be 'value' or 'spatial'"
+            log.info("resampling shape file spatially")
+
+            resample_spatially(
+                shapefile, temp_shapefile,
+                target_field=config.target_property,
+                **config.resample_args)
+
+        return temp_shapefile

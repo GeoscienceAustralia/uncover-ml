@@ -2,6 +2,7 @@ import logging
 import click
 import pandas as pd
 from collections import OrderedDict
+from itertools import product
 
 from sklearn.pipeline import Pipeline
 from sklearn import decomposition
@@ -32,7 +33,7 @@ log = logging.getLogger(__name__)
 pca = decomposition.PCA()
 algos = {'randomforest': TransformedForestRegressor(),
          'gradientboost': TransformedGradientBoost(),
-         'gp': TransformedGPRegressor(n_restarts_optimizer=3,
+         'gp': TransformedGPRegressor(n_restarts_optimizer=10,
                                       normalize_y=True),
          }
 
@@ -50,7 +51,6 @@ def setup_pipeline(config):
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
     param_dict = {}
-    from itertools import product
     if 'featuretransforms' in config.optimisation:
         config.featuretransform = config.optimisation['featuretransforms']
         if 'pca' in config.featuretransform:

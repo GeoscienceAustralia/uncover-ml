@@ -24,7 +24,7 @@ import uncoverml.logging
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
-from uncoverml.targets import resample_shapefile
+from uncoverml.resampling import resample_shapefile
 from uncoverml.logging import warn_with_traceback
 
 log = logging.getLogger(__name__)

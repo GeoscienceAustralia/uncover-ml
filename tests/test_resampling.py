@@ -31,13 +31,13 @@ def test_resampling_value(shapefile, bins, samples):
     samples = (samples//bins) * bins
     lonlats, filename = shapefile
     random_filename = tempfile.mktemp() + ".shp"
-    resampling.resample_shapefile(filename,
-                                  random_filename,
-                                  target_field='lat',
-                                  bins=bins,
-                                  output_samples=samples,
-                                  bootstrap=True
-                                  )
+    resampling.resample_by_magnitude(filename,
+                                     random_filename,
+                                     target_field='lat',
+                                     bins=bins,
+                                     output_samples=samples,
+                                     bootstrap=True
+                                     )
     resampled_sf = shp.Reader(random_filename)
     resampled_shapefields = [f[0] for f in resampled_sf.fields[1:]]
 
@@ -55,14 +55,14 @@ def test_resampling_spatial(shapefile, rows, cols, samples):
     samples = (samples // tiles) * tiles
     lonlats, filename = shapefile
     random_filename = tempfile.mktemp() + ".shp"
-    resampling.resample_shapefile_spatially(filename,
-                                            random_filename,
-                                            target_field='lat',
-                                            rows=rows,
-                                            cols=cols,
-                                            output_samples=samples,
-                                            bootstrap=True
-                                            )
+    resampling.resample_spatially(filename,
+                                  random_filename,
+                                  target_field='lat',
+                                  rows=rows,
+                                  cols=cols,
+                                  output_samples=samples,
+                                  bootstrap=True
+                                  )
     resampled_sf = shp.Reader(random_filename)
     resampled_shapefields = [f[0] for f in resampled_sf.fields[1:]]
 

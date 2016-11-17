@@ -185,4 +185,5 @@ class TransformedGradientBoost(GradientBoostingRegressor, TransformMixin,
 
 transformed_modelmaps = {'transformedrandomforest': TransformedForestRegressor,
                          'gradientboost': TransformedGradientBoost,
+                         'gp': TransformedGPRegressor,
                          }

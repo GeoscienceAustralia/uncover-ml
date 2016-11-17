@@ -221,11 +221,6 @@ class Config:
                                   'pickled files. Please turn off either '
                                   'feature ranking or pickles.')
 
-        if self.rank_features:
-            self.pickle_load = False
-            log.info('Feature ranking is turned on. All targets will be '
-                     'intersected.')
-
         self.output_dir = s['output']['directory']
 
         # create output dir if does not exist

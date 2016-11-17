@@ -1,7 +1,7 @@
 import click
 
 import uncoverml as ls
-from uncoverml.targets import resample_shapefile
+from uncoverml.resampling import resample_shapefile
 from uncoverml import config
 
 @click.command()
@@ -13,6 +13,3 @@ from uncoverml import config
 def cli(pipeline_file, outfile):
     config = ls.config.Config(pipeline_file)
     config.target_file = resample_shapefile(config, outfile)
-
-
-
