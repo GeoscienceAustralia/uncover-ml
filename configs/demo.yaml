@@ -61,17 +61,18 @@ preprocessing:
 targets:
   file: /home/lb/data/GA-cover/geochem_sites.shp
   property: K_ppm_imp_
-  resample: value
-  arguments:
-    bins: 10
-    bootstrap: True
-    output_samples: 500
-#  resample: spatial
-#  arguments:
-#    rows: 4
-#    cols: 4
-#    bootstrap: True
-#    output_samples: 500
+  resample:
+    - value:
+        arguments:
+          bins: 10
+          bootstrap: True
+          output_samples: 500
+    - spatial:
+        arguments:
+          rows: 4
+          cols: 4
+          bootstrap: True
+          output_samples: 500
 
 clustering:
   file: /home/lb/data/GA-cover/geochem_sites_class1.shp

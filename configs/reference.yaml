@@ -33,11 +33,18 @@ preprocessing:
 targets:
   file: /home/lb/data/GA-cover/geochem_sites.shp
   property: Na_ppm_i_1
-  resample: value
-  arguments:
-    bins: 10
-    bootstrap: True
-    output_samples: 500
+  resample:
+    - value:
+        arguments:
+          bins: 10
+          bootstrap: True
+          output_samples: 500
+    - spatial:
+        arguments:
+          rows: 4
+          cols: 4
+          bootstrap: True
+          output_samples: 500
 
 learning:
     algorithm: svr

@@ -6,6 +6,7 @@ import pandas.core.algorithms as algos
 import numpy as np
 from shapely.geometry import Polygon
 import logging
+from uncoverml.config import ConfigException
 
 
 BIN = 'bin'
@@ -46,8 +47,8 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
     """
     Parameters
     ----------
-    input_shapefile
-    output_shapefile
+    input_shapefile: str
+    output_shapefile: str
     target_field: str
         target field for sampling
     bins: int
@@ -56,11 +57,13 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
         of strings to store in the output shapefile
     bootstrap: bool
         whether to sample with replacement or not
-    output_samples: number of samples in the output shpfile
+    output_samples: number of samples in the output shapefile
     Returns
     -------
 
     """
+    log.info("resampling shapefile by values")
+
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
@@ -90,6 +93,8 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
     final_df.sort_index(inplace=True)
     final_df.drop(BIN, axis=1).to_file(output_shapefile)
 
+    return output_shapefile
+
 
 def resample_spatially(input_shapefile,
                        output_shapefile,
@@ -116,6 +121,8 @@ def resample_spatially(input_shapefile,
     -------
 
     """
+    log.info("resampling shapefile spatially")
+
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
@@ -147,6 +154,11 @@ def resample_spatially(input_shapefile,
             log.info('{} does not contain any sample'.format(p))
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
+    return output_shapefile
+
+
+resampling_techniques = {'value': resample_by_magnitude,
+                         'spatial': resample_spatially}
 
 
 def resample_shapefile(config, outfile=None):
@@ -155,29 +167,29 @@ def resample_shapefile(config, outfile=None):
     if not config.resample:
         return shapefile
     else:  # sample shapefile
-        log.info('Stripping shapefile of unnecessary attributes')
         if not outfile:
-            temp_shapefile = tempfile.mktemp(suffix='.shp',
-                                             dir=config.output_dir)
+            final_shpfile = tempfile.mktemp(suffix='.shp',
+                                            dir=config.output_dir)
         else:
-            temp_shapefile = abspath(outfile)
+            final_shpfile = abspath(outfile)
 
-        if config.resample == 'value':
-            log.info("resampling shape file "
-                     "based on '{}' values".format(config.target_property))
-            resample_by_magnitude(shapefile,
-                                  temp_shapefile,
-                                  target_field=config.target_property,
-                                  **config.resample_args
-                                  )
-        else:
-            assert config.resample == 'spatial', \
-                "resample must be 'value' or 'spatial'"
-            log.info("resampling shape file spatially")
+        number_of_transforms = len(config.resample)
 
-            resample_spatially(
-                shapefile, temp_shapefile,
-                target_field=config.target_property,
-                **config.resample_args)
+        for i, r in enumerate(config.resample):
+            for k in r:
+                if k not in resampling_techniques.keys():
+                    raise ConfigException("Resampling must be 'value' or "
+                                          "'spatial'")
 
-        return temp_shapefile
+                int_shpfile = final_shpfile if i == number_of_transforms -1 \
+                    else tempfile.mktemp(suffix='.shp', dir=config.output_dir)
+
+                input_shpfile = shapefile if i==0 else out_shpfile
+
+                out_shpfile = resampling_techniques[k](
+                    input_shpfile, int_shpfile,
+                    target_field=config.target_property,
+                    ** r[k]['arguments']
+                    )
+        log.info('Output shapefile is {}'.format(out_shpfile))
+        return out_shpfile

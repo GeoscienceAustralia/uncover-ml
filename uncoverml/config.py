@@ -193,7 +193,6 @@ class Config:
 
         if 'resample' in s['targets']:
             self.resample = s['targets']['resample']
-            self.resample_args = s['targets']['arguments']
 
         self.mask = None
         if 'mask' in s:
