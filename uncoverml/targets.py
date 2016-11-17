@@ -1,7 +1,6 @@
 import tempfile
-
 import numpy as np
-from os.path import join
+from os.path import join, abspath
 import logging
 
 from uncoverml import mpiops, resampling
@@ -65,14 +64,18 @@ def save_dropped_targets(config, keep, targets):
                        delimiter=',')
 
 
-def resample_shapefile(config):
+def resample_shapefile(config, outfile=None):
     shapefile = config.target_file
 
     if not config.resample:
         return shapefile
     else:  # sample shapefile
         log.info('Stripping shapefile of unnecessary attributes')
-        temp_shapefile = tempfile.mktemp(suffix='.shp', dir=config.output_dir)
+        if not outfile:
+            temp_shapefile = tempfile.mktemp(suffix='.shp',
+                                             dir=config.output_dir)
+        else:
+            temp_shapefile = abspath(outfile)
 
         if config.resample == 'value':
             log.info("resampling shape file "
