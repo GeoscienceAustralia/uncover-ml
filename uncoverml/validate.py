@@ -10,10 +10,11 @@ import numpy as np
 from sklearn.metrics import explained_variance_score, r2_score
 from revrand.metrics import lins_ccc, mll, msll, smse
 
-from uncoverml.models import apply_multiple_masked, modelmaps
+from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
 from uncoverml import predict
 from uncoverml import features as feat
+from uncoverml.learn import all_modelmaps as modelmaps
 
 log = logging.getLogger(__name__)
 

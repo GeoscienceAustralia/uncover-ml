@@ -184,7 +184,7 @@ def resample_shapefile(config, outfile=None):
                 int_shpfile = final_shpfile if i == number_of_transforms -1 \
                     else tempfile.mktemp(suffix='.shp', dir=config.output_dir)
 
-                input_shpfile = shapefile if i==0 else out_shpfile
+                input_shpfile = shapefile if i == 0 else out_shpfile
 
                 out_shpfile = resampling_techniques[k](
                     input_shpfile, int_shpfile,

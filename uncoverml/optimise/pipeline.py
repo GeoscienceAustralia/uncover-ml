@@ -1,47 +1,31 @@
 import logging
-import click
-import pandas as pd
 from collections import OrderedDict
 from itertools import product
 
-from sklearn.pipeline import Pipeline
-from sklearn import decomposition
-from sklearn.model_selection import GridSearchCV
-from sklearn.gaussian_process.kernels import (
-    WhiteKernel,
-    ConstantKernel,
-    RBF,
-    Matern,
-    RationalQuadratic,
-    ExpSineSquared,
-)
-
+import click
+import pandas as pd
 import uncoverml as ls
 import uncoverml.config
 import uncoverml.logging
-from uncoverml.scripts.uncoverml import load_data
-from uncoverml.optimise.models import (
-    TransformedForestRegressor,
-    TransformedGradientBoost,
-    TransformedGPRegressor,
-)
+from sklearn import decomposition
+from sklearn.gaussian_process.kernels import WhiteKernel
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 from uncoverml.config import ConfigException
+from uncoverml.optimise.models import (
+    TransformedGPRegressor,
+    kernels,
+    transformed_modelmaps)
+from uncoverml.scripts.uncoverml import load_data
 from uncoverml.transforms import target as transforms
 
 log = logging.getLogger(__name__)
 
 pca = decomposition.PCA()
-algos = {'randomforest': TransformedForestRegressor(),
-         'gradientboost': TransformedGradientBoost(),
-         'gp': TransformedGPRegressor(n_restarts_optimizer=10,
-                                      normalize_y=True),
-         }
+algos = {k: v() for k, v in transformed_modelmaps.items()}
+algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
+                                                normalize_y=True)
 
-kernels = {'rbf': RBF,
-           'matern': Matern,
-           'quadratic': RationalQuadratic,
-           'expsinesqauared': ExpSineSquared,
-           }
 LENGTH_SCALE = 'length_scale'
 NU = 'nu'
 
@@ -84,7 +68,9 @@ def setup_pipeline(config):
     estimator = GridSearchCV(pipe,
                              param_dict,
                              n_jobs=-1,
-                             iid=False
+                             iid=False,
+                             pre_dispatch=2,
+                             verbose=True,
                              )
 
     return estimator
@@ -116,3 +102,4 @@ def optimise(pipeline_file, partitions):
     pd.DataFrame.from_dict(
         estimator.cv_results_).sort_values(by='rank_test_score').to_csv(
         config.optimisation_output)
+

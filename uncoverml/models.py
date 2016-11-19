@@ -407,7 +407,7 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
     the predictive distribution is sampled for these algorithms!
     """
 
-    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
+    def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
                  alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
                  random_state=None):
@@ -421,7 +421,7 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
                          random_state=random_state
                          )
 
-        self._store_params(kern, nbases, lenscale, ard)
+        self._store_params(kernel, nbases, lenscale, ard)
 
 
 # Bespoke regressor for basin-depth problems
