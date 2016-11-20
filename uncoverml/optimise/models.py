@@ -158,7 +158,7 @@ class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
 class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
 
     def __init__(self,
-                 target_transform=transforms.Identity(),
+                 target_transform='identity',
                  loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -213,5 +213,4 @@ transformed_modelmaps = {
 kernels = {'rbf': RBF,
            'matern': Matern,
            'quadratic': RationalQuadratic,
-           'expsinesqauared': ExpSineSquared,
            }
