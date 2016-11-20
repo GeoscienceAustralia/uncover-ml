@@ -4,9 +4,9 @@ import os
 import pickle
 from itertools import chain
 from os.path import join, isdir, abspath
-
 import numpy as np
-from revrand import StandardLinearModel, GeneralisedLinearModel
+from scipy.stats import gamma
+from revrand import StandardLinearModel, GeneralisedLinearModel, likelihoods
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
     RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
 from revrand.btypes import Parameter, Positive
@@ -48,9 +48,9 @@ class BasisMakerMixin():
         self._make_basis(X)
         return super().fit(X, y, *args, **kwargs)  # args for GLMs
 
-    def _store_params(self, kern, nbases, lenscale, ard):
+    def _store_params(self, kernel, nbases, lenscale, ard):
 
-        self.kern = kern
+        self.kernel = kernel
         self.nbases = nbases
         self.ard = ard
         self.lenscale = lenscale if np.isscalar(lenscale) \
@@ -62,10 +62,9 @@ class BasisMakerMixin():
         lenscale = self.lenscale
         if self.ard and D > 1:
             lenscale = np.ones(D) * lenscale
-
         lenscale_init = Parameter(lenscale, Positive())
-        gpbasis = basismap[self.kern](Xdim=X.shape[1], nbases=self.nbases,
-                                      lenscale_init=lenscale_init)
+        gpbasis = basismap[self.kernel](Xdim=X.shape[1], nbases=self.nbases,
+                                        lenscale_init=lenscale_init)
 
         self.basis = gpbasis + BiasBasis()
 
@@ -183,10 +182,9 @@ class MutualInfoMixin():
             entrpy) assocated with each query input. The units are 'nats', and
             the shape of the returned array is (Ns,).
         """
-
-        Phi = self.basis.transform(X, *atleast_list(self.hypers))
-        pCp = [p.dot(self.covariance).dot(p.T) for p in Phi]
-        MI = 0.5 * (np.log(self.var + np.array(pCp)) - np.log(self.var))
+        Phi = self.basis.transform(X, *atleast_list(self.hypers_))
+        pCp = [p.dot(self.covariance_).dot(p.T) for p in Phi]
+        MI = 0.5 * (np.log(self.var_ + np.array(pCp)) - np.log(self.var_))
         return MI
 
 
@@ -260,7 +258,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
 
     Parameters
     ----------
-    kern: str, optional
+    kernel: str, optional
         the (approximate) kernel to use with this Gaussian process. Have a look
         at :code:`basismap` dictionary for appropriate kernel approximations.
     nbases: int
@@ -285,7 +283,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
         maximum number of iterations for the optimiser.
     """
 
-    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1.,
+    def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, tol=1e-8, maxiter=1000):
 
         super().__init__(basis=None,
@@ -295,7 +293,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
                          maxiter=maxiter
                          )
 
-        self._store_params(kern, nbases, lenscale, ard)
+        self._store_params(kernel, nbases, lenscale, ard)
 
 
 class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
@@ -420,7 +418,6 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
                          updater=Adam(alpha, beta1, beta2, epsilon),
                          random_state=random_state
                          )
-
         self._store_params(kernel, nbases, lenscale, ard)
 
 
