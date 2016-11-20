@@ -150,7 +150,7 @@ class GLMPredictProbaMixin():
         """
 
         Ey, Vy = self.predict_moments(X, *args, **kwargs)
-        Vy += self.like_hypers
+        Vy += self.like_hypers_
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
 
         return Ey, Vy, ql, qu
