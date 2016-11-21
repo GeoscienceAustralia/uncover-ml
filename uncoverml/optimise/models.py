@@ -5,9 +5,54 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, \
     ExpSineSquared
+from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
+    DEFAULT_EPSILON
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP
+    _normpdf, TagsMixin, SGDApproxGP, basismap
 from uncoverml.transforms import target as transforms
+
+
+class TransformedSGDRegressor(SGDRegressor, TagsMixin):
+
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
+                 verbose=1, epsilon=DEFAULT_EPSILON, random_state=None,
+                 learning_rate="invscaling", eta0=0.01, power_t=0.25,
+                 warm_start=False, average=False,
+                 target_transform='identity'):
+
+        super().__init__(
+            loss=loss,
+            penalty=penalty,
+            alpha=alpha,
+            l1_ratio=l1_ratio,
+            fit_intercept=fit_intercept,
+            n_iter=n_iter,
+            shuffle=shuffle,
+            verbose=verbose,
+            epsilon=epsilon,
+            random_state=random_state,
+            learning_rate=learning_rate,
+            eta0=eta0,
+            power_t=power_t,
+            warm_start=warm_start,
+            average=average,
+        )
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        self.target_transform = target_transform
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y)
+        y_t = self.target_transform.transform(y)
+        return super().fit(X, y_t)
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X)
+        Ey = self.target_transform.itransform(Ey_t)
+        return Ey
 
 
 class TransformedGPRegressor(GaussianProcessRegressor, TagsMixin):
@@ -207,6 +252,7 @@ transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
     'transformedgp': TransformedGPRegressor,
+    'sgdregressor': TransformedSGDRegressor,
 }
 
 # scikit-learn kernels

@@ -49,20 +49,23 @@ def setup_pipeline(config):
                 v = [transforms.transforms[vv]() for vv in v]
             if k == 'kernel':
                 V = []
-                for kk, value in v.items():
-                    value = OrderedDict(value)
-                    values = [v for v in value.values()]
-                    prod = product(* values)
-                    keys = value.keys()
-                    combinations = []
-                    for p in prod:
-                        d = {}
-                        for kkk, pp in zip(keys, p):
-                            d[kkk] = pp
-                        combinations.append(d)
-                    V += [kernels[kk](** c) + WhiteKernel()
-                          for c in combinations]
-                v = V
+                # for scikitlearn kernels
+                if isinstance(v, dict):
+                    for kk, value in v.items():
+                        value = OrderedDict(value)
+                        values = [v for v in value.values()]
+                        prod = product(* values)
+                        keys = value.keys()
+                        combinations = []
+                        for p in prod:
+                            d = {}
+                            for kkk, pp in zip(keys, p):
+                                d[kkk] = pp
+                            combinations.append(d)
+                        V += [kernels[kk](** c) + WhiteKernel()
+                              for c in combinations]
+                    v = V
+
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
