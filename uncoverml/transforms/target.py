@@ -64,6 +64,8 @@ class Log(Identity):
 
         y += self.offset
         if self.replace_zeros:
+            if isinstance(y, np.ma.masked_array):
+                y._sharedmask = False
             y[y == 0] = self.ymin / 10.
 
         return np.log(y)
