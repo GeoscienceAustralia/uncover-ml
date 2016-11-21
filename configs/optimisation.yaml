@@ -1,0 +1,181 @@
+
+# not currently implemented
+# patchsize: 0
+
+features:
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: features.pk
+      targets: targets.pk
+      rawcovariates: rawcovariates.csv
+      rawcovariates_mask: rawcovariates_mask.csv
+  - name: my features 1
+    type: ordinal
+    files:
+#      - path: /home/sudipta/GA_data/GA-cover2/k_15v5.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/dem_foc2.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
+#      - directory: /home/sudipta/GA_data/GA-cover2
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+    # transforms are performed in order
+    transforms:
+#      - centre
+#      - standardise
+    imputation: mean
+  
+  - name: my features 2
+    type: categorical
+    files:
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+    transforms: randomhot
+    imputation: nn
+
+mask:
+  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+  retain: 1
+
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation:
+  transforms:
+    - center
+    - standardise
+    # - whiten:
+        # keep_fraction: 0.8
+
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+# resampling is performed in sequence. The order of spatial/value is important.
+targets:
+  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  property: Na_ppm_i_1
+#  resample:
+#    - spatial:
+#        arguments:
+#          rows: 4
+#          cols: 4
+#          bootstrap: True
+#          output_samples: 500
+#    - value:
+#        arguments:
+#          bins: 10
+#          bootstrap: True
+#          output_samples: 500
+
+
+clustering:
+  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+  property: class
+  algorithm: kmeans
+  arguments:
+    n_classes: 12
+    oversample_factor: 5
+
+
+learning:
+  algorithm: sgdapproxgp
+  arguments:
+    target_transform: rank
+    kernel: matern52
+    nbases: 20
+    maxiter: 50
+
+#learning:
+#    algorithm: multirandomforest
+#    arguments:
+#      n_estimators: 50
+#      target_transform: kde
+#      forests: 10
+
+#learning:
+#  algorithm: sgdregressor
+#  arguments:
+#      target_transform: standardise
+#      n_iter: 1000
+#      penalty: elasticnet
+#      alpha: 0.1
+#      l1_ratio: 0.7
+#      fit_intercept: False
+#      learning_rate: invscaling
+#      loss: huber
+##      random_state: 1
+#      shuffle: True
+#      warm_start: True
+#      maxiter: 10
+
+
+#n_components : int, float, None or string
+#        Number of components to keep.
+#        if n_components is not set all components are kept::
+#        if n_components == 'mle' and svd_solver == 'full', Minka\'s MLE is used
+#        to guess the dimension
+#        if ``0 < n_components < 1`` and svd_solver == 'full', select the number
+#        of components such that the amount of variance that needs to be
+#        explained is greater than the percentage specified by n_components
+#        n_components cannot be equal to n_features for svd_solver == 'arpack'.
+# svd_solver: {'auto', 'full', 'arpack', 'randomized'}
+# iterated power: int > 0 or 'auto'
+# kde transform is not working yet
+
+optimisation:
+#  featuretransforms:
+#    pca:
+#      n_components: [20]
+#      whiten: [False, True]
+#      svd_solver: ['auto']
+#      iterated_power: ['auto']
+
+#  algorithm: sgdregressor
+#  hyperparameters:
+#      l1_ratio: [0, 0.15, 0.5, 0.75, 1]
+#      loss: ['huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
+#      learning_rate: ['optimal', 'invscaling']
+#      penalty: ['l1', 'l2', 'elasticnet']
+#      fit_intercept: [True, False]
+#      warm_start: True
+#      target_transform: ['identity', 'standardise']
+#      alpha: [0.0001, 0.001, 0.01, 0.1]
+#      n_iter: [100]
+
+#  algorithm: transformedrandomforest
+#  hyperparameters:
+#    n_estimators: [10, 100]  # use with randomforest and gradientboost
+#    target_transform: ['identity', 'standardise']
+#
+#  algorithm: transformedgp
+#  hyperparameters:
+#    kernel: {
+#              'rbf': {length_scale: [1]},
+#              'matern': {length_scale: [0.1], nu: [0.5]},
+#              'quadratic': {length_scale: [0.1], alpha: [0.01]}
+#            }
+#    target_transform: [identity, standardise]
+
+  algorithm: transformedsvr
+  hyperparameters:
+    kernel: [linear, poly, rbf, sigmoid]
+    target_transform: [identity, standardise, log]
+
+  # kernel: ['rbf', 'matern32']  # revrand kernels
+  optimisation_output: optimisation.csv
+
+prediction:
+  quantiles: 0.95
+
+validation:
+#  #- feature_rank
+  - parallel
+  - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: .
+

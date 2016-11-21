@@ -228,11 +228,9 @@ class Config:
         if 'optimisation' in s:
             self.optimisation = s['optimisation']
             if 'optimisation_output' in self.optimisation:
-                self.optimisation_output = path.abspath(
-                    path.join(
-                        self.output_dir,
-                        self.optimisation['optimisation_output'])
-                )
+                self.optimisation_output = \
+                    self.optimisation['optimisation_output']
+
 
         if 'clustering' in s:
             self.clustering_algorithm = s['clustering']['algorithm']

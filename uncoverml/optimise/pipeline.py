@@ -15,7 +15,8 @@ from uncoverml.config import ConfigException
 from uncoverml.optimise.models import (
     TransformedGPRegressor,
     kernels,
-    transformed_modelmaps)
+    transformed_modelmaps,
+    TransformedSVR)
 from uncoverml.scripts.uncoverml import load_data
 from uncoverml.transforms import target as transforms
 
@@ -25,6 +26,7 @@ pca = decomposition.PCA()
 algos = {k: v() for k, v in transformed_modelmaps.items()}
 algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
                                                 normalize_y=True)
+algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 LENGTH_SCALE = 'length_scale'
 NU = 'nu'
@@ -104,5 +106,5 @@ def optimise(pipeline_file, partitions):
 
     pd.DataFrame.from_dict(
         estimator.cv_results_).sort_values(by='rank_test_score').to_csv(
-        config.optimisation_output)
+        config.optimisation['algorithm'] + '_' + config.optimisation_output)
 

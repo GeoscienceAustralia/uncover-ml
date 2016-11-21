@@ -7,6 +7,7 @@ from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, \
     ExpSineSquared
 from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
     DEFAULT_EPSILON
+from sklearn.svm import SVR
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP, basismap
 from uncoverml.transforms import target as transforms
@@ -248,11 +249,47 @@ class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
         return Ey
 
 
+class TransformedSVR(SVR, TagsMixin):
+
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
+                 cache_size=200, verbose=False, max_iter=-1,
+                 target_transform='identity'):
+        super(TransformedSVR, self).__init__(
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=C,
+            epsilon=epsilon,
+            verbose=verbose,
+            shrinking=shrinking,
+            cache_size=cache_size,
+            max_iter=max_iter)
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        self.target_transform = target_transform
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y)
+        y_t = self.target_transform.transform(y)
+        return super(TransformedSVR, self).fit(X, y_t)
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = super(TransformedSVR, self).predict(X)
+        Ey = self.target_transform.itransform(Ey_t)
+        return Ey
+
+
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
+    'transformedsvr': TransformedSVR,
 }
 
 # scikit-learn kernels
