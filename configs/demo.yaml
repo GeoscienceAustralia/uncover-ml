@@ -57,7 +57,7 @@ preprocessing:
 # output_samples: number of output samples kept
 # bins: for value based resampling only. Number of bins to sample from.
 # rows and cols: for spatial resampling, sample from rows X cols tiles
-
+# resampling is performed in sequence. The order of spatial/value is important.
 targets:
   file: /home/lb/data/GA-cover/geochem_sites.shp
   property: K_ppm_imp_
