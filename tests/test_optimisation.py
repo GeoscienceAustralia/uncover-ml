@@ -46,4 +46,4 @@ def test_pipeline(get_models, get_transform, get_kernel):
                              verbose=True,
                              )
     estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
-    assert estimator.cv_results_['mean_train_score'] > -1.0
+    assert estimator.cv_results_['mean_train_score'][0] > -10.0
