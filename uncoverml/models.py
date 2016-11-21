@@ -612,7 +612,7 @@ def _join_dicts(dicts):
     return d
 
 
-class RandomForestRegressorMulti:
+class RandomForestRegressorMulti(TagsMixin):
 
     def __init__(self,
                  outdir='.',
@@ -620,6 +620,7 @@ class RandomForestRegressorMulti:
                  parallel=True,
                  n_estimators=10,
                  random_state=1,
+                 target_transform='identity',
                  **kwargs):
         self.forests = forests
         self.n_estimators = n_estimators
@@ -631,8 +632,9 @@ class RandomForestRegressorMulti:
                                        'and writeable'
         self.temp_dir = join(abspath(outdir), 'results')
         os.makedirs(self.temp_dir, exist_ok=True)
+        self.target_transform = target_transform
 
-    def fit(self, x, y):
+    def fit(self, x, y, *args, **kwargs):
 
         # set a different random seed for each thread
         np.random.seed(self.random_state + mpiops.chunk_index)
@@ -649,8 +651,11 @@ class RandomForestRegressorMulti:
 
             # change random state in each forest
             self.kwargs['random_state'] = np.random.randint(0, 10000)
-            rf = RandomForestRegressor(n_estimators=self.n_estimators,
-                                       **self.kwargs)
+            rf = RandomForestTransformed(
+                target_transform=self.target_transform,
+                n_estimators=self.n_estimators,
+                **self.kwargs
+                )
             rf.fit(x, y)
             if self.parallel:  # used in training
                 pk_f = join(self.temp_dir,
@@ -665,7 +670,7 @@ class RandomForestRegressorMulti:
         # Mark that we are now trained
         self._trained = True
 
-    def predict_proba(self, x, interval=0.95):
+    def predict_proba(self, x, interval=0.95, *args, **kwargs):
 
         # We can't make predictions until we have trained the model
         if not self._trained:
@@ -684,8 +689,8 @@ class RandomForestRegressorMulti:
             with open(pk_f, 'rb') as fp:
                 f = pickle.load(fp)
                 for m, dt in enumerate(f.estimators_):
-                    nums = dt.predict(x)
-                    y_pred[:, i * self.n_estimators + m] = nums
+                    y_pred[:, i * self.n_estimators + m] = \
+                        f.ytform.itransform(dt.predict(x))
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)
@@ -823,16 +828,6 @@ class LinearRegTransformed(transform_targets(LinearReg), TagsMixin):
 
 class RandomForestTransformed(transform_targets(RandomForestRegressor),
                               TagsMixin):
-    """
-    Random forest regression.
-
-    http://scikit-learn.org/dev/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor
-    """
-    pass
-
-
-class MultiRandomForestTransformed(
-        transform_targets(RandomForestRegressorMulti), TagsMixin):
     """
     Random forest regression.
 
@@ -989,7 +984,7 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 
 # Add all models available to the learning pipeline here!
 modelmaps = {'randomforest': RandomForestTransformed,
-             'multirandomforest': MultiRandomForestTransformed,
+             'multirandomforest': RandomForestRegressorMulti,
              'bayesreg': LinearRegTransformed,
              'sgdbayesreg': SGDLinearRegTransformed,
              'approxgp': ApproxGPTransformed,
