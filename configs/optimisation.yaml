@@ -90,7 +90,7 @@ clustering:
 learning:
   algorithm: transformedsvr
   arguments:
-    target_transform: svr
+    target_transform: kde
     kernel: rbf
 
 #learning:
@@ -112,6 +112,7 @@ learning:
 #  arguments:
 #    n_estimators: 50
 #    target_transform: sqrt
+
 
 #learning:
 #  algorithm: transformedgp
@@ -171,11 +172,17 @@ optimisation:
 #      alpha: [0.0001, 0.001, 0.01, 0.1]
 #      n_iter: [100]
 
-#  algorithm: transformedrandomforest
-#  hyperparameters:
-#    n_estimators: [10, 100]  # use with randomforest and gradientboost
-#    target_transform: ['identity', 'standardise']
-#
+  algorithm: gradientboost
+  hyperparameters:
+    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
+    target_transform: ['identity', 'standardise']
+    loss: [ls, lad, huber, quantile]
+    max_features: [auto, sqrt, log2]
+    min_samples_split: [2, 4, 10]
+    max_depth: [2, 3, 4, 5]
+    subsample: [1.0, 0.75, 0.5]
+
+
 #  algorithm: transformedgp
 #  hyperparameters:
 #    kernel: {
@@ -185,10 +192,10 @@ optimisation:
 #            }
 #    target_transform: [identity, standardise]
 
-  algorithm: transformedsvr
-  hyperparameters:
-    kernel: [linear, poly, rbf, sigmoid]
-    target_transform: [identity, standardise, log]
+#  algorithm: transformedsvr
+#  hyperparameters:
+#    kernel: [linear, poly, rbf, sigmoid]
+#    target_transform: [identity, standardise, log]
 
   # kernel: ['rbf', 'matern32']  # revrand kernels
   optimisation_output: optimisation.csv
