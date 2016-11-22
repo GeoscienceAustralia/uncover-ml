@@ -61,12 +61,12 @@ targets:
 #        arguments:
 #          rows: 4
 #          cols: 4
-#          bootstrap: True
+#          bootstrap: False
 #          output_samples: 500
 #    - value:
 #        arguments:
 #          bins: 10
-#          bootstrap: True
+#          bootstrap: False
 #          output_samples: 500
 
 
@@ -79,13 +79,19 @@ clustering:
     oversample_factor: 5
 
 
+#learning:
+#  algorithm: sgdapproxgp
+#  arguments:
+#    target_transform: rank
+#    kernel: matern52
+#    nbases: 20
+#    maxiter: 50
+
 learning:
-  algorithm: sgdapproxgp
+  algorithm: transformedsvr
   arguments:
-    target_transform: rank
-    kernel: matern52
-    nbases: 20
-    maxiter: 50
+    target_transform: svr
+    kernel: rbf
 
 #learning:
 #    algorithm: multirandomforest
@@ -93,6 +99,26 @@ learning:
 #      n_estimators: 50
 #      target_transform: kde
 #      forests: 10
+
+#learning:
+#  algorithm: transformedrandomforest
+#  arguments:
+#    n_estimators: 50
+#    target_transform: rank
+
+
+#learning:
+#  algorithm: gradientboost
+#  arguments:
+#    n_estimators: 50
+#    target_transform: sqrt
+
+#learning:
+#  algorithm: transformedgp
+#  arguments:
+#    kernel: rbf
+#    normalize_y: True
+#    n_restarts_optimizer: 10
 
 #learning:
 #  algorithm: sgdregressor
@@ -109,6 +135,7 @@ learning:
 #      shuffle: True
 #      warm_start: True
 #      maxiter: 10
+
 
 
 #n_components : int, float, None or string
