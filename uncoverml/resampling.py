@@ -87,7 +87,15 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
 
     gb = gdf_out.groupby(BIN)
     for b, gr in gb:
-        dfs_to_concat.append(gr.sample(n=samples_per_bin, replace=bootstrap))
+        if bootstrap:
+            dfs_to_concat.append(gr.sample(n=samples_per_bin,
+                                           replace=bootstrap))
+        else:
+            if gr.shape[0] > samples_per_bin:
+                dfs_to_concat.append(gr.sample(n=samples_per_bin,
+                                               replace=bootstrap))
+            elif gr.shape[0] <= samples_per_bin:
+                dfs_to_concat.append(gr)
 
     final_df = pd.concat(dfs_to_concat)
     final_df.sort_index(inplace=True)
@@ -148,8 +156,15 @@ def resample_spatially(input_shapefile,
         df = gdf_out[gdf_out[GEOMETRY].within(p)]
         # should probably discard if df.shape[0] < 10% of samples_per_group
         if df.shape[0]:
-            df_to_concat.append(df.sample(n=samples_per_group,
-                                          replace=bootstrap))
+            if bootstrap:
+                df_to_concat.append(df.sample(n=samples_per_group,
+                                              replace=bootstrap))
+            else:
+                if df.shape[0] > samples_per_group:
+                    df_to_concat.append(df.sample(n=samples_per_group,
+                                                  replace=bootstrap))
+                elif df.shape[0] <= samples_per_group:
+                    df_to_concat.append(df)
         else:
             log.info('{}th {} does not contain any sample'.format(i, p))
     final_df = pd.concat(df_to_concat)
