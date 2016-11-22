@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import copy
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process.kernels import WhiteKernel
@@ -8,11 +9,13 @@ from uncoverml.optimise.pipeline import transformed_modelmaps
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import kernels
 
-svr = transformed_modelmaps.pop('transformedsvr')
+modelmaps = copy.deepcopy(transformed_modelmaps)
+svr = modelmaps.pop('transformedsvr')
 
-@pytest.fixture(params=[k for k in transformed_modelmaps.keys()])
+
+@pytest.fixture(params=[k for k in modelmaps.keys()])
 def get_models(request):
-    return request.param, transformed_modelmaps[request.param]
+    return request.param, modelmaps[request.param]
 
 
 @pytest.fixture(params=[k for k in transforms.transforms.keys()])

@@ -1,5 +1,6 @@
 import tempfile
-from os.path import abspath
+from os.path import abspath, exists, splitext
+from os import remove
 import geopandas as gpd
 import pandas as pd
 import pandas.core.algorithms as algos
@@ -176,6 +177,14 @@ resampling_techniques = {'value': resample_by_magnitude,
                          'spatial': resample_spatially}
 
 
+def _remove_files(filename, extensions):
+    for extension in extensions:
+        if exists(filename + extension):
+            remove(filename + extension)
+            log.info('Removed intermediate file {}'.format(filename
+                                                           + extension))
+
+
 def resample_shapefile(config, outfile=None):
     shapefile = config.target_file
 
@@ -200,11 +209,14 @@ def resample_shapefile(config, outfile=None):
                     else tempfile.mktemp(suffix='.shp', dir=config.output_dir)
 
                 input_shpfile = shapefile if i == 0 else out_shpfile
-
                 out_shpfile = resampling_techniques[k](
                     input_shpfile, int_shpfile,
                     target_field=config.target_property,
                     ** r[k]['arguments']
                     )
+                if i > 0:
+                    _remove_files(splitext(input_shpfile)[0],
+                                  ['.shp', '.shx', '.prj', '.dbf', '.cpg'])
+
         log.info('Output shapefile is {}'.format(out_shpfile))
         return out_shpfile

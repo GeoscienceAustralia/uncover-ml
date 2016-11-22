@@ -268,6 +268,7 @@ class TransformedSVR(SVR, TagsMixin):
             cache_size=cache_size,
             max_iter=max_iter)
 
+        # used in training
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
 
