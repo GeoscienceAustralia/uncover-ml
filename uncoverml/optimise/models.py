@@ -13,7 +13,21 @@ from uncoverml.models import RandomForestRegressor, QUADORDER, \
 from uncoverml.transforms import target as transforms
 
 
-class TransformedSGDRegressor(SGDRegressor, TagsMixin):
+class TransforMixin():
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y)
+        y_t = self.target_transform.transform(y)
+        return super().fit(X, y_t)
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X)
+        Ey = self.target_transform.itransform(Ey_t)
+
+        return Ey
+
+
+class TransformedSGDRegressor(TransforMixin, SGDRegressor, TagsMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
@@ -45,18 +59,9 @@ class TransformedSGDRegressor(SGDRegressor, TagsMixin):
 
         self.target_transform = target_transform
 
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
 
-    def predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-        return Ey
-
-
-class TransformedGPRegressor(GaussianProcessRegressor, TagsMixin):
+class TransformedGPRegressor(TransforMixin, GaussianProcessRegressor,
+                             TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -83,18 +88,9 @@ class TransformedGPRegressor(GaussianProcessRegressor, TagsMixin):
             random_state=random_state
         )
 
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
 
-    def predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-        return Ey
-
-
-class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
+class TransformedForestRegressor(RandomForestRegressor,
+                                 TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -201,7 +197,8 @@ class TransformedForestRegressor(RandomForestRegressor, TagsMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
+class TransformedGradientBoost(TransforMixin, GradientBoostingRegressor,
+                               TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -237,19 +234,8 @@ class TransformedGradientBoost(GradientBoostingRegressor, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
 
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
 
-    def predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-
-        return Ey
-
-
-class TransformedSVR(SVR, TagsMixin):
+class TransformedSVR(TransforMixin, SVR, TagsMixin):
 
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
@@ -274,15 +260,33 @@ class TransformedSVR(SVR, TagsMixin):
 
         self.target_transform = target_transform
 
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-        return super(TransformedSVR, self).fit(X, y_t)
 
-    def predict(self, X, *args, **kwargs):
-        Ey_t = super(TransformedSVR, self).predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-        return Ey
+class TransformedSGDApproxGP(TransforMixin, SGDApproxGP, TagsMixin):
+
+    def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
+                 regulariser=1., ard=True, maxiter=3000, batch_size=10,
+                 alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
+                 random_state=None, target_transform='identity'):
+        super().__init__(
+            kernel=kernel,
+            nbases=nbases,
+            lenscale=lenscale,
+            var=var,
+            regulariser=regulariser,
+            ard=ard,
+            maxiter=maxiter,
+            batch_size=batch_size,
+            alpha=alpha,
+            beta1=beta1,
+            beta2=beta2,
+            epsilon=epsilon,
+            random_state=random_state
+        )
+
+        # used in training
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
 
 
 transformed_modelmaps = {
