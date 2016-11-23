@@ -222,9 +222,11 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     image_shape, image_bbox = ls.geoio.get_image_spec(model, config)
 
     outfile_tif = config.name + "_" + config.algorithm
+    predict_tags = model.get_predict_tags()
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=model.get_predict_tags())
+                                     band_tags=predict_tags[0:
+                                     min(len(predict_tags), config.outbands)])
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))

@@ -152,8 +152,13 @@ learning:
 #      parallel: True
 #      calc_usage: True
 
+
+# outbands: number of output bands desired.
+# Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',
+# 'Upper quantile', 'Entropy']
 prediction:
   quantiles: 0.95
+  outbands: 1
 
 validation:
   # - feature_rank

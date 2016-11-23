@@ -53,6 +53,8 @@ learning:
 
 prediction:
   quantiles: 0.95
+  outbands: 1
+
 
 validation:
   #- feature_rank

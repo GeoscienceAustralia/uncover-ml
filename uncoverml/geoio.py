@@ -237,6 +237,7 @@ class ImageWriter:
                                          bbox[0, 1], bbox[1, 1],
                                          shape[0], shape[1])
         self.shape = shape
+        self.outbands = len(band_tags)
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
@@ -249,13 +250,13 @@ class ImageWriter:
         if band_tags:
             file_tags = ["_".join(k.lower().split()) for k in band_tags]
         else:
-            file_tags = [str(k) for k in range(shape[2])]
+            file_tags = [str(k) for k in range(self.outbands)]
             band_tags = file_tags
 
         if mpiops.chunk_index == 0:
             # create a file for each band
             self.files = []
-            for band in range(self.shape[2]):
+            for band in range(self.outbands):
                 output_filename = os.path.join(outputdir, name + "_" +
                                                file_tags[band] + ".tif")
                 f = rasterio.open(output_filename, 'w', driver='GTiff',

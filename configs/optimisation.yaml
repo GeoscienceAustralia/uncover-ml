@@ -87,11 +87,11 @@ clustering:
 #    nbases: 20
 #    maxiter: 50
 
-learning:
-  algorithm: transformedsvr
-  arguments:
-    target_transform: kde
-    kernel: rbf
+#learning:
+#  algorithm: transformedsvr
+#  arguments:
+#    target_transform: kde
+#    kernel: rbf
 
 #learning:
 #    algorithm: multirandomforest
@@ -107,11 +107,11 @@ learning:
 #    target_transform: rank
 
 
-#learning:
-#  algorithm: gradientboost
-#  arguments:
-#    n_estimators: 50
-#    target_transform: sqrt
+learning:
+  algorithm: gradientboost
+  arguments:
+    n_estimators: 50
+    target_transform: sqrt
 
 
 #learning:
@@ -200,8 +200,12 @@ optimisation:
   # kernel: ['rbf', 'matern32']  # revrand kernels
   optimisation_output: optimisation.csv
 
+# outbands: number of output bands desired.
+# Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',
+# 'Upper quantile', 'Entropy']
 prediction:
   quantiles: 0.95
+  outbands: 1
 
 validation:
 #  #- feature_rank

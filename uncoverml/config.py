@@ -145,7 +145,9 @@ class Config:
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
-
+        self.outbands = None
+        if 'outbands' in s['prediction']:
+            self.outbands = s['prediction']['outbands']
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
         self.rawcovariates = False
