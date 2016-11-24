@@ -485,9 +485,10 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
     the predictive distribution is sampled for these algorithms!
     """
 
-    def __init__(self, kern='rbf', nbases=50, lenscale=1., var=1., falloff=1.,
-                 regulariser=1., ard=True, indicator_field='censored',
-                 maxiter=3000, batch_size=10, alpha=0.01, beta1=0.9,
+    def __init__(self, kernnel='rbf', nbases=50, lenscale=1., var=1.,
+                 falloff=1., regulariser=1., ard=True,
+                 indicator_field='censored', maxiter=3000,
+                 batch_size=10, alpha=0.01, beta1=0.9,
                  beta2=0.99, epsilon=1e-8, random_state=None):
 
         lhood = Switching(lenscale=falloff,
@@ -503,7 +504,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
                          )
 
         self.indicator_field = indicator_field
-        self._store_params(kern, nbases, lenscale, ard)
+        self._store_params(kernnel, nbases, lenscale, ard)
 
     def fit(self, X, y, fields):
         r"""

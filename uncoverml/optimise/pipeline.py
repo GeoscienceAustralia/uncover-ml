@@ -28,9 +28,6 @@ algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
                                                 normalize_y=True)
 algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
-LENGTH_SCALE = 'length_scale'
-NU = 'nu'
-
 
 def setup_pipeline(config):
     if config.optimisation['algorithm'] not in algos:
