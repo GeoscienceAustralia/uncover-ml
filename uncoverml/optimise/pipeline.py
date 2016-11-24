@@ -11,6 +11,9 @@ from sklearn import decomposition
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
+from revrand.basis_functions import LinearBasis
+from revrand.btypes import Parameter, Positive
+
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import (
     TransformedGPRegressor,
@@ -64,12 +67,19 @@ def setup_pipeline(config):
                         V += [kernels[kk](** c) + WhiteKernel()
                               for c in combinations]
                     v = V
+            if config.optimisation['algorithm'] == 'transformedbayesreg':
+                if k == 'basis':
+                    v = [LinearBasis(onescol=vv) for vv in v]
+                if k == 'var':
+                    v = [Parameter(vv, Positive()) for vv in v]
+                if k == 'regulariser':
+                    v = [Parameter(vv, Positive()) for vv in v]
 
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
                              param_dict,
-                             n_jobs=-1,
+                             n_jobs=1,
                              iid=False,
                              pre_dispatch=2,
                              verbose=True,

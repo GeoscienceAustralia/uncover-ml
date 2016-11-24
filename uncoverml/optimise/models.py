@@ -9,11 +9,15 @@ from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
     DEFAULT_EPSILON
 from sklearn.svm import SVR
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, basismap
+    _normpdf, TagsMixin, SGDApproxGP, LinearReg, PredictProbaMixin, \
+    GLMPredictProbaMixin, MutualInfoMixin
+from revrand.slm import StandardLinearModel
+from revrand.basis_functions import LinearBasis
+from revrand.btypes import Parameter, Positive
 from uncoverml.transforms import target as transforms
 
 
-class TransforMixin():
+class TransformMixin():
 
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y)
@@ -27,7 +31,41 @@ class TransforMixin():
         return Ey
 
 
-class TransformedSGDRegressor(TransforMixin, SGDRegressor, TagsMixin):
+class TransformedLinearReg(TransformMixin, StandardLinearModel,
+                           PredictProbaMixin, MutualInfoMixin):
+
+    def __init__(self,
+                 basis=True,
+                 var=1.0,
+                 regulariser=1.0,
+                 tol=1e-8,
+                 maxiter=1000,
+                 target_transform='identity'
+                 ):
+
+        if isinstance(basis, bool):  # used during training
+            basis = LinearBasis(onescol=basis)
+
+        if isinstance(var, float):
+            var = Parameter(var, Positive()),
+
+        if isinstance(regulariser, float):
+            regulariser = Parameter(regulariser, Positive())
+
+        super().__init__(basis=basis,
+                         var=var,
+                         regulariser=regulariser,
+                         tol=tol,
+                         maxiter=maxiter,
+                         )
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        self.target_transform = target_transform
+
+
+class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
@@ -60,7 +98,7 @@ class TransformedSGDRegressor(TransforMixin, SGDRegressor, TagsMixin):
         self.target_transform = target_transform
 
 
-class TransformedGPRegressor(TransforMixin, GaussianProcessRegressor,
+class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
                              TagsMixin):
 
     def __init__(self,
@@ -197,7 +235,7 @@ class TransformedForestRegressor(RandomForestRegressor,
         return Ey, Vy, ql, qu
 
 
-class TransformedGradientBoost(TransforMixin, GradientBoostingRegressor,
+class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
                                TagsMixin):
 
     def __init__(self,
@@ -235,7 +273,7 @@ class TransformedGradientBoost(TransforMixin, GradientBoostingRegressor,
         self.target_transform = target_transform
 
 
-class TransformedSVR(TransforMixin, SVR, TagsMixin):
+class TransformedSVR(TransformMixin, SVR, TagsMixin):
 
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
@@ -261,7 +299,7 @@ class TransformedSVR(TransforMixin, SVR, TagsMixin):
         self.target_transform = target_transform
 
 
-class TransformedSGDApproxGP(TransforMixin, SGDApproxGP, TagsMixin):
+class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
 
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
@@ -295,6 +333,7 @@ transformed_modelmaps = {
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
+    'transformedbayesreg': TransformedLinearReg,
 }
 
 # scikit-learn kernels

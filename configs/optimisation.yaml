@@ -84,8 +84,8 @@ clustering:
 #  arguments:
 #    target_transform: rank
 #    kernel: matern52
-#    nbases: 20
-#    maxiter: 50
+#    nbases: 100
+#    maxiter: 5000
 
 #learning:
 #  algorithm: transformedsvr
@@ -172,15 +172,25 @@ optimisation:
 #      alpha: [0.0001, 0.001, 0.01, 0.1]
 #      n_iter: [100]
 
-  algorithm: gradientboost
+#  algorithm: gradientboost
+#  hyperparameters:
+#    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
+#    target_transform: ['identity', 'standardise']
+#    loss: [ls, lad, huber, quantile]
+#    max_features: [auto, sqrt, log2]
+#    min_samples_split: [2, 4, 10]
+#    max_depth: [2, 3, 4, 5]
+#    subsample: [1.0, 0.75, 0.5]
+
+  algorithm: transformedbayesreg
   hyperparameters:
-    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
-    target_transform: ['identity', 'standardise']
-    loss: [ls, lad, huber, quantile]
-    max_features: [auto, sqrt, log2]
-    min_samples_split: [2, 4, 10]
-    max_depth: [2, 3, 4, 5]
-    subsample: [1.0, 0.75, 0.5]
+    target_transform: ['identity']
+    basis: [True]
+    var: [1.0]
+    regulariser: [2.0, 1.0]
+    tol: [1e-8]
+    maxiter: [1000]
+
 
 
 #  algorithm: transformedgp
