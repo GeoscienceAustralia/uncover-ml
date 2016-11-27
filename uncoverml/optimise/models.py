@@ -1,16 +1,15 @@
 import numpy as np
 from scipy.integrate import fixed_quad
-from scipy.stats import norm
+from scipy.stats import norm, gamma
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, \
-    ExpSineSquared
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
     DEFAULT_EPSILON
 from sklearn.svm import SVR
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, LinearReg, PredictProbaMixin, \
-    GLMPredictProbaMixin, MutualInfoMixin
+    _normpdf, TagsMixin, SGDApproxGP, PredictProbaMixin, \
+    MutualInfoMixin
 from revrand.slm import StandardLinearModel
 from revrand.basis_functions import LinearBasis
 from revrand.btypes import Parameter, Positive
@@ -30,9 +29,62 @@ class TransformMixin():
 
         return Ey
 
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey = super().predict(X)
+        return Ey
 
-class TransformedLinearReg(TransformMixin, StandardLinearModel,
-                           PredictProbaMixin, MutualInfoMixin):
+
+class TransormPredictProbaMixin(TransformMixin):
+
+    def __expec_int(self, x, mu, std):
+        px = _normpdf(x, mu, std)
+        Ex = self.target_transform.itransform(x) * px
+        return Ex
+
+    def __var_int(self, x, Ex, mu, std):
+        px = _normpdf(x, mu, std)
+        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
+        return Vx
+
+    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+
+        # Expectation and variance in latent space
+        Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
+
+        # Save computation if identity transform
+        if type(self.target_transform) is transforms.Identity:
+            return Ey_t, Vy_t, ql, qu
+
+        # Save computation if standardise transform
+        elif type(self.target_transform) is transforms.Standardise:
+            Ey = self.target_transform.itransform(Ey_t)
+            Vy = Vy_t * self.target_transform.ystd ** 2
+            ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+            return Ey, Vy, ql, qu
+
+        # All other transforms require quadrature
+        Ey = np.empty_like(Ey_t)
+        Vy = np.empty_like(Vy_t)
+
+        # Used fixed order quadrature to transform prob. estimates
+        for i, (Eyi, Vyi) in enumerate(zip(Ey_t, Vy_t)):
+            # Establish bounds
+            Syi = np.sqrt(Vyi)
+            a, b = Eyi - 3 * Syi, Eyi + 3 * Syi  # approx 99% bounds
+
+            # Quadrature
+            Ey[i], _ = fixed_quad(self.__expec_int, a, b, n=QUADORDER,
+                                  args=(Eyi, Syi))
+            Vy[i], _ = fixed_quad(self.__var_int, a, b, n=QUADORDER,
+                                  args=(Ey[i], Eyi, Syi))
+
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
+
+class TransformedLinearReg(TransormPredictProbaMixin, StandardLinearModel,
+                           PredictProbaMixin, MutualInfoMixin, TagsMixin):
 
     def __init__(self,
                  basis=True,
@@ -43,14 +95,9 @@ class TransformedLinearReg(TransformMixin, StandardLinearModel,
                  target_transform='identity'
                  ):
 
-        if isinstance(basis, bool):  # used during training
-            basis = LinearBasis(onescol=basis)
-
-        if isinstance(var, float):
-            var = Parameter(var, Positive()),
-
-        if isinstance(regulariser, float):
-            regulariser = Parameter(regulariser, Positive())
+        basis = self.get_basis(basis)
+        var = self.get_var(var)
+        regulariser = self.get_regulariser(regulariser)
 
         super().__init__(basis=basis,
                          var=var,
@@ -63,6 +110,26 @@ class TransformedLinearReg(TransformMixin, StandardLinearModel,
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
+
+    @staticmethod
+    def get_basis(basis):
+        if isinstance(basis, bool):
+            basis = LinearBasis(onescol=basis)  # whether to add a bias term
+        return basis
+
+    @staticmethod
+    def get_var(var):
+        if isinstance(var, float):
+            var = gamma(a=var, scale=1)  # Initial target noise
+            var = Parameter(var, Positive())
+        return var
+
+    @staticmethod
+    def get_regulariser(regulariser):
+        if isinstance(regulariser, float):
+            reg = gamma(a=regulariser, scale=1)  # Initial weight prior
+            regulariser = Parameter(reg, Positive())
+        return regulariser
 
 
 class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):

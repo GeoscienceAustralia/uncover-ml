@@ -19,7 +19,8 @@ from uncoverml.optimise.models import (
     TransformedGPRegressor,
     kernels,
     transformed_modelmaps,
-    TransformedSVR)
+    TransformedSVR,
+    TransformedLinearReg)
 from uncoverml.scripts.uncoverml import load_data
 from uncoverml.transforms import target as transforms
 
@@ -69,11 +70,12 @@ def setup_pipeline(config):
                     v = V
             if config.optimisation['algorithm'] == 'transformedbayesreg':
                 if k == 'basis':
-                    v = [LinearBasis(onescol=vv) for vv in v]
+                    v = [TransformedLinearReg().get_basis(vv) for vv in v]
                 if k == 'var':
-                    v = [Parameter(vv, Positive()) for vv in v]
+                    v = [TransformedLinearReg().get_var(vv) for vv in v]
                 if k == 'regulariser':
-                    v = [Parameter(vv, Positive()) for vv in v]
+                    v = [TransformedLinearReg().get_regulariser(vv)
+                         for vv in v]
 
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)

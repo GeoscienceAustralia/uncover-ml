@@ -13,12 +13,12 @@ features:
   - name: my features 1
     type: ordinal
     files:
-#      - path: /home/sudipta/GA_data/GA-cover2/k_15v5.tif
-#      - path: /home/sudipta/GA_data/GA-cover2/dem_foc2.tif
+      - path: /home/sudipta/GA_data/GA-cover2/k_15v5.tif
+      - path: /home/sudipta/GA_data/GA-cover2/dem_foc2.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
 #      - directory: /home/sudipta/GA_data/GA-cover2
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
 #      - centre
@@ -85,7 +85,16 @@ clustering:
 #    target_transform: rank
 #    kernel: matern52
 #    nbases: 100
-#    maxiter: 5000
+#    maxiter: 10
+#
+#
+#learning:
+#  algorithm: approxgp
+#  arguments:
+#    target_transform: rank
+#    kernel: matern52
+#    nbases: 100
+#    maxiter: 10
 
 #learning:
 #  algorithm: transformedsvr
@@ -106,12 +115,21 @@ clustering:
 #    n_estimators: 50
 #    target_transform: rank
 
-
 learning:
-  algorithm: gradientboost
+  algorithm: transformedbayesreg
   arguments:
-    n_estimators: 50
-    target_transform: sqrt
+    target_transform: standardise
+    basis: True
+    var: 1.0
+    regulariser: 1.0
+    tol: 1.0e-08
+    maxiter: 1000
+
+#learning:
+#  algorithm: gradientboost
+#  arguments:
+#    n_estimators: 50
+#    target_transform: sqrt
 
 
 #learning:
@@ -184,11 +202,11 @@ optimisation:
 
   algorithm: transformedbayesreg
   hyperparameters:
-    target_transform: ['identity']
+    target_transform: [rank, identity, standardise, kde, sqrt]
     basis: [True]
     var: [1.0]
-    regulariser: [2.0, 1.0]
-    tol: [1e-8]
+    regulariser: [1.0]
+    tol: [1.0e-08]
     maxiter: [1000]
 
 
