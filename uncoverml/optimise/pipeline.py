@@ -11,8 +11,6 @@ from sklearn import decomposition
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
-from revrand.basis_functions import LinearBasis
-from revrand.btypes import Parameter, Positive
 
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import (

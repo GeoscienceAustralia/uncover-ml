@@ -34,7 +34,7 @@ class TransformMixin():
         return Ey
 
 
-class TransormPredictProbaMixin(TransformMixin):
+class TransformPredictProbaMixin(TransformMixin):
 
     def __expec_int(self, x, mu, std):
         px = _normpdf(x, mu, std)
@@ -83,7 +83,7 @@ class TransormPredictProbaMixin(TransformMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedLinearReg(TransormPredictProbaMixin, StandardLinearModel,
+class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
                            PredictProbaMixin, MutualInfoMixin, TagsMixin):
 
     def __init__(self,
@@ -194,7 +194,8 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
         )
 
 
-class TransformedForestRegressor(RandomForestRegressor,
+class TransformedForestRegressor(TransformPredictProbaMixin,
+                                 RandomForestRegressor,
                                  TagsMixin):
 
     def __init__(self,
@@ -239,67 +240,6 @@ class TransformedForestRegressor(RandomForestRegressor,
 
         # used during optimisation
         self.target_transform = target_transform
-
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
-        y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey = super().predict(X)
-        return Ey
-
-    def predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
-
-        return Ey
-
-    def __expec_int(self, x, mu, std):
-        px = _normpdf(x, mu, std)
-        Ex = self.target_transform.itransform(x) * px
-        return Ex
-
-    def __var_int(self, x, Ex, mu, std):
-        px = _normpdf(x, mu, std)
-        Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
-        return Vx
-
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
-
-        # Expectation and variance in latent space
-        Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
-
-        # Save computation if identity transform
-        if type(self.target_transform) is transforms.Identity:
-            return Ey_t, Vy_t, ql, qu
-
-        # Save computation if standardise transform
-        elif type(self.target_transform) is transforms.Standardise:
-            Ey = self.target_transform.itransform(Ey_t)
-            Vy = Vy_t * self.target_transform.ystd ** 2
-            ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-            return Ey, Vy, ql, qu
-
-        # All other transforms require quadrature
-        Ey = np.empty_like(Ey_t)
-        Vy = np.empty_like(Vy_t)
-
-        # Used fixed order quadrature to transform prob. estimates
-        for i, (Eyi, Vyi) in enumerate(zip(Ey_t, Vy_t)):
-            # Establish bounds
-            Syi = np.sqrt(Vyi)
-            a, b = Eyi - 3 * Syi, Eyi + 3 * Syi  # approx 99% bounds
-
-            # Quadrature
-            Ey[i], _ = fixed_quad(self.__expec_int, a, b, n=QUADORDER,
-                                  args=(Eyi, Syi))
-            Vy[i], _ = fixed_quad(self.__var_int, a, b, n=QUADORDER,
-                                  args=(Ey[i], Eyi, Syi))
-
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
 
 
 class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
