@@ -223,6 +223,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     outfile_tif = config.name + "_" + config.algorithm
     predict_tags = model.get_predict_tags()
+    if not config.outbands:
+        config.outbands = len(predict_tags)
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, outfile_tif,
                                      config.n_subchunks, config.output_dir,
                                      band_tags=predict_tags[0:
