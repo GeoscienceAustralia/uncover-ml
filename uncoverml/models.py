@@ -48,13 +48,14 @@ class BasisMakerMixin():
         self._make_basis(X)
         return super().fit(X, y, *args, **kwargs)  # args for GLMs
 
-    def _store_params(self, kernel, nbases, lenscale, ard):
+    def _store_params(self, kernel, regulariser, nbases, lenscale, ard):
 
         self.kernel = kernel
         self.nbases = nbases
         self.ard = ard
         self.lenscale = lenscale if np.isscalar(lenscale) \
             else np.asarray(lenscale)
+        self.regulariser = Parameter(regulariser, Positive())
 
     def _make_basis(self, X):
 
@@ -64,7 +65,8 @@ class BasisMakerMixin():
             lenscale = np.ones(D) * lenscale
         lenscale_init = Parameter(lenscale, Positive())
         gpbasis = basismap[self.kernel](Xdim=X.shape[1], nbases=self.nbases,
-                                        lenscale_init=lenscale_init)
+                                        lenscale_init=lenscale_init,
+                                        regularizer=self.regulariser)
 
         self.basis = gpbasis + BiasBasis()
 
@@ -242,10 +244,10 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
     def __init__(self, onescol=True, var=1., regulariser=1., tol=1e-8,
                  maxiter=1000):
 
-        basis = LinearBasis(onescol=onescol)
+        basis = LinearBasis(onescol=onescol,
+                            regularizer=Parameter(regulariser, Positive()))
         super().__init__(basis=basis,
                          var=Parameter(var, Positive()),
-                         regulariser=Parameter(regulariser, Positive()),
                          tol=tol,
                          maxiter=maxiter
                          )
@@ -288,12 +290,11 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
 
         super().__init__(basis=None,
                          var=Parameter(var, Positive()),
-                         regulariser=Parameter(regulariser, Positive()),
                          tol=tol,
                          maxiter=maxiter
                          )
 
-        self._store_params(kernel, nbases, lenscale, ard)
+        self._store_params(kernel, regulariser, nbases, lenscale, ard)
 
 
 class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
@@ -339,10 +340,10 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
     def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
                  epsilon=1e-8, random_state=None):
-
+        basis = LinearBasis(onescol=onescol,
+                            regularizer=Parameter(regulariser, Positive()))
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
-                         basis=LinearBasis(onescol),
-                         regulariser=Parameter(regulariser, Positive()),
+                         basis=basis,
                          maxiter=maxiter,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon),
@@ -412,13 +413,12 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
-                         regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon),
                          random_state=random_state
                          )
-        self._store_params(kernel, nbases, lenscale, ard)
+        self._store_params(kernel, regulariser, nbases, lenscale, ard)
 
 
 # Bespoke regressor for basin-depth problems

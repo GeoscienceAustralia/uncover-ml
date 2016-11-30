@@ -97,7 +97,7 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
 
         basis = self.get_basis(basis, regulariser)
         var = self.get_var(var)
-        self.target_transform = target_transform
+        self.target_transform = self.get_target_transform(target_transform)
 
         super().__init__(basis=basis,
                          var=var,
@@ -126,6 +126,12 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
             reg = gamma(a=regulariser, scale=1)  # Initial weight prior
             regulariser = Parameter(reg, Positive())
         return regulariser
+
+    @staticmethod
+    def get_target_transform(target_transform):
+        if isinstance(target_transform, str):
+            return transforms.transforms[target_transform]
+
 
 
 class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
