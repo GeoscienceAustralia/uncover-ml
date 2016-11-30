@@ -1,21 +1,32 @@
-import click
 import numpy as np
 import warnings
 import logging
 from scipy.stats import norm
 
-import pykrige.kriging_tools as kt
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 
 from uncoverml.logging import warn_with_traceback
 from uncoverml.models import TagsMixin
+from uncoverml.config import ConfigException
 
 log = logging.getLogger(__name__)
 warnings.showwarning = warn_with_traceback
 
+krige_methods = {'ordinary': OrdinaryKriging,
+                 'universal': UniversalKriging}
 
-class KrigeMixin():
+
+class Krige(TagsMixin):
+
+    def __init__(self, method, *args, **kwargs):
+        if method not in krige_methods.keys():
+            raise ConfigException('Kirging method must be '
+                                  'one of {}'.format(krige_methods.keys()))
+        self.args = args
+        self.kwargs = kwargs
+        self.model = None  # not trained
+        self.method = method
 
     def fit(self, x, y, *args, **kwargs):
         """
@@ -24,20 +35,13 @@ class KrigeMixin():
         x: array of Points, (x, y) pairs
         y: ndarray
         """
-        if self.method == 'ordinary':
-            self.model = OrdinaryKriging(
-                x=x[:, 0],
-                y=x[:, 1],
-                z=y,
-                **self.kwargs
-             )
-        else:
-            self.model = UniversalKriging(
-                x=x[:, 0],
-                y=x[:, 1],
-                z=y,
-                **self.kwargs
-            )
+
+        self.model = krige_methods[self.method](
+            x=x[:, 0],
+            y=x[:, 1],
+            z=y,
+            **self.kwargs
+         )
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         prediction, variance = \
@@ -51,14 +55,5 @@ class KrigeMixin():
 
     def predict(self, x, interval=0.95):
         return self.predict_proba(x, interval=interval)[0]
-
-
-class Krige(TagsMixin, KrigeMixin):
-
-    def __init__(self, method, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        self.model = None  # not trained
-        self.method = method
 
 krig_dict = {'krige': Krige}

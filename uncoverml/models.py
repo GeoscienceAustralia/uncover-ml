@@ -65,7 +65,7 @@ class BasisMakerMixin():
             lenscale = np.ones(D) * lenscale
         lenscale_init = Parameter(lenscale, Positive())
         gpbasis = basismap[self.kernel](Xdim=X.shape[1], nbases=self.nbases,
-                                        lenscale_init=lenscale_init,
+                                        lenscale=lenscale_init,
                                         regularizer=self.regulariser)
 
         self.basis = gpbasis + BiasBasis()
