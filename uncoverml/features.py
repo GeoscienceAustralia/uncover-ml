@@ -86,8 +86,12 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
             pickle.dump(feature_vec, open(config.featurevec, 'wb'))
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
-    if final_transform and not (config.cubist or config.multicubist):
-        x = final_transform(x)
+    if config.cubist or config.multicubist or config.krige:
+        log.warning("{}: Ignoring preprocessing "
+                    "transform".format(config.algorithm))
+    else:
+        if final_transform:
+            x = final_transform(x)
     return x, cull_all_null_rows(feature_sets)
 
 

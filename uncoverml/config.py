@@ -143,6 +143,7 @@ class Config:
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
+        self.krige = self.algorithm == 'krige'
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
         self.outbands = None
