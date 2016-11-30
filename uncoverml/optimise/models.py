@@ -95,26 +95,22 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
                  target_transform='identity'
                  ):
 
-        basis = self.get_basis(basis)
+        basis = self.get_basis(basis, regulariser)
         var = self.get_var(var)
-        regulariser = self.get_regulariser(regulariser)
+        self.target_transform = target_transform
 
         super().__init__(basis=basis,
                          var=var,
-                         regulariser=regulariser,
                          tol=tol,
-                         maxiter=maxiter,
+                         maxiter=maxiter
                          )
 
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-
-        self.target_transform = target_transform
-
-    @staticmethod
-    def get_basis(basis):
+    def get_basis(self, basis, regulariser):
+        # whether to add a bias term
         if isinstance(basis, bool):
-            basis = LinearBasis(onescol=basis)  # whether to add a bias term
+            regulariser = self.get_regulariser(regulariser)
+            basis = LinearBasis(onescol=basis,
+                                regularizer=regulariser)
         return basis
 
     @staticmethod

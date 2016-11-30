@@ -66,22 +66,14 @@ def setup_pipeline(config):
                         V += [kernels[kk](** c) + WhiteKernel()
                               for c in combinations]
                     v = V
-            if config.optimisation['algorithm'] == 'transformedbayesreg':
-                if k == 'basis':
-                    v = [TransformedLinearReg().get_basis(vv) for vv in v]
-                if k == 'var':
-                    v = [TransformedLinearReg().get_var(vv) for vv in v]
-                if k == 'regulariser':
-                    v = [TransformedLinearReg().get_regulariser(vv)
-                         for vv in v]
 
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
                              param_dict,
-                             n_jobs=1,
+                             n_jobs=-1,
                              iid=False,
-                             pre_dispatch=2,
+                             pre_dispatch='2*n_jobs',
                              verbose=True,
                              )
 
