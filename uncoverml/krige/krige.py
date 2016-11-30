@@ -24,22 +24,20 @@ class KrigeMixin():
         x: array of Points, (x, y) pairs
         y: ndarray
         """
-
-        if not self.model:
-            if self.method == 'ordinary':
-                self.model = OrdinaryKriging(
-                    x=x[:, 0],
-                    y=x[:, 1],
-                    z=y,
-                    **self.kwargs
-                 )
-            else:
-                self.model = UniversalKriging(
-                    x=x[:, 0],
-                    y=x[:, 1],
-                    z=y,
-                    **self.kwargs
-                )
+        if self.method == 'ordinary':
+            self.model = OrdinaryKriging(
+                x=x[:, 0],
+                y=x[:, 1],
+                z=y,
+                **self.kwargs
+             )
+        else:
+            self.model = UniversalKriging(
+                x=x[:, 0],
+                y=x[:, 1],
+                z=y,
+                **self.kwargs
+            )
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         prediction, variance = \
