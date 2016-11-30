@@ -3,18 +3,19 @@
 # patchsize: 0
 
 features:
-  - name: my pickle files
-    type: pickle
-    files:
-      covariates: features.pk
-      targets: targets.pk
-      rawcovariates: rawcovariates.csv
-      rawcovariates_mask: rawcovariates_mask.csv
+#  - name: my pickle files
+#    type: pickle
+#    files:
+#      covariates: /home/sudipta/Documents/murray_basin/features.pk
+#      targets: /home/sudipta/Documents/murray_basin/targets.pk
+#      featurevec: featurevec.pk
+#      rawcovariates: rawcovariates.csv
+#      rawcovariates_mask: rawcovariates_mask.csv
   - name: my features 1
     type: ordinal
     files:
-      - path: /home/sudipta/GA_data/GA-cover2/k_15v5.tif
-      - path: /home/sudipta/GA_data/GA-cover2/dem_foc2.tif
+      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
 #      - directory: /home/sudipta/GA_data/GA-cover2
@@ -23,18 +24,18 @@ features:
     transforms:
 #      - centre
 #      - standardise
-    imputation: mean
-  
-  - name: my features 2
-    type: categorical
-    files:
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-    transforms: randomhot
     imputation: nn
 
-mask:
-  file: /home/sudipta/GA_data/mask/old_mask_test.tif
-  retain: 1
+#  - name: my features 2
+#    type: categorical
+#    files:
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+#    transforms: randomhot
+#    imputation: nn
+
+#mask:
+#  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+#  retain: 1
 
 preprocessing:
   # imputation: none
@@ -54,20 +55,20 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
-  property: Na_ppm_i_1
-#  resample:
-#    - spatial:
-#        arguments:
-#          rows: 4
-#          cols: 4
-#          bootstrap: False
-#          output_samples: 500
-#    - value:
-#        arguments:
-#          bins: 10
-#          bootstrap: False
-#          output_samples: 500
+  file: /home/sudipta/GA_data/MB_covariatesV2/MB_drillholes_only.shp
+  property: depth
+  resample:
+    - spatial:
+        arguments:
+          rows: 4
+          cols: 4
+          bootstrap: False
+          output_samples: 1000
+    - value:
+        arguments:
+          bins: 10
+          bootstrap: False
+          output_samples: 1000
 
 
 clustering:
@@ -82,19 +83,58 @@ clustering:
 #learning:
 #  algorithm: sgdapproxgp
 #  arguments:
-#    target_transform: rank
+#    target_transform: standardise
 #    kernel: matern52
 #    nbases: 100
 #    maxiter: 10
-#
-#
+
 #learning:
 #  algorithm: approxgp
 #  arguments:
 #    target_transform: rank
 #    kernel: matern52
-#    nbases: 100
+#    nbases: 50
+#    maxiter: 10000
+
+
+#learning:
+#  algorithm: sgdbayesreg
+#  arguments:
+#    target_transform: standardise
 #    maxiter: 10
+
+
+#learning:
+#  algorithm: cubist
+#  arguments:
+#    max_rules: 500
+#    committee_members: 2
+#    unbiased: False
+#    max_categories: 5000
+#    target_transform: standardise
+##    bootstrap: 200
+#    sampling: 70
+#    seed: 2
+#    extrapolation: 5
+#    sampling: 50
+#    seed: 2
+#    composite_model: True
+#    auto: False
+#    neighbors: 5
+#    calc_usage: True
+#    print_output: False
+##    trees: 10
+##    parallel: True
+
+
+learning:
+  algorithm: krige  # ordinarykrige or universalkrige
+  arguments:
+    method: ordinary
+#    lat: /home/sudipta/GA_data/MB_covariatesV2/LOC_lot.tif
+#    long: /home/sudipta/GA_data/MB_covariatesV2/LOC_longs.tif
+    variogram_model: linear
+    verbose: False
 
 #learning:
 #  algorithm: transformedsvr
@@ -109,11 +149,11 @@ clustering:
 #      target_transform: kde
 #      forests: 10
 
-learning:
-  algorithm: transformedrandomforest
-  arguments:
-    n_estimators: 50
-    target_transform: log
+#learning:
+#  algorithm: transformedrandomforest
+#  arguments:
+#    n_estimators: 50
+#    target_transform: log
 
 #learning:
 #  algorithm: transformedbayesreg
@@ -124,7 +164,7 @@ learning:
 #    regulariser: 1.0
 #    tol: 1.0e-08
 #    maxiter: 1000
-#
+
 #learning:
 #  algorithm: gradientboost
 #  arguments:
@@ -136,8 +176,9 @@ learning:
 #  algorithm: transformedgp
 #  arguments:
 #    kernel: rbf
+#    alpha: 1.0e-8
 #    normalize_y: True
-#    n_restarts_optimizer: 10
+#    n_restarts_optimizer: 3
 
 #learning:
 #  algorithm: sgdregressor
@@ -153,8 +194,6 @@ learning:
 ##      random_state: 1
 #      shuffle: True
 #      warm_start: True
-#      maxiter: 10
-
 
 
 #n_components : int, float, None or string
@@ -168,7 +207,6 @@ learning:
 #        n_components cannot be equal to n_features for svd_solver == 'arpack'.
 # svd_solver: {'auto', 'full', 'arpack', 'randomized'}
 # iterated power: int > 0 or 'auto'
-# kde transform is not working yet
 
 optimisation:
 #  featuretransforms:
@@ -181,12 +219,13 @@ optimisation:
 #  algorithm: sgdregressor
 #  hyperparameters:
 #      l1_ratio: [0, 0.15, 0.5, 0.75, 1]
-#      loss: ['huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
-#      learning_rate: ['optimal', 'invscaling']
-#      penalty: ['l1', 'l2', 'elasticnet']
+#      kernel: [rbf, matern, quagdratic]
+#      loss: [huber, epsilon_insensitive, squared_epsilon_insensitive]
+#      learning_rate: [optimal, invscaling]
+#      penalty: [l1, l2, elasticnet]
 #      fit_intercept: [True, False]
-#      warm_start: True
-#      target_transform: ['identity', 'standardise']
+#      warm_start: [True, False]
+#      target_transform: [identity, standardise, rank]
 #      alpha: [0.0001, 0.001, 0.01, 0.1]
 #      n_iter: [100]
 
@@ -218,12 +257,14 @@ optimisation:
 #              'matern': {length_scale: [0.1], nu: [0.5]},
 #              'quadratic': {length_scale: [0.1], alpha: [0.01]}
 #            }
-#    target_transform: [identity, standardise]
+    # normalize_y: [False, True]
 
-#  algorithm: transformedsvr
-#  hyperparameters:
-#    kernel: [linear, poly, rbf, sigmoid]
-#    target_transform: [identity, standardise, log]
+  algorithm: transformedsvr
+  hyperparameters:
+    kernel: [linear, poly, rbf, sigmoid]
+    target_transform: [identity, standardise, log, sqrt]
+    C: [1.0, 0.1, 0.01]
+
 
   # kernel: ['rbf', 'matern32']  # revrand kernels
   optimisation_output: optimisation.csv
@@ -239,9 +280,9 @@ validation:
 #  #- feature_rank
   - parallel
   - k-fold:
-      folds: 5
+      folds: 4
       random_seed: 1
-  
+
 output:
   directory: .
 

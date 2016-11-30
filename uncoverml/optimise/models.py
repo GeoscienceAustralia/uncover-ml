@@ -19,7 +19,7 @@ from uncoverml.transforms import target as transforms
 class TransformMixin():
 
     def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y)
+        self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
         return super().fit(X, y_t)
 
@@ -97,7 +97,8 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
 
         basis = self.get_basis(basis, regulariser)
         var = self.get_var(var)
-        self.target_transform = self.get_target_transform(target_transform)
+        target_transform = self.get_target_transform(target_transform)
+        self.target_transform = target_transform
 
         super().__init__(basis=basis,
                          var=var,
@@ -130,8 +131,8 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
     @staticmethod
     def get_target_transform(target_transform):
         if isinstance(target_transform, str):
-            return transforms.transforms[target_transform]
-
+            target_transform = transforms.transforms[target_transform]()
+        return target_transform
 
 
 class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
