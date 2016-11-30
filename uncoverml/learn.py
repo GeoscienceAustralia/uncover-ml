@@ -3,6 +3,7 @@ import logging
 from uncoverml import mpiops
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.krige.krige import krig_dict
 
 
 def _join_dicts(dicts):
@@ -11,7 +12,7 @@ def _join_dicts(dicts):
     d = {k: v for D in dicts for k, v in D.items()}
     return d
 
-all_modelmaps = _join_dicts([transformed_modelmaps, modelmaps])
+all_modelmaps = _join_dicts([transformed_modelmaps, modelmaps, krig_dict])
 
 log = logging.getLogger(__name__)
 
