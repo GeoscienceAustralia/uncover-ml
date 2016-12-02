@@ -1,8 +1,10 @@
 import pytest
 from sklearn.metrics import r2_score
+import numpy as np
 
 from uncoverml.models import modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.krige.krige import krige_methods, Krige
 
 models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
 
@@ -47,6 +49,20 @@ def test_modelmap(linear_data, get_models):
 
     assert r2_score(ys, Ey) > 0
 
+
+@pytest.fixture(params=krige_methods.keys())
+def get_krige_method(request):
+    return request.param
+
+
+def test_krige(linear_data, get_krige_method):
+
+    yt, Xt, ys, Xs = linear_data
+
+    mod = Krige(method=get_krige_method)
+    mod.fit(np.tile(Xt, (1, 2)), yt)
+    Ey = mod.predict(np.tile(Xs, (1, 2)))
+    assert r2_score(ys, Ey) > 0
 
 # def test_modelpersistance(make_fakedata):
 
