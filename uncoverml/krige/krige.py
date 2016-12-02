@@ -20,12 +20,16 @@ krige_methods = {'ordinary': OrdinaryKriging,
 
 class Krige(TagsMixin, RegressorMixin, BaseEstimator):
 
-    def __init__(self, method='ordinary', *args, **kwargs):
+    def __init__(self,
+                 method='ordinary',
+                 variogram_model='linear',
+                 verbose=False
+                 ):
         if method not in krige_methods.keys():
             raise ConfigException('Kirging method must be '
                                   'one of {}'.format(krige_methods.keys()))
-        self.args = args
-        self.kwargs = kwargs
+        self.variogram_model = variogram_model
+        self.verbose = verbose
         self.model = None  # not trained
         self.method = method
 
@@ -41,7 +45,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator):
             x=x[:, 0],
             y=x[:, 1],
             z=y,
-            **self.kwargs
+            variogram_model=self.variogram_model,
+            verbose=self.verbose
          )
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
