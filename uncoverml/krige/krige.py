@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 import logging
 from scipy.stats import norm
-from sklearn.base import RegressorMixin
+from sklearn.base import RegressorMixin, BaseEstimator
 
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
@@ -18,7 +18,7 @@ krige_methods = {'ordinary': OrdinaryKriging,
                  'universal': UniversalKriging}
 
 
-class Krige(TagsMixin, RegressorMixin):
+class Krige(TagsMixin, RegressorMixin, BaseEstimator):
 
     def __init__(self, method='ordinary', *args, **kwargs):
         if method not in krige_methods.keys():
