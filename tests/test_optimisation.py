@@ -5,12 +5,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process.kernels import WhiteKernel
 
-from uncoverml.optimise.pipeline import transformed_modelmaps
+from uncoverml.optimise.pipeline import all_modelmaps
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import kernels
+from uncoverml.krige.krige import krige_methods, Krige
 
-modelmaps = copy.deepcopy(transformed_modelmaps)
+modelmaps = copy.deepcopy(all_modelmaps)
+
 svr = modelmaps.pop('transformedsvr')
+krige = modelmaps.pop('krige')
 
 
 @pytest.fixture(params=[k for k in modelmaps.keys()])
@@ -59,11 +62,36 @@ def test_pipeline(get_models, get_transform, get_kernel):
 
 
 def test_svr_pipeline(get_transform, get_svr_kernel):
-
     trans = get_transform()
     pipe = Pipeline(steps=[('svr', svr())])
-    param_dict = {'svr' + '__kernel': [get_svr_kernel]}
-    param_dict['svr' + '__target_transform'] = [trans]
+    param_dict = {'svr__kernel': [get_svr_kernel]}
+    param_dict['svr__target_transform'] = [trans]
+
+    estimator = GridSearchCV(pipe,
+                             param_dict,
+                             n_jobs=1,
+                             iid=False,
+                             pre_dispatch=2,
+                             verbose=True,
+                             )
+    estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
+    assert estimator.cv_results_['mean_train_score'][0] > -100.0
+
+
+@pytest.fixture(params=krige_methods.keys())
+def get_krige_method(request):
+    return request.param
+
+
+@pytest.fixture(params=['linear', 'power', 'gaussian', 'spherical',
+                        'exponential'])
+def get_variogram_model(request):
+    return request.param
+
+
+def test_krige_pipeline(get_krige_method, get_variogram_model):
+    pipe = Pipeline(steps=[('krige', Krige())])
+    param_dict = {'krige__variogram_model': [get_variogram_model]}
 
     estimator = GridSearchCV(pipe,
                              param_dict,
