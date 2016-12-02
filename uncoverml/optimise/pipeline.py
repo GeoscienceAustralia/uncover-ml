@@ -16,16 +16,15 @@ from uncoverml.config import ConfigException
 from uncoverml.optimise.models import (
     TransformedGPRegressor,
     kernels,
-    transformed_modelmaps,
-    TransformedSVR,
-    TransformedLinearReg)
+    TransformedSVR
+    )
 from uncoverml.scripts.uncoverml import load_data
 from uncoverml.transforms import target as transforms
-
+from uncoverml.learn import all_modelmaps
 log = logging.getLogger(__name__)
 
 pca = decomposition.PCA()
-algos = {k: v() for k, v in transformed_modelmaps.items()}
+algos = {k: v() for k, v in all_modelmaps.items()}
 algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
                                                 normalize_y=True)
 algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
