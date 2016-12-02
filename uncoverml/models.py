@@ -496,7 +496,6 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
 
         super().__init__(likelihood=lhood,
                          basis=None,
-                         regulariser=Parameter(regulariser, Positive()),
                          maxiter=maxiter,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon),
@@ -504,7 +503,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
                          )
 
         self.indicator_field = indicator_field
-        self._store_params(kernnel, nbases, lenscale, ard)
+        self._store_params(kernnel, regulariser, nbases, lenscale, ard)
 
     def fit(self, X, y, fields):
         r"""
