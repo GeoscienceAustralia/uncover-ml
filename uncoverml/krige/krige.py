@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 import logging
 from scipy.stats import norm
+from sklearn.base import RegressorMixin
 
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
@@ -17,9 +18,9 @@ krige_methods = {'ordinary': OrdinaryKriging,
                  'universal': UniversalKriging}
 
 
-class Krige(TagsMixin):
+class Krige(TagsMixin, RegressorMixin):
 
-    def __init__(self, method, *args, **kwargs):
+    def __init__(self, method='ordinary', *args, **kwargs):
         if method not in krige_methods.keys():
             raise ConfigException('Kirging method must be '
                                   'one of {}'.format(krige_methods.keys()))
@@ -55,5 +56,6 @@ class Krige(TagsMixin):
 
     def predict(self, x, interval=0.95):
         return self.predict_proba(x, interval=interval)[0]
+
 
 krig_dict = {'krige': Krige}
