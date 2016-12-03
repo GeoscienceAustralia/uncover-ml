@@ -18,7 +18,26 @@ krige_methods = {'ordinary': OrdinaryKriging,
                  'universal': UniversalKriging}
 
 
-class Krige(TagsMixin, RegressorMixin, BaseEstimator):
+class KrigePredictProbaMixin():
+
+    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+        prediction, variance = \
+            self.model.execute('points', x[:, 0], x[:, 1])
+
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=prediction,
+                               scale=np.sqrt(variance))
+
+        return prediction, variance, ql, qu
+
+
+class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
+    """
+    A scikitlearn wrapper class for Ordinary and Universal Kriging.
+    This works for both Grid/RandomSearchCv for optimising the
+    Krige parameters.
+
+    """
 
     def __init__(self,
                  method='ordinary',
@@ -40,6 +59,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator):
         x: array of Points, (x, y) pairs
         y: ndarray
         """
+        if x.shape[1] != 2:
+            raise ConfigException('krige can use only 2 covariates')
 
         self.model = krige_methods[self.method](
             x=x[:, 0],
@@ -49,18 +70,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator):
             verbose=self.verbose
          )
 
-    def predict_proba(self, x, interval=0.95, *args, **kwargs):
-        prediction, variance = \
-            self.model.execute('points', x[:, 0], x[:, 1])
-
-        # Determine quantiles
-        ql, qu = norm.interval(interval, loc=prediction,
-                               scale=np.sqrt(variance))
-
-        return prediction, variance, ql, qu
-
-    def predict(self, x, interval=0.95):
-        return self.predict_proba(x, interval=interval)[0]
+    def predict(self, x, *args, **kwargs):
+        return self.model.execute('points', x[:, 0], x[:, 1])[0]
 
 
 krig_dict = {'krige': Krige}

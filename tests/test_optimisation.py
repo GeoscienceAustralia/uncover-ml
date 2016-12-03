@@ -18,7 +18,6 @@ def _join_dicts(dicts):
     return d
 
 modelmaps = copy.deepcopy(_join_dicts([krig_dict, transformed_modelmaps]))
-
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
 
@@ -85,7 +84,7 @@ def test_svr_pipeline(get_transform, get_svr_kernel):
     assert estimator.cv_results_['mean_train_score'][0] > -100.0
 
 
-@pytest.fixture(params=krige_methods.keys())
+@pytest.fixture(params=list(krige_methods.keys()))
 def get_krige_method(request):
     return request.param
 
@@ -97,7 +96,7 @@ def get_variogram_model(request):
 
 
 def test_krige_pipeline(get_krige_method, get_variogram_model):
-    pipe = Pipeline(steps=[('krige', Krige())])
+    pipe = Pipeline(steps=[('krige', Krige(method=get_krige_method))])
     param_dict = {'krige__variogram_model': [get_variogram_model]}
 
     estimator = GridSearchCV(pipe,
@@ -105,7 +104,9 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
                              n_jobs=1,
                              iid=False,
                              pre_dispatch=2,
-                             verbose=True,
-                             )
-    estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
+                             verbose=True
+                            )
+    X = np.random.randint(0, 400, size=(20, 2)).astype(float)
+    y = 5*np.random.rand(20)
+    estimator.fit(X=X, y=y)
     assert estimator.cv_results_['mean_train_score'][0] > -100.0
