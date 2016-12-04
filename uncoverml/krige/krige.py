@@ -56,8 +56,10 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         """
         Parameters
         ----------
-        x: array of Points, (x, y) pairs
+        x: ndarray
+            array of Points, (x, y) pairs
         y: ndarray
+            array of targets
         """
         if x.shape[1] != 2:
             raise ConfigException('krige can use only 2 covariates')
@@ -71,6 +73,18 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
          )
 
     def predict(self, x, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        x: ndarray
+
+        Returns:
+        -------
+        Prediction array
+        """
+        if not self.model:
+            raise Exception('Not trained. Train first')
+
         return self.model.execute('points', x[:, 0], x[:, 1])[0]
 
 

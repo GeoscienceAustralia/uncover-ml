@@ -74,6 +74,7 @@ def setup_pipeline(config):
                              iid=False,
                              pre_dispatch='2*n_jobs',
                              verbose=True,
+                             cv=5,
                              )
 
     return estimator
