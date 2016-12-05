@@ -17,12 +17,16 @@ warnings.showwarning = warn_with_traceback
 krige_methods = {'ordinary': OrdinaryKriging,
                  'universal': UniversalKriging}
 
+backend = {'ordinary': 'C',
+           'universal': 'loop'}
+
 
 class KrigePredictProbaMixin():
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         prediction, variance = \
-            self.model.execute('points', x[:, 0], x[:, 1], backend='loop')
+            self.model.execute('points', x[:, 0], x[:, 1],
+                               backend=backend[self.method])
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=prediction,
@@ -86,7 +90,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
             raise Exception('Not trained. Train first')
 
         return self.model.execute('points', x[:, 0], x[:, 1],
-                                  backend='loop')[0]
+                                  backend=backend[self.method])[0]
 
 
 krig_dict = {'krige': Krige}
