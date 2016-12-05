@@ -3,11 +3,11 @@
 # patchsize: 0
 
 features:
-#  - name: my pickle files
-#    type: pickle
-#    files:
-#      covariates: /home/sudipta/Documents/murray_basin/features.pk
-#      targets: /home/sudipta/Documents/murray_basin/targets.pk
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: features.pk
+      targets: targets.pk
 #      featurevec: featurevec.pk
 #      rawcovariates: rawcovariates.csv
 #      rawcovariates_mask: rawcovariates_mask.csv
@@ -127,14 +127,14 @@ clustering:
 ##    parallel: True
 
 
-learning:
-  algorithm: krige  # ordinarykrige or universalkrige
-  arguments:
-    method: ordinary
-#    lat: /home/sudipta/GA_data/MB_covariatesV2/LOC_lot.tif
-#    long: /home/sudipta/GA_data/MB_covariatesV2/LOC_longs.tif
-    variogram_model: linear
-    verbose: False
+#learning:
+#  algorithm: krige  # ordinarykrige or universalkrige
+#  arguments:
+#    method: ordinary
+##    lat: /home/sudipta/GA_data/MB_covariatesV2/LOC_lot.tif
+##    long: /home/sudipta/GA_data/MB_covariatesV2/LOC_longs.tif
+#    variogram_model: linear
+#    verbose: False
 
 #learning:
 #  algorithm: transformedsvr
@@ -149,11 +149,15 @@ learning:
 #      target_transform: kde
 #      forests: 10
 
-#learning:
-#  algorithm: transformedrandomforest
-#  arguments:
-#    n_estimators: 50
-#    target_transform: log
+learning:
+  algorithm: transformedrandomforest
+  arguments:
+    n_estimators: 500
+    target_transform: log
+    max_depth: 20
+    max_features: sqrt
+    min_samples_split: 10
+
 
 #learning:
 #  algorithm: transformedbayesreg
@@ -229,11 +233,20 @@ optimisation:
 #      alpha: [0.0001, 0.001, 0.01, 0.1]
 #      n_iter: [100]
 
+  algorithm: transformedrandomforest
+  hyperparameters:
+    n_estimators: [100]
+    target_transform: [rank, identity, standardise, sqrt, log]
+    max_features: [auto, sqrt, log2]
+    min_samples_split: [2, 4, 10]
+    max_depth: [2, 5, 10, 20]
+
+
 #  algorithm: gradientboost
 #  hyperparameters:
 #    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
-#    target_transform: ['identity', 'standardise']
-#    loss: [ls, lad, huber, quantile]
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    loss: [ls]
 #    max_features: [auto, sqrt, log2]
 #    min_samples_split: [2, 4, 10]
 #    max_depth: [2, 3, 4, 5]
@@ -259,11 +272,11 @@ optimisation:
 #            }
     # normalize_y: [False, True]
 
-  algorithm: transformedsvr
-  hyperparameters:
-    kernel: [linear, poly, rbf, sigmoid]
-    target_transform: [identity, standardise, log, sqrt]
-    C: [1.0, 0.1, 0.01]
+#  algorithm: transformedsvr
+#  hyperparameters:
+#    kernel: [linear, poly, rbf, sigmoid]
+#    target_transform: [identity, standardise, log, sqrt]
+#    C: [1.0, 0.1, 0.01]
 
 
   # kernel: ['rbf', 'matern32']  # revrand kernels

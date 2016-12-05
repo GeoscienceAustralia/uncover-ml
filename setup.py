@@ -47,7 +47,7 @@ setup(
     author_email='daniel.steinberg@nicta.com.au',
     url='https://github.com/NICTA/uncover-ml',
     packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms',
-              'preprocessing', 'uncoverml.optimise'],
+              'preprocessing', 'uncoverml.optimise', 'uncoverml.krige'],
     package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={

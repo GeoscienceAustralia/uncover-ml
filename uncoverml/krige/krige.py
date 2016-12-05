@@ -22,7 +22,7 @@ class KrigePredictProbaMixin():
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         prediction, variance = \
-            self.model.execute('points', x[:, 0], x[:, 1])
+            self.model.execute('points', x[:, 0], x[:, 1], backend='loop')
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=prediction,
@@ -85,7 +85,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         if not self.model:
             raise Exception('Not trained. Train first')
 
-        return self.model.execute('points', x[:, 0], x[:, 1])[0]
+        return self.model.execute('points', x[:, 0], x[:, 1],
+                                  backend='loop')[0]
 
 
 krig_dict = {'krige': Krige}
