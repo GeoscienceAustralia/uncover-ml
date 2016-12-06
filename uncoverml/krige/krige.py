@@ -22,11 +22,38 @@ backend = {'ordinary': 'C',
 
 
 class KrigePredictProbaMixin():
+    """
+    Mixin class for providing a ``predict_proba`` method to the
+    Krige class.
 
+    This is especially for use with PyKrige Ordinary/UniversalKriging classes.
+    """
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
+        """
+        Predictive mean and variance for a probabilistic regressor.
+
+        Parameters
+        ----------
+        X: ndarray
+            (Ns, d) array query dataset (Ns samples, d dimensions).
+        interval: float, optional
+            The percentile confidence interval (e.g. 95%) to return.
+        Returns
+        -------
+        Ey: ndarray
+            The expected value of ys for the query inputs, X of shape (Ns,).
+        Vy: ndarray
+            The expected variance of ys (excluding likelihood noise terms) for
+            the query inputs, X of shape (Ns,).
+        ql: ndarray
+            The lower end point of the interval with shape (Ns,)
+        qu: ndarray
+            The upper end point of the interval with shape (Ns,)
+        """
+
         prediction, variance = \
             self.model.execute('points', x[:, 0], x[:, 1],
-                               backend=backend[self.method])
+                               backend='loop')  # cython backend is not working
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=prediction,
@@ -89,8 +116,9 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         if not self.model:
             raise Exception('Not trained. Train first')
 
+        # cython backend is not working
         return self.model.execute('points', x[:, 0], x[:, 1],
-                                  backend=backend[self.method])[0]
+                                  backend='loop')[0]
 
 
 krig_dict = {'krige': Krige}
