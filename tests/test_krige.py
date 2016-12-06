@@ -48,4 +48,6 @@ def test_krige(krig_method):
                                      variogram_model='linear',
                                      verbose=False, enable_plotting=False)
     zp, ssp = OUK.execute('points', points_x, points_y)
+    assert round(zp[0] - 0.47, 6) == 0
+    assert round(zp[5] - 1.47, 6) == 0
     assert np.allclose(k.predict(points), zp)
