@@ -71,5 +71,5 @@ def test_resampling_spatial(shapefile, rows, cols, samples):
 
     assert 'lat' in resampled_shapefields
     assert 'lon' not in resampled_shapefields
-    assert np.all((samples, 2) == new_coords.shape)
+    assert np.all((samples, 2) >= new_coords.shape)
     assert new_othervals == {}  # only the target is retained after resampling

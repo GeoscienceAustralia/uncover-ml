@@ -63,8 +63,9 @@ def test_pipeline(get_models, get_transform, get_kernel):
                              pre_dispatch=2,
                              verbose=True,
                              )
+    np.random.seed(1)
     estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
-    assert estimator.cv_results_['mean_train_score'][0] > -100.0
+    assert estimator.cv_results_['mean_train_score'][0] > -10.0
 
 
 def test_svr_pipeline(get_transform, get_svr_kernel):
@@ -80,8 +81,9 @@ def test_svr_pipeline(get_transform, get_svr_kernel):
                              pre_dispatch=2,
                              verbose=True,
                              )
+    np.random.seed(1)
     estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
-    assert estimator.cv_results_['mean_train_score'][0] > -100.0
+    assert estimator.cv_results_['mean_train_score'][0] > -10.0
 
 
 @pytest.fixture(params=list(krige_methods.keys()))
@@ -106,7 +108,8 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
                              pre_dispatch=2,
                              verbose=True
                             )
+    np.random.seed(1)
     X = np.random.randint(0, 400, size=(20, 2)).astype(float)
     y = 5*np.random.rand(20)
     estimator.fit(X=X, y=y)
-    assert estimator.cv_results_['mean_train_score'][0] > -100.0
+    assert estimator.cv_results_['mean_train_score'][0] > -1.0
