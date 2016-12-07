@@ -28,7 +28,8 @@ class TestCropReSampleReProject(unittest.TestCase):
         # geotransform tuple different
         crop.crop_reproject_resample(self.std2000_no_mask, tmp_output,
                                      sampling='bilinear',
-                                     extents=extents)
+                                     extents=extents,
+                                     reproject=True)
 
         ds = gdal.Open(tmp_output)
         gt = ds.GetGeoTransform()
@@ -84,7 +85,8 @@ class TestCropReSampleReProject(unittest.TestCase):
                      output_file=output_file,
                      resampling='bilinear',
                      extents=[str(s) for s in self.extents],
-                     jpeg=True)
+                     jpeg=True,
+                     reproject=True)
 
         # output file was created
         self.assertTrue(exists(output_file))

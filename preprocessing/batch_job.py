@@ -1,6 +1,6 @@
 """
 This script takes as input an input dir, an output dir, and optionally
-a mask file, a resampling algorithm, and a jpeg flag.
+a mask file, a resampling algorithm, and a reprojection and a jpeg flag.
 
 It uses mpirun and the crop_mask_resample_reporject script functionality to
 covert the tifs in the input dir, and saves the result in the output dir.
@@ -25,7 +25,8 @@ def return_file_list(my_dir, extension):
     return glob.glob(join(my_dir, extension))
 
 
-def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
+def convert_files(files, output_dir, mask_file, extents, resampling, jpeg,
+                  reproject):
     comm = MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
@@ -37,7 +38,8 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
         # crop/reproject/resample the mask
         crop_reproject_resample(options.mask_file, cropped_mask_file,
                                 sampling='near',
-                                extents=options.extents)
+                                extents=options.extents,
+                                reproject=reproject)
     else:
         cropped_mask_file = options.mask_file
 
@@ -53,7 +55,8 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg):
                 output_file=out_file,
                 extents=extents,
                 resampling=resampling,
-                jpeg=jpeg)
+                jpeg=jpeg,
+                reproject=reproject)
 
     if mask_file:
         os.remove(cropped_mask_file)
@@ -69,13 +72,17 @@ if __name__ == '__main__':
                                 ' -r resampling (optional)\n'
                                 ' -m mask_file (optional)\n'
                                 ' -j jpeg_file (optional)\n'
-                                'Script')
+                                ' -p reproject (optional)\n'
+                                'Crop, resample, and '
+                                'optionally mask and reproject a larger '
+                                'interferrogram into smaller ones.'
+                                'Optionally, create outout jpegs')
 
     parser.add_option('-i', '--input', type=str, dest='input_dir',
-                      help='name of input dir')
+                      help='name of input dir or tif')
 
     parser.add_option('-o', '--out', type=str, dest='output_dir',
-                      help='name of cropped output tif')
+                      help='name of output dir or cropped/reprojected tif')
 
     parser.add_option('-m', '--mask', type=str, dest='mask_file',
                       help='name of mask file')
@@ -93,6 +100,9 @@ if __name__ == '__main__':
 
     parser.add_option('-j', '--jpeg', type=int, dest='jpeg',
                       help='optional jpeg conversion. 0=no jpeg, 1=jpeg')
+
+    parser.add_option('-p', '--reproject', type=int, dest='reproject',
+                      help='optional reprojection to Lambart Conic. ')
 
     options, args = parser.parse_args()
 
@@ -117,6 +127,11 @@ if __name__ == '__main__':
     else:
         options.jpeg = True
 
+    if not options.reproject:  # if reproject is not supplied
+        options.reproject = False
+    else:
+        options.reproject = True
+
     if options.extents:
         extents = [float(t) for t in options.extents.split()]
         if len(extents) != 4:
@@ -130,12 +145,16 @@ if __name__ == '__main__':
         logging.info('No extents specified. Using whole image for projection')
         options.extents = None
 
-    files_to_convert = return_file_list(options.input_dir, '*.tif')
+    if os.path.isdir(options.input_dir):
+        files_to_convert = return_file_list(options.input_dir, '*.tif')
+    else:
+        files_to_convert = [options.input_dir]
 
     convert_files(files_to_convert,
                   output_dir=options.output_dir,
                   mask_file=options.mask_file,
                   extents=options.extents,
                   resampling=options.resampling,
-                  jpeg=options.jpeg
+                  jpeg=options.jpeg,
+                  reproject=options.reproject
                   )
