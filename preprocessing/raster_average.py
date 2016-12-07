@@ -1,15 +1,14 @@
+import warnings
+from subprocess import check_call
+import shutil
+import glob
+import logging
+from os.path import abspath, join, basename, isdir, isfile
+import click
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import ndimage
-import logging
-import click
-from os.path import abspath, join, basename, isdir, isfile
-import shutil
-import glob
 from osgeo import gdal
-from subprocess import check_call
-from itertools import product
-import warnings
 from uncoverml import mpiops
 
 warnings.filterwarnings('ignore')
@@ -40,28 +39,28 @@ def average(input_dir, out_dir, size):
     log.info('Reading tifs from {}'.format(input_dir))
     tifs = glob.glob(join(input_dir, '*.tif'))
 
-    for t in tifs:
-        ds = gdal.Open(t, gdal.GA_ReadOnly)
-        band = ds.GetRasterBand(1)
+    for tif in tifs:
+        data_source = gdal.Open(tif, gdal.GA_ReadOnly)
+        band = data_source.GetRasterBand(1)
         # data_type = gdal.GetDataTypeName(band.DataType)
         data = band.ReadAsArray()
         no_data_val = band.GetNoDataValue()
         averaged_data = filter_data(data, size, no_data_val)
-        log.info('Calculated average for {}'.format(basename(t)))
+        log.info('Calculated average for {}'.format(basename(tif)))
 
-        output_file = join(out_dir, 'average_' + basename(t))
+        output_file = join(out_dir, 'average_' + basename(tif))
         out_ds = gdal.GetDriverByName('GTiff').Create(
-            output_file, ds.RasterXSize, ds.RasterYSize,
+            output_file, data_source.RasterXSize, data_source.RasterYSize,
             1, band.DataType)
         out_band = out_ds.GetRasterBand(1)
         out_band.WriteArray(averaged_data)
-        out_ds.SetGeoTransform(ds.GetGeoTransform())
-        out_ds.SetProjection(ds.GetProjection())
+        out_ds.SetGeoTransform(data_source.GetGeoTransform())
+        out_ds.SetProjection(data_source.GetProjection())
         out_band.FlushCache()  # Write data to disc
         out_ds = None  # close out_ds
-        ds = None  # close dataset
+        data_source = None  # close dataset
 
-        log.info('Finished converting {}'.format(basename(t)))
+        log.info('Finished converting {}'.format(basename(tif)))
 
 
 @cli.command()
@@ -72,32 +71,46 @@ def average(input_dir, out_dir, size):
                    'perform uniform 2d average according to '
                    'scipy.ndimage.uniform_filter')
 def gdalaverage(input_dir, out_dir, size):
+    """
+    average data using gdal's averaging method.
+    Parameters
+    ----------
+    input_dir: str
+        input dir name of the tifs that needs to be averaged
+    out_dir: str
+        output dir name
+    size: int, optional
+        size of kernel
+    Returns
+    -------
+
+    """
     input_dir = abspath(input_dir)
     log.info('Reading tifs from {}'.format(input_dir))
     tifs = glob.glob(join(input_dir, '*.tif'))
 
     process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
 
-    for t in process_tifs:
-        ds = gdal.Open(t, gdal.GA_ReadOnly)
-        # band = ds.GetRasterBand(1)
+    for tif in process_tifs:
+        data_set = gdal.Open(tif, gdal.GA_ReadOnly)
+        # band = data_set.GetRasterBand(1)
         # data_type = gdal.GetDataTypeName(band.DataType)
         # data = band.ReadAsArray()
         # no_data_val = band.GetNoDataValue()
         # averaged_data = filter_data(data, size, no_data_val)
-        log.info('Calculated average for {}'.format(basename(t)))
+        log.info('Calculated average for {}'.format(basename(tif)))
 
-        output_file = join(out_dir, 'average_' + basename(t))
-        src_gt = ds.GetGeoTransform()
+        output_file = join(out_dir, 'average_' + basename(tif))
+        src_gt = data_set.GetGeoTransform()
         tmp_file = '/tmp/tmp_{}.tif'.format(mpiops.chunk_index)
-        resample_cmd = [TRANSLATE] + [t, tmp_file] + \
+        resample_cmd = [TRANSLATE] + [tif, tmp_file] + \
             ['-tr', str(src_gt[1]*size), str(src_gt[1]*size)] + \
             ['-r', 'bilinear']
         check_call(resample_cmd)
         rollback_cmd = [TRANSLATE] + [tmp_file, output_file] + \
             ['-tr', str(src_gt[1]), str(src_gt[1])]
         check_call(rollback_cmd)
-        log.info('Finished converting {}'.format(basename(t)))
+        log.info('Finished converting {}'.format(basename(tif)))
 
 
 def filter_data(data, size, no_data_val=None):
@@ -125,27 +138,12 @@ def filter_data(data, size, no_data_val=None):
     return averaged_data
 
 
-def make_tiles(data, nrows, ncols):
-    """
-    If arr is a 2D array, the returned list contains nrowsXncols numpy arrays
-    with each array preserving the "physical" layout of arr.
-
-    When the array shape (rows, cols) are not divisible by (nrows, ncols) then
-    some of the array dimensions can change according to numpy.array_split.
-    """
-    rows, cols = data.shape
-    col_arr = np.array_split(range(cols), ncols)
-    row_arr = np.array_split(range(rows), nrows)
-    return [data[r[0]: r[-1] + 1, c[0]: c[-1] + 1]
-            for r, c in product(row_arr, col_arr)]
-
-
-def filter_center(A, size=3, no_data_val=None, func=np.nanmean,
+def filter_center(data, size=3, no_data_val=None, func=np.nanmean,
                   mask_no_data=False):
     """
     Parameters
     ----------
-    A: input data
+    data: input data
     size: odd number uniform filtering kernel size
     no_data_val: value in matrix that is treated as no data value
     func: function to use, choose from np.nanmean/median/max/min etc.
@@ -168,28 +166,28 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean,
     """
 
     assert size % 2 == 1, 'Please supply an odd size'
-    rows, cols = A.shape
+    rows, cols = data.shape
 
-    padded_A = np.empty(shape=(rows + size-1,
-                               cols + size-1),
-                        dtype=A.dtype)
-    padded_A[:] = np.nan
-    rows_pad, cols_pad = padded_A.shape
+    padded_data = np.empty(shape=(rows + size-1,
+                                  cols + size-1),
+                           dtype=data.dtype)
+    padded_data[:] = np.nan
+    rows_pad, cols_pad = padded_data.shape
 
     if no_data_val is not None:
-        mask = A == no_data_val
-        A[mask] = np.nan
+        mask = data == no_data_val
+        data[mask] = np.nan
 
-    padded_A[size//2:rows_pad - size//2,
-             size//2: cols_pad - size//2] = A.copy()
+    padded_data[size//2:rows_pad - size//2,
+                size//2: cols_pad - size//2] = data.copy()
 
-    N, M = A.shape
+    row, col = data.shape
 
-    B = as_strided(padded_A, (N, M, size, size),
-                   padded_A.strides+padded_A.strides)
-    B = B.copy().reshape((N, M, size**2))
+    stride_data = as_strided(padded_data, (row, col, size, size),
+                             padded_data.strides+padded_data.strides)
+    stride_data = stride_data.copy().reshape((row, col, size**2))
 
-    avg = func(B, axis=2)
+    avg = func(stride_data, axis=2)
     avg[np.isnan(avg)] = no_data_val
 
     if mask_no_data:
@@ -198,7 +196,7 @@ def filter_center(A, size=3, no_data_val=None, func=np.nanmean,
     return avg
 
 
-def filter_uniform_filter(A, size=3, no_data_val=None,
+def filter_uniform_filter(data, size=3, no_data_val=None,
                           func=np.nanmean):
     """
     Parameters
@@ -222,31 +220,31 @@ def filter_uniform_filter(A, size=3, no_data_val=None,
     """
 
     assert size % 2 == 1, 'Please supply an odd size'
-    rows, cols = A.shape
+    rows, cols = data.shape
 
     padded_A = np.empty(shape=(rows + size-1,
                                cols + size-1),
-                        dtype=A.dtype)
+                        dtype=data.dtype)
     padded_A[:] = np.nan
     rows_pad, cols_pad = padded_A.shape
 
     if no_data_val:
-        mask = A == no_data_val
-        A[mask] = np.nan
+        mask = data == no_data_val
+        data[mask] = np.nan
 
-    padded_A[size-1: rows_pad, size - 1: cols_pad] = A.copy()
+    padded_A[size-1: rows_pad, size - 1: cols_pad] = data.copy()
 
-    N, M = A.shape
-    B = as_strided(padded_A, (N, M, size, size),
-                   padded_A.strides+padded_A.strides)
-    B = B.copy().reshape((N, M, size**2))
+    n, m = data.shape
+    strided_data = as_strided(padded_A, (n, m, size, size),
+                              padded_A.strides+padded_A.strides)
+    strided_data = strided_data.copy().reshape((n, m, size**2))
 
-    return func(B, axis=2)
+    return func(strided_data, axis=2)
 
 
 @cli.command()
 @click.argument('input_dir', type=click.Path(exists=True))
-@click.argument('out_dir',  type=click.Path(exists=True))
+@click.argument('out_dir', type=click.Path(exists=True))
 @click.option('-f', '--func',
               type=click.Choice(['nanmean', 'nanmedian',
                                  'nanmax', 'nanmin']),
@@ -271,10 +269,10 @@ def mean(input_dir, out_dir, size, func, partitions, mask):
 
     process_tifs = np.array_split(tifs, mpiops.chunks)[mpiops.chunk_index]
 
-    for t in process_tifs:
-        log.info('Starting to average {}'.format(basename(t)))
-        treat_file(t, out_dir, size, func, partitions, mask)
-        log.info('Finished averaging {}'.format(basename(t)))
+    for tif in process_tifs:
+        log.info('Starting to average {}'.format(basename(tif)))
+        treat_file(tif, out_dir, size, func, partitions, mask)
+        log.info('Finished averaging {}'.format(basename(tif)))
 
 
 def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
@@ -296,8 +294,8 @@ def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
     -------
         None
     """
-    ds = gdal.Open(tif, gdal.GA_ReadOnly)
-    band = ds.GetRasterBand(1)
+    data_source = gdal.Open(tif, gdal.GA_ReadOnly)
+    band = data_source.GetRasterBand(1)
     no_data_val = band.GetNoDataValue()
     output_file = join(out_dir, basename(tif))
     if no_data_val is None:
@@ -306,19 +304,19 @@ def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
         return
     if band.DataType <= 4:
         shutil.copy(tif, output_file)
-        ds = None
+        data_source = None
         return
     out_ds = gdal.GetDriverByName('GTiff').Create(
-        output_file, ds.RasterXSize, ds.RasterYSize,
+        output_file, data_source.RasterXSize, data_source.RasterYSize,
         1, band.DataType)
     out_band = out_ds.GetRasterBand(1)
 
-    tif_rows = ds.RasterYSize
+    tif_rows = data_source.RasterYSize
     partition_rows = np.array_split(range(tif_rows), partitions)
 
     xoff = 0
-    win_xsize = ds.RasterXSize
-    pad_width = size//2
+    win_xsize = data_source.RasterXSize
+    pad_width = size // 2
 
     for p in range(partitions):
         rows = partition_rows[p]
@@ -342,12 +340,12 @@ def treat_file(tif, out_dir, size, func, partitions, mask_no_data=False):
             basename(tif), p))
 
     out_band.SetNoDataValue(no_data_val)
-    out_ds.SetGeoTransform(ds.GetGeoTransform())
-    out_ds.SetProjection(ds.GetProjection())
+    out_ds.SetGeoTransform(data_source.GetGeoTransform())
+    out_ds.SetProjection(data_source.GetProjection())
 
     out_ds = None  # close out_ds
     band = None
-    ds = None  # close dataset
+    data_source = None  # close dataset
 
 
 def _edge_adjust(partition, pad_width, partitions, rows):
