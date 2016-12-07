@@ -7,13 +7,10 @@ import logging
 import pickle
 import resource
 from os.path import isfile
-
-import matplotlib
-matplotlib.use('Agg')
+import warnings
 import click
 import numpy as np
-import warnings
-
+import matplotlib
 import uncoverml as ls
 import uncoverml.cluster
 import uncoverml.config
@@ -26,9 +23,12 @@ import uncoverml.predict
 import uncoverml.validate
 from uncoverml.resampling import resample_shapefile
 from uncoverml.logging import warn_with_traceback
+matplotlib.use('Agg')
+
 
 log = logging.getLogger(__name__)
 warnings.showwarning = warn_with_traceback
+
 
 @click.group()
 @click.option('-v', '--verbosity',
@@ -95,13 +95,13 @@ def load_data(config, partitions):
 
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
-        x, keep = ls.features.transform_features(image_chunk_sets,
-                                                 transform_sets,
-                                                 config.final_transform,
-                                                 config)
+        features, keep = ls.features.transform_features(image_chunk_sets,
+                                                        transform_sets,
+                                                        config.final_transform,
+                                                        config)
         # learn the model
         # local models need all data
-        x_all = ls.features.gather_features(x[keep], node=0)
+        x_all = ls.features.gather_features(features[keep], node=0)
 
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
@@ -155,16 +155,16 @@ def semisupervised(config):
     image_chunk_sets = ls.geoio.semisupervised_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
-    x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform, config)
+    features = ls.features.transform_features(image_chunk_sets, transform_sets,
+                                              config.final_transform, config)
 
-    x, classes = ls.features.remove_missing(x, targets)
+    features, classes = ls.features.remove_missing(features, targets)
     indices = np.arange(classes.shape[0], dtype=int)
 
     k = ls.cluster.compute_n_classes(classes, config)
     model = ls.cluster.KMeans(k, config.oversample_factor)
     log.info("Clustering image")
-    model.learn(x, indices, classes)
+    model.learn(features, indices, classes)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
 
@@ -176,14 +176,14 @@ def unsupervised(config):
     image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
-    x = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                       config.final_transform, config)
+    features = ls.features.transform_features(image_chunk_sets, transform_sets,
+                                              config.final_transform, config)
 
-    x, _ = ls.features.remove_missing(x)
+    features, _ = ls.features.remove_missing(features)
     k = config.n_classes
     model = ls.cluster.KMeans(k, config.oversample_factor)
     log.info("Clustering image")
-    model.learn(x)
+    model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
 
@@ -227,8 +227,9 @@ def predict(model_or_cluster_file, partitions, mask, retain):
         config.outbands = len(predict_tags)
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=predict_tags[0:
-                                     min(len(predict_tags), config.outbands)])
+                                     band_tags=predict_tags[
+                                         0: min(len(predict_tags),
+                                                config.outbands)])
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
