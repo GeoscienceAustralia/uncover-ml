@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
@@ -7,6 +8,7 @@ from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
     DEFAULT_EPSILON
 from sklearn.svm import SVR
+from sklearn.metrics import r2_score
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP, PredictProbaMixin, \
     MutualInfoMixin
@@ -14,6 +16,8 @@ from revrand.slm import StandardLinearModel
 from revrand.basis_functions import LinearBasis
 from revrand.btypes import Parameter, Positive
 from uncoverml.transforms import target as transforms
+
+log = logging.getLogger(__name__)
 
 
 class TransformMixin():
@@ -32,6 +36,45 @@ class TransformMixin():
     def _notransform_predict(self, X, *args, **kwargs):
         Ey = super().predict(X)
         return Ey
+
+    def score(self, X, y, *args, **kwargs):
+        """
+        This score is used by Scikilearn GridSearchCV/RandomisedSearchCV
+        This is the score as seen by the ML model in the transformed target
+        values. The final cross-val score in the original coordinates
+        can be obtained from uncoverml.validate.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            R^2 of self.predict(X) wrt. y.
+
+        Returns
+        -------
+        score : float
+            R^2 of self._notransform_predict(X) wrt. y.
+
+        """
+        y_t = self.target_transform.transform(y)
+
+        if self.ml_score:
+            log.info('Using custom score')
+            return r2_score(y_true=y_t,
+                            y_pred=self._notransform_predict(
+                                X, *args, **kwargs))
+        else:
+            return super().score(X, y, *args, **kwargs)
 
 
 class TransformPredictProbaMixin(TransformMixin):
@@ -92,13 +135,28 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
                  regulariser=1.0,
                  tol=1e-8,
                  maxiter=1000,
-                 target_transform='identity'
+                 target_transform='identity',
+                 ml_score=False,
                  ):
+        """
+        Parameters
+        ----------
+        basis
+        var
+        regulariser
+        tol
+        maxiter
+        target_transform: str, optional
+
+        ml_score: bool, optional
+            whether to use custom score function
+        """
 
         basis = self.get_basis(basis, regulariser)
         var = self.get_var(var)
         target_transform = self.get_target_transform(target_transform)
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
         super().__init__(basis=basis,
                          var=var,
@@ -142,7 +200,7 @@ class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False,
-                 target_transform='identity'):
+                 target_transform='identity', ml_score=False):
 
         super().__init__(
             loss=loss,
@@ -166,6 +224,7 @@ class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
 
 class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
@@ -175,7 +234,8 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
                  target_transform='identity',
                  kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=True, random_state=None
+                 normalize_y=False, copy_X_train=True, random_state=None,
+                 ml_score=False
                  ):
 
         # uncoverml compatibility if string is passed
@@ -185,6 +245,7 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
         super().__init__(
             kernel=kernel,
@@ -217,7 +278,8 @@ class TransformedForestRegressor(TransformPredictProbaMixin,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False
+                 warm_start=False,
+                 ml_score=False
                  ):
 
         super().__init__(
@@ -243,6 +305,7 @@ class TransformedForestRegressor(TransformPredictProbaMixin,
 
         # used during optimisation
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
 
 class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
@@ -256,7 +319,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
                  max_depth=3, min_impurity_split=1e-7, init=None,
                  random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', ml_score=False):
 
         super().__init__(
             loss=loss,
@@ -281,6 +344,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
 
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
@@ -288,7 +352,7 @@ class TransformedSVR(TransformMixin, SVR, TagsMixin):
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1,
-                 target_transform='identity'):
+                 target_transform='identity', ml_score=False):
         super(TransformedSVR, self).__init__(
             kernel=kernel,
             degree=degree,
@@ -307,6 +371,7 @@ class TransformedSVR(TransformMixin, SVR, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
 
 class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
@@ -314,7 +379,9 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
                  alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
-                 random_state=None, target_transform='identity'):
+                 random_state=None, target_transform='identity',
+                 ml_score=False,
+                 ):
         super().__init__(
             kernel=kernel,
             nbases=nbases,
@@ -335,6 +402,7 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
+        self.ml_score = ml_score
 
 
 transformed_modelmaps = {

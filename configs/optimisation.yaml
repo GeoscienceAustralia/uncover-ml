@@ -154,8 +154,8 @@ learning:
   arguments:
     n_estimators: 500
     target_transform: log
-    max_depth: 20
-    max_features: sqrt
+    max_depth: 250
+    max_features: log2
     min_samples_split: 10
 
 
@@ -293,7 +293,7 @@ validation:
 #  #- feature_rank
   - parallel
   - k-fold:
-      folds: 4
+      folds: 10
       random_seed: 1
 
 output:
