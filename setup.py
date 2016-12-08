@@ -29,6 +29,7 @@ class PyTest(TestCommand):
         import pytest
         exit(pytest.main(self.pytest_args))
 
+
 readme = open('README.rst').read()
 doclink = """
 Documentation
@@ -81,6 +82,7 @@ setup(
         'pandas == 0.18.1',
         'geopandas == 0.2.1',
         'matplotlib==1.5.1',
+        'PyKrige==1.3.0',
     ],
     extras_require={
         'demos': [
