@@ -1,4 +1,12 @@
 from __future__ import print_function
+import subprocess
+import os
+import tempfile
+import shutil
+import logging
+from optparse import OptionParser
+from osgeo import gdal
+
 """
 python utility to crop, resample, reproject and optionally mask, a larger ifg
 into smaller ifg if desired. example usage:
@@ -10,13 +18,6 @@ Also optionally outputs a jpeg file corresponding to the final cropped,
 resampled, reprojectd and masked geotiff.
 For resampling options see gdal.org/gdalwarp.html.
 """
-from optparse import OptionParser
-import subprocess
-from osgeo import gdal
-import os
-import tempfile
-import shutil
-import logging
 
 TSRS = 'EPSG:3112'
 OUTPUT_RES = [str(s) for s in [90, 90]]
@@ -117,12 +118,19 @@ def get_mask(mask_file):
     return mask
 
 
-def do_work(input_file, mask_file, output_file, resampling, extents, jpeg,
-            reproject):
+def do_work(options, mask_file):
     # if we are going to use the mask, create the intermediate output
     # file locally, else create the final output file
     # also create the cropped mask file here, instead of inside apply_mask so
-    # this mask cropping is not repeated in a batch run when using apply mask
+    # this mask cropping is not repeated in a batch run when using apply
+
+    input_file = options.input_file
+    output_file = options.output_file
+    resampling = options.resampling
+    extents = options.extents
+    jpeg = options.jpeg
+    reproject = options.reproject
+
     if mask_file:
         temp_output_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
 
@@ -227,13 +235,7 @@ if __name__ == '__main__':
     else:
         cropped_mask_file = options.mask_file
 
-    do_work(input_file=options.input_file,
-            mask_file=cropped_mask_file,
-            output_file=options.output_file,
-            resampling=options.resampling,
-            extents=options.extents,
-            jpeg=options.jpeg,
-            reproject=options.reproject)
+    do_work(options=options, mask_file=cropped_mask_file)
 
     if options.mask_file:
         os.remove(cropped_mask_file)
