@@ -34,6 +34,14 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
+class Options:
+    def __init__(self, resampling, extents, jpeg, reproject):
+        self.resampling = resampling
+        self.extents = [str(s) for s in extents]
+        self.jpeg = jpeg
+        self.reproject = reproject
+
+
 def crop_reproject_resample(input_file, output_file, sampling, extents,
                             reproject):
     """
@@ -118,14 +126,12 @@ def get_mask(mask_file):
     return mask
 
 
-def do_work(options, mask_file):
+def do_work(input_file, output_file, mask_file, options):
     # if we are going to use the mask, create the intermediate output
     # file locally, else create the final output file
     # also create the cropped mask file here, instead of inside apply_mask so
     # this mask cropping is not repeated in a batch run when using apply
 
-    input_file = options.input_file
-    output_file = options.output_file
     resampling = options.resampling
     extents = options.extents
     jpeg = options.jpeg
@@ -153,7 +159,7 @@ def do_work(options, mask_file):
                                 extents=extents,
                                 reproject=reproject)
 
-
+# TODO: use click here
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_file -o output_file'
                                 ' -e extents (optional) \n'
@@ -235,7 +241,10 @@ if __name__ == '__main__':
     else:
         cropped_mask_file = options.mask_file
 
-    do_work(options=options, mask_file=cropped_mask_file)
+    do_work(input_file=options.input_file,
+            output_file=options.output_file,
+            mask_file=cropped_mask_file,
+            options=options)
 
     if options.mask_file:
         os.remove(cropped_mask_file)

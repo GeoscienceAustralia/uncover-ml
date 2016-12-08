@@ -1,23 +1,14 @@
-import unittest
 import os
-from os.path import join, basename, exists
-import tempfile
 import shutil
+import tempfile
+import unittest
+from os.path import join, basename, exists
+
 from osgeo import gdal
 from preprocessing import crop_mask_resample_reproject as crop
+from preprocessing.crop_mask_resample_reproject import Options
+
 UNCOVER = os.environ['UNCOVER']  # points to the uncover-ml directory
-
-
-class Options:
-    def __init__(self, input_file, output_file, resampling, extents, jpeg,
-                 reproject):
-        self.input_file = input_file
-        self.output_file = output_file
-        self.resampling = resampling
-        self.extents = [str(s) for s in extents]
-        self.jpeg = jpeg
-        self.reproject = reproject
-
 
 
 class TestCropReSampleReProject(unittest.TestCase):
@@ -92,13 +83,14 @@ class TestCropReSampleReProject(unittest.TestCase):
     def test_do_work(self):
         # input_file, mask_file, output_file, resampling, extents, jpeg
         output_file = tempfile.mktemp(suffix='.tif')
-        options = Options(input_file=self.std2000_no_mask,
-                          output_file=output_file,
-                          resampling='bilinear',
+        options = Options(resampling='bilinear',
                           extents=self.extents,
                           jpeg=True,
                           reproject=True)
-        crop.do_work(options, mask_file=self.mask)
+        crop.do_work(input_file=self.std2000_no_mask,
+                     output_file=output_file,
+                     options=options,
+                     mask_file=self.mask)
 
         # output file was created
         self.assertTrue(exists(output_file))

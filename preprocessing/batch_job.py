@@ -25,8 +25,7 @@ def return_file_list(my_dir, extension):
     return glob.glob(join(my_dir, extension))
 
 
-def convert_files(files, output_dir, mask_file, extents, resampling, jpeg,
-                  reproject):
+def convert_files(files, output_dir, opt, mask_file):
     comm = MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
@@ -36,12 +35,13 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg,
         cropped_mask_file = tempfile.mktemp(suffix='.tif', dir=TMPDIR)
 
         # crop/reproject/resample the mask
-        crop_reproject_resample(options.mask_file, cropped_mask_file,
+        crop_reproject_resample(opt.mask_file,
+                                cropped_mask_file,
                                 sampling='near',
-                                extents=options.extents,
-                                reproject=reproject)
+                                extents=opt.extents,
+                                reproject=opt.reproject)
     else:
-        cropped_mask_file = options.mask_file
+        cropped_mask_file = opt.mask_file
 
     for i in range(rank, len(files), size):
         in_file = files[i]
@@ -53,10 +53,7 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg,
         do_work(input_file=in_file,
                 mask_file=cropped_mask_file,
                 output_file=out_file,
-                extents=extents,
-                resampling=resampling,
-                jpeg=jpeg,
-                reproject=reproject)
+                options=options)
 
     if mask_file:
         os.remove(cropped_mask_file)
@@ -66,6 +63,7 @@ def convert_files(files, output_dir, mask_file, extents, resampling, jpeg,
     comm.Barrier()
 
 
+# TODO: use click here
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog -i input_dir -o output_dir'
                                 ' -e extents (optional)\n'
@@ -152,9 +150,6 @@ if __name__ == '__main__':
 
     convert_files(files_to_convert,
                   output_dir=options.output_dir,
+                  opt=options,
                   mask_file=options.mask_file,
-                  extents=options.extents,
-                  resampling=options.resampling,
-                  jpeg=options.jpeg,
-                  reproject=options.reproject
                   )
