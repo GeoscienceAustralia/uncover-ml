@@ -43,7 +43,7 @@ def strip_shapefile(input_shapefile, output_shapefile, *fields_to_keep):
 
 def resample_by_magnitude(input_shapefile, output_shapefile,
                           target_field, bins=10,
-                          *fields_to_keep, bootstrap=True,
+                          fields_to_keep=[], bootstrap=True,
                           output_samples=None):
     """
     Parameters
@@ -110,7 +110,7 @@ def resample_spatially(input_shapefile,
                        target_field,
                        rows=10,
                        cols=10,
-                       *fields_to_keep,
+                       fields_to_keep=[],
                        bootstrap=True,
                        output_samples=None):
     """

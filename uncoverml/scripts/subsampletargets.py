@@ -9,7 +9,7 @@ import os.path
 import shapefile
 import click
 
-import uncoverml.logging
+import uncoverml.mllog
 
 
 @click.command()
@@ -23,7 +23,7 @@ import uncoverml.logging
 def cli(outputdir, npoints, verbosity, filename):
 
     # Setup the logging
-    uncoverml.logging.configure(verbosity)
+    uncoverml.mllog.configure(verbosity)
     name = os.path.basename(filename).rsplit(".", 1)[0]
 
     # Read the shapefile

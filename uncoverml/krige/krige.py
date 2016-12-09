@@ -7,7 +7,7 @@ from sklearn.base import RegressorMixin, BaseEstimator
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 
-from uncoverml.logging import warn_with_traceback
+from uncoverml.mllog import warn_with_traceback
 from uncoverml.models import TagsMixin
 from uncoverml.config import ConfigException
 

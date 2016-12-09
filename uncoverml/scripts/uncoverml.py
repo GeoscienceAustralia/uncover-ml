@@ -17,12 +17,12 @@ import uncoverml.config
 import uncoverml.features
 import uncoverml.geoio
 import uncoverml.learn
-import uncoverml.logging
+import uncoverml.mllog
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 from uncoverml.resampling import resample_shapefile
-from uncoverml.logging import warn_with_traceback
+from uncoverml.mllog import warn_with_traceback
 matplotlib.use('Agg')
 
 
@@ -35,7 +35,7 @@ warnings.showwarning = warn_with_traceback
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 def cli(verbosity):
-    ls.logging.configure(verbosity)
+    ls.mllog.configure(verbosity)
 
 
 def run_crossval(x_all, targets_all, config):

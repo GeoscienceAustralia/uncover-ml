@@ -15,7 +15,7 @@ from uncoverml import geoio
 from uncoverml.image import Image
 from uncoverml import filtering
 from uncoverml import mpiops
-import uncoverml.logging
+import uncoverml.mllog
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def write_data(data, name, in_image, outputdir, forward):
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
 def cli(verbosity, geotiff, height, absorption, forward, outputdir, noise,
         impute):
-    uncoverml.logging.configure(verbosity)
+    uncoverml.mllog.configure(verbosity)
 
     log.info("{} simulating gamma sensor model".format(
         "Forward" if forward else "Backward"))

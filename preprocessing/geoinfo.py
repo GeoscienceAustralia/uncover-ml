@@ -10,7 +10,7 @@ import csv
 from uncoverml import mpiops
 from uncoverml import geoio
 from uncoverml import features
-from uncoverml.logging import warn_with_traceback
+from uncoverml.mllog import warn_with_traceback
 
 log = logging.getLogger(__name__)
 warnings.showwarning = warn_with_traceback

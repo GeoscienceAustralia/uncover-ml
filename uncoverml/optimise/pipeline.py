@@ -6,7 +6,6 @@ import click
 import pandas as pd
 import uncoverml as ls
 import uncoverml.config
-import uncoverml.logging
 from sklearn import decomposition
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.model_selection import GridSearchCV
@@ -108,4 +107,3 @@ def optimise(pipeline_file, partitions):
     pd.DataFrame.from_dict(
         estimator.cv_results_).sort_values(by='rank_test_score').to_csv(
         config.optimisation['algorithm'] + '_' + config.optimisation_output)
-

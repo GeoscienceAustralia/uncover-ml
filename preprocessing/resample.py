@@ -3,7 +3,7 @@ import logging
 import uncoverml as ls
 from uncoverml.resampling import resample_shapefile
 from uncoverml import config
-import uncoverml.logging
+import uncoverml.mllog
 log = logging.getLogger(__name__)
 
 
@@ -17,6 +17,6 @@ log = logging.getLogger(__name__)
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 def cli(pipeline_file, outfile, verbosity):
-    uncoverml.logging.configure(verbosity)
+    uncoverml.mllog.configure(verbosity)
     config = ls.config.Config(pipeline_file)
     config.target_file = resample_shapefile(config, outfile)
