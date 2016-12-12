@@ -19,6 +19,7 @@ OK = OrdinaryKriging(data[:, 0], data[:, 1], data[:, 2],
 
 z, ss = OK.execute('grid', gridx, gridy)
 
+
 def test_supplied():
     assert round(z[0, 0]-0.47, 6) == 0
     assert round(z[5, 0] - 1.47, 6) == 0
@@ -39,7 +40,7 @@ def krig_method(request):
 
 
 def test_krige(krig_method):
-    k = Krige(method=krig_method)
+    k = Krige(method=krig_method, n_closest_points=2)
     k.fit(x=data[:, :2], y=data[:, 2])
     points = np.array(list(product(gridx, gridy)))
     points_x = [p[0] for p in points]
@@ -47,7 +48,12 @@ def test_krige(krig_method):
     OUK = krige_methods[krig_method](data[:, 0], data[:, 1], data[:, 2],
                                      variogram_model='linear',
                                      verbose=False, enable_plotting=False)
-    zp, ssp = OUK.execute('points', points_x, points_y)
+    if isinstance(OUK, OrdinaryKriging):
+        zp, ssp = OUK.execute('points', points_x, points_y,
+                              n_closest_points=2,
+                              backend='loop')
+    else:
+        zp, ssp = OUK.execute('points', points_x, points_y)
     assert round(zp[0] - 0.47, 6) == 0
     assert round(zp[5] - 1.47, 6) == 0
     assert np.allclose(k.predict(points), zp)
