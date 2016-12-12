@@ -52,6 +52,11 @@ class KrigePredictProbaMixin():
         qu: ndarray
             The upper end point of the interval with shape (Ns,)
         """
+        if not self.model:
+            raise Exception('Not trained. Train first')
+
+        if x.shape[1] != 2:
+            raise ValueError('krige can use only 2 covariates')
 
         prediction, variance = \
             self.model.execute('points', x[:, 0], x[:, 1],
@@ -123,17 +128,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         -------
         Prediction array
         """
-        if not self.model:
-            raise Exception('Not trained. Train first')
 
-        if x.shape[1] != 2:
-            raise ValueError('krige can use only 2 covariates')
-
-        # cython backend is not working
-        return self.model.execute('points', x[:, 0], x[:, 1],
-                                  backend='loop',
-                                  *args,
-                                  ** kwargs)[0]
+        return self.predict_proba(x, *args, **kwargs)[0]
 
 
 class MLKrige(Krige):
