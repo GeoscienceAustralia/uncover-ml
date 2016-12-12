@@ -10,6 +10,7 @@ from pykrige.uk import UniversalKriging
 from uncoverml.mllog import warn_with_traceback
 from uncoverml.models import TagsMixin
 from uncoverml.config import ConfigException
+from uncoverml.optimise.models import transformed_modelmaps
 
 log = logging.getLogger(__name__)
 warnings.showwarning = warn_with_traceback
@@ -100,8 +101,10 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
             y=x[:, 1],
             z=y,
             variogram_model=self.variogram_model,
-            verbose=self.verbose
-         )
+            verbose=self.verbose,
+            * args,
+            ** kwargs
+        )
 
     def predict(self, x, *args, **kwargs):
         """
@@ -116,9 +119,17 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         if not self.model:
             raise Exception('Not trained. Train first')
 
+        if x.shape[1] != 2:
+            raise ValueError('krige can use only 2 covariates')
+
         # cython backend is not working
         return self.model.execute('points', x[:, 0], x[:, 1],
-                                  backend='loop')[0]
+                                  backend='loop',
+                                  *args,
+                                  ** kwargs)[0]
 
 
-krig_dict = {'krige': Krige}
+class MLKrige(Krige):
+    pass
+
+krig_dict = {'krige': Krige,}
