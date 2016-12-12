@@ -74,6 +74,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
     def __init__(self,
                  method='ordinary',
                  variogram_model='linear',
+                 nlags=6,
+                 weight=False,
                  verbose=False
                  ):
         if method not in krige_methods.keys():
@@ -81,6 +83,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
                                   'one of {}'.format(krige_methods.keys()))
         self.variogram_model = variogram_model
         self.verbose = verbose
+        self.nlags = nlags
+        self.weight = weight
         self.model = None  # not trained
         self.method = method
 
@@ -102,6 +106,8 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
             z=y,
             variogram_model=self.variogram_model,
             verbose=self.verbose,
+            nlags=self.nlags,
+            weight=self.weight,
             * args,
             ** kwargs
         )
