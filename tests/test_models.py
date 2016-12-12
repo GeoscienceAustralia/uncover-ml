@@ -70,12 +70,19 @@ def get_transformed_model(request):
     return transformed_modelmaps[request.param]
 
 
-def test_ml_score(get_transformed_model):
+def test_trasnsformed_model_attr(get_transformed_model):
     """
     make sure all optimise.models classes have ml_score attr
     """
     assert np.all([hasattr(get_transformed_model(), a) for a in
                    ['ml_score', 'score', 'fit', 'predict']])
+
+
+def test_mlkrige():
+    """
+    placeholder
+    """
+    pass
 
 
 # def test_modelpersistance(make_fakedata):

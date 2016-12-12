@@ -283,6 +283,7 @@ def local_crossval(x_all, targets_all, config):
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     y = targets_all.observations
+    lat_lon = targets_all.positions
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
 
     # Split folds over workers
@@ -305,6 +306,8 @@ def local_crossval(x_all, targets_all, config):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
+        lat_lon_train = lat_lon[train_mask]
+        lat_lon_test = lat_lon[test_mask]
 
         # Extra fields
         fields_train = {f: v[train_mask]
@@ -313,16 +316,21 @@ def local_crossval(x_all, targets_all, config):
 
         # Train on this fold
         apply_multiple_masked(model.fit, data=(x_all[train_mask], y_k_train),
-                              kwargs={'fields': fields_train})
+                              kwargs={'fields': fields_train,
+                                      'lat_lon': lat_lon_train})
 
         # Testing
-        y_k_pred = predict.predict(x_all[test_mask], model, fields=fields_pred)
+        y_k_pred = predict.predict(x_all[test_mask], model,
+                                   fields=fields_pred,
+                                   lat_lon=lat_lon_test
+                                   )
+
         y_k_test = y[test_mask]
         y_pred[fold] = y_k_pred
         y_true[fold] = y_k_test
 
         fold_scores[fold] = calculate_validation_scores(y_k_test, y_k_train,
-                                                   y_k_pred)
+                                                        y_k_pred)
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
         y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))

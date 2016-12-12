@@ -14,24 +14,24 @@ features:
   - name: my features 1
     type: ordinal
     files:
-      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
 #      - directory: /home/sudipta/GA_data/GA-cover2
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
-#      - centre
-#      - standardise
+      - centre
+      - standardise
     imputation: nn
 
-#  - name: my features 2
-#    type: categorical
-#    files:
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-#    transforms: randomhot
-#    imputation: nn
+  - name: my features 2
+    type: categorical
+    files:
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+    transforms: randomhot
+    imputation: nn
 
 #mask:
 #  file: /home/sudipta/GA_data/mask/old_mask_test.tif
@@ -43,8 +43,8 @@ preprocessing:
   # imputation: nn
   imputation:
   transforms:
-    - center
-    - standardise
+#    - center
+#    - standardise
     # - whiten:
         # keep_fraction: 0.8
 
@@ -55,20 +55,20 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/MB_covariatesV2/MB_drillholes_only.shp
-  property: depth
-  resample:
-    - spatial:
-        arguments:
-          rows: 4
-          cols: 4
-          bootstrap: False
-          output_samples: 1000
-    - value:
-        arguments:
-          bins: 10
-          bootstrap: False
-          output_samples: 1000
+  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  property: K_ppm_imp_
+#  resample:
+#    - spatial:
+#        arguments:
+#          rows: 4
+#          cols: 4
+#          bootstrap: False
+#          output_samples: 1000
+#    - value:
+#        arguments:
+#          bins: 10
+#          bootstrap: False
+#          output_samples: 1000
 
 
 clustering:
@@ -128,12 +128,10 @@ clustering:
 
 
 #learning:
-#  algorithm: krige  # ordinarykrige or universalkrige
+#  algorithm: krige
 #  arguments:
-#    method: ordinary
-##    lat: /home/sudipta/GA_data/MB_covariatesV2/LOC_lot.tif
-##    long: /home/sudipta/GA_data/MB_covariatesV2/LOC_longs.tif
-#    variogram_model: linear
+#    method: ordinary  # ordinary or universal
+#    variogram_model: spherical  # linear, power, gaussian, spherical, exponential
 #    verbose: False
 
 #learning:
@@ -152,12 +150,32 @@ clustering:
 learning:
   algorithm: transformedrandomforest
   arguments:
-    n_estimators: 500
+    n_estimators: 10
     target_transform: log
     max_depth: 250
     max_features: log2
     min_samples_split: 10
 
+learning:
+  algorithm: mlkrige
+  arguments:
+    ml_method: transformedrandomforest
+    ml_params: {n_estimators: 10,
+                target_transform: log,
+                max_depth: 250,
+                max_features: log2,
+                min_samples_split: 10}
+    method: ordinary
+    variogram_model: linear
+    verbose: False
+
+
+#learning:
+#  algorithm: krige
+#  arguments:
+#    method: ordinary
+#    variogram_model: linear
+#    verbose: False
 
 #learning:
 #  algorithm: transformedbayesreg
@@ -287,13 +305,13 @@ optimisation:
 # 'Upper quantile', 'Entropy']
 prediction:
   quantiles: 0.95
-  outbands: 1
+#  outbands: 1
 
 validation:
 #  #- feature_rank
   - parallel
   - k-fold:
-      folds: 10
+      folds: 5
       random_seed: 1
 
 output:

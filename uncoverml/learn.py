@@ -25,11 +25,13 @@ def local_learn_model(x_all, targets_all, config):
         model = all_modelmaps[config.algorithm](**config.algorithm_args)
         apply_multiple_masked(model.fit, (x_all, y),
                               kwargs={'fields': targets_all.fields,
-                                      'parallel': True})
+                                      'parallel': True,
+                                      'lat_lon': targets_all.positions})
     else:
         if mpiops.chunk_index == 0:
             y = targets_all.observations
             model = all_modelmaps[config.algorithm](**config.algorithm_args)
             apply_multiple_masked(model.fit, (x_all, y),
-                                  kwargs={'fields': targets_all.fields})
+                                  kwargs={'fields': targets_all.fields,
+                                          'lat_lon': targets_all.positions})
     return model

@@ -8,7 +8,7 @@ from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 
 from uncoverml.mllog import warn_with_traceback
-from uncoverml.models import TagsMixin
+from uncoverml.models import TagsMixin, modelmaps as all_ml_models
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import transformed_modelmaps
 
@@ -20,6 +20,7 @@ krige_methods = {'ordinary': OrdinaryKriging,
 
 backend = {'ordinary': 'C',
            'universal': 'loop'}
+all_ml_models.update(transformed_modelmaps)
 
 
 class KrigePredictProbaMixin():
@@ -136,6 +137,71 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
 
 
 class MLKrige(Krige):
-    pass
 
-krig_dict = {'krige': Krige,}
+    def __init__(self,
+                 ml_method='transformedrandomforest',
+                 ml_params={'n_estimators': 10},
+                 method='ordinary',
+                 variogram_model='linear',
+                 nlags=6,
+                 weight=False,
+                 verbose=False):
+        self.ml_method = ml_method
+        self.ml_params = ml_params
+        super().__init__(method=method,
+                         variogram_model=variogram_model,
+                         nlags=nlags,
+                         weight=weight,
+                         verbose=verbose,
+                         )
+        self.ml_model = all_ml_models[ml_method](**self.ml_params)
+        if not hasattr(self.ml_model, 'predict_proba'):
+            raise ConfigException('Only ml_learn algos with a '
+                                  'predict_proba method are supported now.')
+
+    def fit(self, x, y, *args, **kwargs):
+        self._lat_lon_check(kwargs)
+        self.ml_model.fit(x, y)
+        ml_pred = self.ml_model.predict(x)
+        lat_lon = kwargs['lat_lon']
+        super().fit(x=lat_lon, y=y - ml_pred)  # residual=y-ml_pred
+
+    def predict(self, x, *args, **kwargs):
+        self._lat_lon_check(kwargs)
+
+        lat_lon = kwargs['lat_lon']
+        correction = super(MLKrige, self).predict(lat_lon)
+        return self.ml_model.predict(x) + correction
+
+    def _lat_lon_check(self, kwargs):
+        if 'lat_lon' not in kwargs:
+            raise ValueError('lat_lon must be provided for MLKrige')
+
+    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+        """
+        must override predict_proba method of Krige class
+        Parameters
+        ----------
+        x
+        interval
+        args
+        kwargs
+
+        Returns
+        -------
+
+        """
+        self._lat_lon_check(kwargs)
+        lat_lon = kwargs['lat_lon']
+        correction, corr_var = super(MLKrige, self).predict_proba(
+            lat_lon)[:2]
+        ml_pred, ml_var = self.ml_model.predict_proba(x, *args, **kwargs)[:2]
+        pred = ml_pred + correction
+        var = ml_var + corr_var
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=pred,
+                               scale=np.sqrt(var))
+        return pred, var, ql, qu
+
+krig_dict = {'krige': Krige,
+             'mlkrige': MLKrige}
