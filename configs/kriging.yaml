@@ -18,6 +18,7 @@ features:
       - standardise
     imputation: nn
 
+# only used during prediction
 mask:
   file: /home/sudipta/GA_data/mask/old_mask_test.tif
   retain: 1

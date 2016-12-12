@@ -32,21 +32,28 @@ def predict(data, model, interval=0.95, **kwargs):
 
 
 def _get_data(subchunk, config):
-    mask = config.mask
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
-    mask = mask_rows(config, mask, subchunk)
-    if mask is not None:
-        assert x.shape[0] == mask.shape[0], 'shape mismatch of ' \
-                                              'mask and inputs'
-        x.mask = np.tile(mask, (x.shape[1], 1)).T
-    return x
+    return _mask_rows(x, subchunk, config)
 
 
-def mask_rows(config, mask, subchunk):
+def _get_lon_lat(subchunk, config):
+    if config.lon_lat:
+        lat = geoio.RasterioImageSource(config.lat)
+        lat_data = features.extract_subchunks(lat, subchunk,
+                                              config.n_subchunks, 0)
+        lon = geoio.RasterioImageSource(config.lon)
+        lon_data = features.extract_subchunks(lon, subchunk,
+                                              config.n_subchunks, 0)
+        lat_lon = np.hstack((lon_data, lat_data))
+        return _mask_rows(lat_lon, subchunk, config)
+
+
+def _mask_rows(x, subchunk, config):
+    mask = config.mask
     if mask:
         mask_source = geoio.RasterioImageSource(mask)
         mask_data = features.extract_subchunks(mask_source, subchunk,
@@ -54,7 +61,11 @@ def mask_rows(config, mask, subchunk):
                                                config.patchsize)
         mask_x = mask_data.data[:, 0, 0, 0] != config.retain
         log.info('Areas with mask={} will be predicted'.format(config.retain))
-        return mask_x
+
+        assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
+                                              'mask and inputs'
+        x.mask = np.tile(mask_x, (x.shape[1], 1)).T
+    return x
 
 
 def render_partition(model, subchunk, image_out, config):
@@ -63,5 +74,6 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x, model, interval=config.quantiles)
+    y_star = predict(x, model, interval=config.quantiles,
+                     lon_lat=_get_lon_lat(subchunk, config))
     image_out.write(y_star, subchunk)

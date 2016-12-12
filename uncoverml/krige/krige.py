@@ -123,8 +123,6 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
             verbose=self.verbose,
             nlags=self.nlags,
             weight=self.weight,
-            * args,
-            ** kwargs
         )
 
     def predict(self, x, *args, **kwargs):
@@ -168,22 +166,22 @@ class MLKrige(Krige):
                                   'predict_proba method are supported now.')
 
     def fit(self, x, y, *args, **kwargs):
-        self._lat_lon_check(kwargs)
+        self._lon_lat_check(kwargs)
         self.ml_model.fit(x, y)
         ml_pred = self.ml_model.predict(x)
-        lat_lon = kwargs['lat_lon']
-        super().fit(x=lat_lon, y=y - ml_pred)  # residual=y-ml_pred
+        lon_lat = kwargs['lon_lat']
+        super().fit(x=lon_lat, y=y - ml_pred)  # residual=y-ml_pred
 
     def predict(self, x, *args, **kwargs):
-        self._lat_lon_check(kwargs)
+        self._lon_lat_check(kwargs)
 
-        lat_lon = kwargs['lat_lon']
+        lat_lon = kwargs['lon_lat']
         correction = super(MLKrige, self).predict(lat_lon)
         return self.ml_model.predict(x) + correction
 
-    def _lat_lon_check(self, kwargs):
-        if 'lat_lon' not in kwargs:
-            raise ValueError('lat_lon must be provided for MLKrige')
+    def _lon_lat_check(self, kwargs):
+        if 'lon_lat' not in kwargs:
+            raise ValueError('lon_lat must be provided for MLKrige')
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         """
@@ -199,8 +197,8 @@ class MLKrige(Krige):
         -------
 
         """
-        self._lat_lon_check(kwargs)
-        lat_lon = kwargs['lat_lon']
+        self._lon_lat_check(kwargs)
+        lat_lon = kwargs['lon_lat']
         correction, corr_var = super(MLKrige, self).predict_proba(
             lat_lon)[:2]
         ml_pred, ml_var = self.ml_model.predict_proba(x, *args, **kwargs)[:2]

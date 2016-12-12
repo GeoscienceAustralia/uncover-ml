@@ -283,7 +283,7 @@ def local_crossval(x_all, targets_all, config):
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     y = targets_all.observations
-    lat_lon = targets_all.positions
+    lon_lat = targets_all.positions
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
 
     # Split folds over workers
@@ -306,8 +306,8 @@ def local_crossval(x_all, targets_all, config):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
-        lat_lon_train = lat_lon[train_mask]
-        lat_lon_test = lat_lon[test_mask]
+        lon_lat_train = lon_lat[train_mask]
+        lon_lat_test = lon_lat[test_mask]
 
         # Extra fields
         fields_train = {f: v[train_mask]
@@ -317,12 +317,12 @@ def local_crossval(x_all, targets_all, config):
         # Train on this fold
         apply_multiple_masked(model.fit, data=(x_all[train_mask], y_k_train),
                               kwargs={'fields': fields_train,
-                                      'lat_lon': lat_lon_train})
+                                      'lon_lat': lon_lat_train})
 
         # Testing
         y_k_pred = predict.predict(x_all[test_mask], model,
                                    fields=fields_pred,
-                                   lat_lon=lat_lon_test
+                                   lon_lat=lon_lat_test
                                    )
 
         y_k_test = y[test_mask]

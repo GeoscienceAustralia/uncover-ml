@@ -14,28 +14,34 @@ features:
   - name: my features 1
     type: ordinal
     files:
-#      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-#      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
 #      - directory: /home/sudipta/GA_data/GA-cover2
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
-      - centre
-      - standardise
+#      - centre
+#      - standardise
     imputation: nn
 
-  - name: my features 2
-    type: categorical
-    files:
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-    transforms: randomhot
-    imputation: nn
+#  - name: my features 2
+#    type: categorical
+#    files:
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+#    transforms: randomhot
+#    imputation: nn
 
-#mask:
-#  file: /home/sudipta/GA_data/mask/old_mask_test.tif
-#  retain: 1
+# only used during prediction
+mask:
+  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+  retain: 1
+
+# only used during prediction of mlkrige
+lon_lat:  # used for regression kriging, i.e., mlkrige aglo
+  lon: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 preprocessing:
   # imputation: none
@@ -167,7 +173,7 @@ learning:
                 min_samples_split: 10}
     method: ordinary
     variogram_model: linear
-    n_closest_points: 50
+    n_closest_points: 10
     verbose: False
 
 
@@ -176,6 +182,7 @@ learning:
 #  arguments:
 #    method: ordinary
 #    variogram_model: linear
+#    n_closest_points: 20
 #    verbose: False
 
 #learning:
@@ -306,7 +313,7 @@ optimisation:
 # 'Upper quantile', 'Entropy']
 prediction:
   quantiles: 0.95
-#  outbands: 1
+  outbands: 1
 
 validation:
 #  #- feature_rank
