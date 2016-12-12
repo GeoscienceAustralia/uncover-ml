@@ -20,6 +20,7 @@ def _join_dicts(dicts):
 modelmaps = copy.deepcopy(_join_dicts([krig_dict, transformed_modelmaps]))
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
+mlkrige = modelmaps.pop('mlkrige')
 
 
 @pytest.fixture(params=[k for k in modelmaps.keys()])
