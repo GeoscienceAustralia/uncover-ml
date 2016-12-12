@@ -167,6 +167,7 @@ learning:
                 min_samples_split: 10}
     method: ordinary
     variogram_model: linear
+    n_closest_points: 50
     verbose: False
 
 

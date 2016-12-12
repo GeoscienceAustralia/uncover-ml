@@ -58,9 +58,16 @@ class KrigePredictProbaMixin():
         if x.shape[1] != 2:
             raise ValueError('krige can use only 2 covariates')
 
-        prediction, variance = \
-            self.model.execute('points', x[:, 0], x[:, 1],
-                               backend='loop')  # cython backend is not working
+        # cython backend is not working
+        if isinstance(self.model, OrdinaryKriging):
+            prediction, variance = \
+                self.model.execute('points', x[:, 0], x[:, 1],
+                                   n_closest_points=self.n_closest_points,
+                                   backend='loop')
+        else:
+            prediction, variance = \
+                self.model.execute('points', x[:, 0], x[:, 1],
+                                   backend='loop')
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=prediction,
@@ -82,6 +89,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
                  variogram_model='linear',
                  nlags=6,
                  weight=False,
+                 n_closest_points=10,
                  verbose=False
                  ):
         if method not in krige_methods.keys():
@@ -91,6 +99,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         self.verbose = verbose
         self.nlags = nlags
         self.weight = weight
+        self.n_closest_points = n_closest_points
         self.model = None  # not trained
         self.method = method
 
@@ -139,15 +148,18 @@ class MLKrige(Krige):
                  ml_params={'n_estimators': 10},
                  method='ordinary',
                  variogram_model='linear',
+                 n_closest_points=10,
                  nlags=6,
                  weight=False,
                  verbose=False):
         self.ml_method = ml_method
         self.ml_params = ml_params
+        self.n_closest_points = n_closest_points
         super().__init__(method=method,
                          variogram_model=variogram_model,
                          nlags=nlags,
                          weight=weight,
+                         n_closest_points=n_closest_points,
                          verbose=verbose,
                          )
         self.ml_model = all_ml_models[ml_method](**self.ml_params)
