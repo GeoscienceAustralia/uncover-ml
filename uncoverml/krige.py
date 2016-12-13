@@ -149,8 +149,8 @@ class MLKrige(Krige):
     """
 
     def __init__(self,
-                 ml_method='transformedrandomforest',
-                 ml_params={'n_estimators': 10},
+                 ml_method,
+                 ml_params={},
                  method='ordinary',
                  variogram_model='linear',
                  n_closest_points=10,
@@ -160,13 +160,13 @@ class MLKrige(Krige):
         self.ml_method = ml_method
         self.ml_params = ml_params
         self.n_closest_points = n_closest_points
-        super().__init__(method=method,
-                         variogram_model=variogram_model,
-                         nlags=nlags,
-                         weight=weight,
-                         n_closest_points=n_closest_points,
-                         verbose=verbose,
-                         )
+        super(MLKrige, self).__init__(method=method,
+                                      variogram_model=variogram_model,
+                                      nlags=nlags,
+                                      weight=weight,
+                                      n_closest_points=n_closest_points,
+                                      verbose=verbose,
+                                      )
         self.ml_model = all_ml_models[ml_method](**self.ml_params)
         if not hasattr(self.ml_model, 'predict_proba'):
             raise ConfigException('Only ml_learn algos with a '

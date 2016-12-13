@@ -1,8 +1,10 @@
+from itertools import product
+
+import numpy as np
 import pytest
 from pykrige.ok import OrdinaryKriging
-import numpy as np
-from itertools import product
-from uncoverml.krige.krige import Krige, krige_methods
+
+from uncoverml.krige import Krige, krige_methods
 
 data = np.array([[0.0, 0, 0.47],
                  [1.9, 0.6, 0.56],

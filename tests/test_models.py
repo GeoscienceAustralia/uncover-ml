@@ -1,10 +1,10 @@
+import numpy as np
 import pytest
 from sklearn.metrics import r2_score
-import numpy as np
 
+from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
 from uncoverml.models import modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
-from uncoverml.krige.krige import krige_methods, Krige
 
 models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
 
@@ -78,11 +78,28 @@ def test_trasnsformed_model_attr(get_transformed_model):
                    ['ml_score', 'score', 'fit', 'predict']])
 
 
-def test_mlkrige():
+@pytest.fixture(params=[k for k in all_ml_models
+                        if (hasattr(all_ml_models[k], 'predict_proba')
+                            and k not in ['randomforest',
+                                          'depthregress',
+                                          'cubist',
+                                          'multicubist'])])
+def models_with_predict_proba(request):
+    # TODO: investigate why cubist does not work, but muilticubist works
+    return request.param
+
+
+def test_mlkrige(linear_data, models_with_predict_proba):
     """
-    placeholder
+    tests algos that can be used with MLKrige
     """
-    pass
+    yt, Xt, ys, Xs = linear_data
+    mlk = MLKrige(ml_method=models_with_predict_proba)
+    arr = np.random.rand(Xt.shape[0], 2)
+    np.random.shuffle(arr)
+    mlk.fit(Xt, yt, lon_lat=arr)
+    Ey = mlk.predict(Xs, lon_lat=np.random.rand(Xs.shape[0], 2))
+    assert r2_score(ys, Ey) > 0
 
 
 # def test_modelpersistance(make_fakedata):

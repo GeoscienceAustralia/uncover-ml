@@ -1,14 +1,14 @@
-import pytest
-import numpy as np
 import copy
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
+import numpy as np
+import pytest
 from sklearn.gaussian_process.kernels import WhiteKernel
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 
+from uncoverml.krige import krige_methods, Krige, krig_dict
+from uncoverml.optimise.models import kernels
 from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.transforms import target as transforms
-from uncoverml.optimise.models import kernels
-from uncoverml.krige.krige import krige_methods, Krige, krig_dict
 
 
 def _join_dicts(dicts):

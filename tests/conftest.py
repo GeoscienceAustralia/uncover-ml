@@ -137,9 +137,9 @@ def shapefile(random_filename, request):
 
 @pytest.fixture
 def linear_data():
-
-    Nt = 800
-    Ns = 200
+    np.random.seed(2)
+    Nt = 200
+    Ns = 50
     x = np.linspace(-2, 2, Nt + Ns)
     y = 3 + 2 * x
     X = x[:, np.newaxis]

@@ -78,6 +78,10 @@ targets:
 #    max_features: log2
 #    min_samples_split: 10
 
+
+# mlkrige ml_methods must be one of [sgdbayesreg,
+# transformedrandomforest, transformedbayesreg, multirandomforest, approxgp
+# bayesreg, sgdapproxgp]
 learning:
   algorithm: mlkrige
   arguments:

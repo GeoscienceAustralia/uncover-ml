@@ -1,9 +1,9 @@
 import logging
 
 from uncoverml import mpiops
+from uncoverml.krige import krig_dict
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
-from uncoverml.krige.krige import krig_dict
 
 
 def _join_dicts(dicts):
