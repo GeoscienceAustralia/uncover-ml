@@ -143,6 +143,10 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
 
 
 class MLKrige(Krige):
+    """
+    This is an implementation of Regression-Kriging as described here:
+    https://en.wikipedia.org/wiki/Regression-Kriging
+    """
 
     def __init__(self,
                  ml_method='transformedrandomforest',
@@ -169,18 +173,24 @@ class MLKrige(Krige):
                                   'predict_proba method are supported now.')
 
     def fit(self, x, y, *args, **kwargs):
+        """
+        fit the ML method and also Krige the residual
+
+        Parameters
+        ----------
+        x: ndarray
+        y: array
+
+        """
         self._lon_lat_check(kwargs)
         self.ml_model.fit(x, y)
         ml_pred = self.ml_model.predict(x)
         lon_lat = kwargs['lon_lat']
-        super().fit(x=lon_lat, y=y - ml_pred)  # residual=y-ml_pred
+        # residual=y-ml_pred
+        super(MLKrige, self).fit(x=lon_lat, y=y - ml_pred)
 
     def predict(self, x, *args, **kwargs):
-        self._lon_lat_check(kwargs)
-
-        lat_lon = kwargs['lon_lat']
-        correction = super(MLKrige, self).predict(lat_lon)
-        return self.ml_model.predict(x) + correction
+        return self.predict_proba(x, *args, **kwargs)[0]
 
     def _lon_lat_check(self, kwargs):
         if 'lon_lat' not in kwargs:
@@ -188,16 +198,27 @@ class MLKrige(Krige):
 
     def predict_proba(self, x, interval=0.95, *args, **kwargs):
         """
-        must override predict_proba method of Krige class
+        Must override predict_proba method of Krige.
+        Predictive mean and variance for a probabilistic regressor.
+
         Parameters
         ----------
-        x
-        interval
-        args
-        kwargs
-
+        X: ndarray
+            (Ns, d) array query dataset (Ns samples, d dimensions)
+            for ML regression
+        interval: float, optional
+            The percentile confidence interval (e.g. 95%) to return.
         Returns
         -------
+        Ey: ndarray
+            The expected value of ys for the query inputs, X of shape (Ns,).
+        Vy: ndarray
+            The expected variance of ys (excluding likelihood noise terms) for
+            the query inputs, X of shape (Ns,).
+        ql: ndarray
+            The lower end point of the interval with shape (Ns,)
+        qu: ndarray
+            The upper end point of the interval with shape (Ns,)
 
         """
         self._lon_lat_check(kwargs)
@@ -208,8 +229,7 @@ class MLKrige(Krige):
         pred = ml_pred + correction
         var = ml_var + corr_var
         # Determine quantiles
-        ql, qu = norm.interval(interval, loc=pred,
-                               scale=np.sqrt(var))
+        ql, qu = norm.interval(interval, loc=pred, scale=np.sqrt(var))
         return pred, var, ql, qu
 
 krig_dict = {'krige': Krige,
