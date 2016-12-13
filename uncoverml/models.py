@@ -5,8 +5,7 @@ import pickle
 from itertools import chain
 from os.path import join, isdir, abspath
 import numpy as np
-from scipy.stats import gamma
-from revrand import StandardLinearModel, GeneralisedLinearModel, likelihoods
+from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
     RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
 from revrand.btypes import Parameter, Positive

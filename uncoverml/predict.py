@@ -48,8 +48,9 @@ def _get_lon_lat(subchunk, config):
         lon = geoio.RasterioImageSource(config.lon)
         lon_data = features.extract_subchunks(lon, subchunk,
                                               config.n_subchunks, 0)
-        lat_lon = np.hstack((lon_data, lat_data))
-        return _mask_rows(lat_lon, subchunk, config)
+        lon_lat = np.hstack((lon_data, lat_data)).reshape(
+            (lon_data.shape[0], 2))
+        return _mask_rows(lon_lat, subchunk, config)
 
 
 def _mask_rows(x, subchunk, config):

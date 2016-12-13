@@ -202,11 +202,6 @@ class Config:
             self.mask = s['mask']['file']
             self.retain = s['mask']['retain']  # mask areas that are predicted
 
-        if self.mask and self.algorithm == 'mlkrige':
-            log.info("Masking is not supported for 'mlkrige'. "
-                     "Mask won't be applied for prediction.")
-            self.mask = None
-
         self.lon_lat = False
         if 'lon_lat' in s:
             self.lon_lat = True

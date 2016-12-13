@@ -58,6 +58,9 @@ class KrigePredictProbaMixin():
         if x.shape[1] != 2:
             raise ValueError('krige can use only 2 covariates')
 
+        if isinstance(x, np.ma.masked_array) and np.sum(x.mask):
+            x = x.data[x.mask.sum(axis=1) == 0, :]
+
         # cython backend is not working
         if isinstance(self.model, OrdinaryKriging):
             prediction, variance = \
@@ -198,9 +201,9 @@ class MLKrige(Krige):
 
         """
         self._lon_lat_check(kwargs)
-        lat_lon = kwargs['lon_lat']
+        lon_lat = kwargs['lon_lat']
         correction, corr_var = super(MLKrige, self).predict_proba(
-            lat_lon)[:2]
+            lon_lat)[:2]
         ml_pred, ml_var = self.ml_model.predict_proba(x, *args, **kwargs)[:2]
         pred = ml_pred + correction
         var = ml_var + corr_var

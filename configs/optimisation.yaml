@@ -14,24 +14,24 @@ features:
   - name: my features 1
     type: ordinal
     files:
-      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+#      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
 #      - directory: /home/sudipta/GA_data/GA-cover2
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
 #      - centre
 #      - standardise
     imputation: nn
 
-#  - name: my features 2
-#    type: categorical
-#    files:
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-#    transforms: randomhot
-#    imputation: nn
+  - name: my features 2
+    type: categorical
+    files:
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+    transforms: randomhot
+    imputation: nn
 
 # only used during prediction
 mask:
@@ -153,14 +153,14 @@ clustering:
 #      target_transform: kde
 #      forests: 10
 
-learning:
-  algorithm: transformedrandomforest
-  arguments:
-    n_estimators: 10
-    target_transform: log
-    max_depth: 250
-    max_features: log2
-    min_samples_split: 10
+#learning:
+#  algorithm: transformedrandomforest
+#  arguments:
+#    n_estimators: 10
+#    target_transform: log
+#    max_depth: 250
+#    max_features: log2
+#    min_samples_split: 10
 
 learning:
   algorithm: mlkrige
