@@ -226,7 +226,9 @@ class MLKrige(Krige):
         correction, corr_var = super(MLKrige, self).predict_proba(
             lon_lat)[:2]
         ml_pred, ml_var = self.ml_model.predict_proba(x, *args, **kwargs)[:2]
+        # add prediction and residual
         pred = ml_pred + correction
+        # add vaiances
         var = ml_var + corr_var
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=pred, scale=np.sqrt(var))
