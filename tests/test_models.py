@@ -85,7 +85,6 @@ def test_trasnsformed_model_attr(get_transformed_model):
                                           'cubist',
                                           'multicubist'])])
 def models_with_predict_proba(request):
-    # TODO: investigate why cubist does not work, but muilticubist works
     return request.param
 
 

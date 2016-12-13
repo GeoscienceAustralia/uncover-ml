@@ -36,15 +36,15 @@ class KrigePredictProbaMixin():
 
         Parameters
         ----------
-        X: ndarray
-            (Ns, d) array query dataset (Ns samples, d dimensions).
+        x: ndarray
+            (Ns, 2) array query dataset (Ns samples, 2 dimensions).
         interval: float, optional
             The percentile confidence interval (e.g. 95%) to return.
         Returns
         -------
-        Ey: ndarray
+        prediction: ndarray
             The expected value of ys for the query inputs, X of shape (Ns,).
-        Vy: ndarray
+        variance: ndarray
             The expected variance of ys (excluding likelihood noise terms) for
             the query inputs, X of shape (Ns,).
         ql: ndarray
@@ -208,11 +208,13 @@ class MLKrige(Krige):
             for ML regression
         interval: float, optional
             The percentile confidence interval (e.g. 95%) to return.
+        kwargs must contain a key lon_lat, which needs to be a (Ns, 2) array
+        corresponding to the lon/lat
         Returns
         -------
-        Ey: ndarray
+        pred: ndarray
             The expected value of ys for the query inputs, X of shape (Ns,).
-        Vy: ndarray
+        var: ndarray
             The expected variance of ys (excluding likelihood noise terms) for
             the query inputs, X of shape (Ns,).
         ql: ndarray
