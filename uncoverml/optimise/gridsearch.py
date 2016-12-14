@@ -1,16 +1,16 @@
 import logging
 from collections import OrderedDict
 from itertools import product
-
 import click
 import pandas as pd
-import uncoverml as ls
-import uncoverml.config
 from sklearn import decomposition
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
+import uncoverml as ls
+import uncoverml.config
+import uncoverml.mllog
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import (
     TransformedGPRegressor,
@@ -81,19 +81,15 @@ def setup_pipeline(config):
     return estimator
 
 
-@click.group()
-@click.option('-v', '--verbosity',
-              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
-              default='INFO', help='Level of logging')
-def cli(verbosity):
-    ls.logging.configure(verbosity)
-
-
-@cli.command()
+@click.command()
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def optimise(pipeline_file, partitions):
+@click.option('-v', '--verbosity',
+              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
+              default='INFO', help='Level of logging')
+def cli(pipeline_file, partitions, verbosity):
+    uncoverml.mllog.configure(verbosity)
     config = ls.config.Config(pipeline_file)
     estimator = setup_pipeline(config)
     log.info('Running optimisation for {}'.format(
