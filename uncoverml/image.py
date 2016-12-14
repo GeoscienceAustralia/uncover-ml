@@ -47,6 +47,7 @@ class Image:
         self._start_lat = source.origin_latitude
         self.pixsize_x = source.pixsize_x
         self.pixsize_y = source.pixsize_y
+        self.crs = source.crs
         assert self.pixsize_x > 0
         assert self.pixsize_y > 0
 

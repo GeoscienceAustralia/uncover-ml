@@ -73,6 +73,7 @@ class RasterioImageSource(ImageSource):
                     raise ValueError("No support for multichannel geotiffs "
                                      "with differently typed channels")
             self._dtype = np.dtype(geotiff.dtypes[0])
+            self.crs = geotiff.crs
 
             A = geotiff.affine
             # No shearing or rotation allowed!!
@@ -224,14 +225,15 @@ def get_image_spec(model, config):
     template_image = image.Image(RasterioImageSource(imagelike))
     eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
     eff_bbox = template_image.patched_bbox(config.patchsize)
-    return eff_shape, eff_bbox
+    crs = template_image.crs
+    return eff_shape, eff_bbox, crs
 
 
 class ImageWriter:
 
     nodata_value = np.array(-1e20, dtype='float32')
 
-    def __init__(self, shape, bbox, name, n_subchunks, outputdir,
+    def __init__(self, shape, bbox, crs, name, n_subchunks, outputdir,
                  band_tags=None):
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
@@ -263,6 +265,7 @@ class ImageWriter:
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,
+                                  crs=crs,
                                   transform=self.A,
                                   nodata=self.nodata_value)
                 f.update_tags(1, image_type=band_tags[band])
