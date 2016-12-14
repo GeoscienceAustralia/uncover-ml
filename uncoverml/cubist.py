@@ -694,6 +694,11 @@ class Rule:
         # Split the parts of the string so that they can be manipulated
         header, *conditions, polynomial = rule.split('\n')[:-1]
 
+        # py27 compat
+        # rule_splits = rule.split('\n')[:-1]
+        # # header = rule_splits[0]
+        # conditions = rule_splits[1:-1]
+        # polynomial = rule_splits[-1]
         '''
         Compute and store the regression variables
         '''
@@ -701,6 +706,10 @@ class Rule:
         # Split and parse the coefficients into variable/row indices,
         # coefficients and a bias unit for the regression
         bias, *splits = arguments(polynomial)
+        # py27 compat
+        # args = arguments(polynomial)
+        # bias, splits = args[0], args[1:]
+
         v, c = (zip(*pairwise(splits))
                 if len(splits)
                 else ([], []))

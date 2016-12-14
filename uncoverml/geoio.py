@@ -22,7 +22,8 @@ from uncoverml.targets import Targets
 log = logging.getLogger(__name__)
 
 
-class ImageSource(metaclass=ABCMeta):
+class ImageSource:
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def data(self, min_x, max_x, min_y, max_y):
