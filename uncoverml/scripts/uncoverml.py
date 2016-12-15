@@ -155,9 +155,10 @@ def semisupervised(config):
     image_chunk_sets = ls.geoio.semisupervised_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
-    features = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                              config.final_transform, config)
-
+    features, _ = ls.features.transform_features(image_chunk_sets,
+                                                 transform_sets,
+                                                 config.final_transform,
+                                                 config)
     features, classes = ls.features.remove_missing(features, targets)
     indices = np.arange(classes.shape[0], dtype=int)
 
@@ -176,8 +177,10 @@ def unsupervised(config):
     image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
-    features = ls.features.transform_features(image_chunk_sets, transform_sets,
-                                              config.final_transform, config)
+    features, _ = ls.features.transform_features(image_chunk_sets,
+                                                 transform_sets,
+                                                 config.final_transform,
+                                                 config)
 
     features, _ = ls.features.remove_missing(features)
     k = config.n_classes

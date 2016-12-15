@@ -278,7 +278,7 @@ def compute_class(X, C, training_data=None):
 def centroid(X, weights=None):
     """Compute the centroid of a set of points X
 
-    The points X may have repetitons given by the weights.
+    The points X may have repetitions given by the weights.
 
     Parameters
     ----------
@@ -290,7 +290,7 @@ def centroid(X, weights=None):
     Returns
     -------
     centroid : ndarray
-        (d,) length array, the d-dimensial centroid point of all x in X.
+        (d,) length array, the d-dimensional centroid point of all x in X.
     """
     centroid = np.zeros(X.shape[1])
     if weights is not None:
@@ -308,9 +308,9 @@ def centroid(X, weights=None):
 
 
 def reseed_point(X, C, index):
-    """ Re-initalise the centre of a class if it loses all its members
+    """ Re-initialise the centre of a class if it loses all its members
 
-    This should almest never happen. If it does, find the point furthest
+    This should almost never happen. If it does, find the point furthest
     from all the other cluster centres and use that. Maybe a bad idea but
     a decent first pass
 
