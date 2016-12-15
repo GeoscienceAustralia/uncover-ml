@@ -372,7 +372,10 @@ def semisupervised_feature_sets(targets, config):
         if frac < 1.0:
             np.random.seed(1)
             r_a = r_a[np.random.rand(r_a.shape[0]) < frac]
-        r = np.ma.concatenate([r_t, r_a], axis=0)
+
+        r_data = np.concatenate([r_t.data, r_a.data], axis=0)
+        r_mask = np.concatenate([r_t.mask, r_a.mask], axis=0)
+        r = np.ma.masked_array(data=r_data, mask=r_mask)
         return r
     result = _iterate_sources(f, config)
     return result
