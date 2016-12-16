@@ -57,6 +57,10 @@ class ImageSource:
     def origin_longitude(self):
         return self._start_lon
 
+    @property
+    def crs(self):
+        return self._crs
+
 
 class RasterioImageSource(ImageSource):
 
@@ -73,7 +77,7 @@ class RasterioImageSource(ImageSource):
                     raise ValueError("No support for multichannel geotiffs "
                                      "with differently typed channels")
             self._dtype = np.dtype(geotiff.dtypes[0])
-            self.crs = geotiff.crs
+            self._crs = geotiff.crs
 
             A = geotiff.affine
             # No shearing or rotation allowed!!
@@ -141,7 +145,7 @@ class ArrayImageSource(ImageSource):
     pixsize : ndarray
         Array of the form [pixsize_x, pixsize_y] defining the size of a pixel
     """
-    def __init__(self, A, origin, pixsize):
+    def __init__(self, A, origin, crs, pixsize):
         self._data = A
         self._full_res = A.shape
         self._dtype = A.dtype
@@ -150,6 +154,7 @@ class ArrayImageSource(ImageSource):
         self._pixsize_y = pixsize[1]
         self._start_lon = origin[0]
         self._start_lat = origin[1]
+        self._crs = crs
 
     def data(self, min_x, max_x, min_y, max_y):
         # MUST BE EXCLUSIVE

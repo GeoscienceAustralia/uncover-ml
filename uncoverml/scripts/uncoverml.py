@@ -11,6 +11,7 @@ import warnings
 import click
 import numpy as np
 import matplotlib
+matplotlib.use('Agg')
 import uncoverml as ls
 import uncoverml.cluster
 import uncoverml.config
@@ -23,7 +24,6 @@ import uncoverml.predict
 import uncoverml.validate
 from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback
-matplotlib.use('Agg')
 
 
 log = logging.getLogger(__name__)

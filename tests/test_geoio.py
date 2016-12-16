@@ -1,10 +1,12 @@
 import pytest
 from affine import Affine
 import numpy as np
+import rasterio
 
 from uncoverml import geoio
 from uncoverml.image import Image
 
+crs = rasterio.crs.CRS({'init': 'epsg:4326'})
 
 @pytest.fixture(params=[1., 0.5, 1.5])
 def pix_size_single(request):
@@ -46,7 +48,7 @@ def make_image(pix_size_single, origin_point,
         pix_size = (pix_size_single, -1 * pix_size_single)
     # origin needs to change as well
     origin = (origin_point, origin_point)
-    src = geoio.ArrayImageSource(masked_array, origin, pix_size)
+    src = geoio.ArrayImageSource(masked_array, origin, crs, pix_size)
 
     if num_chunks > 1:
         if chunk_position == 'start':
@@ -156,7 +158,7 @@ def test_array_image_src():
     masked_array = np.ma.array(data=data, mask=False)
     pix_size = (1., 1.)
     origin = (0., 0.)
-    src = geoio.ArrayImageSource(masked_array, origin, pix_size)
+    src = geoio.ArrayImageSource(masked_array, origin, crs, pix_size)
     x_min = 0
     x_max = 10
     y_min = 1
@@ -191,6 +193,7 @@ def array_image_src(request):
     masked_array = np.ma.MaskedArray(data=data, mask=False)
     im_src = geoio.ArrayImageSource(masked_array,
                                     (x_range[0], y_range[0]),
+                                    crs,
                                     (pixsize_x, pixsize_y))
     return im_src
 
@@ -226,7 +229,7 @@ def test_Image_split_overlap(array_image_src, num_chunks, overlap_pixels):
     images = []
     for i in range(nchunks):
         img = Image(array_image_src, chunk_idx=i, nchunks=nchunks,
-                          overlap=overlap)
+                    overlap=overlap)
         images.append(img)
         chunk = img.data()
         if num_chunks == 1:
