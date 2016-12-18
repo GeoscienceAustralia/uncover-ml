@@ -68,6 +68,7 @@ class KrigePredictProbaMixin():
                                    n_closest_points=self.n_closest_points,
                                    backend='loop')
         else:
+            log.warning('n_closest_point will be ignored for UniversalKriging')
             prediction, variance = \
                 self.model.execute('points', x[:, 0], x[:, 1],
                                    backend='loop')
@@ -142,7 +143,14 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         return self.predict_proba(x, *args, **kwargs)[0]
 
 
-class MLKrige(Krige):
+def _check_sklearn_model(model):
+    if not (isinstance(model, BaseEstimator) and
+            isinstance(model, RegressorMixin)):
+        raise RuntimeError('Needs to supply an instance of a scikit-learn '
+                           'regression class.')
+
+
+class MLKrige(TagsMixin):
     """
     This is an implementation of Regression-Kriging as described here:
     https://en.wikipedia.org/wiki/Regression-Kriging
@@ -157,20 +165,16 @@ class MLKrige(Krige):
                  nlags=6,
                  weight=False,
                  verbose=False):
-        self.ml_method = ml_method
-        self.ml_params = ml_params
         self.n_closest_points = n_closest_points
-        super(MLKrige, self).__init__(method=method,
-                                      variogram_model=variogram_model,
-                                      nlags=nlags,
-                                      weight=weight,
-                                      n_closest_points=n_closest_points,
-                                      verbose=verbose,
-                                      )
-        self.ml_model = all_ml_models[ml_method](**self.ml_params)
-        if not hasattr(self.ml_model, 'predict_proba'):
-            raise ConfigException('Only ml_learn algos with a '
-                                  'predict_proba method are supported now.')
+        self.krige = Krige(method=method,
+                           variogram_model=variogram_model,
+                           nlags=nlags,
+                           weight=weight,
+                           n_closest_points=n_closest_points,
+                           verbose=verbose,
+                           )
+        self.ml_model = all_ml_models[ml_method](**ml_params)
+        _check_sklearn_model(self.ml_model)
 
     def fit(self, x, y, *args, **kwargs):
         """
@@ -187,16 +191,13 @@ class MLKrige(Krige):
         ml_pred = self.ml_model.predict(x)
         lon_lat = kwargs['lon_lat']
         # residual=y-ml_pred
-        super(MLKrige, self).fit(x=lon_lat, y=y - ml_pred)
-
-    def predict(self, x, *args, **kwargs):
-        return self.predict_proba(x, *args, **kwargs)[0]
+        self.krige.fit(x=lon_lat, y=y - ml_pred)
 
     def _lon_lat_check(self, kwargs):
         if 'lon_lat' not in kwargs:
             raise ValueError('lon_lat must be provided for MLKrige')
 
-    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+    def predict(self, x, *args, **kwargs):
         """
         Must override predict_proba method of Krige.
         Predictive mean and variance for a probabilistic regressor.
@@ -206,35 +207,19 @@ class MLKrige(Krige):
         X: ndarray
             (Ns, d) array query dataset (Ns samples, d dimensions)
             for ML regression
-        interval: float, optional
-            The percentile confidence interval (e.g. 95%) to return.
         kwargs must contain a key lon_lat, which needs to be a (Ns, 2) array
         corresponding to the lon/lat
         Returns
         -------
         pred: ndarray
             The expected value of ys for the query inputs, X of shape (Ns,).
-        var: ndarray
-            The expected variance of ys (excluding likelihood noise terms) for
-            the query inputs, X of shape (Ns,).
-        ql: ndarray
-            The lower end point of the interval with shape (Ns,)
-        qu: ndarray
-            The upper end point of the interval with shape (Ns,)
-
         """
+        # TODO: reintroduce predict_proba for ml methods that support it
         self._lon_lat_check(kwargs)
         lon_lat = kwargs['lon_lat']
-        correction, corr_var = super(MLKrige, self).predict_proba(
-            lon_lat)[:2]
-        ml_pred, ml_var = self.ml_model.predict_proba(x, *args, **kwargs)[:2]
-        # add prediction and residual
-        pred = ml_pred + correction
-        # add vaiances
-        var = ml_var + corr_var
-        # Determine quantiles
-        ql, qu = norm.interval(interval, loc=pred, scale=np.sqrt(var))
-        return pred, var, ql, qu
+        correction = self.krige.predict(lon_lat)
+        ml_pred = self.ml_model.predict(x, *args, **kwargs)
+        return ml_pred + correction
 
 krig_dict = {'krige': Krige,
              'mlkrige': MLKrige}

@@ -79,21 +79,24 @@ def test_trasnsformed_model_attr(get_transformed_model):
 
 
 @pytest.fixture(params=[k for k in all_ml_models
-                        if (hasattr(all_ml_models[k], 'predict_proba')
-                            and k not in ['randomforest',
-                                          'depthregress',
-                                          'cubist',
-                                          'multicubist'])])
-def models_with_predict_proba(request):
+                        if k not in ['randomforest',
+                                      'multirandomforest',
+                                      'depthregress',
+                                      'cubist',
+                                      'multicubist',
+                                      'decisiontree',
+                                      'extratree'
+                                     ]])
+def models_supported(request):
     return request.param
 
 
-def test_mlkrige(linear_data, models_with_predict_proba):
+def test_mlkrige(linear_data, models_supported, get_krige_method):
     """
     tests algos that can be used with MLKrige
     """
     yt, Xt, ys, Xs = linear_data
-    mlk = MLKrige(ml_method=models_with_predict_proba)
+    mlk = MLKrige(ml_method=models_supported, method=get_krige_method)
     arr = np.random.rand(Xt.shape[0], 2)
     np.random.shuffle(arr)
     mlk.fit(Xt, yt, lon_lat=arr)
