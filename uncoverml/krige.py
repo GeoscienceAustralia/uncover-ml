@@ -176,47 +176,46 @@ class MLKrige(TagsMixin):
         self.ml_model = all_ml_models[ml_method](**ml_params)
         _check_sklearn_model(self.ml_model)
 
-    def fit(self, x, y, *args, **kwargs):
+    def fit(self, x, y, lon_lat, *args, **kwargs):
         """
-        fit the ML method and also Krige the residual
+        Fit the ML method and also Krige the residual.
 
         Parameters
         ----------
         x: ndarray
-        y: array
-
+            (Nt, d) array query dataset (Ns samples, d dimensions)
+            for ML regression
+        lon_lat:
+            ndarray of (x, y) points. Needs to be a (Nt, 2) array
+            corresponding to the lon/lat, for example.
+        y: ndarray
+            array of targets (Nt, )
         """
-        self._lon_lat_check(kwargs)
         self.ml_model.fit(x, y)
         ml_pred = self.ml_model.predict(x)
-        lon_lat = kwargs['lon_lat']
         # residual=y-ml_pred
         self.krige.fit(x=lon_lat, y=y - ml_pred)
 
-    def _lon_lat_check(self, kwargs):
-        if 'lon_lat' not in kwargs:
-            raise ValueError('lon_lat must be provided for MLKrige')
-
-    def predict(self, x, *args, **kwargs):
+    def predict(self, x, lon_lat, *args, **kwargs):
         """
         Must override predict_proba method of Krige.
         Predictive mean and variance for a probabilistic regressor.
 
         Parameters
         ----------
-        X: ndarray
+        x: ndarray
             (Ns, d) array query dataset (Ns samples, d dimensions)
             for ML regression
-        kwargs must contain a key lon_lat, which needs to be a (Ns, 2) array
-        corresponding to the lon/lat
+        lon_lat:
+            ndarray of (x, y) points. Needs to be a (Ns, 2) array
+            corresponding to the lon/lat, for example.
+
         Returns
         -------
         pred: ndarray
             The expected value of ys for the query inputs, X of shape (Ns,).
         """
         # TODO: reintroduce predict_proba for ml methods that support it
-        self._lon_lat_check(kwargs)
-        lon_lat = kwargs['lon_lat']
         correction = self.krige.predict(lon_lat)
         ml_pred = self.ml_model.predict(x, *args, **kwargs)
         return ml_pred + correction
