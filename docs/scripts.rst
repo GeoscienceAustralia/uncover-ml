@@ -10,3 +10,4 @@ Command Line Scripts
    subsampletargets
    gammasensor
    tiff2kmz
+   gridsearch

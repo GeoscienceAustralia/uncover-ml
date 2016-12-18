@@ -147,7 +147,7 @@ def _check_sklearn_model(model):
     if not (isinstance(model, BaseEstimator) and
             isinstance(model, RegressorMixin)):
         raise RuntimeError('Needs to supply an instance of a scikit-learn '
-                           'regression class.')
+                           'compatible regression class.')
 
 
 class MLKrige(TagsMixin):

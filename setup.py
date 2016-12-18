@@ -60,7 +60,7 @@ setup(
             'geoinfo = preprocessing.geoinfo:cli',
             'resample = preprocessing.resample:cli',
             'rasteraverage = preprocessing.raster_average:cli',
-            'gridsearch = uncoverml.optimise.gridsearch:cli'
+            'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
     install_requires=[

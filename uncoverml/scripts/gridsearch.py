@@ -1,3 +1,9 @@
+"""
+Run the various machine learning parameter optimisation using
+scikit-learn GridSearchCv.
+
+.. program-output:: gridsearch --help
+"""
 import logging
 from collections import OrderedDict
 from itertools import product
