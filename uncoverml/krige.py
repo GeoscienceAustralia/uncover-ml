@@ -3,6 +3,7 @@ import warnings
 import logging
 from scipy.stats import norm
 from sklearn.base import RegressorMixin, BaseEstimator
+from sklearn.metrics import r2_score
 
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
@@ -174,6 +175,7 @@ class MLKrige(TagsMixin):
                            verbose=verbose,
                            )
         self.ml_model = all_ml_models[ml_method](**ml_params)
+
         _check_sklearn_model(self.ml_model)
 
     def fit(self, x, y, lon_lat, *args, **kwargs):
@@ -185,11 +187,11 @@ class MLKrige(TagsMixin):
         x: ndarray
             (Nt, d) array query dataset (Ns samples, d dimensions)
             for ML regression
+        y: ndarray
+            array of targets (Nt, )
         lon_lat:
             ndarray of (x, y) points. Needs to be a (Nt, 2) array
             corresponding to the lon/lat, for example.
-        y: ndarray
-            array of targets (Nt, )
         """
         self.ml_model.fit(x, y)
         ml_pred = self.ml_model.predict(x)
@@ -218,7 +220,18 @@ class MLKrige(TagsMixin):
         # TODO: reintroduce predict_proba for ml methods that support it
         correction = self.krige.predict(lon_lat)
         ml_pred = self.ml_model.predict(x, *args, **kwargs)
+
         return ml_pred + correction
+
+    def score(self, x, y, lon_lat, sample_weight=None):
+        """
+        Overloading default regression score method
+        """
+
+        return r2_score(y_pred=self.predict(x, lon_lat),
+                        y_true=y,
+                        sample_weight=sample_weight)
+
 
 krig_dict = {'krige': Krige,
              'mlkrige': MLKrige}
