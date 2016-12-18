@@ -151,7 +151,7 @@ def _check_sklearn_model(model):
                            'compatible regression class.')
 
 
-class MLKrige(TagsMixin):
+class MLKrigeBase(TagsMixin):
     """
     This is an implementation of Regression-Kriging as described here:
     https://en.wikipedia.org/wiki/Regression-Kriging
@@ -231,6 +231,63 @@ class MLKrige(TagsMixin):
         return r2_score(y_pred=self.predict(x, lon_lat),
                         y_true=y,
                         sample_weight=sample_weight)
+
+
+class MLKrigeWithPredictProbaMixin():
+
+    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+        """
+        Must override predict_proba method of Krige.
+        Predictive mean and variance for a probabilistic regressor.
+
+        Parameters
+        ----------
+        X: ndarray
+            (Ns, d) array query dataset (Ns samples, d dimensions)
+            for ML regression
+        interval: float, optional
+            The percentile confidence interval (e.g. 95%) to return.
+        kwargs must contain a key lon_lat, which needs to be a (Ns, 2) array
+        corresponding to the lon/lat
+        Returns
+        -------
+        pred: ndarray
+            The expected value of ys for the query inputs, X of shape (Ns,).
+        var: ndarray
+            The expected variance of ys (excluding likelihood noise terms) for
+            the query inputs, X of shape (Ns,).
+        ql: ndarray
+            The lower end point of the interval with shape (Ns,)
+        qu: ndarray
+            The upper end point of the interval with shape (Ns,)
+
+        """
+        lon_lat = kwargs['lon_lat']
+        correction, corr_var = self.krige.predict_proba(lon_lat)[:2]
+        ml_pred, ml_var = self.ml_model.predict_proba(x, *args,
+                                                      **kwargs)[:2]
+        # add prediction and residual
+        pred = ml_pred + correction
+        # add vaiances
+        var = ml_var + corr_var
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=pred, scale=np.sqrt(var))
+        return pred, var, ql, qu
+
+
+class MLKrigeWithPreidctProba(MLKrigeBase, MLKrigeWithPredictProbaMixin):
+    def __init__(self, *args, **kwargs):
+        super(MLKrigeWithPreidctProba, self).__init__(*args, **kwargs)
+
+
+class MLKrige():
+    def __new__(cls, ml_method, ml_params={}, *args, **kwargs):
+        ml_model = all_ml_models[ml_method](**ml_params)
+        if not hasattr(ml_model, 'predict_proba'):
+            return MLKrigeBase(ml_method, ml_params, *args, **kwargs)
+        else:
+            return MLKrigeWithPreidctProba(ml_method, ml_params,
+                                           *args, **kwargs)
 
 
 krig_dict = {'krige': Krige,
