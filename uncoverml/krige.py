@@ -234,10 +234,10 @@ class MLKrigeBase(TagsMixin):
 
 class MLKrigePredictProbaMixin():
 
-    def predict_proba(self, x, lon_lat, interval=0.95, *args, **kwargs):
+    def predict_proba(self, x, interval=0.95, lon_lat=None, *args, **kwargs):
         """
-        Must override predict_proba method of Krige.
-        Predictive mean and variance for a probabilistic regressor.
+        Predictive mean, variance, lower and upper quantile for a
+        probabilistic regressor.
 
         Parameters
         ----------
