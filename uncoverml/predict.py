@@ -26,6 +26,10 @@ def predict(data, model, interval=0.95, **kwargs):
             MI = model.entropy_reduction(X)
             predres = np.hstack((predres, MI[:, np.newaxis]))
 
+        if hasattr(model, 'krige_residual'):
+            MI = model.krige_residual(lon_lat=kwargs['lon_lat'])
+            predres = np.hstack((predres, MI[:, np.newaxis]))
+
         return predres
     result = apply_masked(pred, data)
     return result

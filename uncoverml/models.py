@@ -214,6 +214,9 @@ class TagsMixin():
         if hasattr(self, 'entropy_reduction'):
             tags.append('Expected reduction in entropy')
 
+        if hasattr(self, 'krige_residual'):
+            tags.append('Kriged correction')
+
         return tags
 
 

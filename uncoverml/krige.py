@@ -217,10 +217,13 @@ class MLKrigeBase(TagsMixin):
         pred: ndarray
             The expected value of ys for the query inputs, X of shape (Ns,).
         """
-        correction = self.krige.predict(lon_lat)
+        correction = self.krige_residual(lon_lat)
         ml_pred = self.ml_model.predict(x, *args, **kwargs)
 
         return ml_pred + correction
+
+    def krige_residual(self, lon_lat):
+        return self.krige.predict(lon_lat)
 
     def score(self, x, y, lon_lat, sample_weight=None):
         """

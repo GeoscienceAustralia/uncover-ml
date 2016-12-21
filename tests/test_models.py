@@ -34,6 +34,9 @@ def test_modeltags(get_models):
         if hasattr(model, 'entropy_reduction'):
             assert len(tags) == 5
 
+        if hasattr(model, 'krige_residual'):
+            assert len(tags) == 5
+
     else:
         if hasattr(model, 'entropy_reduction'):
             assert len(tags) == 2
