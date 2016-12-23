@@ -217,6 +217,9 @@ class TagsMixin():
         if hasattr(self, 'krige_residual'):
             tags.append('Kriged correction')
 
+        if hasattr(self, 'ml_prediction'):
+            tags.append('ml prediction')
+
         return tags
 
 

@@ -218,12 +218,32 @@ class MLKrigeBase(TagsMixin):
             The expected value of ys for the query inputs, X of shape (Ns,).
         """
         correction = self.krige_residual(lon_lat)
-        ml_pred = self.ml_model.predict(x, *args, **kwargs)
-
+        ml_pred = self.ml_prediction(x, *args, **kwargs)
         return ml_pred + correction
 
     def krige_residual(self, lon_lat):
+        """
+        :param lon_lat:
+            ndarray of (x, y) points. Needs to be a (Ns, 2) array
+            corresponding to the lon/lat, for example.
+        :return:
+        residual: ndarray
+            kriged residual values
+        """
         return self.krige.predict(lon_lat)
+
+    def ml_prediction(self, x, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        x: ndarray
+            regression matrix
+        Returns
+        -------
+            ndarray
+            machine learning prediction
+        """
+        return self.ml_model.predict(x, *args, **kwargs)
 
     def score(self, x, y, lon_lat, sample_weight=None):
         """

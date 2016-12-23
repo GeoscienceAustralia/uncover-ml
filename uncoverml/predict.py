@@ -27,8 +27,12 @@ def predict(data, model, interval=0.95, **kwargs):
             predres = np.hstack((predres, MI[:, np.newaxis]))
 
         if hasattr(model, 'krige_residual'):
-            MI = model.krige_residual(lon_lat=kwargs['lon_lat'])
-            predres = np.hstack((predres, MI[:, np.newaxis]))
+            kr = model.krige_residual(lon_lat=kwargs['lon_lat'])
+            predres = np.hstack((predres, kr[:, np.newaxis]))
+
+        if hasattr(model, 'ml_prediction'):
+            ml_pred = model.ml_prediction(X)
+            predres = np.hstack((predres, ml_pred[:, np.newaxis]))
 
         return predres
     result = apply_masked(pred, data)
