@@ -6,6 +6,7 @@ from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import geoio
 from uncoverml.models import apply_masked
+from uncoverml import transforms
 
 log = logging.getLogger(__name__)
 
@@ -49,15 +50,18 @@ def _get_data(subchunk, config):
 
 
 def _get_lon_lat(subchunk, config):
+    def _impute_lat_lon(cov_file, subchunk, config):
+        cov = geoio.RasterioImageSource(cov_file)
+        cov_data = features.extract_subchunks(cov, subchunk,
+                                              config.n_subchunks,
+                                              config.patchsize)
+        nn_imputer = transforms.NearestNeighboursImputer()
+        cov_data = nn_imputer(cov_data.reshape(cov_data.shape[0], 1))
+        return cov_data
     if config.lon_lat:
-        lat = geoio.RasterioImageSource(config.lat)
-        lat_data = features.extract_subchunks(lat, subchunk,
-                                              config.n_subchunks, 0)
-        lon = geoio.RasterioImageSource(config.lon)
-        lon_data = features.extract_subchunks(lon, subchunk,
-                                              config.n_subchunks, 0)
-        lon_lat = np.hstack((lon_data, lat_data)).reshape(
-            (lon_data.shape[0], 2))
+        lat_data = _impute_lat_lon(config.lat, subchunk, config)
+        lon_data = _impute_lat_lon(config.lon, subchunk, config)
+        lon_lat = np.ma.hstack((lon_data, lat_data))
         return _mask_rows(lon_lat, subchunk, config)
 
 
@@ -68,7 +72,8 @@ def _mask_rows(x, subchunk, config):
         mask_data = features.extract_subchunks(mask_source, subchunk,
                                                config.n_subchunks,
                                                config.patchsize)
-        mask_x = mask_data.data[:, 0, 0, 0] != config.retain
+        mask_data = mask_data.reshape(mask_data.shape[0], 1)
+        mask_x = mask_data.data[:, 0] != config.retain
         log.info('Areas with mask={} will be predicted'.format(config.retain))
 
         assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
