@@ -3,6 +3,7 @@ import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
@@ -405,6 +406,21 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
         self.ml_score = ml_score
 
 
+class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
+
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+                 n_jobs=1, target_transform='identity', ml_score=False):
+        # used in training
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        self.ml_score = ml_score
+        super(TransformedOLS, self).__init__(fit_intercept=fit_intercept,
+                                             normalize=normalize,
+                                             copy_X=copy_X,
+                                             n_jobs=n_jobs)
+
+
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
@@ -412,6 +428,7 @@ transformed_modelmaps = {
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
     'transformedbayesreg': TransformedLinearReg,
+    'ols': TransformedOLS,
 }
 
 # scikit-learn kernels
