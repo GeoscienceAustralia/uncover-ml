@@ -137,19 +137,20 @@ def shapefile(random_filename, request):
 
 @pytest.fixture
 def linear_data():
-    np.random.seed(2)
-    Nt = 200
-    Ns = 50
-    x = np.linspace(-2, 2, Nt + Ns)
-    y = 3 + 2 * x
-    X = x[:, np.newaxis]
+    def make_linear_data(seed=2):
+        np.random.seed(seed)
+        Nt = 200
+        Ns = 50
+        x = np.linspace(-2, 2, Nt + Ns)
+        y = 3 + 2 * x
+        X = x[:, np.newaxis]
 
-    trind = np.random.choice(Nt + Ns, Nt, replace=False)
-    tsind = np.zeros_like(x, dtype=bool)
-    tsind[trind] = True
-    tsind = np.where(~tsind)[0]
-
-    return y[trind], X[trind], y[tsind], X[tsind]
+        trind = np.random.choice(Nt + Ns, Nt, replace=False)
+        tsind = np.zeros_like(x, dtype=bool)
+        tsind[trind] = True
+        tsind = np.where(~tsind)[0]
+        return y[trind], X[trind], y[tsind], X[tsind]
+    return make_linear_data
 
 
 # Make sure all MPI tests use this fixure

@@ -44,7 +44,7 @@ def test_modeltags(get_models):
 
 def test_modelmap(linear_data, get_models):
 
-    yt, Xt, ys, Xs = linear_data
+    yt, Xt, ys, Xs = linear_data()
     mod = get_models()
 
     mod.fit(Xt, yt)
@@ -60,7 +60,7 @@ def get_krige_method(request):
 
 def test_krige(linear_data, get_krige_method):
 
-    yt, Xt, ys, Xs = linear_data
+    yt, Xt, ys, Xs = linear_data()
 
     mod = Krige(method=get_krige_method)
     mod.fit(np.tile(Xt, (1, 2)), yt)
@@ -98,13 +98,17 @@ def test_mlkrige(linear_data, models_supported, get_krige_method):
     """
     tests algos that can be used with MLKrige
     """
-    yt, Xt, ys, Xs = linear_data
+    yt2, Xt2, ys2, Xs2 = linear_data()
+    yt3, Xt3, ys3, Xs3 = linear_data(seed=10)
+    yt4, Xt4, ys4, Xs4 = linear_data(seed=5)
+
     mlk = MLKrige(ml_method=models_supported, method=get_krige_method)
-    arr = np.random.rand(Xt.shape[0], 2)
+    arr = np.random.rand(Xt2.shape[0], 2)
     np.random.shuffle(arr)
-    mlk.fit(Xt, yt, lon_lat=arr)
-    Ey = mlk.predict(Xs, lon_lat=np.random.rand(Xs.shape[0], 2))
-    assert r2_score(ys, Ey) > 0
+    mlk.fit(np.hstack((Xt2, Xt3, Xt4)), yt2, lon_lat=arr)
+    Ey = mlk.predict(np.hstack((Xs2, Xs3, Xs4)),
+                     lon_lat=np.random.rand(Xs2.shape[0], 2))
+    assert r2_score(ys2, Ey) > 0
 
 
 # def test_modelpersistance(make_fakedata):
