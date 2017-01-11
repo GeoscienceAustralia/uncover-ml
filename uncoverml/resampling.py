@@ -92,11 +92,8 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
             dfs_to_concat.append(gr.sample(n=samples_per_bin,
                                            replace=bootstrap))
         else:
-            if gr.shape[0] > samples_per_bin:
-                dfs_to_concat.append(gr.sample(n=samples_per_bin,
-                                               replace=bootstrap))
-            elif gr.shape[0] <= samples_per_bin:
-                dfs_to_concat.append(gr)
+            dfs_to_concat.append(_sample_without_replacement(
+                gr, samples_per_bin))
 
     final_df = pd.concat(dfs_to_concat)
     final_df.sort_index(inplace=True)
@@ -161,16 +158,24 @@ def resample_spatially(input_shapefile,
                 df_to_concat.append(df.sample(n=samples_per_group,
                                               replace=bootstrap))
             else:
-                if df.shape[0] > samples_per_group:
-                    df_to_concat.append(df.sample(n=samples_per_group,
-                                                  replace=bootstrap))
-                elif df.shape[0] <= samples_per_group:
-                    df_to_concat.append(df)
+                df_to_concat.append(_sample_without_replacement(
+                    df, samples_per_group))
         else:
             log.info('{}th {} does not contain any sample'.format(i, p))
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
     return output_shapefile
+
+
+def _sample_without_replacement(df, samples_per_group):
+    # if enough points take the number of samples
+    if df.shape[0] > samples_per_group:
+        sampled_df = df.sample(n=samples_per_group, replace=False)
+        return sampled_df
+    # else take everything, this will lead to uncertain number of
+    # points in the resulting shapefile
+    elif df.shape[0] <= samples_per_group:
+        return df
 
 
 resampling_techniques = {'value': resample_by_magnitude,
