@@ -14,10 +14,12 @@ timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 
 @pytest.fixture
 def random_filename(tmpdir_factory):
-    dir = str(tmpdir_factory.mktemp('uncoverml').realpath())
-    fname = ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
-    filename = os.path.join(dir, fname)
-    return filename
+    def make_random_filename(ext=''):
+        dir = str(tmpdir_factory.mktemp('uncoverml').realpath())
+        fname = ''.join(random.choice(string.ascii_lowercase)
+                        for _ in range(10))
+        return os.path.join(dir, fname + ext)
+    return make_random_filename
 
 
 @pytest.fixture
@@ -99,7 +101,7 @@ def make_multi_patch(request):
 def shapefile(random_filename, request):
 
     # File names for test shapefile and test geotiff
-    filename = random_filename + ".shp"
+    filename = random_filename(ext=".shp")
     lons = np.arange(0, 20, 2)
     lats = np.arange(-10, 30, 2)
 

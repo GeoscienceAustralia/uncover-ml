@@ -18,10 +18,15 @@ log = logging.getLogger(__name__)
               help="Validation shapefile name, "
                    "if specified a validation shapefile is produced which "
                    "can be used for model validation")
+@click.option('-n', '--validation_points', type=int,
+              default=100,
+              help="approximate number of validation points")
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
-def cli(pipeline_file, outfile, validation_file, verbosity):
+def cli(pipeline_file, outfile, validation_file, validation_points,
+        verbosity):
     uncoverml.mllog.configure(verbosity)
     config = ls.config.Config(pipeline_file)
-    resample_shapefile(config, outfile, validation_file)
+    resample_shapefile(config, outfile, validation_file,
+                       validation_points=validation_points)

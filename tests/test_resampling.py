@@ -1,10 +1,10 @@
 import pytest
+from os.path import exists
 import shapefile as shp
 import numpy as np
 from uncoverml import resampling
 from uncoverml import geoio
 import tempfile
-import shutil
 
 
 @pytest.fixture(params=range(2, 4))
@@ -73,3 +73,37 @@ def test_resampling_spatial(shapefile, rows, cols, samples):
     assert 'lon' not in resampled_shapefields
     assert np.all((samples, 2) >= new_coords.shape)
     assert new_othervals == {}  # only the target is retained after resampling
+
+
+@pytest.fixture(params=resampling.resampling_techniques.keys())
+def sampling_method(request):
+    return resampling.resampling_techniques[request.param]
+
+
+def test_resampling_params(shapefile, random_filename, sampling_method):
+    lonlats, filename = shapefile
+    with pytest.raises(ValueError):
+        sampling_method(filename,
+                        random_filename(ext='.shp'),
+                        target_field='lat',
+                        bootstrap=True,
+                        validation_file=random_filename(ext='_validation.shp')
+                        )
+
+
+def test_resampling_files_created(shapefile, random_filename, sampling_method):
+    lonlats, filename = shapefile
+    base_path = random_filename()
+    output_shapefile = base_path + '.shp'
+    validation_file = base_path + '_validation.shp'
+    print(base_path, output_shapefile, validation_file)
+    sampling_method(filename,
+                    output_shapefile=output_shapefile,
+                    target_field='lat',
+                    bootstrap=False,
+                    validation_file=validation_file
+                    )
+    file_types = ['.cpg', '.dbf', '.shp', '.shx']
+    for _type in file_types:
+        assert exists(base_path + _type)
+        assert exists(base_path + '_validation' + _type)
