@@ -160,6 +160,7 @@ def resample_spatially(input_shapefile,
 
     Returns
     -------
+    output_shapefile name
 
     """
     log.info("resampling shapefile spatially")
@@ -258,7 +259,8 @@ def _remove_files(filename, extensions):
                                                            + extension))
 
 
-def resample_shapefile(config, outfile=None, validation_file=None):
+def resample_shapefile(config, outfile=None, validation_file=None,
+                       validation_points=100):
     shapefile = config.target_file
 
     if not config.resample:
@@ -283,13 +285,15 @@ def resample_shapefile(config, outfile=None, validation_file=None):
 
                 input_shpfile = shapefile if i == 0 else out_shpfile
 
-                # just create the validation shape file once
-                validation_file = validation_file if i == 0 else None
+                # just create the validation shape during last sampling step
+                validation = validation_file \
+                    if i == number_of_transforms-1 else None
 
                 out_shpfile = resampling_techniques[k](
                     input_shpfile, int_shpfile,
                     target_field=config.target_property,
-                    validation_file=validation_file,
+                    validation_file=validation,
+                    validation_points=validation_points,
                     ** r[k]['arguments']
                     )
                 if i > 0:
