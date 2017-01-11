@@ -182,7 +182,6 @@ def resample_spatially(input_shapefile,
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
     if validation_file:
-        print('validation file:', validation_file)
         validation_df = pd.concat(validation_dfs_to_concat)
         validation_df.to_file(validation_file)
     return output_shapefile
