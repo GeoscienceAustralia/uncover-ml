@@ -44,7 +44,8 @@ def strip_shapefile(input_shapefile, output_shapefile, *fields_to_keep):
 def resample_by_magnitude(input_shapefile, output_shapefile,
                           target_field, bins=10,
                           fields_to_keep=[], bootstrap=True,
-                          output_samples=None):
+                          output_samples=None,
+                          validation_file=None):
     """
     Parameters
     ----------
@@ -64,6 +65,9 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
 
     """
     log.info("resampling shapefile by values")
+    if bootstrap and validation_file:
+        raise ValueError('bootstrapping should not be use while'
+                         'creating a validation shapefile.')
 
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
@@ -83,6 +87,7 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
     gdf_out[BIN] = result
 
     dfs_to_concat = []
+    validation_dfs_to_concat = []
     total_samples = output_samples if output_samples else gdf_out.shape[0]
     samples_per_bin = total_samples // bins
 
@@ -92,13 +97,17 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
             dfs_to_concat.append(gr.sample(n=samples_per_bin,
                                            replace=bootstrap))
         else:
-            dfs_to_concat.append(_sample_without_replacement(
-                gr, samples_per_bin))
+            _df, v_df = _sample_without_replacement(gr, samples_per_bin)
+            dfs_to_concat.append(_df)
+            validation_dfs_to_concat.append(v_df)
 
     final_df = pd.concat(dfs_to_concat)
     final_df.sort_index(inplace=True)
     final_df.drop(BIN, axis=1).to_file(output_shapefile)
-
+    if validation_file:
+        validation_df = pd.concat(validation_dfs_to_concat)
+        validation_df.to_file(validation_file)
+        log.info('Wrote validation shapefile {}'.format(validation_file))
     return output_shapefile
 
 
@@ -109,7 +118,8 @@ def resample_spatially(input_shapefile,
                        cols=10,
                        fields_to_keep=[],
                        bootstrap=True,
-                       output_samples=None):
+                       output_samples=None,
+                       validation_file=None):
     """
     Parameters
     ----------
@@ -129,6 +139,10 @@ def resample_spatially(input_shapefile,
     """
     log.info("resampling shapefile spatially")
 
+    if bootstrap and validation_file:
+        raise ValueError('bootstrapping should not be use while'
+                         'creating a validation shapefile.')
+
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
@@ -146,36 +160,48 @@ def resample_spatially(input_shapefile,
             polygons.append(Polygon([(xs, ys), (xs, ye), (xe, ye), (xe, ys)]))
 
     df_to_concat = []
+    validation_dfs_to_concat = []
 
     total_samples = output_samples if output_samples else gdf_out.shape[0]
     samples_per_group = total_samples // len(polygons)
 
     for i, p in enumerate(polygons):
         df = gdf_out[gdf_out[GEOMETRY].within(p)]
-        # should probably discard if df.shape[0] < 10% of samples_per_group
         if df.shape[0]:
             if bootstrap:
+                # should probably discard if df.shape[0] < 10% of
+                # samples_per_group
                 df_to_concat.append(df.sample(n=samples_per_group,
                                               replace=bootstrap))
             else:
-                df_to_concat.append(_sample_without_replacement(
-                    df, samples_per_group))
+                _df, v_df = _sample_without_replacement(df, samples_per_group)
+                df_to_concat.append(_df)
+                validation_dfs_to_concat.append(v_df)
         else:
             log.info('{}th {} does not contain any sample'.format(i, p))
     final_df = pd.concat(df_to_concat)
     final_df.to_file(output_shapefile)
+    if validation_file:
+        print('validation file:', validation_file)
+        validation_df = pd.concat(validation_dfs_to_concat)
+        validation_df.to_file(validation_file)
     return output_shapefile
 
 
 def _sample_without_replacement(df, samples_per_group):
-    # if enough points take the number of samples
-    if df.shape[0] > samples_per_group:
-        sampled_df = df.sample(n=samples_per_group, replace=False)
-        return sampled_df
-    # else take everything, this will lead to uncertain number of
-    # points in the resulting shapefile
-    elif df.shape[0] <= samples_per_group:
-        return df
+
+    if df.shape[0] > samples_per_group + 1:
+        # if enough points take the number of samples
+        # the second df returned makes up the validation shapefile
+        _df = df.sample(n=samples_per_group+1, replace=False)
+        return _df.tail(samples_per_group), _df.head(1)
+    elif df.shape[0] == samples_per_group + 1:
+        return df.tail(samples_per_group), df.head(1)
+    else:
+        # else take everything, this will lead to uncertain number of
+        # points in the resulting shapefile
+        # return an empty df for the validation set for this bin
+        return df, gpd.GeoDataFrame(columns=df.columns)
 
 
 resampling_techniques = {'value': resample_by_magnitude,
@@ -190,7 +216,7 @@ def _remove_files(filename, extensions):
                                                            + extension))
 
 
-def resample_shapefile(config, outfile=None):
+def resample_shapefile(config, outfile=None, validation_file=None):
     shapefile = config.target_file
 
     if not config.resample:
@@ -214,10 +240,15 @@ def resample_shapefile(config, outfile=None):
                     else tempfile.mktemp(suffix='.shp', dir=config.output_dir)
 
                 input_shpfile = shapefile if i == 0 else out_shpfile
+
+                # just create the validation shape file once
+                validation_file = validation_file if i == 0 else None
+
                 out_shpfile = resampling_techniques[k](
                     input_shpfile, int_shpfile,
                     target_field=config.target_property,
-                    ** r[k]['arguments']
+                    validation_file=validation_file,
+                    ** r[k]['arguments'],
                     )
                 if i > 0:
                     _remove_files(splitext(input_shpfile)[0],
