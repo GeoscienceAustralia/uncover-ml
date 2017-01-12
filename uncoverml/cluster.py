@@ -102,7 +102,7 @@ class KMeans:
                                 training_data=training_data)
         self.centres = C_final
 
-    def predict(self, x):
+    def predict(self, x, *args, **kwargs):
         y_star, _ = compute_class(x, self.centres)
         # y_star = y_star[:, np.newaxis].astype(float)
         y_star = y_star.astype(float)
