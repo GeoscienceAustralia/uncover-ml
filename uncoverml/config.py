@@ -240,7 +240,7 @@ class Config:
                 self.optimisation_output = \
                     self.optimisation['optimisation_output']
 
-
+        self.cluster_analysis = False
         if 'clustering' in s:
             self.clustering_algorithm = s['clustering']['algorithm']
             cluster_args = s['clustering']['arguments']
@@ -252,6 +252,8 @@ class Config:
                 self.class_property = s['clustering']['property']
             else:
                 self.semi_supervised = False
+            if 'cluster_analysis' in s['clustering']:
+                self.cluster_analysis = s['clustering']['cluster_analysis']
 
 
 class ConfigException(Exception):

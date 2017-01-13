@@ -162,8 +162,8 @@ def semisupervised(config):
     features, classes = ls.features.remove_missing(features, targets)
     indices = np.arange(classes.shape[0], dtype=int)
 
-    k = ls.cluster.compute_n_classes(classes, config)
-    model = ls.cluster.KMeans(k, config.oversample_factor)
+    config.n_classes = ls.cluster.compute_n_classes(classes, config)
+    model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     log.info("Clustering image")
     model.learn(features, indices, classes)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
@@ -183,8 +183,7 @@ def unsupervised(config):
                                                  config)
 
     features, _ = ls.features.remove_missing(features)
-    k = config.n_classes
-    model = ls.cluster.KMeans(k, config.oversample_factor)
+    model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     log.info("Clustering image")
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)

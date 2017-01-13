@@ -96,7 +96,6 @@ def test_resampling_files_created(shapefile, random_filename, sampling_method):
     base_path = random_filename()
     output_shapefile = base_path + '.shp'
     validation_file = base_path + '_validation.shp'
-    print(base_path, output_shapefile, validation_file)
     sampling_method(filename,
                     output_shapefile=output_shapefile,
                     target_field='lat',
