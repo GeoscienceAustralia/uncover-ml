@@ -96,6 +96,15 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
 
 
 def save_intersected_features(feature_sets, transform_sets, config):
+    """
+    This function saves raw covariates values at the target locations, i.e.,
+    after the targets have been intersected.
+
+    This will save the following two files if they are provided in the
+    config file:
+        a) rawcovariates.csv: the covariate values in csv
+        b) rawcovariates_mask.csv: the corresponding mask in csv
+    """
     transform_sets_mod = []
     names = ['{}_{}'.format(b, k)
              for ec in feature_sets
