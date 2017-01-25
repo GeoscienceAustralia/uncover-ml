@@ -171,6 +171,10 @@ class Config:
                             path.abspath(d['files']['featurevec'])
                         if not path.exists(d['files']['featurevec']):
                             self.pickle_load = False
+                    if 'plot_covariates' in d['files']:
+                        self.plot_covariates = d['files']['plot_covariates']
+                    else:
+                        self.plot_covariates = False
                     s['features'].pop(n)
         else:
             self.pickle_load = False

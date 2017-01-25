@@ -129,6 +129,17 @@ def save_intersected_features(feature_sets, transform_sets, config):
                    header=header)
         np.savetxt(config.rawcovariates_mask, X=x_all.mask.astype(int),
                    delimiter=',', fmt='%.4e', header=header)
+        if config.plot_covariates:
+            import matplotlib.pyplot as plt
+            for i, name in enumerate(names):
+                log.info('plotting {}'.format(name))
+                plt.figure()
+                vals = x_all[:, i]
+                vals_no_mask = vals[~vals.mask].data
+                plt.scatter(x=list(range(vals_no_mask.shape[0])),
+                            y=vals_no_mask.data)
+                plt.title(name)
+                plt.savefig(name.split()[0] + '.png')
 
 
 def cull_all_null_rows(feature_sets):
