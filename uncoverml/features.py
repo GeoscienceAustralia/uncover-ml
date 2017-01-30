@@ -140,6 +140,7 @@ def save_intersected_features(feature_sets, transform_sets, config):
                             y=vals_no_mask.data)
                 plt.title(name)
                 plt.savefig(name.split()[0] + '.png')
+                plt.close()
 
 
 def cull_all_null_rows(feature_sets):

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
@@ -40,7 +40,8 @@ class TransformMixin():
 
     def score(self, X, y, *args, **kwargs):
         """
-        This score is used by Scikilearn GridSearchCV/RandomisedSearchCV
+        This score is used by Scikilearn GridSearchCV/RandomisedSearchCV by
+        all models that inherit TransformMixin.
         This is the score as seen by the ML model in the transformed target
         values. The final cross-val score in the original coordinates
         can be obtained from uncoverml.validate.
@@ -69,7 +70,7 @@ class TransformMixin():
         """
         y_t = self.target_transform.transform(y)
 
-        if self.ml_score:
+        if hasattr(self, 'ml_score') and self.ml_score:
             log.info('Using custom score')
             return r2_score(y_true=y_t,
                             y_pred=self._notransform_predict(
@@ -195,6 +196,11 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
 
 
 class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
+
+    """
+    Linear elastic net regression model using
+    Stochastic Gradient Descent (SGD).
+    """
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
@@ -408,6 +414,10 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
 
 class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
 
+    """
+    OLS. Suitable for small learning jobs.
+    """
+
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
                  n_jobs=1, target_transform='identity', ml_score=False):
         # used in training
@@ -421,6 +431,30 @@ class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
                                              n_jobs=n_jobs)
 
 
+class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
+    """
+    Linear regression with combined L1 and L2 priors as regularizer.
+    Suitable for small learning jobs.
+    """
+
+    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+                 normalize=False, precompute=False, max_iter=1000,
+                 copy_X=True, tol=0.0001, warm_start=False, positive=False,
+                 random_state=None, selection='cyclic',
+                 target_transform='identity', ml_score=False):
+        # used in training
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        self.ml_score = ml_score
+        super(TransformedElasticNet, self).__init__(
+            alpha=alpha, l1_ratio=l1_ratio, fit_intercept=fit_intercept,
+            normalize=normalize, precompute=precompute, max_iter=max_iter,
+            copy_X=copy_X, tol=tol, warm_start=warm_start, positive=positive,
+            random_state=random_state, selection=selection
+            )
+
+
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
@@ -429,6 +463,7 @@ transformed_modelmaps = {
     'transformedsvr': TransformedSVR,
     'transformedbayesreg': TransformedLinearReg,
     'ols': TransformedOLS,
+    'elasticnet': TransformedElasticNet,
 }
 
 # scikit-learn kernels

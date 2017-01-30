@@ -8,9 +8,10 @@ features:
     files:
       covariates: features.pk
       targets: targets.pk
-#      featurevec: featurevec.pk
-#      rawcovariates: rawcovariates.csv
-#      rawcovariates_mask: rawcovariates_mask.csv
+      featurevec: featurevec.pk  # uncomment for cubist
+      rawcovariates: rawcovariates.csv  # intersected covariates saved as csv
+      rawcovariates_mask: rawcovariates_mask.csv  #
+      plot_covariates: True
   - name: my features 1
     type: ordinal
     files:
@@ -110,6 +111,13 @@ clustering:
 #    target_transform: standardise
 #    maxiter: 10
 
+learning:
+  algorithm: elasticnet
+  arguments:
+    target_transform: standardise
+    ml_score: True
+
+
 
 #learning:
 #  algorithm: cubist
@@ -163,19 +171,19 @@ clustering:
 #    max_features: log2
 #    min_samples_split: 10
 
-learning:
-  algorithm: mlkrige
-  arguments:
-    ml_method: transformedrandomforest
-    ml_params: {n_estimators: 10,
-                target_transform: log,
-                max_depth: 250,
-                max_features: log2,
-                min_samples_split: 10}
-    method: ordinary
-    variogram_model: linear
-    n_closest_points: 10
-    verbose: False
+#learning:
+#  algorithm: mlkrige
+#  arguments:
+#    ml_method: transformedrandomforest
+#    ml_params: {n_estimators: 10,
+#                target_transform: log,
+#                max_depth: 250,
+#                max_features: log2,
+#                min_samples_split: 10}
+#    method: ordinary
+#    variogram_model: linear
+#    n_closest_points: 10
+#    verbose: False
 
 
 #learning:
