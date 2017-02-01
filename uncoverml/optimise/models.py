@@ -143,13 +143,16 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
         """
         Parameters
         ----------
-        basis
-        var
-        regulariser
-        tol
-        maxiter
+        basis : Basis
+            A basis object, see the basis_functions module.
+        var : Parameter, optional
+            observation variance initial value.
+        tol : float, optional
+            optimiser function tolerance convergence criterion.
+        maxiter : int, optional
+            maximum number of iterations for the optimiser.
         target_transform: str, optional
-
+            optional target trasnform
         ml_score: bool, optional
             whether to use custom score function
         """
@@ -160,11 +163,12 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
         self.target_transform = target_transform
         self.ml_score = ml_score
 
-        super().__init__(basis=basis,
-                         var=var,
-                         tol=tol,
-                         maxiter=maxiter
-                         )
+        super(TransformedLinearReg, self).__init__(
+            basis=basis,
+            var=var,
+            tol=tol,
+            maxiter=maxiter
+            )
 
     def get_basis(self, basis, regulariser):
         # whether to add a bias term
@@ -209,7 +213,7 @@ class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
                  warm_start=False, average=False,
                  target_transform='identity', ml_score=False):
 
-        super().__init__(
+        super(TransformedSGDRegressor, self).__init__(
             loss=loss,
             penalty=penalty,
             alpha=alpha,
@@ -254,7 +258,7 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
         self.target_transform = target_transform
         self.ml_score = ml_score
 
-        super().__init__(
+        super(TransformedGPRegressor, self).__init__(
             kernel=kernel,
             alpha=alpha,
             optimizer=optimizer,
@@ -289,7 +293,7 @@ class TransformedForestRegressor(TransformPredictProbaMixin,
                  ml_score=False
                  ):
 
-        super().__init__(
+        super(TransformedForestRegressor, self).__init__(
             n_estimators=n_estimators,
             criterion=criterion,
             max_depth=max_depth,
@@ -328,7 +332,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', ml_score=False):
 
-        super().__init__(
+        super(TransformedGradientBoost, self).__init__(
             loss=loss,
             learning_rate=learning_rate,
             n_estimators=n_estimators,
@@ -389,7 +393,7 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
                  random_state=None, target_transform='identity',
                  ml_score=False,
                  ):
-        super().__init__(
+        super(TransformedSGDApproxGP, self).__init__(
             kernel=kernel,
             nbases=nbases,
             lenscale=lenscale,
