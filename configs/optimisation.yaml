@@ -111,11 +111,11 @@ clustering:
 #    target_transform: standardise
 #    maxiter: 10
 
-learning:
-  algorithm: elasticnet
-  arguments:
-    target_transform: standardise
-    ml_score: True
+#learning:
+#  algorithm: elasticnet
+#  arguments:
+#    target_transform: standardise
+#    ml_score: True
 
 
 
@@ -194,15 +194,15 @@ learning:
 #    n_closest_points: 20
 #    verbose: False
 
-#learning:
-#  algorithm: transformedbayesreg
-#  arguments:
-#    target_transform: standardise
-#    basis: True
-#    var: 1.0
-#    regulariser: 1.0
-#    tol: 1.0e-08
-#    maxiter: 1000
+learning:
+  algorithm: transformedbayesreg
+  arguments:
+    target_transform: standardise
+    basis: True
+    var: 1.0
+    regulariser: 1.0
+    tol: 1.0e-08
+    maxiter: 100000
 
 #learning:
 #  algorithm: gradientboost
@@ -287,14 +287,11 @@ optimisation:
 #    max_depth: [2, 3, 4, 5]
 #    subsample: [1.0, 0.75, 0.5]
 
-#  algorithm: transformedbayesreg
-#  hyperparameters:
-#    target_transform: [rank, identity, standardise, sqrt, log]
-#    basis: [True]
-#    var: [1.0]
-#    regulariser: [1.0]
-#    tol: [1.0e-08]
-#    maxiter: [1000]
+  algorithm: transformedbayesreg
+  hyperparameters:
+    target_transform: [rank, identity, standardise, sqrt, log]
+    maxiter: [100000]
+    ml_score: [True]
 
 
 

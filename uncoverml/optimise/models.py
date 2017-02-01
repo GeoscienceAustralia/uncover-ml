@@ -134,7 +134,7 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
     def __init__(self,
                  basis=True,
                  var=1.0,
-                 regulariser=1.0,
+                 regularizer=1.0,
                  tol=1e-8,
                  maxiter=1000,
                  target_transform='identity',
@@ -152,13 +152,15 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
         maxiter : int, optional
             maximum number of iterations for the optimiser.
         target_transform: str, optional
-            optional target trasnform
+            optional target transform
         ml_score: bool, optional
             whether to use custom score function
         """
-
-        basis = self.get_basis(basis, regulariser)
+        self.regularizer = regularizer
+        basis = self.get_basis(basis, regularizer)
+        self.basis = basis
         var = self.get_var(var)
+        self.var = var
         target_transform = self.get_target_transform(target_transform)
         self.target_transform = target_transform
         self.ml_score = ml_score
@@ -173,7 +175,7 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
     def get_basis(self, basis, regulariser):
         # whether to add a bias term
         if isinstance(basis, bool):
-            regulariser = self.get_regulariser(regulariser)
+            regulariser = self.get_regularizer(regulariser)
             basis = LinearBasis(onescol=basis,
                                 regularizer=regulariser)
         return basis
@@ -186,11 +188,11 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
         return var
 
     @staticmethod
-    def get_regulariser(regulariser):
-        if isinstance(regulariser, float):
-            reg = gamma(a=regulariser, scale=1)  # Initial weight prior
-            regulariser = Parameter(reg, Positive())
-        return regulariser
+    def get_regularizer(regularizer):
+        if isinstance(regularizer, float):
+            reg = gamma(a=regularizer, scale=1)  # Initial weight prior
+            regularizer = Parameter(reg, Positive())
+        return regularizer
 
     @staticmethod
     def get_target_transform(target_transform):
