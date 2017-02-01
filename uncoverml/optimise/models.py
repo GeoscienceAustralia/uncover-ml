@@ -144,7 +144,7 @@ class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
         Parameters
         ----------
         basis : Basis
-            A basis object, see the basis_functions module.
+            A basis object, see the revrand.basis_functions module.
         var : Parameter, optional
             observation variance initial value.
         tol : float, optional
