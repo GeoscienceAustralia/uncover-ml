@@ -490,7 +490,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
     the predictive distribution is sampled for these algorithms!
     """
 
-    def __init__(self, kernnel='rbf', nbases=50, lenscale=1., var=1.,
+    def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  falloff=1., regulariser=1., ard=True,
                  indicator_field='censored', maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9,
@@ -508,9 +508,9 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
                          )
 
         self.indicator_field = indicator_field
-        self._store_params(kernnel, regulariser, nbases, lenscale, ard)
+        self._store_params(kernel, regulariser, nbases, lenscale, ard)
 
-    def fit(self, X, y, fields):
+    def fit(self, X, y, fields, **kwargs):
         r"""
         Learn the parameters of the approximate Gaussian process.
 
@@ -539,7 +539,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
         largs = self._parse_largs(fields[self.indicator_field])
         return super().fit(X, y, likelihood_args=(largs,))
 
-    def predict_proba(self, X, interval=0.95, fields={}):
+    def predict_proba(self, X, interval=0.95, fields={}, **kwargs):
         """
         Predictive mean and variance from an approximate Gaussian process.
 

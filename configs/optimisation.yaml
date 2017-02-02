@@ -96,6 +96,19 @@ clustering:
 #    nbases: 100
 #    maxiter: 10
 
+learning:
+  algorithm: depthregress
+  arguments:
+#    target_transform: standardise
+    kernel: matern52
+    ard: True
+    lenscale: 1.
+    nbases: 100
+    maxiter: 18
+    falloff: 0.1
+    beta1: 0.3
+    beta2: 0.5
+
 #learning:
 #  algorithm: approxgp
 #  arguments:
@@ -194,15 +207,15 @@ clustering:
 #    n_closest_points: 20
 #    verbose: False
 
-learning:
-  algorithm: transformedbayesreg
-  arguments:
-    target_transform: standardise
-    basis: True
-    var: 1.0
-    regulariser: 1.0
-    tol: 1.0e-08
-    maxiter: 100000
+#learning:
+#  algorithm: transformedbayesreg
+#  arguments:
+#    target_transform: standardise
+#    basis: True
+#    var: 1.0
+#    regulariser: 1.0
+#    tol: 1.0e-08
+#    maxiter: 100000
 
 #learning:
 #  algorithm: gradientboost
@@ -268,13 +281,13 @@ optimisation:
 #      alpha: [0.0001, 0.001, 0.01, 0.1]
 #      n_iter: [100]
 
-  algorithm: transformedrandomforest
-  hyperparameters:
-    n_estimators: [100]
-    target_transform: [rank, identity, standardise, sqrt, log]
-    max_features: [auto, sqrt, log2]
-    min_samples_split: [2, 4, 10]
-    max_depth: [2, 5, 10, 20]
+#  algorithm: transformedrandomforest
+#  hyperparameters:
+#    n_estimators: [100]
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    max_features: [auto, sqrt, log2]
+#    min_samples_split: [2, 4, 10]
+#    max_depth: [2, 5, 10, 20]
 
 
 #  algorithm: gradientboost
@@ -287,22 +300,19 @@ optimisation:
 #    max_depth: [2, 3, 4, 5]
 #    subsample: [1.0, 0.75, 0.5]
 
-  algorithm: transformedbayesreg
-  hyperparameters:
-    target_transform: [rank, identity, standardise, sqrt, log]
-    maxiter: [100000]
-    ml_score: [True]
-
-
-
-#  algorithm: transformedgp
+#  algorithm: transformedbayesreg
 #  hyperparameters:
-#    kernel: {
-#              'rbf': {length_scale: [1]},
-#              'matern': {length_scale: [0.1], nu: [0.5]},
-#              'quadratic': {length_scale: [0.1], alpha: [0.01]}
-#            }
-    # normalize_y: [False, True]
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    maxiter: [100000]
+#    ml_score: [True]
+
+
+
+  algorithm: transformedgp
+  hyperparameters:
+    kernel: ['rbf', 'matern', 'quadratic']
+    alpha: [1.0e-10, 1.0e-9, 1.0e-8]
+    normalize_y: [False, True]
 
 #  algorithm: transformedsvr
 #  hyperparameters:
