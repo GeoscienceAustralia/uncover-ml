@@ -77,7 +77,7 @@ def setup_pipeline(config):
     pipe = Pipeline(steps=steps)
     estimator = GridSearchCV(pipe,
                              param_dict,
-                             n_jobs=-1,
+                             n_jobs=config.n_jobs,
                              iid=False,
                              pre_dispatch='2*n_jobs',
                              verbose=True,
@@ -91,12 +91,17 @@ def setup_pipeline(config):
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
+@click.option('-n', '--njobs', type=int, default=-1,
+              help='Number of parallel jobs to run. Lower value of n '
+                   'reduces memory requirement. '
+                   'By default uses all available CPUs')
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
-def cli(pipeline_file, partitions, verbosity):
+def cli(pipeline_file, partitions, njobs, verbosity):
     uncoverml.mllog.configure(verbosity)
     config = ls.config.Config(pipeline_file)
+    config.n_jobs = njobs
     estimator = setup_pipeline(config)
     log.info('Running optimisation for {}'.format(
         config.optimisation['algorithm']))
