@@ -71,7 +71,10 @@ def setup_pipeline(config):
                             combinations.append(d)
                         V += [kernels[kk](** c) + WhiteKernel()
                               for c in combinations]
-                    v = V
+                elif isinstance(v, list):  # just use the default kernels
+                    for kk in v:
+                        V.append(kernels[kk]())
+                v = V
 
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)

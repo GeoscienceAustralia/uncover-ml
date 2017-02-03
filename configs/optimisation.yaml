@@ -19,20 +19,20 @@ features:
 #      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
 #      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
-#      - directory: /home/sudipta/GA_data/GA-cover2
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+      - directory: /home/sudipta/GA_data/MBV2/
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
 #      - centre
 #      - standardise
     imputation: nn
 
-  - name: my features 2
-    type: categorical
-    files:
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-    transforms: randomhot
-    imputation: nn
+#  - name: my features 2
+#    type: categorical
+#    files:
+#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+#    transforms: randomhot
+#    imputation: nn
 
 # only used during prediction
 mask:
@@ -62,8 +62,8 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
-  property: K_ppm_imp_
+  file: /home/sudipta/GA_data/MBV2/GP_ceno_combine.shp
+  property: depth
 #  resample:
 #    - spatial:
 #        arguments:
@@ -310,7 +310,12 @@ optimisation:
 
   algorithm: transformedgp
   hyperparameters:
-    kernel: ['rbf', 'matern', 'quadratic']
+#    kernel: {
+#              'rbf': {length_scale: [1]},
+#              'matern': {length_scale: [0.1], nu: [0.5]},
+#              'quadratic': {length_scale: [0.1], alpha: [0.01]}
+#            }
+    kernel: [rbf, matern, quadratic]
     alpha: [1.0e-10, 1.0e-9, 1.0e-8]
     normalize_y: [False, True]
 
