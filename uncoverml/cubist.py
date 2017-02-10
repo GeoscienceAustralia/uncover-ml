@@ -110,7 +110,8 @@ class Cubist:
         committee_members: int
             The number of cubist models to generate. Committee models can
             greatly reduce the result variance, so this should be used
-            whenever possible.
+            whenever possible. If committee_members=1, committee model is not
+            used
         max_categories: int
             The maximum number of categories cubist will search for in the
             data when creating a categorical variable.
@@ -365,7 +366,7 @@ class Cubist:
                    (' -r ' + str(self.max_rules)
                     if self.max_rules else '') +
                    (' -C ' + str(self.committee_members)
-                    if self.committee_members else '') +
+                    if self.committee_members > 1 else '') +
                    (' -n ' + str(self.neighbors)
                     if self.neighbors else '') +
                    (' -S ' + str(self.sampling)
