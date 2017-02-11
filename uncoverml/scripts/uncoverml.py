@@ -93,6 +93,18 @@ def load_data(config, partitions):
             ls.features.save_intersected_features(image_chunk_sets,
                                                   transform_sets, config)
 
+        if config.rank_features:
+            targets_all = ls.targets.gather_targets_main(
+                targets, keep=np.ones_like(targets.observations, dtype=bool),
+                node=0)
+            measures, features, scores = ls.validate.local_rank_features(
+                image_chunk_sets,
+                transform_sets,
+                targets_all,
+                config)
+            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
+                               features, scores, config)
+
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
         features, keep = ls.features.transform_features(image_chunk_sets,
@@ -105,15 +117,6 @@ def load_data(config, partitions):
 
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
-
-        if config.rank_features:
-            measures, features, scores = ls.validate.local_rank_features(
-                image_chunk_sets,
-                transform_sets,
-                targets_all,
-                config)
-            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
-                               features, scores, config)
 
         if config.pickle and ls.mpiops.chunk_index == 0:
             pickle.dump(x_all, open(config.pickled_covariates, 'wb'))

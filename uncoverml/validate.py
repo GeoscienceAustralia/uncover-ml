@@ -213,6 +213,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         transform_sets_leaveout = copy.deepcopy(transform_sets)
         final_transform_leaveout = copy.deepcopy(config.final_transform)
         image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
+
         for c in image_chunks_leaveout:
             if name in c:
                 c.pop(name)
@@ -221,11 +222,11 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         log.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
 
-        x = feat.transform_features(image_chunks_leaveout,
-                                    transform_sets_leaveout,
-                                    final_transform_leaveout,
-                                    config)
-        x_all = feat.gather_features(x, node=0)
+        x, keep = feat.transform_features(image_chunks_leaveout,
+                                          transform_sets_leaveout,
+                                          final_transform_leaveout,
+                                          config)
+        x_all = feat.gather_features(x[keep], node=0)
 
         results = local_crossval(x_all, targets_all, config)
         feature_scores[fname] = results
