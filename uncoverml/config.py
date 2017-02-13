@@ -229,9 +229,10 @@ class Config:
                     break
 
         if self.rank_features and self.pickle_load:
-            raise ConfigException('Feature ranking does not work with '
-                                  'pickled files. Please turn off either '
-                                  'feature ranking or pickles.')
+            self.pickle_load = False
+            log.info('Feature ranking does not work with '
+                     'pickled files. Pickled files will not be used. '
+                     'All covariates will be intersected.')
 
         self.output_dir = s['output']['directory']
 
