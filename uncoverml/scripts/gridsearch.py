@@ -55,9 +55,9 @@ def setup_pipeline(config):
             if k == 'target_transform':
                 v = [transforms.transforms[vv]() for vv in v]
             if k == 'kernel':
-                V = []
                 # for scikitlearn kernels
                 if isinstance(v, dict):
+                    V = []
                     for kk, value in v.items():
                         value = OrderedDict(value)
                         values = [v for v in value.values()]
@@ -71,10 +71,7 @@ def setup_pipeline(config):
                             combinations.append(d)
                         V += [kernels[kk](** c) + WhiteKernel()
                               for c in combinations]
-                elif isinstance(v, list):  # just use the default kernels
-                    for kk in v:
-                        V.append(kernels[kk]())
-                v = V
+                    v = V
 
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
     pipe = Pipeline(steps=steps)

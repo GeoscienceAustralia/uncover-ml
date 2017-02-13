@@ -62,8 +62,11 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/MBV2/GP_ceno_combine.shp
-  property: depth
+  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  property: K_ppm_imp_
+#targets:
+#  file: /home/sudipta/GA_data/MBV2/GP_ceno_combine.shp
+#  property: depth
 #  resample:
 #    - spatial:
 #        arguments:
@@ -310,12 +313,11 @@ optimisation:
 
   algorithm: transformedgp
   hyperparameters:
-#    kernel: {
-#              'rbf': {length_scale: [1]},
-#              'matern': {length_scale: [0.1], nu: [0.5]},
-#              'quadratic': {length_scale: [0.1], alpha: [0.01]}
-#            }
-    kernel: [rbf, matern, quadratic]
+    kernel: {
+              'rbf': {length_scale: [1]},
+              'matern': {length_scale: [1]},
+              'quadratic': {length_scale: [1]}
+            }
     alpha: [1.0e-10, 1.0e-9, 1.0e-8]
     normalize_y: [False, True]
 
@@ -325,8 +327,6 @@ optimisation:
 #    target_transform: [identity, standardise, log, sqrt]
 #    C: [1.0, 0.1, 0.01]
 
-
-  # kernel: ['rbf', 'matern32']  # revrand kernels
   optimisation_output: optimisation.csv
 
 # outbands: number of output bands desired.
