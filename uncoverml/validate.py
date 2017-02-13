@@ -215,14 +215,18 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
         final_transform_leaveout = copy.deepcopy(config.final_transform)
         image_chunks_leaveout = [copy.copy(k) for k in image_chunk_sets]
 
-        for c in image_chunks_leaveout:
+        for i, c in enumerate(image_chunks_leaveout):
             if name in c:
                 c.pop(name)
+            # if only one covariate of a feature type, delete
+            # this feature type, and transformset
+            if not c:
+                image_chunks_leaveout.pop(i)
+                transform_sets_leaveout.pop(i)
 
         fname = name.rstrip(".tif")
         log.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
-
         x, keep = feat.transform_features(image_chunks_leaveout,
                                           transform_sets_leaveout,
                                           final_transform_leaveout,
