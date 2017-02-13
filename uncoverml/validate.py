@@ -14,6 +14,7 @@ from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
 from uncoverml import predict
 from uncoverml import features as feat
+from uncoverml import targets as targ
 from uncoverml.learn import all_modelmaps as modelmaps
 
 log = logging.getLogger(__name__)
@@ -178,7 +179,7 @@ class CrossvalInfo:
         self.y_pred = y_pred
 
 
-def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
+def local_rank_features(image_chunk_sets, transform_sets, targets, config):
     """ Ranks the importance of the features based on their performance.
     This function trains and cross-validates a model with each individual
     feature removed and then measures the performance of the model with that
@@ -191,7 +192,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
         A dictionary used to get the set of images to test on.
     transform_sets: list
         A dictionary containing the applied transformations
-    targets_all: dict
+    targets: instance of geoio.Targets class
         The targets used in the cross validation
     config: config class instance
         The global config file
@@ -227,7 +228,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets_all, config):
                                           final_transform_leaveout,
                                           config)
         x_all = feat.gather_features(x[keep], node=0)
-
+        targets_all = targ.gather_targets_main(targets, keep, node=0)
         results = local_crossval(x_all, targets_all, config)
         feature_scores[fname] = results
 

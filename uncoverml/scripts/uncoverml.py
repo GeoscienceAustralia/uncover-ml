@@ -94,13 +94,10 @@ def load_data(config, partitions):
                                                   transform_sets, config)
 
         if config.rank_features:
-            targets_all = ls.targets.gather_targets_main(
-                targets, keep=np.ones_like(targets.observations, dtype=bool),
-                node=0)
             measures, features, scores = ls.validate.local_rank_features(
                 image_chunk_sets,
                 transform_sets,
-                targets_all,
+                targets,
                 config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
                                features, scores, config)
