@@ -244,17 +244,22 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
         optimiser function tolerance convergence criterion.
     maxiter: int, optional
         maximum number of iterations for the optimiser.
+    nstarts : int, optional
+        if there are any parameters with distributions as initial values, this
+        determines how many random candidate starts shoulds be evaluated before
+        commencing optimisation at the best candidate.
     """
 
     def __init__(self, onescol=True, var=1., regulariser=1., tol=1e-8,
-                 maxiter=1000):
+                 maxiter=1000, nstarts=100):
 
         basis = LinearBasis(onescol=onescol,
                             regularizer=Parameter(regulariser, Positive()))
         super().__init__(basis=basis,
                          var=Parameter(var, Positive()),
                          tol=tol,
-                         maxiter=maxiter
+                         maxiter=maxiter,
+                         nstarts=nstarts
                          )
 
 
@@ -288,15 +293,21 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
         optimiser function tolerance convergence criterion.
     maxiter: int, optional
         maximum number of iterations for the optimiser.
+    nstarts : int, optional
+        if there are any parameters with distributions as initial values, this
+        determines how many random candidate starts shoulds be evaluated before
+        commencing optimisation at the best candidate.
     """
 
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
-                 regulariser=1., ard=True, tol=1e-8, maxiter=1000):
+                 regulariser=1., ard=True, tol=1e-8, maxiter=1000,
+                 nstarts=100):
 
         super().__init__(basis=None,
                          var=Parameter(var, Positive()),
                          tol=tol,
-                         maxiter=maxiter
+                         maxiter=maxiter,
+                         nstarts=nstarts
                          )
 
         self._store_params(kernel, regulariser, nbases, lenscale, ard)
@@ -334,7 +345,10 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
         (should be small).
     random_state: int or RandomState, optional
         random seed
-
+    nstarts : int, optional
+        if there are any parameters with distributions as initial values, this
+        determines how many random candidate starts shoulds be evaluated before
+        commencing optimisation at the best candidate.
     Note
     ----
     Setting the ``random_state`` may be important for getting consistent
@@ -344,7 +358,7 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
 
     def __init__(self, onescol=True, var=1., regulariser=1., maxiter=3000,
                  batch_size=10, alpha=0.01, beta1=0.9, beta2=0.99,
-                 epsilon=1e-8, random_state=None):
+                 epsilon=1e-8, random_state=None, nstarts=500):
         basis = LinearBasis(onescol=onescol,
                             regularizer=Parameter(regulariser, Positive()))
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
@@ -352,7 +366,8 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
                          maxiter=maxiter,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon),
-                         random_state=random_state
+                         random_state=random_state,
+                         nstarts=nstarts
                          )
 
 
@@ -403,7 +418,10 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
         (should be small).
     random_state: int or RandomState, optional
         random seed
-
+    nstarts : int, optional
+        if there are any parameters with distributions as initial values, this
+        determines how many random candidate starts shoulds be evaluated before
+        commencing optimisation at the best candidate.
     Note
     ----
     Setting the ``random_state`` may be important for getting consistent
@@ -414,14 +432,15 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
                  alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
-                 random_state=None):
+                 random_state=None, nstarts=500):
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
                          maxiter=maxiter,
                          batch_size=batch_size,
                          updater=Adam(alpha, beta1, beta2, epsilon),
-                         random_state=random_state
+                         random_state=random_state,
+                         nstarts=nstarts
                          )
         self._store_params(kernel, regulariser, nbases, lenscale, ard)
 
