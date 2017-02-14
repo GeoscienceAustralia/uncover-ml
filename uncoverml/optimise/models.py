@@ -3,11 +3,15 @@ import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
-from sklearn.linear_model.stochastic_gradient import SGDRegressor, \
-    DEFAULT_EPSILON
+from sklearn.linear_model import (TheilSenRegressor,
+                                  RANSACRegressor,
+                                  HuberRegressor,
+                                  LinearRegression,
+                                  ElasticNet)
+from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
+                                                      DEFAULT_EPSILON)
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
@@ -461,6 +465,25 @@ class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
             )
 
 
+class Huber(TransformMixin, TagsMixin, HuberRegressor):
+    """
+    Robust HuberRegressor
+    """
+
+    def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
+                 warm_start=False, fit_intercept=True, tol=1e-05,
+                 target_transform='identity', ml_score=False):
+        # used in training
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        self.ml_score = ml_score
+        super(Huber, self).__init__(
+            epsilon=epsilon, alpha=alpha, fit_intercept=fit_intercept,
+            max_iter=max_iter, tol=tol, warm_start=warm_start
+            )
+
+
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
@@ -470,6 +493,7 @@ transformed_modelmaps = {
     'transformedbayesreg': TransformedLinearReg,
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
+    'huber': Huber,
 }
 
 # scikit-learn kernels
