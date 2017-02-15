@@ -139,7 +139,7 @@ def save_intersected_features(feature_sets, transform_sets, config):
                 plt.scatter(x=list(range(vals_no_mask.shape[0])),
                             y=vals_no_mask.data)
                 plt.title(name)
-                plt.savefig(name.split()[0] + '.png')
+                plt.savefig(name.rstrip('.tif') + '.png')
                 plt.close()
 
 
