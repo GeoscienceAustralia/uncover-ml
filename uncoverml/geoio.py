@@ -530,29 +530,34 @@ def resample(input_tif, output_tif, ratio, resampling=5):
         src = input_tif
     else:
         src = rasterio.open(input_tif, mode='r')
-    arr = src.read()
-    newarr = np.empty(shape=(arr.shape[0],  # same number of bands
-                             round(arr.shape[1] / ratio),  #
-                             round(arr.shape[2] / ratio)),
-                      dtype=arr.dtype)
-
+    nodatavals = src.nodatavals
+    new_shape = round(src.height / ratio), round(src.width / ratio)
     # adjust the new affine transform to the smaller cell size
     aff = src.transform
 
-    # c, a, b, f, d, e
-    newaff = Affine(aff.a * ratio, aff.b, aff.c,
-                    aff.d, aff.e * ratio, aff.f)
-    reproject(arr, newarr,
-              src_transform=aff,
-              dst_transform=newaff,
-              src_crs=src.crs,
-              dst_crs=src.crs,
-              resample=resampling)
+    # c, a, b, f, d, e, works on rasterio versions >=1.0
+    # newaff = Affine(aff.a * ratio, aff.b, aff.c,
+    #                 aff.d, aff.e * ratio, aff.f)
+    #
+    newaff = Affine(aff[0] * ratio, aff[1], aff[2],
+                    aff[3], aff[4] * ratio, aff[5])
+
     dest = rasterio.open(output_tif, 'w', driver='GTiff',
-                         height=newarr.shape[1], width=newarr.shape[2],
-                         count=newarr.shape[0], dtype=rasterio.float32,
-                         crs=src.crs, transform=newaff)
-    for b in range(newarr.shape[0]):
-        dest.write(newarr[b, :], b + 1)
+                         height=new_shape[0], width=new_shape[1],
+                         count=src.count, dtype=rasterio.float32,
+                         crs=src.crs, transform=newaff,
+                         nodata=nodatavals[0])
+    for b in range(src.count):
+        arr = src.read(b+1)
+        new_arr = np.empty(shape=new_shape, dtype=arr.dtype)
+        reproject(arr, new_arr,
+                  src_transform=aff,
+                  dst_transform=newaff,
+                  src_crs=src.crs,
+                  src_nodata=nodatavals[b],
+                  dst_crs=src.crs,
+                  dst_nodata=nodatavals[b],
+                  resample=resampling)
+        dest.write(new_arr, b + 1)
     src.close()
     dest.close()
