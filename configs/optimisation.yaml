@@ -15,24 +15,24 @@ features:
   - name: my features 1
     type: ordinal
     files:
-#      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-#      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-#      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
-#      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
-      - directory: /home/sudipta/GA_data/MBV2/
+      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
+      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
+#      - directory: /home/sudipta/GA_data/MBV2/
 #      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
-#      - centre
-#      - standardise
+      - centre
+      - standardise
     imputation: nn
 
-#  - name: my features 2
-#    type: categorical
-#    files:
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-#    transforms: randomhot
-#    imputation: nn
+  - name: my features 2
+    type: categorical
+    files:
+      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+    transforms: randomhot
+    imputation: nn
 
 # only used during prediction
 mask:
@@ -99,18 +99,18 @@ clustering:
 #    nbases: 100
 #    maxiter: 10
 
-learning:
-  algorithm: depthregress
-  arguments:
-#    target_transform: standardise
-    kernel: matern52
-    ard: True
-    lenscale: 1.
-    nbases: 100
-    maxiter: 18
-    falloff: 0.1
-    beta1: 0.3
-    beta2: 0.5
+#learning:
+#  algorithm: depthregress
+#  arguments:
+##    target_transform: standardise
+#    kernel: matern52
+#    ard: True
+#    lenscale: 1.
+#    nbases: 100
+#    maxiter: 18
+#    falloff: 0.1
+#    beta1: 0.3
+#    beta2: 0.5
 
 #learning:
 #  algorithm: approxgp
@@ -133,6 +133,11 @@ learning:
 #    target_transform: standardise
 #    ml_score: True
 
+learning:
+  algorithm: huber
+  arguments:
+    target_transform: standardise
+    ml_score: True
 
 
 #learning:
@@ -310,16 +315,23 @@ optimisation:
 #    ml_score: [True]
 
 
-
-  algorithm: transformedgp
+  algorithm: elasticnet
   hyperparameters:
-    kernel: {
-              'rbf': {length_scale: [1]},
-              'matern': {length_scale: [1]},
-              'quadratic': {length_scale: [1]}
-            }
-    alpha: [1.0e-10, 1.0e-9, 1.0e-8]
-    normalize_y: [False, True]
+    alpha: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    l1_ratio: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    target_transform: [rank, identity, standardise, sqrt, log]
+    ml_score: [True]
+    max_iter: [1000000]
+
+#  algorithm: transformedgp
+#  hyperparameters:
+#    kernel: {
+#              'rbf': {length_scale: [1]},
+#              'matern': {length_scale: [1]},
+#              'quadratic': {length_scale: [1]}
+#            }
+#    alpha: [1.0e-10, 1.0e-9, 1.0e-8]
+#    normalize_y: [False, True]
 
 #  algorithm: transformedsvr
 #  hyperparameters:
@@ -335,6 +347,7 @@ optimisation:
 prediction:
   quantiles: 0.95
   outbands: 10
+  thumbnails: 10
 
 validation:
 #  #- feature_rank
@@ -345,4 +358,3 @@ validation:
 
 output:
   directory: .
-

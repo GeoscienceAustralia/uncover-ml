@@ -149,6 +149,9 @@ class Config:
         self.outbands = None
         if 'outbands' in s['prediction']:
             self.outbands = s['prediction']['outbands']
+        self.thumbnails = s['prediction']['thumbnails'] \
+            if 'thumbnails' in s['prediction'] else None
+
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
         self.rawcovariates = False

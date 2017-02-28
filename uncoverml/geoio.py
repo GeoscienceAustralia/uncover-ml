@@ -305,6 +305,14 @@ class ImageWriter:
                     f.write(data[i:i+1], window=window)
         mpiops.comm.barrier()
 
+    def output_thumbnails(self, ratio=10):
+        if mpiops.chunk_index == 0:
+            # input_tif, output_tif, ratio, resampling=5
+            for f in self.files:
+                thumbnails = os.path.splitext(f.name)
+                thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
+                resample(f, output_tif=thumbnail, ratio=ratio)
+
 
 def _iterate_sources(f, config):
 
@@ -488,3 +496,63 @@ def create_scatter_plot(outfile_results, config):
         plt.ylabel('Prediction')
         plt.savefig(true_vs_pred_plot)
 
+
+def resample(input_tif, output_tif, ratio, resampling=5):
+    """
+    Parameters
+    ----------
+    input_tif: str or rasterio.io.DatasetReader
+        input file path or rasterio.io.DatasetReader object
+    output_tif: str
+        output file path
+    ratio: float
+        ratio by which to shrink/expand
+        ratio > 1 means shrink
+    resampling: int, optional
+        default is 5 (average) resampling. Other options are as follows:
+        nearest = 0
+        bilinear = 1
+        cubic = 2
+        cubic_spline = 3
+        lanczos = 4
+        average = 5
+        mode = 6
+        gauss = 7
+        max = 8
+        min = 9
+        med = 10
+        q1 = 11
+        q3 = 12
+    """
+    from rasterio.warp import reproject
+    from affine import Affine
+    if isinstance(input_tif, rasterio._io.RasterReader):
+        src = input_tif
+    else:
+        src = rasterio.open(input_tif, mode='r')
+    arr = src.read()
+    newarr = np.empty(shape=(arr.shape[0],  # same number of bands
+                             round(arr.shape[1] / ratio),  #
+                             round(arr.shape[2] / ratio)),
+                      dtype=arr.dtype)
+
+    # adjust the new affine transform to the smaller cell size
+    aff = src.transform
+
+    # c, a, b, f, d, e
+    newaff = Affine(aff.a * ratio, aff.b, aff.c,
+                    aff.d, aff.e * ratio, aff.f)
+    reproject(arr, newarr,
+              src_transform=aff,
+              dst_transform=newaff,
+              src_crs=src.crs,
+              dst_crs=src.crs,
+              resample=resampling)
+    dest = rasterio.open(output_tif, 'w', driver='GTiff',
+                         height=newarr.shape[1], width=newarr.shape[2],
+                         count=newarr.shape[0], dtype=rasterio.float32,
+                         crs=src.crs, transform=newaff)
+    for b in range(newarr.shape[0]):
+        dest.write(newarr[b, :], b + 1)
+    src.close()
+    dest.close()

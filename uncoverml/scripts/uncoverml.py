@@ -238,6 +238,9 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
+
+    if config.thumbnails:
+        image_out.output_thumbnails(config.thumbnails)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
