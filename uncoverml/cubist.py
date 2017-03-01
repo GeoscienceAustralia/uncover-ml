@@ -138,9 +138,8 @@ class Cubist:
         # Setting up the user details
         self._trained = False
         self.models = []
-        self._filename = name + mpiops.chunk_index + '_' + str(time.time()) \
-            + str(random.random())
-
+        self._filename = name + '_' + str(mpiops.chunk_index) + '_' + \
+                         str(time.time()) + str(random.random())
         # Setting the user options
         self.print_output = print_output
         self.committee_members = committee_members
