@@ -121,12 +121,11 @@ class NearestNeighboursImputer:
 
     def __call__(self, x):
 
-        if self.kdtree is None:
-            self._make_kdtree(x)
-
         # impute with neighbours
         missing_ind = np.ma.count_masked(x, axis=1) > 0
         if missing_ind.sum() > 0:
+            if self.kdtree is None:  # only compute kdtree if required
+                self._make_kdtree(x)
             missing_mask = x.mask[missing_ind]
             nn = self._av_neigbours(x[missing_ind])
             x.data[x.mask] = nn[missing_mask]
