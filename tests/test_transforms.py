@@ -91,10 +91,10 @@ def test_NearestNeighbourImputer(make_missing_data):
 
     X = make_missing_data
     Xcopy = X.copy()
-    nn = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=False)
+    # nn = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=False)
 
     imputer = NearestNeighboursImputer(nodes=100)
-    imputer(nn)
+    # imputer(nn) what's this doing here?
 
     Ximp = imputer(X)
 
@@ -102,6 +102,13 @@ def test_NearestNeighbourImputer(make_missing_data):
     assert np.all(~np.isinf(Ximp))
     assert Ximp.shape == Xcopy.shape
     assert np.ma.count_masked(Ximp) == 0
+
+
+def test_NearestNeighbourImputerValueError():
+    X = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=True)
+    imputer = NearestNeighboursImputer(nodes=100)
+    with pytest.raises(ValueError):
+        Ximp = imputer(X)
 
 
 def test_CentreTransform(make_random_data):

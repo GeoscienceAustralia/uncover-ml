@@ -120,16 +120,20 @@ class NearestNeighboursImputer:
         self.kdtree = None
 
     def __call__(self, x):
-
+        # if any of the columns is entirely masked raise
+        if any(np.ma.count_masked(x, axis=0) == x.shape):
+            raise ValueError('All data is masked. Need at least one valid'
+                             'data point')
         # impute with neighbours
         missing_ind = np.ma.count_masked(x, axis=1) > 0
+
+        if self.kdtree is None:
+            self._make_kdtree(x)
+
         if missing_ind.sum() > 0:
-            if self.kdtree is None:  # only compute kdtree if required
-                self._make_kdtree(x)
             missing_mask = x.mask[missing_ind]
             nn = self._av_neigbours(x[missing_ind])
             x.data[x.mask] = nn[missing_mask]
-
         return np.ma.MaskedArray(data=x.data, mask=False)
 
     def _make_kdtree(self, x):
