@@ -159,8 +159,13 @@ def random_full_points(x, Napprox):
         x_p_node.append(x[i])
         count += 1
 
-    x_p_node = np.vstack(x_p_node)
+    # one chunk can have all of one or more covariates masked
+    x_p_node = np.vstack(x_p_node) if len(x_p_node) else None
+
+    all_x_p_node = comm.allgather(x_p_node)
+    # filter out the None chunks
+    filter_all_x_p_node = [x for x in all_x_p_node if x is not None]
 
     # Gather all random points
-    x_p = np.vstack(comm.allgather(x_p_node))
+    x_p = np.vstack(filter_all_x_p_node)
     return x_p

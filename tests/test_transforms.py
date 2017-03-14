@@ -105,8 +105,17 @@ def test_NearestNeighbourImputer(make_missing_data):
 
 
 def test_NearestNeighbourImputerValueError():
-    X = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=True)
-    imputer = NearestNeighboursImputer(nodes=100)
+    X = np.ma.MaskedArray(data=np.random.randn(100, 3), mask=True)
+    imputer = NearestNeighboursImputer(nodes=100, k=5)
+    X.mask[:4, :] = False
+    with pytest.raises(ValueError):
+        Ximp = imputer(X)
+
+
+def test_NearestNeighbourImputerRowsCleanValueError():
+    X = np.ma.MaskedArray(data=np.random.randn(100, 3), mask=True)
+    imputer = NearestNeighboursImputer(nodes=100, k=5)
+    X.mask[:10, :2] = False
     with pytest.raises(ValueError):
         Ximp = imputer(X)
 

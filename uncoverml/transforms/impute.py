@@ -120,10 +120,7 @@ class NearestNeighboursImputer:
         self.kdtree = None
 
     def __call__(self, x):
-        # if any of the columns is entirely masked raise
-        if any(np.ma.count_masked(x, axis=0) == x.shape):
-            raise ValueError('All data is masked. Need at least one valid'
-                             'data point')
+
         # impute with neighbours
         missing_ind = np.ma.count_masked(x, axis=1) > 0
 
@@ -138,6 +135,12 @@ class NearestNeighboursImputer:
 
     def _make_kdtree(self, x):
         self.kdtree = cKDTree(mpiops.random_full_points(x, Napprox=self.nodes))
+        if not np.isfinite(self.kdtree.query(x, k=self.k)[0]).all():
+            log.warning('Kdtree computation encountered problem. '
+                        'Not enough neighbors available to compute '
+                        'kdtree. Printing kdtree for debugging purpose')
+            raise ValueError('Computed kdtree is not fully populated.'
+                             'Not enough valid neighbours available.')
 
     def _get_neighbour(self, xq):
         _, neighbourind = self.kdtree.query(xq)
