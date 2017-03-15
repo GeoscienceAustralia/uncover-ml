@@ -143,9 +143,9 @@ def eigen_decomposition(x):
 
 
 def random_full_points(x, Napprox):
-
-    Napprox = min(Napprox, len(x))  # Make sure whole dataset is upper bound
     npernode = int(np.round(Napprox / chunks))
+    npernode = min(npernode, len(x))  # Make sure the dataset is upper bound
+
     rinds = np.random.permutation(len(x))  # random choice of indices
 
     # Get random points per node
