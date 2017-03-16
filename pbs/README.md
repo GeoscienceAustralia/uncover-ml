@@ -63,7 +63,7 @@ $ workon uncoverml
 3. Clone the uncoverml repo into your home directory:
 ```bash
 $ cd ~
-$ git clone git@github.com:NICTA/uncover-ml.git
+$ git clone git@github.com:GeoscienceAustralia/uncover-ml.git
 ```
 
 4. Install uncoverml:

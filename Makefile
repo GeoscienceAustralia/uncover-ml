@@ -39,9 +39,9 @@ coverage:
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/uncover-ml.rst
+	rm -f docs/uncoverml.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ uncover-ml
+	sphinx-apidoc -o docs/ uncoverml
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html

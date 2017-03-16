@@ -35,7 +35,7 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://nicta.github.io/uncover-ml/."""
+The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/."""
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
@@ -44,9 +44,10 @@ setup(
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
-    author='NICTA Spatial Inference Systems Team',
-    author_email='daniel.steinberg@nicta.com.au',
-    url='https://github.com/NICTA/uncover-ml',
+    author='Geoscience Australia Mineral Systems Group, NICTA Spatial '
+           'Inference Systems Team',
+    author_email='John.Wilford@ga.gov.au',
+    url='https://github.com/GeoscienceAustralia/uncover-ml',
     packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms',
               'preprocessing', 'uncoverml.optimise'],
     package_dir={'uncover-ml': 'uncoverml'},

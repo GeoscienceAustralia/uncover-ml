@@ -2,18 +2,6 @@
 uncover ML
 ==========
 
-.. .. image:: https://badge.fury.io/py/uncover-ml.png
-..     :target: http://badge.fury.io/py/uncover-ml
-
-.. .. image:: https://travis-ci.org/dsteinberg/uncover-ml.png?branch=master
-..     :target: https://travis-ci.org/dsteinberg/uncover-ml
-
-.. .. image:: https://codecov.io/github/dsteinberg/uncover-ml/coverage.svg?branch=master
-..     :target: https://codecov.io/github/dsteinberg/uncover-ml?branch=master
-
-.. .. image:: https://pypip.in/d/uncover-ml/badge.png
-..     :target: https://pypi.python.org/pypi/uncover-ml
-
 
 Machine learning tools for the Geoscience Australia uncover project.
 
@@ -37,7 +25,7 @@ or install with ``pip``:
 
 .. code:: console
 
-   $ pip install git+https://github.com/nicta/uncover-ml.git@release
+   $ pip install git+https://github.com/GeoscienceAustralia/uncover-ml.git@release
 
 The python requirements should automatically be built and installed.
 
@@ -68,34 +56,34 @@ should be able to use the cubist regressor in the pipeline file.
 Running 
 -------
 
-See the `usage <http://nicta.github.io/uncover-ml/usage.html>`_ documentation.
+See the `usage <http://GeoscienceAustralia.github.io/uncover-ml/usage.html>`_ documentation.
 
 Running on NCI
 --------------
 Please see `The PBS Readme <pbs/README.md>`_ .
 
-Contract with Geoscience Australia
-----------------------------------
-This software is being developed under contract with Geoscience Australia.
+Collaboration
+-------------
+This software is jointly developed by NICTA and Geoscience Australia.
 For a list of features still to be implemented, see the 
-`issue tracker <https://github.com/nicta/uncover-ml/issues>`.
+`issue tracker <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_.
 
 
 Useful Links
 ------------
 
 Home Page
-    http://github.com/nicta/uncover-ml
+    http://github.com/GeoscienceAustralia/uncover-ml
 
 Documentation
-    http://nicta.github.io/uncover-ml
+    http://GeoscienceAustralia.github.io/uncover-ml
 
 Issue tracking
-    https://github.com/nicta/uncover-ml/issues
+    https://github.com/GeoscienceAustralia/uncover-ml/issues
 
 
 Bugs & Feedback
 ---------------
 
 For bugs, questions and discussions, please use 
-`Github Issues <https://github.com/NICTA/uncover/issues>`_.
+`Github Issues <https://github.com/GeoscienceAustralia/uncover/issues>`_.
