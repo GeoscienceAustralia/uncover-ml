@@ -104,6 +104,8 @@ def save_intersected_features(feature_sets, transform_sets, config):
     config file:
         a) rawcovariates.csv: the covariate values in csv
         b) rawcovariates_mask.csv: the corresponding mask in csv
+    This function will also optionally output intersected covariates scatter
+    plot.
     """
     transform_sets_mod = []
     names = ['{}_{}'.format(b, k)
