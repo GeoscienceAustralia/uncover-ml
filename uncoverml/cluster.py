@@ -505,7 +505,7 @@ def compute_n_classes(classes, config):
         The max of k and the number of classes referenced in the training data
     """
     k = mpiops.comm.allreduce(np.amax(classes), op=mpiops.MPI.MAX)
-    k = max(k, config.n_classes)
+    k = int(max(k, config.n_classes))
     return k
 
 
