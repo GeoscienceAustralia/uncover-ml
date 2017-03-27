@@ -293,7 +293,7 @@ class ImageWriter:
         else:
             for node in range(mpiops.chunks):
                 node = mpiops.chunks - node - 1
-                subindex = node * self.n_subchunks + subchunk_index
+                subindex = mpiops.chunks*subchunk_index + node
                 ystart = self.sub_starts[subindex]
                 data = mpiops.comm.recv(source=node) \
                     if node != 0 else image
