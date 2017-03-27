@@ -314,6 +314,19 @@ class ImageWriter:
                 resample(f, output_tif=thumbnail, ratio=ratio)
 
 
+def feature_names(config):
+
+    results = []
+    for s in config.feature_sets:
+        feats = []
+        for tif in s.files:
+            name = os.path.basename(tif)
+            feats.append(name)
+        feats.sort()
+        results += feats
+    return results
+
+
 def _iterate_sources(f, config):
 
     results = []

@@ -41,10 +41,8 @@ def predict(data, model, interval=0.95, **kwargs):
 
 
 def _get_data(subchunk, config):
+    features_names = geoio.feature_names(config)
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
-    features_names = []
-    for d in extracted_chunk_sets:
-        features_names += d.keys()
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
