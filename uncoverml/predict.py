@@ -40,11 +40,35 @@ def predict(data, model, interval=0.95, **kwargs):
     return result
 
 
+def _mask(subchunk, config):
+    extracted_mask = mask_subchunks(subchunk, config)
+    mask_x = extracted_mask.reshape(extracted_mask.shape[0], 1)
+    mask_x.mask = mask_x.data != config.retain
+    return mask_x
+
+
+def mask_subchunks(subchunk, config):
+    image_source = geoio.RasterioImageSource(config.mask)
+    result = features.extract_subchunks(image_source, subchunk,
+                                        config.n_subchunks, config.patchsize)
+    return result
+
+
 def _get_data(subchunk, config):
+    features_names = geoio.feature_names(config)
+
+    if config.mask:
+        mask_x = _mask(subchunk, config)
+        all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
+        if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
+            x = np.ma.zeros((mask_x.shape[0], len(features_names)),
+                            dtype=np.bool)
+            x.mask = True
+            log.info('Partition {} covariates are not loaded as '
+                     'the partition is entirely masked.'.format(subchunk + 1))
+            return x, features_names
+
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
-    features_names = []
-    for d in extracted_chunk_sets:
-        features_names += d.keys()
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,

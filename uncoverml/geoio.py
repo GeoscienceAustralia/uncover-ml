@@ -293,7 +293,7 @@ class ImageWriter:
         else:
             for node in range(mpiops.chunks):
                 node = mpiops.chunks - node - 1
-                subindex = node * self.n_subchunks + subchunk_index
+                subindex = mpiops.chunks*subchunk_index + node
                 ystart = self.sub_starts[subindex]
                 data = mpiops.comm.recv(source=node) \
                     if node != 0 else image
@@ -312,6 +312,19 @@ class ImageWriter:
                 thumbnails = os.path.splitext(f.name)
                 thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
                 resample(f, output_tif=thumbnail, ratio=ratio)
+
+
+def feature_names(config):
+
+    results = []
+    for s in config.feature_sets:
+        feats = []
+        for tif in s.files:
+            name = os.path.basename(tif)
+            feats.append(name)
+        feats.sort()
+        results += feats
+    return results
 
 
 def _iterate_sources(f, config):
