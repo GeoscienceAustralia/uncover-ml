@@ -118,7 +118,7 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Predicting targets for {}.".format(alg))
     y_star = predict(x, model, interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
-    if config.cluster_analysis:
+    if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     image_out.write(y_star, subchunk)
 

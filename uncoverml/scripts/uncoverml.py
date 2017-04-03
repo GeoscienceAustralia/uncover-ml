@@ -6,7 +6,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-from os.path import isfile
+from os.path import isfile, splitext
 import warnings
 import click
 import numpy as np
@@ -204,7 +204,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     model = state_dict["model"]
     config = state_dict["config"]
-
+    config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
+        else False
     config.mask = mask if mask else config.mask
     if config.mask:
         config.retain = retain if retain else config.retain
