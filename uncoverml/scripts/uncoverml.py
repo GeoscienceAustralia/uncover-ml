@@ -22,6 +22,7 @@ import uncoverml.mllog
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
+from uncoverml.transforms import StandardiseTransform
 from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback
 
@@ -128,6 +129,15 @@ def load_data(config, partitions):
               help='only use this fraction of the data for learning classes')
 def cluster(pipeline_file, subsample_fraction):
     config = ls.config.Config(pipeline_file)
+
+    for f in config.feature_sets:
+        if not f.transform_set.global_transforms:
+            raise ValueError('Standardise transform must be used for kmeans')
+        for t in f.transform_set.global_transforms:
+            if not isinstance(t, StandardiseTransform):
+                raise ValueError('Only standardise transform is '
+                                 'allowed for kmeans')
+
     config.subsample_fraction = subsample_fraction
     if config.subsample_fraction < 1:
         log.info("Memory contstraint: using {:2.2f}%"
