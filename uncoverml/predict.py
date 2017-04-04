@@ -144,7 +144,15 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
         writer = csv.writer(csvfile, delimiter=',')
         if mpiops.chunk_index == 0:
             if partition_no == 0:
-                writer.writerow(feature_names)
+                writer.writerow(['feature_names'] + feature_names)
+                means = []
+                sds = []
+                for f in config.feature_sets:
+                    for t in f.transform_set.global_transforms:
+                        means += list(t.mean)
+                        sds += list(t.sd)
+                writer.writerow(['transform mean'] + [str(m) for m in means])
+                writer.writerow(['transform sd'] + [str(s) for s in sds])
             writer.writerow(['partition {}'.format(partition_no)])
         write_mean_and_sd(x, y, writer, config)
 
