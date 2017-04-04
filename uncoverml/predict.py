@@ -153,7 +153,7 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
                         sds += list(t.sd)
                 writer.writerow(['transform mean'] + [str(m) for m in means])
                 writer.writerow(['transform sd'] + [str(s) for s in sds])
-            writer.writerow(['partition {}'.format(partition_no)])
+            writer.writerow(['partition {}'.format(partition_no + 1)])
         write_mean_and_sd(x, y, writer, config)
 
 
@@ -187,5 +187,6 @@ def write_mean_and_sd(x, y, writer, config):
         sd = np.sqrt(delta_c_sum/class_count)
 
         if mpiops.chunk_index == 0:
-            writer.writerow(['mean'] + list(class_mean))
-            writer.writerow(['sd'] + list(sd))
+            writer.writerow(['count-{}'.format(c+1)] + list(class_count))
+            writer.writerow(['mean-{}'.format(c + 1)] + list(class_mean))
+            writer.writerow(['sd-{}'.format(c + 1)] + list(sd))
