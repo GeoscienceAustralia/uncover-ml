@@ -6,7 +6,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-from os.path import isfile
+from os.path import isfile, splitext
 import warnings
 import click
 import numpy as np
@@ -22,6 +22,7 @@ import uncoverml.mllog
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
+from uncoverml.transforms import StandardiseTransform
 from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback
 
@@ -128,6 +129,15 @@ def load_data(config, partitions):
               help='only use this fraction of the data for learning classes')
 def cluster(pipeline_file, subsample_fraction):
     config = ls.config.Config(pipeline_file)
+
+    for f in config.feature_sets:
+        if not f.transform_set.global_transforms:
+            raise ValueError('Standardise transform must be used for kmeans')
+        for t in f.transform_set.global_transforms:
+            if not isinstance(t, StandardiseTransform):
+                raise ValueError('Only standardise transform is '
+                                 'allowed for kmeans')
+
     config.subsample_fraction = subsample_fraction
     if config.subsample_fraction < 1:
         log.info("Memory contstraint: using {:2.2f}%"
@@ -204,7 +214,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     model = state_dict["model"]
     config = state_dict["config"]
-
+    config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
+        else False
     config.mask = mask if mask else config.mask
     if config.mask:
         config.retain = retain if retain else config.retain
@@ -238,6 +249,11 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
+
+    if config.cluster and config.cluster_analysis:
+        if ls.mpiops.chunk_index == 0:
+            ls.predict.final_cluster_analysis(config.n_classes,
+                                              config.n_subchunks)
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
