@@ -293,7 +293,7 @@ class ImageWriter:
         else:
             for node in range(mpiops.chunks):
                 node = mpiops.chunks - node - 1
-                subindex = node * self.n_subchunks + subchunk_index
+                subindex = mpiops.chunks*subchunk_index + node
                 ystart = self.sub_starts[subindex]
                 data = mpiops.comm.recv(source=node) \
                     if node != 0 else image
@@ -314,6 +314,19 @@ class ImageWriter:
                 resample(f, output_tif=thumbnail, ratio=ratio)
 
 
+def feature_names(config):
+
+    results = []
+    for s in config.feature_sets:
+        feats = []
+        for tif in s.files:
+            name = os.path.basename(tif)
+            feats.append(name)
+        feats.sort()
+        results += feats
+    return results
+
+
 def _iterate_sources(f, config):
 
     results = []
@@ -326,10 +339,10 @@ def _iterate_sources(f, config):
             # TODO this may hurt performance. Consider removal
             if type(x) is np.ma.MaskedArray:
                 count = mpiops.count(x)
-                if not np.all(count > 0):
-                    s = ("{} has no data in at least one band.".format(name) +
-                         " Valid_pixel_count: {}".format(count))
-                    raise ValueError(s)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
                 missing_percent = missing_percentage(x)
                 t_missing = mpiops.comm.allreduce(
                     missing_percent) / mpiops.chunks

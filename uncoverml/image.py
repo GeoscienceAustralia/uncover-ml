@@ -223,8 +223,8 @@ class Image:
 
 def bbox2affine(xmax, xmin, ymax, ymin, xres, yres):
 
-    pixsize_x = (xmax - xmin) / (xres + 1)
-    pixsize_y = (ymax - ymin) / (yres + 1)
+    pixsize_x = (xmax - xmin) / xres
+    pixsize_y = (ymax - ymin) / yres
 
     A = Affine(pixsize_x, 0, xmin,
                0, -pixsize_y, ymax)

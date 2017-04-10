@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
     equiv_chunks = n_subchunks * mpiops.chunks
-    equiv_chunk_index = n_subchunks * mpiops.chunk_index + subchunk_index
+    equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
     image = Image(image_source, equiv_chunk_index,
                   equiv_chunks, patchsize)
     x = patch.all_patches(image, patchsize)
@@ -104,6 +104,8 @@ def save_intersected_features(feature_sets, transform_sets, config):
     config file:
         a) rawcovariates.csv: the covariate values in csv
         b) rawcovariates_mask.csv: the corresponding mask in csv
+    This function will also optionally output intersected covariates scatter
+    plot.
     """
     transform_sets_mod = []
     names = ['{}_{}'.format(b, k)

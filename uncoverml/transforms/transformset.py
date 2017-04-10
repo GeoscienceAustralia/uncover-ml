@@ -48,10 +48,10 @@ class TransformSet:
 class ImageTransformSet(TransformSet):
     def __init__(self, image_transforms=None, imputer=None,
                  global_transforms=None, is_categorical=False):
-            self.image_transforms = (image_transforms if image_transforms
-                                     else [])
-            self.is_categorical = is_categorical
-            super().__init__(imputer, global_transforms)
+        self.image_transforms = (image_transforms if image_transforms
+                                 else [])
+        self.is_categorical = is_categorical
+        super().__init__(imputer, global_transforms)
 
     def __call__(self, image_chunks):
         transformed_chunks = copy.copy(image_chunks)

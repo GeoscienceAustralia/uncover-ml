@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import csv
 
 from uncoverml import features
 from uncoverml import mpiops
@@ -40,11 +41,35 @@ def predict(data, model, interval=0.95, **kwargs):
     return result
 
 
+def _mask(subchunk, config):
+    extracted_mask = mask_subchunks(subchunk, config)
+    mask_x = extracted_mask.reshape(extracted_mask.shape[0], 1)
+    mask_x.mask = mask_x.data != config.retain
+    return mask_x
+
+
+def mask_subchunks(subchunk, config):
+    image_source = geoio.RasterioImageSource(config.mask)
+    result = features.extract_subchunks(image_source, subchunk,
+                                        config.n_subchunks, config.patchsize)
+    return result
+
+
 def _get_data(subchunk, config):
+    features_names = geoio.feature_names(config)
+
+    if config.mask:
+        mask_x = _mask(subchunk, config)
+        all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
+        if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
+            x = np.ma.zeros((mask_x.shape[0], len(features_names)),
+                            dtype=np.bool)
+            x.mask = True
+            log.info('Partition {} covariates are not loaded as '
+                     'the partition is entirely masked.'.format(subchunk + 1))
+            return x, features_names
+
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
-    features_names = []
-    for d in extracted_chunk_sets:
-        features_names += d.keys()
     transform_sets = [k.transform_set for k in config.feature_sets]
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
@@ -94,7 +119,7 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Predicting targets for {}.".format(alg))
     y_star = predict(x, model, interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
-    if config.cluster_analysis:
+    if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     image_out.write(y_star, subchunk)
 
@@ -114,14 +139,23 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
         list of strings corresponding to ordered feature names
 
     """
-    import csv
+    log.info('Writing cluster analysis results for '
+             'partition {}'.format(partition_no))
     mode = 'w' if partition_no == 0 else 'a'
     with open('cluster_contributions.csv', mode) as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
         if mpiops.chunk_index == 0:
             if partition_no == 0:
-                writer.writerow(feature_names)
-            writer.writerow(['partition {}'.format(partition_no)])
+                writer.writerow(['feature_names'] + feature_names)
+                means = []
+                sds = []
+                for f in config.feature_sets:
+                    for t in f.transform_set.global_transforms:
+                        means += list(t.mean)
+                        sds += list(t.sd)
+                writer.writerow(['transform mean'] + [str(m) for m in means])
+                writer.writerow(['transform sd'] + [str(s) for s in sds])
+            writer.writerow(['partition {}'.format(partition_no + 1)])
         write_mean_and_sd(x, y, writer, config)
 
 
@@ -155,5 +189,47 @@ def write_mean_and_sd(x, y, writer, config):
         sd = np.sqrt(delta_c_sum/class_count)
 
         if mpiops.chunk_index == 0:
-            writer.writerow(['mean'] + list(class_mean))
-            writer.writerow(['sd'] + list(sd))
+            writer.writerow(['count-{}'.format(c+1)] + list(class_count))
+            writer.writerow(['mean-{}'.format(c+1)] + list(class_mean))
+            writer.writerow(['sd-{}'.format(c+1)] + list(sd))
+
+
+def _flotify(arr):
+    return np.array([float(i) for i in arr])
+
+
+def final_cluster_analysis(n_classes, n_paritions):
+
+    log.info('Performing final cluster analysis')
+
+    with open('cluster_contributions.csv', 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        names = next(reader)
+        means = _flotify(next(reader)[1:])
+        stds = _flotify(next(reader)[1:])
+        n_covariates = len(names[1:])
+        class_pixels = np.zeros(shape=n_classes, dtype=np.int32)
+        class_means = np.zeros(shape=(n_classes, n_covariates))
+        class_stds = np.zeros(shape=(n_classes, n_covariates))
+
+        for p in range(n_paritions):
+            next(reader)  # skip partition string
+            for c in range(n_classes):
+                count = int(next(reader)[1])  # class count
+                class_pixels[c] += count
+                t_means = _flotify(next(reader)[1:])
+                class_means[c, :] += count * t_means  # class mean sum
+                t_stds = _flotify(next(reader)[1:])
+                class_stds[c, :] += count * t_stds * t_stds  # class std sum
+
+    for c in range(n_classes):
+        class_means[c] = stds*class_means[c, :]/class_pixels[c] + means
+        class_stds[c] = stds*np.sqrt((class_stds[c, :]/class_pixels[c]))
+
+    with open('cluster_contributions_final.csv', 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(names)
+        for c in range(n_classes):
+            writer.writerow(['count-{}'.format(c+1)] + [str(class_pixels[c])])
+            writer.writerow(['mean-{}'.format(c+1)] + list(class_means[c]))
+            writer.writerow(['sd-{}'.format(c+1)] + list(class_stds[c]))
