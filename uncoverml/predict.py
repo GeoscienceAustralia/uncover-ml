@@ -217,9 +217,15 @@ def final_cluster_analysis(n_classes, n_paritions):
             for c in range(n_classes):
                 count = int(next(reader)[1])  # class count
                 class_pixels[c] += count
-                t_means = _flotify(next(reader)[1:])
+                if count:  # when there is contribution from this class
+                    t_means = _flotify(next(reader)[1:])
+                    t_stds = _flotify(next(reader)[1:])
+                else:
+                    next(reader)  # skip means
+                    next(reader)  # skip stds
+                    t_means = np.zeros(n_covariates)
+                    t_stds = np.zeros(n_covariates)
                 class_means[c, :] += count * t_means  # class mean sum
-                t_stds = _flotify(next(reader)[1:])
                 class_stds[c, :] += count * t_stds * t_stds  # class std sum
 
     for c in range(n_classes):
