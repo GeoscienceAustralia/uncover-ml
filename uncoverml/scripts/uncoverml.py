@@ -22,6 +22,7 @@ import uncoverml.mllog
 import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
+import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
 from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback

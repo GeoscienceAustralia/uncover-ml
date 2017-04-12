@@ -596,8 +596,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
         return super().predict_proba(X, interval, likelihood_args=(largs,))
 
     def _parse_largs(self, largs):
-
-        return np.array([v == 'no' for v in largs], dtype=bool)
+        return np.array([v == 'yes' for v in largs], dtype=bool)
 
 
 #
