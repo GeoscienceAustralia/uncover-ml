@@ -554,7 +554,9 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
             where ``censored`` is the indicator field, and ``yes`` means we
             have not directly observed the phenomena, and ``no`` means we have.
         """
-
+        # uncomment next line to work with depthregress if your shapefile
+        # does not have a 'censored' column
+        # fields[self.indicator_field] = ['No'] * len(y)
         largs = self._parse_largs(fields[self.indicator_field])
         return super().fit(X, y, likelihood_args=(largs,))
 
@@ -596,7 +598,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
         return super().predict_proba(X, interval, likelihood_args=(largs,))
 
     def _parse_largs(self, largs):
-        return np.array([v == 'yes' for v in largs], dtype=bool)
+        return np.array([v == 'No' for v in largs], dtype=bool)
 
 
 #
