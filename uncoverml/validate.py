@@ -312,6 +312,7 @@ def local_crossval(x_all, targets_all, config):
         y = y[hit]
         x_all = x_all[hit]
         cv_indices = cv_indices[hit]
+        lon_lat = lon_lat[hit]
 
     # Train and score on each fold
     for fold in fold_node:
@@ -349,8 +350,7 @@ def local_crossval(x_all, targets_all, config):
         # Testing
         y_k_pred = predict.predict(x_all[test_mask], model,
                                    fields=fields_pred,
-                                   lon_lat=lon_lat_test
-                                   )
+                                   lon_lat=lon_lat_test)
 
         y_k_test = y[test_mask]
         y_pred[fold] = y_k_pred
