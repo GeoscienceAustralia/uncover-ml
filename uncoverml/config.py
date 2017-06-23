@@ -150,7 +150,7 @@ class Config:
         if 'outbands' in s['prediction']:
             self.outbands = s['prediction']['outbands']
         self.thumbnails = s['prediction']['thumbnails'] \
-            if 'thumbnails' in s['prediction'] else None
+            if 'thumbnails' in s['prediction'] else 10
 
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
