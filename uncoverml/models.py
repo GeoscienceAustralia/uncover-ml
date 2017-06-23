@@ -67,7 +67,7 @@ class BasisMakerMixin():
                                         lenscale=lenscale_init,
                                         regularizer=self.regulariser)
 
-        self.basis = gpbasis + BiasBasis()
+        self.basis = gpbasis + LinearBasis()
 
 
 class PredictProbaMixin():
