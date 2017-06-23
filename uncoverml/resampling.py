@@ -3,8 +3,7 @@ from os.path import abspath, exists, splitext
 from os import remove
 import geopandas as gpd
 import pandas as pd
-# import pandas.core.algorithms as algos
-# from pandas.core.reshape import tile
+import pandas.core.algorithms as algos
 import numpy as np
 from shapely.geometry import Polygon
 import logging
@@ -87,12 +86,11 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
     # the idea is stolen from pandas.qcut
     # pd.qcut does not work for cases when it result in non-unique bin edges
     target = gdf_out[target_field].values
-    # bin_edges = algos.quantile(
-    #     np.unique(target), np.linspace(0, 1, bins+1))
-    # result = tile._bins_to_cuts(target, bin_edges,
-    #                              labels=False,
-    #                              include_lowest=True)
-    result = pd.qcut(target, bins, labels=False)
+    bin_edges = algos.quantile(
+        np.unique(target), np.linspace(0, 1, bins+1))
+    result = pd.tools.tile._bins_to_cuts(target, bin_edges,
+                                         labels=False,
+                                         include_lowest=True)
     # add to output df for sampling
     gdf_out[BIN] = result
 
