@@ -30,7 +30,7 @@ def test_correct_range():
 
     # Fit the data
     predictor = Cubist(print_output=False,
-                       sampling=0, seed=0)
+                       sampling=90, seed=0, committee_members=2)
     predictor.fit(x, y)
 
     # Predict the output
@@ -45,7 +45,7 @@ def test_correct_range_with_sampling():
 
     # Fit the data
     predictor = Cubist(print_output=False,
-                       sampling=90, seed=10)
+                       sampling=90, seed=10, committee_members=2)
     predictor.fit(x, y)
 
     # Predict the output
