@@ -30,14 +30,6 @@ class PyTest(TestCommand):
         exit(pytest.main(self.pytest_args))
 
 
-# class BuildPyCommand(build_py):
-#   """Custom build command for making cubist and writing paths."""
-
-#   def run(self):
-#     target_dir = os.path.abspath(self.build_lib)
-#     import IPython; IPython.embed(); import sys; sys.exit
-#     setuptools.command.build_py.build_py.run(self)
-
 readme = open('README.rst').read()
 doclink = """
 Documentation
