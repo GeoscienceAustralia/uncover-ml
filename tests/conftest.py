@@ -7,10 +7,20 @@ import os.path
 import pytest
 import numpy as np
 import shapefile as shp
+import preprocessing
 from uncoverml import mpiops
 
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 
+@pytest.fixture
+def mock_files():
+    data_dir = os.path.join(os.path.dirname(preprocessing.__file__), 'mocks')
+    std2000 = os.path.join(data_dir, 'std2000.tif')
+    std2000_no_mask = os.path.join(data_dir, 'std2000_no_mask.tif')
+    mask = os.path.join(data_dir, 'mask.tif')
+    result = dict(std2000=std2000, mask=mask,
+                  std2000_no_mask=std2000_no_mask)
+    return result
 
 @pytest.fixture
 def random_filename(tmpdir_factory):
@@ -20,6 +30,17 @@ def random_filename(tmpdir_factory):
                         for _ in range(10))
         return os.path.join(dir, fname + ext)
     return make_random_filename
+
+@pytest.fixture
+def random_dir(tmpdir_factory):
+    def make_random_dir():
+        name = ''.join(random.choice(string.ascii_lowercase)
+                        for _ in range(10))
+        base = str(tmpdir_factory.mktemp('uncoverml').realpath())
+        p = os.path.join(base, name)
+        os.mkdir(p)
+        return p
+    return make_random_dir
 
 
 @pytest.fixture

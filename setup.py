@@ -6,9 +6,9 @@ from setuptools.command.test import test as TestCommand
 
 # If testing in python 2, use subprocess32 instead of built in subprocess
 if os.name == 'posix' and sys.version_info[0] < 3:
-    exta_test_deps = ['subprocess32']
+    extra_test_deps = ['subprocess32']
 else:
-    exta_test_deps = []
+    extra_test_deps = []
 
 
 class PyTest(TestCommand):
@@ -30,6 +30,14 @@ class PyTest(TestCommand):
         exit(pytest.main(self.pytest_args))
 
 
+# class BuildPyCommand(build_py):
+#   """Custom build command for making cubist and writing paths."""
+
+#   def run(self):
+#     target_dir = os.path.abspath(self.build_lib)
+#     import IPython; IPython.embed(); import sys; sys.exit
+#     setuptools.command.build_py.build_py.run(self)
+
 readme = open('README.rst').read()
 doclink = """
 Documentation
@@ -48,8 +56,7 @@ setup(
            'Inference Systems Team',
     author_email='John.Wilford@ga.gov.au',
     url='https://github.com/GeoscienceAustralia/uncover-ml',
-    packages=['uncoverml', 'uncoverml.scripts', 'uncoverml.transforms',
-              'preprocessing', 'uncoverml.optimise'],
+    packages=['uncoverml', 'preprocessing'],
     package_dir={'uncover-ml': 'uncoverml'},
     include_package_data=True,
     entry_points={
@@ -108,7 +115,7 @@ setup(
         'coverage',
         'codecov',
         'tox',
-    ] + exta_test_deps,
+    ] + extra_test_deps,
     license="Apache Software License 2.0",
     zip_safe=False,
     keywords='uncover-ml',
