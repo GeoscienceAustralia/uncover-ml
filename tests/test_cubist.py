@@ -23,7 +23,7 @@ x = np.array([
         [0.637, 0.00, 8.140, 0.5380, 6.0960, 84.50, 4.4619, 4, 307.0, 21.00]])
 
 y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
-                  16.50, 18.90, 15.00, 18.90, 21.70, 20.40, 18.2])
+              16.50, 18.90, 15.00, 18.90, 21.70, 20.40, 18.2])
 
 
 def test_correct_range():
@@ -38,7 +38,7 @@ def test_correct_range():
 
     # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
-    assert 0.68 < score < 0.74
+    assert 0.68 < score < 0.8
 
 
 def test_correct_range_with_sampling():
