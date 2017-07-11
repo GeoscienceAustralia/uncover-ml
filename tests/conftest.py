@@ -12,6 +12,7 @@ from uncoverml import mpiops
 
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 
+
 @pytest.fixture
 def mock_files():
     data_dir = os.path.join(os.path.dirname(preprocessing.__file__), 'mocks')
@@ -22,6 +23,7 @@ def mock_files():
                   std2000_no_mask=std2000_no_mask)
     return result
 
+
 @pytest.fixture
 def random_filename(tmpdir_factory):
     def make_random_filename(ext=''):
@@ -31,11 +33,12 @@ def random_filename(tmpdir_factory):
         return os.path.join(dir, fname + ext)
     return make_random_filename
 
+
 @pytest.fixture
 def random_dir(tmpdir_factory):
     def make_random_dir():
         name = ''.join(random.choice(string.ascii_lowercase)
-                        for _ in range(10))
+                       for _ in range(10))
         base = str(tmpdir_factory.mktemp('uncoverml').realpath())
         p = os.path.join(base, name)
         os.mkdir(p)
@@ -118,6 +121,7 @@ def make_points():
 def make_multi_patch(request):
     return request.param()
 
+
 @pytest.fixture
 def shapefile(random_filename, request):
 
@@ -161,14 +165,14 @@ def shapefile(random_filename, request):
 @pytest.fixture
 def linear_data():
     def make_linear_data(seed=2):
-        np.random.seed(seed)
-        Nt = 200
+        rnd = np.random.RandomState(seed)
+        Nt = 100
         Ns = 50
         x = np.linspace(-2, 2, Nt + Ns)
-        y = 3 + 2 * x
+        y = 3 + 2 * x + rnd.randn(Nt + Ns) * 1e-3
         X = x[:, np.newaxis]
 
-        trind = np.random.choice(Nt + Ns, Nt, replace=False)
+        trind = rnd.choice(Nt + Ns, Nt, replace=False)
         tsind = np.zeros_like(x, dtype=bool)
         tsind[trind] = True
         tsind = np.where(~tsind)[0]
