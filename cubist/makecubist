@@ -7,10 +7,10 @@ if [ -z "$1" ]; then
 else
 
     # Get the required location for the installation and make it if it doesn't exist
-    INSTALL_DIR=$(realpath $1)
+    INSTALL_DIR=$(realpath $1)/cubist
     LAST_DIR=$(pwd)
-    mkdir -p $INSTALL_DIR/cubist
-    cd $INSTALL_DIR/cubist
+    mkdir -p $INSTALL_DIR/build
+    cd $INSTALL_DIR/build
 
     # Download the cubist source and strip out the csh dependency
     curl -Ok https://www.rulequest.com/GPL/Cubist.tgz
@@ -20,9 +20,14 @@ else
     # Make cubist in the old directory
     make
 
+    # Move the cubist executable and clean up
+    mv cubist gpl.txt Cubist.tgz $INSTALL_DIR
+    cd $INSTALL_DIR
+    rm -r build
+
     # Write out the cubist path to a python config file
     cd $LAST_DIR
-    echo "invocation = \"$INSTALL_DIR/cubist/cubist\"" > \
-        ./uncoverml/cubist_config.py
+    echo "invocation = \"$INSTALL_DIR/cubist\"" > \
+      uncoverml/cubist_config.py
 
 fi
