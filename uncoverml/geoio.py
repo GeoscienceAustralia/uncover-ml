@@ -185,9 +185,7 @@ def load_shapefile(filename, targetfield):
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
-    label_coords = np.array(coords)
-    # val *must* be float type
-    val = val.astype(float)
+    label_coords = np.array(coords).squeeze()
     return label_coords, val, othervals
 
 
@@ -421,6 +419,7 @@ def unsupervised_feature_sets(config):
         return r
     result = _iterate_sources(f, config)
     return result
+
 
 _lower_is_better = ['mll', 'msll', 'smse']
 
