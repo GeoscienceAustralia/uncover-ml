@@ -6,8 +6,9 @@ from itertools import chain
 from os.path import join, isdir, abspath
 import numpy as np
 from revrand import StandardLinearModel, GeneralisedLinearModel
-from revrand.basis_functions import LinearBasis, BiasBasis, RandomRBF, \
-    RandomLaplace, RandomCauchy, RandomMatern32, RandomMatern52
+from revrand.basis_functions import (LinearBasis, RandomRBF, RandomLaplace,
+                                     RandomCauchy, RandomMatern32,
+                                     RandomMatern52)
 from revrand.btypes import Parameter, Positive
 from revrand.likelihoods import Gaussian
 from revrand.optimize import Adam
@@ -994,11 +995,14 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
     # Decorate functions to work on stacked data
     dims = np.cumsum(dims[:-1])  # dont split by last dim
 
-    unstack = lambda catdata: [d.flatten() if f else d for d, f
-                               in zip(np.hsplit(catdata, dims), flat)]
+    def unstack(catdata):
+        unstck = [d.flatten() if f else d for d, f
+                  in zip(np.hsplit(catdata, dims), flat)]
+        return unstck
 
-    unstackfunc = lambda catdata, *nargs, **nkwargs: \
-        func(*chain(unstack(catdata), nargs), **nkwargs)
+    def unstackfunc(catdata, *nargs, **nkwargs):
+        unstckfunc = func(*chain(unstack(catdata), nargs), **nkwargs)
+        return unstckfunc
 
     return apply_masked(unstackfunc, np.ma.hstack(datastack), args, kwargs)
 
