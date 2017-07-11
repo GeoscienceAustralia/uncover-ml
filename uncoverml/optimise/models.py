@@ -15,7 +15,7 @@ from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, PredictProbaMixin, \
+    _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
     MutualInfoMixin
 from revrand.slm import StandardLinearModel
 from revrand.basis_functions import LinearBasis
@@ -83,7 +83,7 @@ class TransformMixin():
             return super().score(X, y, *args, **kwargs)
 
 
-class TransformPredictProbaMixin(TransformMixin):
+class TransformPredictDistMixin(TransformMixin):
 
     def __expec_int(self, x, mu, std):
         px = _normpdf(x, mu, std)
@@ -95,10 +95,10 @@ class TransformPredictProbaMixin(TransformMixin):
         Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
         return Vx
 
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+    def predict_dist(self, X, interval=0.95, *args, **kwargs):
 
         # Expectation and variance in latent space
-        Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
+        Ey_t, Vy_t, ql, qu = super().predict_dist(X, interval)
 
         # Save computation if identity transform
         if type(self.target_transform) is transforms.Identity:
@@ -132,8 +132,8 @@ class TransformPredictProbaMixin(TransformMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
-                           PredictProbaMixin, MutualInfoMixin, TagsMixin):
+class TransformedLinearReg(TransformPredictDistMixin, StandardLinearModel,
+                           PredictDistMixin, MutualInfoMixin, TagsMixin):
 
     def __init__(self,
                  basis=True,
@@ -275,7 +275,7 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
         )
 
 
-class TransformedForestRegressor(TransformPredictProbaMixin,
+class TransformedForestRegressor(TransformPredictDistMixin,
                                  RandomForestRegressor,
                                  TagsMixin):
 

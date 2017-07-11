@@ -26,7 +26,7 @@ def test_modeltags(get_models):
 
     assert len(tags) >= 1  # at least a predict function
 
-    if hasattr(model, 'predict_proba'):
+    if hasattr(model, 'predict_dist'):
         assert len(tags) >= 4  # at least predict, var and upper & lower quant
 
         if hasattr(model, 'entropy_reduction'):
