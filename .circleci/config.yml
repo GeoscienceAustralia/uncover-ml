@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: determinant/spatial:0.1
+    working_directory: /usr/src/uncover-ml
+    steps:
+      - checkout
+      - run: mkdir -p test_output/pytest test_output/flake8 test_output/coverage
+      - run: cubist/makecubist .
+      - run: pip3 install .[dev]
+      # - run: make lint
+      - run: make coverage
+      - store_artifacts:
+          path: test_output/coverage
+          destination: reports
+      - store_test_results:
+          path: test_output/
