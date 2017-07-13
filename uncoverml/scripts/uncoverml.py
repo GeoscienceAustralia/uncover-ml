@@ -8,10 +8,12 @@ import pickle
 import resource
 from os.path import isfile, splitext
 import warnings
+
 import click
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+
 import uncoverml as ls
 import uncoverml.cluster
 import uncoverml.config
@@ -41,8 +43,7 @@ def cli(verbosity):
 
 
 def run_crossval(x_all, targets_all, config):
-    crossval_results = ls.validate.local_crossval(x_all,
-                                                  targets_all, config)
+    crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 

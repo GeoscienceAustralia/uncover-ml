@@ -22,6 +22,9 @@ from uncoverml.targets import Targets
 log = logging.getLogger(__name__)
 
 
+_lower_is_better = ['mll', 'msll', 'smse', 'log_loss']
+
+
 class ImageSource:
     __metaclass__ = ABCMeta
 
@@ -421,9 +424,6 @@ def unsupervised_feature_sets(config):
     return result
 
 
-_lower_is_better = ['mll', 'msll', 'smse']
-
-
 def export_feature_ranks(measures, feats, scores, config):
     outfile_ranks = os.path.join(config.output_dir,
                                  config.name + "_" + config.algorithm +
@@ -488,7 +488,8 @@ def export_crossval(crossval_output, config):
             f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
-    create_scatter_plot(outfile_results, config)
+    if not crossval_output.classification:
+        create_scatter_plot(outfile_results, config)
 
 
 def create_scatter_plot(outfile_results, config):
