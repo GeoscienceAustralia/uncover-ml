@@ -4,14 +4,12 @@ from __future__ import division
 import logging
 import copy
 
-import matplotlib.pyplot as pl
 import numpy as np
-
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss)
 from revrand.metrics import lins_ccc, mll, msll, smse
 
-from uncoverml.models import apply_multiple_masked
+from uncoverml.models import apply_multiple_masked, apply_masked
 from uncoverml import mpiops
 from uncoverml import predict
 from uncoverml import features as feat
@@ -22,7 +20,7 @@ from uncoverml.learn import all_modelmaps as modelmaps
 log = logging.getLogger(__name__)
 
 
-MINPROB = 1e-8  # Numerical guard for log-loss evaluation
+MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
     'r2_score': r2_score,
@@ -114,10 +112,10 @@ def classification_validation_scores(ys, eys, pys):
     for k, m in classification_metrics.items():
         if k == 'log_loss':
             # incase we get hard probabilites and log freaks out
-            pys = np.maximum(np.minimum(pys, MINPROB), 1. - MINPROB)
-            score = m(ys, pys)
+            pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
+            score = apply_multiple_masked(m, (ys, pys))
         else:
-            score = m(ys, eys)
+            score = apply_multiple_masked(m, (ys, eys))
         scores[k] = score
 
     return scores
@@ -379,8 +377,7 @@ def local_crossval(x_all, targets_all, config):
         else:
             y_k_test = model.le.transform(y[test_mask])
             y_true[fold] = y_k_test
-            y_k_hard = np.zeros_like(y_k_test)
-            y_k_hard[np.argmax(y_k_pred, axis=1)] = 1
+            y_k_hard = _make_hard_labels(y_k_pred)
             fold_scores[fold] = classification_validation_scores(
                 y_k_test, y_k_hard, y_k_pred
             )
@@ -413,3 +410,8 @@ def local_crossval(x_all, targets_all, config):
         config.algorithm_args['parallel'] = True
 
     return result
+
+
+def _make_hard_labels(p):
+    y = np.argmax(p, axis=1)
+    return y
