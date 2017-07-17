@@ -17,9 +17,10 @@ from revrand.utils import atleast_list
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
 from sklearn.ensemble import (RandomForestRegressor as RFR,
-                              RandomForestClassifier as RFC)
+                              RandomForestClassifier as RFC,
+                              GradientBoostingClassifier)
 from sklearn.linear_model import ARDRegression, LogisticRegression
-from sklearn.svm import SVR
+from sklearn.svm import SVR, SVC
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.preprocessing import LabelEncoder
 from uncoverml import mpiops
@@ -977,6 +978,24 @@ class RandomForestClassifier(encode_targets(RFC), TagsMixin):
     """
     pass
 
+
+class SupportVectorClassifier(encode_targets(SVC), TagsMixin):
+    """
+    Support Vector Machine multi-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
+    """
+    pass
+
+
+class GradBoostedTrees(encode_targets(GradientBoostingClassifier), TagsMixin):
+    """
+    Gradient Boosted Trees multi-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html
+    """
+    pass
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -1073,7 +1092,9 @@ regressors = {
 
 classifiers = {
     'logistic': LogisticClassifier,
-    'forestclassifier': RandomForestClassifier
+    'forestclassifier': RandomForestClassifier,
+    'svc': SupportVectorClassifier,
+    'boostedtrees': GradBoostedTrees
 }
 
 modelmaps = {**classifiers, **regressors}
