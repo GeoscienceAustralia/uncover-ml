@@ -4,6 +4,7 @@ import os
 import pickle
 from itertools import chain
 from os.path import join, isdir, abspath
+
 import numpy as np
 from revrand import StandardLinearModel, GeneralisedLinearModel
 from revrand.basis_functions import (LinearBasis, RandomRBF, RandomLaplace,
@@ -15,10 +16,13 @@ from revrand.optimize import Adam
 from revrand.utils import atleast_list
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
-from sklearn.ensemble import RandomForestRegressor as RFR
-from sklearn.linear_model import ARDRegression
-from sklearn.svm import SVR
+from sklearn.ensemble import (RandomForestRegressor as RFR,
+                              RandomForestClassifier as RFC,
+                              GradientBoostingClassifier)
+from sklearn.linear_model import ARDRegression, LogisticRegression
+from sklearn.svm import SVR, SVC
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
+from sklearn.preprocessing import LabelEncoder
 from uncoverml import mpiops
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
@@ -208,6 +212,12 @@ class TagsMixin():
             ``predict``, `predict_dist``, ``entropy_reduction``).
         """
 
+        # Classification
+        if hasattr(self, 'predict_proba'):
+            tags = self.get_classes()
+            return tags
+
+        # Regression
         tags = ['Prediction']
         if hasattr(self, 'predict_dist'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
@@ -631,13 +641,6 @@ class RandomForestRegressor(RFR):
         return Ey, Vy, ql, qu
 
 
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
-
-
 class RandomForestRegressorMulti(TagsMixin):
 
     def __init__(self,
@@ -734,7 +737,7 @@ class RandomForestRegressorMulti(TagsMixin):
 # Target Transformer factory
 #
 
-def transform_targets(Learner):
+def transform_targets(Regressor):
     """
     Factory function that add's target transformation capabiltiy to compatible
     scikit learn objects.
@@ -748,7 +751,7 @@ def transform_targets(Learner):
 
     """
 
-    class TransformedLearner(Learner):
+    class TransformedRegressor(Regressor):
         # NOTE: All of these explicitly ignore **kwargs on purpose. All generic
         # revrand and scikit learn algorithms don't need them. Custom models
         # probably shouldn't be using this factory
@@ -776,7 +779,7 @@ def transform_targets(Learner):
 
             return Ey
 
-        if hasattr(Learner, 'predict_dist'):
+        if hasattr(Regressor, 'predict_dist'):
             def predict_dist(self, X, interval=0.95, *args, **kwargs):
 
                 # Expectation and variance in latent space
@@ -826,7 +829,30 @@ def transform_targets(Learner):
             Vx = (self.ytform.itransform(x) - Ex)**2 * px
             return Vx
 
-    return TransformedLearner
+    return TransformedRegressor
+
+
+#
+# Label Encoder Factory
+#
+
+def encode_targets(Classifier):
+
+    class EncodedClassifier(Classifier):
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.le = LabelEncoder()
+
+        def fit(self, X, y, **kwargs):
+            y_t = self.le.fit_transform(y)
+            return super().fit(X, y_t)
+
+        def get_classes(self):
+            tags = [str(c) for c in self.le.classes_]
+            return tags
+
+    return EncodedClassifier
 
 
 #
@@ -934,6 +960,42 @@ class CubistMultiTransformed(transform_targets(MultiCubist), TagsMixin):
     """
     pass
 
+
+class LogisticClassifier(encode_targets(LogisticRegression), TagsMixin):
+    """
+    Logistic Regression for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    pass
+
+
+class RandomForestClassifier(encode_targets(RFC), TagsMixin):
+    """
+    Random Forest for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    pass
+
+
+class SupportVectorClassifier(encode_targets(SVC), TagsMixin):
+    """
+    Support Vector Machine multi-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
+    """
+    pass
+
+
+class GradBoostedTrees(encode_targets(GradientBoostingClassifier), TagsMixin):
+    """
+    Gradient Boosted Trees multi-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html
+    """
+    pass
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -1012,28 +1074,39 @@ def apply_multiple_masked(func, data, args=(), kwargs={}):
 #
 
 # Add all models available to the learning pipeline here!
-modelmaps = {'randomforest': RandomForestTransformed,
-             'multirandomforest': RandomForestRegressorMulti,
-             'bayesreg': LinearRegTransformed,
-             'sgdbayesreg': SGDLinearRegTransformed,
-             'approxgp': ApproxGPTransformed,
-             'sgdapproxgp': SGDApproxGPTransformed,
-             'svr': SVRTransformed,
-             'ardregression': ARDRegressionTransformed,
-             'decisiontree': DecisionTreeTransformed,
-             'extratree': ExtraTreeTransformed,
-             'cubist': CubistTransformed,
-             'multicubist': CubistMultiTransformed,
-             'depthregress': DepthRegressor,
-             }
+regressors = {
+    'randomforest': RandomForestTransformed,
+    'multirandomforest': RandomForestRegressorMulti,
+    'bayesreg': LinearRegTransformed,
+    'sgdbayesreg': SGDLinearRegTransformed,
+    'approxgp': ApproxGPTransformed,
+    'sgdapproxgp': SGDApproxGPTransformed,
+    'svr': SVRTransformed,
+    'ardregression': ARDRegressionTransformed,
+    'decisiontree': DecisionTreeTransformed,
+    'extratree': ExtraTreeTransformed,
+    'cubist': CubistTransformed,
+    'multicubist': CubistMultiTransformed,
+    'depthregress': DepthRegressor,
+}
+
+classifiers = {
+    'logistic': LogisticClassifier,
+    'forestclassifier': RandomForestClassifier,
+    'svc': SupportVectorClassifier,
+    'boostedtrees': GradBoostedTrees
+}
+
+modelmaps = {**classifiers, **regressors}
 
 # Add all kernels for the approximate Gaussian processes here!
-basismap = {'rbf': RandomRBF,
-            'laplace': RandomLaplace,
-            'cauchy': RandomCauchy,
-            'matern32': RandomMatern32,
-            'matern52': RandomMatern52
-            }
+basismap = {
+    'rbf': RandomRBF,
+    'laplace': RandomLaplace,
+    'cauchy': RandomCauchy,
+    'matern32': RandomMatern32,
+    'matern52': RandomMatern52
+}
 
 
 #

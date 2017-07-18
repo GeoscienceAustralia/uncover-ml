@@ -22,6 +22,9 @@ from uncoverml.targets import Targets
 log = logging.getLogger(__name__)
 
 
+_lower_is_better = ['mll', 'msll', 'smse', 'log_loss']
+
+
 class ImageSource:
     __metaclass__ = ABCMeta
 
@@ -185,9 +188,7 @@ def load_shapefile(filename, targetfield):
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
-    label_coords = np.array(coords)
-    # val *must* be float type
-    val = val.astype(float)
+    label_coords = np.array(coords).squeeze()
     return label_coords, val, othervals
 
 
@@ -422,8 +423,6 @@ def unsupervised_feature_sets(config):
     result = _iterate_sources(f, config)
     return result
 
-_lower_is_better = ['mll', 'msll', 'smse']
-
 
 def export_feature_ranks(measures, feats, scores, config):
     outfile_ranks = os.path.join(config.output_dir,
@@ -477,19 +476,33 @@ def export_cluster_model(model, config):
 def export_crossval(crossval_output, config):
     outfile_scores = os.path.join(config.output_dir,
                                   config.name + "_scores.json")
+
+    # Make sure we convert numpy arrays to lists
+    scores = {s: v if np.isscalar(v) else v.tolist()
+              for s, v in crossval_output.scores.items()}
+
     with open(outfile_scores, 'w') as f:
-        json.dump(crossval_output.scores, f, sort_keys=True, indent=4)
+        json.dump(scores, f, sort_keys=True, indent=4)
 
     outfile_results = os.path.join(config.output_dir,
                                    config.name + "_results.hdf5")
     with hdf.open_file(outfile_results, 'w') as f:
         for fld, v in crossval_output.y_pred.items():
-            label = "_".join(fld.split())
+            label = _make_valid_array_name(fld)
             f.create_array("/", label, obj=v.data)
             f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
-    create_scatter_plot(outfile_results, config)
+    if not crossval_output.classification:
+        create_scatter_plot(outfile_results, config)
+
+
+def _make_valid_array_name(label):
+    label = "_".join(label.split())
+    label = ''.join(filter(str.isalnum, label))  # alphanum only
+    if label[0].isdigit():
+        label = '_' + label
+    return label
 
 
 def create_scatter_plot(outfile_results, config):

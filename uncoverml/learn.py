@@ -6,15 +6,8 @@ from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
 
 
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
-
-all_modelmaps = _join_dicts([transformed_modelmaps, modelmaps, krig_dict])
-
 log = logging.getLogger(__name__)
+all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
 
 
 def local_learn_model(x_all, targets_all, config):

@@ -18,7 +18,7 @@ class Targets:
 
 
 def gather_targets(targets, keep, config, node=None):
-    save_dropped_targets(config, keep, targets)
+    # save_dropped_targets(config, keep, targets)
     return gather_targets_main(targets, keep, node)
 
 
@@ -56,10 +56,9 @@ def save_dropped_targets(config, keep, targets):
         dropped_postions = targets.positions[~keep, :]
         dropped_observations = targets.observations[~keep].reshape(
             len(dropped_postions), -1)
-        if not np.all(keep):
-            np.savetxt(join(config.output_dir, 'dropped_targets.txt'),
-                       np.concatenate(
-                           [dropped_postions,
-                            dropped_observations
-                            ], axis=1),
-                       delimiter=',')
+        np.savetxt(join(config.output_dir, 'dropped_targets.txt'),
+                   np.concatenate(
+                       [dropped_postions,
+                        dropped_observations
+                        ], axis=1),
+                   delimiter=',')

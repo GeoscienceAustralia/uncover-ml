@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 import pytest
 from sklearn.gaussian_process.kernels import WhiteKernel
@@ -11,13 +10,7 @@ from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.transforms import target as transforms
 
 
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
-
-modelmaps = copy.deepcopy(_join_dicts([krig_dict, transformed_modelmaps]))
+modelmaps = {**krig_dict, **transformed_modelmaps}
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
 mlkrige = modelmaps.pop('mlkrige')
@@ -108,7 +101,7 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
                              iid=False,
                              pre_dispatch=2,
                              verbose=True
-                            )
+                             )
     np.random.seed(1)
     X = np.random.randint(0, 400, size=(20, 2)).astype(float)
     y = 5*np.random.rand(20)

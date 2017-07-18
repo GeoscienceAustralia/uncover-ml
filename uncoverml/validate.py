@@ -4,10 +4,10 @@ from __future__ import division
 import logging
 import copy
 
-import matplotlib.pyplot as pl
 import numpy as np
-
-from sklearn.metrics import explained_variance_score, r2_score
+from sklearn.metrics import (explained_variance_score, r2_score,
+                             accuracy_score, log_loss, roc_auc_score,
+                             confusion_matrix)
 from revrand.metrics import lins_ccc, mll, msll, smse
 
 from uncoverml.models import apply_multiple_masked
@@ -17,14 +17,36 @@ from uncoverml import features as feat
 from uncoverml import targets as targ
 from uncoverml.learn import all_modelmaps as modelmaps
 
+
 log = logging.getLogger(__name__)
 
-metrics = {'r2_score': r2_score,
-           'expvar': explained_variance_score,
-           'smse': smse,
-           'lins_ccc': lins_ccc,
-           'mll': mll,
-           'msll': msll}
+
+MINPROB = 1e-5  # Numerical guard for log-loss evaluation
+
+regression_metrics = {
+    'r2_score': r2_score,
+    'expvar': explained_variance_score,
+    'smse': smse,
+    'lins_ccc': lins_ccc,
+    'mll': mll,
+    'msll': msll
+}
+
+
+def _binarizer(y, p, func, **kwargs):
+    yb = np.zeros_like(p)
+    n = len(y)
+    yb[range(n), y.astype(int)] = 1.
+    score = func(yb, p, **kwargs)
+    return score
+
+
+classification_metrics = {
+    'accuracy': lambda y, ey, p: accuracy_score(y, ey),
+    'log_loss': lambda y, ey, p: log_loss(y, p),
+    'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
+    'confusion': lambda y, ey, p: confusion_matrix(y, ey) / len(y)
+}
 
 
 def split_cfold(nsamples, k=5, seed=None):
@@ -52,8 +74,8 @@ def split_cfold(nsamples, k=5, seed=None):
         cvinds.
 
     """
-    np.random.seed(seed)
-    pindeces = np.random.permutation(nsamples)
+    rnd = np.random.RandomState(seed)
+    pindeces = rnd.permutation(nsamples)
     cvinds = np.array_split(pindeces, k)
 
     cvassigns = np.zeros(nsamples, dtype=int)
@@ -74,8 +96,50 @@ def score_first_dim(func):
     return newscore
 
 
-def calculate_validation_scores(ys, yt, eys):
-    """ Calculates the validation scores for a prediction
+def intercept_missing(func, y, ey, p):
+
+    not_missing = ~ey.mask
+    assert np.all(not_missing == ~np.any(p.mask, axis=1))
+    score = func(y[not_missing], ey.data[not_missing], p.data[not_missing])
+    return score
+
+
+def classification_validation_scores(ys, eys, pys):
+    """ Calculates the validation scores for a regression prediction
+    Given the test and training data, as well as the outputs from every model,
+    this function calculates all of the applicable metrics in the following
+    list, and returns a dictionary with the following (possible) keys:
+        + accuracy
+        + log_loss
+        + f1
+
+    Parameters
+    ----------
+    ys: numpy.array
+        The test data outputs, one-hot representation
+    eys: numpy.array
+        The (hard) predictions made by the trained model on test data, one-hot
+        representation
+    pys: numpy.array
+        The probabilistic predictions made by the trained model on test data
+
+    Returns
+    -------
+    scores: dict
+        A dictionary containing all of the evaluated scores.
+    """
+    scores = {}
+    # incase we get hard probabilites and log freaks out
+    pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
+
+    for k, m in classification_metrics.items():
+        scores[k] = intercept_missing(m, ys, eys, pys)
+
+    return scores
+
+
+def regression_validation_scores(ys, yt, eys):
+    """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
     list, and returns a dictionary with the following (possible) keys:
@@ -108,19 +172,19 @@ def calculate_validation_scores(ys, yt, eys):
     # cubist can predict nan when a categorical variable is not
     # present in the training data
     # TODO: Can be removed except for cubist
+    # NOTE: If we used masked arrays instead of nans apply_masked can do this
     nans = ~np.isnan(eys[:, 0])
     ys = ys[nans]
     eys = eys[:, 0][nans]
 
-    for m in metrics:
+    for k, m in regression_metrics.items():
 
         if m not in probscores:
-            score = apply_multiple_masked(score_first_dim(metrics[m]),
-                                          (ys, eys))
+            score = apply_multiple_masked(score_first_dim(m, (ys, eys)))
         elif eys.ndim == 2:
-            if m == 'mll' and eys.shape[1] > 1:
+            if k == 'mll' and eys.shape[1] > 1:
                 score = apply_multiple_masked(mll, (ys, eys[:, 0], eys[:, 1]))
-            elif m == 'msll' and eys.shape[1] > 1:
+            elif k == 'msll' and eys.shape[1] > 1:
                 score = apply_multiple_masked(msll, (ys, eys[:, 0], eys[:, 1]),
                                               (yt,))
             else:
@@ -128,55 +192,16 @@ def calculate_validation_scores(ys, yt, eys):
         else:
             continue
 
-        scores[m] = score
+        scores[k] = score
     return scores
 
 
-def y_y_plot(y1, y2, y_label=None, y_exp_label=None, title=None,
-             outfile=None, display=None):
-    """ Makes a y-y plot from two corresponding vectors
-    This function makes a y-y plot given two y vectors (y1, y2). This plot can
-    be used to evaluate the performance of the machine learning models.
-
-    Parameters
-    ----------
-    y1: numpy.array
-        The first input vector
-    y2: numpy.array
-        The second input vector, of the same size as y1
-    y_label: string
-        The axis label for the first vector
-    y_exp_label: string
-        The axis label for the second vector
-    title: string
-        The plot title
-    outfile: string
-        The location to save an image of the plot
-    display: boolean
-        If true, a matplotlib graph will display in a window, note that this
-        pauses the execution of the main program till this window is suspended.
-    """
-
-    fig = pl.figure()
-    maxy = max(y1.max(), get_first_dim(y2).max())
-    miny = min(y1.min(), get_first_dim(y2).min())
-    apply_multiple_masked(pl.plot, (y1, get_first_dim(y2)), ('k.',))
-    pl.plot([miny, maxy], [miny, maxy], 'r')
-    pl.grid(True)
-    pl.xlabel(y_label)
-    pl.ylabel(y_exp_label)
-    pl.title(title)
-    if outfile is not None:
-        fig.savefig(outfile + ".png")
-    if display:
-        pl.show()
-
-
 class CrossvalInfo:
-    def __init__(self, scores, y_true, y_pred):
+    def __init__(self, scores, y_true, y_pred, classification):
         self.scores = scores
         self.y_true = y_true
         self.y_pred = y_pred
+        self.classification = classification
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
@@ -288,6 +313,7 @@ def local_crossval(x_all, targets_all, config):
 
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
+    classification = hasattr(model, 'predict_proba')
     y = targets_all.observations
     lon_lat = targets_all.positions
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
@@ -295,7 +321,8 @@ def local_crossval(x_all, targets_all, config):
     # Split folds over workers
     fold_list = np.arange(config.folds)
     if config.parallel_validate:
-        fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+        fold_node = \
+            np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
     else:
         fold_node = fold_list
 
@@ -352,12 +379,25 @@ def local_crossval(x_all, targets_all, config):
                                    fields=fields_pred,
                                    lon_lat=lon_lat_test)
 
-        y_k_test = y[test_mask]
         y_pred[fold] = y_k_pred
-        y_true[fold] = y_k_test
 
-        fold_scores[fold] = calculate_validation_scores(y_k_test, y_k_train,
-                                                        y_k_pred)
+        # Regression
+        if not classification:
+            y_k_test = y[test_mask]
+            y_true[fold] = y_k_test
+            fold_scores[fold] = regression_validation_scores(
+                y_k_test, y_k_train, y_k_pred
+            )
+
+        # Classification
+        else:
+            y_k_test = model.le.transform(y[test_mask])
+            y_true[fold] = y_k_test
+            y_k_hard = _make_hard_labels(y_k_pred)
+            fold_scores[fold] = classification_validation_scores(
+                y_k_test, y_k_hard, y_k_pred
+            )
+
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
         y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
@@ -370,7 +410,7 @@ def local_crossval(x_all, targets_all, config):
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
-        scores = {m: np.mean([d[m] for d in scores.values()])
+        scores = {m: np.mean([d[m] for d in scores.values()], axis=0)
                   for m in valid_metrics}
         score_string = "Validation complete:\n"
         for metric, score in scores.items():
@@ -379,10 +419,18 @@ def local_crossval(x_all, targets_all, config):
 
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, y_pred.T))
-        result = CrossvalInfo(scores, y_true, y_pred_dict)
+        result = CrossvalInfo(scores, y_true, y_pred_dict, classification)
 
     # change back to parallel
     if config.multicubist or config.multirandomforest:
         config.algorithm_args['parallel'] = True
 
     return result
+
+
+def _make_hard_labels(p):
+    data = np.zeros(len(p))
+    missing = np.any(p.mask, axis=1)
+    data[~missing] = np.ma.argmax(p[~missing], axis=1)
+    y = np.ma.array(data, mask=missing, dtype=int)
+    return y
