@@ -2,6 +2,8 @@
 uncover ML
 ==========
 
+.. image:: https://circleci.com/gh/GeoscienceAustralia/uncover-ml/tree/d61-develop.svg?style=svg
+    :target: https://circleci.com/gh/GeoscienceAustralia/uncover-ml/tree/d61-develop
 
 Machine learning tools for the Geoscience Australia uncover project.
 
