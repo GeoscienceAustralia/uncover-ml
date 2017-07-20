@@ -393,9 +393,9 @@ def local_crossval(x_all, targets_all, config):
         else:
             y_k_test = model.le.transform(y[test_mask])
             y_true[fold] = y_k_test
-            y_k_hard = _make_hard_labels(y_k_pred)
+            y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
             fold_scores[fold] = classification_validation_scores(
-                y_k_test, y_k_hard, y_k_pred
+                y_k_test, y_k_hard, p_k
             )
 
     if config.parallel_validate:
@@ -426,11 +426,3 @@ def local_crossval(x_all, targets_all, config):
         config.algorithm_args['parallel'] = True
 
     return result
-
-
-def _make_hard_labels(p):
-    data = np.zeros(len(p))
-    missing = np.any(p.mask, axis=1)
-    data[~missing] = np.ma.argmax(p[~missing], axis=1)
-    y = np.ma.array(data, mask=missing, dtype=int)
-    return y

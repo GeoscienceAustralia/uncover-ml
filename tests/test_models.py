@@ -22,7 +22,7 @@ def test_modeltags(get_models):
 
     # Patch classifiers since they only get their tags when "fit" called
     if hasattr(model, 'predict_proba'):
-        model.le.classes_ = ('1', '2', '3')
+        model.le.classes_ = ('a', 'b', 'c')
 
     tags = model.get_predict_tags()
 
@@ -38,8 +38,8 @@ def test_modeltags(get_models):
             assert len(tags) == 5
 
     elif hasattr(model, 'predict_proba'):
-        assert len(tags) == 3
-        assert tags == ['1', '2', '3']
+        assert len(tags) == 4
+        assert tags == ['most_likely', 'a_0', 'b_1', 'c_2']
 
     else:
         if hasattr(model, 'entropy_reduction'):

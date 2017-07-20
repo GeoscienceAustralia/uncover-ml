@@ -17,7 +17,9 @@ def predict(data, model, interval=0.95, **kwargs):
     # Classification
     if hasattr(model, 'predict_proba'):
         def pred(X):
-            return model.predict_proba(X)
+            y, p = model.predict_proba(X)
+            predres = np.hstack((y[:, np.newaxis], p))
+            return predres
 
     # Regression
     else:
