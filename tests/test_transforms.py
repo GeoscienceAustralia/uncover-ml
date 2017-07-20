@@ -1,16 +1,16 @@
 from scipy.stats import bernoulli
-from functools import reduce
-from operator import mul
 
 from uncoverml.transforms.onehot import sets
-from uncoverml.transforms.impute import GaussImputer, \
-    NearestNeighboursImputer, MeanImputer
-from uncoverml.transforms.linear import CentreTransform, \
-    StandardiseTransform, WhitenTransform
+from uncoverml.transforms.impute import (GaussImputer,
+                                         NearestNeighboursImputer, MeanImputer)
+from uncoverml.transforms.linear import (CentreTransform, StandardiseTransform,
+                                         WhitenTransform)
 from uncoverml.transforms import target
 import numpy as np
 
 import pytest
+
+SEED = 1
 
 
 @pytest.fixture(params=list(target.transforms.keys()))
@@ -20,7 +20,8 @@ def get_transform_names(request):
 
 def test_transform(get_transform_names):
 
-    y = np.concatenate((np.random.randn(100), np.random.randn(100) + 5))
+    rnd = np.random.RandomState(SEED)
+    y = np.concatenate((rnd.randn(100), rnd.randn(100) + 5))
     transformer = target.transforms[get_transform_names]()
 
     if hasattr(transformer, 'offset'):
@@ -43,7 +44,8 @@ def make_missing_data():
 
     N = 100
 
-    Xdata = np.random.randn(N, 2)
+    rnd = np.random.RandomState(SEED)
+    Xdata = rnd.randn(N, 2)
     Xmask = bernoulli.rvs(p=0.3, size=(N, 2)).astype(bool)
     Xmask[Xmask[:, 0], 1] = False  # Make sure we don't have all missing rows
 
@@ -55,7 +57,8 @@ def make_missing_data():
 @pytest.fixture()
 def make_random_data(n=10, m=3):
 
-    data = np.random.randn(n, m) + 5.0 * np.ones((n, m))
+    rnd = np.random.RandomState(SEED)
+    data = rnd.randn(n, m) + 5.0 * np.ones((n, m))
     x = np.ma.masked_array(data)
     mean = np.mean(data, axis=0)
     standard_deviation = np.std(data, axis=0)
@@ -91,7 +94,6 @@ def test_NearestNeighbourImputer(make_missing_data):
 
     X = make_missing_data
     Xcopy = X.copy()
-    # nn = np.ma.MaskedArray(data=np.random.randn(100, 2), mask=False)
 
     imputer = NearestNeighboursImputer(nodes=100)
     # imputer(nn) what's this doing here?
@@ -105,19 +107,21 @@ def test_NearestNeighbourImputer(make_missing_data):
 
 
 def test_NearestNeighbourImputerValueError():
-    X = np.ma.MaskedArray(data=np.random.randn(100, 3), mask=True)
+    rnd = np.random.RandomState(SEED)
+    X = np.ma.MaskedArray(data=rnd.randn(100, 3), mask=True)
     imputer = NearestNeighboursImputer(nodes=100, k=5)
     X.mask[:4, :] = False
     with pytest.raises(ValueError):
-        Ximp = imputer(X)
+        imputer(X)
 
 
 def test_NearestNeighbourImputerRowsCleanValueError():
-    X = np.ma.MaskedArray(data=np.random.randn(100, 3), mask=True)
+    rnd = np.random.RandomState(SEED)
+    X = np.ma.MaskedArray(data=rnd.randn(100, 3), mask=True)
     imputer = NearestNeighboursImputer(nodes=100, k=5)
     X.mask[:10, :2] = False
     with pytest.raises(ValueError):
-        Ximp = imputer(X)
+        imputer(X)
 
 
 def test_CentreTransform(make_random_data):

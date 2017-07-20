@@ -60,6 +60,12 @@ def test_covariance(mpisync, masked_array):
     assert np.allclose(c_true, c)
 
 
+def test_power(masked_array):
+    x, _ = masked_array
+    x2 = mpiops.power(x, 2)
+    assert np.allclose(x2, x**2)
+
+
 class DummySettings:
     def __init__(self):
         pass

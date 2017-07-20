@@ -113,9 +113,20 @@ def mean(x):
 
 def sd(x):
     x_mean = mean(x)
-    delta_mean = mean((x - x_mean)**2)
+    delta_mean = mean(power((x - x_mean), 2))
     sd = np.sqrt(delta_mean)
     return sd
+
+
+def power(x, exp):
+    if np.ma.count_masked(x) == 0:
+        return np.ma.masked_array(x.data**2, mask=False)
+    m = np.where(~x.mask)
+    xe = x[m]
+    xe = xe**exp
+    result = x.copy()
+    result[m] = xe
+    return result
 
 
 def outer(x):
