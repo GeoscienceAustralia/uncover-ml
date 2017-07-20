@@ -20,9 +20,12 @@ from sklearn.ensemble import (RandomForestRegressor as RFR,
                               RandomForestClassifier as RFC,
                               GradientBoostingClassifier)
 from sklearn.linear_model import ARDRegression, LogisticRegression
-from sklearn.svm import SVR, SVC
+from sklearn.svm import SVR, SVC, LinearSVC
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.preprocessing import LabelEncoder
+from sklearn.kernel_approximation import RBFSampler
+from sklearn.pipeline import make_pipeline
+
 from uncoverml import mpiops
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
@@ -734,6 +737,45 @@ class RandomForestRegressorMulti(TagsMixin):
 
 
 #
+# Approximate large scale kernel classifier factory
+#
+
+def kernelize(classifier):
+
+    class ClassifierRBF:
+
+        def __init__(self, gamma='auto', n_components=100, random_state=None,
+                     **kwargs):
+            self.gamma = gamma
+            self.n_components = n_components
+            self.random_state = random_state
+            self.clf = classifier(**kwargs)
+
+        def fit(self, X, y):
+            if self.gamma == 'auto':
+                D = X.shape[1]
+                self.gamma = 1 / D
+            self.rbf = RBFSampler(
+                gamma=self.gamma,
+                n_components=self.n_components,
+                random_state=self.random_state
+            )
+
+            self.clf.fit(self.rbf.fit_transform(X), y)
+            return self
+
+        def predict(self, X):
+            p = self.clf.predict(self.rbf.transform(X))
+            return p
+
+        def predict_proba(self, X):
+            p = self.clf.predict_proba(self.rbf.transform(X))
+            return p
+
+    return ClassifierRBF
+
+
+#
 # Target Transformer factory
 #
 
@@ -1003,6 +1045,16 @@ class GradBoostedTrees(encode_targets(GradientBoostingClassifier), TagsMixin):
     """
     pass
 
+
+class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
+    """Approximate large scale kernel logistic regression."""
+    pass
+
+
+class SupportVectorRBF(encode_targets(kernelize(LinearSVC)), TagsMixin):
+    """Approximate large scale kernel support vector classification."""
+    pass
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -1099,8 +1151,10 @@ regressors = {
 
 classifiers = {
     'logistic': LogisticClassifier,
+    'logisticrbf': LogisticRBF,
     'forestclassifier': RandomForestClassifier,
     'svc': SupportVectorClassifier,
+    'svcapprox': SupportVectorRBF,
     'boostedtrees': GradBoostedTrees
 }
 
