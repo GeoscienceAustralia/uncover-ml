@@ -16,15 +16,15 @@ from revrand.optimize import Adam
 from revrand.utils import atleast_list
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
+
+from sklearn.svm import SVR, SVC
 from sklearn.ensemble import (RandomForestRegressor as RFR,
                               RandomForestClassifier as RFC,
                               GradientBoostingClassifier)
 from sklearn.linear_model import ARDRegression, LogisticRegression
-from sklearn.svm import SVR, SVC, LinearSVC
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
-from sklearn.pipeline import make_pipeline
 
 from uncoverml import mpiops
 from uncoverml.cubist import Cubist
@@ -1051,81 +1051,91 @@ class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
     pass
 
 
-class SupportVectorRBF(encode_targets(kernelize(LinearSVC)), TagsMixin):
-    """Approximate large scale kernel support vector classification."""
-    pass
-
 #
 # Helper functions for multiple outputs and missing/masked data
 #
 
 
-def apply_masked(func, data, args=(), kwargs={}):
+class MaskRows:
+
+    def __init__(self, *Xs):
+        if len(Xs) == 1:
+            self.okrows = self.get_complete_rows(Xs[0])
+        else:
+            self.okrows = np.logical_and(
+                *[self.get_complete_rows(x) for x in Xs]
+            )
+
+    def trim_mask(self, X):
+        if np.ma.isMaskedArray(X):
+            return X.data[self.okrows]
+        else:
+            return X[self.okrows]
+
+    def trim_masks(self, *Xs):
+        return [self.trim_mask(x) for x in Xs]
+
+    def apply_mask(self, X):
+        N = len(self.okrows)
+        if X.ndim == 2:
+            D = X.shape[1]
+            Xdat = np.zeros((N, D))
+            Xmask = np.zeros((N, D), dtype=bool)
+        elif X.ndim == 1:
+            Xdat = np.zeros(N)
+            Xmask = np.zeros(N, dtype=bool)
+        else:
+            raise ValueError("Can only mask/unmask 2D arrays")
+        Xmask[~self.okrows] = True
+        Xdat[self.okrows] = X
+        return np.ma.masked_array(data=Xdat, mask=Xmask)
+
+    def apply_masks(self, *Xs):
+        return [self.apply_mask(x) for x in Xs]
+
+    @staticmethod
+    def get_complete_rows(X):
+        if np.ma.isMaskedArray(X):
+            if np.isscalar(X.mask):
+                okrows = ~X.mask * np.ones_like(X.data, dtype=bool)
+            else:
+                okrows = np.all(~X.mask, axis=1) if X.ndim == 2 else ~X.mask
+        else:
+            okrows = np.ones(len(X), dtype=bool)
+        return okrows
+
+
+def apply_masked(func, data, *args, **kwargs):
     # Data is just a matrix (i.e. X for prediction)
 
     # No masked data
     if np.ma.count_masked(data) == 0:
         return np.ma.array(func(data.data, *args, **kwargs), mask=False)
 
-    # Prediction with missing inputs
-    okdata = (data.mask.sum(axis=1)) == 0 if data.ndim == 2 else ~data.mask
-
-    if data.data[okdata].shape[0] == 0:  # if all of this chunk is masked
-        # to get dimension of the func return, we create a dummpy res
-        res = func(np.ones((1, data.data.shape[1])), *args, **kwargs)
-    else:
-        res = func(data.data[okdata], *args, **kwargs)
+    mr = MaskRows(data)
+    res = func(mr.trim_mask(data), *args, **kwargs)
 
     # For training/fitting that returns nothing
     if not isinstance(res, np.ndarray):
         return res
-
-    # Fill in a padded array the size of the original
-    mres = np.empty(len(data)) if res.ndim == 1 \
-        else np.empty((len(data), res.shape[1]))
-
-    if data.data[okdata].shape[0] != 0:  # don't change due to dummy res
-        mres[okdata] = res
-
-    # Make sure the mask is consistent with the original array
-    mask = ~okdata
-    if mres.ndim > 1:
-        mask = np.tile(mask, (mres.shape[1], 1)).T
-
-    return np.ma.array(mres, mask=mask)
+    else:
+        return mr.apply_mask(res)
 
 
-def apply_multiple_masked(func, data, args=(), kwargs={}):
+def apply_multiple_masked(func, data, *args, **kwargs):
     # Data is a sequence of arrays (i.e. X, y pairs for training)
 
-    datastack = []
-    dims = []
-    flat = []
-    for d in data:
-        if d.ndim == 2:
-            datastack.append(d)
-            dims.append(d.shape[1])
-            flat.append(False)
-        elif d.ndim == 1:
-            datastack.append(d[:, np.newaxis])
-            dims.append(1)
-            flat.append(True)
-        else:
-            raise RuntimeError("data arrays have to be 1 or 2D arrays")
+    mr = MaskRows(*data)
+    if np.all(mr.okrows):
+        return func(*chain(data, args), **kwargs)
 
-    # Decorate functions to work on stacked data
-    dims = np.cumsum(dims[:-1])  # dont split by last dim
+    res = func(*chain(mr.trim_masks(*data), args), **kwargs)
 
-    def unstack(catdata):
-        unstck = [d.flatten() if f else d for d, f
-                  in zip(np.hsplit(catdata, dims), flat)]
-        return unstck
-
-    def unstackfunc(catdata, *nargs, **nkwargs):
-        unstckfunc = func(*chain(unstack(catdata), nargs), **nkwargs)
-        return unstckfunc
-
-    return apply_masked(unstackfunc, np.ma.hstack(datastack), args, kwargs)
+    # For training/fitting that returns nothing
+    if not isinstance(res, np.ndarray):
+        return res
+    else:
+        return mr.apply_mask(res)
 
 
 #
@@ -1154,7 +1164,6 @@ classifiers = {
     'logisticrbf': LogisticRBF,
     'forestclassifier': RandomForestClassifier,
     'svc': SupportVectorClassifier,
-    'svcapprox': SupportVectorRBF,
     'boostedtrees': GradBoostedTrees
 }
 

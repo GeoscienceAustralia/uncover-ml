@@ -5,7 +5,8 @@ import pytest
 from sklearn.metrics import r2_score
 
 from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
-from uncoverml.models import regressors, classifiers
+from uncoverml.models import (regressors, classifiers, apply_masked,
+                              apply_multiple_masked)
 from uncoverml.optimise.models import transformed_modelmaps
 
 models = {**classifiers, **regressors, **transformed_modelmaps}
@@ -117,3 +118,39 @@ def test_mlkrige(models_supported, get_krige_method):
     mod_pic = pickle.loads(mod_str)
     # Make sure all the keys survive the pickle, even if the objects differ
     assert mlk.__dict__.keys() == mod_pic.__dict__.keys()
+
+
+def test_apply_masked(masked_data):
+    yt, Xt, ys, Xs = masked_data
+    yt_masked = np.ma.masked_array(yt, mask=Xt.mask.flatten())
+
+    def ident(X):
+        return X
+
+    def target(X):
+        return yt[~Xt.mask.flatten()]
+
+    def fit(X):
+        assert np.allclose(X, Xt.data[~Xt.mask.flatten()])
+        return
+
+    assert np.ma.all(Xt == apply_masked(ident, Xt))
+    assert np.ma.all(yt_masked == apply_masked(target, Xt))
+    assert apply_masked(fit, Xt) is None
+
+
+def test_apply_multiple_masked(masked_data):
+    yt, Xt, ys, Xs = masked_data
+    yt_masked = np.ma.masked_array(yt, mask=Xt.mask.flatten())
+
+    def fit(X, y):
+        assert np.allclose(X, Xt.data[~Xt.mask.flatten()])
+        assert np.allclose(y, yt_masked.data[~yt_masked.mask.flatten()])
+        return
+
+    def predict(X, y):
+        return y
+
+    yr = apply_multiple_masked(predict, (Xt, yt_masked))
+    assert np.ma.all(yt_masked == yr)
+    assert apply_multiple_masked(fit, (Xt, yt_masked)) is None
