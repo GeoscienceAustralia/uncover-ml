@@ -6,17 +6,17 @@ features:
   - name: my pickle files
     type: pickle
     files:
-      covariates: /home/sb/data/GA-cover/features.pk
-      targets: /home/sb/data/GA-cover/targets.pk
-      rawcovariates: /home/sb/data/GA-cover/rawcovariates.csv
+      covariates: /home/masoud/GA_data/GA-cover2/features.pk
+      targets: /home/masoud/GA_data/GA-cover2/targets.pk
+      rawcovariates: /home/masoud/GA_data/GA-cover2/rawcovariates.csv
       rawcovariates_mask: rawcovariates_mask.csv
 
   - name: my features 1
     type: ordinal
     files:
-      # - path: /home/lb/data/GA-cover/Th_v1.tif
-      # - list: /home/lb/data/GA_Cover2_sirsam_LLC/sirsam_covariates_convolved.txt
-      - directory: /home/lb/data/GA-cover
+      # - path: /home/masoud/GA_data/GA-cover2/Th_v1.tif
+      # - list: /home/masoud/GA_data/GA_Cover2_sirsam_LLC/sirsam_covariates_convolved.txt
+      - directory: /home/masoud/GA_data/GA-cover2
     # transforms are performed in order
     transforms:
       - centre
@@ -26,9 +26,9 @@ features:
   - name: my features 2
     type: categorical
     files:
-      # - path: /home/lb/data/GA-cover/Th_v1.tif
+      # - path: /home/masoud/GA_data/GA-cover2/Th_v1.tif
       # - list: /path/to/csv_file.csv
-      - directory: /home/lb/data/GA-cover/cat_datasets
+      - directory: /home/masoud/GA_data/GA-cover2/cat_datasets
     # transforms are performed in order
     transforms:
       - randomhot:
@@ -39,7 +39,7 @@ features:
 # mask file used for masking prediction grid
 # Mask with values=retain will be predicted
 mask:
-  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
+  file: /home/masoud/GA_data/GA-cover2/mask/old_mask_test.tif
   retain: 1
 
 preprocessing:
@@ -59,7 +59,7 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/lb/data/GA-cover/geochem_sites.shp
+  file: /home/masoud/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
   resample:
     - value:
@@ -75,7 +75,7 @@ targets:
           output_samples: 500
 
 clustering:
-  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+  file: /home/masoud/GA_data/GA-cover2/geochem_sites_class1.shp
   property: class
   algorithm: kmeans
   arguments:
@@ -95,18 +95,18 @@ learning:
     #     maxiter: 5000
     #     nbases: 50
     #     random_state: 1
-    algorithm: randomforest
-    arguments:
-      n_estimators: 500
-      target_transform: standardise
+    #algorithm: randomforest
+    #arguments:
+    #  n_estimators: 500
+    #  target_transform: standardise
 
-#    algorithm: multirandomforest
-#    arguments:
-#       n_estimators: 50
-#       target_transform: standardise
-#       forests: 10
-#       parallel: True
-#       outdir: .
+    algorithm: multirandomforest
+    arguments:
+       n_estimators: 2
+       target_transform: standardise
+       forests: 10
+       parallel: True
+       outdir: .
 
 
 #n_components : int, float, None or string
@@ -135,17 +135,17 @@ optimisation:
 #    target_transform: ['identity', 'standardise', 'log', 'rank', 'logistic']
 #  optimisation_output: optimisation.csv
 
-  algorithm: gradientboost
-  featuretransforms:
-    pca:
-      n_components: [0.5, 0.8]
-      whiten: [False, True]
-      svd_solver: ['auto']
-      iterated_power: ['auto']
-  hyperparameters:
-    n_estimators: [10, 50, 200]
-    target_transform: ['identity', 'standardise', 'log', 'rank', 'logistic']
-  optimisation_output: optimisation.csv
+#  algorithm: gradientboost
+#  featuretransforms:
+#    pca:
+#      n_components: [0.5, 0.8]
+#      whiten: [False, True]
+#      svd_solver: ['auto']
+#      iterated_power: ['auto']
+#  hyperparameters:
+#    n_estimators: [10, 50, 200]
+#    target_transform: ['identity', 'standardise', 'log', 'rank', 'logistic']
+#  optimisation_output: optimisation.csv
 
 
 # outbands: number of output bands desired.

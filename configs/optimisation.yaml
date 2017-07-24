@@ -15,34 +15,28 @@ features:
   - name: my features 1
     type: ordinal
     files:
-      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/relief_twi_3s.tif
-#      - directory: /home/sudipta/GA_data/MBV2/
-#      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+#      - path: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
+#      - path: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#      - path: /home/masoud/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
+#      - path: /home/masoud/GA_data/GA-cover2/relief_twi_3s.tif
+#      - directory: /home/masoud/GA_data/MBV2/
+       - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
       - centre
       - standardise
     imputation: nn
 
-  - name: my features 2
-    type: categorical
-    files:
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
-    transforms: randomhot
-    imputation: nn
 
 # only used during prediction
 mask:
-  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+  file: /home/masoud/GA_data/mask/old_mask_test.tif
   retain: 1
 
 # only used during prediction of mlkrige
 lon_lat:  # used for regression kriging, i.e., mlkrige aglo
-  lon: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-  lat: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+  lon: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 preprocessing:
   # imputation: none
@@ -62,10 +56,10 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  file: /home/masoud/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
 #targets:
-#  file: /home/sudipta/GA_data/MBV2/GP_ceno_combine.shp
+#  file: /home/masoud/GA_data/MBV2/GP_ceno_combine.shp
 #  property: depth
 #  resample:
 #    - spatial:
@@ -81,14 +75,14 @@ targets:
 #          output_samples: 1000
 
 
-clustering:
-  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
-  property: class
-  algorithm: kmeans
-  arguments:
-    n_classes: 5
-    oversample_factor: 5
-  cluster_analysis: True
+#clustering:
+#  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+#  property: class
+#  algorithm: kmeans
+#  arguments:
+#    n_classes: 5
+#    oversample_factor: 5
+#  cluster_analysis: True
 
 
 #learning:
@@ -133,11 +127,23 @@ clustering:
 #    target_transform: standardise
 #    ml_score: True
 
+
 learning:
-  algorithm: huber
+  algorithm: xgboost
   arguments:
     target_transform: standardise
     ml_score: True
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 30
+    
+
+
+#learning:
+#  algorithm: huber
+#  arguments:
+#    target_transform: standardise
+#    ml_score: True
 
 
 #learning:

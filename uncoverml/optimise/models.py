@@ -1,3 +1,9 @@
+# import sys
+# import os
+# sys.path.insert(0, os.path.realpath('../../'))
+
+# from lightgbm.sklearn import LGBMRegressor
+from xgboost.sklearn import XGBRegressor
 import logging
 import numpy as np
 from scipy.integrate import fixed_quad
@@ -21,7 +27,7 @@ from revrand.slm import StandardLinearModel
 from revrand.basis_functions import LinearBasis
 from revrand.btypes import Parameter, Positive
 from uncoverml.transforms import target as transforms
-
+# import copy as cp
 log = logging.getLogger(__name__)
 
 
@@ -483,6 +489,103 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
             max_iter=max_iter, tol=tol, warm_start=warm_start
             )
 
+# class XGB(LGBMRegressor):
+#     def __init__(self, boosting_type="gbdt", num_leaves=31, max_depth=-1, learning_rate=0.1, n_estimators=10,
+#                  max_bin=255, subsample_for_bin=50000, objective=None,
+#                  min_split_gain=0, min_child_weight=5, min_child_samples=10,
+#                  subsample=1, subsample_freq=1, colsample_bytree=1,
+#                  reg_alpha=0, reg_lambda=0, seed=0, nthread=-1, silent=True):
+#
+#         super(XGB, self).__init__(boosting_type=boosting_type, num_leaves=num_leaves, max_depth=max_depth,
+#                                   learning_rate=learning_rate, n_estimators=n_estimators, max_bin=max_bin,
+#                                   subsample_for_bin=subsample_for_bin, objective=objective,
+#                                   min_split_gain=min_split_gain, min_child_weight=min_child_weight,
+#                                   min_child_samples=min_child_samples,
+#                                   subsample=subsample, subsample_freq=subsample_freq, colsample_bytree=colsample_bytree,
+#                                   reg_alpha=reg_alpha, reg_lambda=reg_lambda, seed=seed, nthread=nthread, silent=silent)
+#
+#     def fit(self, X, y_t):
+#         return super(XGB, self).fit(X, y_t)
+#
+# class XGBoost(TagsMixin, LGBMRegressor):
+#
+#     attr_list = ['boosting_type', 'num_leaves', 'max_depth', 'learning_rate', 'n_estimators', 'max_bin',
+#                  'subsample_for_bin', 'objective', 'min_split_gain', 'min_child_weight', 'min_child_samples',
+#                  'subsample', 'subsample_freq', 'colsample_bytree', 'reg_alpha', 'reg_lambda', 'seed', 'nthread', 'silent']
+#
+#     def __init__(self, target_transform='identity', ml_score=False, boosting_type="gbdt", num_leaves=31, max_depth=-1,
+#         learning_rate=0.1, n_estimators=10, max_bin=255,
+#         subsample_for_bin=50000, objective=None,
+#         min_split_gain=0, min_child_weight=5, min_child_samples=10,
+#         subsample=1, subsample_freq=1, colsample_bytree=1,
+#         reg_alpha=0, reg_lambda=0, seed=0, nthread=-1, silent=True):
+#
+#         if isinstance(target_transform, str):
+#             target_transform = transforms.transforms[target_transform]()
+#         self.target_transform = target_transform
+#         self.ml_score = ml_score
+#
+#         super(XGBoost,self).__init__(boosting_type=boosting_type, num_leaves=num_leaves, max_depth=max_depth,
+#             learning_rate=learning_rate, n_estimators=n_estimators, max_bin=max_bin,
+#             subsample_for_bin=subsample_for_bin, objective=objective,
+#             min_split_gain=min_split_gain, min_child_weight=min_child_weight, min_child_samples=min_child_samples,
+#             subsample=subsample, subsample_freq=subsample_freq, colsample_bytree=colsample_bytree,
+#             reg_alpha=reg_alpha, reg_lambda=reg_lambda, seed=seed, nthread=nthread, silent=silent)
+#
+#     def fit(self, X, y, *args, **kwargs):
+#         self.target_transform.fit(y=y)
+#         y_t = self.target_transform.transform(y)
+#         result = dict((attr,val) for attr, val in self.__dict__.items() if attr in self.attr_list)
+#         xgb = XGB(**result)
+#         # self.__delattr__('ml_score')
+#         # self.__delattr__('target_transform')
+#
+#         # a = self.__dict__
+#         # for attr, val in self.__dict__.iteritems():
+#         #     print(attr, val)
+#         # for attr, val in self.__dict__.__delitem__()
+#         # self_cpy = cp..deepcopy(self)
+#         print(xgb)
+#         a=xgb.fit(X, y_t)
+#         print(xgb)
+#         print(a)
+#
+#         # delattr(self, 'target_transform')
+#         # delattr(self, 'ml_score')
+#         #
+
+
+class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
+
+    def __init__(self, target_transform='identity', ml_score=False, max_depth=3, learning_rate=0.1, n_estimators=100,
+                 silent=True, objective="reg:linear", booster='gbtree',
+                 n_jobs=1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0,
+                 subsample=1, colsample_bytree=1, colsample_bylevel=1,
+                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1,
+                 base_score=0.5, random_state=0, seed=None, missing=None):
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+            self.target_transform = target_transform
+            self.ml_score = ml_score
+
+            # super(XGBoost, self).__init__(max_depth=3, learning_rate=0.1, n_estimators=100,
+            #      silent=True, objective="reg:linear", booster='gbtree',
+            #      n_jobs=1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0,
+            #      subsample=1, colsample_bytree=1, colsample_bylevel=1,
+            #      reg_alpha=0, reg_lambda=1, scale_pos_weight=1,
+            #      base_score=0.5, random_state=0, seed=None, missing=None)
+
+            super(XGBoost, self).__init__(max_depth, learning_rate, n_estimators,
+                                          silent, objective, booster,
+                                          n_jobs, nthread, gamma, min_child_weight, max_delta_step,
+                                          subsample, colsample_bytree, colsample_bylevel,
+                                          reg_alpha, reg_lambda, scale_pos_weight,
+                                          base_score, random_state, seed, missing)
+
+
+
+
 
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
@@ -494,6 +597,7 @@ transformed_modelmaps = {
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
+    'xgboost': XGBoost,
 }
 
 # scikit-learn kernels
