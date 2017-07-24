@@ -84,7 +84,6 @@ setup(
         'PyYAML >= 3.11',
         'GDAL >= 2.0.0',
         'pandas == 0.19.2',
-        'geopandas == 0.2.1',
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
     ],
