@@ -29,7 +29,6 @@ from sklearn.kernel_approximation import RBFSampler
 from uncoverml import mpiops
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
-from uncoverml.likelihoods import Switching
 from uncoverml.transforms import target as transforms
 
 #
@@ -457,162 +456,6 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
                          nstarts=nstarts
                          )
         self._store_params(kernel, regulariser, nbases, lenscale, ard)
-
-
-# Bespoke regressor for basin-depth problems
-class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
-                     GLMPredictDistMixin):
-    """
-    A specialised approximate Gaussian process for large scale data using
-    stochastic gradients.
-
-    This has been specialised for depth-measurments where some observations are
-    merely constraints that the phenemena of interest is below the observed
-    depth, and not measured directly. See the project report for details.
-
-    This uses the Adam stochastic gradients algorithm;
-    http://arxiv.org/pdf/1412.6980
-
-    Parameters
-    ----------
-    kern: str, optional
-        the (approximate) kernel to use with this Gaussian process. Have a look
-        at :code:`basismap` dictionary for appropriate kernel approximations.
-    nbases: int
-        how many unique random bases to create (twice this number will be
-        actually created, i.e. real and imaginary components for each base).
-        The higher this number, the more accurate the kernel approximation, but
-        the longer the runtime of the algorithm. Usually if X is high
-        dimensional, this will have to also be high dimensional.
-    lenscale: float, optional
-        the initial value for the kernel length scale to be learned.
-    ard: bool, optional
-        Whether to use a different length scale for each dimension of X or a
-        single length scale. This will result in a longer run time, but
-        potentially better results.
-    var: Parameter, optional
-        observation variance initial value.
-    regulariser: Parameter, optional
-        weight regulariser (variance) initial value.
-    indicator_field: str, optional
-        The name of the field from the target shapefile (passed as a dict to
-        fit and predict) that indicates whether an observation is censored or
-        not.
-    maxiter: int, optional
-        Number of iterations to run for the stochastic gradients algorithm.
-    batch_size: int, optional
-        number of observations to use per SGD batch.
-    alpha: float, optional
-        stepsize to give the stochastic gradient optimisation update.
-    beta1: float, optional
-        smoothing/decay rate parameter for the stochastic gradient, must be
-        [0, 1].
-    beta2: float, optional
-        smoothing/decay rate parameter for the squared stochastic gradient,
-        must be [0, 1].
-    epsilon: float, optional
-        "jitter" term to ensure continued learning in stochastic gradients
-        (should be small).
-    random_state: int or RandomState, optional
-        random seed
-
-    Note
-    ----
-    Setting the ``random_state`` may be important for getting consistent
-    looking predictions when many chunks/subchunks are used. This is because
-    the predictive distribution is sampled for these algorithms!
-    """
-
-    def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
-                 falloff=1., regulariser=1., ard=True,
-                 indicator_field='censored', maxiter=3000,
-                 batch_size=10, alpha=0.01, beta1=0.9,
-                 beta2=0.99, epsilon=1e-8, random_state=None):
-
-        lhood = Switching(lenscale=falloff,
-                          var_init=Parameter(var, Positive()))
-
-        super().__init__(likelihood=lhood,
-                         basis=None,
-                         maxiter=maxiter,
-                         batch_size=batch_size,
-                         updater=Adam(alpha, beta1, beta2, epsilon),
-                         random_state=random_state
-                         )
-
-        self.indicator_field = indicator_field
-        self._store_params(kernel, regulariser, nbases, lenscale, ard)
-
-    def fit(self, X, y, fields, **kwargs):
-        r"""
-        Learn the parameters of the approximate Gaussian process.
-
-        Parameters
-        ----------
-        X: ndarray
-            (N, d) array input dataset (N samples, d dimensions).
-        y: ndarray
-            (N,) array targets (N samples)
-        fields: dict
-            dictionary of fields parsed from the shape file.
-            ``indicator_field`` should be a key in this dictionary. This should
-            be of the form:
-
-            .. code::
-
-                fields = {'censored': ['yes', 'no', ..., 'yes'],
-                          'otherfield': ...,
-                          ...
-                          }
-
-            where ``censored`` is the indicator field, and ``yes`` means we
-            have not directly observed the phenomena, and ``no`` means we have.
-        """
-        # uncomment next line to work with depthregress if your shapefile
-        # does not have a 'censored' column
-        # fields[self.indicator_field] = ['No'] * len(y)
-        largs = self._parse_largs(fields[self.indicator_field])
-        return super().fit(X, y, likelihood_args=(largs,))
-
-    def predict_dist(self, X, interval=0.95, fields={}, **kwargs):
-        """
-        Predictive mean and variance from an approximate Gaussian process.
-
-        Parameters
-        ----------
-        X: ndarray
-            (Ns, d) array query dataset (Ns samples, d dimensions).
-        interval: float, optional
-            The percentile confidence interval (e.g. 95%) to return.
-        fields: dict, optional
-            dictionary of fields parsed from the shape file.
-            ``indicator_field`` should be a key in this dictionary. If this is
-            not present, then a Gaussian likelihood will be used for all
-            predictions. The only time this may be input if for cross
-            validation.
-
-        Returns
-        -------
-        Ey: ndarray
-            The expected value of ys for the query inputs, X of shape (Ns,).
-        Vy: ndarray
-            The expected variance of ys (excluding likelihood noise terms) for
-            the query inputs, X of shape (Ns,).
-        ql: ndarray
-            The lower end point of the interval with shape (Ns,)
-        qu: ndarray
-            The upper end point of the interval with shape (Ns,)
-        """
-
-        if self.indicator_field in fields:
-            largs = self._parse_largs(fields[self.indicator_field])
-        else:
-            largs = np.ones(len(X), dtype=bool)
-
-        return super().predict_dist(X, interval, likelihood_args=(largs,))
-
-    def _parse_largs(self, largs):
-        return np.array([v == 'No' for v in largs], dtype=bool)
 
 
 #
@@ -1156,7 +999,6 @@ regressors = {
     'extratree': ExtraTreeTransformed,
     'cubist': CubistTransformed,
     'multicubist': CubistMultiTransformed,
-    'depthregress': DepthRegressor,
 }
 
 classifiers = {

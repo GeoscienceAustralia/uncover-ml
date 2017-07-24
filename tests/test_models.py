@@ -95,7 +95,6 @@ def test_trasnsformed_model_attr(get_transformed_model):
 @pytest.fixture(params=[k for k in all_ml_models
                         if k not in ['randomforest',
                                      'multirandomforest',
-                                     'depthregress',
                                      'cubist',
                                      'multicubist',
                                      'decisiontree',
