@@ -82,7 +82,6 @@ def load_data(config, partitions):
             log.info("Using memory aggressively: "
                      "dividing all data between nodes")
 
-        # config.target_file = ls.mpiops.run_once(resample_shapefile, config)
         # Make the targets
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property)
