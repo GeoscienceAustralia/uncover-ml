@@ -26,7 +26,6 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
-from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback
 
 
@@ -83,7 +82,7 @@ def load_data(config, partitions):
             log.info("Using memory aggressively: "
                      "dividing all data between nodes")
 
-        config.target_file = ls.mpiops.run_once(resample_shapefile, config)
+        # config.target_file = ls.mpiops.run_once(resample_shapefile, config)
         # Make the targets
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property)

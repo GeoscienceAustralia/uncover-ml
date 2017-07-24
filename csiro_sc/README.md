@@ -25,3 +25,9 @@ cd code/uncover-ml
 pip install -e .
 ```
 
+`scontrol show job` shows the actual memory usage of the job.
+
+Bracewell has 14 cores per node
+
+use  --ntasks-per-node=14 and --nodes= whatever
+
