@@ -1,0 +1,100 @@
+# not currently implemented
+# patchsize: 0
+
+features:
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: features.pk
+      targets: targets.pk
+      featurevec: featurevec.pk  # used for cubist only
+      rawcovariates: rawcovariates.csv  # intersected covariates saved as csv
+      rawcovariates_mask: rawcovariates_mask.csv  #
+      plot_covariates: True
+  - name: my features
+    type: ordinal
+    files:
+      # - path: /short/ge3/jrw547/Murray_datasets2/LATITUDE_GRID1.tif
+      # - path: /short/ge3/jrw547/Murray_datasets2/LOC_distance_to_coast.tif
+      # - path: /short/ge3/jrw547/GA-cover2/Th_v1.tif
+      # - path: /short/ge3/jrw547/GA-cover2/rat15thk.tif
+      - list: /home/masoud/uncover_venv/uncover-ml/configs/list.txt
+      # - directory: /short/ge3/jrw547/GA-cover2
+    transforms:
+      - centre
+      - standardise
+    imputation:  nn   # imputation on the targets
+
+#  - name: my features 2
+#    type: categorical
+#    files:
+#      - path: /short/ge3/jrw547/Murray_datasets2/erdep_ceno_MB.tif
+#    transforms:  onehot
+#    imputation: nn
+
+
+
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation: # mean  # this happen on the cov datasets and only within the masked area
+  transforms:
+     - whiten:
+         keep_fraction: 0.6
+
+# only used during prediction of mlkrige
+#lon_lat:  # used for regression kriging, i.e., mlkrige aglo
+#  lon: /short/ge3/jrw547/Murray_datasets2/LONGITUDE_GRID1.tif
+#  lat: /short/ge3/jrw547/Murray_datasets2/LATITUDE_GRID1.tif
+
+
+
+targets:
+  #file: /g/data1/ge3/john/jobs/murray_B_depth/Targets_2017/Targets_MurrayB_confid3_resampled_50p.shp
+  file: /media/masoud/16B0BE6AB0BE4FCB/fromJohn/Targets_2017/Targets_MurrayB_confid3_resampled_50p.shp
+  property: depth
+
+mask:
+  #file: /short/ge3/jrw547/Murray_datasets2/maskclip3.tif
+  file: /media/masoud/16B0BE6AB0BE4FCB/fromJohn/Targets_2017/maskclip3.tif
+  retain: 0
+
+learning:
+  algorithm: transformedrandomforest
+  arguments:
+    target_transform: identity
+    n_estimators: 60
+    max_features: auto
+    min_samples_split: 5
+    min_samples_leaf: 5
+    max_depth: 10
+    ml_score: True
+
+optimisation:
+  algorithm: transformedrandomforest
+  hyperparameters:
+    target_transform: [identity, standardise, log, sqrt]
+    n_estimators: [10, 20, 100]
+    max_features: ["auto", "sqrt", "log2"]
+    min_samples_split: [2, 5, 10]
+    min_samples_leaf: [1, 5, 10]
+    max_depth: [10, 20, 100]
+    ml_score: [False]
+  optimisation_output: optimisation.csv
+
+
+prediction:
+  quantiles: 0.95
+  outbands: 10
+
+validation:
+#   - feature_rank
+   - parallel
+   - k-fold:
+      folds: 5
+      random_seed: 1
+  
+output:
+  directory: .
+

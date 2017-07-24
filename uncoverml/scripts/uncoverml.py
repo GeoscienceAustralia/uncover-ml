@@ -3,6 +3,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 .. program-output:: uncoverml --help
 """
+
 import logging
 import pickle
 import resource
@@ -50,9 +51,9 @@ def run_crossval(x_all, targets_all, config):
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
+
 def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
-
     targets_all, x_all = load_data(config, partitions)
 
     if config.cross_validate:

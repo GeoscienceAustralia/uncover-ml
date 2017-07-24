@@ -11,7 +11,7 @@ features:
     type: ordinal
     files:
       # this list should ideally not contain lat/lon covariates
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+      - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
       - centre
@@ -21,19 +21,19 @@ features:
   - name: my features 2
     type: categorical
     files:
-      - list: /home/sudipta/GA_data/GA-cover2/sirsam_covariates_cat.txt
+      - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_cat.txt
     transforms: randomhot
     imputation: nn
 
 # only used during prediction
 mask:
-  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+  file: /home/masoud/GA_data/mask/old_mask_test.tif
   retain: 1
 
 # only used during prediction of mlkrige
 lon_lat:  # used for regression kriging, i.e., mlkrige aglo
-  lon: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-  lat: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
+  lon: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 preprocessing:
   # imputation: none
@@ -53,7 +53,7 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  file: /home/masoud/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
 #  resample:
 #    - spatial:
