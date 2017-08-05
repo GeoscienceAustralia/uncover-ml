@@ -487,8 +487,8 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
 
 class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
 
-    def __init__(self, target_transform='identity', ml_score=False, max_depth=3,
-                 learning_rate=0.1, n_estimators=100,
+    def __init__(self, target_transform='identity', ml_score=False,
+                 max_depth=3, learning_rate=0.1, n_estimators=100,
                  silent=True, objective="reg:linear",
                  nthread=1, gamma=0, min_child_weight=1,
                  max_delta_step=0,
@@ -498,27 +498,27 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
-            self.target_transform = target_transform
-            self.ml_score = ml_score
+        self.target_transform = target_transform
+        self.ml_score = ml_score
 
-            super(XGBoost, self).__init__(max_depth=max_depth,
-                                          learning_rate=learning_rate,
-                                          n_estimators=n_estimators,
-                                          silent=silent,
-                                          objective=objective,
-                                          nthread=nthread,
-                                          gamma=gamma,
-                                          min_child_weight=min_child_weight,
-                                          max_delta_step=max_delta_step,
-                                          subsample=subsample,
-                                          colsample_bytree=colsample_bytree,
-                                          colsample_bylevel=colsample_bylevel,
-                                          reg_alpha=reg_alpha,
-                                          reg_lambda=reg_lambda,
-                                          scale_pos_weight=scale_pos_weight,
-                                          base_score=base_score,
-                                          seed=seed,
-                                          missing=missing)
+        super(XGBoost, self).__init__(max_depth=max_depth,
+                                      learning_rate=learning_rate,
+                                      n_estimators=n_estimators,
+                                      silent=silent,
+                                      objective=objective,
+                                      nthread=nthread,
+                                      gamma=gamma,
+                                      min_child_weight=min_child_weight,
+                                      max_delta_step=max_delta_step,
+                                      subsample=subsample,
+                                      colsample_bytree=colsample_bytree,
+                                      colsample_bylevel=colsample_bylevel,
+                                      reg_alpha=reg_alpha,
+                                      reg_lambda=reg_lambda,
+                                      scale_pos_weight=scale_pos_weight,
+                                      base_score=base_score,
+                                      seed=seed,
+                                      missing=missing)
 
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
