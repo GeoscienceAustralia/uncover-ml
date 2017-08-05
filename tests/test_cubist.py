@@ -38,7 +38,7 @@ def test_correct_range():
 
     # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
-    assert 0.68 < score < 0.73
+    assert 0.68 < score < 0.8
 
 
 def test_correct_range_with_sampling():
