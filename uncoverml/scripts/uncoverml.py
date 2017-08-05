@@ -8,7 +8,7 @@ import logging
 import pickle
 import resource
 from os.path import isfile, splitext
-import warnings
+# import warnings
 import click
 import numpy as np
 import matplotlib

@@ -1,5 +1,5 @@
 import numpy as np
-import warnings
+# import warnings
 import logging
 from scipy.stats import norm
 from sklearn.base import RegressorMixin, BaseEstimator
@@ -8,13 +8,13 @@ from sklearn.metrics import r2_score
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 
-from uncoverml.mllog import warn_with_traceback
+# from uncoverml.mllog import warn_with_traceback
 from uncoverml.models import TagsMixin, modelmaps as all_ml_models
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import transformed_modelmaps
 
 log = logging.getLogger(__name__)
-warnings.showwarning = warn_with_traceback
+# warnings.showwarning = warn_with_traceback
 
 krige_methods = {'ordinary': OrdinaryKriging,
                  'universal': UniversalKriging}
