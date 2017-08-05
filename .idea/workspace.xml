@@ -4,47 +4,8 @@
     <bookmark url="file://$PROJECT_DIR$/../PyRate/pyrate/gdal_python.py" description="def crop_resample_average(&#10;        input_tif, exte..." line="207" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b2cfb692-c3bd-4c8b-8086-06d69fef785e" name="Default" comment="used pip (no support for py3 for now)">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/uncover-ml.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="" />
+    <list default="true" id="b2cfb692-c3bd-4c8b-8086-06d69fef785e" name="Default" comment="a few more changes and test fixes">
       <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_1.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_2.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_3.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_4.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_5.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_6.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_7.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_8.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_9.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_x_0_p_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_x_1_p_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_x_2_p_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_x_3_p_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/results/cube_x_4_p_0.pk" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/.idea/inspectionProfiles/profiles_settings.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/.idea/misc.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/.idea/modules.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/.idea/uncoverml.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/.idea/workspace.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/regression.test" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/regression.train" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.idea/inspectionProfiles/profiles_settings.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.idea/misc.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.idea/modules.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.idea/scripts.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.idea/workspace.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.spyderworkspace" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/.~lock.optimisation_results.csv#" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/test_soyder/.spyderproject" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/scripts/test_soyder/test1.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/test_lgbm.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uncoverml/test_xgboost.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/uncoverml/scripts/uncoverml.py" afterPath="$PROJECT_DIR$/uncoverml/scripts/uncoverml.py" />
     </list>
     <ignored path="uncover-ml.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -67,11 +28,9 @@
       <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="99" column="9" lean-forward="false" selection-start-line="99" selection-start-column="9" selection-end-line="99" selection-end-column="9" />
-              <folding>
-                <element signature="e#22#31#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="572">
+              <caret line="86" column="17" lean-forward="false" selection-start-line="86" selection-start-column="17" selection-end-line="86" selection-end-column="17" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -99,16 +58,60 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="uncoverml.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="uncoverml.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/uncoverml/scripts/uncoverml.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="29" column="0" lean-forward="true" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
+            <state relative-caret-position="-255">
+              <caret line="24" column="25" lean-forward="false" selection-start-line="24" selection-start-column="25" selection-end-line="24" selection-end-column="25" />
               <folding>
                 <element signature="e#126#140#0" expanded="true" />
-                <element signature="e#1981#4739#0" expanded="true" />
-                <element signature="e#10492#10727#0" expanded="true" />
+                <element signature="e#1985#4743#0" expanded="true" />
+                <element signature="e#10496#10731#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/uncoverml/optimise/models.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="289">
+              <caret line="17" column="49" lean-forward="false" selection-start-line="17" selection-start-column="49" selection-end-line="17" selection-end-column="49" />
+              <folding>
+                <element signature="e#17947#19336#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="test_cubist.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/test_cubist.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="456">
+              <caret line="77" column="19" lean-forward="false" selection-start-line="77" selection-start-column="19" selection-end-line="77" selection-end-column="19" />
+              <folding>
+                <element signature="e#1536#1863#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="366">
+              <caret line="60" column="6" lean-forward="false" selection-start-line="60" selection-start-column="2" selection-end-line="60" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sklearn.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/venvs/uncover/lib/python3.5/site-packages/xgboost/sklearn.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="357">
+              <caret line="113" column="24" lean-forward="false" selection-start-line="113" selection-start-column="24" selection-end-line="118" selection-end-column="53" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -182,7 +185,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/docs/usage.rst" />
         <option value="$PROJECT_DIR$/docs/index.rst" />
         <option value="$PROJECT_DIR$/pbs/README.md" />
         <option value="$PROJECT_DIR$/tox.ini" />
@@ -226,13 +228,14 @@
         <option value="$PROJECT_DIR$/uncoverml/cubist_config.py" />
         <option value="$PROJECT_DIR$/uncoverml/cubist.py" />
         <option value="$PROJECT_DIR$/configs/cubist_local.yaml" />
-        <option value="$PROJECT_DIR$/tests/test_cubist.py" />
-        <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/.circleci/config.yml" />
         <option value="$PROJECT_DIR$/Makefile" />
         <option value="$PROJECT_DIR$/README.rst" />
-        <option value="$PROJECT_DIR$/uncoverml/optimise/models.py" />
         <option value="$PROJECT_DIR$/uncoverml/scripts/uncoverml.py" />
+        <option value="$PROJECT_DIR$/setup.py" />
+        <option value="$PROJECT_DIR$/uncoverml/optimise/models.py" />
+        <option value="$PROJECT_DIR$/tests/test_cubist.py" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -295,7 +298,18 @@
             <path>
               <item name="uncover-ml" type="b2602c69:ProjectViewProjectNode" />
               <item name="uncover-ml" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="uncover-ml" type="b2602c69:ProjectViewProjectNode" />
+              <item name="uncover-ml" type="462c0819:PsiDirectoryNode" />
               <item name="uncoverml" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="uncover-ml" type="b2602c69:ProjectViewProjectNode" />
+              <item name="uncover-ml" type="462c0819:PsiDirectoryNode" />
+              <item name="uncoverml" type="462c0819:PsiDirectoryNode" />
+              <item name="optimise" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -634,27 +648,6 @@
       <option name="presentableId" value="Default" />
       <updated>1468968600252</updated>
     </task>
-    <task id="LOCAL-00450" summary="minor change in output filename">
-      <created>1487118955906</created>
-      <option name="number" value="00450" />
-      <option name="presentableId" value="LOCAL-00450" />
-      <option name="project" value="LOCAL" />
-      <updated>1487118955906</updated>
-    </task>
-    <task id="LOCAL-00451" summary="make sure multicubist processes have different filenames">
-      <created>1488255511129</created>
-      <option name="number" value="00451" />
-      <option name="presentableId" value="LOCAL-00451" />
-      <option name="project" value="LOCAL" />
-      <updated>1488255511130</updated>
-    </task>
-    <task id="LOCAL-00452" summary="make sure multicubist processes have different filenames">
-      <created>1488255560701</created>
-      <option name="number" value="00452" />
-      <option name="presentableId" value="LOCAL-00452" />
-      <option name="project" value="LOCAL" />
-      <updated>1488255560701</updated>
-    </task>
     <task id="LOCAL-00453" summary="make sure multicubist processes have different filenames">
       <created>1488255601784</created>
       <option name="number" value="00453" />
@@ -977,7 +970,28 @@
       <option name="project" value="LOCAL" />
       <updated>1500612775132</updated>
     </task>
-    <option name="localTasksCounter" value="499" />
+    <task id="LOCAL-00499" summary="clean up and corrected xgboost implementation">
+      <created>1501922456514</created>
+      <option name="number" value="00499" />
+      <option name="presentableId" value="LOCAL-00499" />
+      <option name="project" value="LOCAL" />
+      <updated>1501922456514</updated>
+    </task>
+    <task id="LOCAL-00500" summary="a few more changes and test fixes">
+      <created>1501925465013</created>
+      <option name="number" value="00500" />
+      <option name="presentableId" value="LOCAL-00500" />
+      <option name="project" value="LOCAL" />
+      <updated>1501925465013</updated>
+    </task>
+    <task id="LOCAL-00501" summary="a few more changes and test fixes">
+      <created>1501925531460</created>
+      <option name="number" value="00501" />
+      <option name="presentableId" value="LOCAL-00501" />
+      <option name="project" value="LOCAL" />
+      <updated>1501925531460</updated>
+    </task>
+    <option name="localTasksCounter" value="502" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1009,7 +1023,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.78602153" sideWeight="0.49359658" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3268817" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18836713" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4429029" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.48025614" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.12379936" sideWeight="0.5125786" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -1136,8 +1150,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added python 36 support in tox and setup , fix py33 numpy compatibility" />
-    <MESSAGE value="setup.py install still does not work due to scikit-learn" />
     <MESSAGE value="skip reading covariates when entire chunk is masked" />
     <MESSAGE value="minor change required when retain=0" />
     <MESSAGE value="temp checkin" />
@@ -1161,7 +1173,9 @@
     <MESSAGE value="fix for non-unique bin edges" />
     <MESSAGE value="fixed cubist test warnings" />
     <MESSAGE value="used pip (no support for py3 for now)" />
-    <option name="LAST_COMMIT_MESSAGE" value="used pip (no support for py3 for now)" />
+    <MESSAGE value="clean up and corrected xgboost implementation" />
+    <MESSAGE value="a few more changes and test fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="a few more changes and test fixes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1170,13 +1184,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/.PyCharmCE2017.1/system/python_stubs/-1049221936/_collections.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="87" column="8" lean-forward="false" selection-start-line="87" selection-start-column="8" selection-end-line="87" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/quant.py" />
     <entry file="file://$USER_HOME$/venvs/uncvoer/lib/python3.5/site-packages/revrand-1.0.0-py3.5.egg/revrand/glm.py" />
     <entry file="file://$USER_HOME$/venvs/uncvoer/lib/python3.5/site-packages/numpy/core/fromnumeric.py" />
@@ -1320,13 +1327,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_cubist.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/venvs/uncover/lib/python3.5/site-packages/numpy/core/fromnumeric.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="383">
@@ -1406,17 +1406,7 @@
         <state relative-caret-position="1921">
           <caret line="130" column="18" lean-forward="false" selection-start-line="130" selection-start-column="18" selection-end-line="130" selection-end-column="18" />
           <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="99" column="9" lean-forward="false" selection-start-line="99" selection-start-column="9" selection-end-line="99" selection-end-column="9" />
-          <folding>
-            <element signature="e#22#31#0" expanded="true" />
+            <element signature="e#0#31#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1453,14 +1443,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/venvs/uncover/lib/python3.5/site-packages/xgboost/sklearn.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="113" column="23" lean-forward="false" selection-start-line="113" selection-start-column="23" selection-end-line="118" selection-end-column="53" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/uncoverml/predict.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -1479,17 +1461,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/uncoverml/optimise/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="249">
-          <caret line="491" column="0" lean-forward="true" selection-start-line="491" selection-start-column="0" selection-end-line="491" selection-end-column="0" />
-          <folding>
-            <element signature="e#15236#15715#0" expanded="false" />
-            <element signature="e#17123#17526#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/preprocessing/resample.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="306">
@@ -1503,13 +1474,57 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/uncoverml/scripts/uncoverml.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="29" column="0" lean-forward="true" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
+        <state relative-caret-position="-255">
+          <caret line="24" column="25" lean-forward="false" selection-start-line="24" selection-start-column="25" selection-end-line="24" selection-end-column="25" />
           <folding>
             <element signature="e#126#140#0" expanded="true" />
-            <element signature="e#1981#4739#0" expanded="true" />
-            <element signature="e#10492#10727#0" expanded="true" />
+            <element signature="e#1985#4743#0" expanded="true" />
+            <element signature="e#10496#10731#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/venvs/uncover/lib/python3.5/site-packages/xgboost/sklearn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="113" column="24" lean-forward="false" selection-start-line="113" selection-start-column="24" selection-end-line="118" selection-end-column="53" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="572">
+          <caret line="86" column="17" lean-forward="false" selection-start-line="86" selection-start-column="17" selection-end-line="86" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/uncoverml/optimise/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="17" column="49" lean-forward="false" selection-start-line="17" selection-start-column="49" selection-end-line="17" selection-end-column="49" />
+          <folding>
+            <element signature="e#17947#19336#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_cubist.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="77" column="19" lean-forward="false" selection-start-line="77" selection-start-column="19" selection-end-line="77" selection-end-column="19" />
+          <folding>
+            <element signature="e#1536#1863#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="366">
+          <caret line="60" column="6" lean-forward="false" selection-start-line="60" selection-start-column="2" selection-end-line="60" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>

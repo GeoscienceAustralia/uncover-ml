@@ -71,3 +71,6 @@ hdf5-1.8.*
 
 # Cubist install dir
 cubist/
+
+# pycharm
+.idea/
