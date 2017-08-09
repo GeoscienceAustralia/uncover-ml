@@ -15,6 +15,7 @@ from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
+from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP, PredictProbaMixin, \
     MutualInfoMixin
@@ -520,6 +521,105 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       seed=seed,
                                       missing=missing)
 
+
+class CatBoost(TransformMixin, TagsMixin, CatBoostRegressor):
+
+    def __init__(self, target_transform='identity', ml_score=False,
+                 iterations=500,
+                 learning_rate=0.03,
+                 depth=6,
+                 l2_leaf_reg=3,
+                 rsm=1,
+                 loss_function='RMSE',
+                 border=None,
+                 border_count=None,
+                 feature_border_type='MinEntropy',
+                 fold_permutation_block_size=None,
+                 od_pval=0,
+                 od_wait=None,
+                 od_type=None,
+                 counter_calc_method=None,
+                 gradient_iterations=None,
+                 leaf_estimation_method=None,
+                 thread_count=None,
+                 random_seed=None,
+                 use_best_model=False,
+                 verbose=False,
+                 ctr_description=None,
+                 ctr_border_count=None,
+                 ctr_leaf_count_limit=None,
+                 max_ctr_complexity=None,
+                 store_all_simple_ctr=False,
+                 priors=None,
+                 has_time=False,
+                 classes_count=None,
+                 class_weights=None,
+                 one_hot_max_size=None,
+                 random_strength=1,
+                 name='experiment',
+                 ignored_features=None,
+                 train_dir=None,
+                 custom_loss=None,
+                 eval_metric=None,
+                 bagging_temperature=None,
+                 save_snapshot=None,
+                 snapshot_file=None,
+                 fold_len_multiplier=None,
+                 used_ram_limit=None,
+                 feature_priors=None,
+                 ):
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        self.ml_score = ml_score
+
+        super(CatBoost, self).__init__(
+            iterations=iterations,
+            learning_rate=learning_rate,
+            depth=depth,
+            l2_leaf_reg=l2_leaf_reg,
+            rsm=rsm,
+            loss_function=loss_function,
+            border=border,
+            border_count=border_count,
+            feature_border_type=feature_border_type,
+            fold_permutation_block_size=fold_permutation_block_size,
+            od_pval=od_pval,
+            od_wait=od_wait,
+            od_type=od_type,
+            counter_calc_method=counter_calc_method,
+            gradient_iterations=gradient_iterations,
+            leaf_estimation_method=leaf_estimation_method,
+            thread_count=thread_count,
+            random_seed=random_seed,
+            use_best_model=use_best_model,
+            verbose=verbose,
+            ctr_description=ctr_description,
+            ctr_border_count=ctr_border_count,
+            ctr_leaf_count_limit=ctr_leaf_count_limit,
+            max_ctr_complexity=max_ctr_complexity,
+            store_all_simple_ctr=store_all_simple_ctr,
+            priors=priors,
+            has_time=has_time,
+            classes_count=classes_count,
+            class_weights=class_weights,
+            one_hot_max_size=one_hot_max_size,
+            random_strength=random_strength,
+            name=name,
+            ignored_features=ignored_features,
+            train_dir=train_dir,
+            custom_loss=custom_loss,
+            eval_metric=eval_metric,
+            bagging_temperature=bagging_temperature,
+            save_snapshot=save_snapshot,
+            snapshot_file=snapshot_file,
+            fold_len_multiplier=fold_len_multiplier,
+            used_ram_limit=used_ram_limit,
+            feature_priors=feature_priors
+        )
+
+
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
@@ -531,6 +631,7 @@ transformed_modelmaps = {
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
     'xgboost': XGBoost,
+    'catboost': CatBoost,
 }
 
 # scikit-learn kernels

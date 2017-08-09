@@ -88,7 +88,8 @@ def test_trasnsformed_model_attr(get_transformed_model):
                                       'cubist',
                                       'multicubist',
                                       'decisiontree',
-                                      'extratree'
+                                      'extratree',
+                                      'catboost'
                                      ]])
 def models_supported(request):
     return request.param
@@ -101,7 +102,6 @@ def test_mlkrige(linear_data, models_supported, get_krige_method):
     yt2, Xt2, ys2, Xs2 = linear_data()
     yt3, Xt3, ys3, Xs3 = linear_data(seed=10)
     yt4, Xt4, ys4, Xs4 = linear_data(seed=5)
-
     mlk = MLKrige(ml_method=models_supported, method=get_krige_method)
     arr = np.random.rand(Xt2.shape[0], 2)
     np.random.shuffle(arr)
