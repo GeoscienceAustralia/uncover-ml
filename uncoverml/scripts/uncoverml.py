@@ -51,7 +51,6 @@ def run_crossval(x_all, targets_all, config):
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-
 def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
     targets_all, x_all = load_data(config, partitions)
@@ -216,6 +215,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     model = state_dict["model"]
     config = state_dict["config"]
+    if config.algorithm == 'catboost':
+        model.target_transform = state_dict['target_transform']
     config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
         else False
     config.mask = mask if mask else config.mask
