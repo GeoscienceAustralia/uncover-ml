@@ -82,10 +82,10 @@ setup(
         'GDAL >= 2.0.0',
         'pandas == 0.19.2',
         'geopandas == 0.2.1',
-        'matplotlib == 1.5.1',
+        'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
         'xgboost >= 0.6a2',
-        'catboost >= 0.1.1.6',
+        'catboost == 0.3.0',
     ],
     extras_require={
         'demos': [
@@ -121,6 +121,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
