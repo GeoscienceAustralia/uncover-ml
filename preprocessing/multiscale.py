@@ -149,13 +149,14 @@ class Multiscale():
             else:
                 d = d[psx:-pex, psy:-pey]
 
-            log.info('hello world..')
+            #log.info('hello world..')
 
             #print d.shape
             #print np.min(d), np.max(d)
             #print '\n\n'
 
-            ofn = os.path.join(self._output_folder, 'img.level_%d.tiff'%(l))
+            fn,ext = os.path.splitext(os.path.basename(fname))
+            ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l+1,ext))
             of = driver.CreateCopy(ofn, src_ds, strict=0)
             of.GetRasterBand(1).WriteArray(d)
         # end for
