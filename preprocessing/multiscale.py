@@ -100,7 +100,6 @@ class Multiscale():
         #print 'proc: %d, %d files\n========='%(mpiops.chunk_index,
         #                                       len(self._proc_files[mpiops.chunk_index]))
         #for f in self._proc_files[mpiops.chunk_index]: print f
-        #print '\n\n'
     # end func
 
     def __generate_reconstructions(self, fname):
@@ -185,8 +184,6 @@ class Multiscale():
             else:
                 d = d[psx:-pex, psy:-pey]
 
-            #log.info('hello world..')
-
             #print d.shape
             #print np.min(d), np.max(d)
             #print '\n\n'
@@ -254,7 +251,7 @@ def process(input, output_folder, max_level, file_extension,
             mother_wavelet, extension_mode, extrapolate, max_search_dist,
             smoothing_iterations, log_level):
     """
-    IMPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
+    INPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
     MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
     """
