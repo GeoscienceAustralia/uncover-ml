@@ -29,15 +29,19 @@ import logging
 log = logging.getLogger('multiscale')
 
 class Multiscale():
-    def __init__(self, input_folder, output_folder,
+    def __init__(self, input, output_folder,
+                 file_extension='.tif',
                  level=2, mother_wavelet_name='coif6',
+                 extrapolate=True,
                  extension_mode='smooth',
                  max_search_dist=400,
                  smoothing_iterations=10):
-        self._input_folder = input_folder
+        self._input = input
         self._output_folder = output_folder
+        self._file_extension = file_extension
         self._level = level
         self._mother_wavelet_name = mother_wavelet_name
+        self._extrapolate = extrapolate
         self._extension_mode = extension_mode
         self._max_search_dist = max_search_dist
         self._smoothing_iterations = smoothing_iterations
@@ -49,10 +53,34 @@ class Multiscale():
         self.__split_work()
     # end func
 
+    def __get_files(self):
+        files = None
+        if(os.path.isdir(self._input)):
+            # prepare case insensitive glob pattern,
+            # e.g. for '.pdf', this will produce '*.[Pp][Dd][Ff]'
+            if (self._file_extension.count('.') != 1):
+                raise (RuntimeError, 'Invalid file extension')
+
+            glob_pattern = '*' + ''.join(sum(map(lambda (x): ['[%s%s]' % (a.upper(), a.lower())
+                                                              if a.isalpha() else a for a in list(x)],
+                                                 self._file_extension), []))
+
+            files = glob.glob(os.path.join(self._input, glob_pattern))
+        elif(os.path.isfile(self._input)):
+            try:
+                fh = open(self._input)
+                files = fh.read().splitlines()
+                fh.close()
+            except:
+                raise(RuntimeError, 'Failed to read input file')
+        log.info(' Found %d files to process ' % len(files))
+        print files
+        return files
+    # end func
+
     def __split_work(self):
         if(self._chunk_index==0):
-            files = glob.glob(os.path.join(self._input_folder, '*.tif'))
-
+            files = self.__get_files()
             count = 0
             for iproc in np.arange(self._nproc):
                 for ifile in np.arange(np.divide(len(files), self._nproc)):
@@ -65,6 +93,7 @@ class Multiscale():
         # end if
 
         # broadcast workload to all procs
+        log.info(' Distributing workload over %d processors'%(self._nproc))
         self._proc_files = mpiops.comm.bcast(self._proc_files, root=0)
 
         #print 'proc: %d, %d files\n========='%(mpiops.chunk_index,
@@ -83,9 +112,15 @@ class Multiscale():
             scratch = driver.CreateCopy(scratch_fn, src_ds, strict=0)
             sb = scratch.GetRasterBand(1)
             nodataval = sb.GetNoDataValue()
-            result = gdal.FillNodata(targetBand=sb, maskBand=None,
-                                     maxSearchDist=self._max_search_dist,
-                                     smoothingIterations=self._smoothing_iterations)
+
+            if(nodataval is not None and self._extrapolate==False):
+                log.warning(' NO_DATA_VALUES found in raster %s, but not extrapolating values. This may'%(fname)+\
+                            ' cause \'ringing\' artefacts')
+            if(self._extrapolate and nodataval is not None):
+                log.info(' Extrapolating raster %s by %d pixels'%(fname, self._max_search_dist))
+                result = gdal.FillNodata(targetBand=sb, maskBand=None,
+                                         maxSearchDist=self._max_search_dist,
+                                         smoothingIterations=self._smoothing_iterations)
 
             od = sb.ReadAsArray()
             od[od==nodataval] = np.mean(od[od!=nodataval])
@@ -155,6 +190,9 @@ class Multiscale():
             #print np.min(d), np.max(d)
             #print '\n\n'
 
+            if(d.shape != od.shape):
+                raise(RuntimeError, 'Error encountered in wavelet reconstruction.')
+
             fn,ext = os.path.splitext(os.path.basename(fname))
             ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l+1,ext))
             of = driver.CreateCopy(ofn, src_ds, strict=0)
@@ -164,7 +202,7 @@ class Multiscale():
 
     def process(self):
         for f in self._proc_files[self._chunk_index]:
-            print f
+            log.info(' Processing %s..'%(f))
             self.__generate_reconstructions(f)
         # end for
     # end func
@@ -172,10 +210,12 @@ class Multiscale():
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('input-folder', required=True,
+@click.argument('input', required=True,
                 type=click.Path(exists=True))
 @click.argument('output-folder', required=True,
                 type=click.Path(exists=True))
+@click.argument('file-extension', required=True,
+                type=str)
 @click.argument('max-level', required=True,
                 type=np.int8)
 @click.option('--mother-wavelet', default='coif6',
@@ -196,30 +236,37 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--extension-mode', default='smooth',
               help="Signal extension mode used for padding",
               type=click.Choice(['zero', 'constant', 'symmetric', 'reflect', 'periodic', 'smooth', 'periodization']))
+@click.option('--extrapolate', default=True,
+              type=bool,
+              help="Extrapolate raster if NO_DATA_VALUES are found")
 @click.option('--max-search-dist', default=400,
               help="Maximum search distance (in pixels) for extrapolating NO_DATA values in input raster; not used \
                    if raster has no masked regions")
 @click.option('--smoothing-iterations', default=10,
               help="Number of smoothing iterations used for smoothing extrapolated values; see option --max-search-dist")
-def process(input_folder, output_folder, max_level,
-            mother_wavelet, extension_mode, max_search_dist,
-            smoothing_iterations):
+@click.option('--log-level', default='INFO',
+              help="Logging verbosity",
+              type=click.Choice(['INFO', 'WARN']))
+def process(input, output_folder, file_extension, max_level,
+            mother_wavelet, extension_mode, extrapolate, max_search_dist,
+            smoothing_iterations, log_level):
     """
-    IMPUT_FOLDER: Path to raster files \n
+    IMPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
+    FILE_EXTENSION: File extension, e.g. .TIF
     MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
     """
 
-    logging.basicConfig(level=logging.INFO)
+    logMap = {'INFO':logging.INFO, 'WARN':logging.WARNING}
+    logging.basicConfig(level=logMap[log_level])
 
-    m = Multiscale(input_folder, output_folder,
+    m = Multiscale(input, output_folder, file_extension=file_extension,
                    level=max_level, mother_wavelet_name=mother_wavelet,
-                   extension_mode=extension_mode, max_search_dist=max_search_dist,
-                   smoothing_iterations=smoothing_iterations)
+                   extrapolate=extrapolate, extension_mode=extension_mode,
+                   max_search_dist=max_search_dist, smoothing_iterations=smoothing_iterations)
     m.process()
     return
 # end
-
 
 # =============================================
 # Quick test
