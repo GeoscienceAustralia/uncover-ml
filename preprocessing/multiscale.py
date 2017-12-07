@@ -30,19 +30,19 @@ log = logging.getLogger('multiscale')
 
 class Multiscale():
     def __init__(self, input, output_folder,
-                 file_extension='.tif',
-                 level=2, mother_wavelet_name='coif6',
-                 extrapolate=True,
+                 level=2, file_extension='.tif',
+                 mother_wavelet_name='coif6',
                  extension_mode='smooth',
+                 extrapolate=True,
                  max_search_dist=400,
                  smoothing_iterations=10):
         self._input = input
         self._output_folder = output_folder
-        self._file_extension = file_extension
         self._level = level
+        self._file_extension = file_extension
         self._mother_wavelet_name = mother_wavelet_name
-        self._extrapolate = extrapolate
         self._extension_mode = extension_mode
+        self._extrapolate = extrapolate
         self._max_search_dist = max_search_dist
         self._smoothing_iterations = smoothing_iterations
 
@@ -56,6 +56,8 @@ class Multiscale():
     def __get_files(self):
         files = None
         if(os.path.isdir(self._input)):
+            log.info(' Searching for input files with extension %s in folder %s'%
+                     (self._file_extension, self._input))
             # prepare case insensitive glob pattern,
             # e.g. for '.pdf', this will produce '*.[Pp][Dd][Ff]'
             if (self._file_extension.count('.') != 1):
@@ -74,7 +76,6 @@ class Multiscale():
             except:
                 raise(RuntimeError, 'Failed to read input file')
         log.info(' Found %d files to process ' % len(files))
-        print files
         return files
     # end func
 
@@ -214,10 +215,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                 type=click.Path(exists=True))
 @click.argument('output-folder', required=True,
                 type=click.Path(exists=True))
-@click.argument('file-extension', required=True,
-                type=str)
 @click.argument('max-level', required=True,
                 type=np.int8)
+@click.option('--file-extension', default='.tif',
+              help='File extension to use (e.g. \'.tif\') to search for input files; only required '
+                   'if the \'input\' argument is a file path.',
+              type=str)
 @click.option('--mother-wavelet', default='coif6',
               help='Name of the mother wavelet',
               type=click.Choice(['bior1.1', 'bior1.3', 'bior1.5', 'bior2.2',  'bior2.4',  'bior2.6',  'bior2.8',
@@ -247,23 +250,22 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--log-level', default='INFO',
               help="Logging verbosity",
               type=click.Choice(['INFO', 'WARN']))
-def process(input, output_folder, file_extension, max_level,
+def process(input, output_folder, max_level, file_extension,
             mother_wavelet, extension_mode, extrapolate, max_search_dist,
             smoothing_iterations, log_level):
     """
     IMPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
-    FILE_EXTENSION: File extension, e.g. .TIF
     MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
     """
 
     logMap = {'INFO':logging.INFO, 'WARN':logging.WARNING}
     logging.basicConfig(level=logMap[log_level])
 
-    m = Multiscale(input, output_folder, file_extension=file_extension,
-                   level=max_level, mother_wavelet_name=mother_wavelet,
-                   extrapolate=extrapolate, extension_mode=extension_mode,
-                   max_search_dist=max_search_dist, smoothing_iterations=smoothing_iterations)
+    m = Multiscale(input, output_folder, level=max_level, file_extension=file_extension,
+                   mother_wavelet_name=mother_wavelet, extension_mode=extension_mode,
+                   extrapolate=extrapolate, max_search_dist=max_search_dist,
+                   smoothing_iterations=smoothing_iterations)
     m.process()
     return
 # end
