@@ -16,7 +16,7 @@ Revision History:
 import os
 
 import numpy as np
-from uncoverml import mpiops
+from mpi4py import MPI
 import glob
 from collections import defaultdict
 import pywt
@@ -46,8 +46,9 @@ class Multiscale():
         self._max_search_dist = max_search_dist
         self._smoothing_iterations = smoothing_iterations
 
-        self._nproc = mpiops.chunks
-        self._chunk_index = mpiops.chunk_index
+        self._comm = MPI.COMM_WORLD
+        self._nproc = self._comm.Get_size()
+        self._chunk_index = self._comm.Get_rank()
         self._proc_files = defaultdict(list)
 
         self.__split_work()
@@ -63,7 +64,7 @@ class Multiscale():
             if (self._file_extension.count('.') != 1):
                 raise (RuntimeError, 'Invalid file extension')
 
-            glob_pattern = '*' + ''.join(sum(map(lambda (x): ['[%s%s]' % (a.upper(), a.lower())
+            glob_pattern = '*' + ''.join(sum(map(lambda x: ['[%s%s]' % (a.upper(), a.lower())
                                                               if a.isalpha() else a for a in list(x)],
                                                  self._file_extension), []))
 
@@ -95,7 +96,7 @@ class Multiscale():
 
         # broadcast workload to all procs
         log.info(' Distributing workload over %d processors'%(self._nproc))
-        self._proc_files = mpiops.comm.bcast(self._proc_files, root=0)
+        self._proc_files = self._comm.bcast(self._proc_files, root=0)
 
         #print 'proc: %d, %d files\n========='%(mpiops.chunk_index,
         #                                       len(self._proc_files[mpiops.chunk_index]))
@@ -115,7 +116,7 @@ class Multiscale():
 
             if(nodataval is not None and self._extrapolate==False):
                 log.warning(' NO_DATA_VALUES found in raster %s, but not extrapolating values. This may'%(fname)+\
-                            ' cause \'ringing\' artefacts')
+                            ' cause \'ringing\' artefacts at the edges')
             if(self._extrapolate and nodataval is not None):
                 log.info(' Extrapolating raster %s by %d pixels'%(fname, self._max_search_dist))
                 result = gdal.FillNodata(targetBand=sb, maskBand=None,
@@ -125,7 +126,7 @@ class Multiscale():
             od = sb.ReadAsArray()
             od[od==nodataval] = np.mean(od[od!=nodataval])
 
-            # cleanup
+            # clean up
             scratch = None
             os.system('rm -f %s'%scratch_fn)
         else:
@@ -135,6 +136,8 @@ class Multiscale():
         results = []
         d = od
         assert(d.ndim==2)
+        #print('orig shape:', d.shape)
+
         for i in np.arange(self._level):
             r = pywt.dwt2(d, self._mother_wavelet_name,
                           mode=self._extension_mode)
@@ -144,17 +147,17 @@ class Multiscale():
         # end for
 
         # reconstruct each level, starting from the highest
-        for l in np.arange(self._level)[::-1]:
-            d = results[l][0]
-            #print 'reconstructing level: %d'%(l+1)
+        for l in np.arange(1, self._level+1)[::-1]:
+            d = results[l-1][0]
+            log.debug('\tReconstructing level: %d'%(l))
             #print(d.shape)
-            for i in np.arange(l+1):
+            for i in np.arange(1, l+1):
                 r = pywt.idwt2([d, [np.zeros(d.shape),
                                     np.zeros(d.shape), np.zeros(d.shape)]],
                                self._mother_wavelet_name,
                                mode=self._extension_mode)
                 d = r
-                #print(d.shape)
+                #print(l, i, r.shape)
             # end for
 
             p = np.array(d.shape) - np.array(od.shape)
@@ -192,7 +195,7 @@ class Multiscale():
                 raise(RuntimeError, 'Error encountered in wavelet reconstruction.')
 
             fn,ext = os.path.splitext(os.path.basename(fname))
-            ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l+1,ext))
+            ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l,ext))
             of = driver.CreateCopy(ofn, src_ds, strict=0)
             of.GetRasterBand(1).WriteArray(d)
         # end for
@@ -246,7 +249,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Number of smoothing iterations used for smoothing extrapolated values; see option --max-search-dist")
 @click.option('--log-level', default='INFO',
               help="Logging verbosity",
-              type=click.Choice(['INFO', 'WARN']))
+              type=click.Choice(['DEBUG', 'INFO', 'WARN']))
 def process(input, output_folder, max_level, file_extension,
             mother_wavelet, extension_mode, extrapolate, max_search_dist,
             smoothing_iterations, log_level):
@@ -256,7 +259,7 @@ def process(input, output_folder, max_level, file_extension,
     MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
     """
 
-    logMap = {'INFO':logging.INFO, 'WARN':logging.WARNING}
+    logMap = {'DEBUG':logging.DEBUG, 'INFO':logging.INFO, 'WARN':logging.WARNING}
     logging.basicConfig(level=logMap[log_level])
 
     m = Multiscale(input, output_folder, level=max_level, file_extension=file_extension,
