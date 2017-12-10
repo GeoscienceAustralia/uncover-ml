@@ -24,6 +24,7 @@ import click
 
 import gdal
 from gdalconst import *
+import uuid
 
 import logging
 log = logging.getLogger('multiscale')
@@ -50,6 +51,7 @@ class Multiscale():
         self._nproc = self._comm.Get_size()
         self._chunk_index = self._comm.Get_rank()
         self._proc_files = defaultdict(list)
+        self._rm_list = []
 
         self.__split_work()
     # end func
@@ -86,11 +88,11 @@ class Multiscale():
             count = 0
             for iproc in np.arange(self._nproc):
                 for ifile in np.arange(np.divide(len(files), self._nproc)):
-                    self._proc_files[iproc].append(files[count])
+                    self._proc_files[iproc].append([files[count], str(uuid.uuid4())])
                     count += 1
             # end for
             for iproc in np.arange(np.mod(len(files), self._nproc)):
-                self._proc_files[iproc].append(files[count])
+                self._proc_files[iproc].append([files[count], str(uuid.uuid4())])
                 count += 1
         # end if
 
@@ -103,13 +105,13 @@ class Multiscale():
         #for f in self._proc_files[mpiops.chunk_index]: print f
     # end func
 
-    def __generate_reconstructions(self, fname):
+    def __generate_reconstructions(self, fname, uuid):
         # need all data at once
         src_ds = gdal.Open(fname, gdal.GA_ReadOnly)
         od = None
         if(src_ds.GetRasterBand(1).GetMaskBand() != None):
             driver = gdal.GetDriverByName('GTiff')
-            scratch_fn = os.path.join(self._output_folder, 'scratch_%d.tif'%(self._chunk_index))
+            scratch_fn = os.path.join(self._output_folder, 'scratch_%d.uuid.tif'%(self._chunk_index))
             scratch = driver.CreateCopy(scratch_fn, src_ds, strict=0)
             sb = scratch.GetRasterBand(1)
             nodataval = sb.GetNoDataValue()
@@ -128,12 +130,11 @@ class Multiscale():
 
             # clean up
             scratch = None
-            os.system('rm -f %s'%scratch_fn)
+            self._rm_list.append(scratch_fn)
         else:
             od = src_ds.GetRasterBand(1).ReadAsArray()
 
         # generate wavelet decompositions up to required level
-        results = []
         d = od
         assert(d.ndim==2)
         #print('orig shape:', d.shape)
@@ -141,14 +142,22 @@ class Multiscale():
         for i in np.arange(self._level):
             r = pywt.dwt2(d, self._mother_wavelet_name,
                           mode=self._extension_mode)
-            results.append(r)
+
+            fn, _ = os.path.splitext(os.path.basename(fname))
+            tfn = os.path.join(self._output_folder, '%s.dwt2.level_%03d.%s.npy'%(fn, i+1, uuid))
+
+            np.save(tfn, r[0])
             d = r[0]
             #print(d.shape)
+            self._rm_list.append(tfn)
         # end for
 
         # reconstruct each level, starting from the highest
         for l in np.arange(1, self._level+1)[::-1]:
-            d = results[l-1][0]
+            fn, _ = os.path.splitext(os.path.basename(fname))
+            tfn = os.path.join(self._output_folder, '%s.dwt2.level_%03d.%s.npy'%(fn, l, uuid))
+            d = np.load(tfn)
+
             log.debug('\tReconstructing level: %d'%(l))
             #print(d.shape)
             for i in np.arange(1, l+1):
@@ -199,12 +208,16 @@ class Multiscale():
             of = driver.CreateCopy(ofn, src_ds, strict=0)
             of.GetRasterBand(1).WriteArray(d)
         # end for
+
+        # clean up temporary files
+        for fn in self._rm_list:
+            os.system('rm -rf %s'%fn)
     # end func
 
     def process(self):
-        for f in self._proc_files[self._chunk_index]:
+        for f, uuid in self._proc_files[self._chunk_index]:
             log.info(' Processing %s..'%(f))
-            self.__generate_reconstructions(f)
+            self.__generate_reconstructions(f, uuid)
         # end for
     # end func
 # end class
