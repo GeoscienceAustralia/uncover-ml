@@ -111,7 +111,7 @@ class Multiscale():
         od = None
         if(src_ds.GetRasterBand(1).GetMaskBand() != None):
             driver = gdal.GetDriverByName('GTiff')
-            scratch_fn = os.path.join(self._output_folder, 'scratch_%d.uuid.tif'%(self._chunk_index))
+            scratch_fn = os.path.join(self._output_folder, 'scratch_%d.%s.tif'%(self._chunk_index, uuid))
             scratch = driver.CreateCopy(scratch_fn, src_ds, strict=0)
             sb = scratch.GetRasterBand(1)
             nodataval = sb.GetNoDataValue()
