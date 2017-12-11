@@ -207,6 +207,7 @@ class Multiscale():
             ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l,ext))
             of = driver.CreateCopy(ofn, src_ds, strict=0)
             of.GetRasterBand(1).WriteArray(d)
+            of = None
         # end for
 
         # clean up temporary files
