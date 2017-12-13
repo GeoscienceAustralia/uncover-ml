@@ -189,18 +189,17 @@ class Multiscale():
             psx, pex, psy, pey = np.int_([psx, pex, psy, pey])
             #print psx,pex,psy,pey
 
-            if(psx==0 and pex==0):
-                d = d[:, psy:-pey]
-            elif(psy==0 and pey==0):
+            if(psx != 0 or pex != 0):
                 d = d[psx:-pex, :]
-            else:
-                d = d[psx:-pex, psy:-pey]
+            if(psy != 0 or pey != 0):
+                d = d[:, psy:-pey]
 
             #print d.shape
             #print np.min(d), np.max(d)
             #print '\n\n'
 
             if(d.shape != od.shape):
+                print d.shape, od.shape
                 raise(RuntimeError, 'Error encountered in wavelet reconstruction.')
 
             fn,ext = os.path.splitext(os.path.basename(fname))
