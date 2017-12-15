@@ -37,6 +37,22 @@ class Multiscale():
                  extrapolate=True,
                  max_search_dist=400,
                  smoothing_iterations=10):
+        """
+        :param input: a file containing a list of input files (with full path) or a folder containing
+                      input files
+        :param output_folder: output folder
+        :param level: maximum decomposition level
+        :param file_extension: file extension e.g. '.tif'
+        :param mother_wavelet_name: name of mother wavelet
+        :param extension_mode: method of signal extrapolation during computation of wavelet transforms
+        :param extrapolate: note, this is separate to the extrapolation done internally by pywavelets,
+                            controlled by extention_mode. This parameter controls whether image values
+                            are extrapolated into masked regions with NO_DATA_VALUE assigned to them
+        :param max_search_dist: this parameter sets the search radius -- in number of pixels -- of
+                                extrapolation, controlled by the previous parameter
+        :param smoothing_iterations: number of smoothing iterations to be performed after the extrapolation,
+                                     controlled by the previous two parameters
+        """
         self._input = input
         self._output_folder = output_folder
         self._level = level
@@ -57,6 +73,11 @@ class Multiscale():
     # end func
 
     def __get_files(self):
+        """
+        Function to get a list of input files from a text file or a folder.
+
+        :return: list of files
+        """
         files = None
         if(os.path.isdir(self._input)):
             log.info(' Searching for input files with extension %s in folder %s'%
@@ -83,6 +104,10 @@ class Multiscale():
     # end func
 
     def __split_work(self):
+        """
+        Splits up workload and sends each processor a list of files to process.
+        """
+
         if(self._chunk_index==0):
             files = self.__get_files()
             count = 0
@@ -106,6 +131,15 @@ class Multiscale():
     # end func
 
     def __generate_reconstructions(self, fname, uuid):
+        """
+        Computes wavelet decompositions and reconstructions.
+
+        :param fname: file name
+        :param uuid: universally unique id to be used as a tag to avoid file name collisions when
+                     creating temporary files -- this of course is only useful when multiple
+                     parallel 'multicale' jobs are running on a given node
+        """
+
         # need all data at once
         src_ds = gdal.Open(fname, gdal.GA_ReadOnly)
         od = None
@@ -126,6 +160,8 @@ class Multiscale():
                                          smoothingIterations=self._smoothing_iterations)
 
             od = sb.ReadAsArray()
+            # set NO_DATA_VALUE pixels to the global mean. Note that pywavelets cannot handle
+            # masked values
             od[od==nodataval] = np.mean(od[od!=nodataval])
 
             # clean up
@@ -215,6 +251,10 @@ class Multiscale():
     # end func
 
     def process(self):
+        """
+        Iterates over a list of files and processes them
+        """
+
         for f, uuid in self._proc_files[self._chunk_index]:
             log.info(' Processing %s..'%(f))
             self.__generate_reconstructions(f, uuid)
@@ -231,8 +271,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('max-level', required=True,
                 type=np.int8)
 @click.option('--file-extension', default='.tif',
-              help='File extension to use (e.g. \'.tif\') to search for input files; only required '
-                   'if the \'input\' argument is a file path.',
+              help='File extension to use (e.g. \'.tif\') to search for input files; only applicable'
+                   'if the \'input\' argument is a folder.',
               type=str)
 @click.option('--mother-wavelet', default='coif6',
               help='Name of the mother wavelet',
@@ -254,10 +294,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               type=click.Choice(['zero', 'constant', 'symmetric', 'reflect', 'periodic', 'smooth', 'periodization']))
 @click.option('--extrapolate', default=True,
               type=bool,
-              help="Extrapolate raster if NO_DATA_VALUES are found")
+              help="Extrapolate raster if NO_DATA_VALUES are found. 'Ringing' artefacts can result near sharp contrasts"
+                   " in image values -- especially at the edges of NO_DATA_VALUE regions. By extrapolating image values"
+                   " to regions of NO_DATA_VALUE, 'ringing' artefacts can be pushed further outward, away from the region"
+                   " of interest in the original image. This parameter has no effect when the input raster has no masked"
+                   " regions")
 @click.option('--max-search-dist', default=400,
-              help="Maximum search distance (in pixels) for extrapolating NO_DATA values in input raster; not used \
-                   if raster has no masked regions")
+              help="Maximum search distance (in pixels) for extrapolating image values to regions of NO_DATA_VALUE in "
+                   "input raster; not used if raster has no masked regions")
 @click.option('--smoothing-iterations', default=10,
               help="Number of smoothing iterations used for smoothing extrapolated values; see option --max-search-dist")
 @click.option('--log-level', default='INFO',
@@ -270,6 +314,9 @@ def process(input, output_folder, max_level, file_extension,
     INPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
     MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
+
+    Example usage:
+    mpirun -np 2 python multiscale.py filelist.txt /tmp/output 10 --max-search-dist 500
     """
 
     logMap = {'DEBUG':logging.DEBUG, 'INFO':logging.INFO, 'WARN':logging.WARNING}
