@@ -4,46 +4,43 @@
 
 features:
 
-  - name: my pickle files
-    type: pickle
-    files:
-      covariates: /home/sb/data/GA-cover/features.pk
-      targets: /home/sb/data/GA-cover/targets.pk
-      featurevec: /home/sb/data/GA-cover/featurevec.pk
-      rawcovariates: /home/sb/data/GA-cover/rawcovariates.csv
-      rawcovariates_mask: rawcovariates_mask.csv
-
   - name: my features
     type: ordinal
     files:
-      - directory: /home/lb/data/GA-cover
+#      - directory: /home/lb/data/GA-cover
+      - path: /path/to/data/LATITUDE_GRID1.tif
+      - path: /path/to/data/LONGITUDE_GRID1.tif
     transforms:
       - centre
       - standardise
     imputation: none
 
-  - name: my features
-    type: categorical
-    files:
-      - directory: /home/lb/data/GA-cover/cat_datasets
-    transforms:
-    imputation: nn
+#  - name: my features
+#    type: categorical
+#    files:
+#      - directory: /home/lb/data/GA-cover/cat_datasets
+#    transforms:
+#    imputation: nn
 
 preprocessing:
   # imputation: none
   # imputation: gaus
   # imputation: nn
   imputation: mean
-
   transforms:
     # - whiten:
         # keep_fraction: 0.8
 
 # Mask with values=retain will be predicted
-mask:
-  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
-  retain: 1
+#mask:
+#  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
+#  retain: 1
 
+
+# only used during prediction of mlkrige
+#lon_lat:  # used for regression kriging, i.e., mlkrige aglo
+#  lon: /home/suditpa/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#  lat: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 # resample: choice (value, spatial)
 # bootstrap: bool, sampling with or without replacement
@@ -52,31 +49,32 @@ mask:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/lb/data/GA-cover//geochem_sites.shp
-  property: Na_ppm_i_1
-  resample:
-    - value:
-        arguments:
-          bins: 10
-          bootstrap: True
-          output_samples: 500
-    - spatial:
-        arguments:
-          rows: 4
-          cols: 4
-          bootstrap: True
-          output_samples: 500
+  file: /path/to/data/geochem_sites.shp
+  property: K_ppm_imp_
+#  resample:
+#    - value:
+#        arguments:
+#          bins: 10
+#          bootstrap: True
+#          output_samples: 500
+#    - spatial:
+#        arguments:
+#          rows: 4
+#          cols: 4
+#          bootstrap: True
+#          output_samples: 500
+
 
 
 learning:
   algorithm: cubist
   arguments:
     max_rules: 500
-    committee_members: 20
+    committee_members: 2
     unbiased: False
     max_categories: 5000
     target_transform: standardise
-    bootstrap: 200
+#    bootstrap: 200
     sampling: 70
     seed: 2
     extrapolation: 5
@@ -87,6 +85,8 @@ learning:
     neighbors: 5
     calc_usage: True
     print_output: False
+#    trees: 10
+#    parallel: True
 
 # neighbors: int, number of nearest neighbors to be used (1-9)
 # nearest-neighbor model: predicts the target value of a new case by finding
@@ -158,15 +158,16 @@ learning:
 # 'Upper quantile', 'Entropy']
 prediction:
   quantiles: 0.95
-  outbands: 1
+  outbands: 10
+  thumbnails: 10
 
 validation:
-  # - feature_rank
+#  #- feature_rank
   - parallel
   - k-fold:
       folds: 5
       random_seed: 1
-  
+
 output:
   directory: .
 
