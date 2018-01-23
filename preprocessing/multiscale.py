@@ -53,6 +53,8 @@ class Multiscale():
                                 extrapolation, controlled by the previous parameter
         :param smoothing_iterations: number of smoothing iterations to be performed after the extrapolation,
                                      controlled by the previous two parameters
+        :param keep_level: list of integers that specify the levels to save, while the rest are culled. By
+                           default all levels are saved
         """
         self._input = input
         self._output_folder = output_folder
