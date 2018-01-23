@@ -36,7 +36,8 @@ class Multiscale():
                  extension_mode='smooth',
                  extrapolate=True,
                  max_search_dist=400,
-                 smoothing_iterations=10):
+                 smoothing_iterations=10,
+                 keep_level=()):
         """
         :param input: a file containing a list of input files (with full path) or a folder containing
                       input files
@@ -62,6 +63,7 @@ class Multiscale():
         self._extrapolate = extrapolate
         self._max_search_dist = max_search_dist
         self._smoothing_iterations = smoothing_iterations
+        self._keep_level = keep_level
 
         self._comm = MPI.COMM_WORLD
         self._nproc = self._comm.Get_size()
@@ -190,6 +192,11 @@ class Multiscale():
 
         # reconstruct each level, starting from the highest
         for l in np.arange(1, self._level+1)[::-1]:
+
+            # Culling reconstructed levels based on user-selection
+            if(len(self._keep_level)):
+                if(l not in self._keep_level): continue
+
             fn, _ = os.path.splitext(os.path.basename(fname))
             tfn = os.path.join(self._output_folder, '%s.dwt2.level_%03d.%s.npy'%(fn, l, uuid))
             d = np.load(tfn)
@@ -304,12 +311,16 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                    "input raster; not used if raster has no masked regions")
 @click.option('--smoothing-iterations', default=10,
               help="Number of smoothing iterations used for smoothing extrapolated values; see option --max-search-dist")
+@click.option('--keep-level', multiple=True, type=(int),
+              help="Level to keep. Note that by default all levels up to max-level are saved, which may cause disk"
+                   " space issues. This option allows users to save only those levels that are of interest; e.g. to "
+                   "keep only levels 5 and 6, this option must be repeated twice for the corresponding levels")
 @click.option('--log-level', default='INFO',
               help="Logging verbosity",
               type=click.Choice(['DEBUG', 'INFO', 'WARN']))
 def process(input, output_folder, max_level, file_extension,
             mother_wavelet, extension_mode, extrapolate, max_search_dist,
-            smoothing_iterations, log_level):
+            smoothing_iterations, keep_level, log_level):
     """
     INPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
@@ -325,7 +336,7 @@ def process(input, output_folder, max_level, file_extension,
     m = Multiscale(input, output_folder, level=max_level, file_extension=file_extension,
                    mother_wavelet_name=mother_wavelet, extension_mode=extension_mode,
                    extrapolate=extrapolate, max_search_dist=max_search_dist,
-                   smoothing_iterations=smoothing_iterations)
+                   smoothing_iterations=smoothing_iterations, keep_level=keep_level)
     m.process()
     return
 # end
