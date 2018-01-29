@@ -149,8 +149,10 @@ class Multiscale():
         od = None
         if(src_ds.GetRasterBand(1).GetMaskBand() != None):
             driver = gdal.GetDriverByName('GTiff')
-            scratch_fn = os.path.join(self._output_folder, 'scratch_%d.%s.tif'%(self._chunk_index, uuid))
-            scratch = driver.CreateCopy(scratch_fn, src_ds, strict=0)
+
+            mem_driver = gdal.GetDriverByName('MEM')
+            scratch = mem_driver.CreateCopy('', src_ds, strict=0)
+
             sb = scratch.GetRasterBand(1)
             nodataval = sb.GetNoDataValue()
 
@@ -170,7 +172,6 @@ class Multiscale():
 
             # clean up
             scratch = None
-            self._rm_list.append(scratch_fn)
         else:
             od = src_ds.GetRasterBand(1).ReadAsArray()
 
@@ -254,6 +255,7 @@ class Multiscale():
             of = None
         # end for
 
+        src_ds = None
         # clean up temporary files
         for fn in self._rm_list:
             os.system('rm -rf %s'%fn)
