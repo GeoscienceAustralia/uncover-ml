@@ -159,11 +159,12 @@ class Multiscale():
             if(nodataval is not None and self._extrapolate==False):
                 log.warning(' NO_DATA_VALUES found in raster %s, but not extrapolating values. This may'%(fname)+\
                             ' cause \'ringing\' artefacts at the edges')
-            if(self._extrapolate and nodataval is not None):
+            elif(nodataval is not None and self._extrapolate):
                 log.info(' Extrapolating raster %s by %d pixels'%(fname, self._max_search_dist))
                 result = gdal.FillNodata(targetBand=sb, maskBand=None,
                                          maxSearchDist=self._max_search_dist,
-                                         smoothingIterations=self._smoothing_iterations)
+                                         smoothingIterations=self._smoothing_iterations,
+                                         options=['TEMP_FILE_DRIVER=MEM'])
 
             od = sb.ReadAsArray()
             # set NO_DATA_VALUE pixels to the global mean. Note that pywavelets cannot handle
@@ -310,7 +311,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                    " to regions of NO_DATA_VALUE, 'ringing' artefacts can be pushed further outward, away from the region"
                    " of interest in the original image. This parameter has no effect when the input raster has no masked"
                    " regions")
-@click.option('--max-search-dist', default=400,
+@click.option('--max-search-dist', default=500,
               help="Maximum search distance (in pixels) for extrapolating image values to regions of NO_DATA_VALUE in "
                    "input raster; not used if raster has no masked regions")
 @click.option('--smoothing-iterations', default=10,
@@ -332,6 +333,12 @@ def process(input, output_folder, max_level, file_extension,
 
     Example usage:
     mpirun -np 2 python multiscale.py filelist.txt /tmp/output 10 --max-search-dist 500
+
+    Running in Cluster Environments:
+    This script requires all raster data to be loaded into memory for processing. Furthermore, each
+    raster being processed requires 4 times as much memory, e.g. a 7 GB raster will require ~28 GB
+    of RAM. Hence, for parallel runs, one must be judicious in terms of allocating processors,
+    bearing in mind the amount of memory available on a given compute node on the cluster.
     """
 
     logMap = {'DEBUG':logging.DEBUG, 'INFO':logging.INFO, 'WARN':logging.WARNING}
