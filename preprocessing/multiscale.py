@@ -329,7 +329,11 @@ def process(input, output_folder, max_level, file_extension,
     """
     INPUT: Path to raster files, or a file containing a list of raster file names (with full path)\n
     OUTPUT_FOLDER: Output folder \n
-    MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed
+    MAX_LEVEL: Maximum level up to which wavelet reconstructions are to be computed. Each consecutive
+               level halves the raster resolution (doubles the spatial wavelength); thus the spatial
+               wavelength at a given level is given by:
+
+               spatial_wavelength = orig_spatial_wavelength * 2^level
 
     Example usage:
     mpirun -np 2 python multiscale.py filelist.txt /tmp/output 10 --max-search-dist 500
