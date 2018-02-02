@@ -8,12 +8,14 @@ example usage:
 `-e extents`
 extents = 'lowerleft.x, lowerleft.y upperright.x upperright.y'
 """
+from __future__ import print_function
 from optparse import OptionParser
 import subprocess
 
 
 def crop_using_gdalwarp(input_file, output_file, extents):
     # TODO: add extents checking between input_file and extents
+    print('Cropping {} into {}'.format(input_file, output_file))
     extents_str = [str(e) for e in extents]
     cmd = ['gdalwarp', '-overwrite', '-q', '-te'] + extents_str
     cmd += [input_file, output_file]

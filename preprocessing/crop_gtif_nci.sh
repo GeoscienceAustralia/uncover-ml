@@ -18,8 +18,9 @@
 #PBS -l wd
 #PBS -j oe
 
-# module load parallel
-# module load gdal
+module load python3/3.6.2  
+module load parallel
+module load gdal
 
 inputdir=${PWD}
 outdir=MBTest
