@@ -18,21 +18,20 @@
 #PBS -l wd
 #PBS -j oe
 
-module load python3/3.6.2  
-module load parallel
-module load gdal
-
-inputdir=${PWD}
-outdir=MBTest
-mkdir -p ${outdir}
-
-function crop {
-        outdir=$1
-        f=$2
-        python crop_gtif.py -i ${f} -o ${outdir}/${f##*/} -e '138.1815078 -37.9222297 148.8765078 -29.7972297';
-}
-
-export -f crop
-
-ls ${inputdir}/*.tif | parallel crop ${outdir}
-
+module load parallel                                                            
+module load gdal                                                                
+                                                                                
+inputdir=/g/data/ge3/covariates/national                                        
+outdir=/g/data/ge3/covariates/national/TISATest                                 
+mkdir -p ${outdir}                                                              
+                                                                                
+function crop {                                                                 
+    outdir=$1                                                                   
+    f=$2                                                                        
+    gdalwarp -overwrite -te 138.1815078 -37.9222297 148.8765078 -29.7972297 ${f} ${outdir}/${f##*/};
+}                                                                               
+                                                                                
+export -f crop                                                                  
+                                                                                
+ls ${inputdir}/*.tif | parallel crop ${outdir}                  
+                                                    
