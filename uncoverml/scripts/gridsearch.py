@@ -23,7 +23,7 @@ from uncoverml.optimise.models import (
     kernels,
     TransformedSVR
     )
-from uncoverml.scripts.uncoverml import load_data
+from uncoverml.scripts.uncoverml import _load_data
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import transformed_modelmaps as all_modelmaps
 log = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ def cli(pipeline_file, partitions, njobs, verbosity):
     log.info('Running optimisation for {}'.format(
         config.optimisation['algorithm']))
 
-    targets_all, x_all = load_data(config, partitions)
+    targets_all, x_all = _load_data(config, partitions)
 
     log.info("Optimising {} model".format(config.optimisation['algorithm']))
     estimator.fit(X=x_all, y=targets_all.observations)

@@ -155,30 +155,36 @@ class Config:
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
         self.rawcovariates = False
+        self.train_data_pk = False
         if self.pickle:
             self.pickle_load = True
             for n, d in enumerate(s['features']):
                 if d['type'] == 'pickle':
-                    self.pickled_covariates = \
-                        path.abspath(d['files']['covariates'])
-                    self.pickled_targets = d['files']['targets']
+                    if 'covariates' in d['files']:
+                        self.pickled_covariates = \
+                            path.abspath(d['files']['covariates'])
+                    if 'targets' in d['files']:
+                        self.pickled_targets = d['files']['targets']
                     if 'rawcovariates' in d['files']:
                         self.rawcovariates = d['files']['rawcovariates']
                         self.rawcovariates_mask = \
                             d['files']['rawcovariates_mask']
+                    if 'train_data_pk' in d['files']:
+                        self.train_data_pk = d['files']['train_data_pk']
                     if not (path.exists(d['files']['covariates'])
                             and path.exists(d['files']['targets'])):
                         self.pickle_load = False
                     if self.cubist or self.multicubist:
-                        self.featurevec = \
-                            path.abspath(d['files']['featurevec'])
+                        if 'featurevec' in d['files']:
+                            self.featurevec = \
+                                path.abspath(d['files']['featurevec'])
                         if not path.exists(d['files']['featurevec']):
                             self.pickle_load = False
                     if 'plot_covariates' in d['files']:
                         self.plot_covariates = d['files']['plot_covariates']
                     else:
                         self.plot_covariates = False
-                    s['features'].pop(n)
+                    s['features'].pop(n)  # pop `pickle` features
         else:
             self.pickle_load = False
 

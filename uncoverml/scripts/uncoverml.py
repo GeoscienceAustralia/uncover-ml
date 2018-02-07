@@ -7,7 +7,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-from os.path import isfile, splitext
+from os.path import isfile, splitext, exists
 import warnings
 import click
 import numpy as np
@@ -54,7 +54,7 @@ def run_crossval(x_all, targets_all, config):
               help='divide each node\'s data into this many partitions')
 def learn(pipeline_file, partitions):
     config = ls.config.Config(pipeline_file)
-    targets_all, x_all = load_data(config, partitions)
+    targets_all, x_all = _load_data(config, partitions)
 
     if config.cross_validate:
         run_crossval(x_all, targets_all, config)
@@ -65,7 +65,7 @@ def learn(pipeline_file, partitions):
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
-def load_data(config, partitions):
+def _load_data(config, partitions):
     if config.pickle_load:
         x_all = pickle.load(open(config.pickled_covariates, 'rb'))
         targets_all = pickle.load(open(config.pickled_targets, 'rb'))
@@ -84,17 +84,29 @@ def load_data(config, partitions):
                      "dividing all data between nodes")
 
         config.target_file = ls.mpiops.run_once(resample_shapefile, config)
+
         # Make the targets
-        targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                        targetfield=config.target_property)
-        # Get the image chunks and their associated transforms
-        image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
-        transform_sets = [k.transform_set for k in config.feature_sets]
+        if config.train_data_pk and exists(config.train_data_pk):
+            log.info('Reusing pickled training data')
+            image_chunk_sets, transform_sets, targets = \
+                pickle.load(open(config.train_data_pk, 'rb'))
+        else:
+            log.info('Intersecting targets as pickled train data was not '
+                     'available')
+            targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                            targetfield=config.target_property)
+            # Get the image chunks and their associated transforms
+            image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
+            transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.rawcovariates:
-            log.info('Saving raw data before any processing')
+            log.info('Saving raw data before any imputation and trasnforms')
             ls.features.save_intersected_features(image_chunk_sets,
                                                   transform_sets, config)
+
+        if config.train_data_pk:
+            pickle.dump([image_chunk_sets, transform_sets, targets],
+                        open(config.train_data_pk, 'wb'))
 
         if config.rank_features:
             measures, features, scores = ls.validate.local_rank_features(
@@ -119,8 +131,10 @@ def load_data(config, partitions):
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
 
         if config.pickle and ls.mpiops.chunk_index == 0:
-            pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
-            pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
+            if hasattr(config, 'pickled_covariates'):
+                pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
+            if hasattr(config, 'pickled_targets'):
+                pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
 
     return targets_all, x_all
 

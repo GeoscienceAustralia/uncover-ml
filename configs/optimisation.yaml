@@ -11,6 +11,7 @@ features:
       featurevec: featurevec.pk  # uncomment for cubist
       rawcovariates: rawcovariates.csv  # intersected covariates saved as csv
       rawcovariates_mask: rawcovariates_mask.csv  #
+      train_data_pk: training_data.pk
       plot_covariates: True
   - name: my features 1
     type: ordinal
