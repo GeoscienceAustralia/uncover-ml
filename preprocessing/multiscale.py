@@ -167,6 +167,13 @@ class Multiscale():
                                          options=['TEMP_FILE_DRIVER=MEM'])
 
             od = sb.ReadAsArray()
+            
+            # GetNoDataValue() returns a double, which can be problematic when comparing against
+            # pixel values which may be stored as floating point values of lower precision, e.g.
+            # float32, float16, etc. We need to cast the 'nodatavalue' to the same format as the
+            # pixel values.
+            nodataval = getattr(np, str(od.dtype))(sb.GetNoDataValue())
+            
             # set NO_DATA_VALUE pixels to the global mean. Note that pywavelets cannot handle
             # masked values
             od[od==nodataval] = np.mean(od[od!=nodataval])
