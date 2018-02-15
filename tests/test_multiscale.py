@@ -5,11 +5,11 @@ import gdal
 import os
 import pywt
 
-@pytest.fixture(params=np.random.randint(100, 2000, 5))
+@pytest.fixture(params=np.random.randint(100, 2000, 10))
 def nx(request):
     return request.param
 
-@pytest.fixture(params=np.random.randint(100, 2000, 5))
+@pytest.fixture(params=np.random.randint(100, 2000, 10))
 def ny(request):
     return request.param
 

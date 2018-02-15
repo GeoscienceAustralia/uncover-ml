@@ -163,12 +163,12 @@ class Multiscale():
                                          options=['TEMP_FILE_DRIVER=MEM'])
 
             od = sb.ReadAsArray()
-            
+
             # GetNoDataValue() returns a double, which can be problematic when comparing against
             # pixel values which may be stored as floating point values of lower precision, e.g.
             # float32, float16, etc. We need to cast the 'nodatavalue' to the same format as the
             # pixel values.
-            nodataval = getattr(np, str(od.dtype))(sb.GetNoDataValue())
+            nodataval = getattr(np, str(od.dtype))(sb.GetNoDataValue()) if nodataval is not None else None
             
             # set NO_DATA_VALUE pixels to the global mean. Note that pywavelets cannot handle
             # masked values
@@ -179,12 +179,23 @@ class Multiscale():
         else:
             od = src_ds.GetRasterBand(1).ReadAsArray()
 
+        # Compute maximum level computable for raster size
+        w = pywt.Wavelet(self._mother_wavelet_name)
+        ml = int(np.min(np.array([pywt.dwt_max_level(od.shape[0], w.dec_len),
+                                  pywt.dwt_max_level(od.shape[1], w.dec_len)])))
+
         # generate wavelet decompositions up to required level
         assert(od.ndim==2)
-        #print('orig shape:', d.shape)
+        #print('orig shape:', od.shape)
 
         # reconstruct each level, starting from the highest
         for l in np.arange(1, self._level+1)[::-1]:
+
+            # Culling reconstructed levels based on highest level computable for raster size
+            if(l > ml):
+                log.warning('Maximum level computable for raster %s is %d; '
+                            'skipping level %d'%(os.path.basename(fname), ml, l))
+                continue
 
             # Culling reconstructed levels based on user-selection
             if(len(self._keep_level)):
