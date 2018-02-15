@@ -24,7 +24,6 @@ import click
 
 import gdal
 from gdalconst import *
-import uuid
 
 import logging
 log = logging.getLogger('multiscale')
@@ -71,7 +70,6 @@ class Multiscale():
         self._nproc = self._comm.Get_size()
         self._chunk_index = self._comm.Get_rank()
         self._proc_files = defaultdict(list)
-        self._rm_list = []
 
         self.__split_work()
     # end func
@@ -117,16 +115,17 @@ class Multiscale():
             count = 0
             for iproc in np.arange(self._nproc):
                 for ifile in np.arange(np.divide(len(files), self._nproc)):
-                    self._proc_files[iproc].append([files[count], str(uuid.uuid4())])
+                    self._proc_files[iproc].append(files[count])
                     count += 1
             # end for
             for iproc in np.arange(np.mod(len(files), self._nproc)):
-                self._proc_files[iproc].append([files[count], str(uuid.uuid4())])
+                self._proc_files[iproc].append(files[count])
                 count += 1
         # end if
 
         # broadcast workload to all procs
-        log.info(' Distributing workload over %d processors'%(self._nproc))
+        if(self._chunk_index==0): log.info(' Distributing workload over %d processors'%(self._nproc))
+
         self._proc_files = self._comm.bcast(self._proc_files, root=0)
 
         #print 'proc: %d, %d files\n========='%(mpiops.chunk_index,
@@ -134,14 +133,11 @@ class Multiscale():
         #for f in self._proc_files[mpiops.chunk_index]: print f
     # end func
 
-    def __generate_reconstructions(self, fname, uuid):
+    def __generate_reconstructions(self, fname):
         """
         Computes wavelet decompositions and reconstructions.
 
         :param fname: file name
-        :param uuid: universally unique id to be used as a tag to avoid file name collisions when
-                     creating temporary files -- this of course is only useful when multiple
-                     parallel 'multicale' jobs are running on a given node
         """
 
         # need all data at once
@@ -184,22 +180,8 @@ class Multiscale():
             od = src_ds.GetRasterBand(1).ReadAsArray()
 
         # generate wavelet decompositions up to required level
-        d = od
-        assert(d.ndim==2)
+        assert(od.ndim==2)
         #print('orig shape:', d.shape)
-
-        for i in np.arange(self._level):
-            r = pywt.dwt2(d, self._mother_wavelet_name,
-                          mode=self._extension_mode)
-
-            fn, _ = os.path.splitext(os.path.basename(fname))
-            tfn = os.path.join(self._output_folder, '%s.dwt2.level_%03d.%s.npy'%(fn, i+1, uuid))
-
-            np.save(tfn, r[0])
-            d = r[0]
-            #print(d.shape)
-            self._rm_list.append(tfn)
-        # end for
 
         # reconstruct each level, starting from the highest
         for l in np.arange(1, self._level+1)[::-1]:
@@ -208,22 +190,16 @@ class Multiscale():
             if(len(self._keep_level)):
                 if(l not in self._keep_level): continue
 
-            fn, _ = os.path.splitext(os.path.basename(fname))
-            tfn = os.path.join(self._output_folder, '%s.dwt2.level_%03d.%s.npy'%(fn, l, uuid))
-            d = np.load(tfn)
-
             log.debug('\tReconstructing level: %d'%(l))
-            #print(d.shape)
-            for i in np.arange(1, l+1):
-                r = pywt.idwt2([d, [np.zeros(d.shape),
-                                    np.zeros(d.shape), np.zeros(d.shape)]],
-                               self._mother_wavelet_name,
-                               mode=self._extension_mode)
-                d = r
-                #print(l, i, r.shape)
-            # end for
 
-            p = np.array(d.shape) - np.array(od.shape)
+            coeffs = pywt.wavedec2(od, self._mother_wavelet_name,
+                                   mode=self._extension_mode, level=l)
+
+            for i in range(1,len(coeffs)):coeffs[i] = tuple([np.zeros_like(c) for c in coeffs[i]])
+
+            r = pywt.waverec2(coeffs, self._mother_wavelet_name, mode=self._extension_mode)
+
+            p = np.array(r.shape) - np.array(od.shape)
             #print(p, d.shape, od.shape)
             psx = pex = psy = pey = None
             if (p[0] % 2):
@@ -244,31 +220,24 @@ class Multiscale():
             #print psx,pex,psy,pey
 
             if(psx != 0 or pex != 0):
-                d = d[psx:-pex, :]
+                r = r[psx:-pex, :]
             if(psy != 0 or pey != 0):
-                d = d[:, psy:-pey]
+                r = r[:, psy:-pey]
 
-            #print d.shape
-            #print np.min(d), np.max(d)
-            #print '\n\n'
-
-            if(d.shape != od.shape):
-                print d.shape, od.shape
+            if(r.shape != od.shape):
+                print r.shape, od.shape
                 raise(RuntimeError, 'Error encountered in wavelet reconstruction.')
 
             fn,ext = os.path.splitext(os.path.basename(fname))
             ofn = os.path.join(self._output_folder, '%s.level_%03d%s'%(fn,l,ext))
             of = driver.CreateCopy(ofn, src_ds, strict=0)
             rb = of.GetRasterBand(1)
-            rb.WriteArray(d)
+            rb.WriteArray(r)
             rb.ComputeStatistics(0)
             of = None
         # end for
 
         src_ds = None
-        # clean up temporary files
-        for fn in self._rm_list:
-            os.system('rm -rf %s'%fn)
     # end func
 
     def process(self):
@@ -276,9 +245,9 @@ class Multiscale():
         Iterates over a list of files and processes them
         """
 
-        for f, uuid in self._proc_files[self._chunk_index]:
+        for f in self._proc_files[self._chunk_index]:
             log.info(' Processing %s..'%(f))
-            self.__generate_reconstructions(f, uuid)
+            self.__generate_reconstructions(f)
         # end for
     # end func
 # end class
@@ -310,7 +279,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                                'rbio5.5', 'rbio6.8', 'sym2', 'sym3', 'sym4', 'sym5', 'sym6', 'sym7', 'sym8', 'sym9',
                                'sym10', 'sym11', 'sym12', 'sym13', 'sym14', 'sym15', 'sym16', 'sym17', 'sym18',
                                'sym19', 'sym20']))
-@click.option('--extension-mode', default='smooth',
+@click.option('--extension-mode', default='symmetric',
               help="Signal extension mode used for padding",
               type=click.Choice(['zero', 'constant', 'symmetric', 'reflect', 'periodic', 'smooth', 'periodization']))
 @click.option('--extrapolate', default=True,

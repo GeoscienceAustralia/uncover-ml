@@ -3,6 +3,7 @@ from preprocessing.multiscale import Multiscale
 import numpy as np
 import gdal
 import os
+import pywt
 
 @pytest.fixture(params=np.random.randint(100, 2000, 5))
 def nx(request):
@@ -10,10 +11,6 @@ def nx(request):
 
 @pytest.fixture(params=np.random.randint(100, 2000, 5))
 def ny(request):
-    return request.param
-
-@pytest.fixture(params=np.random.randint(1, 10, 5))
-def ml(request):
     return request.param
 
 def create_tif(npx, npy, fn):
@@ -32,7 +29,7 @@ def create_tif(npx, npy, fn):
     dst_ds = None
 # end func
 
-def test_multiscale(nx, ny, ml):
+def test_multiscale(nx, ny):
     fn = '/tmp/test.%d.%d.tif'%(nx,ny)
     create_tif(nx, ny, fn)
 
@@ -40,10 +37,13 @@ def test_multiscale(nx, ny, ml):
     flist.write(fn)
     flist.close()
 
+    w = pywt.Wavelet('coif6')
+    ml = int(np.min(np.array([pywt.dwt_max_level(int(nx), w.dec_len),
+                              pywt.dwt_max_level(int(ny), w.dec_len)])))
     print 'Testing Multiscale with nx:%d, ny:%d, max_level:%d'%(nx,ny,ml)
     ms = Multiscale('/tmp/flist.txt', '/tmp', level=ml, file_extension='.tif',
                     mother_wavelet_name='coif6',
-                    extension_mode='smooth',
+                    extension_mode='symmetric',
                     extrapolate=True,
                     max_search_dist=5,
                     smoothing_iterations=10)
