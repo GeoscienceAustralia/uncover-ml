@@ -2,6 +2,7 @@ import logging
 from collections import OrderedDict
 import numpy as np
 import pickle
+from os.path import basename
 
 from uncoverml import mpiops
 from uncoverml.image import Image
@@ -108,7 +109,7 @@ def save_intersected_features(feature_sets, transform_sets, config):
     plot.
     """
     transform_sets_mod = []
-    names = ['{}_{}'.format(b, k)
+    names = ['{}_{}'.format(b, basename(k))
              for ec in feature_sets
              for k in ec
              for b in range(ec[k].shape[3])]

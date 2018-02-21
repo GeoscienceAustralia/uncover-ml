@@ -333,7 +333,7 @@ def _iterate_sources(f, config):
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
-            name = os.path.basename(tif)
+            name = os.path.abspath(tif)
             image_source = RasterioImageSource(tif)
             x = f(image_source)
             # TODO this may hurt performance. Consider removal

@@ -26,12 +26,10 @@ import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
 from uncoverml.resampling import resample_shapefile
-import warnings
 from uncoverml.mllog import warn_with_traceback
 warnings.showwarning = warn_with_traceback
 
 log = logging.getLogger(__name__)
-
 
 
 @click.group()
