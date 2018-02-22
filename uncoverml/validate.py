@@ -234,7 +234,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
         x_all = feat.gather_features(x[keep], node=0)
         targets_all = targ.gather_targets_main(targets, keep, node=0)
         results = local_crossval(x_all, targets_all, config)
-        feature_scores[fname] = results
+        feature_scores[name] = results
 
     # Get the different types of score from one of the outputs
     if mpiops.chunk_index == 0:
