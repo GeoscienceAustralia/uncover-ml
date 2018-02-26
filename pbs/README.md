@@ -93,10 +93,6 @@ $ python setup.py install
 If the pull and the installation complete successfully, the code is ready to run!
 
 
-
-
-
-
 ## Running Batch Jobs
 
 in the `pbs` subfolder of uncover-ml there are some example scripts and a
@@ -112,7 +108,7 @@ $ qsub submit_tests.sh
 
 ### MPIRun
 
-uncoverml uses MPI internally for parallelization. To run a script or demo
+`uncoverml` uses MPI internally for parallelization. To run a script or demo
 simply do
 
 ```bash
@@ -147,6 +143,14 @@ where in this case mpirun is able to determine the number of available
 cores via PBS. This job submits the `learn`ing and `predict`ion jobs one 
 after the other. The `-p 10` or `-p 40` options partitions the input 
 covariates into 10/40 partitions during learning/prediction jobs.  
+
+### PBS job configuration
+[Refer to the NCI user guide](https://opus.nci.org.au/display/Help/Raijin+User+Guide) 
+for different cpu and memory configuration options.
+
+Specifically, [this section](https://opus.nci.org.au/display/Help/Raijin+User+Guide#RaijinUserGuide-QueueLimits)
+details the various combinations available. We recommend using the `normal`, 
+`express`, `normalbw`, or the `expressbw` option with the required memory.
 
 ### Running the demos
 In the pbs folder there are two scripts called  `submit_demo_predicion.sh`
