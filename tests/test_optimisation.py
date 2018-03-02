@@ -117,3 +117,12 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
     y = 5*np.random.rand(20)
     estimator.fit(X=X, y=y)
     assert estimator.cv_results_['mean_train_score'][0] > -1.0
+
+
+def test_gp_std(get_kernel):
+    from uncoverml.optimise.models import TransformedGPRegressor
+    np.random.seed(10)
+    sklearn_gp = TransformedGPRegressor(kernel=get_kernel(length_scale=1))
+
+    sklearn_gp.fit(X=1+np.random.rand(10, 3), y=1 + np.random.rand(10))
+    p, s = sklearn_gp.predict(X=1+np.random.rand(5, 3), return_std=True)

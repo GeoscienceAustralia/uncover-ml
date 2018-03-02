@@ -5,9 +5,7 @@ from scipy.stats import norm, gamma
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
-from sklearn.linear_model import (TheilSenRegressor,
-                                  RANSACRegressor,
-                                  HuberRegressor,
+from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
                                   ElasticNet)
 from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
@@ -27,7 +25,7 @@ from uncoverml.transforms import target as transforms
 log = logging.getLogger(__name__)
 
 
-class TransformMixin():
+class TransformMixin:
 
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
@@ -35,10 +33,17 @@ class TransformMixin():
         return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        Ey = self.target_transform.itransform(Ey_t)
 
-        return Ey
+        if 'return_std' in kwargs:
+            return_std = kwargs.pop('return_std')
+            if return_std:
+                Ey_t, std_t = super().predict(X, return_std=return_std)
+
+                return self.target_transform.itransform(Ey_t), \
+                    self.target_transform.itransform(std_t)
+
+        Ey_t = super().predict(X)
+        return self.target_transform.itransform(Ey_t)
 
     def _notransform_predict(self, X, *args, **kwargs):
         Ey = super().predict(X)
