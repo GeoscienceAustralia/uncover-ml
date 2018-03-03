@@ -281,6 +281,15 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
             random_state=random_state
         )
 
+    def predict_proba(self, X, interval=0.95):
+        Ey, std_t = super().predict(X, return_std=True)
+        ql, qu = norm.interval(interval, loc=Ey, scale=std_t)
+
+        return Ey, std_t**2, ql, qu
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_proba(X)[0]
+
 
 class TransformedForestRegressor(TransformPredictProbaMixin,
                                  RandomForestRegressor,

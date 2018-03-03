@@ -125,4 +125,4 @@ def test_gp_std(get_kernel):
     sklearn_gp = TransformedGPRegressor(kernel=get_kernel(length_scale=1))
 
     sklearn_gp.fit(X=1+np.random.rand(10, 3), y=1 + np.random.rand(10))
-    p, s = sklearn_gp.predict(X=1+np.random.rand(5, 3), return_std=True)
+    p, v, uq, lq = sklearn_gp.predict_proba(X=1+np.random.rand(5, 3))
