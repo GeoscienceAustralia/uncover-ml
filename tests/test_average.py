@@ -85,6 +85,11 @@ class TestFilterCenterWithNoDataAndMask:
                              [1.0, 1.2, 1000.0, 1.6, 1.8],
                              [2.0, 1.2, 1.4, 1.6, 1.8],
                              [1000.0, 1.2, 1.4, 1.6, 1.8]])
+        cls.data2 = np.array([[1000.0, 1.2, 1.4, 1.6, 1.8],
+                             [1000.0, 1.2, 1.4, 1.6, 1.8],
+                             [1.0, 1.2, 1000.0, 1.6, 1.8],
+                             [2.0, 1.2, 1.4, 1.6, 1.8],
+                             [1000.0, 1.2, 1.4, 1.6, 1.8]])
 
         cls.expected_average_3 = np.array(
             [[1000.0, 1.3, 1.4, 1.6, 1.7],
@@ -129,7 +134,7 @@ class TestFilterCenterWithNoDataAndMask:
 
     def test_average_size5(self):
         averaged_data = raster_average.filter_center(
-            self.data, size=5, no_data_val=1000.0, func=np.nanmean,
+            self.data2, size=5, no_data_val=1000.0, func=np.nanmean,
             mask_no_data=True)
         np.testing.assert_array_almost_equal(averaged_data,
                                              self.expected_average_5)
