@@ -8,8 +8,14 @@ import pytest
 import numpy as np
 import shapefile as shp
 from uncoverml import mpiops
+UNCOVER = os.path.dirname(os.path.dirname(__file__))
 
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
+
+
+@pytest.fixture
+def uncover():
+    return UNCOVER
 
 
 @pytest.fixture
