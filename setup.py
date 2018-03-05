@@ -84,7 +84,7 @@ setup(
         'geopandas == 0.2.1',
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
-        'xgboost >= 0.6a2',
+        'xgboost == 0.6a2',
         'catboost == 0.3.0',
     ],
     extras_require={
