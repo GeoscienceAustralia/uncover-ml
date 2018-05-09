@@ -3,9 +3,11 @@ Installation
 
 Before you start, make sure your system has the following packages installed,
 
-- gdal (libgdal-dev)
+- gdal (libgdal-dev version >= 2.0.0)
 - openmpi
 - hdf5
+
+libgdal-dev version 2.0.0 or higher is required to build the required GDAL python package. For Ubuntu, binaries for version 2.0.0 and higher can be found in PPA https://wiki.ubuntu.com/UbuntuGIS.  
 
 We **strongly** recommend using a virtual environment.
 To install, simply run ``setup.py``:
