@@ -1,8 +1,8 @@
 import pandas as pd
 import dask.dataframe as dd
 
-df = dd.read_csv('3D_AEM_model_V3_base.csv')
-#df = pd.read_csv('3D_AEM_model_V3_sample.csv')
+df = pd.read_csv('3D_AEM_model_V3_base.csv')
+ddf = dd.from_pandas(df, npartitions=60)
 df_011 = pd.read_csv('fromYusen/test.011/lines/1090001.csv', sep=' ')
 df_022 = pd.read_csv('fromYusen/test.022/lines/1090001.csv', sep=' ')
 df_055 = pd.read_csv('fromYusen/test.055/lines/1090001.csv', sep=' ')
@@ -55,6 +55,5 @@ meta = [ ('line#', 'float64'),
          ('cond055', 'float64'),
          ('cond099', 'float64'),
          ('class', 'int64')]
-out_df = df.groupby(['X', 'Y']).apply(tmpFunc, meta=meta).compute()
-#out_df = df.groupby(['X', 'Y']).apply(tmpFunc)
+out_df = ddf.groupby(['X', 'Y']).apply(tmpFunc, meta=meta).compute()
 out_df.to_csv('3D_AEM_model_V3_input.csv', index=False)
