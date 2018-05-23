@@ -469,7 +469,7 @@ class MultiCubist:
             input vector. Again we expect y.shape[0] = n.
         """
         # set a different random seed for each thread
-        np.random.seed(mpiops.chunk_index)
+        np.random.seed(mpiops.chunk_index + np.random.randint(0, 10000))
 
         if self.parallel:  # during training
             process_trees = np.array_split(range(self.trees),
