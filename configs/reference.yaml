@@ -7,8 +7,8 @@ features:
   - name: my continuous features
     type: continuous
     files:
-      - path: /home/lb/data/GA-cover/Th_v1.tif
-      - directory: /home/lb/data/GA-cover
+      - path: /path/to/data/GA-cover/Th_v1.tif
+      - directory: /path/to/data/GA-cover
     transforms:
       - standardise
       - whiten:
@@ -18,8 +18,8 @@ features:
   - name: my discrete features
     type: categorical
     files:
-      - path: /home/lb/data/GA-cover/tot15.tif
-      - directory: /home/lb/data/GA-cover
+      - path: /path/to/data/GA-cover/tot15.tif
+      - directory: /path/to/data/GA-cover
     transforms:
       - onehot
     imputation: none
@@ -31,20 +31,8 @@ preprocessing:
         keep_fraction: 0.8
 
 targets:
-  file: /home/lb/data/GA-cover/geochem_sites.shp
+  file: /path/to/data/GA-cover/geochem_sites.shp
   property: Na_ppm_i_1
-  resample:
-    - value:
-        arguments:
-          bins: 10
-          bootstrap: True
-          output_samples: 500
-    - spatial:
-        arguments:
-          rows: 4
-          cols: 4
-          bootstrap: True
-          output_samples: 500
 
 learning:
     algorithm: svr

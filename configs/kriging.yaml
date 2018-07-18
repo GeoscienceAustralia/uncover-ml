@@ -1,6 +1,4 @@
-# not currently implemented
-# patchsize: 0
-
+# basic kriging setup
 features:
   - name: my pickle files
     type: pickle
@@ -10,8 +8,8 @@ features:
   - name: my features 1
     type: ordinal
     files:
-      - path: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-      - path: /home/sudipta/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+      - path: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
+      - path: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
     # transforms are performed in order
     transforms:
       - centre
@@ -20,7 +18,7 @@ features:
 
 # only used during prediction
 mask:
-  file: /home/sudipta/GA_data/mask/old_mask_test.tif
+  file: /path/to/GA_data/mask/old_mask_test.tif
   retain: 1
 
 
@@ -31,7 +29,7 @@ mask:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/sudipta/GA_data/GA-cover2/geochem_sites.shp
+  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
 #  resample:
 #    - spatial:

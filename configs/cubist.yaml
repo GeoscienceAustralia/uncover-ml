@@ -1,13 +1,10 @@
-
-# not currently implemented
-# patchsize: 0
-
+# cubist specific config file
 features:
 
   - name: my features
     type: ordinal
     files:
-#      - directory: /home/lb/data/GA-cover
+#      - directory: /path/to/GA-cover
       - path: /path/to/data/LATITUDE_GRID1.tif
       - path: /path/to/data/LONGITUDE_GRID1.tif
     transforms:
@@ -18,7 +15,7 @@ features:
 #  - name: my features
 #    type: categorical
 #    files:
-#      - directory: /home/lb/data/GA-cover/cat_datasets
+#      - directory: /path/to/GA-cover/cat_datasets
 #    transforms:
 #    imputation: nn
 
@@ -33,37 +30,13 @@ preprocessing:
 
 # Mask with values=retain will be predicted
 #mask:
-#  file: /home/lb/data/GA-cover/mask/old_mask_test.tif
+#  file: /path/to/GA-cover/mask/old_mask_test.tif
 #  retain: 1
 
-
-# only used during prediction of mlkrige
-#lon_lat:  # used for regression kriging, i.e., mlkrige aglo
-#  lon: /home/suditpa/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-#  lat: /home/sudipta/GA_data/GA-cover2/LATITUDE_GRID1.tif
-
 # resample: choice (value, spatial)
-# bootstrap: bool, sampling with or without replacement
-# output_samples: number of output samples kept
-# bins: for value based resampling only. Number of bins to sample from.
-# rows and cols: for spatial resampling, sample from rows X cols tiles
-# resampling is performed in sequence. The order of spatial/value is important.
 targets:
   file: /path/to/data/geochem_sites.shp
   property: K_ppm_imp_
-#  resample:
-#    - value:
-#        arguments:
-#          bins: 10
-#          bootstrap: True
-#          output_samples: 500
-#    - spatial:
-#        arguments:
-#          rows: 4
-#          cols: 4
-#          bootstrap: True
-#          output_samples: 500
-
 
 
 learning:
@@ -170,4 +143,3 @@ validation:
 
 output:
   directory: .
-

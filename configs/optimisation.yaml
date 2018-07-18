@@ -1,6 +1,5 @@
-
-# not currently implemented
-# patchsize: 0
+# This config demonstrates many of the features available in
+# uncoverml.
 
 features:
   - name: my pickle files
@@ -16,12 +15,12 @@ features:
   - name: my features 1
     type: ordinal
     files:
-#      - path: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
-#      - path: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-#      - path: /home/masoud/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
-#      - path: /home/masoud/GA_data/GA-cover2/relief_twi_3s.tif
-#      - directory: /home/masoud/GA_data/MBV2/
-       - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+#      - path: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
+#      - path: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#      - path: /path/to/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
+#      - path: /path/to/GA_data/GA-cover2/relief_twi_3s.tif
+#      - directory: /path/to/GA_data/MBV2/
+       - list: /path/to/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
       - centre
@@ -31,13 +30,13 @@ features:
 
 # only used during prediction
 mask:
-  file: /home/masoud/GA_data/mask/old_mask_test.tif
+  file: /path/to/GA_data/mask/old_mask_test.tif
   retain: 1
 
 # only used during prediction of mlkrige
 lon_lat:  # used for regression kriging, i.e., mlkrige aglo
-  lon: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-  lat: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
+  lon: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 preprocessing:
   # imputation: none
@@ -57,10 +56,10 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/masoud/GA_data/GA-cover2/geochem_sites.shp
+  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
 #targets:
-#  file: /home/masoud/GA_data/MBV2/GP_ceno_combine.shp
+#  file: /path/to/GA_data/MBV2/GP_ceno_combine.shp
 #  property: depth
 #  resample:
 #    - spatial:
@@ -77,7 +76,7 @@ targets:
 
 
 #clustering:
-#  file: /home/lb/data/GA-cover/geochem_sites_class1.shp
+#  file: /path/to/data/GA-cover/geochem_sites_class1.shp
 #  property: class
 #  algorithm: kmeans
 #  arguments:

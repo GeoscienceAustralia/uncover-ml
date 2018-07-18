@@ -1,3 +1,5 @@
+# config file for kriging of residuals followed by ML regression
+
 features:
   - name: my pickle files
     type: pickle
@@ -11,7 +13,7 @@ features:
     type: ordinal
     files:
       # this list should ideally not contain lat/lon covariates
-      - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
+      - list: /path/to/GA_data/GA-cover2/sirsam_covariates_ordinal.txt
     # transforms are performed in order
     transforms:
       - centre
@@ -21,19 +23,19 @@ features:
   - name: my features 2
     type: categorical
     files:
-      - list: /home/masoud/GA_data/GA-cover2/sirsam_covariates_cat.txt
+      - list: /path/to/GA_data/GA-cover2/sirsam_covariates_cat.txt
     transforms: randomhot
     imputation: nn
 
 # only used during prediction
 mask:
-  file: /home/masoud/GA_data/mask/old_mask_test.tif
+  file: /path/to/GA_data/mask/old_mask_test.tif
   retain: 1
 
 # only used during prediction of mlkrige
 lon_lat:  # used for regression kriging, i.e., mlkrige aglo
-  lon: /home/masoud/GA_data/GA-cover2/LONGITUDE_GRID1.tif
-  lat: /home/masoud/GA_data/GA-cover2/LATITUDE_GRID1.tif
+  lon: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
 
 preprocessing:
   # imputation: none
@@ -53,7 +55,7 @@ preprocessing:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /home/masoud/GA_data/GA-cover2/geochem_sites.shp
+  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
   property: K_ppm_imp_
 #  resample:
 #    - spatial:
@@ -67,17 +69,6 @@ targets:
 #          bins: 10
 #          bootstrap: False
 #          output_samples: 1000
-
-
-#learning:
-#  algorithm: transformedrandomforest
-#  arguments:
-#    n_estimators: 10
-#    target_transform: log
-#    max_depth: 250
-#    max_features: log2
-#    min_samples_split: 10
-
 
 # mlkrige ml_methods must be one of [sgdbayesreg,
 # transformedrandomforest, transformedbayesreg, multirandomforest, approxgp
@@ -113,4 +104,3 @@ validation:
 
 output:
   directory: .
-
