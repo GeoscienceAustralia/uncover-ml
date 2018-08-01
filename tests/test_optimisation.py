@@ -100,22 +100,22 @@ def get_variogram_model(request):
     return request.param
 
 
-# def test_krige_pipeline(get_krige_method, get_variogram_model):
-#     pipe = Pipeline(steps=[('krige', Krige(method=get_krige_method))])
-#     param_dict = {'krige__variogram_model': [get_variogram_model]}
-#
-#     estimator = GridSearchCV(pipe,
-#                              param_dict,
-#                              n_jobs=1,
-#                              iid=False,
-#                              pre_dispatch=2,
-#                              verbose=True
-#                             )
-#     np.random.seed(1)
-#     X = np.random.randint(1, 400, size=(20, 2)).astype(float)
-#     y = 1 + 5*np.random.rand(20)
-#     estimator.fit(X=X, y=y)
-#     assert estimator.cv_results_['mean_train_score'][0] > -1.0
+def test_krige_pipeline(get_krige_method, get_variogram_model):
+    pipe = Pipeline(steps=[('krige', Krige(method=get_krige_method))])
+    param_dict = {'krige__variogram_model': [get_variogram_model]}
+
+    estimator = GridSearchCV(pipe,
+                             param_dict,
+                             n_jobs=1,
+                             iid=False,
+                             pre_dispatch=2,
+                             verbose=True
+                            )
+    np.random.seed(1)
+    X = np.random.randint(1, 400, size=(20, 2)).astype(float)
+    y = 1 + 5*np.random.rand(20)
+    estimator.fit(X=X, y=y)
+    assert estimator.cv_results_['mean_train_score'][0] > -1.0
 
 
 def test_gp_std(get_kernel):
