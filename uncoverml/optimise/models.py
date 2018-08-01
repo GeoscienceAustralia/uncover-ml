@@ -508,8 +508,8 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                  nthread=1, gamma=0, min_child_weight=1,
                  max_delta_step=0,
                  subsample=1, colsample_bytree=1, colsample_bylevel=1,
-                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1,
-                 base_score=0.5, seed=1, missing=None):
+                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=-1,
+                 base_score=0.5, random_state=1, missing=None):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
@@ -532,8 +532,9 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       reg_lambda=reg_lambda,
                                       scale_pos_weight=scale_pos_weight,
                                       base_score=base_score,
-                                      seed=seed,
-                                      missing=missing)
+                                      random_state=random_state,
+                                      missing=missing,
+                                      n_jobs=n_jobs)
 
 
 class CatBoost(TransformMixin, TagsMixin, CatBoostRegressor):

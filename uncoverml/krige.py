@@ -75,6 +75,8 @@ class KrigePredictProbaMixin():
                                    backend='loop')
 
         # Determine quantiles
+        print('===========================>>>>>>', variance)
+
         ql, qu = norm.interval(interval, loc=prediction,
                                scale=np.sqrt(variance))
 
