@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pytest
 from sklearn.metrics import r2_score
@@ -13,7 +14,8 @@ models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
                         if k not in ['depthregress',
                                      'cubist',
                                      'multicubist',
-                                     'multirandomforest']])
+                                     'multirandomforest',
+                                     'catboost']])
 def get_models(request):
     if request.param in modelmaps:
         return modelmaps[request.param]
@@ -42,15 +44,22 @@ def test_modeltags(get_models):
             assert len(tags) == 2
 
 
-def test_modelmap(linear_data, get_models):
+def test_modelmap(get_models):
 
-    yt, Xt, ys, Xs = linear_data()
     mod = get_models()
 
-    mod.fit(Xt, yt)
-    Ey = mod.predict(Xs)
+    assert hasattr(mod, 'fit')
+    assert hasattr(mod, 'predict')
 
-    assert r2_score(ys, Ey) > 0
+
+def test_modelpickle(get_models):
+
+    mod = get_models()
+    mod_str = pickle.dumps(mod)
+    mod_pic = pickle.loads(mod_str)
+
+    # Make sure all the keys survive the pickle, even if the objects differ
+    assert mod.__dict__.keys() == mod_pic.__dict__.keys()
 
 
 @pytest.fixture(params=krige_methods.keys())
@@ -95,20 +104,18 @@ def models_supported(request):
     return request.param
 
 
-def test_mlkrige(linear_data, models_supported, get_krige_method):
+def test_mlkrige(models_supported, get_krige_method):
     """
     tests algos that can be used with MLKrige
     """
-    yt2, Xt2, ys2, Xs2 = linear_data()
-    yt3, Xt3, ys3, Xs3 = linear_data(seed=10)
-    yt4, Xt4, ys4, Xs4 = linear_data(seed=5)
     mlk = MLKrige(ml_method=models_supported, method=get_krige_method)
-    arr = np.random.rand(Xt2.shape[0], 2)
-    np.random.shuffle(arr)
-    mlk.fit(np.hstack((Xt2, Xt3, Xt4)), yt2, lon_lat=arr)
-    Ey = mlk.predict(np.hstack((Xs2, Xs3, Xs4)),
-                     lon_lat=np.random.rand(Xs2.shape[0], 2))
-    assert r2_score(ys2, Ey) > 0
+    assert hasattr(mlk, 'fit')
+    assert hasattr(mlk, 'predict')
+
+    mod_str = pickle.dumps(mlk)
+    mod_pic = pickle.loads(mod_str)
+    # Make sure all the keys survive the pickle, even if the objects differ
+    assert mlk.__dict__.keys() == mod_pic.__dict__.keys()
 
 
 # def test_modelpersistance(make_fakedata):
