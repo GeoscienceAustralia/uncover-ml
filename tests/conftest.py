@@ -146,14 +146,14 @@ def shapefile(random_filename, request):
 @pytest.fixture
 def linear_data():
     def make_linear_data(seed=2):
-        np.random.seed(seed)
-        Nt = 200
+        rnd = np.random.RandomState(seed)
+        Nt = 100
         Ns = 50
         x = np.linspace(-2, 2, Nt + Ns)
-        y = 3 + 2 * x
+        y = 3 + 2 * x + rnd.randn(Nt + Ns) * 1e-3
         X = x[:, np.newaxis]
 
-        trind = np.random.choice(Nt + Ns, Nt, replace=False)
+        trind = rnd.choice(Nt + Ns, Nt, replace=False)
         tsind = np.zeros_like(x, dtype=bool)
         tsind[trind] = True
         tsind = np.where(~tsind)[0]

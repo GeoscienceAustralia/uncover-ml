@@ -22,6 +22,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 
+
 def build_cubist():
     try:
         from uncoverml import cubist_config
@@ -74,7 +75,6 @@ setup(
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
         'click == 6.6',
-        'pywavelets == 0.5.2',
         'revrand >= 0.9.10',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',
@@ -90,9 +90,6 @@ setup(
         'catboost == 0.3.0',
     ],
     extras_require={
-        'demos': [
-            'matplotlib'
-        ],
         'kmz': [
             'simplekml',
             'pillow'
