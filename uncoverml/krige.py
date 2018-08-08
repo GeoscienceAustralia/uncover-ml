@@ -24,14 +24,14 @@ backend = {'ordinary': 'C',
 all_ml_models.update(transformed_modelmaps)
 
 
-class KrigePredictProbaMixin():
+class KrigePredictDistMixin():
     """
-    Mixin class for providing a ``predict_proba`` method to the
+    Mixin class for providing a ``predict_dist`` method to the
     Krige class.
 
     This is especially for use with PyKrige Ordinary/UniversalKriging classes.
     """
-    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+    def predict_dist(self, x, interval=0.95, *args, **kwargs):
         """
         Predictive mean and variance for a probabilistic regressor.
 
@@ -81,7 +81,7 @@ class KrigePredictProbaMixin():
         return prediction, variance, ql, qu
 
 
-class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
+class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
     """
     A scikitlearn wrapper class for Ordinary and Universal Kriging.
     This works for both Grid/RandomSearchCv for optimising the
@@ -141,7 +141,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictProbaMixin):
         Prediction array
         """
 
-        return self.predict_proba(x, *args, **kwargs)[0]
+        return self.predict_dist(x, *args, **kwargs)[0]
 
 
 def _check_sklearn_model(model):
@@ -200,7 +200,7 @@ class MLKrigeBase(TagsMixin):
 
     def predict(self, x, lon_lat, *args, **kwargs):
         """
-        Must override predict_proba method of Krige.
+        Must override predict_dist method of Krige.
         Predictive mean and variance for a probabilistic regressor.
 
         Parameters
@@ -255,9 +255,9 @@ class MLKrigeBase(TagsMixin):
                         sample_weight=sample_weight)
 
 
-class MLKrigePredictProbaMixin():
+class MLKrigePredictDistMixin():
 
-    def predict_proba(self, x, interval=0.95, lon_lat=None, *args, **kwargs):
+    def predict_dist(self, x, interval=0.95, lon_lat=None, *args, **kwargs):
         """
         Predictive mean, variance, lower and upper quantile for a
         probabilistic regressor.
@@ -287,8 +287,8 @@ class MLKrigePredictProbaMixin():
             The upper end point of the interval with shape (Ns,)
 
         """
-        correction, corr_var = self.krige.predict_proba(lon_lat)[:2]
-        ml_pred, ml_var = self.ml_model.predict_proba(x, *args,
+        correction, corr_var = self.krige.predict_dist(lon_lat)[:2]
+        ml_pred, ml_var = self.ml_model.predict_dist(x, *args,
                                                       **kwargs)[:2]
         # add prediction and residual
         pred = ml_pred + correction
@@ -299,19 +299,19 @@ class MLKrigePredictProbaMixin():
         return pred, var, ql, qu
 
 
-class MLKrigePreidctProba(MLKrigeBase, MLKrigePredictProbaMixin):
+class MLKrigePreidctDist(MLKrigeBase, MLKrigePredictDistMixin):
     def __init__(self, *args, **kwargs):
-        super(MLKrigePreidctProba, self).__init__(*args, **kwargs)
+        super(MLKrigePreidctDist, self).__init__(*args, **kwargs)
 
 
 class MLKrige():
     def __new__(cls, ml_method, ml_params={}, *args, **kwargs):
         ml_model = all_ml_models[ml_method](**ml_params)
-        if not hasattr(ml_model, 'predict_proba'):
+        if not hasattr(ml_model, 'predict_dist'):
             return MLKrigeBase(ml_method, ml_params, *args, **kwargs)
         else:
-            return MLKrigePreidctProba(ml_method, ml_params,
-                                       *args, **kwargs)
+            return MLKrigePreidctDist(ml_method, ml_params,
+                                      *args, **kwargs)
 
 
 krig_dict = {'krige': Krige,

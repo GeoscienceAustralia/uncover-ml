@@ -70,13 +70,13 @@ class BasisMakerMixin():
         self.basis = gpbasis + LinearBasis()
 
 
-class PredictProbaMixin():
+class PredictDistMixin():
     """
-    Mixin class for providing a ``predict_proba`` method to the
+    Mixin class for providing a ``predict_dist`` method to the
     StandardLinearModel class in revrand.
     """
 
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+    def predict_dist(self, X, interval=0.95, *args, **kwargs):
         """
         Predictive mean and variance for a probabilistic regressor.
 
@@ -112,15 +112,15 @@ class PredictProbaMixin():
         return Ey, Vy, ql, qu
 
 
-class GLMPredictProbaMixin():
+class GLMPredictDistMixin():
     """
-    Mixin class for providing a ``predict_proba`` method to the
+    Mixin class for providing a ``predict_dist`` method to the
     GeneralisedLinearModel class in revrand.
 
     This is especially for use with Gaussian likelihood models.
     """
 
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+    def predict_dist(self, X, interval=0.95, *args, **kwargs):
         """
         Predictive mean and variance for a probabilistic regressor.
 
@@ -204,11 +204,11 @@ class TagsMixin():
         list:
             of strings with the types of outputs that can be returned by this
             algorithm. This depends on the prediction methods implemented (e.g.
-            ``predict``, `predict_proba``, ``entropy_reduction``).
+            ``predict``, `predict_dist``, ``entropy_reduction``).
         """
 
         tags = ['Prediction']
-        if hasattr(self, 'predict_proba'):
+        if hasattr(self, 'predict_dist'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
 
         if hasattr(self, 'entropy_reduction'):
@@ -228,7 +228,7 @@ class TagsMixin():
 # few curated algorithms
 #
 
-class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
+class LinearReg(StandardLinearModel, PredictDistMixin, MutualInfoMixin):
     """
     Bayesian standard linear model.
 
@@ -263,7 +263,7 @@ class LinearReg(StandardLinearModel, PredictProbaMixin, MutualInfoMixin):
                          )
 
 
-class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
+class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictDistMixin,
                MutualInfoMixin):
     """
     An approximate Gaussian process for medium scale data.
@@ -313,7 +313,7 @@ class ApproxGP(BasisMakerMixin, StandardLinearModel, PredictProbaMixin,
         self._store_params(kernel, regulariser, nbases, lenscale, ard)
 
 
-class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
+class SGDLinearReg(GeneralisedLinearModel, GLMPredictDistMixin):
     """
     Bayesian standard linear model, using stochastic gradients.
 
@@ -372,7 +372,7 @@ class SGDLinearReg(GeneralisedLinearModel, GLMPredictProbaMixin):
 
 
 class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
-                  GLMPredictProbaMixin):
+                  GLMPredictDistMixin):
     """
     An approximate Gaussian process for large scale data using stochastic
     gradients.
@@ -447,7 +447,7 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
 
 # Bespoke regressor for basin-depth problems
 class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
-                     GLMPredictProbaMixin):
+                     GLMPredictDistMixin):
     """
     A specialised approximate Gaussian process for large scale data using
     stochastic gradients.
@@ -560,7 +560,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
         largs = self._parse_largs(fields[self.indicator_field])
         return super().fit(X, y, likelihood_args=(largs,))
 
-    def predict_proba(self, X, interval=0.95, fields={}, **kwargs):
+    def predict_dist(self, X, interval=0.95, fields={}, **kwargs):
         """
         Predictive mean and variance from an approximate Gaussian process.
 
@@ -595,7 +595,7 @@ class DepthRegressor(BasisMakerMixin, GeneralisedLinearModel, TagsMixin,
         else:
             largs = np.ones(len(X), dtype=bool)
 
-        return super().predict_proba(X, interval, likelihood_args=(largs,))
+        return super().predict_dist(X, interval, likelihood_args=(largs,))
 
     def _parse_largs(self, largs):
         return np.array([v == 'No' for v in largs], dtype=bool)
@@ -611,7 +611,7 @@ class RandomForestRegressor(RFR):
     decision tree estimator ouputs.
     """
 
-    def predict_proba(self, X, interval=0.95):
+    def predict_dist(self, X, interval=0.95):
         if hasattr(self, "_notransform_predict"):
             Ey = self._notransform_predict(X)
         else:
@@ -695,7 +695,7 @@ class RandomForestRegressorMulti(TagsMixin):
         # Mark that we are now trained
         self._trained = True
 
-    def predict_proba(self, x, interval=0.95, *args, **kwargs):
+    def predict_dist(self, x, interval=0.95, *args, **kwargs):
 
         # We can't make predictions until we have trained the model
         if not self._trained:
@@ -726,7 +726,7 @@ class RandomForestRegressorMulti(TagsMixin):
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
-        return self.predict_proba(x)[0]
+        return self.predict_dist(x)[0]
 
 
 #
@@ -775,11 +775,11 @@ def transform_targets(Learner):
 
             return Ey
 
-        if hasattr(Learner, 'predict_proba'):
-            def predict_proba(self, X, interval=0.95, *args, **kwargs):
+        if hasattr(Learner, 'predict_dist'):
+            def predict_dist(self, X, interval=0.95, *args, **kwargs):
 
                 # Expectation and variance in latent space
-                Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
+                Ey_t, Vy_t, ql, qu = super().predict_dist(X, interval)
 
                 # Save computation if identity transform
                 if type(self.ytform) is transforms.Identity:

@@ -15,7 +15,7 @@ from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
 from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, PredictProbaMixin, \
+    _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
     MutualInfoMixin
 from revrand.slm import StandardLinearModel
 from revrand.basis_functions import LinearBasis
@@ -90,7 +90,7 @@ class TransformMixin:
             return super().score(X, y, *args, **kwargs)
 
 
-class TransformPredictProbaMixin(TransformMixin):
+class TransformPredictDistMixin(TransformMixin):
 
     def __expec_int(self, x, mu, std):
         px = _normpdf(x, mu, std)
@@ -102,10 +102,10 @@ class TransformPredictProbaMixin(TransformMixin):
         Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
         return Vx
 
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+    def predict_dist(self, X, interval=0.95, *args, **kwargs):
 
         # Expectation and variance in latent space
-        Ey_t, Vy_t, ql, qu = super().predict_proba(X, interval)
+        Ey_t, Vy_t, ql, qu = super().predict_dist(X, interval)
 
         # Save computation if identity transform
         if type(self.target_transform) is transforms.Identity:
@@ -139,8 +139,8 @@ class TransformPredictProbaMixin(TransformMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedLinearReg(TransformPredictProbaMixin, StandardLinearModel,
-                           PredictProbaMixin, MutualInfoMixin, TagsMixin):
+class TransformedLinearReg(TransformPredictDistMixin, StandardLinearModel,
+                           PredictDistMixin, MutualInfoMixin, TagsMixin):
 
     def __init__(self,
                  basis=True,
@@ -281,17 +281,17 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
             random_state=random_state
         )
 
-    def predict_proba(self, X, interval=0.95, *args, **kwargs):
+    def predict_dist(self, X, interval=0.95, *args, **kwargs):
         Ey, std_t = super().predict(X, return_std=True)
         ql, qu = norm.interval(interval, loc=Ey, scale=std_t)
 
         return Ey, std_t**2, ql, qu
 
     def predict(self, X, *args, **kwargs):
-        return self.predict_proba(X)[0]
+        return self.predict_dist(X)[0]
 
 
-class TransformedForestRegressor(TransformPredictProbaMixin,
+class TransformedForestRegressor(TransformPredictDistMixin,
                                  RandomForestRegressor,
                                  TagsMixin):
 

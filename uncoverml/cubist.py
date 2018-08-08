@@ -271,7 +271,7 @@ class Cubist:
             ['.tmp', '.names', '.data', '.model', '.pred']
         )
 
-    def predict_proba(self, x, interval=0.95):
+    def predict_dist(self, x, interval=0.95):
         """ Predict the outputs and variances of the inputs
         This method predicts the output values that would correspond to
         each input in X. This method also returns the certainty of the
@@ -332,7 +332,7 @@ class Cubist:
 
     def predict(self, x):
         """ Predicts the y values that correspond to each input
-        Just like predict_proba, this predicts the output value, given a
+        Just like predict_dist, this predicts the output value, given a
         list of inputs contained in x.
 
         Parameters
@@ -346,7 +346,7 @@ class Cubist:
             An array of expected output values given the inputs
         """
 
-        mean, _, _, _ = self.predict_proba(x)
+        mean, _, _, _ = self.predict_dist(x)
         return mean
 
     def _run_cubist(self):
@@ -519,7 +519,7 @@ class MultiCubist:
         # Mark that we are now trained
         self._trained = True
 
-    def predict_proba(self, x, interval=0.95):
+    def predict_dist(self, x, interval=0.95):
         """ Predict the outputs and variances of the inputs
         This method predicts the output values that would correspond to
         each input in X. This method also returns the certainty of the
@@ -590,7 +590,7 @@ class MultiCubist:
 
     def predict(self, x):
         """ Predicts the y values that correspond to each input
-        Just like predict_proba, this predicts the output value, given a
+        Just like predict_dist, this predicts the output value, given a
         list of inputs contained in x.
 
         Parameters
@@ -603,7 +603,7 @@ class MultiCubist:
         y_mean: numpy.array
             An array of expected output values given the inputs
         """
-        mean, _, _, _ = self.predict_proba(x)
+        mean, _, _, _ = self.predict_dist(x)
         return mean
 
     def calculate_usage(self):

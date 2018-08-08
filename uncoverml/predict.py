@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 def predict(data, model, interval=0.95, **kwargs):
 
     def pred(X):
-        if hasattr(model, 'predict_proba'):
+        if hasattr(model, 'predict_dist'):
             Ey, Vy, ql, qu = model.predict_proba(X, interval, **kwargs)
             predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
                                  ql[:, np.newaxis], qu[:, np.newaxis]))
