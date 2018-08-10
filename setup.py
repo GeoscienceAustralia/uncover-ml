@@ -87,7 +87,6 @@ setup(
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
         'xgboost >= 0.72.1',
-        'catboost == 0.3.0',
     ],
     extras_require={
         'kmz': [

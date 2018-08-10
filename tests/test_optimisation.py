@@ -18,7 +18,7 @@ krige = modelmaps.pop('krige')
 mlkrige = modelmaps.pop('mlkrige')
 
 # TODO: investigate why catboost does not work with target transforms
-catboost = modelmaps.pop('catboost')
+# catboost = modelmaps.pop('catboost')
 
 
 @pytest.fixture(params=[k for k in modelmaps.keys()])

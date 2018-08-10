@@ -487,13 +487,21 @@ def export_crossval(crossval_output, config):
                                    config.name + "_results.hdf5")
     with hdf.open_file(outfile_results, 'w') as f:
         for fld, v in crossval_output.y_pred.items():
-            label = "_".join(fld.split())
+            label = _make_valid_array_name(fld)
             f.create_array("/", label, obj=v.data)
             f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
     if not crossval_output.classification:
         create_scatter_plot(outfile_results, config)
+
+
+def _make_valid_array_name(label):
+    label = "_".join(label.split())
+    label = ''.join(filter(str.isalnum, label))  # alphanum only
+    if label[0].isdigit():
+        label = '_' + label
+    return label
 
 
 def create_scatter_plot(outfile_results, config):
