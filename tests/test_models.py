@@ -4,8 +4,10 @@ import pytest
 from sklearn.metrics import r2_score
 
 from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
-from uncoverml.models import modelmaps
+from uncoverml.models import regressors, classifiers
 from uncoverml.optimise.models import transformed_modelmaps
+
+modelmaps = {**regressors, **classifiers}
 
 models = list(modelmaps.keys()) + list(transformed_modelmaps.keys())
 

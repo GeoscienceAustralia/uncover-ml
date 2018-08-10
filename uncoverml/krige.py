@@ -9,7 +9,7 @@ from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 
 # from uncoverml.mllog import warn_with_traceback
-from uncoverml.models import TagsMixin, modelmaps as all_ml_models
+from uncoverml.models import TagsMixin, regressors as all_ml_models
 from uncoverml.config import ConfigException
 from uncoverml.optimise.models import transformed_modelmaps
 

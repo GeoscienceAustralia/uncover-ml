@@ -14,29 +14,36 @@ log = logging.getLogger(__name__)
 
 def predict(data, model, interval=0.95, **kwargs):
 
-    def pred(X):
-        if hasattr(model, 'predict_dist'):
-            Ey, Vy, ql, qu = model.predict_proba(X, interval, **kwargs)
-            predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
-                                 ql[:, np.newaxis], qu[:, np.newaxis]))
+    # Classification
+    if hasattr(model, 'predict_proba'):
+        def pred(X):
+            return model.predict_proba(X)
 
-        else:
-            predres = np.reshape(model.predict(X, **kwargs),
-                                 newshape=(len(X), 1))
+    # Regression
+    else:
+        def pred(X):
+            if hasattr(model, 'predict_dist'):
+                Ey, Vy, ql, qu = model.predict_dist(X, interval, **kwargs)
+                predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
+                                     ql[:, np.newaxis], qu[:, np.newaxis]))
 
-        if hasattr(model, 'entropy_reduction'):
-            MI = model.entropy_reduction(X)
-            predres = np.hstack((predres, MI[:, np.newaxis]))
+            else:
+                predres = np.reshape(model.predict(X, **kwargs),
+                                     newshape=(len(X), 1))
 
-        if hasattr(model, 'krige_residual'):
-            kr = model.krige_residual(lon_lat=kwargs['lon_lat'])
-            predres = np.hstack((predres, kr[:, np.newaxis]))
+            if hasattr(model, 'entropy_reduction'):
+                MI = model.entropy_reduction(X)
+                predres = np.hstack((predres, MI[:, np.newaxis]))
 
-        if hasattr(model, 'ml_prediction'):
-            ml_pred = model.ml_prediction(X)
-            predres = np.hstack((predres, ml_pred[:, np.newaxis]))
+            if hasattr(model, 'krige_residual'):
+                kr = model.krige_residual(lon_lat=kwargs['lon_lat'])
+                predres = np.hstack((predres, kr[:, np.newaxis]))
 
-        return predres
+            if hasattr(model, 'ml_prediction'):
+                ml_pred = model.ml_prediction(X)
+                predres = np.hstack((predres, ml_pred[:, np.newaxis]))
+
+            return predres
     result = apply_masked(pred, data)
     return result
 
