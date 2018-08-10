@@ -480,8 +480,13 @@ def export_cluster_model(model, config):
 def export_crossval(crossval_output, config):
     outfile_scores = os.path.join(config.output_dir,
                                   config.name + "_scores.json")
+
+    # Make sure we convert numpy arrays to lists
+    scores = {s: v if np.isscalar(v) else v.tolist()
+              for s, v in crossval_output.scores.items()}
+
     with open(outfile_scores, 'w') as f:
-        json.dump(crossval_output.scores, f, sort_keys=True, indent=4)
+        json.dump(scores, f, sort_keys=True, indent=4)
 
     outfile_results = os.path.join(config.output_dir,
                                    config.name + "_results.hdf5")

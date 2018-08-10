@@ -6,10 +6,11 @@ import copy
 
 import numpy as np
 from sklearn.metrics import (explained_variance_score, r2_score,
-                             accuracy_score, log_loss)
+                             accuracy_score, log_loss, roc_auc_score,
+                             confusion_matrix)
 from revrand.metrics import lins_ccc, mll, msll, smse
 
-from uncoverml.models import apply_multiple_masked, apply_masked
+from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
 from uncoverml import predict
 from uncoverml import features as feat
@@ -31,9 +32,20 @@ regression_metrics = {
     'msll': msll
 }
 
+
+def _binarizer(y, p, func, **kwargs):
+    yb = np.zeros_like(p)
+    n = len(y)
+    yb[range(n), y.astype(int)] = 1.
+    score = func(yb, p, **kwargs)
+    return score
+
+
 classification_metrics = {
-    'accuracy': accuracy_score,
-    'log_loss': log_loss,
+    'accuracy': lambda y, ey, p: accuracy_score(y, ey),
+    'log_loss': lambda y, ey, p: log_loss(y, p),
+    'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
+    'confusion': lambda y, ey, p: confusion_matrix(y, ey) / len(y)
 }
 
 
@@ -84,6 +96,14 @@ def score_first_dim(func):
     return newscore
 
 
+def intercept_missing(func, y, ey, p):
+
+    not_missing = ~ey.mask
+    assert np.all(not_missing == ~np.any(p.mask, axis=1))
+    score = func(y[not_missing], ey.data[not_missing], p.data[not_missing])
+    return score
+
+
 def classification_validation_scores(ys, eys, pys):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
@@ -109,14 +129,11 @@ def classification_validation_scores(ys, eys, pys):
         A dictionary containing all of the evaluated scores.
     """
     scores = {}
+    # in case we get hard probabilites and log freaks out
+    pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
+
     for k, m in classification_metrics.items():
-        if k == 'log_loss':
-            # incase we get hard probabilites and log freaks out
-            pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
-            score = apply_multiple_masked(m, (ys, pys))
-        else:
-            score = apply_multiple_masked(m, (ys, eys))
-        scores[k] = score
+        scores[k] = intercept_missing(m, ys, eys, pys)
 
     return scores
 
