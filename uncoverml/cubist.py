@@ -53,7 +53,7 @@ def write_dict(filename, dict_obj):
     with open(filename, 'w') as csv_file:
         writer = csv.writer(csv_file)
         for key, value in dict_obj.items():
-           writer.writerow([key, value])
+            writer.writerow([key, value])
 
 
 def arguments(p):
@@ -139,7 +139,7 @@ class Cubist:
         self._trained = False
         self.models = []
         self._filename = name + '_' + str(mpiops.chunk_index) + '_' + \
-                         str(time.time()) + str(random.random())
+            str(time.time()) + str(random.random())
         # Setting the user options
         self.print_output = print_output
         self.committee_members = committee_members
@@ -376,7 +376,7 @@ class Cubist:
                    (' -I ' + str(self.seed)
                     if self.seed else '') +
                    (' -i'
-                   if self.composite_model else '') +
+                    if self.composite_model else '') +
                    (' -a'
                     if self.auto else '') +
                    (' -f ' + self._filename))
@@ -396,13 +396,6 @@ class Cubist:
         for extension in extensions:
             if os.path.exists(self._filename + extension):
                 os.remove(self._filename + extension)
-
-
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
 
 
 class MultiCubist:

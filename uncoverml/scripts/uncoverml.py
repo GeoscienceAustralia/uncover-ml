@@ -25,7 +25,6 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
-from uncoverml.resampling import resample_shapefile
 from uncoverml.mllog import warn_with_traceback
 warnings.showwarning = warn_with_traceback
 
@@ -80,8 +79,6 @@ def _load_data(config, partitions):
         else:
             log.info("Using memory aggressively: "
                      "dividing all data between nodes")
-
-        config.target_file = ls.mpiops.run_once(resample_shapefile, config)
 
         # Make the targets
         if config.train_data_pk and exists(config.train_data_pk):

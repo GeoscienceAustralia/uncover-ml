@@ -11,13 +11,8 @@ from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.transforms import target as transforms
 
 
-def _join_dicts(dicts):
-    if dicts is None:
-        return
-    d = {k: v for D in dicts for k, v in D.items()}
-    return d
+modelmaps = {**krig_dict, **transformed_modelmaps}
 
-modelmaps = copy.deepcopy(_join_dicts([krig_dict, transformed_modelmaps]))
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
 mlkrige = modelmaps.pop('mlkrige')

@@ -14,7 +14,8 @@ from revrand.optimize import Adam
 from revrand.utils import atleast_list
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
-from sklearn.ensemble import RandomForestRegressor as RFR
+from sklearn.ensemble import (RandomForestRegressor as RFR,
+                              RandomForestClassifier as RFC)
 from sklearn.linear_model import ARDRegression, LogisticRegression
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
@@ -959,6 +960,15 @@ class LogisticClassifier(encode_targets(LogisticRegression), TagsMixin):
     """
     pass
 
+
+class RandomForestClassifier(encode_targets(RFC), TagsMixin):
+    """
+    Random Forest for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    pass
+
 #
 # Helper functions for multiple outputs and missing/masked data
 #
@@ -1054,7 +1064,8 @@ regressors = {
 }
 
 classifiers = {
-    'logistic': LogisticClassifier
+    'logistic': LogisticClassifier,
+    'forestclassifier': RandomForestClassifier
 }
 
 modelmaps = {**classifiers, **regressors}
