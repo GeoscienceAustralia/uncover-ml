@@ -25,8 +25,6 @@ def test_modeltags(get_models):
 
     tags = model.get_predict_tags()
 
-    print(tags)
-
     assert len(tags) >= 1  # at least a predict function for regression
 
     if hasattr(model, 'predict_dist'):

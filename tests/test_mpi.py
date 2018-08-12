@@ -19,6 +19,12 @@ def transform_opt(request):
     return request.param
 
 
+def test_power(masked_array):
+    x, _ = masked_array
+    x2 = mpiops.power(x, 2)
+    assert np.allclose(x2, x**2)
+
+
 @pytest.fixture(params=[True, False])
 def impute_opt(request):
     return request.param

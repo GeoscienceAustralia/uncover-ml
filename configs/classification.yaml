@@ -1,0 +1,61 @@
+
+# not currently implemented
+# patchsize: 0
+
+features:
+- name: continuous
+  type: ordinal
+  files:
+  - directory: /home/sudipta/Documents/GA-cover2/covariates
+  # transforms are performed in order
+  transforms:
+  - centre
+  - standardise
+  imputation: none
+
+preprocessing:
+  imputation: none
+  # imputation: gaus
+  # imputation: nn
+  # imputation: mean
+
+  transforms:
+  # - whiten:
+  # keep_fraction: 0.8
+
+targets:
+  file: /home/sudipta/Documents/GA-cover2/sirsam.shp
+  property: Na_cats
+
+learning:
+  # algorithm: svc
+  # arguments:
+  #     probability: True
+
+  # algorithm: boostedtrees
+  # arguments:
+  #     n_estimators: 50
+
+   algorithm: forestclassifier
+   arguments:
+       n_estimators: 20
+
+#  algorithm: logisticrbf
+#  arguments:
+#    gamma: 0.005
+#    n_components: 300
+#    multi_class: multinomial
+#    solver: lbfgs
+    # class_weight: balanced
+
+prediction:
+  quantiles: 0.95
+
+validation:
+- parallel
+- k-fold:
+    folds: 5
+    random_seed: 1
+
+output:
+  directory: scratch/
