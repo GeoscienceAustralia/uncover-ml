@@ -21,7 +21,6 @@ def test_modeltags(get_models):
 
     # Patch classifiers since they only get their tags when "fit" called
     if hasattr(model, 'predict_proba'):
-        # patching is not working
         model.le.classes_ = ('1', '2', '3')
 
     tags = model.get_predict_tags()
@@ -40,10 +39,8 @@ def test_modeltags(get_models):
             assert len(tags) == 5
 
     elif hasattr(model, 'predict_proba'):
-        # classifiers only get their tags when "fit" called, and
-        # patching is not working for me
-        assert len(tags) == 1
-        # assert tags == ['1', '2', '3']
+        assert len(tags) == 3
+        assert tags == ['1', '2', '3']
 
     else:
         if hasattr(model, 'entropy_reduction'):

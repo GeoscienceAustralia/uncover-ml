@@ -210,6 +210,12 @@ class TagsMixin():
             ``predict``, `predict_dist``, ``entropy_reduction``).
         """
 
+        # Classification
+        if hasattr(self, 'predict_proba'):
+            tags = self.get_classes()
+            return tags
+
+        # Regression
         tags = ['Prediction']
         if hasattr(self, 'predict_dist'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
