@@ -846,8 +846,15 @@ def encode_targets(Classifier):
             y_t = self.le.fit_transform(y)
             return super().fit(X, y_t)
 
+        def predict_proba(self, X, **kwargs):
+            p = super().predict_proba(X)
+            y = np.argmax(p, axis=1)  # Also return hard labels
+            return y, p
+
         def get_classes(self):
-            tags = [str(c) for c in self.le.classes_]
+            tags = ["most_likely"]
+            tags += ["{}_{}".format(c, i)
+                     for i, c in enumerate(self.le.classes_)]
             return tags
 
     return EncodedClassifier
