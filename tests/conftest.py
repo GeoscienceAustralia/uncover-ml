@@ -11,6 +11,9 @@ from uncoverml import mpiops
 UNCOVER = os.path.dirname(os.path.dirname(__file__))
 
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
+SEED = 665
+RND = np.random.RandomState(SEED)
+random.seed(SEED)
 
 
 @pytest.fixture
@@ -34,6 +37,16 @@ def masked_array():
                            mask=[[True, False], [False, True], [False, False]],
                            fill_value=1e23)
     return x
+
+
+@pytest.fixture
+def masked_data():
+    yt, Xt, ys, Xs = make_linear_data()
+    mt = RND.choice([True, False], size=Xt.shape, p=[0.05, 0.95])
+    ms = RND.choice([True, False], size=Xs.shape, p=[0.05, 0.95])
+    Xtm = np.ma.masked_array(Xt, mask=mt)
+    Xsm = np.ma.masked_array(Xs, mask=ms)
+    return yt, Xtm, ys, Xsm
 
 
 @pytest.fixture
@@ -114,8 +127,8 @@ def shapefile(random_filename, request):
     # Generate data for shapefile
     nsamples = 100
     ntargets = 10
-    dlon = lons[np.random.randint(0, high=len(lons), size=nsamples)]
-    dlat = lats[np.random.randint(0, high=len(lats), size=nsamples)]
+    dlon = lons[RND.randint(0, high=len(lons), size=nsamples)]
+    dlat = lats[RND.randint(0, high=len(lats), size=nsamples)]
     fields = [str(i) for i in range(ntargets)] + ["lon", "lat"]
     vals = np.ones((nsamples, ntargets)) * np.arange(ntargets)
     lonlats = np.array([dlon, dlat]).T
@@ -143,21 +156,23 @@ def shapefile(random_filename, request):
     return lonlats, filename
 
 
+def make_linear_data(seed=SEED):
+    rnd = np.random.RandomState(seed)
+    Nt = 100
+    Ns = 50
+    x = np.linspace(-2, 2, Nt + Ns)
+    y = 3 + 2 * x + rnd.randn(Nt + Ns) * 1e-3
+    X = x[:, np.newaxis]
+
+    trind = rnd.choice(Nt + Ns, Nt, replace=False)
+    tsind = np.zeros_like(x, dtype=bool)
+    tsind[trind] = True
+    tsind = np.where(~tsind)[0]
+    return y[trind], X[trind], y[tsind], X[tsind]
+
+
 @pytest.fixture
 def linear_data():
-    def make_linear_data(seed=2):
-        rnd = np.random.RandomState(seed)
-        Nt = 100
-        Ns = 50
-        x = np.linspace(-2, 2, Nt + Ns)
-        y = 3 + 2 * x + rnd.randn(Nt + Ns) * 1e-3
-        X = x[:, np.newaxis]
-
-        trind = rnd.choice(Nt + Ns, Nt, replace=False)
-        tsind = np.zeros_like(x, dtype=bool)
-        tsind[trind] = True
-        tsind = np.where(~tsind)[0]
-        return y[trind], X[trind], y[tsind], X[tsind]
     return make_linear_data
 
 

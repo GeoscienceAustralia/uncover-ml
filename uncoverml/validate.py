@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
                              confusion_matrix)
-from revrand.metrics import lins_ccc, mll, msll, smse
+from revrand.metrics import lins_ccc, mll, smse
 
 from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
@@ -24,12 +24,11 @@ log = logging.getLogger(__name__)
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': r2_score,
-    'expvar': explained_variance_score,
-    'smse': smse,
-    'lins_ccc': lins_ccc,
+    'r2_score': lambda y, ey, sy:  r2_score(y, ey),
+    'expvar': lambda y, ey, sy: explained_variance_score(y, ey),
+    'smse': lambda y, ey, sy: smse(y, ey),
+    'lins_ccc': lambda y, ey, sy: lins_ccc(y, ey),
     'mll': mll,
-    'msll': msll
 }
 
 
@@ -45,7 +44,7 @@ classification_metrics = {
     'accuracy': lambda y, ey, p: accuracy_score(y, ey),
     'log_loss': lambda y, ey, p: log_loss(y, p),
     'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
-    'confusion': lambda y, ey, p: confusion_matrix(y, ey) / len(y)
+    'confusion': lambda y, ey, p: (confusion_matrix(y, ey) / len(y)).tolist()
 }
 
 
@@ -85,23 +84,11 @@ def split_cfold(nsamples, k=5, seed=None):
     return cvinds, cvassigns
 
 
-def get_first_dim(y):
-    return y[:, 0] if y.ndim > 1 else y
-
-
-# Decorator to deal with probabilistic output for non-probabilistic scores
-def score_first_dim(func):
-    def newscore(y_true, y_pred, *args, **kwargs):
-        return func(y_true.flatten(), get_first_dim(y_pred), *args, **kwargs)
-    return newscore
-
-
-def intercept_missing(func, y, ey, p):
-
-    not_missing = ~ey.mask
-    assert np.all(not_missing == ~np.any(p.mask, axis=1))
-    score = func(y[not_missing], ey.data[not_missing], p.data[not_missing])
-    return score
+def intercept_missing(func, *data):
+    res = apply_multiple_masked(func, data)
+    if np.ma.isMaskedArray(res):
+        res = res.data[~res.mask]
+    return res
 
 
 def classification_validation_scores(ys, eys, pys):
@@ -138,7 +125,7 @@ def classification_validation_scores(ys, eys, pys):
     return scores
 
 
-def regression_validation_scores(ys, yt, eys):
+def regression_validation_scores(ys, ey):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -154,8 +141,6 @@ def regression_validation_scores(ys, yt, eys):
     ----------
     ys: numpy.array
         The test data outputs
-    yt: numpy.array
-        The training data's corresponding predictions
     eys: numpy.array
         The predictions made by the trained model on test data
 
@@ -164,35 +149,17 @@ def regression_validation_scores(ys, yt, eys):
     scores: dict
         A dictionary containing all of the evaluated scores.
     """
-
-    probscores = ['msll', 'mll']
-
     scores = {}
-
-    # cubist can predict nan when a categorical variable is not
-    # present in the training data
-    # TODO: Can be removed except for cubist
-    # NOTE: If we used masked arrays instead of nans apply_masked can do this
-    nans = ~np.isnan(eys[:, 0])
-    ys = ys[nans]
-    eys = eys[:, 0][nans]
+    if ey.ndim > 1:
+        py = ey[:, 0]
+        sy = ey[:, 1]
+    else:
+        py = ey
+        sy = ey
 
     for k, m in regression_metrics.items():
+        scores[k] = intercept_missing(m, ys, py, sy)
 
-        if m not in probscores:
-            score = apply_multiple_masked(score_first_dim(m, (ys, eys)))
-        elif eys.ndim == 2:
-            if k == 'mll' and eys.shape[1] > 1:
-                score = apply_multiple_masked(mll, (ys, eys[:, 0], eys[:, 1]))
-            elif k == 'msll' and eys.shape[1] > 1:
-                score = apply_multiple_masked(msll, (ys, eys[:, 0], eys[:, 1]),
-                                              (yt,))
-            else:
-                continue
-        else:
-            continue
-
-        scores[k] = score
     return scores
 
 
@@ -385,10 +352,8 @@ def local_crossval(x_all, targets_all, config):
         if not classification:
             y_k_test = y[test_mask]
             y_true[fold] = y_k_test
-
-            fold_scores[fold] = regression_validation_scores(
-                y_k_test, y_k_train, y_k_pred
-            )
+            fold_scores[fold] = regression_validation_scores(y_k_test,
+                                                             y_k_pred)
 
         # Classification
         else:
@@ -411,7 +376,7 @@ def local_crossval(x_all, targets_all, config):
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
-        scores = {m: np.mean([d[m] for d in scores.values()])
+        scores = {m: np.mean([d[m] for d in scores.values()], axis=0)
                   for m in valid_metrics}
         score_string = "Validation complete:\n"
         for metric, score in scores.items():
