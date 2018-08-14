@@ -7,12 +7,14 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-from os.path import isfile, splitext, exists
-import warnings
+from os.path import isfile, splitext
+# import warnings
+
 import click
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+
 import uncoverml as ls
 import uncoverml.cluster
 import uncoverml.config
@@ -25,10 +27,11 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
-from uncoverml.mllog import warn_with_traceback
-warnings.showwarning = warn_with_traceback
+# from uncoverml.mllog import warn_with_traceback
+
 
 log = logging.getLogger(__name__)
+# warnings.showwarning = warn_with_traceback
 
 
 @click.group()
@@ -225,8 +228,6 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     model = state_dict["model"]
     config = state_dict["config"]
-    if config.algorithm == 'catboost':
-        model.target_transform = state_dict['target_transform']
     config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
         else False
     config.mask = mask if mask else config.mask
@@ -256,8 +257,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
                                      band_tags=predict_tags[
-                                         0: min(len(predict_tags),
-                                                config.outbands)])
+                                               0: min(len(predict_tags),
+                                                      config.outbands)])
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))

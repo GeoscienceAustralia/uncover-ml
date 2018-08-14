@@ -35,12 +35,12 @@ class ElapsedFormatter():
         return logstr
 
 
-def warn_with_traceback(message, category, filename, lineno, line=None):
-    """
-    copied from:
-    http://stackoverflow.com/questions/22373927/get-traceback-of-warnings
-    """
-    traceback.print_stack()
-    log = sys.stderr
-    log.write(warnings.formatwarning(
-        message, category, filename, lineno, line))
+# def warn_with_traceback(message, category, filename, lineno, line=None):
+#     """
+#     copied from:
+#     http://stackoverflow.com/questions/22373927/get-traceback-of-warnings
+#     """
+#     traceback.print_stack()
+#     log = sys.stderr
+#     log.write(warnings.formatwarning(
+#         message, category, filename, lineno, line))

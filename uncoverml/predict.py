@@ -67,19 +67,20 @@ def mask_subchunks(subchunk, config):
 def _get_data(subchunk, config):
     features_names = geoio.feature_names(config)
 
-    if config.mask:
-        mask_x = _mask(subchunk, config)
-        all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
-        if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
-            x = np.ma.zeros((mask_x.shape[0], len(features_names)),
-                            dtype=np.bool)
-            x.mask = True
-            log.info('Partition {} covariates are not loaded as '
-                     'the partition is entirely masked.'.format(subchunk + 1))
-            return x, features_names
+    # NOTE: This breaks since it returns an *untransformed* x
+    # if config.mask:
+    #     mask_x = _mask(subchunk, config)
+    #     all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
+    #     if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
+    #         x = np.ma.zeros((mask_x.shape[0], len(features_names)),
+    #                         dtype=np.bool)
+    #         x.mask = True
+    #         log.info('Partition {} covariates are not loaded as '
+    #                  'the partition is entirely masked.'.format(subchunk + 1))
+    #         return x, features_names
 
-    extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
+    extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
