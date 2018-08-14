@@ -6,7 +6,7 @@ features:
 - name: continuous
   type: ordinal
   files:
-  - directory: /home/sudipta/Documents/GA-cover2/covariates
+  - directory: /home/sudiptra/Documents/GA-cover2/covariates
   # transforms are performed in order
   transforms:
   - centre
@@ -24,7 +24,7 @@ preprocessing:
   # keep_fraction: 0.8
 
 targets:
-  file: /home/sudipta/Documents/GA-cover2/sirsam.shp
+  file: /home/sudiptra/Documents/GA-cover2/sirsam.shp
   property: Na_cats
 
 learning:

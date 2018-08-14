@@ -84,13 +84,6 @@ def split_cfold(nsamples, k=5, seed=None):
     return cvinds, cvassigns
 
 
-def intercept_missing(func, *data):
-    res = apply_multiple_masked(func, data)
-    if np.ma.isMaskedArray(res):
-        res = res.data[~res.mask]
-    return res
-
-
 def classification_validation_scores(ys, eys, pys):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
@@ -120,7 +113,7 @@ def classification_validation_scores(ys, eys, pys):
     pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
 
     for k, m in classification_metrics.items():
-        scores[k] = intercept_missing(m, ys, eys, pys)
+        scores[k] = apply_multiple_masked(m, (ys, eys, pys))
 
     return scores
 

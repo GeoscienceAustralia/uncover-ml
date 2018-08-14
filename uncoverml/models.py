@@ -936,23 +936,19 @@ class MaskRows:
 
     @staticmethod
     def get_complete_rows(X):
+        N = len(X)
         if np.ma.isMaskedArray(X):
             if np.isscalar(X.mask):
-                okrows = ~X.mask * np.ones_like(X.data, dtype=bool)
+                okrows = ~X.mask * np.ones(N, dtype=bool)
             else:
                 okrows = np.all(~X.mask, axis=1) if X.ndim == 2 else ~X.mask
         else:
-            okrows = np.ones(len(X), dtype=bool)
+            okrows = np.ones(N, dtype=bool)
         return okrows
 
 
 def apply_masked(func, data, *args, **kwargs):
     # Data is just a matrix (i.e. X for prediction)
-
-    # No masked data
-    if np.ma.count_masked(data) == 0:
-        return np.ma.array(func(data.data, *args, **kwargs), mask=False)
-
     mr = MaskRows(data)
     res = func(mr.trim_mask(data), *args, **kwargs)
 
@@ -965,11 +961,7 @@ def apply_masked(func, data, *args, **kwargs):
 
 def apply_multiple_masked(func, data, *args, **kwargs):
     # Data is a sequence of arrays (i.e. X, y pairs for training)
-
     mr = MaskRows(*data)
-    if np.all(mr.okrows):
-        return func(*chain(data, args), **kwargs)
-
     res = func(*chain(mr.trim_masks(*data), args), **kwargs)
 
     # For training/fitting that returns nothing

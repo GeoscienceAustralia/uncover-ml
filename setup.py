@@ -16,7 +16,8 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/."""
+The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/.
+"""
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 from setuptools.command.install import install
