@@ -96,7 +96,7 @@ def test_trasnsformed_model_attr(get_transformed_model):
                                       'multicubist',
                                       'decisiontree',
                                       'extratree',
-                                      'catboost'
+                                      # 'catboost'
                                      ]])
 def models_supported(request):
     return request.param

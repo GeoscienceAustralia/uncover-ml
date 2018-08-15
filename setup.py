@@ -95,16 +95,16 @@ setup(
             'pillow'
         ],
         'dev': [
+
             'sphinx',
             'ghp-import',
-            'sphinxcontrib-programoutput'
             'sphinxcontrib-programoutput',
-                   'pytest',
-                   'pytest-cov',
-                   'coverage',
-                   'codecov',
-                   'tox',
-               ] + extra_test_deps
+            'pytest',
+            'pytest-cov',
+            'coverage',
+            'codecov',
+            'tox',
+           ] + extra_test_deps
     },
     license="Apache Software License 2.0",
     zip_safe=False,

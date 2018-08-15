@@ -461,8 +461,8 @@ def export_model(model, config):
     # TODO: investigate why catboost model does not save target transform
     state_dict = {"model": model,
                   "config": config}
-    if config.algorithm == 'catboost':
-        state_dict['target_transform'] = model.target_transform
+    # if config.algorithm == 'catboost':
+    #     state_dict['target_transform'] = model.target_transform
 
     with open(outfile_state, 'wb') as f:
         pickle.dump(state_dict, f)

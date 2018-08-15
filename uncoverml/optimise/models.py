@@ -13,7 +13,7 @@ from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
-from catboost import CatBoostRegressor
+# from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
     MutualInfoMixin
