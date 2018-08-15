@@ -10,13 +10,21 @@ jobs:
         key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
     - run: mkdir -p test_output/pytest test_output/flake8 test_output/coverage
     - run: cubist/makecubist .
+    - run:
+        command: |
+          sudo apt-get install gdal-bin libgdal-dev
+          sudo apt-get install libblas-dev liblapack-dev
+          sudo apt-get install libatlas-dev libatlas-base-dev
+          sudo apt-get install gfortran libproj-dev openmpi-bin libopenmpi-dev
+
     - run: # install and activate virtual environment with pip
         command: |
           python3 -m venv venv
           . venv/bin/activate
+          pip3 install -U pip numpy cython
           pip3 install .[dev]
     - save_cache: # special step to save dependency cache
-        key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+        key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
         paths:
         - "venv"
     # - run: make lint

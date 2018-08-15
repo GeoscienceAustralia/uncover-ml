@@ -10,6 +10,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     extra_test_deps = []
 
+GDAL_VERSION = subprocess.check_output(["gdal-config", "--version"]).decode(
+    encoding="utf-8").split('\n')[0]
 
 readme = open('README.rst').read()
 doclink = """
@@ -83,11 +85,12 @@ setup(
         'scikit-image >= 0.12.3',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
-        'GDAL >= 2.0.0',
+        'GDAL >==' + GDAL_VERSION,
         'pandas == 0.19.2',
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
         'xgboost >= 0.72.1',
+        'setuptools>=30.0.0',
     ],
     extras_require={
         'kmz': [
@@ -103,7 +106,7 @@ setup(
             'pytest-cov',
             'coverage',
             'codecov',
-            'tox',
+            'tox==3.2.1',
            ] + extra_test_deps
     },
     license="Apache Software License 2.0",
