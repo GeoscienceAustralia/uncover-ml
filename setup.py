@@ -10,9 +10,6 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     extra_test_deps = []
 
-GDAL_VERSION = subprocess.check_output(["gdal-config", "--version"]).decode(
-    encoding="utf-8").split('\n')[0]
-
 readme = open('README.rst').read()
 doclink = """
 Documentation
@@ -85,7 +82,6 @@ setup(
         'scikit-image >= 0.12.3',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
-        'GDAL >==' + GDAL_VERSION,
         'pandas == 0.19.2',
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
