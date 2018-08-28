@@ -143,15 +143,13 @@ def regression_validation_scores(ys, ey):
         A dictionary containing all of the evaluated scores.
     """
     scores = {}
-    if ey.ndim > 1:
-        py = ey[:, 0]
-        sy = ey[:, 1]
+    if ey.shape[1] > 1:
+        py, sy = ey[:, 0], ey[:, 1]
     else:
-        py = ey
-        sy = ey
+        py, sy = ey, ey
 
     for k, m in regression_metrics.items():
-        scores[k] = intercept_missing(m, ys, py, sy)
+        scores[k] = apply_multiple_masked(m, (ys, py, sy))
 
     return scores
 
@@ -290,17 +288,6 @@ def local_crossval(x_all, targets_all, config):
     y_true = {}
     fold_scores = {}
 
-    # NOTE: HACK TO GET CENSORED DATA COMPARISON WORKING
-    if config.algorithm == 'depthregress':
-        nhit = targets_all.fields['censored'] == 'yes'
-        hit = ~nhit
-        y_cen = y[nhit]
-        x_cen = x_all[nhit]
-        y = y[hit]
-        x_all = x_all[hit]
-        cv_indices = cv_indices[hit]
-        lon_lat = lon_lat[hit]
-
     # Train and score on each fold
     for fold in fold_node:
 
@@ -313,23 +300,13 @@ def local_crossval(x_all, targets_all, config):
         lon_lat_train = lon_lat[train_mask]
         lon_lat_test = lon_lat[test_mask]
 
-        if config.algorithm == 'depthregress':
-            # Always add censored data back into training folds
-            y_k_train = np.concatenate((y_k_train, y_cen))
-            x_train = np.vstack((x_all[train_mask], x_cen))
-            Ntr = sum(train_mask)
-            Ncen = len(y_cen)
-            censtr = np.array(['No'] * Ntr + ['yes'] * Ncen)
-            fields_train = {'censored': censtr}
-        else:
-            # Extra fields
-            fields_train = {f: v[train_mask]
-                            for f, v in targets_all.fields.items()}
-            # Train on this fold
-            x_train = x_all[train_mask]
-
+        # Extra fields
+        fields_train = {f: v[train_mask]
+                        for f, v in targets_all.fields.items()}
         fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
 
+        # Train on this fold
+        x_train = x_all[train_mask]
         apply_multiple_masked(model.fit, data=(x_train, y_k_train),
                               kwargs={'fields': fields_train,
                                       'lon_lat': lon_lat_train})
