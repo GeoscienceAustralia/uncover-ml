@@ -7,7 +7,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import pickle
 import resource
-from os.path import isfile, splitext
+from os.path import isfile, splitext, exists
 # import warnings
 
 import click
@@ -98,7 +98,7 @@ def _load_data(config, partitions):
             transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.rawcovariates:
-            log.info('Saving raw data before any imputation and trasnforms')
+            log.info('Saving raw data before any processing')
             ls.features.save_intersected_features(image_chunk_sets,
                                                   transform_sets, config)
 

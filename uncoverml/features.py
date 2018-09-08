@@ -131,7 +131,7 @@ def save_intersected_features(feature_sets, transform_sets, config):
                    fmt='%.4e',
                    header=header)
         np.savetxt(config.rawcovariates_mask, X=x_all.mask.astype(int),
-                   delimiter=',', fmt='%.4e', header=header)
+                   delimiter=',', fmt='%d', header=header)
         if config.plot_covariates:
             import matplotlib.pyplot as plt
             for i, name in enumerate(names):

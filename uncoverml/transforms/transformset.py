@@ -28,8 +28,8 @@ def missing_percentage(x):
 
 class TransformSet:
     def __init__(self, imputer=None, transforms=None):
-            self.global_transforms = (transforms if transforms else [])
-            self.imputer = imputer
+        self.global_transforms = (transforms if transforms else [])
+        self.imputer = imputer
 
     def __call__(self, x):
         # impute

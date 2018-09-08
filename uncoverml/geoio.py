@@ -172,7 +172,7 @@ def load_shapefile(filename, targetfield):
     sf = shapefile.Reader(filename)
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
     dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
-    dtypes = ['float' if k[0] == 'N' else '<U{}'.format(k[1])
+    dtypes = ['float' if (k[0] == 'N' or k[0] == 'F') else '<U{}'.format(k[1])
               for k in dtype_flags]
     records = np.array(sf.records()).T
     record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
