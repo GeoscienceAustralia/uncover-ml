@@ -892,11 +892,6 @@ class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
     pass
 
 
-#
-# Helper functions for multiple outputs and missing/masked data
-#
-
-
 class MaskRows:
 
     def __init__(self, *Xs):
@@ -909,7 +904,13 @@ class MaskRows:
 
     def trim_mask(self, X):
         if np.ma.isMaskedArray(X):
-            return X.data[self.okrows]
+            predict_data = X.data[self.okrows]
+
+            if predict_data.shape[0] == 0:  # if all of this chunk is masked
+                # to get dimension of the func return, we create a dummpy res
+                predict_data = np.ones((1, X.data.shape[1]))
+
+            return predict_data
         else:
             return X[self.okrows]
 
