@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 else
 
     # Get the required location for the installation and make it if it doesn't exist
-    INSTALL_DIR=$(realpath $1)/cubist
+    INSTALL_DIR=$(readlink -f $1)/cubist
     LAST_DIR=$(pwd)
     mkdir -p $INSTALL_DIR/build
     cd $INSTALL_DIR/build
@@ -23,7 +23,7 @@ else
     # Move the cubist executable and clean up
     mv cubist gpl.txt Cubist.tgz $INSTALL_DIR
     cd $INSTALL_DIR
-    rm -r build
+    rm -r build Cubist.tgz gpl.txt
 
     # Write out the cubist path to a python config file
     cd $LAST_DIR
