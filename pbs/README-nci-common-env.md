@@ -5,7 +5,14 @@
 
 ```bash
 $ cd ~
-$ git clone git@github.com:GeoscienceAustralia/uncover-ml.git
+$ git clone https://github.com/basaks/uncover-ml.git
+```
+
+1.1. Temporary step until branch is merged
+
+```bash
+$ cd ~/uncover-ml
+$ git checkout -b master-cleanup origin/master-cleanup
 ```
 
 2. Copy the following lines and save it in `~/create_uncoverml_env.sh` in your home directory.
