@@ -82,7 +82,7 @@ class RasterioImageSource(ImageSource):
             self._dtype = np.dtype(geotiff.dtypes[0])
             self._crs = geotiff.crs
 
-            A = geotiff.affine
+            A = geotiff.transform
             # No shearing or rotation allowed!!
             if not ((A[1] == 0) and (A[3] == 0)):
                 raise RuntimeError("Transform to pixel coordinates"
