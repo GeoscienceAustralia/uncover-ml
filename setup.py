@@ -74,7 +74,7 @@ setup(
         'rasterio >= 1.0.8',
         'affine == 2.0.0.post1',
         'pyshp == 1.2.3',
-        'click == 6.6',
+        'click >= 6.6',
         'revrand >= 0.9.10',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',

@@ -8,6 +8,8 @@ import json
 import pickle
 import matplotlib.pyplot as plt
 import rasterio
+from rasterio.warp import reproject
+from affine import Affine
 import numpy as np
 import shapefile
 import tables as hdf
@@ -262,9 +264,11 @@ class ImageWriter:
             file_tags = [str(k) for k in range(self.outbands)]
             band_tags = file_tags
 
+
         if mpiops.chunk_index == 0:
             # create a file for each band
             self.files = []
+            self.file_names = []
             for band in range(self.outbands):
                 output_filename = os.path.join(outputdir, name + "_" +
                                                file_tags[band] + ".tif")
@@ -276,6 +280,11 @@ class ImageWriter:
                                   nodata=self.nodata_value)
                 f.update_tags(1, image_type=band_tags[band])
                 self.files.append(f)
+                self.file_names.append(output_filename)
+        else:
+            self.file_names = []
+
+        self.file_names = mpiops.comm.bcast(self.file_names, root=0)
 
     def write(self, x, subchunk_index):
         x = x.astype(np.float32)
@@ -306,13 +315,18 @@ class ImageWriter:
                     f.write(data[i:i+1], window=window)
         mpiops.comm.barrier()
 
-    def output_thumbnails(self, ratio=10):
+    def close(self):  # we can explicitly close rasters using this
         if mpiops.chunk_index == 0:
-            # input_tif, output_tif, ratio, resampling=5
             for f in self.files:
-                thumbnails = os.path.splitext(f.name)
-                thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
-                resample(f, output_tif=thumbnail, ratio=ratio)
+                f.close()
+
+    def output_thumbnails(self, ratio=10):
+        this_chunk_files = np.array_split(self.file_names,
+                                          mpiops.chunks)[mpiops.chunk_index]
+        for f in this_chunk_files:
+            thumbnails = os.path.splitext(f)
+            thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
+            resample(f, output_tif=thumbnail, ratio=ratio)
 
 
 def feature_names(config):
@@ -554,16 +568,13 @@ def resample(input_tif, output_tif, ratio, resampling=5):
         q1 = 11
         q3 = 12
     """
-    from rasterio.warp import reproject
-    from affine import Affine
-    if isinstance(input_tif, rasterio._io.RasterReader):
-        src = input_tif
-    else:
-        src = rasterio.open(input_tif, mode='r')
-    nodatavals = src.nodatavals
+
+    src = rasterio.open(input_tif, mode='r')
+
+    nodatavals = src.get_nodatavals()
     new_shape = round(src.height / ratio), round(src.width / ratio)
     # adjust the new affine transform to the smaller cell size
-    aff = src.transform
+    aff = src.get_transform()
 
     # c, a, b, f, d, e, works on rasterio versions >=1.0
     # newaff = Affine(aff.a * ratio, aff.b, aff.c,
