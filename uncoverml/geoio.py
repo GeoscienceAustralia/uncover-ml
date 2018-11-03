@@ -319,6 +319,7 @@ class ImageWriter:
         if mpiops.chunk_index == 0:
             for f in self.files:
                 f.close()
+        mpiops.comm.barrier()
 
     def output_thumbnails(self, ratio=10):
         this_chunk_files = np.array_split(self.file_names,

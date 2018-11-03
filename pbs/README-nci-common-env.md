@@ -1,50 +1,41 @@
 # Reuse the Shared Virtualenv in NCI
 
-
-1. Clone the uncoverml repo into your home directory:
-
-```bash
-$ cd ~
-$ git clone https://github.com/basaks/uncover-ml.git
-```
-
-1.1. Temporary step until branch is merged
+1. Activate `uncoverml` virtualenv by issuing the following command
 
 ```bash
-$ cd ~/uncover-ml
-$ git checkout -b master-cleanup origin/master-cleanup
-```
+$ /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
+``` 
+That is it. You are all set to use `uncoverml` in NCI.
 
-2. Copy the following lines and save it in `~/create_uncoverml_env.sh` in your home directory.
-
-```
-module unload intel-cc
-module unload intel-cc
-module load python3/3.5.2 python3/3.5.2-matplotlib
-module load hdf5/1.8.10 gdal/2.0.0 geos/3.5.0 gcc/4.9.0
-module load openmpi/1.8
-source /g/data/ge3/john/venvs/class/bin/activate
-```
-
-3. Activate `uncoverml` virtualenv by issuing the following command
+2. If you are using this shared `uncoverml` env, your job submission script can be:
 
 ```bash
-$ source ~/create_uncoverml_env.sh
+#!/bin/bash
+#PBS -P ge3
+#PBS -q express
+#PBS -l walltime=0:15:00,mem=32GB,ncpus=16,jobfs=100GB
+#PBS -l wd
+#PBS -j oe
+
+source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
+
+# run command
+mpirun --mca mpi_warn_on_fork 0 uncoverml learn your_yaml_file.yaml -p 10
+mpirun --mca mpi_warn_on_fork 0 uncoverml predict your_tranined_model_file.model -p 10
 ``` 
 
-4. Install `cubist`
+3. To run the demo locally:
 
+First copy the demo files locally.
 ```bash
-$ cd ~/uncover-ml
-$ ./cubist/makecubist .
+cp -r /g/data/ge3/john/jobs/sirsam/demo/ ~/demo
 ```
 
- 
- 5. Make sure the tests work:
+Then run the demo locally:
 
 ```bash
-$ cd ~/uncover-ml
-$ pytest tests
+source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
+cd ~/bash
+uncoverml learn sirsam_Na.yaml -p 4
+uncoverml predict sirsam_Na.model -p 10
 ```
-
-If the tests all pass, that's it! You can use `uncoverml` in NCI.
