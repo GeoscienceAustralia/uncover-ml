@@ -3,7 +3,7 @@
 1. Activate `uncoverml` virtualenv by issuing the following command
 
 ```bash
-$ /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
+$ source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
 ``` 
 That is it. You are all set to use `uncoverml` in NCI.
 
@@ -35,7 +35,7 @@ Then run the demo locally:
 
 ```bash
 source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
-cd ~/bash
+cd ~/demo
 uncoverml learn sirsam_Na.yaml -p 4
 uncoverml predict sirsam_Na.model -p 10
 ```
