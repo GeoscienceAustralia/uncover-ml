@@ -72,7 +72,7 @@ setup(
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio >= 1.0.8',
-        'affine == 2.0.0.post1',
+        'affine >= 2.2.1',
         'pyshp == 1.2.3',
         'click >= 6.6',
         'revrand >= 0.9.10',
