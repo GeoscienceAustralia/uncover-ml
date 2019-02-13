@@ -242,7 +242,7 @@ class ImageWriter:
     nodata_value = np.array(-1e20, dtype='float32')
 
     def __init__(self, shape, bbox, crs, name, n_subchunks, outputdir,
-                 band_tags=None):
+                 band_tags=None, independent=False):
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
                                          bbox[0, 1], bbox[1, 1],
@@ -253,6 +253,7 @@ class ImageWriter:
         self.name = name
         self.outputdir = outputdir
         self.n_subchunks = n_subchunks
+        self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
@@ -264,29 +265,42 @@ class ImageWriter:
             file_tags = [str(k) for k in range(self.outbands)]
             band_tags = file_tags
 
+        files = []
+        file_names = []
 
-        if mpiops.chunk_index == 0:
-            # create a file for each band
-            self.files = []
-            self.file_names = []
-            for band in range(self.outbands):
-                output_filename = os.path.join(outputdir, name + "_" +
-                                               file_tags[band] + ".tif")
-                f = rasterio.open(output_filename, 'w', driver='GTiff',
-                                  width=self.shape[0], height=self.shape[1],
-                                  dtype=np.float32, count=1,
-                                  crs=crs,
-                                  transform=self.A,
-                                  nodata=self.nodata_value)
-                f.update_tags(1, image_type=band_tags[band])
-                self.files.append(f)
-                self.file_names.append(output_filename)
+        for band in range(self.outbands):
+            output_filename = os.path.join(outputdir, name + "_" +
+                                           file_tags[band] + ".tif")
+            f = rasterio.open(output_filename, 'w', driver='GTiff',
+                              width=self.shape[0], height=self.shape[1],
+                              dtype=np.float32, count=1,
+                              crs=crs,
+                              transform=self.A,
+                              nodata=self.nodata_value)
+            f.update_tags(1, image_type=band_tags[band])
+            files.append(f)
+            file_names.append(output_filename)
+
+        if independent:
+            self.files = files
         else:
-            self.file_names = []
+            if mpiops.chunk_index == 0:
+                # create a file for each band
+                self.files = files
+                self.file_names = file_names
+            else:
+                self.file_names = []
 
-        self.file_names = mpiops.comm.bcast(self.file_names, root=0)
+            self.file_names = mpiops.comm.bcast(self.file_names, root=0)
 
     def write(self, x, subchunk_index):
+        """
+        :param x:
+        :param subchunk_index:
+        :param independent: bool
+            independent image writing by different processes, i.e., images are not chunked
+        :return:
+        """
         x = x.astype(np.float32)
         rows = self.shape[0]
         bands = x.shape[1]
@@ -298,21 +312,29 @@ class ImageWriter:
 
         mpiops.comm.barrier()
         log.info("Writing partition to output file")
-        if mpiops.chunk_index != 0:
-            mpiops.comm.send(image, dest=0)
+
+        if self.independent:
+            data = np.ma.transpose(image, [2, 1, 0])  # untranspose
+            # write each band separately
+            for i, f in enumerate(self.files):
+                f.write(data[i:i+1])
         else:
-            for node in range(mpiops.chunks):
-                node = mpiops.chunks - node - 1
-                subindex = mpiops.chunks*subchunk_index + node
-                ystart = self.sub_starts[subindex]
-                data = mpiops.comm.recv(source=node) \
-                    if node != 0 else image
-                data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                yend = ystart + data.shape[1]  # this is Y
-                window = ((ystart, yend), (0, self.shape[0]))
-                # write each band separately
-                for i, f in enumerate(self.files):
-                    f.write(data[i:i+1], window=window)
+            if mpiops.chunk_index != 0:
+                mpiops.comm.send(image, dest=0)
+            else:
+                for node in range(mpiops.chunks):
+                    node = mpiops.chunks - node - 1
+                    subindex = mpiops.chunks*subchunk_index + node
+                    ystart = self.sub_starts[subindex]
+                    data = mpiops.comm.recv(source=node) \
+                        if node != 0 else image
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
+                    yend = ystart + data.shape[1]  # this is Y
+                    window = ((ystart, yend), (0, self.shape[0]))
+                    # write each band separately
+                    for i, f in enumerate(self.files):
+                        f.write(data[i:i+1], window=window)
+
         mpiops.comm.barrier()
 
     def close(self):  # we can explicitly close rasters using this

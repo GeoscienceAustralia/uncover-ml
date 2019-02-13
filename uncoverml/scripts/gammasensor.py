@@ -33,7 +33,8 @@ def write_data(data, name, in_image, outputdir, forward):
     eff_shape = in_image.patched_shape(0) + (nchannels,)
     eff_bbox = in_image.patched_bbox(0)
     writer = geoio.ImageWriter(eff_shape, eff_bbox, in_image.crs, name,
-                               n_subchunks, outputdir, band_tags=tags)
+                               n_subchunks, outputdir, band_tags=tags,
+                               independent=True)
     writer.write(data, 0)
 
 
