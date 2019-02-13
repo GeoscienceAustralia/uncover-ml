@@ -272,6 +272,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
             ls.predict.final_cluster_analysis(config.n_classes,
                                               config.n_subchunks)
 
+    # ls.predict.final_cluster_analysis(config.n_classes,
+    #                                   config.n_subchunks)
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)

@@ -67,7 +67,7 @@ def mask_subchunks(subchunk, config):
 def _get_data(subchunk, config):
     features_names = geoio.feature_names(config)
 
-    # NOTE: This breaks since it returns an *untransformed* x
+    # NOTE: This returns an *untransformed* x, which is ok as we just need dummys here
     if config.mask:
         mask_x = _mask(subchunk, config)
         all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
@@ -131,6 +131,7 @@ def render_partition(model, subchunk, image_out, config):
                      lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
+    # cluster_analysis(x, y_star, subchunk, config, feature_names)
     image_out.write(y_star, subchunk)
 
 
@@ -152,17 +153,23 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
     log.info('Writing cluster analysis results for '
              'partition {}'.format(partition_no))
     mode = 'w' if partition_no == 0 else 'a'
-    with open('cluster_contributions.csv', mode) as csvfile:
-        writer = csv.writer(csvfile, delimiter=',')
-        if mpiops.chunk_index == 0:
+
+    if mpiops.chunk_index == 0:
+        with open('cluster_contributions.csv', mode) as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
             if partition_no == 0:
                 writer.writerow(['feature_names'] + feature_names)
                 means = []
                 sds = []
+                # add feature transform contributions
                 for f in config.feature_sets:
                     for t in f.transform_set.global_transforms:
+                        # import IPython; IPython.embed(); import sys; sys.exit()
                         means += list(t.mean)
                         sds += list(t.sd)
+                # check final transform
+                if config.final_transform is not None:
+                    pass
                 writer.writerow(['transform mean'] + [str(m) for m in means])
                 writer.writerow(['transform sd'] + [str(s) for s in sds])
             writer.writerow(['partition {}'.format(partition_no + 1)])
