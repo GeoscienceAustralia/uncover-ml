@@ -147,6 +147,8 @@ def regression_validation_scores(ys, ey):
         py, sy = ey[:, 0], ey[:, 1]
     else:
         py, sy = ey, ey
+        # don't calculate mll when std is not available
+        regression_metrics.pop('mll')
 
     for k, m in regression_metrics.items():
         scores[k] = apply_multiple_masked(m, (ys, py, sy))
