@@ -100,7 +100,7 @@ setup(
             'sphinx',
             'ghp-import',
             'sphinxcontrib-programoutput',
-            'pytest',
+            'pytest == 3.7.0',
             'pytest-cov',
             'coverage',
             'codecov',
