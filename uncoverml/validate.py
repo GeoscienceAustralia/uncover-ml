@@ -164,13 +164,14 @@ def regression_validation_scores(ys, ey, model):
         py, vy = ey[:, 0], ey[:, 0]
         # don't calculate mll when std is not available
         regression_metrics.pop('mll', None)
-        regression_metrics.pop('mll_transformed', None)
+        transformed_regression_metrics.pop('mll_transformed', None)
 
     if hasattr(model, 'notransform_predict'):
         py_t = model.ytform.transform(ey[:, 0])
         y_t = model.ytform.transform(ys)  # trasnformed targets
-        v_t = model.ytform.transform(np.sqrt(ys))  # trasnformed standard dev
-        vy_t = np.square(v_t)  # transformed variances
+        if 'Variance' in result_tags:
+            v_t = model.ytform.transform(np.sqrt(vy))  # trasnformed standard dev
+            vy_t = np.square(v_t)  # transformed variances
         regression_metrics.update(transformed_regression_metrics)
     else:  # don't calculate if Transformed Prediction is not available
         py_t = py
