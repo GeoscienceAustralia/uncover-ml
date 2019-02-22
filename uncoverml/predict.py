@@ -45,11 +45,6 @@ def predict(data, model, interval=0.95, **kwargs):
                 ml_pred = model.ml_prediction(X)
                 predres = np.hstack((predres, ml_pred[:, np.newaxis]))
 
-            # NOTE: notransform_predict MUST be last column returned in predres
-            if hasattr(model, 'notransform_predict'):
-                transformed_pred = model.notransform_predict(X)
-                predres = np.hstack((predres, transformed_pred[:, np.newaxis]))
-
             return predres
     result = apply_masked(pred, data)
     return result

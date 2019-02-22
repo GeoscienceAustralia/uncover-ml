@@ -231,9 +231,6 @@ class TagsMixin():
         if hasattr(self, 'ml_prediction'):
             tags.append('ml prediction')
 
-        if hasattr(self, 'notransform_predict'):
-            tags.append('Transformed Prediction')
-
         return tags
 
 
