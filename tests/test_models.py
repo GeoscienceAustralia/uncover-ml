@@ -32,7 +32,7 @@ def test_modeltags(get_models):
         assert len(tags) >= 4  # at least predict, var and upper & lower quant
 
         if hasattr(model, 'entropy_reduction'):
-            assert len(tags) == 5
+            assert len(tags) == 6
 
         if hasattr(model, 'krige_residual'):
             assert len(tags) == 5

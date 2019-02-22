@@ -139,79 +139,6 @@ class TransformPredictDistMixin(TransformMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedLinearReg(TransformPredictDistMixin, StandardLinearModel,
-                           PredictDistMixin, MutualInfoMixin, TagsMixin):
-
-    def __init__(self,
-                 basis=True,
-                 var=1.0,
-                 regularizer=1.0,
-                 tol=1e-8,
-                 maxiter=1000,
-                 target_transform='identity',
-                 ml_score=False,
-                 ):
-        """
-        Parameters
-        ----------
-        basis : Basis
-            A basis object, see the revrand.basis_functions module.
-        var : Parameter, optional
-            observation variance initial value.
-        tol : float, optional
-            optimiser function tolerance convergence criterion.
-        maxiter : int, optional
-            maximum number of iterations for the optimiser.
-        target_transform: str, optional
-            optional target transform
-        ml_score: bool, optional
-            whether to use custom score function
-        """
-        self.regularizer = regularizer
-        basis = self.get_basis(basis, regularizer)
-        self.basis = basis
-        var = self.get_var(var)
-        self.var = var
-        target_transform = self.get_target_transform(target_transform)
-        self.target_transform = target_transform
-        self.ml_score = ml_score
-
-        super(TransformedLinearReg, self).__init__(
-            basis=basis,
-            var=var,
-            tol=tol,
-            maxiter=maxiter
-            )
-
-    def get_basis(self, basis, regulariser):
-        # whether to add a bias term
-        if isinstance(basis, bool):
-            regulariser = self.get_regularizer(regulariser)
-            basis = LinearBasis(onescol=basis,
-                                regularizer=regulariser)
-        return basis
-
-    @staticmethod
-    def get_var(var):
-        if isinstance(var, float):
-            var = gamma(a=var, scale=1)  # Initial target noise
-            var = Parameter(var, Positive())
-        return var
-
-    @staticmethod
-    def get_regularizer(regularizer):
-        if isinstance(regularizer, float):
-            reg = gamma(a=regularizer, scale=1)  # Initial weight prior
-            regularizer = Parameter(reg, Positive())
-        return regularizer
-
-    @staticmethod
-    def get_target_transform(target_transform):
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-        return target_transform
-
-
 class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
 
     """
@@ -637,7 +564,6 @@ transformed_modelmaps = {
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
-    'transformedbayesreg': TransformedLinearReg,
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,

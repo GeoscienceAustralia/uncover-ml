@@ -24,11 +24,16 @@ log = logging.getLogger(__name__)
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': lambda y, ey, sy:  r2_score(y, ey),
-    'expvar': lambda y, ey, sy: explained_variance_score(y, ey),
-    'smse': lambda y, ey, sy: smse(y, ey),
-    'lins_ccc': lambda y, ey, sy: lins_ccc(y, ey),
-    'mll': mll,
+    'r2_score': lambda y, ey, sy, y_t, ey_t:  r2_score(y, ey),
+    'r2_score_transformed': lambda y, ey, sy, y_t, ey_t:  r2_score(y_t, ey_t),
+    'expvar': lambda y, ey, sy, y_t, ey_t: explained_variance_score(y, ey),
+    'expvar_transformed': lambda y, ey, sy, y_t, ey_t:
+    explained_variance_score(y_t, ey_t),
+    'smse': lambda y, ey, sy, y_t, ey_t: smse(y, ey),
+    'smse_transformed': lambda y, ey, sy, y_t, ey_t: smse(y_t, ey_t),
+    'lins_ccc': lambda y, ey, sy, y_t, ey_t: lins_ccc(y, ey),
+    'lins_ccc_transformed': lambda y, ey, sy, y_t, ey_t: lins_ccc(y_t, ey_t),
+    'mll': lambda y, ey, sy, y_t, ey_t: mll(y, ey, sy)
 }
 
 
@@ -118,7 +123,7 @@ def classification_validation_scores(ys, eys, pys):
     return scores
 
 
-def regression_validation_scores(ys, ey):
+def regression_validation_scores(ys, ey, model):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -134,7 +139,7 @@ def regression_validation_scores(ys, ey):
     ----------
     ys: numpy.array
         The test data outputs
-    eys: numpy.array
+    ey: numpy.array
         The predictions made by the trained model on test data
 
     Returns
@@ -143,15 +148,26 @@ def regression_validation_scores(ys, ey):
         A dictionary containing all of the evaluated scores.
     """
     scores = {}
-    if ey.shape[1] > 1:
+
+    result_tags = model.get_predict_tags()
+
+    if 'Variance' in result_tags:
         py, sy = ey[:, 0], ey[:, 1]
     else:
-        py, sy = ey, ey
+        py, sy = ey[:, 0], ey[:, 0]
         # don't calculate mll when std is not available
         regression_metrics.pop('mll')
 
+    if 'Transformed Prediction' in result_tags:
+        py_t = ey[:, -1]
+        y_t = model.ytform.transform(ys)  # trasnformed targets
+    else:  # don't calculate if Transformed Prediction is not available
+        py_t = py
+        y_t = py
+        regression_metrics.pop('transformed_r2_score')
+
     for k, m in regression_metrics.items():
-        scores[k] = apply_multiple_masked(m, (ys, py, sy))
+        scores[k] = apply_multiple_masked(m, (ys, py, sy, y_t, py_t))
 
     return scores
 
@@ -324,8 +340,8 @@ def local_crossval(x_all, targets_all, config):
         if not classification:
             y_k_test = y[test_mask]
             y_true[fold] = y_k_test
-            fold_scores[fold] = regression_validation_scores(y_k_test,
-                                                             y_k_pred)
+            fold_scores[fold] = regression_validation_scores(
+                y_k_test, y_k_pred, model)
 
         # Classification
         else:

@@ -231,6 +231,9 @@ class TagsMixin():
         if hasattr(self, 'ml_prediction'):
             tags.append('ml prediction')
 
+        if hasattr(self, 'notransform_predict'):
+            tags.append('Transformed Prediction')
+
         return tags
 
 
@@ -651,13 +654,13 @@ def transform_targets(Regressor):
 
             return super().fit(X, y_t)
 
-        def _notransform_predict(self, X, *args, **kwargs):
+        def notransform_predict(self, X, *args, **kwargs):
             Ey = super().predict(X)
             return Ey
 
         def predict(self, X, *args, **kwargs):
 
-            Ey_t = super().predict(X)
+            Ey_t = self.notransform_predict(X, *args, **kwargs)
             Ey = self.ytform.itransform(Ey_t)
 
             return Ey
@@ -895,12 +898,11 @@ class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
 class MaskRows:
 
     def __init__(self, *Xs):
-        if len(Xs) == 1:
-            self.okrows = self.get_complete_rows(Xs[0])
-        else:
-            self.okrows = np.logical_and(
-                *[self.get_complete_rows(x) for x in Xs]
-            )
+        self.okrows = self.get_complete_rows(Xs[0])
+        if len(Xs) > 1:
+            for c in chain(Xs[1:]):
+                self.okrows = np.logical_and(
+                    self.okrows, self.get_complete_rows(c))
 
     def trim_mask(self, X):
         if np.ma.isMaskedArray(X):
