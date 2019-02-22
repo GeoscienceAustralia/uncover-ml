@@ -24,23 +24,24 @@ log = logging.getLogger(__name__)
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': lambda y, ey, sy, y_t, vy_t, ey_t:  r2_score(y, ey),
-    'expvar': lambda y, ey, sy, y_t, vy_t, ey_t: explained_variance_score(y, ey),
-    'smse': lambda y, ey, sy, y_t, vy_t, ey_t: smse(y, ey),
-    'lins_ccc': lambda y, ey, sy, y_t, vy_t, ey_t: lins_ccc(y, ey),
-    'mll': lambda y, ey, vy, y_t, vy_t, ey_t: mll(y, ey, vy)
+    'r2_score': lambda y, py, vy, y_t, py_t, vy_t:  r2_score(y, py),
+    'expvar': lambda y, py, vy, y_t, py_t, vy_t:
+    explained_variance_score(y, py),
+    'smse': lambda y, py, vy, y_t, py_t, vy_t: smse(y, py),
+    'lins_ccc': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y, py),
+    'mll': lambda y, py, vy, y_t, py_t, vy_t: mll(y, py, vy)
 }
 
 
 transformed_regression_metrics = {
-    'r2_score_transformed': lambda y, ey, sy, y_t, vy_t, ey_t:
-    r2_score(y_t, ey_t),
-    'expvar_transformed': lambda y, ey, sy, y_t, vy_t, ey_t:
-    explained_variance_score(y_t, ey_t),
-    'smse_transformed': lambda y, ey, sy, y_t, vy_t, ey_t: smse(y_t, ey_t),
-    'lins_ccc_transformed': lambda y, ey, sy, y_t, vy_t, ey_t: lins_ccc(y_t,
-                                                                        ey_t),
-    'mll_transformed': lambda y, ey, vy, y_t, vy_t, ey_t: mll(y_t, ey_t, vy_t)
+    'r2_score_transformed': lambda y, py, vy, y_t, py_t, vy_t:
+    r2_score(y_t, py_t),
+    'expvar_transformed': lambda y, py, vy, y_t, py_t, vy_t:
+    explained_variance_score(y_t, py_t),
+    'smse_transformed': lambda y, py, vy, y_t, py_t, vy_t: smse(y_t, py_t),
+    'lins_ccc_transformed': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y_t,
+                                                                        py_t),
+    'mll_transformed': lambda y, py, vy, y_t, py_t, vy_t: mll(y_t, py_t, vy_t)
 }
 
 
@@ -130,7 +131,7 @@ def classification_validation_scores(ys, eys, pys):
     return scores
 
 
-def regression_validation_scores(ys, ey, model):
+def regression_validation_scores(y, ey, model):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -144,7 +145,7 @@ def regression_validation_scores(ys, ey, model):
 
     Parameters
     ----------
-    ys: numpy.array
+    y: numpy.array
         The test data outputs
     ey: numpy.array
         The predictions made by the trained model on test data
@@ -162,24 +163,30 @@ def regression_validation_scores(ys, ey, model):
         py, vy = ey[:, 0], ey[:, 1]
     else:
         py, vy = ey[:, 0], ey[:, 0]
-        # don't calculate mll when std is not available
+        # don't calculate mll when variance is not available
         regression_metrics.pop('mll', None)
         transformed_regression_metrics.pop('mll_transformed', None)
 
-    if hasattr(model, 'notransform_predict'):
-        py_t = model.ytform.transform(ey[:, 0])
-        y_t = model.ytform.transform(ys)  # trasnformed targets
-        if 'Variance' in result_tags:
-            v_t = model.ytform.transform(np.sqrt(vy))  # trasnformed standard dev
-            vy_t = np.square(v_t)  # transformed variances
+    if hasattr(model, '_notransform_predict'):  # is a transformed model
+
+        y_t = model.ytform.transform(y)  # transformed targets
+        py_t = model.ytform.transform(py)  # transformed prediction
+
         regression_metrics.update(transformed_regression_metrics)
+
+        if 'Variance' in result_tags:
+            # transformed standard dev
+            v_t = model.ytform.transform(np.sqrt(vy))
+            vy_t = np.square(v_t)  # transformed variances
+        else:
+            vy_t = py
     else:  # don't calculate if Transformed Prediction is not available
+        y_t = y
         py_t = py
-        y_t = py
         vy_t = py
 
     for k, m in regression_metrics.items():
-        scores[k] = apply_multiple_masked(m, (ys, py, vy, y_t, vy_t, py_t))
+        scores[k] = apply_multiple_masked(m, (y, py, vy, y_t, py_t, vy_t))
 
     return scores
 
