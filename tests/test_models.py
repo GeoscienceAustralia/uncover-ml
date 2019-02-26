@@ -82,10 +82,10 @@ def get_transformed_model(request):
 
 def test_trasnsformed_model_attr(get_transformed_model):
     """
-    make sure all optimise.models classes have ml_score attr
+    make sure all optimise.models classes have the required attributes
     """
     assert np.all([hasattr(get_transformed_model(), a) for a in
-                   ['ml_score', 'score', 'fit', 'predict']])
+                   ['score', 'fit', 'predict']])
 
 
 @pytest.fixture(params=[k for k in all_ml_models

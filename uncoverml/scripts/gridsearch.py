@@ -29,12 +29,10 @@ from uncoverml.optimise.models import transformed_modelmaps as all_modelmaps
 log = logging.getLogger(__name__)
 
 pca = decomposition.PCA()
-algos = {k: v(ml_score=True) for k, v in all_modelmaps.items()}
+algos = {k: v() for k, v in all_modelmaps.items()}
 algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
-                                                normalize_y=True,
-                                                ml_score=True)
-algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000,
-                                         ml_score=True)
+                                                normalize_y=True)
+algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 
 def setup_pipeline(config):
