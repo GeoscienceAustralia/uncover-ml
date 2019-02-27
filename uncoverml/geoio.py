@@ -276,7 +276,11 @@ class ImageWriter:
                               dtype=np.float32, count=1,
                               crs=crs,
                               transform=self.A,
-                              nodata=self.nodata_value)
+                              nodata=self.nodata_value,
+                              compress='lzw',
+                              bigtiff='YES',
+                              tiled=True
+                              )
             f.update_tags(1, image_type=band_tags[band])
             files.append(f)
             file_names.append(output_filename)
@@ -317,7 +321,8 @@ class ImageWriter:
             data = np.ma.transpose(image, [2, 1, 0])  # untranspose
             # write each band separately
             for i, f in enumerate(self.files):
-                f.write(data[i:i+1])
+                f.write(data[i:i+1], compress='lzw',
+                        bigtiff='YES')
         else:
             if mpiops.chunk_index != 0:
                 mpiops.comm.send(image, dest=0)
