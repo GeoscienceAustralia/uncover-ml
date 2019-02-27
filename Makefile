@@ -32,8 +32,8 @@ lint:
 	py.test --junit-xml=test_output/flake8/results.xml --flake8 -p no:regtest --cache-clear uncoverml
 
 test:
-	py.test --junit-xml=test_output/pytest/results.xml --cache-clear
+	py.test --junit-xml=test_output/pytest/results.xml --cache-clear --disable-pytest-warnings
 
 coverage:
-	py.test --junit-xml=test_output/pytest/results.xml --cov=uncoverml --cov-report=html:test_output/coverage --cache-clear --cov-fail-under=30 ./tests
+	py.test --junit-xml=test_output/pytest/results.xml --cov=uncoverml --cov-report=html:test_output/coverage --cache-clear --cov-fail-under=30 ./tests --disable-pytest-warnings
 
