@@ -169,14 +169,14 @@ def regression_validation_scores(y, ey, model):
 
     if hasattr(model, '_notransform_predict'):  # is a transformed model
 
-        y_t = model.ytform.transform(y)  # transformed targets
-        py_t = model.ytform.transform(py)  # transformed prediction
+        y_t = model.target_transform.transform(y)  # transformed targets
+        py_t = model.target_transform.transform(py)  # transformed prediction
 
         regression_metrics.update(transformed_regression_metrics)
 
         if 'Variance' in result_tags:
             # transformed standard dev
-            v_t = model.ytform.transform(np.sqrt(vy))
+            v_t = model.target_transform.transform(np.sqrt(vy))
             vy_t = np.square(v_t)  # transformed variances
         else:
             vy_t = py

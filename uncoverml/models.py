@@ -635,12 +635,12 @@ def transform_targets(Regressor):
         def __init__(self, target_transform='identity', *args, **kwargs):
 
             super().__init__(*args, **kwargs)
-            self.ytform = transforms.transforms[target_transform]()
+            self.target_transform = transforms.transforms[target_transform]()
 
         def fit(self, X, y, *args, **kwargs):
 
-            self.ytform.fit(y)
-            y_t = self.ytform.transform(y)
+            self.target_transform.fit(y)
+            y_t = self.target_transform.transform(y)
 
             return super().fit(X, y_t)
 
@@ -651,7 +651,7 @@ def transform_targets(Regressor):
         def predict(self, X, *args, **kwargs):
 
             Ey_t = self._notransform_predict(X, *args, **kwargs)
-            Ey = self.ytform.itransform(Ey_t)
+            Ey = self.target_transform.itransform(Ey_t)
 
             return Ey
 
@@ -662,13 +662,13 @@ def transform_targets(Regressor):
                 Ey_t, Vy_t, ql, qu = super().predict_dist(X, interval)
 
                 # Save computation if identity transform
-                if type(self.ytform) is transforms.Identity:
+                if type(self.target_transform) is transforms.Identity:
                     return Ey_t, Vy_t, ql, qu
 
                 # Save computation if standardise transform
-                elif type(self.ytform) is transforms.Standardise:
-                    Ey = self.ytform.itransform(Ey_t)
-                    Vy = Vy_t * self.ytform.ystd**2
+                elif type(self.target_transform) is transforms.Standardise:
+                    Ey = self.target_transform.itransform(Ey_t)
+                    Vy = Vy_t * self.target_transform.ystd ** 2
                     ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
                     return Ey, Vy, ql, qu
 
@@ -696,13 +696,13 @@ def transform_targets(Regressor):
         def __expec_int(self, x, mu, std):
 
             px = _normpdf(x, mu, std)
-            Ex = self.ytform.itransform(x) * px
+            Ex = self.target_transform.itransform(x) * px
             return Ex
 
         def __var_int(self, x, Ex, mu, std):
 
             px = _normpdf(x, mu, std)
-            Vx = (self.ytform.itransform(x) - Ex)**2 * px
+            Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
             return Vx
 
     return TransformedRegressor

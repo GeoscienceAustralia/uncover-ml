@@ -49,46 +49,6 @@ class TransformMixin:
         Ey = super().predict(X)
         return Ey
 
-    def score(self, X, y, *args, **kwargs):
-        """
-        This score is used by Scikilearn GridSearchCV/RandomisedSearchCV by
-        all models that inherit TransformMixin.
-        This is the score as seen by the ML model in the transformed target
-        values. The final cross-val score in the original coordinates
-        can be obtained from uncoverml.validate.
-
-        Parameters
-        ----------
-        X : array-like, shape = (n_samples, n_features)
-            Test samples.
-
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
-            True values for X.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            R^2 of self.predict(X) wrt. y.
-
-        Returns
-        -------
-        score : float
-            R^2 of self._notransform_predict(X) wrt. y.
-
-        """
-        y_t = self.target_transform.transform(y)
-
-        if hasattr(self, 'ml_score') and self.ml_score:
-            log.info('Using custom score')
-            return r2_score(y_true=y_t,
-                            y_pred=self._notransform_predict(
-                                X, *args, **kwargs))
-        else:
-            return super().score(X, y, *args, **kwargs)
-
 
 class TransformPredictDistMixin(TransformMixin):
 
@@ -139,7 +99,7 @@ class TransformPredictDistMixin(TransformMixin):
         return Ey, Vy, ql, qu
 
 
-class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
+class TransformedSGDRegressor(TransformPredictDistMixin, SGDRegressor, TagsMixin):
 
     """
     Linear elastic net regression model using
@@ -151,7 +111,7 @@ class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False,
-                 target_transform='identity', ml_score=False):
+                 target_transform='identity'):
 
         super(TransformedSGDRegressor, self).__init__(
             loss=loss,
@@ -175,18 +135,16 @@ class TransformedSGDRegressor(TransformMixin, SGDRegressor, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
 
-class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
+class TransformedGPRegressor(TransformPredictDistMixin, GaussianProcessRegressor,
                              TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
                  kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=True, random_state=None,
-                 ml_score=False
+                 normalize_y=False, copy_X_train=True, random_state=None
                  ):
 
         # uncoverml compatibility if string is passed
@@ -196,7 +154,6 @@ class TransformedGPRegressor(TransformMixin, GaussianProcessRegressor,
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
         super(TransformedGPRegressor, self).__init__(
             kernel=kernel,
@@ -239,7 +196,6 @@ class TransformedForestRegressor(TransformPredictDistMixin,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 ml_score=False
                  ):
 
         super(TransformedForestRegressor, self).__init__(
@@ -265,7 +221,6 @@ class TransformedForestRegressor(TransformPredictDistMixin,
 
         # used during optimisation
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
 
 class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
@@ -279,7 +234,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
                  max_depth=3, min_impurity_split=1e-7, init=None,
                  random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto', ml_score=False):
+                 warm_start=False, presort='auto'):
 
         super(TransformedGradientBoost, self).__init__(
             loss=loss,
@@ -304,7 +259,6 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
 
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
@@ -312,7 +266,7 @@ class TransformedSVR(TransformMixin, SVR, TagsMixin):
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1,
-                 target_transform='identity', ml_score=False):
+                 target_transform='identity'):
         super(TransformedSVR, self).__init__(
             kernel=kernel,
             degree=degree,
@@ -331,7 +285,6 @@ class TransformedSVR(TransformMixin, SVR, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
 
 class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
@@ -339,8 +292,7 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
                  alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
-                 random_state=None, target_transform='identity',
-                 ml_score=False,
+                 random_state=None, target_transform='identity'
                  ):
         super(TransformedSGDApproxGP, self).__init__(
             kernel=kernel,
@@ -362,7 +314,6 @@ class TransformedSGDApproxGP(TransformMixin, SGDApproxGP, TagsMixin):
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
 
 class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
@@ -372,12 +323,11 @@ class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1, target_transform='identity', ml_score=False):
+                 n_jobs=1, target_transform='identity'):
         # used in training
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
         super(TransformedOLS, self).__init__(fit_intercept=fit_intercept,
                                              normalize=normalize,
                                              copy_X=copy_X,
@@ -394,12 +344,12 @@ class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=0.0001, warm_start=False, positive=False,
                  random_state=None, selection='cyclic',
-                 target_transform='identity', ml_score=False):
+                 target_transform='identity'):
         # used in training
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
+
         super(TransformedElasticNet, self).__init__(
             alpha=alpha, l1_ratio=l1_ratio, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, max_iter=max_iter,
@@ -415,12 +365,11 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
 
     def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
                  warm_start=False, fit_intercept=True, tol=1e-05,
-                 target_transform='identity', ml_score=False):
+                 target_transform='identity'):
         # used in training
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
         super(Huber, self).__init__(
             epsilon=epsilon, alpha=alpha, fit_intercept=fit_intercept,
             max_iter=max_iter, tol=tol, warm_start=warm_start
@@ -429,7 +378,7 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
 
 class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
 
-    def __init__(self, target_transform='identity', ml_score=False,
+    def __init__(self, target_transform='identity',
                  max_depth=3, learning_rate=0.1, n_estimators=100,
                  silent=True, objective="reg:linear",
                  nthread=1, gamma=0, min_child_weight=1,
@@ -441,7 +390,6 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
-        self.ml_score = ml_score
 
         super(XGBoost, self).__init__(max_depth=max_depth,
                                       learning_rate=learning_rate,
@@ -464,100 +412,6 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       n_jobs=n_jobs)
 
 
-# class CatBoost(TransformMixin, TagsMixin, CatBoostRegressor):
-#
-#     def __init__(self, target_transform='identity', ml_score=False,
-#                  iterations=500,
-#                  learning_rate=0.03,
-#                  depth=6,
-#                  l2_leaf_reg=3,
-#                  rsm=1,
-#                  loss_function='RMSE',
-#                  border=None,
-#                  border_count=None,
-#                  feature_border_type='MinEntropy',
-#                  fold_permutation_block_size=None,
-#                  od_pval=0,
-#                  od_wait=None,
-#                  od_type=None,
-#                  counter_calc_method=None,
-#                  gradient_iterations=None,
-#                  leaf_estimation_method=None,
-#                  thread_count=None,
-#                  random_seed=None,
-#                  use_best_model=False,
-#                  verbose=False,
-#                  ctr_description=None,
-#                  ctr_border_count=None,
-#                  ctr_leaf_count_limit=None,
-#                  max_ctr_complexity=None,
-#                  store_all_simple_ctr=False,
-#                  priors=None,
-#                  has_time=False,
-#                  one_hot_max_size=None,
-#                  random_strength=1,
-#                  name='experiment',
-#                  ignored_features=None,
-#                  train_dir=None,
-#                  custom_loss=None,
-#                  eval_metric=None,
-#                  bagging_temperature=None,
-#                  save_snapshot=None,
-#                  snapshot_file=None,
-#                  fold_len_multiplier=None,
-#                  used_ram_limit=None,
-#                  feature_priors=None,
-#                  ):
-#
-#         if isinstance(target_transform, str):
-#             target_transform = transforms.transforms[target_transform]()
-#         self.target_transform = target_transform
-#         self.ml_score = ml_score
-#
-#         super(CatBoost, self).__init__(
-#             iterations=iterations,
-#             learning_rate=learning_rate,
-#             depth=depth,
-#             l2_leaf_reg=l2_leaf_reg,
-#             rsm=rsm,
-#             loss_function=loss_function,
-#             border=border,
-#             border_count=border_count,
-#             feature_border_type=feature_border_type,
-#             fold_permutation_block_size=fold_permutation_block_size,
-#             od_pval=od_pval,
-#             od_wait=od_wait,
-#             od_type=od_type,
-#             counter_calc_method=counter_calc_method,
-#             gradient_iterations=gradient_iterations,
-#             leaf_estimation_method=leaf_estimation_method,
-#             thread_count=thread_count,
-#             random_seed=random_seed,
-#             use_best_model=use_best_model,
-#             verbose=verbose,
-#             ctr_description=ctr_description,
-#             ctr_border_count=ctr_border_count,
-#             ctr_leaf_count_limit=ctr_leaf_count_limit,
-#             max_ctr_complexity=max_ctr_complexity,
-#             store_all_simple_ctr=store_all_simple_ctr,
-#             priors=priors,
-#             has_time=has_time,
-#             one_hot_max_size=one_hot_max_size,
-#             random_strength=random_strength,
-#             name=name,
-#             ignored_features=ignored_features,
-#             train_dir=train_dir,
-#             custom_loss=custom_loss,
-#             eval_metric=eval_metric,
-#             bagging_temperature=bagging_temperature,
-#             save_snapshot=save_snapshot,
-#             snapshot_file=snapshot_file,
-#             fold_len_multiplier=fold_len_multiplier,
-#             used_ram_limit=used_ram_limit,
-#             feature_priors=feature_priors
-#         )
-
-
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
     'gradientboost': TransformedGradientBoost,
@@ -567,8 +421,7 @@ transformed_modelmaps = {
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
-    'xgboost': XGBoost,
-    # 'catboost': CatBoost,
+    'xgboost': XGBoost
 }
 
 # scikit-learn kernels
