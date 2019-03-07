@@ -42,26 +42,22 @@ class StandardiseTransform:
 
 
 class LogTransform:
-    def __init__(self):
+    def __init__(self, stabilizer=1.0e-6):
         self.min = None
+        self.stabilizer = stabilizer
 
     def __call__(self, x):
 
         x = x.astype(float)
         if self.min is None:
-            self.min = mpiops.min(x)
+            self.min = mpiops.minimum(x)
 
         # remove min
         x -= self.min
 
-        # add small values for stable log
-        x += 1e-6
-
-        if not (x > 0.0).all():
-            raise ValueError('LogTransform not possible as x still contains '
-                             '-ve values')
-
-        return np.log(x)
+        # add small +ve value for stable log
+        x += self.stabilizer
+        return np.ma.log(x)
 
 
 class WhitenTransform:

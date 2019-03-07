@@ -111,7 +111,7 @@ def mean(x):
     return mean
 
 
-def min(x):
+def minimum(x):
     x_min_local = np.ma.min(x, axis=0)
     x_min = comm.allreduce(x_min_local, op=min0_op)
     still_masked = np.ma.count_masked(x_min)
