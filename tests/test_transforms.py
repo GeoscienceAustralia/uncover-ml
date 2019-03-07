@@ -4,7 +4,8 @@ from uncoverml.transforms.onehot import sets
 from uncoverml.transforms.impute import (GaussImputer,
                                          NearestNeighboursImputer, MeanImputer)
 from uncoverml.transforms.linear import (CentreTransform, StandardiseTransform,
-                                         WhitenTransform, LogTransform)
+                                         WhitenTransform, LogTransform,
+                                         SqrtTransform)
 from uncoverml.transforms import target
 import numpy as np
 
@@ -158,22 +159,33 @@ def test_CentreTransform_caching(make_random_data):
     assert np.array_equal(x_expected, x_produced)
 
 
-def test_LogTransform(make_random_data):
+p_transforms = {np.log: LogTransform,
+                np.sqrt: SqrtTransform}
 
+
+@pytest.fixture(params=list(p_transforms.keys()))
+def positive_transform(request):
+    return request.param, p_transforms[request.param]
+
+
+def test_PositiveTransform(make_random_data, positive_transform):
+
+    func, trans = positive_transform
     # Generate the expected data
     x, mu, std = make_random_data
-    x_expected = np.log(x - x.min(axis=0) + 1.0e-6)
+    x_expected = func(x - x.min(axis=0) + 1.0e-6)
 
     # Apply the LogTransform
-    log_transformer = LogTransform()
-    x_produced = log_transformer(x)
+    sqrt_transformer = trans()
+    x_produced = sqrt_transformer(x)
 
     # Check that the values are the same
     assert np.array_equal(x_expected, x_produced)
 
 
-def test_LogTransform_caching(make_random_data):
+def test_PositiveTransform_caching(make_random_data, positive_transform):
 
+    func, trans = positive_transform
     # Generate an initial set of data
     x, mu, std = make_random_data
 
@@ -182,13 +194,13 @@ def test_LogTransform_caching(make_random_data):
     # Apply the CentreTransform to the first dataset to preserve the mean
     x_copy = x.copy()
     stabilizer = 1.0e-6
-    log_transformer = LogTransform(stabilizer=stabilizer)
-    log_transformer(x_copy)
+    sqrt_transformer = trans(stabilizer=stabilizer)
+    sqrt_transformer(x_copy)
 
     # Now apply the log transform to a matrix that has been translated
     x_translated = x + 15
-    x_expected = np.log(x_translated - x.min(axis=0) + stabilizer)
-    x_produced = log_transformer(x_translated)
+    x_expected = func(x_translated - x.min(axis=0) + stabilizer)
+    x_produced = sqrt_transformer(x_translated)
 
     # Check that the transformer used the minimum from x instead of the
     # translated minimum which was (x.min + 15) in this case above

@@ -41,13 +41,13 @@ class StandardiseTransform:
         return x
 
 
-class LogTransform:
+class PositiveTransform:
+
     def __init__(self, stabilizer=1.0e-6):
         self.min = None
         self.stabilizer = stabilizer
 
-    def __call__(self, x):
-
+    def __call__(self, func, x):
         x = x.astype(float)
         if self.min is None:
             self.min = mpiops.minimum(x)
@@ -57,7 +57,25 @@ class LogTransform:
 
         # add small +ve value for stable log
         x += self.stabilizer
-        return np.ma.log(x)
+        return func(x)
+
+
+class LogTransform(PositiveTransform):
+
+    def __init__(self, stabilizer=1.0e-6):
+        super(LogTransform, self).__init__(stabilizer)
+
+    def __call__(self, *args):
+        return super(LogTransform, self).__call__(np.ma.log, *args)
+
+
+class SqrtTransform(PositiveTransform):
+
+    def __init__(self, stabilizer=1.0e-6):
+        super(SqrtTransform, self).__init__(stabilizer)
+
+    def __call__(self, *args):
+        return super(SqrtTransform, self).__call__(np.ma.sqrt, *args)
 
 
 class WhitenTransform:
