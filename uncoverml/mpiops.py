@@ -111,6 +111,18 @@ def mean(x):
     return mean
 
 
+def min(x):
+    x_min_local = np.ma.min(x, axis=0)
+    x_min = comm.allreduce(x_min_local, op=min0_op)
+    still_masked = np.ma.count_masked(x_min)
+    if still_masked != 0:
+        log.info('Reported x_min: ' + ', '.join([str(s) for s in x_min]))
+        raise ValueError("Can't compute mean: At least 1 column has nodata")
+    if hasattr(x_min, 'mask'):
+        x_min = x_min.data
+    return x_min
+
+
 def sd(x):
     x_mean = mean(x)
     delta_mean = mean(power((x - x_mean), 2))

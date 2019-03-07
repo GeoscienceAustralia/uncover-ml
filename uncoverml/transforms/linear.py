@@ -41,6 +41,29 @@ class StandardiseTransform:
         return x
 
 
+class LogTransform:
+    def __init__(self):
+        self.min = None
+
+    def __call__(self, x):
+
+        x = x.astype(float)
+        if self.min is None:
+            self.min = mpiops.min(x)
+
+        # remove min
+        x -= self.min
+
+        # add small values for stable log
+        x += 1e-6
+
+        if not (x > 0.0).all():
+            raise ValueError('LogTransform not possible as x still contains '
+                             '-ve values')
+
+        return np.log(x)
+
+
 class WhitenTransform:
     def __init__(self, keep_fraction):
         self.mean = None

@@ -24,6 +24,7 @@ _image_transforms = {'onehot': transforms.OneHotTransform,
 """
 _global_transforms = {'centre': transforms.CentreTransform,
                       'standardise': transforms.StandardiseTransform,
+                      'log': transforms.LogTransform,
                       'whiten': transforms.WhitenTransform}
 
 
