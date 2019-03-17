@@ -74,7 +74,7 @@ def _fix_for_corrupt_data(x):
     """
     x_inf = np.isinf(x.data)
     x_isnan = np.isnan(x.data)
-    x.mask = x.mask + x_isnan + x_inf
+    x.mask += x_isnan + x_inf
     return x
 
 
@@ -131,7 +131,9 @@ def _mask_rows(x, subchunk, config):
 
         assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
                                               'mask and inputs'
-        x.mask = np.tile(mask_x, (x.shape[1], 1)).T
+        mask = np.tile(mask_x, (x.shape[1], 1)).T
+        x.mask += mask
+
     return x
 
 
