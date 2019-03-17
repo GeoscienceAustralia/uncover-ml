@@ -65,8 +65,9 @@ def mask_subchunks(subchunk, config):
 
 
 def _fix_for_corrupt_data(x):
-    """Input contains NaN, infinity or a value too large
-    for dtype('float32').
+    """
+    Address this error during prediction:
+    "Input contains NaN, infinity or a value too large for dtype('float32')."
 
     The fix is applied as additional masked areas where infinite, or nan
     values are found that are not already masked.
@@ -141,7 +142,7 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x, model, interval=config.quantiles,
+    y_star = predict(x.astype(np.float32), model, interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
