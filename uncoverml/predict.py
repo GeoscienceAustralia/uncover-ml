@@ -64,10 +64,24 @@ def mask_subchunks(subchunk, config):
     return result
 
 
+def _fix_for_corrupt_data(x):
+    """Input contains NaN, infinity or a value too large
+    for dtype('float32').
+
+    The fix is applied as additional masked areas where infinite, or nan
+    values are found that are not already masked.
+    """
+    x_inf = np.isinf(x.data)
+    x_isnan = np.isnan(x.data)
+    x.mask = x.mask + x_isnan + x_inf
+    return x
+
+
 def _get_data(subchunk, config):
     features_names = geoio.feature_names(config)
 
-    # NOTE: This returns an *untransformed* x, which is ok as we just need dummys here
+    # NOTE: This returns an *untransformed* x,
+    # which is ok as we just need dummys here
     if config.mask:
         mask_x = _mask(subchunk, config)
         all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
@@ -84,6 +98,7 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
+    x = _fix_for_corrupt_data(x)
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -104,9 +119,8 @@ def _get_lon_lat(subchunk, config):
 
 
 def _mask_rows(x, subchunk, config):
-    mask = config.mask
-    if mask:
-        mask_source = geoio.RasterioImageSource(mask)
+    if config.mask:
+        mask_source = geoio.RasterioImageSource(config.mask)
         mask_data = features.extract_subchunks(mask_source, subchunk,
                                                config.n_subchunks,
                                                config.patchsize)
