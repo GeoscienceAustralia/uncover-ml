@@ -90,7 +90,7 @@ def _fix_for_corrupt_data(x):
     1. The fix is applied as additional masked areas where nan values are
     found that are not already masked.
     2. Where float32 conversion problem occurs, we limit the data to max/min
-    float32.
+    float32, and additionally mask these areas. Just masking was not enough.
 
     """
     x_isnan = np.isnan(x.data)
@@ -99,8 +99,11 @@ def _fix_for_corrupt_data(x):
     if np.isfinite(x.astype(np.float32)).all():
         return x
     else:
-        x.data[x.data < float32finfo.min] = float32finfo.min
-        x.data[x.data > float32finfo.max] = float32finfo.max
+        min_mask = x.data < float32finfo.min
+        max_mask = x.data > float32finfo.max
+        x.data[min_mask] = float32finfo.min
+        x.data[max_mask] = float32finfo.max
+        x.mask += min_mask + max_mask
 
     return x
 
