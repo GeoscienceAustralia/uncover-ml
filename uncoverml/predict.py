@@ -1,5 +1,5 @@
 import logging
-
+from itertools import compress
 import numpy as np
 import csv
 
@@ -65,7 +65,7 @@ def mask_subchunks(subchunk, config):
     return result
 
 
-def _fix_for_corrupt_data(x):
+def _fix_for_corrupt_data(x, feature_names):
     """
     Address this error during prediction:
     "Input contains NaN, infinity or a value too large for dtype('float32')."
@@ -96,7 +96,9 @@ def _fix_for_corrupt_data(x):
     x_isnan = np.isnan(x.data)
     x.mask += x_isnan
 
-    if np.isfinite(x.astype(np.float32)).all():
+    isfinite = np.isfinite(x.astype(np.float32))
+
+    if isfinite.all():
         return x
     else:
         min_mask = x.data < float32finfo.min
@@ -104,7 +106,14 @@ def _fix_for_corrupt_data(x):
         x.data[min_mask] = float32finfo.min
         x.data[max_mask] = float32finfo.max
         x.mask += min_mask + max_mask
+        problem_feature_names = \
+            list(compress(feature_names, ~isfinite.all(axis=0)))
 
+        log.warn("Float64 data had to truncated to float32 max/min values."
+                 "Check your covariates for possible nodatavalue, datatype,"
+                 "min/max values.")
+        log.warn("These features were found to be have problems:\n{}".format(
+            problem_feature_names))
     return x
 
 
@@ -129,7 +138,6 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
-    x = _fix_for_corrupt_data(x)
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -174,7 +182,7 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(_fix_for_corrupt_data(x), model,
+    y_star = predict(_fix_for_corrupt_data(x, feature_names), model,
                      interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
