@@ -10,6 +10,7 @@ from uncoverml.models import apply_masked
 from uncoverml import transforms
 
 log = logging.getLogger(__name__)
+float32finfo = np.finfo(dtype=np.float32)
 
 
 def predict(data, model, interval=0.95, **kwargs):
@@ -69,12 +70,38 @@ def _fix_for_corrupt_data(x):
     Address this error during prediction:
     "Input contains NaN, infinity or a value too large for dtype('float32')."
 
-    The fix is applied as additional masked areas where infinite, or nan
-    values are found that are not already masked.
+    Also address float64 to float32 conversion issue here.
+    Several sklearn algorithms performs a data validation and wants float32
+    data type.
+
+    From the scikit learn docs:
+    "All decision trees use np.float32 arrays internally.
+    If training data is not in this format, a copy of the dataset will be made."
+
+    The problem is if our input data is is greater than the abs(max/min(
+    float32)), then the return value in the float64 to float32 typecasting is
+    infinity. In other words, for numbers outside float32 max/min
+    limits, operations like (np.float64).astype(np.float32) results in
+    infinite values.
+
+    See the following comment in stackoverflow.
+    https://stackoverflow.com/a/11019850/3321542.
+
+    1. The fix is applied as additional masked areas where nan values are
+    found that are not already masked.
+    2. Where float32 conversion problem occurs, we limit the data to max/min
+    float32.
+
     """
-    x_inf = np.isinf(x.data)
     x_isnan = np.isnan(x.data)
-    x.mask += x_isnan + x_inf
+    x.mask += x_isnan
+
+    if np.isfinite(x.astype(np.float32)).all():
+        return x
+    else:
+        x.data[x.data < float32finfo.min] = float32finfo.min
+        x.data[x.data > float32finfo.max] = float32finfo.max
+
     return x
 
 
@@ -144,7 +171,8 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x.astype(np.float32), model, interval=config.quantiles,
+    y_star = predict(_fix_for_corrupt_data(x), model,
+                     interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
