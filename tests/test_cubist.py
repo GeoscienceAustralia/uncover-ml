@@ -92,4 +92,4 @@ def test_multicibist_mpi(mpisync):
 
     score = r2_score(y, y_pred_p)
 
-    assert 0.6 < score < 0.8
+    assert 0.5 < score < 0.8

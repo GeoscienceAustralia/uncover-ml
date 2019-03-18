@@ -78,9 +78,9 @@ def _fix_for_corrupt_data(x, feature_names):
     "All decision trees use np.float32 arrays internally.
     If training data is not in this format, a copy of the dataset will be made."
 
-    The problem is if our input data is is greater than the abs(max/min(
-    float32)), then the return value in the float64 to float32 typecasting is
-    infinity. In other words, for numbers outside float32 max/min
+    The problem is if our input data is contains values greater than the abs(
+    max/min(float32)), then the return value in the float64 to float32
+    typecasting is infinity. In other words, for numbers outside float32 max/min
     limits, operations like (np.float64).astype(np.float32) results in
     infinite values.
 
@@ -92,8 +92,23 @@ def _fix_for_corrupt_data(x, feature_names):
     2. Where float32 conversion problem occurs, we limit the data to max/min
     float32, and additionally mask these areas. Just masking was not enough.
 
+    Warns about covariates that cause issues.
+
+    Function uses print instead of log.warn as we only print logs from
+    process 0.
+
     """
-    x_isnan = np.isnan(x.data)
+    x_isnan = np.isnan(x)
+
+    if x_isnan.any():
+        print("Warning: Nans were found in unmasked areas."
+              "Check your covariates for possible nodatavalue, datatype,"
+              "min/max values.")
+        problem_feature_names = \
+            list(compress(feature_names, x_isnan.any(axis=0)))
+        print("Warning: These features were found to be have problems with "
+              "nans present:\n{}".format(problem_feature_names))
+
     x.mask += x_isnan
 
     isfinite = np.isfinite(x.astype(np.float32))
@@ -109,11 +124,11 @@ def _fix_for_corrupt_data(x, feature_names):
         problem_feature_names = \
             list(compress(feature_names, ~isfinite.all(axis=0)))
 
-        log.warn("Float64 data had to truncated to float32 max/min values."
-                 "Check your covariates for possible nodatavalue, datatype,"
-                 "min/max values.")
-        log.warn("These features were found to be have problems:\n{}".format(
-            problem_feature_names))
+        print("Warning: Float64 data was truncated to float32 max/min values."
+              "Check your covariates for possible nodatavalue, datatype, "
+              "min/max values.")
+        print("Warning: These features were found to be have problems with "
+              "float32 conversion:\n{}".format(problem_feature_names))
     return x
 
 
@@ -220,7 +235,6 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
                 # add feature transform contributions
                 for f in config.feature_sets:
                     for t in f.transform_set.global_transforms:
-                        # import IPython; IPython.embed(); import sys; sys.exit()
                         means += list(t.mean)
                         sds += list(t.sd)
                 # check final transform
