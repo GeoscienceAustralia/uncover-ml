@@ -321,8 +321,7 @@ class ImageWriter:
             data = np.ma.transpose(image, [2, 1, 0])  # untranspose
             # write each band separately
             for i, f in enumerate(self.files):
-                f.write(data[i:i+1], compress='lzw',
-                        bigtiff='YES')
+                f.write(data[i:i+1])
         else:
             if mpiops.chunk_index != 0:
                 mpiops.comm.send(image, dest=0)
