@@ -44,8 +44,9 @@ def write_data(data, name, in_image, outputdir, forward):
               help='Apply inverse sensor model')
 @click.option('--apply', 'forward', flag_value=True, default=True,
               help='Apply forward sensor model')
-@click.option('--height', type=float, help='height of sensor')
-@click.option('--absorption', type=float, help='absorption coeff')
+@click.option('--height', type=float, required=True, help='height of sensor')
+@click.option('--absorption', type=float,  required=True,
+              help='absorption coeff')
 @click.option('--impute', is_flag=True, help='Use the sensor model to impute'
               ' missing values in the deconvolution')
 @click.option('--noise', type=float, default=0.001,

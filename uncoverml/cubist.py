@@ -461,6 +461,13 @@ class MultiCubist:
             y contains the output target variables for each corresponding
             input vector. Again we expect y.shape[0] = n.
         """
+        if 'NCPUS' in os.environ and 'PBS_NCPUS' in os.environ:
+            num_nodes = int(int(os.getenv('PBS_NCPUS'))/int(os.getenv('NCPUS')))
+            if num_nodes > 1:
+                raise EnvironmentError(
+                    "Can not use more than one node during MultiCubist "
+                    "training.")
+
         # set a different random seed for each thread
         np.random.seed(mpiops.chunk_index + np.random.randint(0, 10000))
 
