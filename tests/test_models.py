@@ -51,8 +51,12 @@ def test_modelmap(get_models):
 
 
 def test_modelpickle(get_models):
-
     mod = get_models()
+
+    # don't test picking for multirandomforest as pickling is handled by
+    # the individual randomforest jobs downstream
+    if isinstance(mod, models['multirandomforest']):
+        return
     mod_str = pickle.dumps(mod)
     mod_pic = pickle.loads(mod_str)
 
