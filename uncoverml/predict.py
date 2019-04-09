@@ -2,11 +2,12 @@ import logging
 from itertools import compress
 import numpy as np
 import csv
+from sklearn.ensemble import BaseEnsemble
 
 from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import geoio
-from uncoverml.models import apply_masked
+from uncoverml.models import apply_masked, modelmaps
 from uncoverml import transforms
 
 log = logging.getLogger(__name__)
@@ -153,7 +154,10 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
-    x = _fix_for_corrupt_data(x, features_names)
+
+    # only check/correct float32 conversion for Ensemble models
+    if isinstance(modelmaps[config.algorithm](), BaseEnsemble):
+        x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
 

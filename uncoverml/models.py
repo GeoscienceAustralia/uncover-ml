@@ -506,6 +506,11 @@ class RandomForestRegressorMulti():
         self.temp_dir = join(abspath(outdir), 'results')
         os.makedirs(self.temp_dir, exist_ok=True)
 
+    # override __class__ to mock instance type
+    @property
+    def __class__(self):
+        return RandomForestRegressor
+
     def fit(self, x, y, *args, **kwargs):
 
         # set a different random seed for each thread
@@ -1003,7 +1008,7 @@ regressors = {
     'extratree': ExtraTreeTransformed,
     'cubist': CubistTransformed,
     'multicubist': CubistMultiTransformed,
-    'nn': KNearestNeighborTransformed,
+    'nnr': KNearestNeighborTransformed,
 }
 
 
