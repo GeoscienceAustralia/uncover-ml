@@ -136,7 +136,7 @@ def _get_data(subchunk, config):
     features_names = geoio.feature_names(config)
 
     # NOTE: This returns an *untransformed* x,
-    # which is ok as we just need dummys here
+    # which is ok as we just need dummies here
     if config.mask:
         mask_x = _mask(subchunk, config)
         all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
@@ -153,6 +153,7 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
+    x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -197,8 +198,7 @@ def render_partition(model, subchunk, image_out, config):
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(_fix_for_corrupt_data(x, feature_names), model,
-                     interval=config.quantiles,
+    y_star = predict(x, model, interval=config.quantiles,
                      lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
