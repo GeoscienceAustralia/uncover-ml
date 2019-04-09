@@ -21,6 +21,7 @@ from sklearn.ensemble import (RandomForestRegressor as RFR,
                               GradientBoostingClassifier)
 from sklearn.linear_model import ARDRegression, LogisticRegression
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
 
@@ -743,6 +744,17 @@ def encode_targets(Classifier):
 #
 
 
+class KNearestNeighborTransformed(transform_targets(KNeighborsRegressor),
+                                  TagsMixin):
+    """
+    K Nearest Neighbour Regression
+
+    https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
+    """
+
+    pass
+
+
 class SVRTransformed(transform_targets(SVR), TagsMixin):
     """
     Support vector machine.
@@ -991,6 +1003,7 @@ regressors = {
     'extratree': ExtraTreeTransformed,
     'cubist': CubistTransformed,
     'multicubist': CubistMultiTransformed,
+    'nn': KNearestNeighborTransformed,
 }
 
 
