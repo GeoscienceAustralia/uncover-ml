@@ -99,6 +99,8 @@ def _fix_for_corrupt_data(x, feature_names):
     process 0.
 
     """
+    import time
+    t = time.time()
     x_isnan = np.isnan(x)
 
     if x_isnan.any():
@@ -115,6 +117,8 @@ def _fix_for_corrupt_data(x, feature_names):
     isfinite = np.isfinite(x.astype(np.float32))
 
     if isfinite.all():
+        print("Float64/float32 check/conversion "
+              "took {}s".format(time.time()-t))
         return x
     else:
         min_mask = x.data < float32finfo.min
@@ -130,6 +134,8 @@ def _fix_for_corrupt_data(x, feature_names):
               "min/max values.")
         print("Warning: These features were found to be have problems with "
               "float32 conversion:\n{}".format(problem_feature_names))
+    print("Float64/float32 check/conversion "
+          "took {}s".format(time.time() - t))
     return x
 
 
@@ -156,7 +162,8 @@ def _get_data(subchunk, config):
                                     config.final_transform, config)[0]
 
     # only check/correct float32 conversion for Ensemble models
-    if isinstance(modelmaps[config.algorithm](), BaseEnsemble):
+    if isinstance(modelmaps[config.algorithm](), BaseEnsemble) or  \
+            config.multirandomforest:
         x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
