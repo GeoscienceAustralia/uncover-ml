@@ -1,0 +1,3 @@
+[submodule "geo-wavelets"]
+	path = geo-wavelets
+	url = https://github.com/GeoscienceAustralia/geo-wavelets.git
