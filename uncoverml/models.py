@@ -26,6 +26,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
 
 from uncoverml import mpiops
+from uncoverml.interpolate import SKLearnNearestNDInterpolator, \
+    SKLearnLinearNDInterpolator, SKLearnRbf
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
 from uncoverml.transforms import target as transforms
@@ -908,6 +910,20 @@ class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
     pass
 
 
+class TransformedLinearNDInterpolator(
+    transform_targets(SKLearnLinearNDInterpolator), TagsMixin):
+    pass
+
+
+class TransformedNearestNDInterpolator(
+    transform_targets(SKLearnNearestNDInterpolator), TagsMixin):
+    pass
+
+
+class TransformedRbfInterpolator(transform_targets(SKLearnRbf), TagsMixin):
+    pass
+
+
 class MaskRows:
 
     def __init__(self, *Xs):
@@ -1006,6 +1022,13 @@ regressors = {
     'nnr': KNearestNeighborTransformed,
 }
 
+interpolators = {
+    'linear': TransformedLinearNDInterpolator,
+    'nn': TransformedNearestNDInterpolator,
+    'rbf': TransformedRbfInterpolator
+}
+
+regressors.update(interpolators)
 
 classifiers = {
     'logistic': LogisticClassifier,
