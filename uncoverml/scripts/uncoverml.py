@@ -8,7 +8,7 @@ import logging
 import pickle
 import resource
 from os.path import isfile, splitext, exists
-# import warnings
+import warnings
 
 import click
 import numpy as np
@@ -32,6 +32,8 @@ from uncoverml.transforms import StandardiseTransform
 
 log = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
+warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 @click.group()

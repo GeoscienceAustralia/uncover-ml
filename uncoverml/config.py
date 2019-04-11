@@ -149,8 +149,8 @@ class Config:
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
 
-        self.geotif_options = s['prediction']['geotif'] if 'geotif' in s[
-            'prediction'] else {}
+        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
+            s['prediction'] else {}
 
         self.outbands = None
         if 'outbands' in s['prediction']:
