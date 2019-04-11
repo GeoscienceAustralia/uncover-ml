@@ -271,20 +271,21 @@ class ImageWriter:
         files = []
         file_names = []
 
-        for band in range(self.outbands):
-            output_filename = os.path.join(outputdir, name + "_" +
-                                           file_tags[band] + ".tif")
-            f = rasterio.open(output_filename, 'w', driver='GTiff',
-                              width=self.shape[0], height=self.shape[1],
-                              dtype=np.float32, count=1,
-                              crs=crs,
-                              transform=self.A,
-                              nodata=self.nodata_value,
-                              **kwargs
-                              )
-            f.update_tags(1, image_type=band_tags[band])
-            files.append(f)
-            file_names.append(output_filename)
+        if mpiops.chunk_index == 0:
+            for band in range(self.outbands):
+                output_filename = os.path.join(outputdir, name + "_" +
+                                               file_tags[band] + ".tif")
+                f = rasterio.open(output_filename, 'w', driver='GTiff',
+                                  width=self.shape[0], height=self.shape[1],
+                                  dtype=np.float32, count=1,
+                                  crs=crs,
+                                  transform=self.A,
+                                  nodata=self.nodata_value,
+                                  **kwargs
+                                  )
+                f.update_tags(1, image_type=band_tags[band])
+                files.append(f)
+                file_names.append(output_filename)
 
         if independent:
             self.files = files

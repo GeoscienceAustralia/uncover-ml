@@ -117,8 +117,6 @@ def _fix_for_corrupt_data(x, feature_names):
     isfinite = np.isfinite(x.astype(np.float32))
 
     if isfinite.all():
-        print("Float64/float32 check/conversion "
-              "took {}s".format(time.time()-t))
         return x
     else:
         min_mask = x.data < float32finfo.min
@@ -134,8 +132,6 @@ def _fix_for_corrupt_data(x, feature_names):
               "min/max values.")
         print("Warning: These features were found to be have problems with "
               "float32 conversion:\n{}".format(problem_feature_names))
-    print("Float64/float32 check/conversion "
-          "took {}s".format(time.time() - t))
     return x
 
 
