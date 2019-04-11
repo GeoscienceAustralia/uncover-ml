@@ -148,6 +148,10 @@ class Config:
         self.krige = self.algorithm == 'krige'
         self.algorithm_args = s['learning']['arguments']
         self.quantiles = s['prediction']['quantiles']
+
+        self.geotif_options = s['prediction']['geotif'] if 'geotif' in s[
+            'prediction'] else {}
+
         self.outbands = None
         if 'outbands' in s['prediction']:
             self.outbands = s['prediction']['outbands']

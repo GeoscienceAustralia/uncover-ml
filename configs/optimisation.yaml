@@ -354,6 +354,10 @@ prediction:
   quantiles: 0.95
   outbands: 10
   thumbnails: 10
+  geotif:
+    compress: 'lzw'
+    bigtiff: 'YES'
+    tiled: True
 
 validation:
 #  #- feature_rank

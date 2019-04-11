@@ -242,7 +242,10 @@ class ImageWriter:
     nodata_value = np.array(-1e20, dtype='float32')
 
     def __init__(self, shape, bbox, crs, name, n_subchunks, outputdir,
-                 band_tags=None, independent=False):
+                 band_tags=None, independent=False, **kwargs):
+        """
+        pass in additional geotif write options in kwargs
+        """
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
                                          bbox[0, 1], bbox[1, 1],
@@ -277,9 +280,7 @@ class ImageWriter:
                               crs=crs,
                               transform=self.A,
                               nodata=self.nodata_value,
-                              compress='lzw',
-                              bigtiff='YES',
-                              tiled=True
+                              **kwargs
                               )
             f.update_tags(1, image_type=band_tags[band])
             files.append(f)

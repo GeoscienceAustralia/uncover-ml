@@ -258,7 +258,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
                                      config.n_subchunks, config.output_dir,
                                      band_tags=predict_tags[
                                                0: min(len(predict_tags),
-                                                      config.outbands)])
+                                                      config.outbands)],
+                                     **config.geotif_options)
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
