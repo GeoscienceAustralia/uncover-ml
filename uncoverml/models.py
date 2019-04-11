@@ -1022,13 +1022,13 @@ regressors = {
     'nnr': KNearestNeighborTransformed,
 }
 
+
 interpolators = {
     'linear': TransformedLinearNDInterpolator,
     'nn': TransformedNearestNDInterpolator,
     'rbf': TransformedRbfInterpolator
 }
 
-regressors.update(interpolators)
 
 classifiers = {
     'logistic': LogisticClassifier,
@@ -1038,7 +1038,7 @@ classifiers = {
     'boostedtrees': GradBoostedTrees
 }
 
-modelmaps = {**classifiers, **regressors}
+modelmaps = {**classifiers, **regressors, **interpolators}
 
 # Add all kernels for the approximate Gaussian processes here!
 basismap = {

@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for Rbf class. \n""" + \
+    __doc__ = """Scikit-learn wrapper for LinearNDInterpolator class. \n""" + \
               LinearNDInterpolator.__doc__
 
     def __init__(self, fill_value=0,
@@ -36,7 +36,7 @@ class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
 
 class SKLearnNearestNDInterpolator(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for Rbf class. \n""" + \
+    __doc__ = """Scikit-learn wrapper for NearestNDInterpolator class. \n""" + \
               NearestNDInterpolator.__doc__
 
     def __init__(self,
