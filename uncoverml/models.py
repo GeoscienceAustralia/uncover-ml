@@ -27,7 +27,7 @@ from sklearn.kernel_approximation import RBFSampler
 
 from uncoverml import mpiops
 from uncoverml.interpolate import SKLearnNearestNDInterpolator, \
-    SKLearnLinearNDInterpolator, SKLearnRbf
+    SKLearnLinearNDInterpolator, SKLearnRbf, SKLearnCT
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
 from uncoverml.transforms import target as transforms
@@ -924,6 +924,10 @@ class TransformedRbfInterpolator(transform_targets(SKLearnRbf), TagsMixin):
     pass
 
 
+class TransformedCTInterpolator(transform_targets(SKLearnCT), TagsMixin):
+    pass
+
+
 class MaskRows:
 
     def __init__(self, *Xs):
@@ -1026,7 +1030,8 @@ regressors = {
 interpolators = {
     'linear': TransformedLinearNDInterpolator,
     'nn': TransformedNearestNDInterpolator,
-    'rbf': TransformedRbfInterpolator
+    'rbf': TransformedRbfInterpolator,
+    'cloughtocher': TransformedCTInterpolator,
 }
 
 
