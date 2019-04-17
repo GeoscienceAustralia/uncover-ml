@@ -754,7 +754,7 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
                  algorithm='auto',
                  leaf_size=30,
                  metric='minkowski', p=2,
-                 metric_params=None, n_jobs=None,
+                 metric_params=None, n_jobs=1,
                  noise=0.0):
 
         self.noise = noise
