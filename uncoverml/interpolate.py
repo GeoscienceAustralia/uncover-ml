@@ -1,5 +1,4 @@
 import logging
-import numpy as np
 from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator, \
     Rbf, CloughTocher2DInterpolator
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -9,26 +8,23 @@ log = logging.getLogger(__name__)
 
 class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for LinearNDInterpolator class. \n""" + \
-              LinearNDInterpolator.__doc__
+    __doc__ = """Scikit-learn wrapper for 
+        scipy.interpolate.LinearNDInterpolator class.\n""" + \
+        LinearNDInterpolator.__doc__
 
     def __init__(self, fill_value=0,
                  rescale=False
                  ):
-
-        log.info("Using Linear Interpolation")
 
         self.fill_value = fill_value
         self._interpolator = None
         self.rescale = rescale
 
     def fit(self, X, y):
-        log.info("Fitting linear interpolation")
         self._interpolator = LinearNDInterpolator(
             X, y, fill_value=self.fill_value, rescale=self.rescale)
 
     def predict(self, X):
-        log.info("predicting using linear interplocation")
         if self._interpolator is None:
             print('Train first')
             return
@@ -38,8 +34,9 @@ class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
 
 class SKLearnNearestNDInterpolator(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for NearestNDInterpolator class. \n""" + \
-              NearestNDInterpolator.__doc__
+    __doc__ = """Scikit-learn wrapper for 
+        scipy.interpolate.NearestNDInterpolator class.\n""" + \
+        NearestNDInterpolator.__doc__
 
     def __init__(self,
                  rescale=False,
@@ -58,13 +55,13 @@ class SKLearnNearestNDInterpolator(BaseEstimator, RegressorMixin):
         if self._interpolator is None:
             print('Train first')
             return
-
         return self._interpolator(X)
 
 
 class SKLearnRbf(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for Rbf class. \n""" + Rbf.__doc__
+    __doc__ = """Scikit-learn wrapper for scipy.interpolate.Rbf class. \n""" \
+              + Rbf.__doc__
 
     def __init__(self,
                  function='multiquadric',
@@ -92,8 +89,9 @@ class SKLearnRbf(BaseEstimator, RegressorMixin):
 
 class SKLearnCT(BaseEstimator, RegressorMixin):
 
-    __doc__ = """Scikit-learn wrapper for CloughTocher2DInterpolator 
-              class.\n""" + CloughTocher2DInterpolator.__doc__
+    __doc__ = """Scikit-learn wrapper for
+        scipy.interpolate.CloughTocher2DInterpolator class.\n""" + \
+        CloughTocher2DInterpolator.__doc__
 
     def __init__(self,
                  fill_value=0,
