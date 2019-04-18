@@ -133,7 +133,7 @@ class Config:
     """
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
-            s = yaml.load(f)
+            s = yaml.safe_load(f)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         # TODO expose this option when fixed

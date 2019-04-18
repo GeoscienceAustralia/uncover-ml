@@ -755,17 +755,19 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
                  leaf_size=30,
                  metric='minkowski', p=2,
                  metric_params=None, n_jobs=1,
-                 noise=0.0):
+                 min_distance=0.0):
 
-        self.noise = noise
+        self.min_distance = min_distance
+
+        weights_ = weights
 
         if weights == 'distance':
-            weights = self._get_weights
+            weights_ = self._get_weights
 
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
-            weights=weights,
+            weights=weights_,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs
         )
@@ -780,11 +782,11 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
                 # (ex: RadiusNeighborClassifier.predict may set an element of
                 # dist to 1e-6 to represent an 'outlier')
                 if hasattr(point_dist, '__contains__') and 0. in point_dist:
-                    dist[point_dist_i] = point_dist == 0. + self.noise
+                    dist[point_dist_i] = point_dist == 0. + self.min_distance
                 else:
-                    dist[point_dist_i] = 1. / point_dist + self.noise
+                    dist[point_dist_i] = 1. / (point_dist + self.min_distance)
         else:
-            dist = 1. / (dist + self.noise)
+            dist = 1. / (dist + self.min_distance)
 
         return dist
 
@@ -1074,7 +1076,7 @@ interpolators = {
     'linear': TransformedLinearNDInterpolator,
     'nn': TransformedNearestNDInterpolator,
     'rbf': TransformedRbfInterpolator,
-    'cloughtocher': TransformedCTInterpolator,
+    'cubic2d': TransformedCTInterpolator,
 }
 
 
