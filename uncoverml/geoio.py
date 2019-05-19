@@ -491,6 +491,7 @@ def export_feature_ranks(measures, feats, scores, config):
         plt.plot(range(len(sorted_features)), sorted_scores)
         plt.xticks(range(len(sorted_features)), sorted_features,
                    rotation='vertical')
+        plt.ylabel(measure)
         plt.savefig('{}.png'.format(measure))
 
     # Write the results out to a file
