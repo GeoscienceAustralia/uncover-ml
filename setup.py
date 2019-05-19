@@ -80,7 +80,7 @@ setup(
         'revrand >= 0.9.10',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',
-        'scikit-learn >= 0.18.1',
+        'scikit-learn >= 0.21.1',
         'scikit-image >= 0.12.3',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
