@@ -128,9 +128,12 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
 
-    t = np.atleast_2d(targets.observations).T
+    all_targets = np.ma.concatenate(
+        mpiops.comm.allgather(targets.observations), axis=0)
 
     if mpiops.chunk_index == 0:
+
+        t = np.atleast_2d(all_targets).T
         data = np.hstack((x_all.data, t))
         np.savetxt(config.rawcovariates, X=data, delimiter=',',
                    fmt='%.4e',
