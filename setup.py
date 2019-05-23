@@ -30,6 +30,10 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
+    git_hash = subprocess.check_output(['git', 'rev-parse',
+                                        'HEAD']).decode().strip()
+    with open('uncoverml/git_hash.py', 'w') as f:
+        f.write("git_hash = '{}'".format(git_hash))
 
 
 class CustomInstall(install):
