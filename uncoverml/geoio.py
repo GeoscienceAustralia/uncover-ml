@@ -561,8 +561,11 @@ def create_scatter_plot(outfile_results, config, scores):
     with hdf.open_file(outfile_results, 'r') as f:
         prediction = f.get_node("/", "Prediction").read()
         y_true = f.get_node("/", "y_true").read()
-        np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T,
-                   delimiter=',')
+        to_text = [y_true, prediction]
+        if 'transformedpredict' in f.root:
+            transformed_predict = f.get_node("/", "transformedpredict").read()
+            to_text.append(transformed_predict)
+        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',')
         plt.figure()
         plt.scatter(y_true, prediction, label='True vs Prediction')
         plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],

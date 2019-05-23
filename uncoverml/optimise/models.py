@@ -42,12 +42,12 @@ class TransformMixin:
                 return self.target_transform.itransform(Ey_t), \
                     self.target_transform.itransform(std_t)
 
-        Ey_t = super().predict(X)
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
         return self.target_transform.itransform(Ey_t)
 
     def _notransform_predict(self, X, *args, **kwargs):
-        Ey = super().predict(X)
-        return Ey
+        Ey_t = super().predict(X)
+        return Ey_t
 
 
 class TransformPredictDistMixin(TransformMixin):
