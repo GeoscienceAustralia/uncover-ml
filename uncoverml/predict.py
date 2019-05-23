@@ -7,13 +7,13 @@ from sklearn.ensemble import BaseEnsemble
 from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import geoio
-from uncoverml.models import apply_masked, modelmaps as models
+from uncoverml.models import apply_masked, modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml import transforms
 
 log = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
-modelmaps = models.update(transformed_modelmaps)
+modelmaps.update(transformed_modelmaps)
 
 
 def predict(data, model, interval=0.95, **kwargs):
