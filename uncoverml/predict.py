@@ -9,11 +9,13 @@ from uncoverml import mpiops
 from uncoverml import geoio
 from uncoverml.models import apply_masked, modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.krige import krig_dict
 from uncoverml import transforms
 
 log = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
 modelmaps.update(transformed_modelmaps)
+modelmaps.update(krig_dict)
 
 
 def predict(data, model, interval=0.95, **kwargs):
