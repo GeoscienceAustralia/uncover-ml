@@ -1,7 +1,46 @@
 #! /usr/bin/env python
 """
 Description:
-    Gather Metadata for the uncover-ml prediction output results
+    Gather Metadata for the uncover-ml prediction output results:
+
+Reference: email 2019-05-24
+Overview
+Creator: (person who generated the model)
+Model;
+    Name:
+    Type and date:
+    Algorithm:
+    Extent: Lat/long - location on Australia map?
+
+SB Notes: None of the above is required as this information will be captured in the yaml file.
+
+Model inputs:
+
+1.      Covariates - list (in full)
+2.      Targets: path to shapefile:  csv file
+SB Notes: Only covaraite list file. Targets and path to shapefile is not required as this is available in the yaml file. May be the full path to the shapefile has some merit as one can specify partial path.
+
+Model performance
+       JSON file (in full)
+SB Notes: Yes
+
+Model outputs
+
+1.      Prediction grid including path
+2.      Quantiles Q5; Q95
+3.      Variance:
+4.      Entropy:
+5.      Feature rank file
+6.      Raw covariates file (target value - covariate value)
+7.      Optimisation output
+8.      Others ??
+SB Notes: Not required as these are model dependent, and the metadata will be contained in each of the output geotif file.
+
+
+Model parameters:
+1.      YAML file (in full)
+2.      .SH file (in full)
+SB Notes: The .sh file is not required. YAML file is read as a python dictionary in uncoverml which can be dumped in the metadata.
 
 
 CreationDate:   31/05/19
@@ -15,28 +54,47 @@ Revision History:
 # import section
 import os
 import sys
+import json
 import pickle
+import datetime
 from ppretty import ppretty
 
 
-class MetaSummary():
+
+class MetadataSummary():
     """
     Summary Description of the ML prediction output
     """
 
     def __init__(self, model_file):
+
+        path2mf = os.path.dirname(os.path.abspath(model_file))
+
+        print (path2mf)
+
         self.description = "Metadata for the ML results"
         self.creator = "login_user_fxz547"
-
+        self.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(model_file, 'rb') as f:
             state_dict = pickle.load(f)
 
         print(state_dict.keys())
 
-        self.model = state_dict["model"]
-        config = state_dict["config"]
+        #self.model = state_dict["model"]
+        self.config = state_dict["config"]
+        self.name = self.config.name  # 'demo_regression'
+        self.algorithm = self.config.algorithm  # 'svr'
 
-        self.name = config.name
+        self.extent= ((-10, 100),(-40, 140))
+
+
+        # self.performance_metric= {"json_file": 0.99}
+        jsonfilename = "%s_scores.json"%(self.name)
+
+        jsonfile = os.path.join(path2mf, jsonfilename)
+
+        with open(jsonfile) as json_file:
+            self.model_performance_metrics = json.load(json_file)
 
 
     def write_metadata(self, out_filename):
@@ -106,7 +164,7 @@ def main(mf):
     :return:
     """
 
-    obj= MetaSummary(mf)
+    obj= MetadataSummary(mf)
     obj.write_metadata(out_filename='metatest.txt')
 
     return
