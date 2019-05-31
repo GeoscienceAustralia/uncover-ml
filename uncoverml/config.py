@@ -132,6 +132,9 @@ class Config:
         see the uncoverml documentation
     """
     def __init__(self, yaml_file):
+
+        self.config_yaml = yaml_file  # This will include the full path of the yaml file
+
         with open(yaml_file, 'r') as f:
             s = yaml.load(f)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
