@@ -1,0 +1,96 @@
+# assume the system has python3 (3.6.7) and pip3 
+
+
+pip3 install --user cython
+pip3 install --user ppretty 
+
+
+# fzhang@zubuntu1804 /MySoft/Githubz/uncover-ml (fei/uncoverml) 
+
+pip3 install --user -e .
+
+
+sudo apt install openmpi-bin 
+sudo apt install libopenmpi-dev
+# for pip3 install --user mpi4py
+
+
+############################################
+ $ pip3 install --user -e .
+Obtaining file:///media/fzhang/fdc0aab1-693c-49db-a845-affde4f428fe/Githubz/uncover-ml
+Collecting numpy>=1.9.2 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/87/2d/e4656149cbadd3a8a0369fcd1a9c7d61cc7b87b3903b85389c70c989a696/numpy-1.16.4-cp36-cp36m-manylinux1_x86_64.whl
+Collecting pycontracts==1.7.9 (from uncover-ml==0.1.0)
+Collecting tables>=3.2.2 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/87/f7/bb0ec32a3f3dd74143a3108fbf737e6dcfd47f0ffd61b52af7106ab7a38a/tables-3.5.2-cp36-cp36m-manylinux1_x86_64.whl
+Collecting rasterio>=1.0.8 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/8b/1e/73e3c22ad5a3a20d028f860e2cf77ba5322736586229f97955d056ffa8a8/rasterio-1.0.23-cp36-cp36m-manylinux1_x86_64.whl
+Collecting affine>=2.2.1 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/56/5d/6877929932d17850fa4903d0db8233ec8ed35aab7ceae96fa44ea6d479bd/affine-2.2.2-py2.py3-none-any.whl
+Collecting pyshp==1.2.3 (from uncover-ml==0.1.0)
+Collecting click>=6.6 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/fa/37/45185cb5abbc30d7257104c434fe0b07e5a195a6847506c074527aa599ec/Click-7.0-py2.py3-none-any.whl
+Collecting revrand>=0.9.10 (from uncover-ml==0.1.0)
+Collecting mpi4py==2.0.0 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/ee/b8/f443e1de0b6495479fc73c5863b7b5272a4ece5122e3589db6cd3bb57eeb/mpi4py-2.0.0.tar.gz
+Collecting scipy>=0.15.1 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/72/4c/5f81e7264b0a7a8bd570810f48cd346ba36faedbd2ba255c873ad556de76/scipy-1.3.0-cp36-cp36m-manylinux1_x86_64.whl
+Collecting scikit-learn>=0.18.1 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/85/04/49633f490f726da6e454fddc8e938bbb5bfed2001681118d3814c219b723/scikit_learn-0.21.2-cp36-cp36m-manylinux1_x86_64.whl
+Collecting scikit-image>=0.12.3 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/d4/ab/674e168bf7d0bc597218b3bec858d02c23fbac9ec1fec9cad878c6cee95f/scikit_image-0.15.0-cp36-cp36m-manylinux1_x86_64.whl
+Collecting wheel>=0.29.0 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/bb/10/44230dd6bf3563b8f227dbf344c908d412ad2ff48066476672f3a72e174e/wheel-0.33.4-py2.py3-none-any.whl
+Collecting PyYAML>=3.11 (from uncover-ml==0.1.0)
+Collecting pandas==0.19.2 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/f1/33/b455d0af521b76b1982eac1ed1c30c9e67f9885f54c3349aef0b0c547d85/pandas-0.19.2-cp36-cp36m-manylinux1_x86_64.whl
+Collecting matplotlib>=1.5.1 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/da/83/d989ee20c78117c737ab40e0318ea221f1aed4e3f5a40b4f93541b369b93/matplotlib-3.1.0-cp36-cp36m-manylinux1_x86_64.whl
+Collecting PyKrige==1.3.0 (from uncover-ml==0.1.0)
+Collecting xgboost>=0.72.1 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/c1/24/5fe7237b2eca13ee0cfb100bec8c23f4e69ce9df852a64b0493d49dae4e0/xgboost-0.90-py2.py3-none-manylinux1_x86_64.whl
+Collecting setuptools>=30.0.0 (from uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/ec/51/f45cea425fd5cb0b0380f5b0f048ebc1da5b417e48d304838c02d6288a1e/setuptools-41.0.1-py2.py3-none-any.whl
+Collecting decorator (from pycontracts==1.7.9->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/5f/88/0075e461560a1e750a0dcbf77f1d9de775028c37a19a346a6c565a257399/decorator-4.4.0-py2.py3-none-any.whl
+Collecting pyparsing (from pycontracts==1.7.9->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/dd/d9/3ec19e966301a6e25769976999bd7bbe552016f0d32b577dc9d63d2e0c49/pyparsing-2.4.0-py2.py3-none-any.whl
+Collecting six (from pycontracts==1.7.9->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/73/fb/00a976f728d0d1fecfe898238ce23f502a721c0ac0ecfedb80e0d88c64e9/six-1.12.0-py2.py3-none-any.whl
+Collecting numexpr>=2.6.2 (from tables>=3.2.2->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/0e/13/d38d56c4c49e50b35b6912c80d89f856d50aff605c9e3a4dbba91fc3df44/numexpr-2.6.9-cp36-cp36m-manylinux1_x86_64.whl
+Collecting mock>=2.0 (from tables>=3.2.2->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/05/d2/f94e68be6b17f46d2c353564da56e6fb89ef09faeeff3313a046cb810ca9/mock-3.0.5-py2.py3-none-any.whl
+Collecting attrs (from rasterio>=1.0.8->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/23/96/d828354fa2dbdf216eaa7b7de0db692f12c234f7ef888cc14980ef40d1d2/attrs-19.1.0-py2.py3-none-any.whl
+Collecting cligj>=0.5 (from rasterio>=1.0.8->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/e4/be/30a58b4b0733850280d01f8bd132591b4668ed5c7046761098d665ac2174/cligj-0.5.0-py3-none-any.whl
+Collecting click-plugins (from rasterio>=1.0.8->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/e9/da/824b92d9942f4e472702488857914bdd50f73021efea15b4cad9aca8ecef/click_plugins-1.1.1-py2.py3-none-any.whl
+Collecting snuggs>=1.4.1 (from rasterio>=1.0.8->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/58/14/8e90b7586ab6929861161e73e9fd55637a060e4d14dd1be14a4b8a08751f/snuggs-1.4.6-py3-none-any.whl
+Collecting joblib>=0.11 (from scikit-learn>=0.18.1->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/cd/c1/50a758e8247561e58cb87305b1e90b171b8c767b15b12a1734001f41d356/joblib-0.13.2-py2.py3-none-any.whl
+Collecting PyWavelets>=0.4.0 (from scikit-image>=0.12.3->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/4e/cd/528dba0b474b08f6f9a3a5e1b4bb23d8e33ed5d9f0e321cc967c2607df05/PyWavelets-1.0.3-cp36-cp36m-manylinux1_x86_64.whl
+Collecting pillow>=4.3.0 (from scikit-image>=0.12.3->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/d2/c2/f84b1e57416755e967236468dcfb0fad7fd911f707185efc4ba8834a1a94/Pillow-6.0.0-cp36-cp36m-manylinux1_x86_64.whl
+Collecting networkx>=2.0 (from scikit-image>=0.12.3->uncover-ml==0.1.0)
+Collecting imageio>=2.0.1 (from scikit-image>=0.12.3->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/af/0a/943c965d372dae0b1f1482677d29030ab834351a61a9a632fd62f27f1523/imageio-2.5.0-py3-none-any.whl
+Collecting python-dateutil>=2 (from pandas==0.19.2->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/41/17/c62faccbfbd163c7f57f3844689e3a78bae1f403648a6afb1d0866d87fbb/python_dateutil-2.8.0-py2.py3-none-any.whl
+Collecting pytz>=2011k (from pandas==0.19.2->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/3d/73/fe30c2daaaa0713420d0382b16fbb761409f532c56bdcc514bf7b6262bb6/pytz-2019.1-py2.py3-none-any.whl
+Collecting cycler>=0.10 (from matplotlib>=1.5.1->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/f7/d2/e07d3ebb2bd7af696440ce7e754c59dd546ffe1bbe732c8ab68b9c834e61/cycler-0.10.0-py2.py3-none-any.whl
+Collecting kiwisolver>=1.0.1 (from matplotlib>=1.5.1->uncover-ml==0.1.0)
+  Using cached https://files.pythonhosted.org/packages/f8/a1/5742b56282449b1c0968197f63eae486eca2c35dcd334bab75ad524e0de1/kiwisolver-1.1.0-cp36-cp36m-manylinux1_x86_64.whl
+Building wheels for collected packages: mpi4py
+  Running setup.py bdist_wheel for mpi4py ... done
+  Stored in directory: /home/fzhang/.cache/pip/wheels/99/2a/54/da4d20a13d79ef9dcecf1f0073bf38475765751a69f3dcf302
+Successfully built mpi4py
+Installing collected packages: numpy, decorator, pyparsing, six, pycontracts, numexpr, mock, tables, attrs, click, cligj, click-plugins, snuggs, affine, rasterio, pyshp, joblib, scipy, scikit-learn, revrand, mpi4py, PyWavelets, cycler, setuptools, kiwisolver, python-dateutil, matplotlib, pillow, networkx, imageio, scikit-image, wheel, PyYAML, pytz, pandas, PyKrige, xgboost, uncover-ml
+  Running setup.py develop for uncover-ml
+Successfully installed PyKrige-1.3.0 PyWavelets-1.0.3 PyYAML-5.1 affine-2.2.2 attrs-19.1.0 click-7.0 click-plugins-1.1.1 cligj-0.5.0 cycler-0.10.0 decorator-4.4.0 imageio-2.5.0 joblib-0.13.2 kiwisolver-1.1.0 matplotlib-3.1.0 mock-3.0.5 mpi4py-3.0.1 networkx-2.3 numexpr-2.6.9 numpy-1.16.4 pandas-0.19.2 pillow-6.0.0 pycontracts-1.7.9 pyparsing-2.4.0 pyshp-1.2.3 python-dateutil-2.8.0 pytz-2019.1 rasterio-1.0.23 revrand-1.0.0 scikit-image-0.15.0 scikit-learn-0.21.2 scipy-1.3.0 setuptools-41.0.1 six-1.12.0 snuggs-1.4.6 tables-3.5.2 uncover-ml wheel-0.33.4 xgboost-0.90
+

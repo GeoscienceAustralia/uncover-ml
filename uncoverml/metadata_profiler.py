@@ -80,7 +80,11 @@ class MetadataSummary():
 
         print(state_dict.keys())
 
-        #self.model = state_dict["model"]
+        model = state_dict["model"]
+        print("####################### Info about the prediction model  ####################")
+        model_str = ppretty(model, indent='  ', show_protected=True, show_static=True, show_address=False, str_length=50)
+        print(model_str)
+
         self.config = state_dict["config"]
         self.name = self.config.name  # 'demo_regression'
         self.algorithm = self.config.algorithm  # 'svr'
