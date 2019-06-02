@@ -113,9 +113,10 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
              for ec in feature_sets
              for k in ec
              for b in range(ec[k].shape[3])]
-    names.append(config.target_property + "(target)")
 
+    names += ["X", "Y", config.target_property + "(target)"]
     header = ', '.join(names)
+
     for t in transform_sets:
         dummy_transform = transforms.ImageTransformSet(
             image_transforms=None, imputer=None,
@@ -128,14 +129,15 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
 
-    all_targets = mpiops.comm.gather(targets.observations, int_root=0)
+    all_xy = mpiops.comm.gather(targets.positions, root=0)
+    all_targets = mpiops.comm.gather(targets.observations, root=0)
 
     if mpiops.chunk_index == 0:
-
+        all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
-
+        xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
-        data = np.hstack((x_all.data, t))
+        data = np.hstack((x_all.data, xy, t))
         np.savetxt(config.rawcovariates, X=data, delimiter=',',
                    fmt='%.4e',
                    header=header)

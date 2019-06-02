@@ -360,7 +360,8 @@ prediction:
     tiled: True
 
 validation:
-#  #- feature_rank
+  - feature_rank
+  - purmutation_rank
   - parallel
   - k-fold:
       folds: 5

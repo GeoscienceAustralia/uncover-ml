@@ -51,7 +51,6 @@ def main():
     pl.imshow(out2.astype(np.uint8), interpolation='none', cmap=pl.cm.gray)
     pl.title('Inverse Sensored')
     pl.show()
-    import IPython; IPython.embed(); import sys; sys.exit()
 
 
 
