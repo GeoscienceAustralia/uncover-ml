@@ -57,6 +57,10 @@ import sys
 import json
 import pickle
 import datetime
+import getpass
+import socket
+import uncoverml.git_hash as gits
+
 from ppretty import ppretty
 
 
@@ -73,16 +77,22 @@ class MetadataSummary():
         print (path2mf)
 
         self.description = "Metadata for the ML results"
-        self.creator = "login_user_fxz547"
+        username = getpass.getuser()
+        hostname = socket.gethostname()
+
+        self.creator = username
+        self.computename = hostname
         self.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.git_hash = gits.git_hash
+
         with open(model_file, 'rb') as f:
             state_dict = pickle.load(f)
 
         print(state_dict.keys())
 
-        model = state_dict["model"]
+        self.model = state_dict["model"]
         print("####################### Info about the prediction model  ####################")
-        model_str = ppretty(model, indent='  ', show_protected=True, show_static=True, show_address=False, str_length=50)
+        model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True, show_address=False, str_length=50)
         print(model_str)
 
         self.config = state_dict["config"]
@@ -103,15 +113,35 @@ class MetadataSummary():
 
     def write_metadata(self, out_filename):
         with open(out_filename, 'w') as outf:
-            outf.write("####### Metadata for the prediction results \n\n")
+            outf.write("# Metadata Profile for the Prediction Results")
 
-            objstr = ppretty(self, indent='  ', width=200, seq_length=200,
+            outf.write("\n\n############ Software Environment ###########\n\n")
+            outf.write("Creator = %s \n"%self.creator)
+            outf.write("Computer = %s \n"%self.computename)
+            outf.write("ML Algorithm = %s \n"%self.algorithm)
+            outf.write("uncoverml git-hash = %s\n"%self.git_hash)
+            outf.write("Datetime = %s \n"%self.datetime)
+
+            outf.write("\n\n############ Performance Matrics ###########\n\n")
+            #outf.write(str(self.model_performance_metrics))
+            for keys, values in self.model_performance_metrics.items():
+                outf.write("%s = %s\n"%(keys,values))
+
+            outf.write("\n\n############ Configuration ###########\n\n")
+
+            conf_str = ppretty(self.config, indent='  ', width=200, seq_length=200,
                              show_protected=True, show_static=True, show_properties=True, show_address=False,
                              str_length=200)
 
-            outf.write(objstr)
+            outf.write(conf_str)
 
-            outf.write("\n####### End of Metadata \n")
+            outf.write("\n\n############ Model ###########\n\n")
+            model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True, show_address=False,
+                                str_length=50)
+            outf.write(model_str)
+
+
+            outf.write("\n\n############ The End of Metadata ###########\n\n")
 
         return out_filename
 

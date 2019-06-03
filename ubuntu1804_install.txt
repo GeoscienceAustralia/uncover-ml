@@ -1,22 +1,19 @@
 # assume the system has python3 (3.6.7) and pip3 
 
+# fzhang@zubuntu1804 /MySoft/Githubz/uncover-ml (fei/uncoverml) 
 
 pip3 install --user cython
 pip3 install --user ppretty 
 
 
-# fzhang@zubuntu1804 /MySoft/Githubz/uncover-ml (fei/uncoverml) 
-
-pip3 install --user -e .
-
-
+# dependency of the mpi4py
 sudo apt install openmpi-bin 
 sudo apt install libopenmpi-dev
-# for pip3 install --user mpi4py
 
 
 ############################################
  $ pip3 install --user -e .
+
 Obtaining file:///media/fzhang/fdc0aab1-693c-49db-a845-affde4f428fe/Githubz/uncover-ml
 Collecting numpy>=1.9.2 (from uncover-ml==0.1.0)
   Using cached https://files.pythonhosted.org/packages/87/2d/e4656149cbadd3a8a0369fcd1a9c7d61cc7b87b3903b85389c70c989a696/numpy-1.16.4-cp36-cp36m-manylinux1_x86_64.whl
