@@ -101,8 +101,9 @@ def _load_data(config, partitions):
 
         if config.rawcovariates:
             log.info('Saving raw data before any processing')
-            ls.features.save_intersected_features(image_chunk_sets,
-                                                  transform_sets, config)
+            ls.features.save_intersected_features_and_targets(image_chunk_sets,
+                                                              transform_sets,
+                                                              targets, config)
 
         if config.train_data_pk:
             pickle.dump([image_chunk_sets, transform_sets, targets],

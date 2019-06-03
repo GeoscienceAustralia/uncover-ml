@@ -392,6 +392,9 @@ def local_crossval(x_all, targets_all, config):
 
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, y_pred.T))
+        if hasattr(model, '_notransform_predict'):
+            y_pred_dict['transformedpredict'] = \
+                model.target_transform.transform(y_pred[:, 0])
         result = CrossvalInfo(scores, y_true, y_pred_dict, classification)
 
     # change back to parallel

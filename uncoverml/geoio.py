@@ -491,6 +491,7 @@ def export_feature_ranks(measures, feats, scores, config):
         plt.plot(range(len(sorted_features)), sorted_scores)
         plt.xticks(range(len(sorted_features)), sorted_features,
                    rotation='vertical')
+        plt.ylabel(measure)
         plt.savefig('{}.png'.format(measure))
 
     # Write the results out to a file
@@ -541,7 +542,7 @@ def export_crossval(crossval_output, config):
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
     if not crossval_output.classification:
-        create_scatter_plot(outfile_results, config)
+        create_scatter_plot(outfile_results, config, scores)
 
 
 def _make_valid_array_name(label):
@@ -552,7 +553,7 @@ def _make_valid_array_name(label):
     return label
 
 
-def create_scatter_plot(outfile_results, config):
+def create_scatter_plot(outfile_results, config, scores):
     true_vs_pred = os.path.join(config.output_dir,
                                 config.name + "_results.csv")
     true_vs_pred_plot = os.path.join(config.output_dir,
@@ -560,13 +561,28 @@ def create_scatter_plot(outfile_results, config):
     with hdf.open_file(outfile_results, 'r') as f:
         prediction = f.get_node("/", "Prediction").read()
         y_true = f.get_node("/", "y_true").read()
-        np.savetxt(true_vs_pred, X=np.vstack([y_true, prediction]).T,
-                   delimiter=',')
+        to_text = [y_true, prediction]
+        if 'transformedpredict' in f.root:
+            transformed_predict = f.get_node("/", "transformedpredict").read()
+            to_text.append(transformed_predict)
+        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',')
         plt.figure()
-        plt.scatter(y_true, prediction)
+        plt.scatter(y_true, prediction, label='True vs Prediction')
+        plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
+                 color='r', linewidth=2, label='One to One Line')
+        plt.legend(loc='upper left')
+
         plt.title('true vs prediction')
         plt.xlabel('True')
         plt.ylabel('Prediction')
+        display_score = ['r2_score', 'lins_ccc']
+        score_sring = ''
+        for k in display_score:
+            score_sring += '{}={:0.2f}\n'.format(k, scores[k])
+
+        plt.text(y_true.min() + (y_true.max() - y_true.min())/20,
+                 y_true.min() + (y_true.max() - y_true.min())*3/4,
+                 score_sring)
         plt.savefig(true_vs_pred_plot)
 
 

@@ -60,7 +60,9 @@ def test_pipeline(get_models, get_transform, get_kernel):
                              n_jobs=1,
                              iid=False,
                              pre_dispatch=2,
-                             verbose=True)
+                             verbose=True,
+                             return_train_score=True,
+                             )
     np.random.seed(10)
     estimator.fit(X=1 + np.random.rand(10, 3), y=1. + np.random.rand(10))
     assert estimator.cv_results_['mean_train_score'][0] > -15.0
@@ -78,6 +80,7 @@ def test_svr_pipeline(get_transform, get_svr_kernel):
                              iid=False,
                              pre_dispatch=2,
                              verbose=True,
+                             return_train_score=True,
                              )
     np.random.seed(1)
     estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
@@ -104,7 +107,8 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
                              n_jobs=1,
                              iid=False,
                              pre_dispatch=2,
-                             verbose=True
+                             verbose=True,
+                             return_train_score=True,
                             )
     np.random.seed(1)
     X = np.random.randint(1, 400, size=(20, 2)).astype(float)

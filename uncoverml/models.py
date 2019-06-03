@@ -2,6 +2,7 @@
 
 import os
 import pickle
+import warnings
 from itertools import chain
 from os.path import join, isdir, abspath
 import numpy as np
@@ -26,10 +27,12 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
 
 from uncoverml import mpiops
+from uncoverml.interpolate import SKLearnNearestNDInterpolator, \
+    SKLearnLinearNDInterpolator, SKLearnRbf, SKLearnCT
 from uncoverml.cubist import Cubist
 from uncoverml.cubist import MultiCubist
 from uncoverml.transforms import target as transforms
-
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 #
 # Module constants
 #
@@ -744,7 +747,51 @@ def encode_targets(Classifier):
 #
 
 
-class KNearestNeighborTransformed(transform_targets(KNeighborsRegressor),
+class CustomKNeighborsRegressor(KNeighborsRegressor):
+
+    def __init__(self, n_neighbors=10,  # min_weight_fraction,
+                 weights='distance',
+                 algorithm='auto',
+                 leaf_size=30,
+                 metric='minkowski', p=2,
+                 metric_params=None, n_jobs=1,
+                 min_distance=0.0):
+
+        self.min_distance = min_distance
+
+        weights_ = weights
+
+        if weights == 'distance':
+            weights_ = self._get_weights
+
+        super().__init__(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            weights=weights_,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params, n_jobs=n_jobs
+        )
+
+    def _get_weights(self, dist):
+        # if user attempts to classify a point that was zero distance from one
+        # or more training points, those training points are weighted as 1.0
+        # and the other points as 0.0
+        if dist.dtype is np.dtype(object):
+            for point_dist_i, point_dist in enumerate(dist):
+                # check if point_dist is iterable
+                # (ex: RadiusNeighborClassifier.predict may set an element of
+                # dist to 1e-6 to represent an 'outlier')
+                if hasattr(point_dist, '__contains__') and 0. in point_dist:
+                    dist[point_dist_i] = point_dist == 0. + self.min_distance
+                else:
+                    dist[point_dist_i] = 1. / (point_dist + self.min_distance)
+        else:
+            dist = 1. / (dist + self.min_distance)
+
+        return dist
+
+
+class KNearestNeighborTransformed(transform_targets(CustomKNeighborsRegressor),
                                   TagsMixin):
     """
     K Nearest Neighbour Regression
@@ -908,6 +955,24 @@ class LogisticRBF(encode_targets(kernelize(LogisticRegression)), TagsMixin):
     pass
 
 
+class TransformedLinearNDInterpolator(
+    transform_targets(SKLearnLinearNDInterpolator), TagsMixin):
+    pass
+
+
+class TransformedNearestNDInterpolator(
+    transform_targets(SKLearnNearestNDInterpolator), TagsMixin):
+    pass
+
+
+class TransformedRbfInterpolator(transform_targets(SKLearnRbf), TagsMixin):
+    pass
+
+
+class TransformedCTInterpolator(transform_targets(SKLearnCT), TagsMixin):
+    pass
+
+
 class MaskRows:
 
     def __init__(self, *Xs):
@@ -1007,6 +1072,14 @@ regressors = {
 }
 
 
+interpolators = {
+    'linear': TransformedLinearNDInterpolator,
+    'nn': TransformedNearestNDInterpolator,
+    'rbf': TransformedRbfInterpolator,
+    'cubic2d': TransformedCTInterpolator,
+}
+
+
 classifiers = {
     'logistic': LogisticClassifier,
     'logisticrbf': LogisticRBF,
@@ -1015,7 +1088,7 @@ classifiers = {
     'boostedtrees': GradBoostedTrees
 }
 
-modelmaps = {**classifiers, **regressors}
+modelmaps = {**classifiers, **regressors, **interpolators}
 
 # Add all kernels for the approximate Gaussian processes here!
 basismap = {

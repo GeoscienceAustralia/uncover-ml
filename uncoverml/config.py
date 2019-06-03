@@ -136,7 +136,7 @@ class Config:
         self.config_yaml = yaml_file  # This will include the full path of the yaml file
 
         with open(yaml_file, 'r') as f:
-            s = yaml.load(f)
+            s = yaml.safe_load(f)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         # TODO expose this option when fixed

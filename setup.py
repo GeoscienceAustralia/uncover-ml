@@ -30,6 +30,10 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
+    git_hash = subprocess.check_output(['git', 'rev-parse',
+                                        'HEAD']).decode().strip()
+    with open('uncoverml/git_hash.py', 'w') as f:
+        f.write("git_hash = '{}'".format(git_hash))
 
 # hash
     git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
@@ -86,7 +90,7 @@ setup(
         'revrand >= 0.9.10',
         'mpi4py == 2.0.0',
         'scipy >= 0.15.1',
-        'scikit-learn >= 0.18.1',
+        'scikit-learn >= 0.21.1',
         'scikit-image >= 0.12.3',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',

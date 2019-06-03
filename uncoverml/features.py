@@ -96,7 +96,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     return x, cull_all_null_rows(feature_sets)
 
 
-def save_intersected_features(feature_sets, transform_sets, config):
+def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config):
     """
     This function saves raw covariates values at the target locations, i.e.,
     after the targets have been intersected.
@@ -114,7 +114,9 @@ def save_intersected_features(feature_sets, transform_sets, config):
              for k in ec
              for b in range(ec[k].shape[3])]
 
+    names += ["X", "Y", config.target_property + "(target)"]
     header = ', '.join(names)
+
     for t in transform_sets:
         dummy_transform = transforms.ImageTransformSet(
             image_transforms=None, imputer=None,
@@ -126,11 +128,21 @@ def save_intersected_features(feature_sets, transform_sets, config):
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
+
+    all_xy = mpiops.comm.gather(targets.positions, root=0)
+    all_targets = mpiops.comm.gather(targets.observations, root=0)
+
     if mpiops.chunk_index == 0:
-        np.savetxt(config.rawcovariates, X=x_all.data, delimiter=',',
+        all_xy = np.ma.concatenate(all_xy, axis=0)
+        all_targets = np.ma.concatenate(all_targets, axis=0)
+        xy = np.atleast_2d(all_xy)
+        t = np.atleast_2d(all_targets).T
+        data = np.hstack((x_all.data, xy, t))
+        np.savetxt(config.rawcovariates, X=data, delimiter=',',
                    fmt='%.4e',
                    header=header)
-        np.savetxt(config.rawcovariates_mask, X=x_all.mask.astype(int),
+        mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
+        np.savetxt(config.rawcovariates_mask, X=mask,
                    delimiter=',', fmt='%d', header=header)
         if config.plot_covariates:
             import matplotlib.pyplot as plt

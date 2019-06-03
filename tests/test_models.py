@@ -4,11 +4,12 @@ import pytest
 from sklearn.metrics import r2_score
 
 from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
-from uncoverml.models import (regressors, classifiers, apply_masked,
-                              apply_multiple_masked)
+from uncoverml.models import (apply_masked,
+                              apply_multiple_masked,
+                              modelmaps)
 from uncoverml.optimise.models import transformed_modelmaps
 
-models = {**classifiers, **regressors, **transformed_modelmaps}
+models = {**transformed_modelmaps, **modelmaps}
 
 
 @pytest.fixture(params=[v for v in models.values()])
