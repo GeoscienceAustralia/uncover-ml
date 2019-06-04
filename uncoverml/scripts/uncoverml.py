@@ -289,47 +289,15 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
 def write_prediction_metadata(model_file, out_filename="metadata.txt"):
     """
-    write the metadata for this prediction result, into a human-readable YAML file.
+    write the metadata for this prediction result, into a human-readable txt file.
     in order to make the ML results traceable and reproduceable (provenance)
     :return:
     """
 
-    from ppretty import ppretty
+    from uncoverml.metadata_profiler import MetadataSummary
 
-    with open(model_file, 'rb') as f:
-        state_dict = pickle.load(f)
-
-    print(type(state_dict))
-    print(state_dict.keys())
-
-    model = state_dict["model"]
-    print(type(model))
-
-    #print("####################### -------------------------------  ####################")
-    print("####################### wrting the properties of the prediction model  ####################")
-    model_str = ppretty(model, indent='  ', width=40, seq_length=10,
-             show_protected=True, show_static=True, show_properties=True, show_address=False,str_length=150)
-
-    config = state_dict["config"]
-
-    #print("#######################  --------------------------------  ####################")
-    print("#######################  writing the properties of the config  ####################")
-
-    config_str = ppretty(config, indent='  ', width=200, seq_length=200,
-              show_protected=True, show_static=True, show_properties=True, show_address=False,  str_length=200)
-
-
-    with open (out_filename, 'w') as outf:
-
-        outf.write("####### Metadata for the prediction results ")
-
-        outf.write("\n####### Summary of the ML Result \n")
-
-        outf.write("\n###### Configuration Info \n")
-        outf.write(config_str)
-
-        outf.write("\n####### Model Info \n")
-        outf.write(model_str)
+    mobj = MetadataSummary(model_file)
+    mobj.write_metadata(out_filename)
 
     return out_filename
 
