@@ -8,14 +8,17 @@ import numpy as np
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
                              confusion_matrix)
+import eli5
+from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
 
 from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
-from uncoverml import predict
+from uncoverml import predict, geoio
 from uncoverml import features as feat
 from uncoverml import targets as targ
 from uncoverml.learn import all_modelmaps as modelmaps
+from uncoverml.optimise.models import transformed_modelmaps
 
 
 log = logging.getLogger(__name__)
@@ -197,6 +200,26 @@ class CrossvalInfo:
         self.y_true = y_true
         self.y_pred = y_pred
         self.classification = classification
+
+
+def permutation_importance(x_all, targets_all, config):
+
+    if config.algorithm not in transformed_modelmaps.keys():
+        raise AttributeError(f"Only the following can be used for permutation "
+                             f"importance {transformed_modelmaps.keys()}")
+
+    model = modelmaps[config.algorithm](**config.algorithm_args)
+
+    y = targets_all.observations
+    pi_cv = apply_multiple_masked(
+        PermutationImportance(model, cv=5, n_iter=10).fit,
+        data=(x_all, y)
+    )
+    feature_names = geoio.feature_names(config)
+    df_picv = eli5.explain_weights_df(
+        pi_cv, feature_names=feature_names, top=100)
+    df_picv.to_csv(config.output_dir + config.name +
+                   "_permutation_importance.csv", index=False)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):

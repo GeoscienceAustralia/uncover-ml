@@ -229,12 +229,15 @@ class Config:
 
         # TODO pipeline this better
         self.rank_features = False
+        self.permutation_importance = False
         self.cross_validate = False
         self.parallel_validate = False
         if s['validation']:
             for i in s['validation']:
                 if i == 'feature_rank':
                     self.rank_features = True
+                if i == 'permutation_importance':
+                    self.permutation_importance = True
                 if i == 'parallel':
                     self.parallel_validate = True
                 if type(i) is dict and 'k-fold' in i:

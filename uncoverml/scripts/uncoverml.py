@@ -61,6 +61,10 @@ def learn(pipeline_file, partitions):
     if config.cross_validate:
         run_crossval(x_all, targets_all, config)
 
+    if config.permutation_importance:
+        ls.mpiops.run_once(ls.validate.permutation_importance, x_all,
+                           targets_all, config)
+
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
