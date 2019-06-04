@@ -140,10 +140,10 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         data = np.hstack((x_all.data, xy, t))
         np.savetxt(config.rawcovariates, X=data, delimiter=',',
                    fmt='%.4e',
-                   header=header)
+                   header=header, comments='')
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
         np.savetxt(config.rawcovariates_mask, X=mask,
-                   delimiter=',', fmt='%d', header=header)
+                   delimiter=',', fmt='%d', header=header, comments='')
         if config.plot_covariates:
             import matplotlib.pyplot as plt
             for i, name in enumerate(names):
