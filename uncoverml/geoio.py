@@ -565,7 +565,9 @@ def create_scatter_plot(outfile_results, config, scores):
         if 'transformedpredict' in f.root:
             transformed_predict = f.get_node("/", "transformedpredict").read()
             to_text.append(transformed_predict)
-        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',')
+        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',',
+                   fmt='%.4e',
+                   header=', '.join(['y_true', 'y_pred', 'y_transformed']))
         plt.figure()
         plt.scatter(y_true, prediction, label='True vs Prediction')
         plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
