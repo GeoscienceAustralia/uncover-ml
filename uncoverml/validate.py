@@ -3,7 +3,7 @@
 from __future__ import division
 import logging
 import copy
-
+from pathlib import Path
 import numpy as np
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
@@ -226,9 +226,10 @@ def permutation_importance(model, x_all, targets_all, config):
             feature_names = geoio.feature_names(config)
             df_picv = eli5.explain_weights_df(
                 pi_cv, feature_names=feature_names, top=100)
-            df_picv.to_csv(config.output_dir + config.name +
-                           "_permutation_importance_{}.csv".format(score),
-                           index=False)
+            csv = Path(config.output_dir).joinpath(
+                config.name + "_permutation_importance_{}.csv".format(
+                    score)).as_posix()
+            df_picv.to_csv(csv, index=False)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
