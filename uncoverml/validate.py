@@ -202,24 +202,31 @@ class CrossvalInfo:
         self.classification = classification
 
 
-def permutation_importance(x_all, targets_all, config):
-
+def permutation_importance(model, x_all, targets_all, config):
+    log.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
         raise AttributeError(f"Only the following can be used for permutation "
                              f"importance {transformed_modelmaps.keys()}")
 
-    model = modelmaps[config.algorithm](**config.algorithm_args)
-
     y = targets_all.observations
-    pi_cv = apply_multiple_masked(
-        PermutationImportance(model, cv=5, n_iter=10).fit,
-        data=(x_all, y)
-    )
-    feature_names = geoio.feature_names(config)
-    df_picv = eli5.explain_weights_df(
-        pi_cv, feature_names=feature_names, top=100)
-    df_picv.to_csv(config.output_dir + config.name +
-                   "_permutation_importance.csv", index=False)
+
+    classification = hasattr(model, 'predict_proba')
+
+    if not classification:
+        for score in ['explained_variance',
+                      'r2',
+                      'neg_mean_absolute_error',
+                      'neg_mean_squared_error']:
+            pi_cv = apply_multiple_masked(
+                PermutationImportance(model, scoring=score,
+                                      cv='prefit', n_iter=10,
+                                      refit=False).fit, data=(x_all, y)
+            )
+            feature_names = geoio.feature_names(config)
+            df_picv = eli5.explain_weights_df(
+                pi_cv, feature_names=feature_names, top=100)
+            df_picv.to_csv(config.output_dir + config.name +
+                           f"_permutation_importance_{score}.csv", index=False)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
