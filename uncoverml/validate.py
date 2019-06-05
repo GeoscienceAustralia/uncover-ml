@@ -205,8 +205,9 @@ class CrossvalInfo:
 def permutation_importance(model, x_all, targets_all, config):
     log.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
-        raise AttributeError(f"Only the following can be used for permutation "
-                             f"importance {transformed_modelmaps.keys()}")
+        raise AttributeError("Only the following can be used for permutation "
+                             "importance {}".format(
+            list(transformed_modelmaps.keys())))
 
     y = targets_all.observations
 
@@ -226,7 +227,8 @@ def permutation_importance(model, x_all, targets_all, config):
             df_picv = eli5.explain_weights_df(
                 pi_cv, feature_names=feature_names, top=100)
             df_picv.to_csv(config.output_dir + config.name +
-                           f"_permutation_importance_{score}.csv", index=False)
+                           "_permutation_importance_{}.csv".format(score),
+                           index=False)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
