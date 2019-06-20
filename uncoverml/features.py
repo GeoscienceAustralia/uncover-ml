@@ -146,7 +146,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                    delimiter=',', fmt='%d', header=header, comments='')
         if config.plot_covariates:
             import matplotlib.pyplot as plt
-            for i, name in enumerate(names):
+            for i, name in enumerate(names[:-3]):
                 log.info('plotting {}'.format(name))
                 plt.figure()
                 vals = x_all[:, i]
