@@ -162,9 +162,10 @@ def _get_data(subchunk, config):
                                     config.final_transform, config)[0]
 
     # only check/correct float32 conversion for Ensemble models
-    if isinstance(modelmaps[config.algorithm](), BaseEnsemble) or  \
-            config.multirandomforest:
-        x = _fix_for_corrupt_data(x, features_names)
+    if not config.clustering:
+        if (isinstance(modelmaps[config.algorithm](), BaseEnsemble) or
+                config.multirandomforest):
+            x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
 

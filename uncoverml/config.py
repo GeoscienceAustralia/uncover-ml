@@ -264,7 +264,9 @@ class Config:
                     self.optimisation['optimisation_output']
 
         self.cluster_analysis = False
+        self.clustering = False
         if 'clustering' in s:
+            self.clustering = True
             self.clustering_algorithm = s['clustering']['algorithm']
             cluster_args = s['clustering']['arguments']
             self.n_classes = cluster_args['n_classes']
