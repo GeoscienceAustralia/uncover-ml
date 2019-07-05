@@ -60,7 +60,9 @@ classification_metrics = {
     'accuracy': lambda y, ey, p: accuracy_score(y, ey),
     'log_loss': lambda y, ey, p: log_loss(y, p),
     'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
-    'confusion': lambda y, ey, p: (confusion_matrix(y, ey) / len(y)).tolist()
+    'mean_confusion': lambda y, ey, p: (confusion_matrix(y, ey)).tolist(),
+    'mean_confusion_normalized': lambda y, ey, p:
+        (confusion_matrix(y, ey) / len(y)).tolist()
 }
 
 
