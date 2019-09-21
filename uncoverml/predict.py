@@ -103,8 +103,6 @@ def _fix_for_corrupt_data(x, feature_names):
     process 0.
 
     """
-    import time
-    t = time.time()
     x_isnan = np.isnan(x)
 
     if x_isnan.any():
