@@ -35,6 +35,12 @@ def build_cubist():
     with open('uncoverml/git_hash.py', 'w') as f:
         f.write("git_hash = '{}'".format(git_hash))
 
+# hash
+    git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+    with open('uncoverml/git_hash.py', 'w') as f: 
+        f.write("git_hash = '{}'".format(git_hash))
+
+
 
 class CustomInstall(install):
     def run(self):
