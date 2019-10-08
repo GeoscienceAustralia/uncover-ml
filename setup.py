@@ -94,6 +94,7 @@ setup(
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
         'pandas == 0.25.1',
+        'ppretty==1.3',
         'matplotlib >= 1.5.1',
         'PyKrige == 1.3.0',
         'xgboost >= 0.72.1',
