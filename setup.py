@@ -41,17 +41,16 @@ def build_cubist():
         f.write("git_hash = '{}'".format(git_hash))
 
 
-
 class CustomInstall(install):
     def run(self):
         build_cubist()
-        install.run(self)
+        install.do_egg_install(self)
 
 
 class CustomDevelop(develop):
     def run(self):
         build_cubist()
-        develop.run(self)
+        develop.do_egg_install(self)
 
 
 setup(
