@@ -58,7 +58,7 @@ def make_missing_data():
 @pytest.fixture()
 def make_random_data():
     
-    def _make_random_data(n=10, m=3):
+    def _make_random_data(n, m):
         rnd = np.random.RandomState(SEED)
         data = rnd.randn(n, m) + 5.0 * np.ones((n, m))
         x = np.ma.masked_array(data)
@@ -130,7 +130,7 @@ def test_NearestNeighbourImputerRowsCleanValueError():
 def test_CentreTransform(make_random_data):
 
     # Generate the expected data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
     x_expected = x - mu
 
     # Apply the CentreTransform
@@ -144,7 +144,7 @@ def test_CentreTransform(make_random_data):
 def test_CentreTransform_caching(make_random_data):
 
     # Generate an initial set of data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
 
     # Apply the CentreTransform to the first dataset to preserve the mean
     x_copy = x.copy()
@@ -174,7 +174,7 @@ def test_PositiveTransform(make_random_data, positive_transform):
 
     func, trans = positive_transform
     # Generate the expected data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
     x_expected = func(x - x.min(axis=0) + 1.0e-6)
 
     # Apply the LogTransform
@@ -189,7 +189,7 @@ def test_PositiveTransform_caching(make_random_data, positive_transform):
 
     func, trans = positive_transform
     # Generate an initial set of data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
 
     # x_expected = np.log(x - x.min(axis=0) + 1.0e-6)
 
@@ -212,7 +212,7 @@ def test_PositiveTransform_caching(make_random_data, positive_transform):
 def test_StandardiseTransform(make_random_data):
 
     # Generate the expected data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
     x_expected = (x - mu) / std
 
     # Apply the StandardiseTransform
@@ -226,7 +226,7 @@ def test_StandardiseTransform(make_random_data):
 def test_StandardiseTransform_caching(make_random_data):
 
     # Generate an initial set of data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
 
     # Apply the CentreTransform to the first dataset to preserve the mean
     x_copy = x.copy()
@@ -246,7 +246,7 @@ def test_StandardiseTransform_caching(make_random_data):
 def test_WhitenTransform(make_random_data):
 
     # Perform the whitening directly to the expected data
-    x, mu, std = make_random_data
+    x, mu, std = make_random_data(10, 3)
 
     # Apply the Whitening using the test function
     whitener = WhitenTransform(1.0)
