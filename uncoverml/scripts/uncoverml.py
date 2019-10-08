@@ -287,7 +287,25 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
+
+    #FZ: create metadata profile for the ML results
+    ls.mpiops.run_once(write_prediction_metadata, model_or_cluster_file, out_filename="metadata.txt")
+
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+def write_prediction_metadata(model_file, out_filename="metadata.txt"):
+    """
+    write the metadata for this prediction result, into a human-readable txt file.
+    in order to make the ML results traceable and reproduceable (provenance)
+    :return:
+    """
+
+    from uncoverml.metadata_profiler import MetadataSummary
+
+    mobj = MetadataSummary(model_file)
+    mobj.write_metadata(out_filename)
+
+    return out_filename
 
 
 def _total_gb():
