@@ -15,8 +15,18 @@ import matplotlib
 matplotlib.use('Agg')
 
 import uncoverml as ls
+import uncoverml.cluster
+import uncoverml.config
+import uncoverml.features
+import uncoverml.geoio
+import uncoverml.learn
+import uncoverml.mllog
+import uncoverml.mpiops
+import uncoverml.predict
+import uncoverml.validate
+import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
-# from uncoverml.mllog import warn_with_traceback
+
 
 _logger = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
@@ -210,7 +220,6 @@ def unsupervised(config):
 @click.option('-r', '--retain', type=int, default=None,
               help="mask values where to predict")
 def predict(model_or_cluster_file, partitions, mask, retain):
-
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = pickle.load(f)
 
