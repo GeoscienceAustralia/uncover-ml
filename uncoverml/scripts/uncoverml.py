@@ -3,7 +3,6 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 .. program-output:: uncoverml --help
 """
-
 import logging
 import pickle
 import resource
@@ -16,25 +15,13 @@ import matplotlib
 matplotlib.use('Agg')
 
 import uncoverml as ls
-import uncoverml.cluster
-import uncoverml.config
-import uncoverml.features
-import uncoverml.geoio
-import uncoverml.learn
-import uncoverml.mllog
-import uncoverml.mpiops
-import uncoverml.predict
-import uncoverml.validate
-import uncoverml.targets
 from uncoverml.transforms import StandardiseTransform
 # from uncoverml.mllog import warn_with_traceback
-
 
 _logger = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
-
 
 @click.group()
 @click.option('-v', '--verbosity',
@@ -43,12 +30,10 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 def cli(verbosity):
     ls.mllog.configure(verbosity)
 
-
 def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all,
                                                   targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
-
 
 @cli.command()
 @click.argument('pipeline_file')
@@ -72,7 +57,6 @@ def learn(pipeline_file, partitions):
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
-
 def _load_data(config, partitions):
     if config.pickle_load:
         x_all = pickle.load(open(config.pickled_covariates, 'rb'))
@@ -80,25 +64,25 @@ def _load_data(config, partitions):
         if config.cubist or config.multicubist:
             config.algorithm_args['feature_type'] = \
                 pickle.load(open(config.featurevec, 'rb'))
-        _logger.warning('Using  pickled targets and covariates. Make sure you have'
-                    ' not changed targets file and/or covariates.')
+        _logger.warning("Using  pickled targets and covariates. Make sure you have"
+                        " not changed targets file and/or covariates.")
     else:
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
             _logger.info("Memory constraint forcing {} iterations "
-                     "through data".format(config.n_subchunks))
+                         "through data".format(config.n_subchunks))
         else:
             _logger.info("Using memory aggressively: "
-                     "dividing all data between nodes")
+                         "dividing all data between nodes")
 
         # Make the targets
         if config.train_data_pk and exists(config.train_data_pk):
-            _logger.info('Reusing pickled training data')
+            _logger.info("Reusing pickled training data")
             image_chunk_sets, transform_sets, targets = \
                 pickle.load(open(config.train_data_pk, 'rb'))
         else:
-            _logger.info('Intersecting targets as pickled train data was not '
-                     'available')
+            _logger.info("Intersecting targets as pickled train data was not "
+                         "available")
             targets = ls.geoio.load_targets(shapefile=config.target_file,
                                             targetfield=config.target_property)
             # Get the image chunks and their associated transforms
@@ -106,7 +90,7 @@ def _load_data(config, partitions):
             transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.rawcovariates:
-            _logger.info('Saving raw data before any processing')
+            _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
                                                               transform_sets,
                                                               targets, config)
@@ -145,26 +129,24 @@ def _load_data(config, partitions):
 
     return targets_all, x_all
 
-
 @cli.command()
 @click.argument('pipeline_file')
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
-              help='only use this fraction of the data for learning classes')
+              help="only use this fraction of the data for learning classes")
 def cluster(pipeline_file, subsample_fraction):
     config = ls.config.Config(pipeline_file)
 
     for f in config.feature_sets:
         if not f.transform_set.global_transforms:
-            raise ValueError('Standardise transform must be used for kmeans')
+            raise ValueError("Standardise transform must be used for kmeans")
         for t in f.transform_set.global_transforms:
             if not isinstance(t, StandardiseTransform):
-                raise ValueError('Only standardise transform is '
-                                 'allowed for kmeans')
+                raise ValueError("Only standardise transform is allowed for kmeans")
 
     config.subsample_fraction = subsample_fraction
     if config.subsample_fraction < 1:
         _logger.info("Memory contstraint: using {:2.2f}%"
-                 " of pixels".format(config.subsample_fraction * 100))
+                     " of pixels".format(config.subsample_fraction * 100))
     else:
         _logger.info("Using memory aggressively: dividing all data between nodes")
 
@@ -173,7 +155,6 @@ def cluster(pipeline_file, subsample_fraction):
     else:
         unsupervised(config)
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
-
 
 def semisupervised(config):
 
@@ -201,7 +182,6 @@ def semisupervised(config):
     model.learn(features, indices, classes)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
-
 def unsupervised(config):
     # make sure we're clear that we're clustering
     config.algorithm = config.clustering_algorithm
@@ -221,15 +201,14 @@ def unsupervised(config):
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
-
 @cli.command()
 @click.argument('model_or_cluster_file')
 @click.option('-p', '--partitions', type=int, default=1,
-              help='divide each node\'s data into this many partitions')
+              help="divide each node\'s data into this many partitions")
 @click.option('-m', '--mask', type=str, default='',
-              help='mask file used to limit prediction area')
+              help="mask file used to limit prediction area")
 @click.option('-r', '--retain', type=int, default=None,
-              help='mask values where to predict')
+              help="mask values where to predict")
 def predict(model_or_cluster_file, partitions, mask, retain):
 
     with open(model_or_cluster_file, 'rb') as f:
@@ -245,13 +224,13 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
         if not isfile(config.mask):
             config.mask = ''
-            _logger.info('A mask was provided, but the file does not exist on '
-                     'disc or is not a file.')
+            _logger.info("A mask was provided, but the file does not exist on "
+                         "disc or is not a file.")
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
         _logger.info("Memory contstraint forcing {} iterations "
-                 "through data".format(config.n_subchunks))
+                     "through data".format(config.n_subchunks))
     else:
         _logger.info("Using memory aggressively: dividing all data between nodes")
 
@@ -289,7 +268,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
         image_out.output_thumbnails(config.thumbnails)
 
     #FZ: create metadata profile for the ML results
-    ls.mpiops.run_once(write_prediction_metadata, model_or_cluster_file, out_filename="metadata.txt")
+    ls.mpiops.run_once(
+        write_prediction_metadata, model_or_cluster_file, out_filename="metadata.txt")
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
@@ -306,7 +286,6 @@ def write_prediction_metadata(model_file, out_filename="metadata.txt"):
     mobj.write_metadata(out_filename)
 
     return out_filename
-
 
 def _total_gb():
     # given in KB so convert
