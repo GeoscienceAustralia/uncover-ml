@@ -30,7 +30,7 @@ from uncoverml.transforms import StandardiseTransform
 # from uncoverml.mllog import warn_with_traceback
 
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
@@ -61,7 +61,7 @@ def learn(pipeline_file, partitions):
     if config.cross_validate:
         run_crossval(x_all, targets_all, config)
 
-    log.info("Learning full {} model".format(config.algorithm))
+    _logger.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
 
     # use trained model
@@ -70,7 +70,7 @@ def learn(pipeline_file, partitions):
                            targets_all, config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
-    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 def _load_data(config, partitions):
@@ -80,24 +80,24 @@ def _load_data(config, partitions):
         if config.cubist or config.multicubist:
             config.algorithm_args['feature_type'] = \
                 pickle.load(open(config.featurevec, 'rb'))
-        log.warning('Using  pickled targets and covariates. Make sure you have'
+        _logger.warning('Using  pickled targets and covariates. Make sure you have'
                     ' not changed targets file and/or covariates.')
     else:
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
-            log.info("Memory constraint forcing {} iterations "
+            _logger.info("Memory constraint forcing {} iterations "
                      "through data".format(config.n_subchunks))
         else:
-            log.info("Using memory aggressively: "
+            _logger.info("Using memory aggressively: "
                      "dividing all data between nodes")
 
         # Make the targets
         if config.train_data_pk and exists(config.train_data_pk):
-            log.info('Reusing pickled training data')
+            _logger.info('Reusing pickled training data')
             image_chunk_sets, transform_sets, targets = \
                 pickle.load(open(config.train_data_pk, 'rb'))
         else:
-            log.info('Intersecting targets as pickled train data was not '
+            _logger.info('Intersecting targets as pickled train data was not '
                      'available')
             targets = ls.geoio.load_targets(shapefile=config.target_file,
                                             targetfield=config.target_property)
@@ -106,7 +106,7 @@ def _load_data(config, partitions):
             transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.rawcovariates:
-            log.info('Saving raw data before any processing')
+            _logger.info('Saving raw data before any processing')
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
                                                               transform_sets,
                                                               targets, config)
@@ -163,16 +163,16 @@ def cluster(pipeline_file, subsample_fraction):
 
     config.subsample_fraction = subsample_fraction
     if config.subsample_fraction < 1:
-        log.info("Memory contstraint: using {:2.2f}%"
+        _logger.info("Memory contstraint: using {:2.2f}%"
                  " of pixels".format(config.subsample_fraction * 100))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
+        _logger.info("Using memory aggressively: dividing all data between nodes")
 
     if config.semi_supervised:
         semisupervised(config)
     else:
         unsupervised(config)
-    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 def semisupervised(config):
@@ -197,7 +197,7 @@ def semisupervised(config):
 
     config.n_classes = ls.cluster.compute_n_classes(classes, config)
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
-    log.info("Clustering image")
+    _logger.info("Clustering image")
     model.learn(features, indices, classes)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
@@ -217,7 +217,7 @@ def unsupervised(config):
 
     features, _ = ls.features.remove_missing(features)
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
-    log.info("Clustering image")
+    _logger.info("Clustering image")
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
@@ -245,15 +245,15 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
         if not isfile(config.mask):
             config.mask = ''
-            log.info('A mask was provided, but the file does not exist on '
+            _logger.info('A mask was provided, but the file does not exist on '
                      'disc or is not a file.')
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
-        log.info("Memory contstraint forcing {} iterations "
+        _logger.info("Memory contstraint forcing {} iterations "
                  "through data".format(config.n_subchunks))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
+        _logger.info("Using memory aggressively: dividing all data between nodes")
 
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
@@ -271,7 +271,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
                                      **config.geotif_options)
 
     for i in range(config.n_subchunks):
-        log.info("starting to render partition {}".format(i+1))
+        _logger.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
 
     # explicitly close output rasters
@@ -291,7 +291,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     #FZ: create metadata profile for the ML results
     ls.mpiops.run_once(write_prediction_metadata, model_or_cluster_file, out_filename="metadata.txt")
 
-    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 def write_prediction_metadata(model_file, out_filename="metadata.txt"):
     """
