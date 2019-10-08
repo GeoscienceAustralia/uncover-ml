@@ -56,15 +56,17 @@ def make_missing_data():
 
 
 @pytest.fixture()
-def make_random_data(n=10, m=3):
+def make_random_data():
+    
+    def _make_random_data(n=10, m=3):
+        rnd = np.random.RandomState(SEED)
+        data = rnd.randn(n, m) + 5.0 * np.ones((n, m))
+        x = np.ma.masked_array(data)
+        mean = np.mean(data, axis=0)
+        standard_deviation = np.std(data, axis=0)
+        return x, mean, standard_deviation
 
-    rnd = np.random.RandomState(SEED)
-    data = rnd.randn(n, m) + 5.0 * np.ones((n, m))
-    x = np.ma.masked_array(data)
-    mean = np.mean(data, axis=0)
-    standard_deviation = np.std(data, axis=0)
-
-    return x, mean, standard_deviation
+    return _make_random_data
 
 
 def test_MeanImputer(make_missing_data):
@@ -257,8 +259,7 @@ def test_WhitenTransform(make_random_data):
     column_products = abs(x_cov[~np.eye(len(x_cov), dtype=bool)])
     assert np.all(np.less(column_products, 1e-5))
 
-
-def test_WhitenTransform_caching():
+def test_WhitenTransform_caching(make_random_data):
 
     # Prestandardise and center an initial dataset
     x, mu, std = make_random_data(6, 3)
