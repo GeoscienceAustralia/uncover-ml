@@ -7,8 +7,8 @@ from mpi4py import MPI
 log = logging.getLogger(__name__)
 
 # We're having trouble with the MPI pickling and 64bit integers
-MPI.pickle.dumps = pickle.dumps
-MPI.pickle.loads = pickle.loads
+# MPI.pickle.dumps = pickle.dumps
+# MPI.pickle.loads = pickle.loads
 
 comm = MPI.COMM_WORLD
 """module-level MPI 'world' object representing all connected nodes

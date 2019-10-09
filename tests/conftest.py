@@ -112,9 +112,9 @@ def make_points():
     return timg, pwidth, points, tpatch
 
 
-@pytest.fixture(params=[make_patch_31, make_patch_11])
+@pytest.fixture
 def make_multi_patch(request):
-    return request.param()
+    return request.getfixturevalue(request.param)
 
 @pytest.fixture
 def shapefile(random_filename, request):

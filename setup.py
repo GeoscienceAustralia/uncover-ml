@@ -3,12 +3,8 @@ import os
 import sys
 import subprocess
 from setuptools import setup
-
-# If testing in python 2, use subprocess32 instead of built in subprocess
-if os.name == 'posix' and sys.version_info[0] < 3:
-    extra_test_deps = ['subprocess32']
-else:
-    extra_test_deps = []
+from setuptools.command.build_py import build_py as _build_py
+from setuptools.command.develop import develop as _develop
 
 readme = open('README.rst').read()
 doclink = """
@@ -19,10 +15,6 @@ The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/.
 """
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-
-
 def build_cubist():
     try:
         from uncoverml import cubist_config
@@ -30,35 +22,35 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
-    git_hash = subprocess.check_output(['git', 'rev-parse',
-                                        'HEAD']).decode().strip()
+
+    git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
     with open('uncoverml/git_hash.py', 'w') as f:
         f.write("git_hash = '{}'".format(git_hash))
 
-# hash
-    git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-    with open('uncoverml/git_hash.py', 'w') as f: 
-        f.write("git_hash = '{}'".format(git_hash))
-
-
-
-class CustomInstall(install):
+class build_py(_build_py):
+    """
+    Override build_py to ensure cubist is installed as part of 'pip install'
+    and when using 'python setup.py install'.
+    """
     def run(self):
         build_cubist()
-        install.run(self)
+        _build_py.run(self)
 
-
-class CustomDevelop(develop):
+class develop(_develop):
+    """
+    Override develop to ensure cubist is installed as part of 'pip -e install'. 
+    """
     def run(self):
         build_cubist()
-        develop.run(self)
-
+        _develop.run(self)
 
 setup(
-    cmdclass={'install': CustomInstall,
-              'develop': CustomDevelop},
+    cmdclass={
+        'build_py': build_py,
+        'develop': develop
+    },
     name='uncover-ml',
-    version='0.1.0',
+    version='0.2.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
@@ -79,27 +71,28 @@ setup(
             'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
+    setup_requires=[
+        'numpy==1.17.2',
+        'Cython==0.29.13',
+    ],
     install_requires=[
-        'numpy >= 1.9.2',
-        'pycontracts == 1.7.9',
-        'tables >= 3.2.2',
-        'rasterio >= 1.0.8',
-        'affine >= 2.2.1',
-        'pyshp == 1.2.3',
-        'click >= 6.6',
-        'revrand >= 0.9.10',
-        'mpi4py == 2.0.0',
-        'scipy >= 0.15.1',
-        'scikit-learn >= 0.21.1',
-        'scikit-image >= 0.12.3',
-        'wheel >= 0.29.0',
-        'PyYAML >= 3.11',
-        'pandas == 0.19.2',
-        'matplotlib >= 1.5.1',
-        'PyKrige == 1.3.0',
-        'xgboost >= 0.72.1',
-        'setuptools >= 30.0.0',
-        'eli5 >= 0.8.2',
+        'tables==3.5.2',
+        'rasterio==1.1.0',
+        'affine==2.3.0',
+        'pyshp==1.2.3',
+        'click==7.0',
+        'revrand==1.0.0',
+        'mpi4py==3.0.2',
+        'scipy==1.3.1',
+        'scikit-learn==0.21.3',
+        'scikit-image==0.15.0',
+        'PyYAML==5.1.2',
+        'pandas==0.25.1',
+        'ppretty==1.3',
+        'matplotlib==3.1.1',
+        'PyKrige==1.3.0',
+        'xgboost==0.90',
+        'eli5==0.10.1',
     ],
     extras_require={
         'kmz': [
@@ -107,16 +100,16 @@ setup(
             'pillow'
         ],
         'dev': [
-
-            'sphinx',
-            'ghp-import',
-            'sphinxcontrib-programoutput',
-            'pytest == 3.7.0',
-            'pytest-cov',
-            'coverage',
-            'codecov',
+            'codecov==2.0.15',
+            'sphinx==2.2.0',
+            'ghp-import==0.5.5',
+            'sphinxcontrib-programoutput==0.15',
+            'pytest==5.2.1',
+            'pytest-cov==2.8.1',
             'tox==3.2.1',
-           ] + extra_test_deps
+            'setuptools==41.4.0',
+            'wheel==0.33.6'
+        ] 
     },
     license="Apache Software License 2.0",
     zip_safe=False,
@@ -127,8 +120,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
