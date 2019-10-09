@@ -3,8 +3,8 @@ import os
 import sys
 import subprocess
 from setuptools import setup
-from setuptools.command.install import install
-from setuptools.command.develop import develop
+from setuptools.command.build_py import build_py as _build_py
+from setuptools.command.develop import develop as _develop
 
 readme = open('README.rst').read()
 doclink = """
@@ -24,25 +24,31 @@ def build_cubist():
         out = subprocess.run(['./cubist/makecubist', '.'])
 
     git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-    with open('uncoverml/git_hash.py', 'w') as f: 
+    with open('uncoverml/git_hash.py', 'w') as f:
         f.write("git_hash = '{}'".format(git_hash))
 
-
-class CustomInstall(install):
+class build_py(_build_py):
+    """
+    Override build_py to ensure cubist is installed as part of 'pip install'
+    and when using 'python setup.py install'.
+    """
     def run(self):
         build_cubist()
-        install.do_egg_install(self)
+        _build_py.run(self)
 
-
-class CustomDevelop(develop):
+class develop(_develop):
+    """
+    Override develop to ensure cubist is installed as part of 'pip -e install'. 
+    """
     def run(self):
         build_cubist()
-        develop.run(self)
-
+        _develop.run(self)
 
 setup(
-    cmdclass={'install': CustomInstall,
-              'develop': CustomDevelop},
+    cmdclass={
+        'build_py': build_py,
+        'develop': develop
+    },
     name='uncover-ml',
     version='0.2.0',
     description='Machine learning tools for the Geoscience Australia uncover '
