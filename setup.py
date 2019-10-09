@@ -57,7 +57,7 @@ setup(
     cmdclass={'install': CustomInstall,
               'develop': CustomDevelop},
     name='uncover-ml',
-    version='0.1.0',
+    version='0.2.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
@@ -130,8 +130,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
