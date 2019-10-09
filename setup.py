@@ -78,8 +78,11 @@ setup(
             'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
+    setup_requires=[
+        'numpy==1.17.2',
+        'Cython==0.29.13',
+    ],
     install_requires=[
-        'numpy == 1.17.2',
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio >= 1.0.8',
