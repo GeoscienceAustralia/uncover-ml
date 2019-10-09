@@ -100,6 +100,7 @@ setup(
             'pillow'
         ],
         'dev': [
+            'codecov==2.0.15',
             'sphinx==2.2.0',
             'ghp-import==0.5.5',
             'sphinxcontrib-programoutput==0.15',
