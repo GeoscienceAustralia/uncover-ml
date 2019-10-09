@@ -90,7 +90,7 @@ setup(
         'pandas==0.25.1',
         'ppretty==1.3',
         'matplotlib==3.1.1',
-        'PyKrige==1.4.1',
+        'PyKrige==1.3.0',
         'xgboost==0.90',
         'eli5==0.10.1',
     ],
