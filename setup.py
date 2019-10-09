@@ -3,12 +3,8 @@ import os
 import sys
 import subprocess
 from setuptools import setup
-
-# If testing in python 2, use subprocess32 instead of built in subprocess
-if os.name == 'posix' and sys.version_info[0] < 3:
-    extra_test_deps = ['subprocess32']
-else:
-    extra_test_deps = []
+from setuptools.command.install import install
+from setuptools.command.develop import develop
 
 readme = open('README.rst').read()
 doclink = """
@@ -19,10 +15,6 @@ The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/.
 """
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-
-
 def build_cubist():
     try:
         from uncoverml import cubist_config
@@ -30,12 +22,7 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
-    git_hash = subprocess.check_output(['git', 'rev-parse',
-                                        'HEAD']).decode().strip()
-    with open('uncoverml/git_hash.py', 'w') as f:
-        f.write("git_hash = '{}'".format(git_hash))
 
-# hash
     git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
     with open('uncoverml/git_hash.py', 'w') as f: 
         f.write("git_hash = '{}'".format(git_hash))
@@ -50,7 +37,7 @@ class CustomInstall(install):
 class CustomDevelop(develop):
     def run(self):
         build_cubist()
-        develop.do_egg_install(self)
+        develop.run(self)
 
 
 setup(
@@ -79,7 +66,7 @@ setup(
         ]
     },
     setup_requires=[
-        'numpy==1.17.2',
+        'numpy',
         'Cython==0.29.13',
     ],
     install_requires=[
@@ -119,7 +106,7 @@ setup(
             'coverage',
             'codecov',
             'tox==3.2.1',
-           ] + extra_test_deps
+        ] 
     },
     license="Apache Software License 2.0",
     zip_safe=False,
