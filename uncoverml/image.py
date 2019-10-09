@@ -164,18 +164,15 @@ class Image:
         eff_bbox = self.pix2lonlat(xy)
         return eff_bbox
 
-    # @contract(xy='array[Nx2](int64),N>0')
     def _global_pix2lonlat(self, xy):
         result = np.array([[self._pix_x_to_coords[x],
                            self._pix_y_to_coords[y]] for x, y in xy])
         return result
 
-    # @contract(xy='array[Nx2](int64),N>0')
     def pix2lonlat(self, xy):
         result = self._global_pix2lonlat(xy + self._offset)
         return result
 
-    # @contract(lonlat='array[Nx2](float64),N>0')
     def _global_lonlat2pix(self, lonlat):
         x = np.searchsorted(self._coords_x, lonlat[:, 0], side='right') - 1
         x = x.astype(int)
@@ -197,7 +194,6 @@ class Image:
         result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)
         return result
 
-    # @contract(lonlat='array[Nx2](float64),N>0')
     def lonlat2pix(self, lonlat):
         result = self._global_lonlat2pix(lonlat) - self._offset
         # check the postcondition
