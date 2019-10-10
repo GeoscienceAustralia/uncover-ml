@@ -57,7 +57,7 @@ html:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-ghp: html
+ghp:
 	ghp-import -n -p $(BUILDDIR)/html
 	@echo "Deployment to Github Pages finished."
 
