@@ -107,7 +107,6 @@ setup(
             'sphinxcontrib-programoutput==0.15',
             'pytest==5.2.1',
             'pytest-cov==2.8.1',
-            'tox==3.2.1',
             'twine==2.0.0',
             'setuptools==41.4.0',
             'wheel==0.33.6'
