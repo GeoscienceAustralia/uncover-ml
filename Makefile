@@ -26,7 +26,6 @@ docs:
 	sphinx-apidoc -o docs/ uncoverml
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
 
 test:
 	pytest ./tests 
