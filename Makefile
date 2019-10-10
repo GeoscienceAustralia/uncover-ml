@@ -33,3 +33,12 @@ test:
 
 coverage:
 	pytest --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
+
+dist: clean
+	python setup.py sdist
+	python setup.py bdist_wheel
+	ls -l dist
+
+release: dist
+	twine upload dist/*
+
