@@ -10,6 +10,7 @@ Added
 - Metadata profiler.
 - Codecov integration.
 - 'dist' and 'release' steps to Makefile.
+- Doc deployment from CircleCI on master commits.
 
 Fixed
 +++++
