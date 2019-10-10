@@ -167,6 +167,9 @@ def main(mf):
 
 # =============================================
 # Section for quick test of this script
+#
+# cd /g/data1a/ha3/fxz547/Githubz/uncover_fei_branch_backup/tmp_run/GA-cover2
+$ python /g/data/ha3/fxz547/Githubz/uncover-ml/uncoverml/metadata_profiler.py demo_regression.model
 # ---------------------------------------------
 if __name__ == "__main__":
     # call main function
