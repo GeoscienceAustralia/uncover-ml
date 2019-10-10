@@ -1,12 +1,15 @@
-.PHONY: help clean clean-pyc clean-build list test test-all coverage docs release sdist
+.PHONY: help clean clean-pyc clean-build lint test coverage docs ghp dist release
 
 help:
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
-	@echo "lint - check style with flake8"
+	@echo "lint - check style with pylint"
 	@echo "test - run tests quickly with the default Python"
-	@echo "coverage - check code coverage quickly with the default Python"
+	@echo "coverage - check code coverage"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
+	@echo "ghp - upload docs to github pages"
+	@echo "dist - build source and wheel distributions"
+	@echo "release - upload source and wheel distributions to PyPi."
 
 clean: clean-build clean-pyc
 
@@ -27,6 +30,12 @@ docs:
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
+ghp: docs
+	$(MAKE) -C docs ghp
+
+lint:
+	pylint uncoverml
+
 test:
 	pytest ./tests 
 
@@ -40,4 +49,3 @@ dist: clean
 
 release: dist
 	twine upload dist/*
-
