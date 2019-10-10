@@ -3,7 +3,10 @@ uncover ML
 ==========
 
 .. image:: https://circleci.com/gh/GeoscienceAustralia/uncover-ml/tree/master.svg?style=svg
-    :target: https://circleci.com/gh/GeoscienceAustralia/uncover-ml/tree/master
+    :target: https://circleci.com/gh/GeoscienceAustralia/uncover-ml/tree/master  
+    
+.. image:: https://codecov.io/gh/GeoscienceAustralia/uncover-ml/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/GeoscienceAustralia/uncover-ml
 
 Machine learning tools for the Geoscience Australia uncover project.
 
