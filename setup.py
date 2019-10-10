@@ -103,6 +103,7 @@ setup(
             'codecov==2.0.15',
             'sphinx==2.2.0',
             'ghp-import==0.5.5',
+            'IPython==7.8.0',
             'sphinxcontrib-programoutput==0.15',
             'pytest==5.2.1',
             'pytest-cov==2.8.1',
