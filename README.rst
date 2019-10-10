@@ -9,9 +9,11 @@ uncover ML
 
 Machine learning tools for the Geoscience Australia uncover project.
 
-.. include:: docs/installation.rst
+Installation
+------------
 
-.. include:: docs/usage.rst
+Usage
+-----
 
 Useful Links
 ------------
