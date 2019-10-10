@@ -3,11 +3,15 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.7
+
     working_directory: ~/uncover-ml
+
     steps:
       - checkout
+
       - restore_cache:  
           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+
       - run:
           name: Install uncoverml 
           command: |
@@ -20,20 +24,23 @@ jobs:
             . venv/bin/activate
             pip3 install -U pip numpy==1.17.2 cython==0.29.13
             pip3 install .[dev]
-        - run:
-            name: Run tests and generate coverage report
-            command: | 
-              . venv/bin/activate
-              make coverage
-              codecov
-        - run: 
-            name: Deploy docs
-            command: |
-              if [ "$CIRCLE_BRANCH" = "bren-docs" ]; then
-                . venv/bin/activate
-                make ghp
-              fi 
-    - save_cache: 
-        key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
-        paths:
-        - "venv"
+
+      - run:
+         name: Run tests and generate coverage report
+         command: | 
+           . venv/bin/activate
+           make coverage
+           codecov
+
+      - run: 
+         name: Deploy docs
+         command: |
+           if [ "$CIRCLE_BRANCH" = "bren-docs" ]; then
+             . venv/bin/activate
+             make ghp
+           fi
+ 
+      - save_cache: 
+          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+          paths:
+            - "venv"
