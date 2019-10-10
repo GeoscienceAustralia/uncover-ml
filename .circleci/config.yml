@@ -2,33 +2,39 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/python:3.7
+      - image: circleci/python:3.7
     working_directory: ~/uncover-ml
     steps:
-    - checkout
-    - restore_cache:  
-       key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
-    - run: mkdir -p test_output/pytest test_output/flake8 test_output/coverage
-    - run: cubist/makecubist .
-    - run:  
-        command: |
-          sudo apt-get install gdal-bin libgdal-dev
-          sudo apt-get install libblas-dev liblapack-dev
-          sudo apt-get install libatlas-base-dev
-          sudo apt-get install gfortran libproj-dev openmpi-bin libopenmpi-dev
-
-    - run:  
-       command: |
-          python3 -m venv venv
-          . venv/bin/activate
-          pip3 install -U pip numpy==1.17.2 cython==0.29.13
-          pip3 install .[dev]
+      - checkout
+      - restore_cache:  
+          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+      - run:
+          name: Install uncoverml 
+          command: |
+            cubist/makecubist .
+            sudo apt-get install gdal-bin libgdal-dev
+            sudo apt-get install libblas-dev liblapack-dev
+            sudo apt-get install libatlas-base-dev
+            sudo apt-get install gfortran libproj-dev openmpi-bin libopenmpi-dev
+            python3 -m venv venv
+            . venv/bin/activate
+            pip3 install -U pip numpy==1.17.2 cython==0.29.13
+            pip3 install .[dev]
+        - run:
+            name: Run tests and generate coverage report
+            command: | 
+              . venv/bin/activate
+              make coverage
+              codecov
+        - run: 
+            name: Deploy docs
+            command: |
+              if [ "$CIRCLE_BRANCH" = "bren-docs" ]; then
+                . venv/bin/activate
+                make ghp
+              fi 
+            
     - save_cache: 
         key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
         paths:
         - "venv"
-    - run: 
-        command: |
-          . venv/bin/activate
-          make coverage
-          codecov
