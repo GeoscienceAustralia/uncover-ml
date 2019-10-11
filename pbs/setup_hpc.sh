@@ -7,6 +7,8 @@ module load openmpi/2.1.1
 module load hdf5/1.8.10
 module load geos/3.5.0
 
+pip3 install --user virtualenv virtualenvwrapper
+
 export PATH=$HOME/.local/bin:$PATH
 export PYTHONPATH=$HOME/.local/lib/python3.7/site-packages:$PYTHONPATH
 export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.7.2/bin/python3                 
