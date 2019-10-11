@@ -19,13 +19,14 @@ def build_cubist():
     try:
         from uncoverml import cubist_config
         out = subprocess.run([cubist_config.invocation, '-h'])
-        print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
 
+    print(out)
     git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
     with open('uncoverml/git_hash.py', 'w') as f:
         f.write("git_hash = '{}'".format(git_hash))
+
 
 class build_py(_build_py):
     """
@@ -36,6 +37,7 @@ class build_py(_build_py):
         build_cubist()
         _build_py.run(self)
 
+
 class develop(_develop):
     """
     Override develop to ensure cubist is installed as part of 'pip -e install'. 
@@ -43,6 +45,7 @@ class develop(_develop):
     def run(self):
         build_cubist()
         _develop.run(self)
+
 
 setup(
     cmdclass={
@@ -71,17 +74,15 @@ setup(
             'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
-    setup_requires=[
-        'numpy==1.17.2',
-        'Cython==0.29.13',
-    ],
     install_requires=[
+        'Cython==0.29.13',
         'tables==3.5.2',
         'rasterio==1.1.0',
         'affine==2.3.0',
         'pyshp==1.2.3',
         'click==7.0',
         'revrand==1.0.0',
+        'numpy==1.17.2',
         'mpi4py==3.0.2',
         'scipy==1.3.1',
         'scikit-learn==0.21.3',
