@@ -109,7 +109,8 @@ setup(
             'pytest-cov==2.8.1',
             'twine==2.0.0',
             'setuptools==41.4.0',
-            'wheel==0.33.6'
+            'wheel==0.33.6',
+            'sphinx_rtd_theme==0.4.3'
         ] 
     },
     license="Apache Software License 2.0",
