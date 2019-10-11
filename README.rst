@@ -18,6 +18,13 @@ Before you start, make sure your system has the following packages installed,
 - openmpi
 - hdf5
 
+And your Python environment has:
+
+- numpy
+- scipy
+- matplotlib
+- Cython
+
 We strongly recommend using a virtual environment.
 To install, simply run ``setup.py``:
 
