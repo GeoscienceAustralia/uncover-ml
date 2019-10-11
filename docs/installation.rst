@@ -8,7 +8,7 @@ UncoverML supports Ubuntu 18.04 with Python 3.6 or Python 3.7.
 
 The following instructions may be used for other Linux distributions but the packages and package
 manager used may be different. If you require help using uncoverML with a different Linux 
-Linux distribution, ask for help on our 
+distribution, ask for help on our 
 `Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.
 
 Before installing UncoverML, ensure your OS has the following packages:
@@ -45,7 +45,7 @@ Once created, activate the venv with:
 
     source /path/to/your/venv/bin/activate
 
-With your environment activate, there are some packages that must be installed before uncoverML.
+With your environment activated, there are some packages that must be installed before uncoverML.
 Install these with pip:
 
 .. code:: bash
@@ -60,7 +60,7 @@ Python Package Index using:
     
     pip install uncoverml
 
-To install from the repository, clone using git:
+Alternatively to install from the repository, clone using git:
 
 .. code:: bash
 
@@ -120,8 +120,8 @@ Setup virtualenv by exporting some environment variables and activating the virt
 For convenience, the above commands can be placed in your ``~/.profile``. This will run the above
 commands everytime you open a new session on Raijin. Alternatively, if you already have a 
 configuration in your path you'd like to preserve but don't want to type the above commands
-every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` to perform the above commands as 
-needed.
+every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` script to perform the above 
+commands as needed.
 
 Create a virtualenv for uncoverML and activate it:
 
