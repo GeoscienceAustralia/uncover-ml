@@ -1,47 +1,159 @@
 Installation
 ============
 
-Before you start, make sure your system has the following packages installed,
+Ubuntu 18.04
+------------
 
-- gdal (libgdal-dev)
+UncoverML supports Ubuntu 18.04 with Python 3.6 or Python 3.7. 
+
+The following instructions may be used for other Linux distributions but the packages and package
+manager used may be different. If you require help using uncoverML with a different Linux 
+distribution, ask for help on our 
+`Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.
+
+Before installing UncoverML, ensure your OS has the following packages:
+
+- gdal
 - openmpi
 - hdf5
 
-We **strongly** recommend using a virtual environment.
-To install, simply run ``setup.py``:
+These can be installed with the following commands:
 
-.. code:: console
+.. code:: bash
 
-   $ python setup.py install
+    sudo apt-get install \
+        gdal-bin libgdal-dev \
+        libblas-dev liblapack-dev \
+        libatlas-base-dev libproj-dev \
+        gfortran \
+        openmpi-bin libopenmpi-dev
 
-or install with ``pip``:
+It's recommended to use a Python virtual environment (venv) when installing UncoverML. This will
+prevent packages that it requires from conflicting with any exist Python environments.
 
-.. code:: console
+To create a virtual environment, run in your shell:
 
-   $ pip install git+https://github.com/nicta/uncover-ml.git@release
+.. code:: bash
 
-The python requirements should automatically be built and installed.
+    python3 -m venv /path/to/your/venv
 
-Cubist
-------
+where ``/path/to/your/venv`` is the directory where the venv will exist.
 
-In order to use the cubist regressor, you need to first make sure cubist is
-installed. This is easy with our simple installation script, invoke it with:
+Once created, activate the venv with:
 
-.. code:: console
+.. code:: bash
+
+    source /path/to/your/venv/bin/activate
+
+With your environment activated, there are some packages that must be installed before uncoverML.
+Install these with pip:
+
+.. code:: bash
+
+    pip install -U pip setuptools
+    pip install numpy scipy matplotlib Cython
+
+You are now ready to install uncoverML. The latest stable release can be installed from the 
+Python Package Index using:
+
+.. code:: bash
     
-    $ ./makecubist <installation-path>
+    pip install uncoverml
 
-Once cubist is installed, it will add a configuration file to the script. If
-you like, you can test that it's been installed in the correct place by
-checking the contents of `uncover-ml/cubist_config.py`, its presence indicates
-that the installation completed successfully.
+Alternatively to install from the repository, clone using git:
 
-Next you need to rerun the setup script with:
+.. code:: bash
 
-.. code:: console
+    git clone git@github.com:GeoscienceAustralia/uncover-ml
 
-    $ python setup.py install
+Once in the cloned repository, checkout the desired branch and install with pip:
 
-Which will ensure the `cubist_config` has been added successfully. Now you
-should be able to use the cubist regressor in the pipeline file.
+.. code:: bash
+    
+    git checkout branch-to-install
+    pip install .
+
+.. todo::
+    
+    Need to include a simple workflow for testing the installation here.
+
+This completes the installation. Check out the :ref:`Usage` documentation to get started using
+UncoverML.
+
+HPC
+---
+
+The following instructions refer specifically to NCI's Raijin, but may be applicable to other
+HPC environments running PBS and MPI.
+
+The first step is to unload unrequired and load required system modules:
+
+.. code:: bash
+
+    module unload intel-cc
+    module unload intel-fc
+
+    module load python3/3.7.2
+    module load gdal/2.2.2
+    module load openmpi/2.1.1
+    moudle load hdf5/1.8.10
+    module load geos/3.5.0
+
+It's recommended to use virtualenv on Raijin. Install it with pip:
+
+.. code:: bash
+
+    pip3 install --user virtualenv virtualenvwrapper
+
+Setup virtualenv by exporting some environment variables and activating the virtualenv wrapper:
+
+.. code:: bash
+
+    export PATH=$HOME/.local/bin:$PATH
+    export PYTHONPATH=$HOME/.local/lib/python3.4/site-packages:$PYTHONPATH
+    export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
+    export LC_ALL=en_AU.UTF-8
+    export LANG=en_AU.UTF-8
+
+    source $HOME/.local/bin/virtualenvwrapper.sh 
+
+For convenience, the above commands can be placed in your ``~/.profile``. This will run the above
+commands everytime you open a new session on Raijin. Alternatively, if you already have a 
+configuration in your path you'd like to preserve but don't want to type the above commands
+every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` script to perform the above 
+commands as needed.
+
+Create a virtualenv for uncoverML and activate it:
+
+.. code:: bash
+
+    mkvirtualenv --system-site-packages uncoverml
+    workon uncoverml
+
+Next, clone and install uncoverml:
+
+.. code:: bash
+
+    git clone git@github.com:geoscienceaustralia/uncover-ml
+    cd uncover-ml
+    python setup.py install
+
+.. todo::
+    
+    Need to include a simple workflow for testing the installation here (can be run on login node).
+    Tests don't count because they require dev requirements and shouldn't need to be installed
+    for an average user.
+
+This completes the installation. Check out the :ref:`Usage` documentation to get started using
+uncoverML.
+
+Reusing Shared Virtualenv
++++++++++++++++++++++++++
+
+An alternative to the above installation is to activate the shared uncoverml virtual environment. 
+On Raijin, activate by running:
+
+.. code:: bash
+
+    source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
+

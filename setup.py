@@ -104,13 +104,14 @@ setup(
             'codecov==2.0.15',
             'sphinx==2.2.0',
             'ghp-import==0.5.5',
+            'IPython==7.8.0',
             'sphinxcontrib-programoutput==0.15',
             'pytest==5.2.1',
             'pytest-cov==2.8.1',
-            'tox==3.2.1',
             'twine==2.0.0',
             'setuptools==41.4.0',
-            'wheel==0.33.6'
+            'wheel==0.33.6',
+            'sphinx_rtd_theme==0.4.3'
         ] 
     },
     license="Apache Software License 2.0",
