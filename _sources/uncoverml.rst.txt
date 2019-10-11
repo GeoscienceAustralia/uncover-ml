@@ -1,0 +1,183 @@
+uncoverml package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+
+   uncoverml.optimise
+   uncoverml.scripts
+   uncoverml.transforms
+
+Submodules
+----------
+
+uncoverml.cluster module
+------------------------
+
+.. automodule:: uncoverml.cluster
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.config module
+-----------------------
+
+.. automodule:: uncoverml.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.cubist module
+-----------------------
+
+.. automodule:: uncoverml.cubist
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.cubist\_config module
+-------------------------------
+
+.. automodule:: uncoverml.cubist_config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.features module
+-------------------------
+
+.. automodule:: uncoverml.features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.filtering module
+--------------------------
+
+.. automodule:: uncoverml.filtering
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.geoio module
+----------------------
+
+.. automodule:: uncoverml.geoio
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.image module
+----------------------
+
+.. automodule:: uncoverml.image
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.interpolate module
+----------------------------
+
+.. automodule:: uncoverml.interpolate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.krige module
+----------------------
+
+.. automodule:: uncoverml.krige
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.learn module
+----------------------
+
+.. automodule:: uncoverml.learn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.likelihoods module
+----------------------------
+
+.. automodule:: uncoverml.likelihoods
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.metadata\_profiler module
+-----------------------------------
+
+.. automodule:: uncoverml.metadata_profiler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.mllog module
+----------------------
+
+.. automodule:: uncoverml.mllog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.models module
+-----------------------
+
+.. automodule:: uncoverml.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.mpiops module
+-----------------------
+
+.. automodule:: uncoverml.mpiops
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.patch module
+----------------------
+
+.. automodule:: uncoverml.patch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.predict module
+------------------------
+
+.. automodule:: uncoverml.predict
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.targets module
+------------------------
+
+.. automodule:: uncoverml.targets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.validate module
+-------------------------
+
+.. automodule:: uncoverml.validate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: uncoverml
+   :members:
+   :undoc-members:
+   :show-inheritance:

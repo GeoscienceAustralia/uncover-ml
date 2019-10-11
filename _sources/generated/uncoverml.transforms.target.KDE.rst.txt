@@ -1,0 +1,25 @@
+uncoverml.transforms.target.KDE
+===============================
+
+.. currentmodule:: uncoverml.transforms.target
+
+.. autoclass:: KDE
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~KDE.__init__
+      ~KDE.fit
+      ~KDE.itransform
+      ~KDE.transform
+   
+   
+
+   
+   
+   

@@ -1,0 +1,22 @@
+uncoverml.scripts.gridsearch
+============================
+
+.. automodule:: uncoverml.scripts.gridsearch
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      setup_pipeline
+   
+   
+
+   
+   
+   
+
+   
+   
+   

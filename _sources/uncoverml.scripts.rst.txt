@@ -1,0 +1,54 @@
+uncoverml.scripts package
+=========================
+
+Submodules
+----------
+
+uncoverml.scripts.gammasensor module
+------------------------------------
+
+.. automodule:: uncoverml.scripts.gammasensor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.gridsearch module
+-----------------------------------
+
+.. automodule:: uncoverml.scripts.gridsearch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.subsampletargets module
+-----------------------------------------
+
+.. automodule:: uncoverml.scripts.subsampletargets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.tiff2kmz module
+---------------------------------
+
+.. automodule:: uncoverml.scripts.tiff2kmz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.uncoverml module
+----------------------------------
+
+.. automodule:: uncoverml.scripts.uncoverml
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: uncoverml.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:

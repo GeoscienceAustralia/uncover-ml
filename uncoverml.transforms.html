@@ -1,0 +1,559 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>uncoverml.transforms package &mdash; uncoverml 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Command Line Scripts" href="scripts.html" />
+    <link rel="prev" title="uncoverml.scripts package" href="uncoverml.scripts.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> uncoverml
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">uncoverml</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="uncoverml.html">uncoverml package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="uncoverml.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="uncoverml.optimise.html">uncoverml.optimise package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="uncoverml.scripts.html">uncoverml.scripts package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">uncoverml.transforms package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.cluster">uncoverml.cluster module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.config">uncoverml.config module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.cubist">uncoverml.cubist module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.cubist_config">uncoverml.cubist_config module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.features">uncoverml.features module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.filtering">uncoverml.filtering module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.geoio">uncoverml.geoio module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.image">uncoverml.image module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.interpolate">uncoverml.interpolate module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.krige">uncoverml.krige module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.learn">uncoverml.learn module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.likelihoods">uncoverml.likelihoods module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#uncoverml-metadata-profiler-module">uncoverml.metadata_profiler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.mllog">uncoverml.mllog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.models">uncoverml.models module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.mpiops">uncoverml.mpiops module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.patch">uncoverml.patch module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.predict">uncoverml.predict module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.targets">uncoverml.targets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.validate">uncoverml.validate module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">uncoverml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">uncoverml</a> &raquo;</li>
+        
+          <li><a href="uncoverml.html">uncoverml package</a> &raquo;</li>
+        
+      <li>uncoverml.transforms package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/uncoverml.transforms.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="uncoverml-transforms-package">
+<h1>uncoverml.transforms package<a class="headerlink" href="#uncoverml-transforms-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-uncoverml.transforms.impute">
+<span id="uncoverml-transforms-impute-module"></span><h2>uncoverml.transforms.impute module<a class="headerlink" href="#module-uncoverml.transforms.impute" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uncoverml.transforms.impute.GaussImputer">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.impute.</code><code class="sig-name descname">GaussImputer</code><a class="headerlink" href="#uncoverml.transforms.impute.GaussImputer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gaussian Imputer.</p>
+<p>This imputer fits a Gaussian to the data, then conditions on this Gaussian
+to interpolate missing data. This is effectively the same as using a linear
+regressor to impute the missing data, given all of the non-missing
+dimensions.</p>
+<dl class="simple">
+<dt>Have a look at:</dt><dd><p><a class="reference external" href="https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions">https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions</a></p>
+</dd>
+</dl>
+<p>We use the precision (inverse covariance) form of the Gaussian for
+computational efficiency.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.impute.MeanImputer">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.impute.</code><code class="sig-name descname">MeanImputer</code><a class="headerlink" href="#uncoverml.transforms.impute.MeanImputer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simple mean imputation.</p>
+<p>Replaces the missing values in x, with the mean of x.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.impute.NearestNeighboursImputer">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.impute.</code><code class="sig-name descname">NearestNeighboursImputer</code><span class="sig-paren">(</span><em class="sig-param">nodes=500</em>, <em class="sig-param">k=3</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.NearestNeighboursImputer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Nearest neighbour imputation.</p>
+<p>This builds up a KD tree using random points (without missing data), then
+fills in the missing data in query points with values from thier average
+nearest neighbours.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes</strong> (<em>int</em><em>, </em><em>optional</em>) – maximum number of points to use as nearest neightbours.</p></li>
+<li><p><strong>k</strong> (<em>int</em><em>, </em><em>optional</em>) – number of neighbours to average for missing values.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.impute.impute_with_mean">
+<code class="sig-prename descclassname">uncoverml.transforms.impute.</code><code class="sig-name descname">impute_with_mean</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">mean</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.impute_with_mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.transforms.linear">
+<span id="uncoverml-transforms-linear-module"></span><h2>uncoverml.transforms.linear module<a class="headerlink" href="#module-uncoverml.transforms.linear" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uncoverml.transforms.linear.CentreTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">CentreTransform</code><a class="headerlink" href="#uncoverml.transforms.linear.CentreTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.linear.LogTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">LogTransform</code><span class="sig-paren">(</span><em class="sig-param">stabilizer=1e-06</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.linear.LogTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.linear.PositiveTransform" title="uncoverml.transforms.linear.PositiveTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.linear.PositiveTransform</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.linear.PositiveTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">PositiveTransform</code><span class="sig-paren">(</span><em class="sig-param">stabilizer=1e-06</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.linear.PositiveTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.linear.SqrtTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">SqrtTransform</code><span class="sig-paren">(</span><em class="sig-param">stabilizer=1e-06</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.linear.SqrtTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.linear.PositiveTransform" title="uncoverml.transforms.linear.PositiveTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.linear.PositiveTransform</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.linear.StandardiseTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">StandardiseTransform</code><a class="headerlink" href="#uncoverml.transforms.linear.StandardiseTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.linear.WhitenTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.linear.</code><code class="sig-name descname">WhitenTransform</code><span class="sig-paren">(</span><em class="sig-param">keep_fraction</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.linear.WhitenTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.transforms.onehot">
+<span id="uncoverml-transforms-onehot-module"></span><h2>uncoverml.transforms.onehot module<a class="headerlink" href="#module-uncoverml.transforms.onehot" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uncoverml.transforms.onehot.OneHotTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.onehot.</code><code class="sig-name descname">OneHotTransform</code><a class="headerlink" href="#uncoverml.transforms.onehot.OneHotTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.onehot.RandomHotTransform">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.onehot.</code><code class="sig-name descname">RandomHotTransform</code><span class="sig-paren">(</span><em class="sig-param">n_features</em>, <em class="sig-param">seed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.onehot.RandomHotTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.onehot.compute_unique_values">
+<code class="sig-prename descclassname">uncoverml.transforms.onehot.</code><code class="sig-name descname">compute_unique_values</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.onehot.compute_unique_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute per-dimension unique values over a data vector</p>
+<p>This function computes the set of unique values for each dimension in
+x, unless the number of unique values exceeds max_onehot_dims.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>ndarray</em><em> (</em><em>n x m</em><em>)</em>) – The array over which to compute unique values. The set is over
+the first dimension</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>x_sets</strong> – A list of m sets of unique values for each dimension in x</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.onehot.one_hot">
+<code class="sig-prename descclassname">uncoverml.transforms.onehot.</code><code class="sig-name descname">one_hot</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">x_set</em>, <em class="sig-param">matrices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.onehot.one_hot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.onehot.sets">
+<code class="sig-prename descclassname">uncoverml.transforms.onehot.</code><code class="sig-name descname">sets</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.onehot.sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>works on a masked x</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.transforms.target">
+<span id="uncoverml-transforms-target-module"></span><h2>uncoverml.transforms.target module<a class="headerlink" href="#module-uncoverml.transforms.target" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uncoverml.transforms.target.Identity">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Identity</code><a class="headerlink" href="#uncoverml.transforms.target.Identity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.Identity.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Identity.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Identity.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Identity.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Identity.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Identity.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.KDE">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">KDE</code><a class="headerlink" href="#uncoverml.transforms.target.KDE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.KDE.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.KDE.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.KDE.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.KDE.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.KDE.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.KDE.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.Log">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Log</code><span class="sig-paren">(</span><em class="sig-param">offset=0.0</em>, <em class="sig-param">replace_zeros=True</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.Log.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Log.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Log.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Log.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Log.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Log.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.Logistic">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Logistic</code><span class="sig-paren">(</span><em class="sig-param">scale=1</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Logistic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.Logistic.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Logistic.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Logistic.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Logistic.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.RankGaussian">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">RankGaussian</code><a class="headerlink" href="#uncoverml.transforms.target.RankGaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<p>Forces the marginal histogram to be Gaussian.</p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.RankGaussian.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.RankGaussian.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.RankGaussian.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.RankGaussian.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.RankGaussian.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.RankGaussian.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.Sqrt">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Sqrt</code><span class="sig-paren">(</span><em class="sig-param">offset=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Sqrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.Sqrt.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Sqrt.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Sqrt.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Sqrt.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.target.Standardise">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Standardise</code><a class="headerlink" href="#uncoverml.transforms.target.Standardise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.target.Identity" title="uncoverml.transforms.target.Identity"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.target.Identity</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.transforms.target.Standardise.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Standardise.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Standardise.itransform">
+<code class="sig-name descname">itransform</code><span class="sig-paren">(</span><em class="sig-param">y_transformed</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Standardise.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.transforms.target.Standardise.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Standardise.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.transforms.transformset">
+<span id="uncoverml-transforms-transformset-module"></span><h2>uncoverml.transforms.transformset module<a class="headerlink" href="#module-uncoverml.transforms.transformset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="uncoverml.transforms.transformset.ImageTransformSet">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.transformset.</code><code class="sig-name descname">ImageTransformSet</code><span class="sig-paren">(</span><em class="sig-param">image_transforms=None</em>, <em class="sig-param">imputer=None</em>, <em class="sig-param">global_transforms=None</em>, <em class="sig-param">is_categorical=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.transformset.ImageTransformSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.transforms.transformset.TransformSet" title="uncoverml.transforms.transformset.TransformSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.transforms.transformset.TransformSet</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="uncoverml.transforms.transformset.TransformSet">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.transformset.</code><code class="sig-name descname">TransformSet</code><span class="sig-paren">(</span><em class="sig-param">imputer=None</em>, <em class="sig-param">transforms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.transformset.TransformSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.transformset.build_feature_vector">
+<code class="sig-prename descclassname">uncoverml.transforms.transformset.</code><code class="sig-name descname">build_feature_vector</code><span class="sig-paren">(</span><em class="sig-param">image_chunks</em>, <em class="sig-param">is_categorical</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.transformset.build_feature_vector" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.transforms.transformset.missing_percentage">
+<code class="sig-prename descclassname">uncoverml.transforms.transformset.</code><code class="sig-name descname">missing_percentage</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.transformset.missing_percentage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.transforms">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncoverml.transforms" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="scripts.html" class="btn btn-neutral float-right" title="Command Line Scripts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="uncoverml.scripts.html" class="btn btn-neutral float-left" title="uncoverml.scripts package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

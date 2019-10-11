@@ -1,0 +1,22 @@
+uncoverml.optimise package
+==========================
+
+Submodules
+----------
+
+uncoverml.optimise.models module
+--------------------------------
+
+.. automodule:: uncoverml.optimise.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: uncoverml.optimise
+   :members:
+   :undoc-members:
+   :show-inheritance:

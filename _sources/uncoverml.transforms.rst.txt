@@ -1,0 +1,54 @@
+uncoverml.transforms package
+============================
+
+Submodules
+----------
+
+uncoverml.transforms.impute module
+----------------------------------
+
+.. automodule:: uncoverml.transforms.impute
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.transforms.linear module
+----------------------------------
+
+.. automodule:: uncoverml.transforms.linear
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.transforms.onehot module
+----------------------------------
+
+.. automodule:: uncoverml.transforms.onehot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.transforms.target module
+----------------------------------
+
+.. automodule:: uncoverml.transforms.target
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.transforms.transformset module
+----------------------------------------
+
+.. automodule:: uncoverml.transforms.transformset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: uncoverml.transforms
+   :members:
+   :undoc-members:
+   :show-inheritance:

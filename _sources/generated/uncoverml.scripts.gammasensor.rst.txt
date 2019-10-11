@@ -1,0 +1,22 @@
+uncoverml.scripts.gammasensor
+=============================
+
+.. automodule:: uncoverml.scripts.gammasensor
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      write_data
+   
+   
+
+   
+   
+   
+
+   
+   
+   

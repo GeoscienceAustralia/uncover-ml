@@ -1,103 +1,193 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>uncoverml.transforms.impute.NearestNeighboursImputer &mdash; uncoverml 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
     
-    <title>uncoverml.transforms.impute.NearestNeighboursImputer &mdash; uncoverml 0.1.0 documentation</title>
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
-    <link rel="stylesheet" href="../_static/pyramid.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
     
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '0.1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="uncoverml 0.1.0 documentation" href="../index.html" />
-    <link rel="up" title="Transforms Module" href="../transforms.html" />
-    <link rel="next" title="uncoverml.transforms.linear.CentreTransform" href="uncoverml.transforms.linear.CentreTransform.html" />
-    <link rel="prev" title="uncoverml.transforms.impute.GaussImputer" href="uncoverml.transforms.impute.GaussImputer.html" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
-<!--[if lte IE 6]>
-<link rel="stylesheet" href="../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
-<![endif]-->
 
-  </head>
-  <body role="document">
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="uncoverml.transforms.linear.CentreTransform.html" title="uncoverml.transforms.linear.CentreTransform"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="uncoverml.transforms.impute.GaussImputer.html" title="uncoverml.transforms.impute.GaussImputer"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Pipeline Python Modules</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../transforms.html" accesskey="U">Transforms Module</a> &raquo;</li> 
-      </ul>
-    </div>  
+<body class="wy-body-for-nav">
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> uncoverml
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../projectreport.html">Uncover-ML project report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">uncoverml</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Command Line Scripts</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">uncoverml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>uncoverml.transforms.impute.NearestNeighboursImputer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/generated/uncoverml.transforms.impute.NearestNeighboursImputer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="uncoverml-transforms-impute-nearestneighboursimputer">
 <h1>uncoverml.transforms.impute.NearestNeighboursImputer<a class="headerlink" href="#uncoverml-transforms-impute-nearestneighboursimputer" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="uncoverml.transforms.impute.NearestNeighboursImputer">
-<em class="property">class </em><code class="descclassname">uncoverml.transforms.impute.</code><code class="descname">NearestNeighboursImputer</code><span class="sig-paren">(</span><em>nodes=500</em>, <em>k=3</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.NearestNeighboursImputer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.impute.</code><code class="sig-name descname">NearestNeighboursImputer</code><span class="sig-paren">(</span><em class="sig-param">nodes=500</em>, <em class="sig-param">k=3</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.NearestNeighboursImputer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Nearest neighbour imputation.</p>
 <p>This builds up a KD tree using random points (without missing data), then
 fills in the missing data in query points with values from thier average
 nearest neighbours.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>nodes</strong> (<em>int, optional</em>) &#8211; maximum number of points to use as nearest neightbours.</li>
-<li><strong>k</strong> (<em>int, optional</em>) &#8211; number of neighbours to average for missing values.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes</strong> (<em>int</em><em>, </em><em>optional</em>) – maximum number of points to use as nearest neightbours.</p></li>
+<li><p><strong>k</strong> (<em>int</em><em>, </em><em>optional</em>) – number of neighbours to average for missing values.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <dl class="method">
 <dt id="uncoverml.transforms.impute.NearestNeighboursImputer.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>nodes=500</em>, <em>k=3</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.NearestNeighboursImputer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nodes=500</em>, <em class="sig-param">k=3</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.impute.NearestNeighboursImputer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
 
 <p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-default">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#uncoverml.transforms.impute.NearestNeighboursImputer.__init__" title="uncoverml.transforms.impute.NearestNeighboursImputer.__init__"><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code></a>([nodes,&nbsp;k])</td>
-<td></td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#uncoverml.transforms.impute.NearestNeighboursImputer.__init__" title="uncoverml.transforms.impute.NearestNeighboursImputer.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([nodes, k])</p></td>
+<td><p>Initialize self.</p></td>
 </tr>
 </tbody>
 </table>
@@ -106,91 +196,43 @@ nearest neighbours.</p>
 </div>
 
 
+           </div>
+           
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h3><a href="../index.html">Table Of Contents</a></h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../projectreport.html">Uncover-ML project report</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">Pipeline Python Modules</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../cluster.html">Clustering</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../config.html">Configuration file parsing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cubist.html">Cubist Python Wrapper</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../features.html">Pipeline Feature Processing Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../filtering.html">Image filtering Module (specifically for Gamma sensors)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../geoio.html">Geometry file I/O Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../image.html">Distributed Image Operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../learn.html">Pipeline Learning Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../likelihoods.html">Specialised Likelihood Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../logging.html">Pipeline Resource Logging Functionality</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../models.html">Models Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../mpiops.html">Special Statistical MPI operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../patch.html">Image Patch Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../predict.html">Pipeline Prediction Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../targets.html">Pipeline Targets Processing Module</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../transforms.html">Transforms Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../validate.html">Validation Module</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Command Line Scripts</a></li>
-</ul>
+          <footer>
+  
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="uncoverml.transforms.impute.GaussImputer.html"
-                        title="previous chapter">uncoverml.transforms.impute.GaussImputer</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="uncoverml.transforms.linear.CentreTransform.html"
-                        title="next chapter">uncoverml.transforms.linear.CentreTransform</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="../_sources/generated/uncoverml.transforms.impute.NearestNeighboursImputer.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Data61 Spatial Inference Systems Team
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="uncoverml.transforms.linear.CentreTransform.html" title="uncoverml.transforms.linear.CentreTransform"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="uncoverml.transforms.impute.GaussImputer.html" title="uncoverml.transforms.impute.GaussImputer"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">uncoverml 0.1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Pipeline Python Modules</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../transforms.html" >Transforms Module</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, Data61 Spatial Inference Systems Team.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
-    </div>
-  </body>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>
