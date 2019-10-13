@@ -4,7 +4,7 @@ Usage
 Running locally
 ---------------
 
-Uncover-ML uses MPI for parallelization on localhosts and on clusters/high
+UncoverML uses MPI for parallelization on localhosts and on clusters/high
 performance computers. Here is an example of running the pipeline from the
 command line,
 
@@ -21,12 +21,14 @@ Breaking this down,
   and the `config.yaml` is the configuration file for the pipeline.
 
 Similarly, there are two more options,
+
 .. code:: console
 
   $ mpirun -n 4 uncoverml predict -p 10 config.yaml
 
 Which uses the learned model from the previous command to predict target values
 for all query points, and
+
 .. code:: console
 
   $ mpirun -n 4 uncoverml cluster config.yaml

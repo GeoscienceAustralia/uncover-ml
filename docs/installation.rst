@@ -7,7 +7,7 @@ Ubuntu 18.04
 UncoverML supports Ubuntu 18.04 with Python 3.6 or Python 3.7. 
 
 The following instructions may be used for other Linux distributions but the packages and package
-manager used may be different. If you require help using uncoverML with a different Linux 
+manager used may be different. If you require help using UncoverML with a different Linux 
 distribution, ask for help on our 
 `Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.
 
@@ -29,7 +29,7 @@ These can be installed with the following commands:
         openmpi-bin libopenmpi-dev
 
 It's recommended to use a Python virtual environment (venv) when installing UncoverML. This will
-prevent packages that it requires from conflicting with any exist Python environments.
+prevent packages that it requires from conflicting with any existing Python environments.
 
 To create a virtual environment, run in your shell:
 
@@ -45,7 +45,7 @@ Once created, activate the venv with:
 
     source /path/to/your/venv/bin/activate
 
-With your environment activated, there are some packages that must be installed before uncoverML.
+With your environment activated, there are some packages that must be installed before UncoverML.
 Install these with pip:
 
 .. code:: bash
@@ -53,7 +53,7 @@ Install these with pip:
     pip install -U pip setuptools
     pip install numpy scipy matplotlib Cython
 
-You are now ready to install uncoverML. The latest stable release can be installed from the 
+You are now ready to install UncoverML. The latest stable release can be installed from the 
 Python Package Index using:
 
 .. code:: bash
@@ -119,11 +119,11 @@ Setup virtualenv by exporting some environment variables and activating the virt
 
 For convenience, the above commands can be placed in your ``~/.profile``. This will run the above
 commands everytime you open a new session on Raijin. Alternatively, if you already have a 
-configuration in your path you'd like to preserve but don't want to type the above commands
+configuration in your profile you'd like to preserve but don't want to type the above commands
 every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` script to perform the above 
 commands as needed.
 
-Create a virtualenv for uncoverML and activate it:
+Create a virtualenv for UncoverML and activate it:
 
 .. code:: bash
 
@@ -145,12 +145,12 @@ Next, clone and install uncoverml:
     for an average user.
 
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
-uncoverML.
+UncoverML.
 
 Reusing Shared Virtualenv
 +++++++++++++++++++++++++
 
-An alternative to the above installation is to activate the shared uncoverml virtual environment. 
+An alternative to the above installation is to activate the shared UncoverML virtual environment. 
 On Raijin, activate by running:
 
 .. code:: bash
