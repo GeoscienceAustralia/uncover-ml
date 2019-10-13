@@ -41,17 +41,16 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx_rtd_theme'
+    'sphinx_rtd_theme',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
+    'sphinxcontrib.programoutput',
+    'sphinx.ext.autosectionlabel'
+    
 ]
-
-extensions.extend(
-    ['sphinx.ext.napoleon',
-     'sphinx.ext.autosummary',
-     'matplotlib.sphinxext.plot_directive',
-     'IPython.sphinxext.ipython_console_highlighting',
-     'IPython.sphinxext.ipython_directive',
-     'sphinxcontrib.programoutput']
-)
 
 napoleon_numpy_docstring = True
 
