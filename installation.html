@@ -171,7 +171,7 @@
 <h2>Ubuntu 18.04<a class="headerlink" href="#ubuntu-18-04" title="Permalink to this headline">¶</a></h2>
 <p>UncoverML supports Ubuntu 18.04 with Python 3.6 or Python 3.7.</p>
 <p>The following instructions may be used for other Linux distributions but the packages and package
-manager used may be different. If you require help using uncoverML with a different Linux
+manager used may be different. If you require help using UncoverML with a different Linux
 distribution, ask for help on our
 <a class="reference external" href="https://github.com/GeoscienceAustralia/uncover-ml/issues">Github Issues</a> page.</p>
 <p>Before installing UncoverML, ensure your OS has the following packages:</p>
@@ -190,7 +190,7 @@ distribution, ask for help on our
 </pre></div>
 </div>
 <p>It’s recommended to use a Python virtual environment (venv) when installing UncoverML. This will
-prevent packages that it requires from conflicting with any exist Python environments.</p>
+prevent packages that it requires from conflicting with any existing Python environments.</p>
 <p>To create a virtual environment, run in your shell:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 -m venv /path/to/your/venv
 </pre></div>
@@ -200,13 +200,13 @@ prevent packages that it requires from conflicting with any exist Python environ
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /path/to/your/venv/bin/activate
 </pre></div>
 </div>
-<p>With your environment activated, there are some packages that must be installed before uncoverML.
+<p>With your environment activated, there are some packages that must be installed before UncoverML.
 Install these with pip:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U pip setuptools
 pip install numpy scipy matplotlib Cython
 </pre></div>
 </div>
-<p>You are now ready to install uncoverML. The latest stable release can be installed from the
+<p>You are now ready to install UncoverML. The latest stable release can be installed from the
 Python Package Index using:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install uncoverml
 </pre></div>
@@ -224,7 +224,7 @@ pip install .
 <p class="admonition-title">Todo</p>
 <p>Need to include a simple workflow for testing the installation here.</p>
 </div>
-<p>This completes the installation. Check out the <span class="xref std std-ref">Usage</span> documentation to get started using
+<p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
 UncoverML.</p>
 </div>
 <div class="section" id="hpc">
@@ -258,10 +258,10 @@ module load geos/3.5.0
 </div>
 <p>For convenience, the above commands can be placed in your <code class="docutils literal notranslate"><span class="pre">~/.profile</span></code>. This will run the above
 commands everytime you open a new session on Raijin. Alternatively, if you already have a
-configuration in your path you’d like to preserve but don’t want to type the above commands
+configuration in your profile you’d like to preserve but don’t want to type the above commands
 every time, you can source the <code class="docutils literal notranslate"><span class="pre">uncover-ml/pbs/setup_hpc.sh</span></code> script to perform the above
 commands as needed.</p>
-<p>Create a virtualenv for uncoverML and activate it:</p>
+<p>Create a virtualenv for UncoverML and activate it:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkvirtualenv --system-site-packages uncoverml
 workon uncoverml
 </pre></div>
@@ -278,11 +278,11 @@ python setup.py install
 Tests don’t count because they require dev requirements and shouldn’t need to be installed
 for an average user.</p>
 </div>
-<p>This completes the installation. Check out the <span class="xref std std-ref">Usage</span> documentation to get started using
-uncoverML.</p>
+<p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
+UncoverML.</p>
 <div class="section" id="reusing-shared-virtualenv">
 <h3>Reusing Shared Virtualenv<a class="headerlink" href="#reusing-shared-virtualenv" title="Permalink to this headline">¶</a></h3>
-<p>An alternative to the above installation is to activate the shared uncoverml virtual environment.
+<p>An alternative to the above installation is to activate the shared UncoverML virtual environment.
 On Raijin, activate by running:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
 </pre></div>

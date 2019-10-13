@@ -166,7 +166,7 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="running-locally">
 <h2>Running locally<a class="headerlink" href="#running-locally" title="Permalink to this headline">¶</a></h2>
-<p>Uncover-ML uses MPI for parallelization on localhosts and on clusters/high
+<p>UncoverML uses MPI for parallelization on localhosts and on clusters/high
 performance computers. Here is an example of running the pipeline from the
 command line,</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> mpirun -n <span class="m">4</span> uncoverml learn -p <span class="m">10</span> config.yaml
@@ -180,17 +180,15 @@ machine learning model). The <cite>-p 10</cite> flag makes 10 chunks of work for
 four workers (this is to limit memory usage, more chunks, less memory usage),
 and the <cite>config.yaml</cite> is the configuration file for the pipeline.</p></li>
 </ul>
-<p>Similarly, there are two more options,
-.. code:: console</p>
-<blockquote>
-<div><p>$ mpirun -n 4 uncoverml predict -p 10 config.yaml</p>
-</div></blockquote>
+<p>Similarly, there are two more options,</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> mpirun -n <span class="m">4</span> uncoverml predict -p <span class="m">10</span> config.yaml
+</pre></div>
+</div>
 <p>Which uses the learned model from the previous command to predict target values
-for all query points, and
-.. code:: console</p>
-<blockquote>
-<div><p>$ mpirun -n 4 uncoverml cluster config.yaml</p>
-</div></blockquote>
+for all query points, and</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> mpirun -n <span class="m">4</span> uncoverml cluster config.yaml
+</pre></div>
+</div>
 <p>Which clusters (unsupervised) all of the data.</p>
 <p>See also:</p>
 <ul class="simple">
