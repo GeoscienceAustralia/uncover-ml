@@ -133,7 +133,11 @@ class Config(object):
     scripts.
 
     This class is *mostly* read-only, but it does also contain the
-    Transform objects which have state. TODO: separate these out!
+    Transform objects which have state. 
+
+    .. todo::
+
+        Factor out stateful Transform objects.
 
     Parameters
     ----------
