@@ -11,9 +11,18 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://GeoscienceAustralia.github.io/uncover-ml/.
+The full documentation is at 
+http://GeoscienceAustralia.github.io/uncover-ml/.
 """
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
+
+
+def parse_requirements(filename):
+    """Gets list of requirements from a requirements file.
+    """
+    with open(filename) as f:
+        return f.read().splitlines()
+
 
 def build_cubist():
     try:
@@ -29,9 +38,10 @@ def build_cubist():
 
 
 class build_py(_build_py):
-    """
-    Override build_py to ensure cubist is installed as part of 'pip install'
-    and when using 'python setup.py install'.
+    """ Override to ensure cubist is installed.
+
+    Ensures cubist installs when running 'pip install' or 'python
+    setup.py install.'
     """
     def run(self):
         build_cubist()
@@ -39,8 +49,9 @@ class build_py(_build_py):
 
 
 class develop(_develop):
-    """
-    Override develop to ensure cubist is installed as part of 'pip -e install'. 
+    """ Override to ensure cubist is installed.
+
+    Ensures cubist installs when running 'pip install .[dev]'.
     """
     def run(self):
         build_cubist()
@@ -74,45 +85,10 @@ setup(
             'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
-    install_requires=[
-        'Cython==0.29.13',
-        'tables==3.5.2',
-        'rasterio==1.1.0',
-        'affine==2.3.0',
-        'pyshp==1.2.3',
-        'click==7.0',
-        'revrand==1.0.0',
-        'numpy==1.17.2',
-        'mpi4py==3.0.2',
-        'scipy==1.3.1',
-        'scikit-learn==0.21.3',
-        'scikit-image==0.15.0',
-        'PyYAML==5.1.2',
-        'pandas==0.25.1',
-        'ppretty==1.3',
-        'matplotlib==3.1.1',
-        'PyKrige==1.3.0',
-        'xgboost==0.90',
-        'eli5==0.10.1',
-    ],
+    install_requires=parse_requirements('requirements.txt'),
     extras_require={
-        'kmz': [
-            'simplekml',
-            'pillow'
-        ],
-        'dev': [
-            'codecov==2.0.15',
-            'sphinx==2.2.0',
-            'ghp-import==0.5.5',
-            'IPython==7.8.0',
-            'sphinxcontrib-programoutput==0.15',
-            'pytest==5.2.1',
-            'pytest-cov==2.8.1',
-            'twine==2.0.0',
-            'setuptools==41.4.0',
-            'wheel==0.33.6',
-            'sphinx_rtd_theme==0.4.3'
-        ] 
+        'kmz': parse_requirements('requirements-kmz.txt'),
+        'dev': parse_requirements('requirements-dev.txt'),
     },
     license="Apache Software License 2.0",
     zip_safe=False,
