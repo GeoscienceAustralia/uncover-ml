@@ -9,16 +9,12 @@ Contents:
 
    installation
    usage
+   scripts
    contributing
    authors
    history
-
-   projectreport
-
    modules
-
-   scripts
-
+   projectreport
 
 Feedback
 --------
