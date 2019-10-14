@@ -1,8 +1,9 @@
-Uncover-ML project report
-=========================
+UncoverML Project Report (NICTA)
+================================
 
-This page contains a brief report on some of the aspects of the uncover ml GA
-project not covered by the documentation.
+This page contains a brief report of the work completed by NICTA (now
+Data61) on some of the aspects of UncoverML not covered by the 
+documentation.
 
 .. contents::
 

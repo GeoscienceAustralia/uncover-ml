@@ -71,9 +71,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'uncoverml'
-copyright = '2015, Data61 Spatial Inference Systems Team'
-author = 'Data61 Spatial Inference Systems Team'
+project = 'UncoverML'
+copyright = '2019, Geoscience Australia'
+author = 'Geoscience Australia' 
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

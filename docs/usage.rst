@@ -35,14 +35,6 @@ for all query points, and
 
 Which clusters (unsupervised) all of the data.
 
-See also:
-
-- :doc:`Scripts <scripts>` for details on the script options
-- :doc:`Configuration <config>` for how to create a configuration file
-- :doc:`Models <models>` for an overview of the available supervised
-  algorithm
-
-
 Running on HPC
 --------------
 
@@ -89,3 +81,24 @@ partitions the input covariates into the specificed number of memory partitions.
 
 For more information on configuring PBS jobs on Raijin, view the 
 `NCI user documentation <https://opus.nci.org.au/display/Help/Raijin+User+Guide>`_. 
+
+Configuration File
+------------------
+
+.. todo:: 
+
+    Need example configurtion file and explanation of parameters.
+
+Models
+------
+
+For an overview of the models available in UncoverML, view the module
+documentation: :mod:`uncoverml.models`
+
+Command Line Interface
+----------------------
+
+UncoverML has several command line options. Select an option below to 
+view its documentation:
+
+.. include:: scripts.rst
