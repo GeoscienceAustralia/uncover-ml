@@ -51,7 +51,7 @@ Install these with pip:
 .. code:: bash
 
     pip install -U pip setuptools
-    pip install numpy scipy matplotlib Cython
+    pip install -r requirements-pykrige.txt
 
 You are now ready to install UncoverML. The latest stable release can be installed from the 
 Python Package Index using:
