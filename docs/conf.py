@@ -43,13 +43,13 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx_rtd_theme',
     'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.autosummary',
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinxcontrib.programoutput',
     'sphinx.ext.autosectionlabel'
-    
 ]
 
 napoleon_numpy_docstring = True
@@ -71,9 +71,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'uncoverml'
-copyright = '2015, Data61 Spatial Inference Systems Team'
-author = 'Data61 Spatial Inference Systems Team'
+project = 'UncoverML'
+copyright = '2019, Geoscience Australia'
+author = 'Geoscience Australia' 
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

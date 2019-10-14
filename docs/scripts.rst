@@ -1,9 +1,7 @@
-Command Line Scripts
-====================
-
 .. currentmodule:: uncoverml.scripts
 
 .. autosummary::
+   :nosignatures:
    :toctree: generated/
 
    uncoverml

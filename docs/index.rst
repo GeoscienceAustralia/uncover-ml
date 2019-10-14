@@ -1,5 +1,10 @@
-Welcome to the documentation of uncover-ml!
-===========================================
+UncoverML Documentation
+=======================
+
+UncoverML is a Geoscience Australia project applying machine learning
+to geoscience datasets. 
+
+Homepage: https://github.com/GeoscienceAustralia/uncover-ml
 
 Contents:
 ---------
@@ -12,20 +17,11 @@ Contents:
    contributing
    authors
    history
-
-   projectreport
-
-   modules
-
-   scripts
-
+   NICTA Project Report <projectreport>
+   UncoverML API Reference <modules>
 
 Feedback
 --------
 
-If you have any suggestions or questions about **uncover ML** feel free to
-email the developers.
-
-If you encounter any errors or problems with **uncover ML**, please let me
-know!  Open an Issue at the GitHub http://github.com/GeoscienceAustralia/uncover-ml main
-repository.
+If you encounter any errors or problems with UncoverML, please let 
+the developers know! Open an issue on the `Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.

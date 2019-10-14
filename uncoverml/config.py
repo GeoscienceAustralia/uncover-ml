@@ -1,26 +1,31 @@
+from typing import Optional
 import logging
 from os import path
 from os import makedirs
 import glob
 import csv
+
 import yaml
 
 from uncoverml import transforms
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
-"""The strings associated with each imputation option
+"""
+The strings associated with each imputation option.
 """
 _imputers = {'mean': transforms.MeanImputer,
              'gaus': transforms.GaussImputer,
              'nn': transforms.NearestNeighboursImputer}
 
-"""These transforms operate individually on each image before concatenation
+"""
+These transforms operate on each image before concatenation.
 """
 _image_transforms = {'onehot': transforms.OneHotTransform,
                      'randomhot': transforms.RandomHotTransform}
 
-"""Post-concatenation transforms: operate on whole data vector
+"""
+Post-concatenation transforms: operate on whole data vector.
 """
 _global_transforms = {'centre': transforms.CentreTransform,
                       'standardise': transforms.StandardiseTransform,
@@ -29,28 +34,29 @@ _global_transforms = {'centre': transforms.CentreTransform,
                       'whiten': transforms.WhitenTransform}
 
 
-def _parse_transform_set(transform_dict, imputer_string, n_images=None):
-    """Parse a dictionary read from yaml into a TransformSet object
+def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int) -> tuple:
+    """
+    Parse a dictionary read from yaml into a TransformSet object.
 
     Parameters
     ----------
-    transform_dict : dictionary
-        The dictionary as read from the yaml config file containing config
-        key-value pairs
-    imputer_string : string
-        The name of the imputer (could be None)
-    n_images : int > 0
-        The number of images being read in. Required because we need to create
-        a new image transform for each image
-
+    transform_dict
+        The dictionary as read from the yaml config file containing
+        config key-value pairs.
+    imputer_string
+        The name of the imputer.
+    n_images
+        The number of images being read in. Required because we need to
+        create a new image transform for each image.
+        
     Returns
     -------
-    image_transforms : list
-        A list of image Transform objects
-    imputer : Imputer
-        An Imputer object
-    global_transforms : list
-        A list of global Transform objects
+    image_transforms
+        A list of image Transform objects.
+    imputer
+        An Imputer object.
+    global_transforms
+        A list of global Transform objects.
     """
     image_transforms = []
     global_transforms = []
@@ -71,19 +77,21 @@ def _parse_transform_set(transform_dict, imputer_string, n_images=None):
     return image_transforms, imputer, global_transforms
 
 
-class FeatureSetConfig:
-    """Config class representing a 'feature set' in the config file
+class FeatureSetConfig(object):
+    """
+    Config class representing a 'feature set' in the config file.
 
     Parameters
     ----------
-    d : dictionary
-        The section of the yaml file for a feature set
+    config_dict
+        The section of the yaml file for a feature set.
     """
-    def __init__(self, d):
+    def __init__(self, config_dict: dict):
+        d = config_dict
         self.name = d['name']
         self.type = d['type']
         if d['type'] not in {'ordinal', 'categorical'}:
-            log.warning("Feature set type must be ordinal or categorical: "
+            _logger.warning("Feature set type must be ordinal or categorical: "
                         "Unknown option "
                         "{} (assuming ordinal)".format(d['type']))
         is_categorical = d['type'] == 'categorical'
@@ -119,21 +127,31 @@ class FeatureSetConfig:
                                                           is_categorical)
 
 
-class Config:
-    """Class representing the global configuration of the uncoverml scripts
+class Config(object):
+    """
+    Class representing the global configuration of the uncoverml
+    scripts.
 
-    This class is *mostly* read-only, but it does also contain the Transform
-    objects which have state. TODO: separate these out!
+    This class is *mostly* read-only, but it does also contain the
+    Transform objects which have state. 
+
+    .. todo::
+
+        Factor out stateful Transform objects.
 
     Parameters
     ----------
-    yaml_file : string
-        The path to the yaml config file. For details on the yaml schema
-        see the uncoverml documentation
-    """
-    def __init__(self, yaml_file):
+    yaml_file
+        The path to the yaml config file. For details on the yaml
+        schema see the uncoverml documentation.
 
-        self.config_yaml = yaml_file  # This will include the full path of the yaml file
+    Attributes
+    ----------
+    yaml_file : str
+        Absolute path to the config yaml file.
+    """
+    def __init__(self, yaml_file: str):
+        self.config_yaml = yaml_file  
 
         with open(yaml_file, 'r') as f:
             s = yaml.safe_load(f)
@@ -141,7 +159,7 @@ class Config:
 
         # TODO expose this option when fixed
         if 'patchsize' in s:
-            log.info("Patchsize currently fixed at 0 -- ignoring")
+            _logger.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
 
         self.algorithm = s['learning']['algorithm']
@@ -198,7 +216,7 @@ class Config:
             self.pickle_load = False
 
         if not self.pickle_load:
-            log.info('One or both pickled files were not '
+            _logger.info('One or both pickled files were not '
                      'found. All targets will be intersected.')
 
         self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
@@ -251,7 +269,7 @@ class Config:
 
         if self.rank_features and self.pickle_load:
             self.pickle_load = False
-            log.info('Feature ranking does not work with '
+            _logger.info('Feature ranking does not work with '
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
 
