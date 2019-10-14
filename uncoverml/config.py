@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import logging
 from os import path
 from os import makedirs
@@ -85,15 +85,28 @@ class FeatureSetConfig(object):
     ----------
     config_dict
         The section of the yaml file for a feature set.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature set.
+    type : str
+        Data type of the feature set ('categorical' or 'ordinal').
+    files : list of str
+        Absolute paths to .tif files of the feature set.
+    transform_set : :class:`~uncoverml.transforms.transformset.ImageTransformSet`
+        Transforms specified for the feautre set.
     """
     def __init__(self, config_dict: dict):
         d = config_dict
         self.name = d['name']
-        self.type = d['type']
-        if d['type'] not in {'ordinal', 'categorical'}:
-            _logger.warning("Feature set type must be ordinal or categorical: "
-                        "Unknown option "
-                        "{} (assuming ordinal)".format(d['type']))
+        if d['type'] not in ('ordinal', 'categorical'):
+            _logger.warning("Feature set type must be ordinal or categorical. "
+                            "Unknwon option: '%s'. Type has been set to 'ordinal'.",
+                            d['type'])
+            self.type = 'ordinal'
+        else:
+            self.type = d['type']
         is_categorical = d['type'] == 'categorical'
 
         # get list of all the files
