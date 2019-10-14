@@ -43,13 +43,13 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx_rtd_theme',
     'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.autosummary',
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinxcontrib.programoutput',
     'sphinx.ext.autosectionlabel'
-    
 ]
 
 napoleon_numpy_docstring = True

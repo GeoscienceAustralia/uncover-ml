@@ -1,3 +1,11 @@
+"""
+Likelihood functions that can be used with revrand.
+
+Can be used with revrand's GeneralisedLinearModel class for specialised
+regression tasks such as basement depth estimation from censored and
+uncensored depth observations.
+"""
+
 from __future__ import division
 
 import numpy as np

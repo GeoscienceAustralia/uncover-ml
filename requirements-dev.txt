@@ -3,9 +3,10 @@ codecov==2.0.15
 ghp-import==0.5.5
 pytest-cov==2.8.1
 pytest==5.2.1
-setuptools==41.4.0
+setuptools>=41.4.0
 sphinx==2.2.0
+sphinx-autodoc-typeints>=1.8.0
 sphinx_rtd_theme==0.4.3
 sphinxcontrib-programoutput==0.15
 twine==2.0.0
-wheel==0.33.6
+wheel>=0.33.6
