@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to the documentation of uncover-ml! &mdash; uncoverml 0.1.0 documentation</title>
+  <title>UncoverML Documentation &mdash; UncoverML 0.1.0 documentation</title>
   
 
   
@@ -50,7 +50,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> uncoverml
+            <a href="#" class="icon icon-home"> UncoverML
           
 
           
@@ -90,9 +90,8 @@
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
-<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">uncoverml</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 </ul>
 
             
@@ -107,7 +106,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">uncoverml</a>
+          <a href="#">UncoverML</a>
         
       </nav>
 
@@ -138,7 +137,7 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>Welcome to the documentation of uncover-ml!</li>
+      <li>UncoverML Documentation</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -157,8 +156,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="welcome-to-the-documentation-of-uncover-ml">
-<h1>Welcome to the documentation of uncover-ml!<a class="headerlink" href="#welcome-to-the-documentation-of-uncover-ml" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="uncoverml-documentation">
+<h1>UncoverML Documentation<a class="headerlink" href="#uncoverml-documentation" title="Permalink to this headline">¶</a></h1>
+<p>UncoverML is a Geoscience Australia project applying machine learning
+to geoscience datasets.</p>
+<p>Homepage: <a class="reference external" href="https://github.com/GeoscienceAustralia/uncover-ml">https://github.com/GeoscienceAustralia/uncover-ml</a></p>
 <div class="section" id="contents">
 <h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -171,6 +173,9 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#running-locally">Running locally</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#running-on-hpc">Running on HPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#command-line-interface">Command Line Interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
@@ -188,21 +193,14 @@
 <li class="toctree-l2"><a class="reference internal" href="history.html#id1">0.1.0 (2016-05-01)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="projectreport.html">Uncover-ML project report</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="projectreport.html#revrand-large-scale-approximate-gaussian-processes">Revrand - large-scale approximate Gaussian processes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="projectreport.html#heterogeneous-drill-observations">Heterogeneous drill observations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="projectreport.html#references">References</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">uncoverml</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.html">uncoverml package</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="scripts.html">Command Line Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gridsearch.html">uncoverml.scripts.gridsearch</a></li>
 </ul>
 </li>
 </ul>
@@ -210,11 +208,8 @@
 </div>
 <div class="section" id="feedback">
 <h2>Feedback<a class="headerlink" href="#feedback" title="Permalink to this headline">¶</a></h2>
-<p>If you have any suggestions or questions about <strong>uncover ML</strong> feel free to
-email the developers.</p>
-<p>If you encounter any errors or problems with <strong>uncover ML</strong>, please let me
-know!  Open an Issue at the GitHub <a class="reference external" href="http://github.com/GeoscienceAustralia/uncover-ml">http://github.com/GeoscienceAustralia/uncover-ml</a> main
-repository.</p>
+<p>If you encounter any errors or problems with UncoverML, please let
+the developers know! Open an issue on the <a class="reference external" href="https://github.com/GeoscienceAustralia/uncover-ml/issues">Github Issues</a> page.</p>
 </div>
 </div>
 
@@ -236,7 +231,7 @@ repository.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Data61 Spatial Inference Systems Team
+        &copy; Copyright 2019, Geoscience Australia
 
     </p>
   </div>
