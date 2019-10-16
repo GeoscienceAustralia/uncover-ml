@@ -104,7 +104,8 @@ def _load_data(config, partitions):
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
                                                               transform_sets,
                                                               targets, config)
-
+        
+        # TODO: If the training data exists and was loaded above, this dump is redundant.
         if config.train_data_pk:
             pickle.dump([image_chunk_sets, transform_sets, targets],
                         open(config.train_data_pk, 'wb'))
@@ -253,9 +254,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=predict_tags[
-                                               0: min(len(predict_tags),
-                                                      config.outbands)],
+                                     band_tags=predict_tags[0: min(len(predict_tags), 
+                                                                   config.outbands)],
                                      **config.geotif_options)
 
     for i in range(config.n_subchunks):
