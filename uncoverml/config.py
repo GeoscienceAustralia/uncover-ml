@@ -70,8 +70,8 @@ def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: in
                 t = {t: {}}
             key, params = list(t.items())[0]
             if key in _image_transforms:
-                image_transforms.append([_image_transforms[key](**params)
-                                         for k in range(n_images)])
+                image_transforms.append([_image_transforms[key](**params) 
+                                        for k in range(n_images)])
             elif key in _global_transforms:
                 global_transforms.append(_global_transforms[key](**params))
     return image_transforms, imputer, global_transforms
@@ -136,8 +136,8 @@ class FeatureSetConfig(object):
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
                                                     d['imputation'],
                                                     n_files)
-        self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g,
-                                                          is_categorical)
+        self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g, is_categorical)
+                                                          
 
 
 class Config(object):
@@ -146,22 +146,111 @@ class Config(object):
     scripts.
 
     This class is *mostly* read-only, but it does also contain the
-    Transform objects which have state. 
+    Transform objects which have state.
 
     .. todo::
 
         Factor out stateful Transform objects.
 
+    .. todo::
+
+        The mechanism for selecting outbands could be a lot better
+        and explanation of the outbands available (or where to find
+        that infomration for each model) would be a good addition.
+
+    .. todo::
+        
+        rawcovariates and train_data_pk are initialised as bools
+        but treated as strings (file paths) later in the code
+
     Parameters
     ----------
     yaml_file
-        The path to the yaml config file. For details on the yaml
-        schema see the uncoverml documentation.
+        The path to the yaml config file.
 
     Attributes
     ----------
-    yaml_file : str
+    config_file : str
         Absolute path to the config yaml file.
+    name : str
+        Name fo the config file.
+    patchsize : int
+        Half-width of the patches that feature data will be chunked
+        into. Height/width of each patch is equal to patchsize * 2 + 1.
+    algorithm : str
+        The ML model to train.
+    cubist : bool
+        True if the selected model is 'cubist'.
+    multicubist : bool
+        True if the selected model is 'multicubist'.
+    multirandomforest : bool
+        True if the selected model is 'multirandomforest'.
+    krige : bool
+        True if the selected model is 'krige'.
+    algorithm_args : dict
+        Arguments for the selected model. See the parameters for models
+        in the :mod:`~uncoverml.models` module.
+    quantiles : float
+        Prediction quantile/interval for predicted values.
+    geotif_options : dict
+        Optional creation options passed to the geotiff output driver.
+        See https://gdal.org/drivers/raster/gtiff.html#creation-options
+        for a list of creation options.
+    outbands : int
+        The outbands to write in the prediction output file. Used as
+        the 'stop' for a slice taken from list of prediction tags,
+        i.e. [0: outbands]. If the resulting slice is greater than
+        the number of tags available, then all tags will be selected.
+        If no value is provied, then all tags will be selected.
+    thumbnails : int
+        Subsampling factor for thumbnails of output images. Default
+        is 10.
+    pickle : bool
+        Whether or not a feature set of type 'pickle' is present
+        in the config.
+    rawcovariates : str
+        Path to file for saving intersected features and targets
+        as CSV before processing is performed (hence 'raw'). If not
+        present then saving will not occur.
+    rawcovariates_mask : str
+        Corresponding mask for the raw covariates in CSV format. Must
+        be provided if raw covariates is provided.
+    train_data_pk  : str
+        Path to file containing pickled training data. If file exists,
+        image chunk sets, transform sets and targets will be loaded
+        from the pickle file. Training data will be pickled and saved
+        to the specified file after its creation.
+    pickled_covariates : str
+        Path to pickle file containing intersection of targets and
+        covariates. If :attr:`~pikcle_load` is True, then this file
+        will be loaded and used as covariates for learning. If
+        :attr:`~pickle_load` is False, then covariates will be dumped
+        to this file after they have been created from the feature
+        sets specified in the configuration.
+    pickled_targets : str
+        Path to pickle file containing targets. If :attr:`~pickle_load`
+        is True, then this file will be loaded and used as targets
+        for learning. If :attr:`~pickle_load` is False, then targets
+        will be dumped to this file after they have been created from
+        the feature sets specified in the configuration.
+    pickle_load : bool
+        True if :attr:`~pickle` is True and existent files are provided
+        for :attr:`~pickled_covariates` and :attr:`~pickled_targets`.
+        If True, then covariates and targets will be loaded from the
+        pickle files. If False, the created targets and covariates
+        will be dumped if respective file paths are provided.
+    featurevec : str
+        Path to pickle file containing feature vector. Must be provided
+        if algorithm is 'cubist' or 'multicubist' and loading from
+        pickle files. 
+    feature_sets : list of :obj:`~uncoverml.config.FeatureSetConfig`
+        A list of feature sets; one for each non-pickle type feature
+        set specified in the config.
+    final_transform : :obj:`~uncoverml.transforms.transformset.TransformSet`
+        A TransformSet containing an imputer and transforms that is
+        applied to all features following image transforms, imputation,
+        global transforms and concatenation.
+
     """
     def __init__(self, yaml_file: str):
         self.config_yaml = yaml_file  
@@ -192,7 +281,7 @@ class Config(object):
         self.thumbnails = s['prediction']['thumbnails'] \
             if 'thumbnails' in s['prediction'] else 10
 
-        self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
+        self.pickle = any(d['type'] == 'pickle' for d in s['features'])
 
         self.rawcovariates = False
         self.train_data_pk = False
