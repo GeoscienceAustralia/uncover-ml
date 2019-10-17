@@ -1,3 +1,6 @@
+"""
+Handles parsing of the configuration file.
+"""
 from typing import Optional, List
 import logging
 from os import path
@@ -232,13 +235,15 @@ class Config(object):
         is True, then this file will be loaded and used as targets
         for learning. If :attr:`~pickle_load` is False, then targets
         will be dumped to this file after they have been created from
-        the feature sets specified in the configuration.
+        the target file specified in the config.
     pickle_load : bool
         True if :attr:`~pickle` is True and existent files are provided
         for :attr:`~pickled_covariates` and :attr:`~pickled_targets`.
         If True, then covariates and targets will be loaded from the
         pickle files. If False, the created targets and covariates
-        will be dumped if respective file paths are provided.
+        will be dumped if respective file paths are provided. Will
+        also be set to False if :attr:`~rank_features` is True as
+        feature ranking is not compatible with pickled data.
     featurevec : str
         Path to pickle file containing feature vector. Must be provided
         if algorithm is 'cubist' or 'multicubist' and loading from
@@ -250,7 +255,100 @@ class Config(object):
         A TransformSet containing an imputer and transforms that is
         applied to all features following image transforms, imputation,
         global transforms and concatenation.
+    target_file : str
+        Path to a Shapefile containing target values and X, Y 
+        coordinates.
+    target_propery : str
+        Name of the property in the target file to use for training.
+    resample : list of dict
+        Resampling arguments for target data. 
 
+        .. todo::
+
+            Doesn't appear to be implemented
+    
+    mask : str
+        Path to a geotiff file for masking the output prediction 
+        map. Only values that have been masked will be predicted.
+    retain : int
+        Value in the above mask that indicates cell should be retained
+        and predicted.
+    lon_lat : bool
+        True if 'lon_lat' block is present.
+    lon : str
+        Path to geotiff file containing latitiude grid for Kriging.
+    lat : str
+        Path to geotiff file containing longitude grid for Kriging.
+    rank_features : bool
+        True if 'feature_ranking' is present in 'validation' block
+        of the config. Turns on feature ranking.
+    permutation_importance : bool
+        True if 'permutation_importance' is present in 'validation'
+        block of the config. Turns on permutation importance.  
+    parallel_validate : bool
+        True if 'parallel' is present in 'validation' block of
+        config. Turns on parallel k-fold cross validation.
+    cross_validate : bool
+        True if 'k-fold' is present in 'validation' block of config.
+        Turns on k-fold cross validation.
+    folds : int
+        The number of folds to split dataset into for cross validation.
+    crossval_seed : int
+        Seed for random sorting of folds for cross validation.
+    output_dir : str
+        Path to directory where prediciton map and other outputs
+        will be written.
+    optimisation : dict
+        Dictionary of optimisation arguments.
+    optimisation_output : str
+        Filname for output of optimisation.
+    clustering : bool
+        True if 'clustering' present in config file. 
+
+        .. note:: 
+
+            Only seems to be used in :mod:`~uncoverml.predict`, 
+            otherwise clustering is a specific CLI process.
+
+    cluster_analysis : bool
+        True if 'cluster_analysis' in the 'clustering' block of the
+        config file. Turns on cluster analysis.
+
+        .. todo::
+        
+            Need a better explanation of what clustering analysis does.
+
+    clustering_algorithm : str
+        Name of the clustering algorithm to use.
+
+        .. note::
+            
+            The only available algorith is kmeans. This is used to set
+            :attr:`~algorithm` when performing clustering due to the
+            polymorphism of model classes.
+
+        .. todo:: 
+
+            If kmeans is the only option, why not just set 
+            :attr:`~algorithm` directly.
+
+    n_classes : int
+        The number of cluster centres to be used in clustering. If
+        running semisupervised learning and this is set to less than
+        the number of labelled classes in the training data, then the
+        the number of laballed classes in the training data will be
+        used as the value instead.
+    oversample_factor : float
+        Controls how many candidates are found for cluster 
+        initialisation when running kmeans clustering. See
+        :func:`~uncoverml.cluster.weighted_starting_candidates`.
+    semisupervised : bool
+        True if a training data file is provided in clustering 
+        arguments. Turns on semisupervised clustering.
+    class_file : str
+        Path to a Shapefile containing training data for clustering.
+    class_property : str
+        Name of the property to train clustering against.
     """
     def __init__(self, yaml_file: str):
         self.config_yaml = yaml_file  
