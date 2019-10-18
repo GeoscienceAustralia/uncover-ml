@@ -113,7 +113,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.krige">uncoverml.krige module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.learn">uncoverml.learn module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.likelihoods">uncoverml.likelihoods module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#uncoverml-metadata-profiler-module">uncoverml.metadata_profiler module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.metadata_profiler">uncoverml.metadata_profiler module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.mllog">uncoverml.mllog module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.models">uncoverml.models module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.mpiops">uncoverml.mpiops module</a></li>
@@ -2714,8 +2714,79 @@ likelihood.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="uncoverml-metadata-profiler-module">
-<h2>uncoverml.metadata_profiler module<a class="headerlink" href="#uncoverml-metadata-profiler-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.metadata_profiler">
+<span id="uncoverml-metadata-profiler-module"></span><h2>uncoverml.metadata_profiler module<a class="headerlink" href="#module-uncoverml.metadata_profiler" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Description:</dt><dd><p>Gather Metadata for the uncover-ml prediction output results:</p>
+</dd>
+</dl>
+<p>Reference: email 2019-05-24
+Overview
+Creator: (person who generated the model)
+Model;</p>
+<blockquote>
+<div><p>Name:
+Type and date:
+Algorithm:
+Extent: Lat/long - location on Australia map?</p>
+</div></blockquote>
+<p>SB Notes: None of the above is required as this information will be captured in the yaml file.</p>
+<p>Model inputs:</p>
+<ol class="arabic simple">
+<li><p>Covariates - list (in full)</p></li>
+</ol>
+<p>2.      Targets: path to shapefile:  csv file
+SB Notes: Only covaraite list file. Targets and path to shapefile is not required as this is available in the yaml file. May be the full path to the shapefile has some merit as one can specify partial path.</p>
+<dl class="simple">
+<dt>Model performance</dt><dd><p>JSON file (in full)</p>
+</dd>
+</dl>
+<p>SB Notes: Yes</p>
+<p>Model outputs</p>
+<ol class="arabic simple">
+<li><p>Prediction grid including path</p></li>
+<li><p>Quantiles Q5; Q95</p></li>
+<li><p>Variance:</p></li>
+<li><p>Entropy:</p></li>
+<li><p>Feature rank file</p></li>
+<li><p>Raw covariates file (target value - covariate value)</p></li>
+<li><p>Optimisation output</p></li>
+</ol>
+<p>8.      Others ??
+SB Notes: Not required as these are model dependent, and the metadata will be contained in each of the output geotif file.</p>
+<p>Model parameters:
+1.      YAML file (in full)
+2.      .SH file (in full)
+SB Notes: The .sh file is not required. YAML file is read as a python dictionary in uncoverml which can be dumped in the metadata.</p>
+<p>CreationDate:   31/05/19
+Developer:      <a class="reference external" href="mailto:fei&#46;zhang&#37;&#52;&#48;ga&#46;gov&#46;au">fei<span>&#46;</span>zhang<span>&#64;</span>ga<span>&#46;</span>gov<span>&#46;</span>au</a></p>
+<dl class="simple">
+<dt>Revision History:</dt><dd><p>LastUpdate:     31/05/19   FZ
+LastUpdate:     dd/mm/yyyy  Who     Optional description</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="uncoverml.metadata_profiler.MetadataSummary">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.metadata_profiler.</code><code class="sig-name descname">MetadataSummary</code><span class="sig-paren">(</span><em class="sig-param">model_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.MetadataSummary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Summary Description of the ML prediction output</p>
+<dl class="method">
+<dt id="uncoverml.metadata_profiler.MetadataSummary.write_metadata">
+<code class="sig-name descname">write_metadata</code><span class="sig-paren">(</span><em class="sig-param">out_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.MetadataSummary.write_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>write the metadata for this prediction result, into a human-readable txt file.
+in order to make the ML results traceable and reproduceable (provenance)
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.metadata_profiler.main">
+<code class="sig-prename descclassname">uncoverml.metadata_profiler.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">mf</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>define my main function
+:return:</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-uncoverml.mllog">
 <span id="uncoverml-mllog-module"></span><h2>uncoverml.mllog module<a class="headerlink" href="#module-uncoverml.mllog" title="Permalink to this headline">¶</a></h2>
