@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 import pickle
 from os.path import basename
+import os
 
 from uncoverml import mpiops
 from uncoverml.image import Image
@@ -154,7 +155,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                 plt.scatter(x=list(range(vals_no_mask.shape[0])),
                             y=vals_no_mask.data)
                 plt.title(name)
-                plt.savefig(name.rstrip('.tif') + '.png')
+                plt.savefig(os.path.join(config.plot_covariates, name.rstrip('.tif') + '.png'))
                 plt.close()
 
 

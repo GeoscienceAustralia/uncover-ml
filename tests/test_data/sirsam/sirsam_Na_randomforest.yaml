@@ -6,7 +6,7 @@ features:
       targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
       rawcovariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/rawcovariates.csv
       rawcovariates_mask: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/rawcovariates_mask.csv
-      plot_covariates: true
+      plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/
       train_data_pk: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/training_data.pk
 
   - name: ordinal_features
