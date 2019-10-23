@@ -5,8 +5,10 @@ from typing import Optional, List
 import logging
 from os import path
 from os import makedirs
+import os
 import glob
 import csv
+import re
 
 import yaml
 
@@ -36,6 +38,7 @@ _global_transforms = {'centre': transforms.CentreTransform,
                       'sqrt': transforms.SqrtTransform,
                       'whiten': transforms.WhitenTransform}
 
+    
 
 def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int) -> tuple:
     """
@@ -351,10 +354,10 @@ class Config(object):
         Name of the property to train clustering against.
     """
     def __init__(self, yaml_file: str):
-        self.config_yaml = yaml_file  
-
+        Config._configure_pyyaml()
+        self.config_yaml = yaml_file
         with open(yaml_file, 'r') as f:
-            s = yaml.safe_load(f)
+            s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         # TODO expose this option when fixed
@@ -500,6 +503,32 @@ class Config(object):
                 self.semi_supervised = False
             if 'cluster_analysis' in s['clustering']:
                 self.cluster_analysis = s['clustering']['cluster_analysis']
+
+    yaml_loader = yaml.SafeLoader
+    """The PyYaml loader to use."""
+
+    @staticmethod
+    def _configure_pyyaml():
+        # Configure PyYaml to implicitly resolve environment variables of form '$ENV_VAR'.
+        env_var_pattern = re.compile(r'\$([A-Z_]*)')
+        yaml.add_implicit_resolver('!envvar', env_var_pattern, Loader=Config.yaml_loader)
+
+        def _env_var_constructor(loader, node):
+            """
+            PyYaml constructor for resolving env vars.
+            """
+            value = loader.construct_scalar(node)
+            env_vars = env_var_pattern.findall(value)
+            for ev in env_vars:
+                try:
+                    ev_val = os.environ.get(ev)
+                except KeyError:
+                    _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
+                value = re.sub(env_var_pattern, ev_val, value, count=1)
+            print(f'found regex - returning {value}')
+            return value
+
+        yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
 
 
 class ConfigException(Exception):
