@@ -507,8 +507,7 @@ class Config(object):
     @staticmethod
     def _configure_pyyaml():
         # Configure PyYaml to implicitly resolve environment variables of form '$ENV_VAR'.
-        env_var_pattern_string = re.compile(r'\$([A-Z_]*)')
-        env_var_pattern = re.compile(env_var_pattern_string)
+        env_var_pattern = re.compile(r'\$([A-Z_]*)')
         yaml.add_implicit_resolver('!envvar', env_var_pattern, Loader=Config.yaml_loader)
 
         def _env_var_constructor(loader, node):
@@ -522,7 +521,8 @@ class Config(object):
                     ev_val = os.environ.get(ev)
                 except KeyError:
                     _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
-                value = re.sub(env_var_pattern_string, ev_val, value, count=1)
+                value = re.sub(env_var_pattern, ev_val, value, count=1)
+            print(f'found regex - returning {value}')
             return value
 
         yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
