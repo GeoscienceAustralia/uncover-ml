@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import shutil
+import csv
 
 import pytest
 
@@ -45,8 +46,9 @@ class TestLearnCommand:
                         + SIRSAM_RF_COVARIATE_OUTPUT \
                         + SIRSAM_RF_COVARIATE_PLOTS
 
+    @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_learning(self, request, sirsam_rf_conf, sirsam_rf_out):
+    def run_sirsam_random_forest_learning(request, sirsam_rf_conf, sirsam_rf_out):
         """
         Run the top level 'learn' command'. Removes generated output on
         completion.
@@ -61,14 +63,33 @@ class TestLearnCommand:
         # Catch SystemExit as it gets raised by Click on command completion
         except SystemExit:
             pass
-        
+    
+    @staticmethod
     @pytest.fixture(params=SIRSAM_RF_OUTPUTS)
-    def sirsam_rf_output(self, request, sirsam_rf_out):
+    def sirsam_rf_output(request, sirsam_rf_out):
         return os.path.join(sirsam_rf_out, request.param)
-
-    def test_output_exists(self, sirsam_rf_output):
+    
+    @staticmethod
+    def test_output_exists(sirsam_rf_output):
         """
-        Test that excepted outputs of 'learn' command exist after 
+        Test that excepted outputs of 'learn' command exist after
         running.
         """
         assert os.path.exists(sirsam_rf_output)
+
+    @staticmethod
+    @pytest.fixture(params=SIRSAM_RF_COVARIATE_OUTPUT)
+    def sirsam_rf_covariate_outputs(request, sirsam_rf_out, sirsam_rf_precomp):
+        return (
+            os.path.join(sirsam_rf_out, request.param),
+            os.path.join(sirsam_rf_precomp, 'covariate_outputs', request.param)
+        )
+
+    @staticmethod
+    def test_covariate_csv_outputs_match(sirsam_rf_covariate_outputs):
+        with open(sirsam_rf_covariate_outputs[0]) as test, \
+                open(sirsam_rf_covariate_outputs[1]) as precomp:
+            test_lines = test.readlines()
+            precomp_lines = precomp.readlines()
+        assert test_lines == precomp_lines  
+        
