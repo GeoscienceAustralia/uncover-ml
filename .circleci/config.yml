@@ -13,6 +13,11 @@ jobs:
           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
 
       - run:
+          name: Set up environment variables
+          command: |
+            echo 'export UNCOVERML_SRC=$CIRCLE_WORKING_DIRECTORY'
+
+      - run:
           name: Install uncoverml 
           command: |
             cubist/makecubist .
