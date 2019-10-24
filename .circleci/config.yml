@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/python:3.7
 
-    working_directory: ~/uncover-ml
+    working_directory: /home/circleci/uncover-ml
 
     steps:
       - checkout
