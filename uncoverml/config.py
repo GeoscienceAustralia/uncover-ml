@@ -522,6 +522,8 @@ class Config(object):
                 except KeyError:
                     _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
                     raise
+                print("DEBUG!")
+                print(f"{env_var_pattern}, {ev_val}, {value}")
                 value = re.sub(env_var_pattern, ev_val, value, count=1)
             return value
 
