@@ -220,3 +220,11 @@ def sirsam_rf_conf(sirsam_rf):
     Path to SirSam random forest test config.
     """
     return os.path.join(sirsam_rf, 'sirsam_Na_randomforest.yaml')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp(sirsam_rf):
+    """
+    Path to SirSam random forest precomputed outputs.
+    """
+    return os.path.join(sirsam_rf, 'precomputed')
+ 
