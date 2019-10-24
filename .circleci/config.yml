@@ -15,7 +15,7 @@ jobs:
       - run:
           name: Set up environment variables
           command: |
-            echo 'export UNCOVERML_SRC=$CIRCLE_WORKING_DIRECTORY'
+            echo 'export UNCOVERML_SRC=$CIRCLE_WORKING_DIRECTORY' >> $BASH_ENV
 
       - run:
           name: Install uncoverml 
