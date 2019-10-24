@@ -518,7 +518,7 @@ class Config(object):
             env_vars = env_var_pattern.findall(value)
             for ev in env_vars:
                 try:
-                    ev_val = os.environ.get(ev)
+                    ev_val = os.environ[ev]
                 except KeyError:
                     _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
                     raise
