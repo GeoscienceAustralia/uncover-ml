@@ -521,8 +521,8 @@ class Config(object):
                     ev_val = os.environ.get(ev)
                 except KeyError:
                     _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
+                    raise
                 value = re.sub(env_var_pattern, ev_val, value, count=1)
-            print(f'found regex - returning {value}')
             return value
 
         yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
