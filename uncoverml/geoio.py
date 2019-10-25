@@ -1,6 +1,7 @@
 from __future__ import division
 
 import os.path
+import os
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
@@ -255,6 +256,8 @@ class ImageWriter:
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
+        if not os.path.exists(self.outputdir):
+            os.makedirs(self.outputdir)
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
