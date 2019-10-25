@@ -1,0 +1,97 @@
+# Metadata Profile for the Prediction Results
+
+############ Software Environment ###########
+
+Creator = ubuntu 
+Computer = ip-172-31-3-225 
+ML Algorithm = multirandomforest 
+uncoverml git-hash = 883d8a131a9187a970d206519fdf096d4aefa2e9
+Datetime = 2019-10-25 03:06:01 
+
+
+############ Performance Matrics ###########
+
+expvar = 0.5234628450325468
+expvar_transformed = 0.531611887457396
+lins_ccc = 0.6782576696084297
+lins_ccc_transformed = 0.6820184726717139
+mll = 0.5554504342500338
+mll_transformed = 0.8322164916070733
+r2_score = 0.5174018081761803
+r2_score_transformed = 0.5207674332235998
+smse = 0.4825981918238197
+smse_transformed = 0.47923256677640025
+
+
+############ Configuration ###########
+
+uncoverml.config.Config(
+  algorithm = 'multirandomforest', 
+  algorithm_args = {'n_estimators': 10, 'target_transform': 'log', 'forests': 20, 'parallel': True}, 
+  cluster_analysis = False, 
+  clustering = False, 
+  config_yaml = 'sirsam_Na_randomforest.yaml', 
+  cross_validate = True, 
+  crossval_seed = 1, 
+  cubist = False, 
+  feature_sets = [
+      uncoverml.config.FeatureSetConfig(
+        files = [
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1.tif', 
+            '/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15.tif'
+          ], 
+        name = 'ordinal_features', 
+        transform_set = uncoverml.transforms.transformset.ImageTransformSet(global_transforms = [...], image_transforms = [...], imputer = uncoverml.transforms.impute.MeanImputer(...), is_categorical = False), 
+        type = 'ordinal'
+      )
+    ], 
+  final_transform = None, 
+  folds = 5, 
+  geotif_options = {}, 
+  krige = False, 
+  lon_lat = False, 
+  mask = None, 
+  multicubist = False, 
+  multirandomforest = True, 
+  name = 'sirsam_Na_randomforest', 
+  outbands = 10, 
+  output_dir = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/', 
+  parallel_validate = True, 
+  patchsize = 0, 
+  permutation_importance = False, 
+  pickle = True, 
+  pickle_load = True, 
+  pickled_covariates = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/features.pk', 
+  pickled_targets = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/targets.pk', 
+  plot_covariates = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/', 
+  quantiles = 0.95, 
+  rank_features = False, 
+  rawcovariates = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/rawcovariates.csv', 
+  rawcovariates_mask = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/rawcovariates_mask.csv', 
+  resample = None, 
+  target_file = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/targets/geochem_sites_log.shp', 
+  target_property = 'Na_log', 
+  thumbnails = 10, 
+  train_data_pk = '/home/ubuntu/uncover-ml/tests/test_data/sirsam/random_forest/out/training_data.pk', 
+  yaml_loader = <class 'yaml.loader.SafeLoader'>
+)
+
+############ Model ###########
+
+uncoverml.models.MultiRandomForestTransformed(
+  _trained = True, 
+  forests = 20, 
+  ..., 
+  target_transform = uncoverml.transforms.target.Log(
+    offset = 0.0,   replace_zeros = True,   ymin = 1.735593), 
+  temp_dir = '/home/ubuntu/uncover-ml/t...test_data/sirsam/results'
+)
+
+############ The End of Metadata ###########
+
