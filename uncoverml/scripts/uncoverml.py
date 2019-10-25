@@ -7,6 +7,7 @@ import logging
 import pickle
 import resource
 from os.path import isfile, splitext, exists
+import os
 import warnings
 
 import click
@@ -278,7 +279,8 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     #FZ: create metadata profile for the ML results
     ls.mpiops.run_once(
-        write_prediction_metadata, model_or_cluster_file, out_filename="metadata.txt")
+        write_prediction_metadata,
+        model_or_cluster_file, os.path.join(config.output_dir, 'metadata.txt'))
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
@@ -288,7 +290,6 @@ def write_prediction_metadata(model_file, out_filename="metadata.txt"):
     in order to make the ML results traceable and reproduceable (provenance)
     :return:
     """
-
     from uncoverml.metadata_profiler import MetadataSummary
 
     mobj = MetadataSummary(model_file)
