@@ -120,12 +120,10 @@ class TestLearnCommand:
         """
         Test that generated model matches precomputed model.
         """
-        test_model, test_config = \
-            _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
-        precomp_model, precomp_config = \
-            _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_MODEL)) 
-        assert test_model == precomp_model
-        assert test_config == precomp_config
+        t_dict = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
+        p_dict = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_MODEL))
+        assert t_dict['model'] == p_dict['model']
+        assert t_dict['config'] == p_dict['config']
 
     @classmethod
     def test_training_data_matches(cls, sirsam_rf_out, sirsam_rf_precomp_learn):
@@ -148,7 +146,7 @@ class TestLearnCommand:
         t_features = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_FEATURE_DATA))
         p_features = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_FEATURE_DATA))
         assert np.array_equal(t_features, p_features)
-        
+
     @classmethod
     def test_pickled_targets_match(cls, sirsam_rf_out, sirsam_rf_precomp_learn):
         """
@@ -157,7 +155,7 @@ class TestLearnCommand:
         t_targets = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_TARGET_DATA))
         p_targets = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_TARGET_DATA))
         assert t_targets == p_targets
-        
+
 def _unpickle(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
