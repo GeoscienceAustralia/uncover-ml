@@ -159,3 +159,55 @@ class TestLearnCommand:
 def _unpickle(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
+
+@pytest.mark.predict
+class TestPredictCommand:
+    SIRSAM_RF_MF = 'sirsam_Na_randomforest_multirandomforest'
+    
+    SIRSAM_PREDICTION_MAPS = [
+        SIRSAM_RF_MF + '_lower_quantile.tif',
+        SIRSAM_RF_MF + '_lower_quantile_thumbnail.tif',
+        SIRSAM_RF_MF + '_prediction.tif',
+        SIRSAM_RF_MF + '_prediction_thumbnail.tif',
+        SIRSAM_RF_MF + '_upper_quantile.tif',
+        SIRSAM_RF_MF + '_upper_quantile_thumbnail.tif',
+        SIRSAM_RF_MF + '_variance.tif',
+        SIRSAM_RF_MF + '_variance_thumbnail.tif'
+    ]
+        
+    SIRSAM_RF_MF_METADATA = 'metadata.txt'
+
+    @staticmethod
+    @pytest.fixture(scope='class', autouse=True)
+    def run_sirsam_random_forest_prediction(request, sirsam_rf_out, sirsam_rf_precomp_learn):
+        """
+        Run the top level 'predict' command'. Removes generated output on
+        completion.
+        """
+        def finalize():
+            shutil.rmtree(sirsam_rf_out)
+
+        request.addfinalizer(finalize)
+
+        model = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_MODEL)
+        try:
+            return uncoverml.predict([model, '-p', 20])
+        # Catch SystemExit as it gets raised by Click on command completion
+        except SystemExit:
+            pass
+    
+    @staticmethod
+    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA])
+    def sirsam_rf_output(request, sirsam_rf_out):
+        return os.path.join(sirsam_rf_out, request.param)
+    
+    @staticmethod
+    def test_output_exists(sirsam_rf_output):
+        """
+        Test that excepted outputs of 'predict' command exist after
+        running.
+        """
+        assert os.path.exists(sirsam_rf_output)
+
+
+

@@ -234,3 +234,10 @@ def sirsam_rf_precomp_learn(sirsam_rf_precomp):
     Path to SirSam random forest precomputed learn outputs.
     """
     return os.path.join(sirsam_rf_precomp, 'learn')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp_predict(sirsam_rf_precomp):
+    """
+    Path to SirSam random forest precomputed predict outputs.
+    """
+    return os.path.join(sirsam_rf_precomp, 'predict')
