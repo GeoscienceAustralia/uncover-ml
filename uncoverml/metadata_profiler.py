@@ -69,12 +69,9 @@ class MetadataSummary():
     """
     Summary Description of the ML prediction output
     """
-
     def __init__(self, model_file):
 
         path2mf = os.path.dirname(os.path.abspath(model_file))
-
-        print (path2mf)
 
         self.description = "Metadata for the ML results"
         username = getpass.getuser()
@@ -88,19 +85,15 @@ class MetadataSummary():
         with open(model_file, 'rb') as f:
             state_dict = pickle.load(f)
 
-        print(state_dict.keys())
-
         self.model = state_dict["model"]
-        print("####################### Info about the prediction model  ####################")
-        model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True, show_address=False, str_length=50)
-        print(model_str)
+        model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True,
+                            show_address=False, str_length=50)
 
         self.config = state_dict["config"]
         self.name = self.config.name  # 'demo_regression'
         self.algorithm = self.config.algorithm  # 'svr'
 
-        self.extent= ((-10, 100),(-40, 140))
-
+        self.extent = ((-10, 100),(-40, 140))
 
         # self.performance_metric= {"json_file": 0.99}
         jsonfilename = "%s_scores.json"%(self.name)
@@ -115,9 +108,7 @@ class MetadataSummary():
         """
         write the metadata for this prediction result, into a human-readable txt file.
         in order to make the ML results traceable and reproduceable (provenance)
-        :return:
         """
-
         with open(out_filename, 'w') as outf:
             outf.write("# Metadata Profile for the Prediction Results")
 
@@ -136,41 +127,17 @@ class MetadataSummary():
             outf.write("\n\n############ Configuration ###########\n\n")
 
             conf_str = ppretty(self.config, indent='  ', width=200, seq_length=200,
-                             show_protected=True, show_static=True, show_properties=True, show_address=False,
-                             str_length=200)
+                               show_protected=True, show_static=True, show_properties=True, 
+                               show_address=False, str_length=200)
 
             outf.write(conf_str)
 
             outf.write("\n\n############ Model ###########\n\n")
-            model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True, show_address=False,
-                                str_length=50)
-            outf.write(model_str)
+            model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True, 
+                                show_address=False, str_length=50)
 
+            outf.write(model_str)
 
             outf.write("\n\n############ The End of Metadata ###########\n\n")
 
         return out_filename
-
-
-
-def main(mf):
-    """
-    define my main function
-    :return:
-    """
-
-    obj= MetadataSummary(mf)
-    obj.write_metadata(out_filename='metatest.txt')
-
-    return
-
-
-# =============================================
-# Section for quick test of this script
-#
-# cd /g/data1a/ha3/fxz547/Githubz/uncover_fei_branch_backup/tmp_run/GA-cover2
-# $ python /g/data/ha3/fxz547/Githubz/uncover-ml/uncoverml/metadata_profiler.py demo_regression.model
-# ---------------------------------------------
-if __name__ == "__main__":
-    # call main function
-    main(sys.argv[1])
