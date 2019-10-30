@@ -192,6 +192,31 @@ def data_sirsam(data_dir):
     """
     return os.path.join(data_dir, 'sirsam')
 
+@pytest.fixture(scope='session')
+def sirsam_covariate_paths(data_sirsam):
+    """
+    Paths to SirSam covariate files.
+    """
+    names = [
+        'Clim_Prescott_LindaGregory.tif',
+        'U_15v1.tif',
+        'U_TH_15.tif',
+        'dem_foc2.tif',
+        'er_depg.tif',
+        'gg_clip.tif',
+        'k_15v5.tif',
+        'tpi_300.tif'
+    ]
+    paths = [os.path.join(data_sirsam, 'covariates', n) for n in names]
+    return paths
+
+@pytest.fixture(scope='session')
+def sirsam_target_path(data_sirsam):
+    """
+    Path to SirSam target file.
+    """
+    return os.path.join(data_sirsam, 'targets', 'geochem_sites_log.shp')
+
 # Sir Samuel random forest
 @pytest.fixture(scope='session')
 def sirsam_rf(data_sirsam):
