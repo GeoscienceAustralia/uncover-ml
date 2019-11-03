@@ -179,7 +179,8 @@ class TestPredictCommand:
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_prediction(request, sirsam_rf_out, sirsam_rf_precomp_learn):
+    def run_sirsam_random_forest_prediction(request, sirsam_rf_out, sirsam_rf_conf, 
+                                            sirsam_rf_precomp_learn):
         """
         Run the top level 'predict' command'. Removes generated output on
         completion.
@@ -189,9 +190,14 @@ class TestPredictCommand:
 
         request.addfinalizer(finalize)
 
+        # Copy precomputed model to the output directory
+        os.mkdir(sirsam_rf_out)
         model = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_MODEL)
+        shutil.copyfile(
+            model, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_MODEL))
+
         try:
-            return uncoverml.predict([model, '-p', 20])
+            return uncoverml.predict([sirsam_rf_conf, '-p', 21])
         # Catch SystemExit as it gets raised by Click on command completion
         except SystemExit:
             pass
@@ -208,6 +214,4 @@ class TestPredictCommand:
         running.
         """
         assert os.path.exists(sirsam_rf_output)
-
-
 

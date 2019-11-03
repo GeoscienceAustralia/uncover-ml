@@ -474,7 +474,6 @@ class Config(object):
                      'All covariates will be intersected.')
 
         self.output_dir = s['output']['directory']
-
         # create output dir if does not exist
         makedirs(self.output_dir, exist_ok=True)
 
