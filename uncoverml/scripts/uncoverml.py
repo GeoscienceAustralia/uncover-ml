@@ -47,11 +47,11 @@ def run_crossval(x_all, targets_all, config):
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 @cli.command()
-@click.argument('pipeline_file')
+@click.argument('config_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def learn(pipeline_file, partitions):
-    config = ls.config.Config(pipeline_file)
+def learn(config_file, partitions):
+    config = ls.config.Config(config_file)
     targets_all, x_all = _load_data(config, partitions)
 
     if config.cross_validate:
@@ -142,11 +142,11 @@ def _load_data(config, partitions):
     return targets_all, x_all
 
 @cli.command()
-@click.argument('pipeline_file')
+@click.argument('config_file')
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help="only use this fraction of the data for learning classes")
-def cluster(pipeline_file, subsample_fraction):
-    config = ls.config.Config(pipeline_file)
+def cluster(config_file, subsample_fraction):
+    config = ls.config.Config(config_file)
 
     for f in config.feature_sets:
         if not f.transform_set.global_transforms:
@@ -192,7 +192,7 @@ def semisupervised(config):
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     _logger.info("Clustering image")
     model.learn(features, indices, classes)
-    ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
+    ls.mpiops.run_once(ls.geoio.export_model, model, config, '.cluster')
 
 def unsupervised(config):
     # make sure we're clear that we're clustering
@@ -211,24 +211,26 @@ def unsupervised(config):
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     _logger.info("Clustering image")
     model.learn(features)
-    ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
+    ls.mpiops.run_once(ls.geoio.export_model, model, config, '.cluster')
 
 @cli.command()
-@click.argument('model_or_cluster_file')
+@click.argument('config_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help="divide each node\'s data into this many partitions")
 @click.option('-m', '--mask', type=str, default='',
               help="mask file used to limit prediction area")
 @click.option('-r', '--retain', type=int, default=None,
               help="mask values where to predict")
-def predict(model_or_cluster_file, partitions, mask, retain):
-    with open(model_or_cluster_file, 'rb') as f:
-        state_dict = pickle.load(f)
+def predict(config_file, partitions, mask, retain):
+    config = ls.config.Config(config_file)
+    if config.clustering:
+        suffix = '.cluster'
+    else:
+        suffix = '.model'
+    model_file = os.path.join(os.path.join(config.output_dir, config.name + suffix))
+    with open(model_file, 'rb') as f:
+        model = pickle.load(f)
 
-    model = state_dict["model"]
-    config = state_dict["config"]
-    config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
-        else False
     config.mask = mask if mask else config.mask
     if config.mask:
         config.retain = retain if retain else config.retain
@@ -266,7 +268,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     # explicitly close output rasters
     image_out.close()
 
-    if config.cluster and config.cluster_analysis:
+    if config.clustering and config.cluster_analysis:
         if ls.mpiops.chunk_index == 0:
             ls.predict.final_cluster_analysis(config.n_classes,
                                               config.n_subchunks)
@@ -280,11 +282,11 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     #FZ: create metadata profile for the ML results
     ls.mpiops.run_once(
         write_prediction_metadata,
-        model_or_cluster_file, os.path.join(config.output_dir, 'metadata.txt'))
+        model_file, config, os.path.join(config.output_dir, 'metadata.txt'))
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
-def write_prediction_metadata(model_file, out_filename="metadata.txt"):
+def write_prediction_metadata(model_file, config, out_filename="metadata.txt"):
     """
     write the metadata for this prediction result, into a human-readable txt file.
     in order to make the ML results traceable and reproduceable (provenance)
@@ -292,7 +294,7 @@ def write_prediction_metadata(model_file, out_filename="metadata.txt"):
     """
     from uncoverml.metadata_profiler import MetadataSummary
 
-    mobj = MetadataSummary(model_file)
+    mobj = MetadataSummary(model_file, config)
     mobj.write_metadata(out_filename)
 
     return out_filename
@@ -303,3 +305,8 @@ def _total_gb():
     # total_usage = mpiops.comm.reduce(my_usage, root=0)
     total_usage = ls.mpiops.comm.allreduce(my_usage)
     return total_usage
+
+def _load_model(config, suffix='.model'):
+    with open(os.path.join(config.output_dir, config.name + suffix), 'rb') as f:
+        return pickle.load(f)
+

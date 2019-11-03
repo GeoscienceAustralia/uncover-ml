@@ -69,7 +69,7 @@ class MetadataSummary():
     """
     Summary Description of the ML prediction output
     """
-    def __init__(self, model_file):
+    def __init__(self, model_file, config):
 
         path2mf = os.path.dirname(os.path.abspath(model_file))
 
@@ -83,13 +83,12 @@ class MetadataSummary():
         self.git_hash = gits.git_hash
 
         with open(model_file, 'rb') as f:
-            state_dict = pickle.load(f)
+            self.model = pickle.load(f)
 
-        self.model = state_dict["model"]
         model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True,
                             show_address=False, str_length=50)
 
-        self.config = state_dict["config"]
+        self.config = config
         self.name = self.config.name  # 'demo_regression'
         self.algorithm = self.config.algorithm  # 'svr'
 
