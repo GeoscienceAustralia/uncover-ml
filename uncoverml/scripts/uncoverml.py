@@ -192,7 +192,7 @@ def semisupervised(config):
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     _logger.info("Clustering image")
     model.learn(features, indices, classes)
-    ls.mpiops.run_once(ls.geoio.export_model, model, config, '.cluster')
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
 
 def unsupervised(config):
     # make sure we're clear that we're clustering
@@ -211,7 +211,7 @@ def unsupervised(config):
     model = ls.cluster.KMeans(config.n_classes, config.oversample_factor)
     _logger.info("Clustering image")
     model.learn(features)
-    ls.mpiops.run_once(ls.geoio.export_model, model, config, '.cluster')
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
 
 @cli.command()
 @click.argument('config_file')
@@ -223,13 +223,7 @@ def unsupervised(config):
               help="mask values where to predict")
 def predict(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file)
-    if config.clustering:
-        suffix = '.cluster'
-    else:
-        suffix = '.model'
-    model_file = os.path.join(os.path.join(config.output_dir, config.name + suffix))
-    with open(model_file, 'rb') as f:
-        model = pickle.load(f)
+    model = _load_model(config)
 
     config.mask = mask if mask else config.mask
     if config.mask:
@@ -282,11 +276,11 @@ def predict(config_file, partitions, mask, retain):
     #FZ: create metadata profile for the ML results
     ls.mpiops.run_once(
         write_prediction_metadata,
-        model_file, config, os.path.join(config.output_dir, 'metadata.txt'))
+        model, config, os.path.join(config.output_dir, 'metadata.txt'))
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
-def write_prediction_metadata(model_file, config, out_filename="metadata.txt"):
+def write_prediction_metadata(model, config, out_filename="metadata.txt"):
     """
     write the metadata for this prediction result, into a human-readable txt file.
     in order to make the ML results traceable and reproduceable (provenance)
@@ -294,7 +288,7 @@ def write_prediction_metadata(model_file, config, out_filename="metadata.txt"):
     """
     from uncoverml.metadata_profiler import MetadataSummary
 
-    mobj = MetadataSummary(model_file, config)
+    mobj = MetadataSummary(model, config)
     mobj.write_metadata(out_filename)
 
     return out_filename
@@ -306,7 +300,7 @@ def _total_gb():
     total_usage = ls.mpiops.comm.allreduce(my_usage)
     return total_usage
 
-def _load_model(config, suffix='.model'):
-    with open(os.path.join(config.output_dir, config.name + suffix), 'rb') as f:
+def _load_model(config):
+    with open(config.model, 'rb') as f:
         return pickle.load(f)
 

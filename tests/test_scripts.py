@@ -197,7 +197,7 @@ class TestPredictCommand:
             model, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_MODEL))
 
         try:
-            return uncoverml.predict([sirsam_rf_conf, '-p', 21])
+            return uncoverml.predict([sirsam_rf_conf, '-p', 20])
         # Catch SystemExit as it gets raised by Click on command completion
         except SystemExit:
             pass

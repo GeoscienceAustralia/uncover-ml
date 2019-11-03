@@ -473,8 +473,12 @@ class Config(object):
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
 
-        self.output_dir = s['output']['directory']
-        # create output dir if does not exist
+        # OUTPUT BLOCK
+        output_dict = s['output']
+        self.output_dir = output_dict['directory']
+        self.model_file = \
+            output_dict.get('model', os.path.join(
+                self.output_dir, self.name + '_' + self.algorithm + '.model'))
         makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:

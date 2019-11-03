@@ -105,8 +105,10 @@ def cli(pipeline_file, partitions, njobs, verbosity):
         config.optimisation['algorithm']))
 
     targets_all, x_all = _load_data(config, partitions)
-
+    
     log.info("Optimising {} model".format(config.optimisation['algorithm']))
+    # Runs 'fit' on selected model ('estimator' in scikit-learn) with 
+    # hyperparameter combinations.
     estimator.fit(X=x_all, y=targets_all.observations)
 
     pd.DataFrame.from_dict(
