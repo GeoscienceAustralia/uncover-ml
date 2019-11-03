@@ -501,9 +501,8 @@ def export_feature_ranks(measures, feats, scores, config):
     with open(outfile_ranks, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
-def export_model(model, config, suffix='.model'):
-    outfile = os.path.join(config.output_dir, config.name + suffix)
-    with open(outfile, 'wb') as f:
+def export_model(model, config):
+    with open(config.model_file, 'wb') as f:
         pickle.dump(model, f)
 
 def export_crossval(crossval_output, config):

@@ -41,3 +41,4 @@ validation:
 
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
+  model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model

@@ -69,10 +69,8 @@ class MetadataSummary():
     """
     Summary Description of the ML prediction output
     """
-    def __init__(self, model_file, config):
-
-        path2mf = os.path.dirname(os.path.abspath(model_file))
-
+    def __init__(self, model, config):
+        self.model = model
         self.description = "Metadata for the ML results"
         username = getpass.getuser()
         hostname = socket.gethostname()
@@ -81,9 +79,6 @@ class MetadataSummary():
         self.computename = hostname
         self.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.git_hash = gits.git_hash
-
-        with open(model_file, 'rb') as f:
-            self.model = pickle.load(f)
 
         model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True,
                             show_address=False, str_length=50)
@@ -94,10 +89,9 @@ class MetadataSummary():
 
         self.extent = ((-10, 100),(-40, 140))
 
-        # self.performance_metric= {"json_file": 0.99}
         jsonfilename = "%s_scores.json"%(self.name)
 
-        jsonfile = os.path.join(path2mf, jsonfilename)
+        jsonfile = os.path.join(config.output_dir, jsonfilename)
 
         with open(jsonfile) as json_file:
             self.model_performance_metrics = json.load(json_file)
