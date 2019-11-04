@@ -301,6 +301,6 @@ def _total_gb():
     return total_usage
 
 def _load_model(config):
-    with open(config.model, 'rb') as f:
+    with open(config.model_file, 'rb') as f:
         return pickle.load(f)
 
