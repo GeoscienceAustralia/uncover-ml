@@ -52,10 +52,10 @@ class develop(_develop):
         build_cubist()
         _develop.run(self)
 
-def git_hash():
+def git_desc():
     # FIXME: won't work for platforms that don't have git
-    gh = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-    return gh[:7]
+    desc = ['git', 'describe', '--long', '--tags', '--dirty', '--always']
+    return subprocess.check_output(desc).decode().strip()
 
 setup(
     cmdclass={
@@ -63,7 +63,7 @@ setup(
         'develop': develop
     },
     name='uncover-ml',
-    version=f'0.2.0-{git_hash()}',
+    version=git_desc(),
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,

@@ -106,7 +106,7 @@ class MetadataSummary():
             outf.write("Creator = %s \n"%self.creator)
             outf.write("Computer = %s \n"%self.computename)
             outf.write("ML Algorithm = %s \n"%self.algorithm)
-            outf.write("uncoverml git-hash = %s\n"%self.git_hash)
+            outf.write("Version = %s\n"%self.version)
             outf.write("Datetime = %s \n"%self.datetime)
 
             outf.write("\n\n############ Performance Matrics ###########\n\n")
