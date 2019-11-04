@@ -59,7 +59,8 @@ class TestLearnCommand:
         completion.
         """
         def finalize():
-            shutil.rmtree(sirsam_rf_out)
+            if os.path.exists(sirsam_rf_out):
+            	shutil.rmtree(sirsam_rf_out)
 
         request.addfinalizer(finalize)
 
@@ -186,7 +187,8 @@ class TestPredictCommand:
         completion.
         """
         def finalize():
-            shutil.rmtree(sirsam_rf_out)
+            if os.path.exists(sirsam_rf_out):
+                shutil.rmtree(sirsam_rf_out)
 
         request.addfinalizer(finalize)
 
