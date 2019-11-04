@@ -476,9 +476,8 @@ class Config(object):
         # OUTPUT BLOCK
         output_dict = s['output']
         self.output_dir = output_dict['directory']
-        self.model_file = \
-            output_dict.get('model', os.path.join(
-                self.output_dir, self.name + '_' + self.algorithm + '.model'))
+        self.model_file = output_dict.get('model', os.path.join(
+            self.output_dir, self.name + '_' + self.algorithm + '.model'))
         makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:
