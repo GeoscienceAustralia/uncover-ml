@@ -30,12 +30,7 @@ def build_cubist():
         out = subprocess.run([cubist_config.invocation, '-h'])
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
-
     print(out)
-    git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-    with open('uncoverml/git_hash.py', 'w') as f:
-        f.write("git_hash = '{}'".format(git_hash))
-
 
 class build_py(_build_py):
     """ Override to ensure cubist is installed.
@@ -57,6 +52,10 @@ class develop(_develop):
         build_cubist()
         _develop.run(self)
 
+def git_hash():
+    # FIXME: won't work for platforms that don't have git
+    gh = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+    return gh[:7]
 
 setup(
     cmdclass={
@@ -64,7 +63,7 @@ setup(
         'develop': develop
     },
     name='uncover-ml',
-    version='0.2.0',
+    version=f'0.2.0-{git_hash()}',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
