@@ -574,7 +574,7 @@ class RandomForestRegressorMulti():
             if self.parallel:  # used in training
                 f = self._randomforests['rf_model_{}'.format(i)]
             else:  # used when parallel is false, i.e., during x-val
-                f = self._randomforests['rf_model_{}_{}.pk'.format(i, mpiops.chunk_index)]
+                f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
             for m, dt in enumerate(f.estimators_):
                 y_pred[:, i * self.n_estimators + m] = dt.predict(x)
 
