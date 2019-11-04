@@ -478,6 +478,8 @@ class Config(object):
         self.output_dir = output_dict['directory']
         self.model_file = output_dict.get('model', os.path.join(
             self.output_dir, self.name + '_' + self.algorithm + '.model'))
+        self.scores_file = output_dict.get('scores', os.path.join(
+            self.output_dir, self.name + '_' + 'scores.json'))
         makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:

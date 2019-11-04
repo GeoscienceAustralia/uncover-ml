@@ -89,12 +89,9 @@ class MetadataSummary():
 
         self.extent = ((-10, 100),(-40, 140))
 
-        jsonfilename = "%s_scores.json"%(self.name)
-
-        jsonfile = os.path.join(config.output_dir, jsonfilename)
-
-        with open(jsonfile) as json_file:
-            self.model_performance_metrics = json.load(json_file)
+        if config.cross_validate:
+            with open(config.scores_files) as sf:
+                self.model_performance_metrics = json.load(sf)
 
 
     def write_metadata(self, out_filename):
