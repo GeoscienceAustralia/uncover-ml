@@ -562,7 +562,6 @@ class RandomForestRegressorMulti():
         self._trained = True
 
     def predict_dist(self, x, interval=0.95, *args, **kwargs):
-        print(self.__dict__)
         # We can't make predictions until we have trained the model
         if not self._trained:
             print('Train first')
