@@ -59,10 +59,10 @@ import pickle
 import datetime
 import getpass
 import socket
-import uncoverml.git_hash as gits
 
 from ppretty import ppretty
 
+import uncoverml
 
 
 class MetadataSummary():
@@ -78,7 +78,7 @@ class MetadataSummary():
         self.creator = username
         self.computename = hostname
         self.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.git_hash = gits.git_hash
+        self.version = uncoverml.__version__
 
         model_str = ppretty(self.model, indent='  ', show_protected=True, show_static=True,
                             show_address=False, str_length=50)
