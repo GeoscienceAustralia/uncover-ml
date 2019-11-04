@@ -192,11 +192,15 @@ class TestPredictCommand:
 
         request.addfinalizer(finalize)
 
-        # Copy precomputed model to the output directory
+        # Copy precomputed files from learn step to the output directory
         os.mkdir(sirsam_rf_out)
         model = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_MODEL)
         shutil.copyfile(
             model, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_MODEL))
+        # Scores is required by metadata_profiler if crossval has been performed
+        scores = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
+        shutil.copyfile(
+            model, os.path.join(sirasm_rf_out, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT))
 
         try:
             return uncoverml.predict([sirsam_rf_conf, '-p', 20])
