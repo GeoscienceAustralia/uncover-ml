@@ -224,28 +224,33 @@ class Config(object):
         image chunk sets, transform sets and targets will be loaded
         from the pickle file. Training data will be pickled and saved
         to the specified file after its creation.
-    pickled_covariates : str
+    pk_covariates : str
         Path to pickle file containing intersection of targets and
-        covariates. If :attr:`~pikcle_load` is True, then this file
+        covariates. If :attr:`~pk_load` is True, then this file
         will be loaded and used as covariates for learning. If
-        :attr:`~pickle_load` is False, then covariates will be dumped
-        to this file after they have been created from the feature
-        sets specified in the configuration.
-    pickled_targets : str
-        Path to pickle file containing targets. If :attr:`~pickle_load`
-        is True, then this file will be loaded and used as targets
-        for learning. If :attr:`~pickle_load` is False, then targets
-        will be dumped to this file after they have been created from
-        the target file specified in the config.
-    pickle_load : bool
+        :attr:`~pk_load` is False, and this file does not exist,
+        then covariates will be dumped to this file after they have
+        been created from the feature sets specified in the 
+        configuration.
+    pk_targets : str
+        Path to pickle file containing targets. If :attr:`~pk_load` is
+        True, then this file will be loaded and used as targets for
+        learning. If :attr:`~pk_load` is False, and this file does not
+        exist, then targets will be dumped to this file after they have
+        been created from the target data specified in the 
+        configuration.
+    pk_load : bool
         True if :attr:`~pickle` is True and existent files are provided
         for :attr:`~pickled_covariates` and :attr:`~pickled_targets`.
         If True, then covariates and targets will be loaded from the
         pickle files. If False, the created targets and covariates
         will be dumped if respective file paths are provided. Will
         also be set to False if :attr:`~rank_features` is True as
-        feature ranking is not compatible with pickled data.
-    featurevec : str
+        feature ranking is not compatible with pickled data. If using
+        Cubist or Multicubist algorithms, it will also require 
+        :attr:`~pk_featurevec` to be present and an existing file
+        in order to be True.
+    pk_featurevec : str
         Path to pickle file containing feature vector. Must be provided
         if algorithm is 'cubist' or 'multicubist' and loading from
         pickle files. 
@@ -302,7 +307,7 @@ class Config(object):
     model_file : str
         Path to the file where model will be saved after
         learning/clustering and loaded from when predicting.
-    scroes_file : str
+    scores_file : str
         Path to the JSON file where cross validation scores will be
         saved.
     optimisation : dict
@@ -385,44 +390,62 @@ class Config(object):
         self.thumbnails = s['prediction']['thumbnails'] \
             if 'thumbnails' in s['prediction'] else 10
 
-        self.pickle = any(d['type'] == 'pickle' for d in s['features'])
+        # PICKLING BLOCK
+        pk_block = s.get('pickling')
+        if pk_block:
+            self.pk_covariates = pk_block.get('covariates')
+            self.pk_targets = pk_block.get('targets')
 
-        self.rawcovariates = False
-        self.train_data_pk = False
-        if self.pickle:
-            self.pickle_load = True
-            for n, d in enumerate(s['features']):
-                if d['type'] == 'pickle':
-                    if 'covariates' in d['files']:
-                        self.pickled_covariates = \
-                            path.abspath(d['files']['covariates'])
-                    if 'targets' in d['files']:
-                        self.pickled_targets = d['files']['targets']
-                    if 'rawcovariates' in d['files']:
-                        self.rawcovariates = d['files']['rawcovariates']
-                        self.rawcovariates_mask = \
-                            d['files']['rawcovariates_mask']
-                    if 'train_data_pk' in d['files']:
-                        self.train_data_pk = d['files']['train_data_pk']
-                    if not (path.exists(d['files']['covariates'])
-                            and path.exists(d['files']['targets'])):
-                        self.pickle_load = False
-                    if self.cubist or self.multicubist:
-                        if 'featurevec' in d['files']:
-                            self.featurevec = \
-                                path.abspath(d['files']['featurevec'])
-                        if not path.exists(d['files']['featurevec']):
-                            self.pickle_load = False
-                    self.plot_covariates = d['files'].get('plot_covariates')
-                    s['features'].pop(n)  # pop `pickle` features
+            # Load from pickle files if covariates and targets exist.
+            self.pk_load = self.pk_covariates and os.path.exists(self.pk_covariates) \
+                           and self.pk_targets and os.path.exists(self.pk_targets)
+            
+            if self.cubist or self.multicubist:
+                self.pk_featurevec = pk_block.get('featurevec')
+                # If running multicubist, we also need featurevec to  load from pickle files.
+                self.pk_load = self.pk_load \
+                               and self.pk_featurevec and os.path.exists(self.pk_featurevec)
+
+            if not self.pk_load:
+                self.pk_training_data = pk_block.get('training_data')
+
         else:
-            self.pickle_load = False
+            self.pk_load = False
 
-        if not self.pickle_load:
-            _logger.info('One or both pickled files were not '
-                     'found. All targets will be intersected.')
+        #self.rawcovariates = False
+        #self.train_data_pk = False
+        #if self.pickle:
+        #    self.pickle_load = True
+        #    for n, d in enumerate(s['features']):
+        #        if d['type'] == 'pickle':
+        #            if 'covariates' in d['files']:
+        #                self.pickled_covariates = \
+        #                    path.abspath(d['files']['covariates'])
+        #            if 'targets' in d['files']:
+        #                self.pickled_targets = d['files']['targets']
+        #            if 'rawcovariates' in d['files']:
+        #                self.rawcovariates = d['files']['rawcovariates']
+        #                self.rawcovariates_mask = \
+        #                    d['files']['rawcovariates_mask']
+        #            if 'train_data_pk' in d['files']:
+        #                self.train_data_pk = d['files']['train_data_pk']
+        #            if not (path.exists(d['files']['covariates'])
+        #                    and path.exists(d['files']['targets'])):
+        #                self.pickle_load = False
+        #            if self.cubist or self.multicubist:
+        #                if 'featurevec' in d['files']:
+        #                    self.featurevec = \
+        #                        path.abspath(d['files']['featurevec'])
+        #                if not path.exists(d['files']['featurevec']):
+        #                    self.pickle_load = False
+        #            self.plot_covariates = d['files'].get('plot_covariates')
+        #            s['features'].pop(n)  # pop `pickle` features
+        #else:
+        #    self.pickle_load = False
 
-        self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+        # If loading from pickled data, ignore all other features.
+        if not self.pk_load:
+            self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
 
         if 'preprocessing' in s:
             final_transform = s['preprocessing']
@@ -479,10 +502,19 @@ class Config(object):
         # OUTPUT BLOCK
         output_dict = s['output']
         self.output_dir = output_dict['directory']
+        
         self.model_file = output_dict.get('model', os.path.join(
             self.output_dir, self.name + '_' + self.algorithm + '.model'))
-        self.scores_file = output_dict.get('scores', os.path.join(
-            self.output_dir, self.name + '_' + 'scores.json'))
+
+        if self.cross_validate:
+            self.scores_file = output_dict.get('scores', os.path.join(
+                self.output_dir, self.name + '_' + 'scores.json'))
+
+        self.raw_covariates = output_dict.get('raw_covariates')
+        if self.raw_covariates:
+            self.raw_covariates_mask = os.path.join(self.raw_covariates, 'raw_covariates_mask.csv')
+            self.raw_covariates = os.path.join(self.raw_covariates, 'raw_covariates.csv')
+
         makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:

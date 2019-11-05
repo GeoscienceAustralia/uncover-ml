@@ -1,14 +1,13 @@
-features:
-  - name: pickle_features
-    type: pickle
+# This block is for using Python's pickle module to save and load
+# ML data. 
+pickling:
     files:
-      covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
+      covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/covariates.pk
       targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
-      rawcovariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/rawcovariates.csv
-      rawcovariates_mask: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/rawcovariates_mask.csv
-      plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/
-      train_data_pk: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/training_data.pk
+      # featurevec:
+      # training_data: 
 
+features:
   - name: ordinal_features
     type: ordinal
     files:
