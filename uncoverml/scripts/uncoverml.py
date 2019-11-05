@@ -87,22 +87,13 @@ def _load_data(config, partitions):
                          "dividing all data between nodes")
 
         # Make the targets
-        if config.pk_training_data and os.path.exists(config.pk_training_data):
-            _logger.info("Reusing pickled training data")
-            image_chunk_sets, transform_sets, targets = \
-                pickle.load(open(config.pk_training_data, 'rb'))
-        else:
-            _logger.info("Intersecting targets as pickled train data was not "
-                         "available")
-            targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                            targetfield=config.target_property)
-            # Get the image chunks and their associated transforms
-            image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
-            transform_sets = [k.transform_set for k in config.feature_sets]
-
-            if config.pk_training_data:
-                pickle.dump([image_chunk_sets, transform_sets, targets],
-                            open(config.pk_training_data, 'wb'))
+        _logger.info("Intersecting targets as pickled train data was not "
+                     "available")
+        targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                        targetfield=config.target_property)
+        # Get the image chunks and their associated transforms
+        image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
+        transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.raw_covariates_dir:
             _logger.info("Saving raw data before any processing")
