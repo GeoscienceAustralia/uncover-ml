@@ -102,23 +102,17 @@ def _load_data(config, partitions):
 
             if config.pk_training_data:
                 pickle.dump([image_chunk_sets, transform_sets, targets],
-                    open(config.pk_training_data, 'wb'))
+                            open(config.pk_training_data, 'wb'))
 
-        # Fixme
-        if config.rawcovariates:
+        if config.raw_covariates_dir:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
-                                                              transform_sets,
-                                                              targets, config)
+                                                              transform_sets, targets, config)
 
         if config.rank_features:
-            measures, features, scores = ls.validate.local_rank_features(
-                image_chunk_sets,
-                transform_sets,
-                targets,
-                config)
-            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
-                               features, scores, config)
+            measures, features, scores = \
+                ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
+            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
 
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained

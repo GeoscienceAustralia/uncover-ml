@@ -212,13 +212,11 @@ class Config(object):
     pickle : bool
         Whether or not a feature set of type 'pickle' is present
         in the config.
-    rawcovariates : str
-        Path to file for saving intersected features and targets
-        as CSV before processing is performed (hence 'raw'). If not
-        present then saving will not occur.
-    rawcovariates_mask : str
-        Corresponding mask for the raw covariates in CSV format. Must
-        be provided if raw covariates is provided.
+    raw_covariates_dir : str, optional
+        Path to a directory for saving intersected features and targets
+        as CSV before processing is performed (hence 'raw'). Will save
+        two files: the intersected values and a mask of intersection
+        locations. If not provided will be None.
     train_data_pk  : str
         Path to file containing pickled training data. If file exists,
         image chunk sets, transform sets and targets will be loaded
@@ -510,12 +508,12 @@ class Config(object):
             self.scores_file = output_dict.get('scores', os.path.join(
                 self.output_dir, self.name + '_' + 'scores.json'))
 
-        self.raw_covariates = output_dict.get('raw_covariates')
-        if self.raw_covariates:
-            self.raw_covariates_mask = os.path.join(self.raw_covariates, 'raw_covariates_mask.csv')
-            self.raw_covariates = os.path.join(self.raw_covariates, 'raw_covariates.csv')
+        self.raw_covariates_dir = output_dict.get('raw_covariates')
 
-        makedirs(self.output_dir, exist_ok=True)
+        paths = [self.output_dir, self.model_file, self.scores_file, self.raw_covariates_dir]
+        for p in paths:
+            if p:
+                makedirs(p, exist_ok=True)
 
         if 'optimisation' in s:
             self.optimisation = s['optimisation']
