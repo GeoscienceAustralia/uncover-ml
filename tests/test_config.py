@@ -10,13 +10,14 @@ from uncoverml.config import Config, FeatureSetConfig
 from uncoverml import transforms
 
 @pytest.fixture
-def config_object(sirsam_rf_conf):
+def config_object(sirsam_rf_conf, sirsam_rf_out):
+    if os.path.exists(sirsam_rf_out):
+        shutil.rmtree(sirsam_rf_out)
     return Config(sirsam_rf_conf)
 
 def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out, 
                           sirsam_covariate_paths, sirsam_target_path):
     c = config_object
-    assert c.config_yaml == sirsam_rf_conf
     assert c.patchsize == 0
     assert c.algorithm == 'multirandomforest'
     assert c.cubist == False
