@@ -1,11 +1,10 @@
 # This block is for using Python's pickle module to save and load
 # ML data. 
 pickling:
-    files:
-      covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/covariates.pk
-      targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
-      # featurevec:
-      # training_data: 
+  covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
+  targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
+  training_data: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/training_data.pk
+  # featurevec:
 
 features:
   - name: ordinal_features
@@ -41,3 +40,4 @@ validation:
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
+  raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out

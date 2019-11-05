@@ -31,13 +31,11 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.geotif_options == {}
     assert c.outbands == 10
     assert c.thumbnails == 10
-    assert c.pickle == True
-    assert c.rawcovariates == os.path.join(sirsam_rf_out, 'rawcovariates.csv')
-    assert c.rawcovariates_mask == os.path.join(sirsam_rf_out, 'rawcovariates_mask.csv')
-    assert c.train_data_pk == os.path.join(sirsam_rf_out, 'training_data.pk')
-    assert c.pickled_covariates == os.path.join(sirsam_rf_out, 'features.pk')
-    assert c.pickled_targets == os.path.join(sirsam_rf_out, 'targets.pk')
-    assert c.pickle_load == False
+    assert c.raw_covariates_dir == sirsam_rf_out
+    assert c.pk_covariates == os.path.join(sirsam_rf_out, 'features.pk')
+    assert c.pk_targets == os.path.join(sirsam_rf_out, 'targets.pk')
+    assert c.pk_load == False
+    assert c.pk_training_data == os.path.join(sirsam_rf_out, 'training_data.pk')
     assert not hasattr(c, 'featurevec')
     assert len(c.feature_sets) == 1
     assert c.feature_sets[0].name == 'ordinal_features'
