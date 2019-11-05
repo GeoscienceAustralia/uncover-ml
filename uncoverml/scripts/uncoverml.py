@@ -69,12 +69,12 @@ def learn(config_file, partitions):
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 def _load_data(config, partitions):
-    if config.pickle_load:
-        x_all = pickle.load(open(config.pickled_covariates, 'rb'))
-        targets_all = pickle.load(open(config.pickled_targets, 'rb'))
+    if config.pk_load:
+        x_all = pickle.load(open(config.pk_covariates, 'rb'))
+        targets_all = pickle.load(open(config.pk_targets, 'rb'))
         if config.cubist or config.multicubist:
             config.algorithm_args['feature_type'] = \
-                pickle.load(open(config.featurevec, 'rb'))
+                pickle.load(open(config.pk_featurevec, 'rb'))
         _logger.warning("Using  pickled targets and covariates. Make sure you have"
                         " not changed targets file and/or covariates.")
     else:
@@ -87,10 +87,10 @@ def _load_data(config, partitions):
                          "dividing all data between nodes")
 
         # Make the targets
-        if config.train_data_pk and exists(config.train_data_pk):
+        if config.pk_training_data and os.path.exists(config.pk_training_data):
             _logger.info("Reusing pickled training data")
             image_chunk_sets, transform_sets, targets = \
-                pickle.load(open(config.train_data_pk, 'rb'))
+                pickle.load(open(config.pk_training_data, 'rb'))
         else:
             _logger.info("Intersecting targets as pickled train data was not "
                          "available")
@@ -100,16 +100,16 @@ def _load_data(config, partitions):
             image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
             transform_sets = [k.transform_set for k in config.feature_sets]
 
+            if config.pk_training_data:
+                pickle.dump([image_chunk_sets, transform_sets, targets],
+                    open(config.pk_training_data, 'wb'))
+
+        # Fixme
         if config.rawcovariates:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
                                                               transform_sets,
                                                               targets, config)
-        
-        # TODO: If the training data exists and was loaded above, this dump is redundant.
-        if config.train_data_pk:
-            pickle.dump([image_chunk_sets, transform_sets, targets],
-                        open(config.train_data_pk, 'wb'))
 
         if config.rank_features:
             measures, features, scores = ls.validate.local_rank_features(
@@ -133,11 +133,12 @@ def _load_data(config, partitions):
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
 
-        if config.pickle and ls.mpiops.chunk_index == 0:
-            if hasattr(config, 'pickled_covariates'):
-                pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
-            if hasattr(config, 'pickled_targets'):
-                pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
+        # Pickle data if requested.
+        if ls.mpiops.chunk_index == 0:
+            if config.pk_covariates and not os.path.exists(config.pk_covariates):
+                pickle.dump(x_all, open(config.pk_covariates, 'wb'))
+            if config.pk_targets and not os.path.exists(config.pk_targets):
+                pickle.dump(targets_all, open(config.pk_targets))
 
     return targets_all, x_all
 
