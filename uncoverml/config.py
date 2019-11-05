@@ -366,28 +366,33 @@ class Config(object):
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
-        # TODO expose this option when fixed
-        if 'patchsize' in s:
-            _logger.info("Patchsize currently fixed at 0 -- ignoring")
-        self.patchsize = 0
-
+        # LEARNING BLOCK
         self.algorithm = s['learning']['algorithm']
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
         self.algorithm_args = s['learning']['arguments']
-        self.quantiles = s['prediction']['quantiles']
 
-        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-            s['prediction'] else {}
+        # CLUSTERING BLOCK
+        self.cluster_analysis = False
+        self.clustering = False
+        if 'clustering' in s:
+            self.clustering = True
+            self.clustering_algorithm = s['clustering']['algorithm']
+            cluster_args = s['clustering']['arguments']
+            self.n_classes = cluster_args['n_classes']
+            self.oversample_factor = cluster_args['oversample_factor']
+            if 'file' in s['clustering'] and s['clustering']['file']:
+                self.semi_supervised = True
+                self.class_file = s['clustering']['file']
+                self.class_property = s['clustering']['property']
+            else:
+                self.semi_supervised = False
+            if 'cluster_analysis' in s['clustering']:
+                self.cluster_analysis = s['clustering']['cluster_analysis']
 
-        self.outbands = None
-        if 'outbands' in s['prediction']:
-            self.outbands = s['prediction']['outbands']
-        self.thumbnails = s['prediction']['thumbnails'] \
-            if 'thumbnails' in s['prediction'] else 10
-
+        
         # PICKLING BLOCK
         pk_block = s.get('pickling')
         if pk_block:
@@ -400,51 +405,32 @@ class Config(object):
             
             if self.cubist or self.multicubist:
                 self.pk_featurevec = pk_block.get('featurevec')
-                # If running multicubist, we also need featurevec to  load from pickle files.
+                # If running multicubist, we also need featurevec to load from pickle files.
                 self.pk_load = self.pk_load \
                                and self.pk_featurevec and os.path.exists(self.pk_featurevec)
-
-            if not self.pk_load:
-                self.pk_training_data = pk_block.get('training_data')
 
         else:
             self.pk_load = False
 
-        #self.rawcovariates = False
-        #self.train_data_pk = False
-        #if self.pickle:
-        #    self.pickle_load = True
-        #    for n, d in enumerate(s['features']):
-        #        if d['type'] == 'pickle':
-        #            if 'covariates' in d['files']:
-        #                self.pickled_covariates = \
-        #                    path.abspath(d['files']['covariates'])
-        #            if 'targets' in d['files']:
-        #                self.pickled_targets = d['files']['targets']
-        #            if 'rawcovariates' in d['files']:
-        #                self.rawcovariates = d['files']['rawcovariates']
-        #                self.rawcovariates_mask = \
-        #                    d['files']['rawcovariates_mask']
-        #            if 'train_data_pk' in d['files']:
-        #                self.train_data_pk = d['files']['train_data_pk']
-        #            if not (path.exists(d['files']['covariates'])
-        #                    and path.exists(d['files']['targets'])):
-        #                self.pickle_load = False
-        #            if self.cubist or self.multicubist:
-        #                if 'featurevec' in d['files']:
-        #                    self.featurevec = \
-        #                        path.abspath(d['files']['featurevec'])
-        #                if not path.exists(d['files']['featurevec']):
-        #                    self.pickle_load = False
-        #            self.plot_covariates = d['files'].get('plot_covariates')
-        #            s['features'].pop(n)  # pop `pickle` features
-        #else:
-        #    self.pickle_load = False
-
-        # If loading from pickled data, ignore all other features.
+       # FEATURES BLOCK
+       # If loading from pickled data, ignore all other features.
         if not self.pk_load:
             self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
 
+        # Not yet implemented.
+        if 'patchsize' in s:
+            _logger.info("Patchsize currently fixed at 0 -- ignoring")
+        self.patchsize = 0
+
+        # TARGET BLOCK
+        self.target_file = s['targets']['file']
+        self.target_property = s['targets']['property']
+        # Not yet implemented
+        self.resample = None
+        if 'resample' in s['targets']:
+            self.resample = s['targets']['resample']
+
+        # FINAL TRANSFORM BLOCK
         if 'preprocessing' in s:
             final_transform = s['preprocessing']
             _, im, trans_g = _parse_transform_set(
@@ -452,27 +438,8 @@ class Config(object):
             self.final_transform = transforms.TransformSet(im, trans_g)
         else:
             self.final_transform = None
-
-        self.target_file = s['targets']['file']
-        self.target_property = s['targets']['property']
-
-        self.resample = None
-
-        if 'resample' in s['targets']:
-            self.resample = s['targets']['resample']
-
-        self.mask = None
-        if 'mask' in s:
-            self.mask = s['mask']['file']
-            self.retain = s['mask']['retain']  # mask areas that are predicted
-
-        self.lon_lat = False
-        if 'lon_lat' in s:
-            self.lon_lat = True
-            self.lat = s['lon_lat']['lat']
-            self.lon = s['lon_lat']['lon']
-
-        # TODO pipeline this better
+                
+        # VALIDATION BLOCK
         self.rank_features = False
         self.permutation_importance = False
         self.cross_validate = False
@@ -497,6 +464,33 @@ class Config(object):
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
 
+        # OPTIMISATION BLOCK
+        if 'optimisation' in s:
+            self.optimisation = s['optimisation']
+            if 'optimisation_output' in self.optimisation:
+                self.optimisation_output = \
+                    self.optimisation['optimisation_output']
+
+        # PREDICT BLOCK
+        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
+            s['prediction'] else {}
+        self.quantiles = s['prediction']['quantiles']
+        self.outbands = None
+        if 'outbands' in s['prediction']:
+            self.outbands = s['prediction']['outbands']
+        self.thumbnails = s['prediction']['thumbnails'] \
+            if 'thumbnails' in s['prediction'] else 10
+        self.mask = None
+        if 'mask' in s:
+            self.mask = s['mask']['file']
+            self.retain = s['mask']['retain']
+        # Specific to Kriging.
+        self.lon_lat = False
+        if 'lon_lat' in s:
+            self.lon_lat = True
+            self.lat = s['lon_lat']['lat']
+            self.lon = s['lon_lat']['lon']
+
         # OUTPUT BLOCK
         output_dict = s['output']
         self.output_dir = output_dict['directory']
@@ -514,29 +508,6 @@ class Config(object):
         for p in paths:
             if p:
                 makedirs(p, exist_ok=True)
-
-        if 'optimisation' in s:
-            self.optimisation = s['optimisation']
-            if 'optimisation_output' in self.optimisation:
-                self.optimisation_output = \
-                    self.optimisation['optimisation_output']
-
-        self.cluster_analysis = False
-        self.clustering = False
-        if 'clustering' in s:
-            self.clustering = True
-            self.clustering_algorithm = s['clustering']['algorithm']
-            cluster_args = s['clustering']['arguments']
-            self.n_classes = cluster_args['n_classes']
-            self.oversample_factor = cluster_args['oversample_factor']
-            if 'file' in s['clustering'] and s['clustering']['file']:
-                self.semi_supervised = True
-                self.class_file = s['clustering']['file']
-                self.class_property = s['clustering']['property']
-            else:
-                self.semi_supervised = False
-            if 'cluster_analysis' in s['clustering']:
-                self.cluster_analysis = s['clustering']['cluster_analysis']
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
