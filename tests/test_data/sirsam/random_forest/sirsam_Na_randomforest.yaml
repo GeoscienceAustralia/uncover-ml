@@ -1,11 +1,13 @@
-# This block is for using Python's pickle module to save and load
-# ML data. 
-pickling:
-  covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
-  targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
-  training_data: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/training_data.pk
-  # featurevec:
+learning:
+  algorithm: multirandomforest
+  arguments:
+    n_estimators: 10
+    target_transform: log
+    forests: 20
 
+
+# If not loading from pickled data, covariates and targets will be
+# ignored.
 features:
   - name: ordinal_features
     type: ordinal
@@ -20,22 +22,24 @@ targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_log
 
-learning:
-  algorithm: multirandomforest
-  arguments:
-    n_estimators: 10
-    target_transform: log
-    forests: 20
-
-prediction:
-  quantiles: 0.95
-  outbands: 10
+# Preprocessing (final transform)
 
 validation:
   - parallel
   - k-fold:
      folds: 5
      random_seed: 1
+
+# Optimisation
+
+prediction:
+  quantiles: 0.95
+  outbands: 11
+
+pickling:
+  covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
+  targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
+  # featurevec:
 
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
