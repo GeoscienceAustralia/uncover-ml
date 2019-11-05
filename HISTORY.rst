@@ -6,8 +6,9 @@ History
 -----------------
 Added
 +++++
-- Python 3.7 support.
-- Metadata profiler.
+- Python 3.6 and 3.7 support.
+- Metadata profiler: a 'metadata.txt' file will be generated as part of predict output that
+  will allow reproducability of results.
 - Codecov integration.
 - 'dist' and 'release' steps to Makefile.
 - Doc deployment from CircleCI on master commits.

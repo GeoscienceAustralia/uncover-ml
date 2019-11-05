@@ -176,8 +176,6 @@ class Config(object):
 
     Attributes
     ----------
-    config_file : str
-        Absolute path to the config yaml file.
     name : str
         Name fo the config file.
     patchsize : int
@@ -301,6 +299,12 @@ class Config(object):
     output_dir : str
         Path to directory where prediciton map and other outputs
         will be written.
+    model_file : str
+        Path to the file where model will be saved after
+        learning/clustering and loaded from when predicting.
+    scroes_file : str
+        Path to the JSON file where cross validation scores will be
+        saved.
     optimisation : dict
         Dictionary of optimisation arguments.
     optimisation_output : str
@@ -355,7 +359,6 @@ class Config(object):
     """
     def __init__(self, yaml_file: str):
         Config._configure_pyyaml()
-        self.config_yaml = yaml_file
         with open(yaml_file, 'r') as f:
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
