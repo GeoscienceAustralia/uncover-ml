@@ -360,38 +360,49 @@ class Config(object):
     class_property : str
         Name of the property to train clustering against.
     """
-    def __init__(self, yaml_file: str):
+    def __init__(self, yaml_file: str, cluster=False):
+
+        def _grp(d, k, msg=None):
+            """
+            Get required parameter.
+            """
+            try:
+                return d[k]
+            except KeyError:
+                if msg is None:
+                    msg = f"Required parameter {k} not present in config."
+                _logger.exception(msg)
+                raise
+
         Config._configure_pyyaml()
         with open(yaml_file, 'r') as f:
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         # LEARNING BLOCK
-        self.algorithm = s['learning']['algorithm']
-        self.cubist = self.algorithm == 'cubist'
-        self.multicubist = self.algorithm == 'multicubist'
-        self.multirandomforest = self.algorithm == 'multirandomforest'
-        self.krige = self.algorithm == 'krige'
-        self.algorithm_args = s['learning']['arguments']
-
+        if not cluster:
+            learn_block = _grp(s, 'learning')
+            self.algorithm = _grp(learn_block, 'algorithm',
+                                  "'algorithm' must be provided as part of 'learning' block.")
+            self.cubist = self.algorithm == 'cubist'
+            self.multicubist = self.algorithm == 'multicubist'
+            self.multirandomforest = self.algorithm == 'multirandomforest'
+            self.krige = self.algorithm == 'krige'
+            self.algorithm_args = _grp(learn_block, 'arguments',
+                                       "'arguments' must be provided for learning algorithm.")
         # CLUSTERING BLOCK
-        self.cluster_analysis = False
-        self.clustering = False
-        if 'clustering' in s:
+        else:
+            cb = _grp(s, 'clustering', "'clustering' block must be provided when clustering.")
             self.clustering = True
-            self.clustering_algorithm = s['clustering']['algorithm']
-            cluster_args = s['clustering']['arguments']
-            self.n_classes = cluster_args['n_classes']
-            self.oversample_factor = cluster_args['oversample_factor']
-            if 'file' in s['clustering'] and s['clustering']['file']:
-                self.semi_supervised = True
-                self.class_file = s['clustering']['file']
-                self.class_property = s['clustering']['property']
-            else:
-                self.semi_supervised = False
-            if 'cluster_analysis' in s['clustering']:
-                self.cluster_analysis = s['clustering']['cluster_analysis']
-
+            self.n_classes = _grp(cb, 'n_classes', "'n_classes' must be provided when clustering.")
+            self.oversample_factor = _grp(cb, 'oversample_factor',
+                                          "'oversample_factor' must be provided when clustering.")
+            self.cluster_analysis = cb.get('cluster_analysis', False)
+            self.class_file = cb.get('file')
+            if self.class_file:
+                self.class_property = _grp(cb, 'property', "'property' must be provided when "
+                                           "providing a file for semisupervised clustering.")
+            self.semi_supervised = self.class_file is not None
         
         # PICKLING BLOCK
         pk_block = s.get('pickling')
@@ -408,14 +419,14 @@ class Config(object):
                 # If running multicubist, we also need featurevec to load from pickle files.
                 self.pk_load = self.pk_load \
                                and self.pk_featurevec and os.path.exists(self.pk_featurevec)
-
         else:
             self.pk_load = False
 
-       # FEATURES BLOCK
-       # If loading from pickled data, ignore all other features.
+        # FEATURES BLOCK
         if not self.pk_load:
-            self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+            features = _grp(s, 'features', "'features' block must be provided when not loading "
+                            "from pickled data.")
+            self.feature_sets = [FeatureSetConfig(f) for f in features]
 
         # Not yet implemented.
         if 'patchsize' in s:
@@ -535,6 +546,6 @@ class Config(object):
 
         yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
 
-
+    
 class ConfigException(Exception):
     pass
