@@ -37,6 +37,7 @@ algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 
 def setup_pipeline(config):
+    config.optimisation['algorithm'] = config.algorithm
     if config.optimisation['algorithm'] not in algos:
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
