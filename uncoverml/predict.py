@@ -177,8 +177,8 @@ def _get_lon_lat(subchunk, config):
         cov_data = nn_imputer(cov_data.reshape(cov_data.shape[0], 1))
         return cov_data
     if config.lon_lat:
-        lat_data = _impute_lat_lon(config.lat, subchunk, config)
-        lon_data = _impute_lat_lon(config.lon, subchunk, config)
+        lat_data = _impute_lat_lon(config.lon_lat['lat'], subchunk, config)
+        lon_data = _impute_lat_lon(config.lon_lat['lon'], subchunk, config)
         lon_lat = np.ma.hstack((lon_data, lat_data))
         return _mask_rows(lon_lat, subchunk, config)
 

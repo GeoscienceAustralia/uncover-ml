@@ -40,7 +40,7 @@ _global_transforms = {'centre': transforms.CentreTransform,
 
     
 
-def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int) -> tuple:
+def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int=None) -> tuple:
     """
     Parse a dictionary read from yaml into a TransformSet object.
 
@@ -66,7 +66,7 @@ def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: in
     """
     image_transforms = []
     global_transforms = []
-    if imputer_string in _imputers:
+    if imputer_string is not None and imputer_string in _imputers:
         imputer = _imputers[imputer_string]()
     else:
         imputer = None
@@ -181,6 +181,11 @@ class Config(object):
     patchsize : int
         Half-width of the patches that feature data will be chunked
         into. Height/width of each patch is equal to patchsize * 2 + 1.
+
+        .. todo::
+            
+            Not implemneted, defaults to 1.
+
     algorithm : str
         The ML model to train.
     cubist : bool
@@ -217,11 +222,6 @@ class Config(object):
         as CSV before processing is performed (hence 'raw'). Will save
         two files: the intersected values and a mask of intersection
         locations. If not provided will be None.
-    train_data_pk  : str
-        Path to file containing pickled training data. If file exists,
-        image chunk sets, transform sets and targets will be loaded
-        from the pickle file. Training data will be pickled and saved
-        to the specified file after its creation.
     pk_covariates : str
         Path to pickle file containing intersection of targets and
         covariates. If :attr:`~pk_load` is True, then this file
@@ -269,29 +269,28 @@ class Config(object):
 
         .. todo::
 
-            Doesn't appear to be implemented
+            Not yet implemented.
     
-    mask : str
+    mask : str, optional
         Path to a geotiff file for masking the output prediction 
         map. Only values that have been masked will be predicted.
-    retain : int
+    retain : int, optional
         Value in the above mask that indicates cell should be retained
-        and predicted.
-    lon_lat : bool
-        True if 'lon_lat' block is present.
-    lon : str
-        Path to geotiff file containing latitiude grid for Kriging.
-    lat : str
-        Path to geotiff file containing longitude grid for Kriging.
+        and predicted. Must be provided if a mask is provided.
+    lon_lat : dict, optional
+        Dictionary containing paths to longitude and latitude grids
+        used in kriging.
     rank_features : bool
         True if 'feature_ranking' is present in 'validation' block
-        of the config. Turns on feature ranking.
+        of the config. Turns on feature ranking. Default is False.
     permutation_importance : bool
         True if 'permutation_importance' is present in 'validation'
         block of the config. Turns on permutation importance.  
+        Default is False.
     parallel_validate : bool
-        True if 'parallel' is present in 'validation' block of
-        config. Turns on parallel k-fold cross validation.
+        True if 'parallel' is present in 'k-fold' block of
+        config. Turns on parallel k-fold cross validation. Default
+        is False.
     cross_validate : bool
         True if 'k-fold' is present in 'validation' block of config.
         Turns on k-fold cross validation.
@@ -308,10 +307,10 @@ class Config(object):
     scores_file : str
         Path to the JSON file where cross validation scores will be
         saved.
+    plot_covaraites_dir : str
+        Path to directory where plotted covariates will be stored.
     optimisation : dict
         Dictionary of optimisation arguments.
-    optimisation_output : str
-        Filname for output of optimisation.
     clustering : bool
         True if 'clustering' present in config file. 
 
@@ -382,6 +381,8 @@ class Config(object):
         # LEARNING BLOCK
         if not cluster:
             learn_block = _grp(s, 'learning')
+            self.clustering = False
+            self.cluster_analysis = False
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.cubist = self.algorithm == 'cubist'
@@ -433,89 +434,89 @@ class Config(object):
             _logger.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
 
+        
         # TARGET BLOCK
-        self.target_file = s['targets']['file']
-        self.target_property = s['targets']['property']
-        # Not yet implemented
-        self.resample = None
-        if 'resample' in s['targets']:
-            self.resample = s['targets']['resample']
+        if not self.pk_load:
+            tb = _grp(s, 'targets', "'targets' block my be provided when not loading from "
+                      "pickled data.")
+            self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
+                                    "targets.")
+            self.target_property = _grp(tb, 'property', "'property needs to be provided when "
+                                        "specifying targets.")
+            self.resample = tb.get('resample')
 
         # FINAL TRANSFORM BLOCK
-        if 'preprocessing' in s:
-            final_transform = s['preprocessing']
-            _, im, trans_g = _parse_transform_set(
-                final_transform['transforms'], final_transform['imputation'])
+        ftb = s.get('preprocessing')
+        if ftb is not None:
+            _, im, trans_g = _parse_transform_set(ftb.get('transforms'), ftb.get('imputation'))
             self.final_transform = transforms.TransformSet(im, trans_g)
         else:
             self.final_transform = None
                 
         # VALIDATION BLOCK
-        self.rank_features = False
-        self.permutation_importance = False
-        self.cross_validate = False
-        self.parallel_validate = False
-        if s['validation']:
-            for i in s['validation']:
-                if i == 'feature_rank':
-                    self.rank_features = True
-                if i == 'permutation_importance':
-                    self.permutation_importance = True
-                if i == 'parallel':
-                    self.parallel_validate = True
-                if type(i) is dict and 'k-fold' in i:
-                    self.cross_validate = True
-                    self.folds = i['k-fold']['folds']
-                    self.crossval_seed = i['k-fold']['random_seed']
-                    break
-
-        if self.rank_features and self.pickle_load:
-            self.pickle_load = False
-            _logger.info('Feature ranking does not work with '
-                     'pickled files. Pickled files will not be used. '
-                     'All covariates will be intersected.')
+        vb = s.get('validation')
+        if vb:
+            self.rank_features = vb.get('feature_rank', False)
+            if self.pk_load and self.rank_features:
+                _logger.warning("Feature ranking cannot be performed when loading covariates and "
+                                "targets from pickled data.")
+                self.rank_features = False
+            self.permutation_importance = vb.get('permutation_importance', False)
+            kfb = vb.get('k-fold')
+            if kfb:
+                self.cross_validate = True
+                self.folds = _grp(kfb, 'folds', "'folds' (number of folds) must be specified "
+                                  "if k-fold cross validation is being used.")
+                self.crossval_seed = _grp(kfb, 'random_seed', "'random_seed' must be specified "
+                                          "if k-fold cross validation is being used.")
+                self.parallel_validate = kfb.get('parallel', False)
+        else:
+            self.cross_validate = False
+            self.rank_features = False
+            self.permutation_importance = False
+            self.parallel_validate = False
 
         # OPTIMISATION BLOCK
-        if 'optimisation' in s:
-            self.optimisation = s['optimisation']
-            if 'optimisation_output' in self.optimisation:
-                self.optimisation_output = \
-                    self.optimisation['optimisation_output']
+        # Note: optimisation options get parsed in scripts/gridsearch.py
+        self.optimisation = s.get('optimisation')
 
         # PREDICT BLOCK
-        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-            s['prediction'] else {}
-        self.quantiles = s['prediction']['quantiles']
-        self.outbands = None
-        if 'outbands' in s['prediction']:
-            self.outbands = s['prediction']['outbands']
-        self.thumbnails = s['prediction']['thumbnails'] \
-            if 'thumbnails' in s['prediction'] else 10
-        self.mask = None
-        if 'mask' in s:
-            self.mask = s['mask']['file']
-            self.retain = s['mask']['retain']
-        # Specific to Kriging.
-        self.lon_lat = False
-        if 'lon_lat' in s:
-            self.lon_lat = True
-            self.lat = s['lon_lat']['lat']
-            self.lon = s['lon_lat']['lon']
-
-        # OUTPUT BLOCK
-        output_dict = s['output']
-        self.output_dir = output_dict['directory']
+        pb = _grp(s, 'prediction', "'prediction' block must be provided.")
+        self.geotif_options = pb.get('geotif', {})
+        self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of "
+                              "prediction block.")
+        self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
+                             "block.")
+        self.thumbnails = pb.get('thumbnails', 10)
+        mb = s.get('mask')
+        if mb:
+            self.mask = mb.get('file') 
+            self.mask = None if not os.path.exists(self.mask) else self.mask
+            if self.mask:
+                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
+                                   "prediction mask.")
+        else:
+            self.mask = None
         
-        self.model_file = output_dict.get('model', os.path.join(
+        if self.krige:
+            # Todo: don't know if lon/lat is compulsory or not for kriging
+            self.lon_lat = s.get('lon_lat')
+        else:
+            self.lon_lat = None
+
+        ob = _grp(s, 'output', "'output' block is required.")
+        self.output_dir = _grp(ob, 'directory', "'directory' for output is required.")
+        self.model_file = ob.get('model', os.path.join(
             self.output_dir, self.name + '_' + self.algorithm + '.model'))
-
         if self.cross_validate:
-            self.scores_file = output_dict.get('scores', os.path.join(
+            self.scores_file = ob.get('scores', os.path.join(
                 self.output_dir, self.name + '_' + 'scores.json'))
+        self.raw_covariates_dir = ob.get('raw_covariates')
+        self.plot_covariates_dir = ob.get('plot_covariates')
 
-        self.raw_covariates_dir = output_dict.get('raw_covariates')
-
-        paths = [self.output_dir, self.model_file, self.scores_file, self.raw_covariates_dir]
+        paths = [self.output_dir, os.path.split(self.model_file)[1], 
+                 os.path.split(self.scores_file)[1], self.raw_covariates_dir,
+                 self.plot_covariates_dir]
         for p in paths:
             if p:
                 makedirs(p, exist_ok=True)

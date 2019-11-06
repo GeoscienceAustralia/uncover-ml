@@ -123,7 +123,7 @@ def _load_data(config, partitions):
             if config.pk_covariates and not os.path.exists(config.pk_covariates):
                 pickle.dump(x_all, open(config.pk_covariates, 'wb'))
             if config.pk_targets and not os.path.exists(config.pk_targets):
-                pickle.dump(targets_all, open(config.pk_targets))
+                pickle.dump(targets_all, open(config.pk_targets, 'wb'))
 
     return targets_all, x_all
 
