@@ -446,7 +446,7 @@ class Config(object):
             self.resample = tb.get('resample')
 
         # FINAL TRANSFORM BLOCK
-        ftb = s.get('preprocessing')
+        ftb = s.get('final_transform')
         if ftb is not None:
             _, im, trans_g = _parse_transform_set(ftb.get('transforms'), ftb.get('imputation'))
             self.final_transform = transforms.TransformSet(im, trans_g)
