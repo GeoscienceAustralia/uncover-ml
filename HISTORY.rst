@@ -39,6 +39,18 @@ Changed
 - Updated depdency versions.
 - Package version is now dervied from 'git describe' command. This is also written to metadata
   file when making predictions.
+- Config:
+
+  - Raise errors when required parameters are missing.
+  - 'learning' block no longer required when clustering and vice versa.
+  - Removed pickling of training data
+  - Separate 'pickling' block for pickling data
+  - Separate non-pickle outputs from pickling block into output block
+  - No longer need to provide 'features' or 'target' blocks when loading from pickled data.
+  - Renamed 'preprocessing' to 'final_transform' to better reflect its purpose.
+  - Crossval parallel has to be set as 'parallel: True/False' under 'k-fold' block
+  - 'optimisation_output' no longer required, writes results to output directory.
+  - 'algorithm' no longer required for optimistion. Gets this from 'learning' algorithm.
 
 Removed
 +++++++ 
