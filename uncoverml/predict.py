@@ -247,7 +247,7 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
                     for t in f.transform_set.global_transforms:
                         means += list(t.mean)
                         sds += list(t.sd)
-                # check final transform
+                # check final transform <- oh god what???
                 if config.final_transform is not None:
                     pass
                 writer.writerow(['transform mean'] + [str(m) for m in means])
