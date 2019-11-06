@@ -21,28 +21,46 @@ targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_log
 
-# Preprocessing (final transform)
+# I've renamed preprocessing to 'final_transform' to be better reflect
+# that it gets applied after all other transforms/concatenating has 
+# been done.
+#final_transform:
 
+# Modified crossval slightly - you now need to specify a boolean for
+# 'parallel' and place it under the 'k-fold' block (it only applies
+# to crossval, trying to make that clearer).
 validation:
   k-fold:
    parallel: True
    folds: 5
    random_seed: 1
 
-# Optimisation
+# Optimisation remains the same except you no longer need to specify
+# an 'algorithm' argument - it will automatically get this from the
+# the algorihtm set for learning.
+#optimisation:
 
+# Outbands hasn't changed but I'm planning to look into it.
 prediction:
   quantiles: 0.95
   outbands: 10
 
+# New output block - raw_covariates and plot_covariates directories
+# are specified here. If user provides them they'll be written. I haven't
+# separated plotting from the raw_covariates yet so plotting will only
+# occur if raw_covariates is also set. 
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
   raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
 
+# Will load from pickled data if covariates and targets are present. If any of the files don't
+# exist, covariates and targets will be intersected and data will be dumped to the file specified.
 pickling:
   covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
   targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
-  # featurevec:
+  # When running Cubist or Multicubist, featurevec is also required
+  # to load from pickled data.
+  #featurevec:
 
