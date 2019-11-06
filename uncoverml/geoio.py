@@ -1,6 +1,7 @@
 from __future__ import division
 
 import os.path
+import os
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
@@ -255,6 +256,8 @@ class ImageWriter:
         self.bbox = bbox
         self.name = name
         self.outputdir = outputdir
+        if not os.path.exists(self.outputdir):
+            os.makedirs(self.outputdir)
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
@@ -498,28 +501,9 @@ def export_feature_ranks(measures, feats, scores, config):
     with open(outfile_ranks, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
-
 def export_model(model, config):
-    outfile_state = os.path.join(config.output_dir,
-                                 config.name + ".model")
-    # TODO: investigate why catboost model does not save target transform
-    state_dict = {"model": model,
-                  "config": config}
-    # if config.algorithm == 'catboost':
-    #     state_dict['target_transform'] = model.target_transform
-
-    with open(outfile_state, 'wb') as f:
-        pickle.dump(state_dict, f)
-
-
-def export_cluster_model(model, config):
-    outfile_state = os.path.join(config.output_dir,
-                                 config.name + ".cluster")
-    state_dict = {"model": model,
-                  "config": config}
-    with open(outfile_state, 'wb') as f:
-        pickle.dump(state_dict, f)
-
+    with open(config.model_file, 'wb') as f:
+        pickle.dump(model, f)
 
 def export_crossval(crossval_output, config):
     outfile_scores = os.path.join(config.output_dir,
