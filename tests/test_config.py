@@ -35,7 +35,6 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.pk_covariates == os.path.join(sirsam_rf_out, 'features.pk')
     assert c.pk_targets == os.path.join(sirsam_rf_out, 'targets.pk')
     assert c.pk_load == False
-    assert c.pk_training_data == os.path.join(sirsam_rf_out, 'training_data.pk')
     assert not hasattr(c, 'featurevec')
     assert len(c.feature_sets) == 1
     assert c.feature_sets[0].name == 'ordinal_features'
@@ -54,7 +53,7 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.resample == None
     assert c.mask == None
     assert not hasattr(c, 'retain')
-    assert c.lon_lat == False
+    assert c.lon_lat == None
     assert not hasattr(c, 'lon')
     assert not hasattr(c, 'lat')
     assert c.rank_features == False
@@ -64,7 +63,7 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.folds == 5
     assert c.crossval_seed == 1
     assert c.output_dir == sirsam_rf_out
-    assert not hasattr(c, 'optimisation')
+    assert c.optimisation == None
     assert c.clustering == False
     assert c.cluster_analysis == False
     assert not hasattr(c, 'clustering_algorithm')

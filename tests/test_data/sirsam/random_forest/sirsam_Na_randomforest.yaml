@@ -5,7 +5,6 @@ learning:
     target_transform: log
     forests: 20
 
-
 # If not loading from pickled data, covariates and targets will be
 # ignored.
 features:
@@ -25,23 +24,25 @@ targets:
 # Preprocessing (final transform)
 
 validation:
-  - parallel
-  - k-fold:
-     folds: 5
-     random_seed: 1
+  k-fold:
+   parallel: True
+   folds: 5
+   random_seed: 1
 
 # Optimisation
 
 prediction:
   quantiles: 0.95
-  outbands: 11
+  outbands: 10
+
+output:
+  directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
+  model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
+  raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
+  plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
 
 pickling:
   covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
   targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
   # featurevec:
 
-output:
-  directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
-  model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
-  raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
