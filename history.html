@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>History &mdash; UncoverML 0.1.0 documentation</title>
+  <title>History &mdash; UncoverML v0.1.0-133-g9e4b005 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.1.0
+                v0.1.0-133-g9e4b005
               </div>
             
           
@@ -91,14 +91,14 @@
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#unreleased-2019-10-xx">Unreleased (2019-10-xx)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.2.0 (2019-11-05)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#removed">Removed</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">0.1.0 (2016-05-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.1.0 (2019-09-22)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
@@ -169,16 +169,20 @@
             
   <div class="section" id="history">
 <h1>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="unreleased-2019-10-xx">
-<h2>Unreleased (2019-10-xx)<a class="headerlink" href="#unreleased-2019-10-xx" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h2>0.2.0 (2019-11-05)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="added">
 <h3>Added<a class="headerlink" href="#added" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Python 3.7 support.</p></li>
-<li><p>Metadata profiler.</p></li>
+<li><p>Python 3.6 and 3.7 support.</p></li>
+<li><p>Metadata profiler: a ‘metadata.txt’ file will be generated as part of predict output that
+will allow reproducability of results.</p></li>
 <li><p>Codecov integration.</p></li>
 <li><p>‘dist’ and ‘release’ steps to Makefile.</p></li>
 <li><p>Doc deployment from CircleCI on master commits.</p></li>
+<li><p>Config module documentation.</p></li>
+<li><p>Script tests and test data.</p></li>
+<li><p>Can now provide env vars in YAML config in the form ‘$ENV_VAR’.</p></li>
 </ul>
 </div>
 <div class="section" id="fixed">
@@ -187,25 +191,39 @@
 <li><p>Broken tests due to usage of fixtures and new verison of PyTest</p></li>
 <li><p>Override of MPI pickling.</p></li>
 <li><p>Cubist install no longer prevents ‘install_requires’ from running as part of ‘setup.py install’.</p></li>
+<li><p>Output directories: outputs no longer dumped in working directory. Optional files need to have a
+path specified. Compulsory files that have no path specified will default to ‘output’ directory.</p></li>
+<li><p>Config object no longer pickled with model file. This was causing issues with tests and also
+prevents making tweaks (e.g. selecting outbands) without having to rerun the ‘learn’ command
+and retrain the model. <em>You now need to specify a path under ‘model’ in the ‘output’ block of
+the config</em>. This is where the model will be saved when running ‘learn’ and loaded from running
+‘predict’.</p></li>
+<li><p>Multirandomforest and multicubist ‘temp’ files. Training these models generates files which
+are required for making predictions using the model. These were previously dumped in working
+directory in a ‘results’ folder. These files aren’t temporary and need to passed with the model.
+To make models portable these are longer saved as files but are stored in the model object
+itself.</p></li>
 </ul>
 </div>
 <div class="section" id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Updated depdency versions.</p></li>
+<li><p>Package version is now dervied from ‘git describe’ command. This is also written to metadata
+file when making predictions.</p></li>
 </ul>
 </div>
 <div class="section" id="removed">
 <h3>Removed<a class="headerlink" href="#removed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Support for Python versions below 3.7.</p></li>
+<li><p>Support for Python versions below 3.6.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id1">
-<h2>0.1.0 (2016-05-01)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h2>0.1.0 (2019-09-22)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>First release on PyPI.</p></li>
+<li><p>Start of versioning</p></li>
 </ul>
 </div>
 </div>

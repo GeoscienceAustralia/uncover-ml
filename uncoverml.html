@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>uncoverml package &mdash; UncoverML 0.1.0 documentation</title>
+  <title>uncoverml package &mdash; UncoverML v0.1.0-133-g9e4b005 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.1.0
+                v0.1.0-133-g9e4b005
               </div>
             
           
@@ -596,17 +596,6 @@ but treated as strings (file paths) later in the code</p>
 </dd>
 </dl>
 <dl class="attribute">
-<dt id="uncoverml.config.Config.config_file">
-<code class="sig-name descname">config_file</code><a class="headerlink" href="#uncoverml.config.Config.config_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Absolute path to the config yaml file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="uncoverml.config.Config.name">
 <code class="sig-name descname">name</code><a class="headerlink" href="#uncoverml.config.Config.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name fo the config file.</p>
@@ -1062,6 +1051,30 @@ will be written.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="uncoverml.config.Config.model_file">
+<code class="sig-name descname">model_file</code><a class="headerlink" href="#uncoverml.config.Config.model_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the file where model will be saved after
+learning/clustering and loaded from when predicting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.scroes_file">
+<code class="sig-name descname">scroes_file</code><a class="headerlink" href="#uncoverml.config.Config.scroes_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the JSON file where cross validation scores will be
+saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="uncoverml.config.Config.optimisation">
 <code class="sig-name descname">optimisation</code><a class="headerlink" href="#uncoverml.config.Config.optimisation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of optimisation arguments.</p>
@@ -1197,6 +1210,12 @@ arguments. Turns on semisupervised clustering.</p>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.yaml_loader">
+<code class="sig-name descname">yaml_loader</code><a class="headerlink" href="#uncoverml.config.Config.yaml_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">yaml.loader.SafeLoader</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -1718,11 +1737,6 @@ independent image writing by different processes, i.e., images are not chunked</
 <dl class="function">
 <dt id="uncoverml.geoio.create_scatter_plot">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">create_scatter_plot</code><span class="sig-paren">(</span><em class="sig-param">outfile_results</em>, <em class="sig-param">config</em>, <em class="sig-param">scores</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.create_scatter_plot" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.geoio.export_cluster_model">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">export_cluster_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.export_cluster_model" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -2767,24 +2781,16 @@ LastUpdate:     dd/mm/yyyy  Who     Optional description</p>
 </dl>
 <dl class="class">
 <dt id="uncoverml.metadata_profiler.MetadataSummary">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.metadata_profiler.</code><code class="sig-name descname">MetadataSummary</code><span class="sig-paren">(</span><em class="sig-param">model_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.MetadataSummary" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.metadata_profiler.</code><code class="sig-name descname">MetadataSummary</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.MetadataSummary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Summary Description of the ML prediction output</p>
 <dl class="method">
 <dt id="uncoverml.metadata_profiler.MetadataSummary.write_metadata">
 <code class="sig-name descname">write_metadata</code><span class="sig-paren">(</span><em class="sig-param">out_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.MetadataSummary.write_metadata" title="Permalink to this definition">¶</a></dt>
 <dd><p>write the metadata for this prediction result, into a human-readable txt file.
-in order to make the ML results traceable and reproduceable (provenance)
-:return:</p>
+in order to make the ML results traceable and reproduceable (provenance)</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.metadata_profiler.main">
-<code class="sig-prename descclassname">uncoverml.metadata_profiler.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">mf</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.metadata_profiler.main" title="Permalink to this definition">¶</a></dt>
-<dd><p>define my main function
-:return:</p>
 </dd></dl>
 
 </div>
