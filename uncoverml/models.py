@@ -530,10 +530,7 @@ class RandomForestRegressorMulti():
         self.kwargs = kwargs
         self.random_state = random_state
         self._trained = False
-        assert isdir(abspath(outdir)), 'Make sure the outdir exists ' \
-                                       'and writeable'
-        self.temp_dir = join(abspath(outdir), 'results')
-        os.makedirs(self.temp_dir, exist_ok=True)
+        self._randomforests = {}
 
     def fit(self, x, y, *args, **kwargs):
 
@@ -556,19 +553,15 @@ class RandomForestRegressorMulti():
                 n_estimators=self.n_estimators, **self.kwargs)
             rf.fit(x, y)
             if self.parallel:  # used in training
-                pk_f = join(self.temp_dir, 'rf_model_{}.pk'.format(t))
+                self._randomforests['rf_model_{}'.format(t)] = rf
             else:  # used when parallel is false, i.e., during x-val
-                pk_f = join(self.temp_dir,
-                            'rf_model_{}_{}.pk'.format(t, mpiops.chunk_index))
-            with open(pk_f, 'wb') as fp:
-                pickle.dump(rf, fp)
+                self._randomforests['rf_model_{}_{}'.format(t, mpiops.chunk_index)] = rf
         if self.parallel:
             mpiops.comm.barrier()
         # Mark that we are now trained
         self._trained = True
 
     def predict_dist(self, x, interval=0.95, *args, **kwargs):
-
         # We can't make predictions until we have trained the model
         if not self._trained:
             print('Train first')
@@ -578,15 +571,11 @@ class RandomForestRegressorMulti():
 
         for i in range(self.forests):
             if self.parallel:  # used in training
-                pk_f = join(self.temp_dir,
-                            'rf_model_{}.pk'.format(i))
+                f = self._randomforests['rf_model_{}'.format(i)]
             else:  # used when parallel is false, i.e., during x-val
-                pk_f = join(self.temp_dir,
-                            'rf_model_{}_{}.pk'.format(i, mpiops.chunk_index))
-            with open(pk_f, 'rb') as fp:
-                f = pickle.load(fp)
-                for m, dt in enumerate(f.estimators_):
-                    y_pred[:, i * self.n_estimators + m] = dt.predict(x)
+                f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
+            for m, dt in enumerate(f.estimators_):
+                y_pred[:, i * self.n_estimators + m] = dt.predict(x)
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)

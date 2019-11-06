@@ -4,13 +4,18 @@ jobs:
     docker:
       - image: circleci/python:3.7
 
-    working_directory: ~/uncover-ml
+    working_directory: /home/circleci/uncover-ml
 
     steps:
       - checkout
 
       - restore_cache:  
           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+
+      - run:
+          name: Set up environment variables
+          command: |
+            echo 'export UNCOVERML_SRC=$CIRCLE_WORKING_DIRECTORY' >> $BASH_ENV
 
       - run:
           name: Install uncoverml 

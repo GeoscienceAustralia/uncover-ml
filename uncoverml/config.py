@@ -5,8 +5,10 @@ from typing import Optional, List
 import logging
 from os import path
 from os import makedirs
+import os
 import glob
 import csv
+import re
 
 import yaml
 
@@ -36,6 +38,7 @@ _global_transforms = {'centre': transforms.CentreTransform,
                       'sqrt': transforms.SqrtTransform,
                       'whiten': transforms.WhitenTransform}
 
+    
 
 def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int) -> tuple:
     """
@@ -173,8 +176,6 @@ class Config(object):
 
     Attributes
     ----------
-    config_file : str
-        Absolute path to the config yaml file.
     name : str
         Name fo the config file.
     patchsize : int
@@ -298,6 +299,12 @@ class Config(object):
     output_dir : str
         Path to directory where prediciton map and other outputs
         will be written.
+    model_file : str
+        Path to the file where model will be saved after
+        learning/clustering and loaded from when predicting.
+    scroes_file : str
+        Path to the JSON file where cross validation scores will be
+        saved.
     optimisation : dict
         Dictionary of optimisation arguments.
     optimisation_output : str
@@ -351,10 +358,9 @@ class Config(object):
         Name of the property to train clustering against.
     """
     def __init__(self, yaml_file: str):
-        self.config_yaml = yaml_file  
-
+        Config._configure_pyyaml()
         with open(yaml_file, 'r') as f:
-            s = yaml.safe_load(f)
+            s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         # TODO expose this option when fixed
@@ -407,10 +413,7 @@ class Config(object):
                                 path.abspath(d['files']['featurevec'])
                         if not path.exists(d['files']['featurevec']):
                             self.pickle_load = False
-                    if 'plot_covariates' in d['files']:
-                        self.plot_covariates = d['files']['plot_covariates']
-                    else:
-                        self.plot_covariates = False
+                    self.plot_covariates = d['files'].get('plot_covariates')
                     s['features'].pop(n)  # pop `pickle` features
         else:
             self.pickle_load = False
@@ -473,9 +476,13 @@ class Config(object):
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
 
-        self.output_dir = s['output']['directory']
-
-        # create output dir if does not exist
+        # OUTPUT BLOCK
+        output_dict = s['output']
+        self.output_dir = output_dict['directory']
+        self.model_file = output_dict.get('model', os.path.join(
+            self.output_dir, self.name + '_' + self.algorithm + '.model'))
+        self.scores_file = output_dict.get('scores', os.path.join(
+            self.output_dir, self.name + '_' + 'scores.json'))
         makedirs(self.output_dir, exist_ok=True)
 
         if 'optimisation' in s:
@@ -500,6 +507,32 @@ class Config(object):
                 self.semi_supervised = False
             if 'cluster_analysis' in s['clustering']:
                 self.cluster_analysis = s['clustering']['cluster_analysis']
+
+    yaml_loader = yaml.SafeLoader
+    """The PyYaml loader to use."""
+
+    @staticmethod
+    def _configure_pyyaml():
+        # Configure PyYaml to implicitly resolve environment variables of form '$ENV_VAR'.
+        env_var_pattern = re.compile(r'\$([A-Z_]*)')
+        yaml.add_implicit_resolver('!envvar', env_var_pattern, Loader=Config.yaml_loader)
+
+        def _env_var_constructor(loader, node):
+            """
+            PyYaml constructor for resolving env vars.
+            """
+            value = loader.construct_scalar(node)
+            env_vars = env_var_pattern.findall(value)
+            for ev in env_vars:
+                try:
+                    ev_val = os.environ[ev]
+                except KeyError:
+                    _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
+                    raise
+                value = re.sub(env_var_pattern, ev_val, value, count=1)
+            return value
+
+        yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
 
 
 class ConfigException(Exception):

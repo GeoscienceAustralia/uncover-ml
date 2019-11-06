@@ -3,23 +3,24 @@ from __future__ import division
 import random
 import string
 import os.path
+import os
 
 import pytest
 import numpy as np
 import shapefile as shp
-from uncoverml import mpiops
-UNCOVER = os.path.dirname(os.path.dirname(__file__))
 
+from uncoverml import mpiops
+
+UNCOVER = os.path.dirname(os.path.dirname(__file__))
+os.environ['UNCOVERML_SRC_DIR'] = UNCOVER
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 SEED = 665
 RND = np.random.RandomState(SEED)
 random.seed(SEED)
 
-
-@pytest.fixture
+@pytest.fixture(scope='session')
 def uncover():
     return UNCOVER
-
 
 @pytest.fixture
 def random_filename(tmpdir_factory):
@@ -30,14 +31,12 @@ def random_filename(tmpdir_factory):
         return os.path.join(dir, fname + ext)
     return make_random_filename
 
-
 @pytest.fixture
 def masked_array():
     x = np.ma.masked_array(data=[[0., 1.], [2., 3.], [4., 5.]],
                            mask=[[True, False], [False, True], [False, False]],
                            fill_value=1e23)
     return x
-
 
 @pytest.fixture
 def masked_data():
@@ -48,7 +47,6 @@ def masked_data():
     Xsm = np.ma.masked_array(Xs, mask=ms)
     return yt, Xtm, ys, Xsm
 
-
 @pytest.fixture
 def int_masked_array():
     x = np.ma.masked_array(data=[[1, 1], [2, 3], [4, 5], [3, 3]],
@@ -56,7 +54,6 @@ def int_masked_array():
                                  [False, False]],
                            fill_value=-9999, dtype=int)
     return x
-
 
 @pytest.fixture
 def make_patch_31():
@@ -81,7 +78,6 @@ def make_patch_31():
 
     return timg, pwidth, tpatch, tx, ty
 
-
 @pytest.fixture
 def make_patch_11():
     pwidth = 0
@@ -92,7 +88,6 @@ def make_patch_11():
     tx, ty = [g.flatten() for g in np.meshgrid(np.arange(3), np.arange(3))]
 
     return timg, pwidth, tpatch, tx, ty
-
 
 @pytest.fixture
 def make_points():
@@ -111,14 +106,12 @@ def make_points():
 
     return timg, pwidth, points, tpatch
 
-
 @pytest.fixture
 def make_multi_patch(request):
     return request.getfixturevalue(request.param)
 
 @pytest.fixture
 def shapefile(random_filename, request):
-
     # File names for test shapefile and test geotiff
     filename = random_filename(ext=".shp")
     lons = np.arange(0, 20, 2)
@@ -155,7 +148,6 @@ def shapefile(random_filename, request):
 
     return lonlats, filename
 
-
 def make_linear_data(seed=SEED):
     rnd = np.random.RandomState(seed)
     Nt = 100
@@ -170,11 +162,9 @@ def make_linear_data(seed=SEED):
     tsind = np.where(~tsind)[0]
     return y[trind], X[trind], y[tsind], X[tsind]
 
-
 @pytest.fixture
 def linear_data():
     return make_linear_data
-
 
 # Make sure all MPI tests use this fixure
 @pytest.fixture()
@@ -185,3 +175,94 @@ def mpisync(request):
         mpiops.comm.barrier()
     request.addfinalizer(fin)
     return mpiops.comm
+
+# Test data
+@pytest.fixture(scope='session')
+def data_dir(uncover):
+    """
+    Path to test data directory.
+    """
+    return os.path.join(uncover, 'tests', 'test_data')
+
+# Sir Samuel 
+@pytest.fixture(scope='session')
+def data_sirsam(data_dir):
+    """
+    Path to SirSam test data.
+    """
+    return os.path.join(data_dir, 'sirsam')
+
+@pytest.fixture(scope='session')
+def sirsam_covariate_paths(data_sirsam):
+    """
+    Paths to SirSam covariate files.
+    """
+    names = [
+        'Clim_Prescott_LindaGregory.tif',
+        'U_15v1.tif',
+        'U_TH_15.tif',
+        'dem_foc2.tif',
+        'er_depg.tif',
+        'gg_clip.tif',
+        'k_15v5.tif',
+        'tpi_300.tif'
+    ]
+    paths = [os.path.join(data_sirsam, 'covariates', n) for n in names]
+    return paths
+
+@pytest.fixture(scope='session')
+def sirsam_target_path(data_sirsam):
+    """
+    Path to SirSam target file.
+    """
+    return os.path.join(data_sirsam, 'targets', 'geochem_sites_log.shp')
+
+# Sir Samuel random forest
+@pytest.fixture(scope='session')
+def sirsam_rf(data_sirsam):
+    """
+    Path to SirSam random forest outputs.
+    """
+    return os.path.join(data_sirsam, 'random_forest')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_out(sirsam_rf):
+    """
+    Path to SirSam random forest output directory.
+    """
+    return os.path.join(sirsam_rf, 'out')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_tmp(sirsam_rf):
+    """
+    Path to SirSam random forest temp directory.
+    """
+    return os.path.join(sirsam_rf, 'results')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_conf(sirsam_rf):
+    """
+    Path to SirSam random forest test config.
+    """
+    return os.path.join(sirsam_rf, 'sirsam_Na_randomforest.yaml')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp(sirsam_rf):
+    """
+    Path to SirSam random forest precomputed outputs.
+    """
+    return os.path.join(sirsam_rf, 'precomputed')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp_learn(sirsam_rf_precomp):
+    """
+    Path to SirSam random forest precomputed learn outputs.
+    """
+    return os.path.join(sirsam_rf_precomp, 'learn')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp_predict(sirsam_rf_precomp):
+    """
+    Path to SirSam random forest precomputed predict outputs.
+    """
+    return os.path.join(sirsam_rf_precomp, 'predict')
