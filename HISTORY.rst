@@ -2,6 +2,13 @@
 
 History
 =======
+0.3.0 (2019-11-xx)
+------------------
+Added
++++++
+- Diagnostics module for plotting various metrics
+- Diagnostics notebook for viewing plots
+
 0.2.1 (2019-11-07)
 -----------------------
 Added
