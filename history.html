@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>History &mdash; UncoverML v0.1.0-133-g9e4b005 documentation</title>
+  <title>History &mdash; UncoverML v0.2.0-0-gd493feb documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                v0.1.0-133-g9e4b005
+                v0.2.0-0-gd493feb
               </div>
             
           
@@ -211,6 +211,20 @@ itself.</p></li>
 <li><p>Updated depdency versions.</p></li>
 <li><p>Package version is now dervied from ‘git describe’ command. This is also written to metadata
 file when making predictions.</p></li>
+<li><p>Config:</p>
+<ul>
+<li><p>Raise errors when required parameters are missing.</p></li>
+<li><p>‘learning’ block no longer required when clustering and vice versa.</p></li>
+<li><p>Removed pickling of training data</p></li>
+<li><p>Separate ‘pickling’ block for pickling data</p></li>
+<li><p>Separate non-pickle outputs from pickling block into output block</p></li>
+<li><p>No longer need to provide ‘features’ or ‘target’ blocks when loading from pickled data.</p></li>
+<li><p>Renamed ‘preprocessing’ to ‘final_transform’ to better reflect its purpose.</p></li>
+<li><p>Crossval parallel has to be set as ‘parallel: True/False’ under ‘k-fold’ block</p></li>
+<li><p>‘optimisation_output’ no longer required, writes results to output directory.</p></li>
+<li><p>‘algorithm’ no longer required for optimistion. Gets this from ‘learning’ algorithm.</p></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="removed">
