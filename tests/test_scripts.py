@@ -23,15 +23,14 @@ class TestLearnCommand:
 
     SIRSAM_RF_HDF_OUTPUT = SIRSAM_RF + '_results.hdf5'
 
-    SIRSAM_RF_TRAINING_DATA = 'training_data.pk'
     SIRSAM_RF_FEATURE_DATA = 'features.pk'
     SIRSAM_RF_TARGET_DATA = 'targets.pk'
     SIRSAM_RF_MODEL = SIRSAM_RF + '.model'
 
     SIRSAM_RF_CSV_OUTPUT = [
         SIRSAM_RF + '_results.csv',
-        'rawcovariates.csv',
-        'rawcovariates_mask.csv'
+        'raw_covariates.csv',
+        'raw_covariates_mask.csv'
     ]
 
     SIRSAM_RF_IMAGE_OUTPUT = [
@@ -46,7 +45,7 @@ class TestLearnCommand:
         SIRSAM_RF + '_results.png'
     ]
 
-    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_JSON_OUTPUT, SIRSAM_RF_HDF_OUTPUT, SIRSAM_RF_TRAINING_DATA,
+    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_JSON_OUTPUT, SIRSAM_RF_HDF_OUTPUT, 
                          SIRSAM_RF_FEATURE_DATA, SIRSAM_RF_TARGET_DATA, SIRSAM_RF_MODEL]
     SIRSAM_RF_OUTPUTS += SIRSAM_RF_CSV_OUTPUT \
                          + SIRSAM_RF_IMAGE_OUTPUT

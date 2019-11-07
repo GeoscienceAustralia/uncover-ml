@@ -40,7 +40,7 @@ _global_transforms = {'centre': transforms.CentreTransform,
 
     
 
-def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int) -> tuple:
+def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int=None) -> tuple:
     """
     Parse a dictionary read from yaml into a TransformSet object.
 
@@ -66,7 +66,7 @@ def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: in
     """
     image_transforms = []
     global_transforms = []
-    if imputer_string in _imputers:
+    if imputer_string is not None and imputer_string in _imputers:
         imputer = _imputers[imputer_string]()
     else:
         imputer = None
@@ -171,18 +171,25 @@ class Config(object):
 
     Parameters
     ----------
-    yaml_file
+    yaml_file : str
         The path to the yaml config file.
+    cluster : bool
+        True if clustering.
 
     Attributes
     ----------
     name : str
-        Name fo the config file.
+        Name oo the config file.
     patchsize : int
         Half-width of the patches that feature data will be chunked
         into. Height/width of each patch is equal to patchsize * 2 + 1.
+
+        .. todo::
+            
+            Not implemneted, defaults to 1.
+
     algorithm : str
-        The ML model to train.
+        The ML algorithm to train.
     cubist : bool
         True if the selected model is 'cubist'.
     multicubist : bool
@@ -196,128 +203,121 @@ class Config(object):
         in the :mod:`~uncoverml.models` module.
     quantiles : float
         Prediction quantile/interval for predicted values.
-    geotif_options : dict
+    geotif_options : dict, optional
         Optional creation options passed to the geotiff output driver.
         See https://gdal.org/drivers/raster/gtiff.html#creation-options
-        for a list of creation options.
+        for a list of creation options. Default value is empty dict.
     outbands : int
         The outbands to write in the prediction output file. Used as
         the 'stop' for a slice taken from list of prediction tags,
         i.e. [0: outbands]. If the resulting slice is greater than
         the number of tags available, then all tags will be selected.
         If no value is provied, then all tags will be selected.
-    thumbnails : int
+    thumbnails : int, optional
         Subsampling factor for thumbnails of output images. Default
         is 10.
-    pickle : bool
-        Whether or not a feature set of type 'pickle' is present
-        in the config.
-    rawcovariates : str
-        Path to file for saving intersected features and targets
-        as CSV before processing is performed (hence 'raw'). If not
-        present then saving will not occur.
-    rawcovariates_mask : str
-        Corresponding mask for the raw covariates in CSV format. Must
-        be provided if raw covariates is provided.
-    train_data_pk  : str
-        Path to file containing pickled training data. If file exists,
-        image chunk sets, transform sets and targets will be loaded
-        from the pickle file. Training data will be pickled and saved
-        to the specified file after its creation.
-    pickled_covariates : str
+    raw_covariates_dir : str, optional
+        Path to a directory for saving intersected features and targets
+        as CSV before processing is performed (hence 'raw'). Will save
+        two files: the intersected values and a mask of intersection
+        locations. If not provided will be None.
+    pk_covariates : str, optional
         Path to pickle file containing intersection of targets and
-        covariates. If :attr:`~pikcle_load` is True, then this file
+        covariates. If :attr:`~pk_load` is True, then this file
         will be loaded and used as covariates for learning. If
-        :attr:`~pickle_load` is False, then covariates will be dumped
-        to this file after they have been created from the feature
-        sets specified in the configuration.
-    pickled_targets : str
-        Path to pickle file containing targets. If :attr:`~pickle_load`
-        is True, then this file will be loaded and used as targets
-        for learning. If :attr:`~pickle_load` is False, then targets
-        will be dumped to this file after they have been created from
-        the target file specified in the config.
-    pickle_load : bool
+        :attr:`~pk_load` is False, and this file does not exist,
+        then covariates will be dumped to this file after they have
+        been created from the feature sets specified in the 
+        configuration.
+    pk_targets : str, optional
+        Path to pickle file containing targets. If :attr:`~pk_load` is
+        True, then this file will be loaded and used as targets for
+        learning. If :attr:`~pk_load` is False, and this file does not
+        exist, then targets will be dumped to this file after they have
+        been created from the target data specified in the 
+        configuration.
+    pk_load : bool
         True if :attr:`~pickle` is True and existent files are provided
         for :attr:`~pickled_covariates` and :attr:`~pickled_targets`.
         If True, then covariates and targets will be loaded from the
         pickle files. If False, the created targets and covariates
         will be dumped if respective file paths are provided. Will
         also be set to False if :attr:`~rank_features` is True as
-        feature ranking is not compatible with pickled data.
-    featurevec : str
+        feature ranking is not compatible with pickled data. If using
+        Cubist or Multicubist algorithms, it will also require 
+        :attr:`~pk_featurevec` to be present and an existing file
+        in order to be True.
+    pk_featurevec : str, optional
         Path to pickle file containing feature vector. Must be provided
         if algorithm is 'cubist' or 'multicubist' and loading from
         pickle files. 
     feature_sets : list of :obj:`~uncoverml.config.FeatureSetConfig`
         A list of feature sets; one for each non-pickle type feature
-        set specified in the config.
-    final_transform : :obj:`~uncoverml.transforms.transformset.TransformSet`
+        set specified in the config. These are loaded from 'features'
+        in the config file. Not required if :attr:`~pk_load` is True.
+    final_transform : :obj:`~uncoverml.transforms.transformset.TransformSet`, optional
         A TransformSet containing an imputer and transforms that is
         applied to all features following image transforms, imputation,
         global transforms and concatenation.
     target_file : str
         Path to a Shapefile containing target values and X, Y 
-        coordinates.
+        coordinates. Not required if :attr:`~pk_load` is True.
     target_propery : str
         Name of the property in the target file to use for training.
-    resample : list of dict
+        Required if :attr:`~target_file` is specified.
+    resample : list of dict, optional
         Resampling arguments for target data. 
 
         .. todo::
 
-            Doesn't appear to be implemented
+            Not yet implemented.
     
-    mask : str
+    mask : str, optional
         Path to a geotiff file for masking the output prediction 
         map. Only values that have been masked will be predicted.
     retain : int
         Value in the above mask that indicates cell should be retained
-        and predicted.
-    lon_lat : bool
-        True if 'lon_lat' block is present.
-    lon : str
-        Path to geotiff file containing latitiude grid for Kriging.
-    lat : str
-        Path to geotiff file containing longitude grid for Kriging.
-    rank_features : bool
-        True if 'feature_ranking' is present in 'validation' block
-        of the config. Turns on feature ranking.
+        and predicted. Must be provided if a mask is provided.
+    lon_lat : dict, optional
+        Dictionary containing paths to longitude and latitude grids
+        used in kriging.
+    rank_features : bool, optional
+        True if 'feature_ranking' is True in 'validation' block
+        of the config. Turns on feature ranking. Default is False.
     permutation_importance : bool
-        True if 'permutation_importance' is present in 'validation'
+        True if 'permutation_importance' is True in 'validation'
         block of the config. Turns on permutation importance.  
-    parallel_validate : bool
-        True if 'parallel' is present in 'validation' block of
-        config. Turns on parallel k-fold cross validation.
-    cross_validate : bool
-        True if 'k-fold' is present in 'validation' block of config.
-        Turns on k-fold cross validation.
+        Default is False.
+    parallel_validate : bool, optional
+        True if 'parallel' is present in 'k-fold' block of
+        config. Turns on parallel k-fold cross validation. Default
+        is False.
+    cross_validate : bool, optional
+        True if 'k-fold' block is present in 'validation' block of 
+        config. Turns on k-fold cross validation.
     folds : int
         The number of folds to split dataset into for cross validation.
+        Required if :attr:`~cross_validate` is True.
     crossval_seed : int
-        Seed for random sorting of folds for cross validation.
+        Seed for random sorting of folds for cross validation. Required
+        if :attr:`~cross_validate` is True.
     output_dir : str
         Path to directory where prediciton map and other outputs
         will be written.
-    model_file : str
+    model_file : str, optional
         Path to the file where model will be saved after
-        learning/clustering and loaded from when predicting.
-    scroes_file : str
+        learning/clustering and loaded from when predicting. Default
+        is to save in :attr:`~output_dir`.
+    scores_file : str, optional
         Path to the JSON file where cross validation scores will be
-        saved.
-    optimisation : dict
+        saved. Default is to save in :attr:`~output_dir`.
+    plot_covaraites_dir : str, optional
+        Path to directory where plotted covariates will be stored.
+    optimisation : dict, optional
         Dictionary of optimisation arguments.
-    optimisation_output : str
-        Filname for output of optimisation.
     clustering : bool
-        True if 'clustering' present in config file. 
-
-        .. note:: 
-
-            Only seems to be used in :mod:`~uncoverml.predict`, 
-            otherwise clustering is a specific CLI process.
-
-    cluster_analysis : bool
+        True if clustering.
+    cluster_analysis : bool, optional
         True if 'cluster_analysis' in the 'clustering' block of the
         config file. Turns on cluster analysis.
 
@@ -344,169 +344,191 @@ class Config(object):
         running semisupervised learning and this is set to less than
         the number of labelled classes in the training data, then the
         the number of laballed classes in the training data will be
-        used as the value instead.
+        used as the value instead. Required when clustering.
     oversample_factor : float
         Controls how many candidates are found for cluster 
         initialisation when running kmeans clustering. See
         :func:`~uncoverml.cluster.weighted_starting_candidates`.
+        Required when clustering.
     semisupervised : bool
         True if a training data file is provided in clustering 
         arguments. Turns on semisupervised clustering.
     class_file : str
         Path to a Shapefile containing training data for clustering.
     class_property : str
-        Name of the property to train clustering against.
+        Name of the property to train clustering against. Required
+        if :attr:`~class_file` is provided.
     """
-    def __init__(self, yaml_file: str):
+    def __init__(self, yaml_file: str, cluster=False):
+
+        def _grp(d, k, msg=None):
+            """
+            Get required parameter.
+            """
+            try:
+                return d[k]
+            except KeyError:
+                if msg is None:
+                    msg = f"Required parameter {k} not present in config."
+                _logger.exception(msg)
+                raise
+
         Config._configure_pyyaml()
         with open(yaml_file, 'r') as f:
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
-        # TODO expose this option when fixed
-        if 'patchsize' in s:
-            _logger.info("Patchsize currently fixed at 0 -- ignoring")
-        self.patchsize = 0
+        # LEARNING BLOCK
+        if not cluster:
+            learn_block = _grp(s, 'learning')
+            self.clustering = False
+            self.cluster_analysis = False
+            self.algorithm = _grp(learn_block, 'algorithm',
+                                  "'algorithm' must be provided as part of 'learning' block.")
+            
+            self.algorithm_args = _grp(learn_block, 'arguments',
+                                       "'arguments' must be provided for learning algorithm.")
+        # CLUSTERING BLOCK
+        else:
+            cb = _grp(s, 'clustering', "'clustering' block must be provided when clustering.")
+            self.clustering = True
+            self.algorithm = cb.get('algorithm', 'kmeans')
+            self.n_classes = _grp(cb, 'n_classes', "'n_classes' must be provided when clustering.")
+            self.oversample_factor = _grp(cb, 'oversample_factor',
+                                          "'oversample_factor' must be provided when clustering.")
+            self.cluster_analysis = cb.get('cluster_analysis', False)
+            self.class_file = cb.get('file')
+            if self.class_file:
+                self.class_property = _grp(cb, 'property', "'property' must be provided when "
+                                           "providing a file for semisupervised clustering.")
+            self.semi_supervised = self.class_file is not None
 
-        self.algorithm = s['learning']['algorithm']
+        # Set flags based on algorithm being used - these control
+        # some special behaviours in the code.
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
-        self.algorithm_args = s['learning']['arguments']
-        self.quantiles = s['prediction']['quantiles']
+        
+        # PICKLING BLOCK
+        pk_block = s.get('pickling')
+        if pk_block:
+            self.pk_covariates = pk_block.get('covariates')
+            self.pk_targets = pk_block.get('targets')
 
-        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-            s['prediction'] else {}
-
-        self.outbands = None
-        if 'outbands' in s['prediction']:
-            self.outbands = s['prediction']['outbands']
-        self.thumbnails = s['prediction']['thumbnails'] \
-            if 'thumbnails' in s['prediction'] else 10
-
-        self.pickle = any(d['type'] == 'pickle' for d in s['features'])
-
-        self.rawcovariates = False
-        self.train_data_pk = False
-        if self.pickle:
-            self.pickle_load = True
-            for n, d in enumerate(s['features']):
-                if d['type'] == 'pickle':
-                    if 'covariates' in d['files']:
-                        self.pickled_covariates = \
-                            path.abspath(d['files']['covariates'])
-                    if 'targets' in d['files']:
-                        self.pickled_targets = d['files']['targets']
-                    if 'rawcovariates' in d['files']:
-                        self.rawcovariates = d['files']['rawcovariates']
-                        self.rawcovariates_mask = \
-                            d['files']['rawcovariates_mask']
-                    if 'train_data_pk' in d['files']:
-                        self.train_data_pk = d['files']['train_data_pk']
-                    if not (path.exists(d['files']['covariates'])
-                            and path.exists(d['files']['targets'])):
-                        self.pickle_load = False
-                    if self.cubist or self.multicubist:
-                        if 'featurevec' in d['files']:
-                            self.featurevec = \
-                                path.abspath(d['files']['featurevec'])
-                        if not path.exists(d['files']['featurevec']):
-                            self.pickle_load = False
-                    self.plot_covariates = d['files'].get('plot_covariates')
-                    s['features'].pop(n)  # pop `pickle` features
+            # Load from pickle files if covariates and targets exist.
+            self.pk_load = self.pk_covariates and os.path.exists(self.pk_covariates) \
+                           and self.pk_targets and os.path.exists(self.pk_targets)
+            
+            if self.cubist or self.multicubist:
+                self.pk_featurevec = pk_block.get('featurevec')
+                # If running multicubist, we also need featurevec to load from pickle files.
+                self.pk_load = self.pk_load \
+                               and self.pk_featurevec and os.path.exists(self.pk_featurevec)
         else:
-            self.pickle_load = False
+            self.pk_load = False
+            self.pk_covariates = None
+            self.pk_targets = None
+            self.pk_featurevec = None
 
-        if not self.pickle_load:
-            _logger.info('One or both pickled files were not '
-                     'found. All targets will be intersected.')
+        # FEATURES BLOCK
+        if not self.pk_load:
+            features = _grp(s, 'features', "'features' block must be provided when not loading "
+                            "from pickled data.")
+            self.feature_sets = [FeatureSetConfig(f) for f in features]
 
-        self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+        # Not yet implemented.
+        if 'patchsize' in s:
+            _logger.info("Patchsize currently fixed at 0 -- ignoring")
+        self.patchsize = 0
 
-        if 'preprocessing' in s:
-            final_transform = s['preprocessing']
-            _, im, trans_g = _parse_transform_set(
-                final_transform['transforms'], final_transform['imputation'])
+        
+        # TARGET BLOCK
+        if not self.pk_load:
+            tb = _grp(s, 'targets', "'targets' block my be provided when not loading from "
+                      "pickled data.")
+            self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
+                                    "targets.")
+            self.target_property = _grp(tb, 'property', "'property needs to be provided when "
+                                        "specifying targets.")
+            self.resample = tb.get('resample')
+
+        # FINAL TRANSFORM BLOCK
+        ftb = s.get('final_transform')
+        if ftb is not None:
+            _, im, trans_g = _parse_transform_set(ftb.get('transforms'), ftb.get('imputation'))
             self.final_transform = transforms.TransformSet(im, trans_g)
         else:
             self.final_transform = None
+                
+        # VALIDATION BLOCK
+        vb = s.get('validation')
+        if vb:
+            self.rank_features = vb.get('feature_rank', False)
+            if self.pk_load and self.rank_features:
+                _logger.warning("Feature ranking cannot be performed when loading covariates and "
+                                "targets from pickled data.")
+                self.rank_features = False
+            self.permutation_importance = vb.get('permutation_importance', False)
+            kfb = vb.get('k-fold')
+            if kfb:
+                self.cross_validate = True
+                self.folds = _grp(kfb, 'folds', "'folds' (number of folds) must be specified "
+                                  "if k-fold cross validation is being used.")
+                self.crossval_seed = _grp(kfb, 'random_seed', "'random_seed' must be specified "
+                                          "if k-fold cross validation is being used.")
+                self.parallel_validate = kfb.get('parallel', False)
+        else:
+            self.cross_validate = False
+            self.rank_features = False
+            self.permutation_importance = False
+            self.parallel_validate = False
 
-        self.target_file = s['targets']['file']
-        self.target_property = s['targets']['property']
+        # OPTIMISATION BLOCK
+        # Note: optimisation options get parsed in scripts/gridsearch.py
+        self.optimisation = s.get('optimisation')
 
-        self.resample = None
-
-        if 'resample' in s['targets']:
-            self.resample = s['targets']['resample']
-
-        self.mask = None
-        if 'mask' in s:
-            self.mask = s['mask']['file']
-            self.retain = s['mask']['retain']  # mask areas that are predicted
-
-        self.lon_lat = False
-        if 'lon_lat' in s:
-            self.lon_lat = True
-            self.lat = s['lon_lat']['lat']
-            self.lon = s['lon_lat']['lon']
-
-        # TODO pipeline this better
-        self.rank_features = False
-        self.permutation_importance = False
-        self.cross_validate = False
-        self.parallel_validate = False
-        if s['validation']:
-            for i in s['validation']:
-                if i == 'feature_rank':
-                    self.rank_features = True
-                if i == 'permutation_importance':
-                    self.permutation_importance = True
-                if i == 'parallel':
-                    self.parallel_validate = True
-                if type(i) is dict and 'k-fold' in i:
-                    self.cross_validate = True
-                    self.folds = i['k-fold']['folds']
-                    self.crossval_seed = i['k-fold']['random_seed']
-                    break
-
-        if self.rank_features and self.pickle_load:
-            self.pickle_load = False
-            _logger.info('Feature ranking does not work with '
-                     'pickled files. Pickled files will not be used. '
-                     'All covariates will be intersected.')
+        # PREDICT BLOCK
+        pb = _grp(s, 'prediction', "'prediction' block must be provided.")
+        self.geotif_options = pb.get('geotif', {})
+        self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of "
+                              "prediction block.")
+        self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
+                             "block.")
+        self.thumbnails = pb.get('thumbnails', 10)
+        mb = s.get('mask')
+        if mb:
+            self.mask = mb.get('file') 
+            self.mask = None if not os.path.exists(self.mask) else self.mask
+            if self.mask:
+                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
+                                   "prediction mask.")
+        else:
+            self.mask = None
+        
+        if self.krige:
+            # Todo: don't know if lon/lat is compulsory or not for kriging
+            self.lon_lat = s.get('lon_lat')
+        else:
+            self.lon_lat = None
 
         # OUTPUT BLOCK
-        output_dict = s['output']
-        self.output_dir = output_dict['directory']
-        self.model_file = output_dict.get('model', os.path.join(
+        ob = _grp(s, 'output', "'output' block is required.")
+        self.output_dir = _grp(ob, 'directory', "'directory' for output is required.")
+        self.model_file = ob.get('model', os.path.join(
             self.output_dir, self.name + '_' + self.algorithm + '.model'))
-        self.scores_file = output_dict.get('scores', os.path.join(
-            self.output_dir, self.name + '_' + 'scores.json'))
-        makedirs(self.output_dir, exist_ok=True)
+        if self.cross_validate:
+            self.scores_file = ob.get('scores', os.path.join(
+                self.output_dir, self.name + '_' + 'scores.json'))
+        self.raw_covariates_dir = ob.get('raw_covariates')
+        self.plot_covariates_dir = ob.get('plot_covariates')
 
-        if 'optimisation' in s:
-            self.optimisation = s['optimisation']
-            if 'optimisation_output' in self.optimisation:
-                self.optimisation_output = \
-                    self.optimisation['optimisation_output']
-
-        self.cluster_analysis = False
-        self.clustering = False
-        if 'clustering' in s:
-            self.clustering = True
-            self.clustering_algorithm = s['clustering']['algorithm']
-            cluster_args = s['clustering']['arguments']
-            self.n_classes = cluster_args['n_classes']
-            self.oversample_factor = cluster_args['oversample_factor']
-            if 'file' in s['clustering'] and s['clustering']['file']:
-                self.semi_supervised = True
-                self.class_file = s['clustering']['file']
-                self.class_property = s['clustering']['property']
-            else:
-                self.semi_supervised = False
-            if 'cluster_analysis' in s['clustering']:
-                self.cluster_analysis = s['clustering']['cluster_analysis']
+        paths = [self.output_dir, os.path.split(self.model_file)[1], 
+                 os.path.split(self.scores_file)[1], self.raw_covariates_dir,
+                 self.plot_covariates_dir]
+        for p in paths:
+            if p:
+                makedirs(p, exist_ok=True)
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
@@ -534,6 +556,6 @@ class Config(object):
 
         yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
 
-
+    
 class ConfigException(Exception):
     pass

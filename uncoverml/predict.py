@@ -177,8 +177,8 @@ def _get_lon_lat(subchunk, config):
         cov_data = nn_imputer(cov_data.reshape(cov_data.shape[0], 1))
         return cov_data
     if config.lon_lat:
-        lat_data = _impute_lat_lon(config.lat, subchunk, config)
-        lon_data = _impute_lat_lon(config.lon, subchunk, config)
+        lat_data = _impute_lat_lon(config.lon_lat['lat'], subchunk, config)
+        lon_data = _impute_lat_lon(config.lon_lat['lon'], subchunk, config)
         lon_lat = np.ma.hstack((lon_data, lat_data))
         return _mask_rows(lon_lat, subchunk, config)
 
@@ -247,7 +247,7 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
                     for t in f.transform_set.global_transforms:
                         means += list(t.mean)
                         sds += list(t.sd)
-                # check final transform
+                # check final transform <- oh god what???
                 if config.final_transform is not None:
                     pass
                 writer.writerow(['transform mean'] + [str(m) for m in means])
