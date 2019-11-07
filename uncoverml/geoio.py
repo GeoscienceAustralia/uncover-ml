@@ -471,10 +471,6 @@ def unsupervised_feature_sets(config):
 
 
 def export_feature_ranks(measures, feats, scores, config):
-    outfile_ranks = os.path.join(config.output_dir,
-                                 config.name + "_" + config.algorithm +
-                                 "_featureranks.json")
-
     score_listing = dict(scores={}, ranks={})
     for measure, measure_scores in zip(measures, scores):
 
@@ -498,7 +494,7 @@ def export_feature_ranks(measures, feats, scores, config):
         plt.savefig('{}.png'.format(measure))
 
     # Write the results out to a file
-    with open(outfile_ranks, 'w') as output_file:
+    with open(config.rank_features_file, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 def export_model(model, config):

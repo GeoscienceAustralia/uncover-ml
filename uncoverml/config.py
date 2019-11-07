@@ -523,6 +523,9 @@ class Config(object):
         if self.cross_validate:
             self.scores_file = ob.get('scores', os.path.join(
                 self.output_dir, self.name + '_' + 'scores.json'))
+        if self.rank_features:
+            self.rank_features_file = ob.get('feature_ranking', os.path.join(
+                self.output_dir, self.name + '_' + self.algorithm + '_featureranks.json'))
         self.raw_covariates_dir = ob.get('raw_covariates')
         self.plot_covariates_dir = ob.get('plot_covariates')
 
