@@ -2,6 +2,17 @@
 
 History
 =======
+0.2.1 (2019-11-07)
+-----------------------
+Added
++++++
+- Temporary workaround for 'get_image_spec', at least one covariate file is now required
+  even if using pickled data. Will be fixed.
+
+Fixed
++++++
+- Prediction thumbnails
+
 0.2.0 (2019-11-05)
 -----------------
 Added
