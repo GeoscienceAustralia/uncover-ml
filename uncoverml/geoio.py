@@ -600,26 +600,20 @@ def resample(input_tif, output_tif, ratio, resampling=5):
         q1 = 11
         q3 = 12
     """
-
     src = rasterio.open(input_tif, mode='r')
 
     nodatavals = src.get_nodatavals()
     new_shape = round(src.height / ratio), round(src.width / ratio)
     # adjust the new affine transform to the smaller cell size
-    aff = src.get_transform()
-
-    # c, a, b, f, d, e, works on rasterio versions >=1.0
-    # newaff = Affine(aff.a * ratio, aff.b, aff.c,
-    #                 aff.d, aff.e * ratio, aff.f)
-    #
-    newaff = Affine(aff[0] * ratio, aff[1], aff[2],
-                    aff[3], aff[4] * ratio, aff[5])
+    aff = Affine.from_gdal(*src.get_transform())
+    newaff = aff * Affine.scale(ratio)
 
     dest = rasterio.open(output_tif, 'w', driver='GTiff',
                          height=new_shape[0], width=new_shape[1],
                          count=src.count, dtype=rasterio.float32,
                          crs=src.crs, transform=newaff,
                          nodata=nodatavals[0])
+
     for b in range(src.count):
         arr = src.read(b+1)
         new_arr = np.empty(shape=new_shape, dtype=arr.dtype)

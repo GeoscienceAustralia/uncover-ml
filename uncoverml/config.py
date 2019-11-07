@@ -432,10 +432,13 @@ class Config(object):
             self.pk_featurevec = None
 
         # FEATURES BLOCK
-        if not self.pk_load:
-            features = _grp(s, 'features', "'features' block must be provided when not loading "
-                            "from pickled data.")
-            self.feature_sets = [FeatureSetConfig(f) for f in features]
+        # Todo: fix get_image_spec so features are optional if using pickled data.
+        # if not self.pk_load:
+        _logger.warning("'features' are required even when loading from pickled data - this is "
+                        "a work around for getting image specifications. Needs to be fixed.")
+        features = _grp(s, 'features', "'features' block must be provided when not loading "
+                        "from pickled data.")
+        self.feature_sets = [FeatureSetConfig(f) for f in features]
 
         # Not yet implemented.
         if 'patchsize' in s:
