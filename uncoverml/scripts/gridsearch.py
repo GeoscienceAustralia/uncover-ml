@@ -5,6 +5,7 @@ scikit-learn GridSearchCv.
 .. program-output:: gridsearch --help
 """
 import logging
+import os
 from collections import OrderedDict
 from itertools import product
 import click
@@ -36,6 +37,7 @@ algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 
 def setup_pipeline(config):
+    config.optimisation['algorithm'] = config.algorithm
     if config.optimisation['algorithm'] not in algos:
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
@@ -111,6 +113,6 @@ def cli(pipeline_file, partitions, njobs, verbosity):
     # hyperparameter combinations.
     estimator.fit(X=x_all, y=targets_all.observations)
 
-    pd.DataFrame.from_dict(
-        estimator.cv_results_).sort_values(by='rank_test_score').to_csv(
-        config.optimisation['algorithm'] + '_' + config.optimisation_output)
+    outfile = os.path.join(config.output_dir, 
+                           config.optimisation['algorithm'] + '_optimisation.csv')
+    pd.DataFrame.from_dict(estimator.cv_results_).sort_values(by='rank_test_score').to_csv(outfile)

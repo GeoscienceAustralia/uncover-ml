@@ -69,12 +69,12 @@ def learn(config_file, partitions):
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 def _load_data(config, partitions):
-    if config.pickle_load:
-        x_all = pickle.load(open(config.pickled_covariates, 'rb'))
-        targets_all = pickle.load(open(config.pickled_targets, 'rb'))
+    if config.pk_load:
+        x_all = pickle.load(open(config.pk_covariates, 'rb'))
+        targets_all = pickle.load(open(config.pk_targets, 'rb'))
         if config.cubist or config.multicubist:
             config.algorithm_args['feature_type'] = \
-                pickle.load(open(config.featurevec, 'rb'))
+                pickle.load(open(config.pk_featurevec, 'rb'))
         _logger.warning("Using  pickled targets and covariates. Make sure you have"
                         " not changed targets file and/or covariates.")
     else:
@@ -87,38 +87,23 @@ def _load_data(config, partitions):
                          "dividing all data between nodes")
 
         # Make the targets
-        if config.train_data_pk and exists(config.train_data_pk):
-            _logger.info("Reusing pickled training data")
-            image_chunk_sets, transform_sets, targets = \
-                pickle.load(open(config.train_data_pk, 'rb'))
-        else:
-            _logger.info("Intersecting targets as pickled train data was not "
-                         "available")
-            targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                            targetfield=config.target_property)
-            # Get the image chunks and their associated transforms
-            image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
-            transform_sets = [k.transform_set for k in config.feature_sets]
+        _logger.info("Intersecting targets as pickled train data was not "
+                     "available")
+        targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                        targetfield=config.target_property)
+        # Get the image chunks and their associated transforms
+        image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
+        transform_sets = [k.transform_set for k in config.feature_sets]
 
-        if config.rawcovariates:
+        if config.raw_covariates_dir:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
-                                                              transform_sets,
-                                                              targets, config)
-        
-        # TODO: If the training data exists and was loaded above, this dump is redundant.
-        if config.train_data_pk:
-            pickle.dump([image_chunk_sets, transform_sets, targets],
-                        open(config.train_data_pk, 'wb'))
+                                                              transform_sets, targets, config)
 
         if config.rank_features:
-            measures, features, scores = ls.validate.local_rank_features(
-                image_chunk_sets,
-                transform_sets,
-                targets,
-                config)
-            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures,
-                               features, scores, config)
+            measures, features, scores = \
+                ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
+            ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
 
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
@@ -133,11 +118,12 @@ def _load_data(config, partitions):
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
 
-        if config.pickle and ls.mpiops.chunk_index == 0:
-            if hasattr(config, 'pickled_covariates'):
-                pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
-            if hasattr(config, 'pickled_targets'):
-                pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
+        # Pickle data if requested.
+        if ls.mpiops.chunk_index == 0:
+            if config.pk_covariates and not os.path.exists(config.pk_covariates):
+                pickle.dump(x_all, open(config.pk_covariates, 'wb'))
+            if config.pk_targets and not os.path.exists(config.pk_targets):
+                pickle.dump(targets_all, open(config.pk_targets, 'wb'))
 
     return targets_all, x_all
 
@@ -146,7 +132,7 @@ def _load_data(config, partitions):
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help="only use this fraction of the data for learning classes")
 def cluster(config_file, subsample_fraction):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, cluster=True)
 
     for f in config.feature_sets:
         if not f.transform_set.global_transforms:

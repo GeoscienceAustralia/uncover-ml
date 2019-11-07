@@ -48,10 +48,8 @@ targets:
 clustering:
   file: /path/to/GA_data/GA-cover2/geochem_sites_class1.shp
   property: class
-  algorithm: kmeans
-  arguments:
-    n_classes: 12
-    oversample_factor: 5
+  n_classes: 12
+  oversample_factor: 5
 
 prediction:
   quantiles: 0.95

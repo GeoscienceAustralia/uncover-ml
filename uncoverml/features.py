@@ -83,9 +83,10 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         for k, v in zip(names, np.concatenate(feature)):
             feature_vec[k] = v
         config.algorithm_args['feature_type'] = feature_vec
-        if mpiops.chunk_index == 0 and config.pickle:
+        if mpiops.chunk_index == 0 \
+                and config.pk_featurevec and not os.path.exists(config.pk_featurevec):
             log.info('Saving featurevec for reuse')
-            pickle.dump(feature_vec, open(config.featurevec, 'wb'))
+            pickle.dump(feature_vec, open(config.pk_featurevec, 'wb'))
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if config.cubist or config.multicubist or config.krige:
@@ -139,13 +140,12 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
         data = np.hstack((x_all.data, xy, t))
-        np.savetxt(config.rawcovariates, X=data, delimiter=',',
-                   fmt='%.4e',
-                   header=header, comments='')
+        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates.csv'),
+                   X=data, delimiter=',', fmt='%.4e', header=header, comments='')
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
-        np.savetxt(config.rawcovariates_mask, X=mask,
-                   delimiter=',', fmt='%d', header=header, comments='')
-        if config.plot_covariates:
+        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates_mask.csv'),
+                   X=mask, delimiter=',', fmt='%d', header=header, comments='')
+        if config.plot_covariates_dir:
             import matplotlib.pyplot as plt
             for i, name in enumerate(names[:-3]):
                 log.info('plotting {}'.format(name))
@@ -155,7 +155,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                 plt.scatter(x=list(range(vals_no_mask.shape[0])),
                             y=vals_no_mask.data)
                 plt.title(name)
-                plt.savefig(os.path.join(config.plot_covariates, name.rstrip('.tif') + '.png'))
+                plt.savefig(os.path.join(config.plot_covariates_dir, name.rstrip('.tif') + '.png'))
                 plt.close()
 
 
