@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>History &mdash; UncoverML v0.2.0-0-gd493feb documentation</title>
+  <title>History &mdash; UncoverML v0.2.0-5-g8c9c6b6 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                v0.2.0-0-gd493feb
+                v0.2.0-5-g8c9c6b6
               </div>
             
           
@@ -91,14 +91,19 @@
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id1">0.2.0 (2019-11-05)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.2.1 (2019-11-07)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.2.0 (2019-11-05)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Fixed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#removed">Removed</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">0.1.0 (2019-09-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.1.0 (2019-09-22)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
@@ -170,9 +175,25 @@
   <div class="section" id="history">
 <h1>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
-<h2>0.2.0 (2019-11-05)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>0.2.1 (2019-11-07)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="added">
 <h3>Added<a class="headerlink" href="#added" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Temporary workaround for ‘get_image_spec’, at least one covariate file is now required
+even if using pickled data. Will be fixed.</p></li>
+</ul>
+</div>
+<div class="section" id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Prediction thumbnails</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>0.2.0 (2019-11-05)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>Added<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Python 3.6 and 3.7 support.</p></li>
 <li><p>Metadata profiler: a ‘metadata.txt’ file will be generated as part of predict output that
@@ -185,8 +206,8 @@ will allow reproducability of results.</p></li>
 <li><p>Can now provide env vars in YAML config in the form ‘$ENV_VAR’.</p></li>
 </ul>
 </div>
-<div class="section" id="fixed">
-<h3>Fixed<a class="headerlink" href="#fixed" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3>Fixed<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Broken tests due to usage of fixtures and new verison of PyTest</p></li>
 <li><p>Override of MPI pickling.</p></li>
@@ -234,8 +255,8 @@ file when making predictions.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id2">
-<h2>0.1.0 (2019-09-22)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h2>0.1.0 (2019-09-22)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Start of versioning</p></li>
 </ul>
