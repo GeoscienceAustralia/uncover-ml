@@ -1,0 +1,206 @@
+{
+    "ranks": {
+        "expvar": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "expvar_transformed": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "lins_ccc": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "lins_ccc_transformed": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "mll": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "mll_transformed": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip"
+        ],
+        "r2_score": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "r2_score_transformed": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "smse": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300"
+        ],
+        "smse_transformed": [
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/tpi_300",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/gg_clip",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/dem_foc2",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/er_depg",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_15v1",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/U_TH_15",
+            "/home/ubuntu/uncover-ml/tests/test_data/sirsam/covariates/k_15v5"
+        ]
+    },
+    "scores": {
+        "expvar": [
+            0.27111736119257407,
+            0.49568083870794544,
+            0.5013173509437292,
+            0.5026390578118889,
+            0.5038064146909145,
+            0.5061285581929119,
+            0.5105036805157708,
+            0.5181515795794478
+        ],
+        "expvar_transformed": [
+            0.26309829461131107,
+            0.5027519259740072,
+            0.5085663125174161,
+            0.5111495454591195,
+            0.5116334277069752,
+            0.5153754910167427,
+            0.5167786192514879,
+            0.5284741587545307
+        ],
+        "lins_ccc": [
+            0.44017575388624214,
+            0.6597958734946501,
+            0.660213696604917,
+            0.6622617904125729,
+            0.6662754418825604,
+            0.6666293605424117,
+            0.6721501735191984,
+            0.6780435868907501
+        ],
+        "lins_ccc_transformed": [
+            0.4264628330317771,
+            0.662275039687309,
+            0.6659863460734676,
+            0.6671818939319295,
+            0.6674117124767258,
+            0.6720872931098614,
+            0.6731474131425312,
+            0.682959379170338
+        ],
+        "mll": [
+            0.7802751062287101,
+            0.5964700795747305,
+            0.5947393220752131,
+            0.5843824539725764,
+            0.5828376843465733,
+            0.5783042940463404,
+            0.5667047672621075,
+            0.5656133885617067
+        ],
+        "mll_transformed": [
+            0.62784578730049,
+            0.8231831076321224,
+            0.8275537972604061,
+            0.8285488273378814,
+            0.832629565826735,
+            0.8338796831142877,
+            0.8382333697967954,
+            0.8391726972154829
+        ],
+        "r2_score": [
+            0.2622088434679025,
+            0.4899682612855368,
+            0.4940278989688494,
+            0.495229285903563,
+            0.49782070723282723,
+            0.4999209226791045,
+            0.5048525616471027,
+            0.5120661460853245
+        ],
+        "r2_score_transformed": [
+            0.24577758220427853,
+            0.49258034528190836,
+            0.49787928689336064,
+            0.498411896907139,
+            0.5002543517409118,
+            0.5048386989474242,
+            0.5056155824519852,
+            0.5171888747345494
+        ],
+        "smse": [
+            0.7377911565320975,
+            0.5100317387144633,
+            0.5059721010311506,
+            0.504770714096437,
+            0.5021792927671727,
+            0.5000790773208955,
+            0.4951474383528973,
+            0.4879338539146755
+        ],
+        "smse_transformed": [
+            0.48281112526545045,
+            0.4943844175480147,
+            0.49516130105257583,
+            0.4997456482590882,
+            0.5015881030928611,
+            0.5021207131066393,
+            0.5074196547180916,
+            0.7542224177957214
+        ]
+    }
+}

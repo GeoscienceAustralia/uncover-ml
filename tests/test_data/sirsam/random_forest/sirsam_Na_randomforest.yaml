@@ -30,6 +30,7 @@ targets:
 # 'parallel' and place it under the 'k-fold' block (it only applies
 # to crossval, trying to make that clearer).
 validation:
+  feature_rank: True
   k-fold:
    parallel: True
    folds: 5
@@ -54,6 +55,7 @@ output:
   model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
   raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
+  plot_feature_ranks: True
 
 # Will load from pickled data if covariates and targets are present. If any of the files don't
 # exist, covariates and targets will be intersected and data will be dumped to the file specified.
