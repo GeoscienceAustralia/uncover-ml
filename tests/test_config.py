@@ -31,7 +31,7 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.geotif_options == {}
     assert c.outbands == 10
     assert c.thumbnails == 10
-    assert c.raw_covariates_dir == sirsam_rf_out
+    assert c.raw_covariates == os.path.join(sirsam_rf_out, c.name + '_rawcovariates.csv')
     assert c.pk_covariates == os.path.join(sirsam_rf_out, 'features.pk')
     assert c.pk_targets == os.path.join(sirsam_rf_out, 'targets.pk')
     assert c.pk_load == False

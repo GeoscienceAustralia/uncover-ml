@@ -18,6 +18,7 @@ import tables as hdf
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
+from uncoverml import diagnostics
 from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
@@ -242,7 +243,7 @@ class ImageWriter:
 
     nodata_value = np.array(-1e20, dtype='float32')
 
-    def __init__(self, shape, bbox, crs, name, n_subchunks, outputdir,
+    def __init__(self, shape, bbox, crs, name, n_subchunks, output_path, output_path_thumbnail,
                  band_tags=None, independent=False, **kwargs):
         """
         pass in additional geotif write options in kwargs
@@ -255,9 +256,7 @@ class ImageWriter:
         self.outbands = len(band_tags)
         self.bbox = bbox
         self.name = name
-        self.outputdir = outputdir
-        if not os.path.exists(self.outputdir):
-            os.makedirs(self.outputdir)
+        self.outpath = outpath
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
@@ -276,9 +275,7 @@ class ImageWriter:
 
         if mpiops.chunk_index == 0:
             for band in range(self.outbands):
-                output_filename = os.path.join(outputdir, name + "_" +
-                                               file_tags[band] + ".tif")
-                f = rasterio.open(output_filename, 'w', driver='GTiff',
+                f = rasterio.open(self.outpath.format(file_tags[band]), 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,
                                   crs=crs,
@@ -469,11 +466,10 @@ def unsupervised_feature_sets(config):
     result = _iterate_sources(f, config)
     return result
 
-
 def export_feature_ranks(measures, feats, scores, config):
     score_listing = dict(scores={}, ranks={})
-    for measure, measure_scores in zip(measures, scores):
 
+    for measure, measure_scores in zip(measures, scores):
         # Sort the scores
         scores = sorted(zip(feats, measure_scores),
                         key=lambda s: s[1])
@@ -485,37 +481,35 @@ def export_feature_ranks(measures, feats, scores, config):
         score_listing['scores'][measure] = sorted_scores
         score_listing['ranks'][measure] = sorted_features
 
+        # Todo: factor out this plotting
         # plot the results
         plt.figure()
         plt.plot(range(len(sorted_features)), sorted_scores)
         plt.xticks(range(len(sorted_features)), sorted_features,
                    rotation='vertical')
-        plt.ylabel(measure)
-        plotfile = os.path.join(config.outdir, f'feature_ranking_{measure}.png')
-        plt.savefig(plotfile)
+        plt.savefig(config.plot_feature_rank.format(measure))
 
     # Write the results out to a file
-    with open(config.rank_features_file, 'w') as output_file:
+    with open(config.feature_ranks_file, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
+
+    if config.plot_feature_ranks:
+        figure = diagnostics.plot_feature_ranks(config.rank_features_file)
+        figure.savefig(config.plot_feature_ranks)
 
 def export_model(model, config):
     with open(config.model_file, 'wb') as f:
         pickle.dump(model, f)
 
 def export_crossval(crossval_output, config):
-    outfile_scores = os.path.join(config.output_dir,
-                                  config.name + "_scores.json")
-
     # Make sure we convert numpy arrays to lists
     scores = {s: v if np.isscalar(v) else v.tolist()
               for s, v in crossval_output.scores.items()}
 
-    with open(outfile_scores, 'w') as f:
+    with open(config.crossval_scores_file, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)
 
-    outfile_results = os.path.join(config.output_dir,
-                                   config.name + "_results.hdf5")
-    with hdf.open_file(outfile_results, 'w') as f:
+    with hdf.open_file(config.crossval_scores_hdf5, 'w') as f:
         for fld, v in crossval_output.y_pred.items():
             label = _make_valid_array_name(fld)
             f.create_array("/", label, obj=v.data)
@@ -523,8 +517,7 @@ def export_crossval(crossval_output, config):
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
     if not crossval_output.classification:
-        create_scatter_plot(outfile_results, config, scores)
-
+        create_scatter_plot(config.crossval_scores_hdf5, config, scores)
 
 def _make_valid_array_name(label):
     label = "_".join(label.split())
@@ -533,12 +526,7 @@ def _make_valid_array_name(label):
         label = '_' + label
     return label
 
-
 def create_scatter_plot(outfile_results, config, scores):
-    true_vs_pred = os.path.join(config.output_dir,
-                                config.name + "_results.csv")
-    true_vs_pred_plot = os.path.join(config.output_dir,
-                                     config.name + "_results.png")
     with hdf.open_file(outfile_results, 'r') as f:
         prediction = f.get_node("/", "Prediction").read()
         y_true = f.get_node("/", "y_true").read()
@@ -546,7 +534,7 @@ def create_scatter_plot(outfile_results, config, scores):
         if 'transformedpredict' in f.root:
             transformed_predict = f.get_node("/", "transformedpredict").read()
             to_text.append(transformed_predict)
-        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',',
+        np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, delimiter=',',
                    fmt='%.4e',
                    header=', '.join(['y_true', 'y_pred', 'y_transformed']),
                    comments='')
@@ -567,7 +555,7 @@ def create_scatter_plot(outfile_results, config, scores):
         plt.text(y_true.min() + (y_true.max() - y_true.min())/20,
                  y_true.min() + (y_true.max() - y_true.min())*3/4,
                  score_sring)
-        plt.savefig(true_vs_pred_plot)
+        plt.savefig(config.crossval_results_plot)
 
 
 def resample(input_tif, output_tif, ratio, resampling=5):
