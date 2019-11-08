@@ -19,7 +19,10 @@ class TestLearnCommand:
     SIRSAM_RF = 'sirsam_Na_randomforest'
 
     # Group the outputs of the learn command by filetype to make them easier to test.
-    SIRSAM_RF_JSON_OUTPUT = SIRSAM_RF + '_crossval_scores.json'
+    SIRSAM_RF_JSON_OUTPUT = [
+        SIRSAM_RF + '_crossval_scores.json',
+        SIRSAM_RF + '_featureranks.json'
+    ]
 
     SIRSAM_RF_HDF_OUTPUT = SIRSAM_RF + '_crossval_scores.hdf5'
 
@@ -42,13 +45,24 @@ class TestLearnCommand:
         SIRSAM_RF + '_covariate_0_gg_clip.png',
         SIRSAM_RF + '_covariate_0_k_15v5.png',
         SIRSAM_RF + '_covariate_0_tpi_300.png',
-        SIRSAM_RF + '_crossval_results.png'
+        SIRSAM_RF + '_crossval_results.png',
+        SIRSAM_RF + '_featurerank_expvar.png',
+        SIRSAM_RF + '_featurerank_expvar_transformed.png',
+        SIRSAM_RF + '_featurerank_lins_ccc.png',
+        SIRSAM_RF + '_featurerank_lins_ccc_transformed.png',
+        SIRSAM_RF + '_featurerank_mll.png',
+        SIRSAM_RF + '_featurerank_mll_transformed.png',
+        SIRSAM_RF + '_featurerank_r2_score.png',
+        SIRSAM_RF + '_featurerank_r2_score_transformed.png',
+        SIRSAM_RF + '_featurerank_smse.png',
+        SIRSAM_RF + '_featurerank_smse_transformed.png',
+        SIRSAM_RF + '_featureranks.png'
     ]
-
-    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_JSON_OUTPUT, SIRSAM_RF_HDF_OUTPUT, 
-                         SIRSAM_RF_FEATURE_DATA, SIRSAM_RF_TARGET_DATA, SIRSAM_RF_MODEL]
-    SIRSAM_RF_OUTPUTS += SIRSAM_RF_CSV_OUTPUT \
-                         + SIRSAM_RF_IMAGE_OUTPUT
+     
+   
+    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_HDF_OUTPUT, SIRSAM_RF_FEATURE_DATA, SIRSAM_RF_TARGET_DATA, 
+                         SIRSAM_RF_MODEL]
+    SIRSAM_RF_OUTPUTS += SIRSAM_RF_CSV_OUTPUT + SIRSAM_RF_IMAGE_OUTPUT + SIRSAM_RF_JSON_OUTPUT
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
@@ -103,14 +117,19 @@ class TestLearnCommand:
 
 
     @staticmethod
-    def test_json_outputs_match(sirsam_rf_out, sirsam_rf_precomp_learn):
+    @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
+    def sirsam_rf_json_outputs(request, sirsam_rf_out, sirsam_rf_precomp_learn):
+        return (
+            os.path.join(sirsam_rf_out, request.param),
+            os.path.join(sirsam_rf_precomp_learn, request.param)
+        )
+
+    @staticmethod
+    def test_json_outputs_match(sirsam_rf_json_outputs):
         """
         Test that JSON scores matches precomputed output.
         """
-        test_path = os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        pc_path = \
-            os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        with open(test_path) as tf, open(pc_path) as pf:
+        with open(sirsam_rf_json_outputs[0]) as tf, open(sirsam_rf_json_outputs[1]) as pf:
             test_json = json.load(tf)
             precomp_json = json.load(pf)
         assert test_json == precomp_json
