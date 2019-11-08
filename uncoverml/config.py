@@ -304,6 +304,10 @@ class Config(object):
     output_dir : str
         Path to directory where prediciton map and other outputs
         will be written.
+    plot_covariates : str, optional
+        Path to directory where covariate plots will be written.
+    plot_feature_ranks_file : str, optional
+        Path to directory where feature rank plot will be written.
     model_file : str, optional
         Path to the file where model will be saved after
         learning/clustering and loaded from when predicting. Default
@@ -516,22 +520,43 @@ class Config(object):
             self.lon_lat = None
 
         # OUTPUT BLOCK
+        def _outpath(filename):
+            return os.path.join(self.output_dir, self.name + f'{filename}')
+
         ob = _grp(s, 'output', "'output' block is required.")
         self.output_dir = _grp(ob, 'directory', "'directory' for output is required.")
-        self.model_file = ob.get('model', os.path.join(
-            self.output_dir, self.name + '_' + self.algorithm + '.model'))
-        if self.cross_validate:
-            self.scores_file = ob.get('scores', os.path.join(
-                self.output_dir, self.name + '_' + 'scores.json'))
-        if self.rank_features:
-            self.rank_features_file = ob.get('feature_ranking', os.path.join(
-                self.output_dir, self.name + '_' + self.algorithm + '_featureranks.json'))
-        self.raw_covariates_dir = ob.get('raw_covariates')
-        self.plot_covariates_dir = ob.get('plot_covariates')
+        self.model_file = ob.get('model', _outpath('.model'))
 
-        paths = [self.output_dir, os.path.split(self.model_file)[1], 
-                 os.path.split(self.scores_file)[1], self.raw_covariates_dir,
-                 self.plot_covariates_dir]
+        if ob.get('raw_covariates', False):
+            self.raw_covariates = _outpath('_rawcovariates.csv')
+            self.raw_covariates_mask = _outpath('_rawcovariates_mask.csv')
+        else:
+            self.raw_covariates = None
+            self.raw_covariates_mask = None
+
+        if ob.get('plot_covariates', False):
+            self.plot_covariates = _outpath('_covariate_{}.png')
+        else:
+            self.plot_covariates = None
+
+        if ob.get('plot_feature_ranks', False):
+            self.plot_feature_ranks = _outpath('_featureranks.png')
+            self.plot_feature_rank = _outpath('_featurerank_{}.png')
+        else:
+            self.plot_feature_ranks = None
+            self.plot_feature_rank = None
+        
+        self.feature_ranks_file = _outpath('_featureranks.json')
+        self.crossval_scores_file = _outpath('_crossval_scores.json')
+        self.crossval_scores_hdf5 = _outpath('_crossval_scores.hdf5')
+        self.crossval_results_file = _outpath('_crossval_results.csv')
+        self.crossval_results_plot = _outpath('_crossval_results.png')
+        self.dropped_targets_file = _outpath('_dropped_targets.txt')
+        self.metadata_file = _outpath('_metadata.txt')
+        self.optimisation_results_file = _outpath('_optimisation.csv')
+        self.prediction_file = _outpath('_{}.tif')
+        
+        paths = [self.output_dir, os.path.split(self.model_file)[0]]
         for p in paths:
             if p:
                 makedirs(p, exist_ok=True)

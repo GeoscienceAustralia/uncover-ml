@@ -140,12 +140,12 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
         data = np.hstack((x_all.data, xy, t))
-        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates.csv'),
+        np.savetxt(config.raw_covariates,
                    X=data, delimiter=',', fmt='%.4e', header=header, comments='')
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
-        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates_mask.csv'),
+        np.savetxt(config.raw_covariates_mask,
                    X=mask, delimiter=',', fmt='%d', header=header, comments='')
-        if config.plot_covariates_dir:
+        if config.plot_covariates:
             import matplotlib.pyplot as plt
             for i, name in enumerate(names[:-3]):
                 log.info('plotting {}'.format(name))
@@ -155,7 +155,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                 plt.scatter(x=list(range(vals_no_mask.shape[0])),
                             y=vals_no_mask.data)
                 plt.title(name)
-                plt.savefig(os.path.join(config.plot_covariates_dir, name.rstrip('.tif') + '.png'))
+                plt.savefig(config.plot_covariates.format(name.rstrip('.tif')))
                 plt.close()
 
 

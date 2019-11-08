@@ -56,7 +56,7 @@ def save_dropped_targets(config, keep, targets):
         dropped_postions = targets.positions[~keep, :]
         dropped_observations = targets.observations[~keep].reshape(
             len(dropped_postions), -1)
-        np.savetxt(join(config.output_dir, 'dropped_targets.txt'),
+        np.savetxt(config.dropped_targets_file,
                    np.concatenate(
                        [dropped_postions,
                         dropped_observations

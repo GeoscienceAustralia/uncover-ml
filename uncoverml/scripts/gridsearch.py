@@ -103,8 +103,7 @@ def cli(pipeline_file, partitions, njobs, verbosity):
     config = ls.config.Config(pipeline_file)
     config.n_jobs = njobs
     estimator = setup_pipeline(config)
-    log.info('Running optimisation for {}'.format(
-        config.optimisation['algorithm']))
+    log.info('Running optimisation for {}'.format(config.optimisation['algorithm']))
 
     targets_all, x_all = _load_data(config, partitions)
     
@@ -113,6 +112,5 @@ def cli(pipeline_file, partitions, njobs, verbosity):
     # hyperparameter combinations.
     estimator.fit(X=x_all, y=targets_all.observations)
 
-    outfile = os.path.join(config.output_dir, 
-                           config.optimisation['algorithm'] + '_optimisation.csv')
-    pd.DataFrame.from_dict(estimator.cv_results_).sort_values(by='rank_test_score').to_csv(outfile)
+    pd.DataFrame.from_dict(estimator.cv_results_).sort_values(by='rank_test_score')\
+      .to_csv(config.optimisation_results_file)

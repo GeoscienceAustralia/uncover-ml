@@ -19,30 +19,30 @@ class TestLearnCommand:
     SIRSAM_RF = 'sirsam_Na_randomforest'
 
     # Group the outputs of the learn command by filetype to make them easier to test.
-    SIRSAM_RF_JSON_OUTPUT = SIRSAM_RF + '_scores.json'
+    SIRSAM_RF_JSON_OUTPUT = SIRSAM_RF + '_crossval_scores.json'
 
-    SIRSAM_RF_HDF_OUTPUT = SIRSAM_RF + '_results.hdf5'
+    SIRSAM_RF_HDF_OUTPUT = SIRSAM_RF + '_crossval_scores.hdf5'
 
     SIRSAM_RF_FEATURE_DATA = 'features.pk'
     SIRSAM_RF_TARGET_DATA = 'targets.pk'
     SIRSAM_RF_MODEL = SIRSAM_RF + '.model'
 
     SIRSAM_RF_CSV_OUTPUT = [
-        SIRSAM_RF + '_results.csv',
-        'raw_covariates.csv',
-        'raw_covariates_mask.csv'
+        SIRSAM_RF + '_crossval_results.csv',
+        SIRSAM_RF + '_rawcovariates.csv',
+        SIRSAM_RF + '_rawcovariates_mask.csv'
     ]
 
     SIRSAM_RF_IMAGE_OUTPUT = [
-        '0_Clim_Prescott_LindaGregory.png',
-        '0_U_15v1.png',
-        '0_U_TH_15.png',
-        '0_dem_foc2.png',
-        '0_er_depg.png',
-        '0_gg_clip.png',
-        '0_k_15v5.png',
-        '0_tpi_300.png',
-        SIRSAM_RF + '_results.png'
+        SIRSAM_RF + '_covariate_0_Clim_Prescott_LindaGregory.png',
+        SIRSAM_RF + '_covariate_0_U_15v1.png',
+        SIRSAM_RF + '_covariate_0_U_TH_15.png',
+        SIRSAM_RF + '_covariate_0_dem_foc2.png',
+        SIRSAM_RF + '_covariate_0_er_depg.png',
+        SIRSAM_RF + '_covariate_0_gg_clip.png',
+        SIRSAM_RF + '_covariate_0_k_15v5.png',
+        SIRSAM_RF + '_covariate_0_tpi_300.png',
+        SIRSAM_RF + '_crossval_results.png'
     ]
 
     SIRSAM_RF_OUTPUTS = [SIRSAM_RF_JSON_OUTPUT, SIRSAM_RF_HDF_OUTPUT, 
