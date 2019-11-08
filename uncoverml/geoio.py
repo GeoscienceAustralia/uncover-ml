@@ -494,7 +494,7 @@ def export_feature_ranks(measures, feats, scores, config):
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
     if config.plot_feature_ranks:
-        figure = diagnostics.plot_feature_ranks(config.rank_features_file)
+        figure = diagnostics.plot_feature_ranks(config.feature_ranks_file)
         figure.savefig(config.plot_feature_ranks)
 
 def export_model(model, config):
