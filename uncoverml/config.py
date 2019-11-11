@@ -545,6 +545,11 @@ class Config(object):
         else:
             self.plot_feature_ranks = None
             self.plot_feature_rank = None
+
+        if ob.get('plot_intersection', False):
+            self.plot_intersection = _outpath('_intersected.png')
+        else:
+            self.plot_intersection = None
         
         self.feature_ranks_file = _outpath('_featureranks.json')
         self.crossval_scores_file = _outpath('_crossval_scores.json')
@@ -552,6 +557,7 @@ class Config(object):
         self.crossval_results_file = _outpath('_crossval_results.csv')
         self.crossval_results_plot = _outpath('_crossval_results.png')
         self.dropped_targets_file = _outpath('_dropped_targets.txt')
+        self.transformed_targets_file = _outpath('_transformed_targets.csv')
         self.metadata_file = _outpath('_metadata.txt')
         self.optimisation_results_file = _outpath('_optimisation.csv')
         self.prediction_file = _outpath('_{}.tif')
