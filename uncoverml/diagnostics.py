@@ -8,7 +8,58 @@ import math
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
+from matplotlib import colors
 import numpy as np
+
+def plot_target_scaling(path, bins=20):
+    """
+    Plots histograms of target values pre and post-scaling.
+
+    Parameters
+    ----------
+    path : str
+        Path to 'transformed_targets' CSV file.
+    bins : int, optional
+        The number of value bins for the histograms. Default is 20.
+
+    Returns
+    -------
+    :obj:maplotlib.figure.Figure
+        The histograms as a matplotlib Figure.
+    """
+    def _color_histogram(N, bins, patches):
+     fracs = N / N.max()
+     norm = colors.Normalize(fracs.min(), fracs.max())
+     for f, p in zip(fracs, patches):
+         color = plt.cm.viridis(norm(f))
+         p.set_facecolor(color)
+        
+    with open(path) as f:
+        data = np.loadtxt(f, delimiter=',', skiprows=1)
+         
+    nt = data[:, 0]
+    t = data[:, 1]
+
+    figsize = 16, 8
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, sharey=True, 
+                            gridspec_kw={'wspace': 0})
+
+    for ax in axs:
+        ax.set_xlabel('Target Value')
+        ax.set_ylabel('Frequency')
+        ax.label_outer()
+
+    axs[0].set_title('Pre-Scaling')
+    axs[1].set_title('Post-Scaling')
+    hist_nt = axs[0].hist(nt, bins=bins)
+    hist_t = axs[1].hist(t, bins=bins)
+
+    _color_histogram(*hist_nt)
+    _color_histogram(*hist_t)
+
+    fig.suptitle('Target Scaling', x=0.5, y=1.02, ha='center', fontsize=16)
+    fig.tight_layout()
+    return fig
 
 def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     """
