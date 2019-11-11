@@ -10,7 +10,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_covariates_x_targets(path, cols=1, subplot_width=8, subplot_height=4):
+def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     """
     Plots scatter plots of each covariate intersected with target
     values. 
@@ -87,9 +87,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     with open(path, 'r') as f:
         fr_dict = json.load(f)
         
-    # Get list of sorted covariates
     covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
-    # Get list of performance metrics
     metrics = fr_dict['ranks'].keys()
 
     # Get scores grouped by metric and ordered by covariate
