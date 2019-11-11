@@ -4,10 +4,64 @@ and displaying other diagnostic information.
 """
 import os
 import json
+import math
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+def plot_covariates_x_targets(path, cols=1, subplot_width=8, subplot_height=4):
+    """
+    Plots scatter plots of each covariate intersected with target
+    values. 
+    
+    Parameters
+    ----------
+    path : str
+        Path to 'rawcovariates' CSV file containing intersection
+        of targets and covariates.
+    cols : int, optional
+        The number of columns to split the figure into. Default is 1.
+    subplot_width : int
+        Width of each subplot in inches. Default is 8.
+    subplot_height : int
+        Width of each subplot in inches. Default is 4.
+
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The scatter plots as a matplotlib Figure.
+    """
+    with open(path) as f:
+        header = f.readline().strip().split(',')[:-3]
+        header = [h.replace('.tif', '') for h in header]
+        data = np.loadtxt(f, delimiter=',', skiprows=1)
+
+    rows = math.ceil(len(header) / cols)
+    figsize = cols * subplot_width, rows * subplot_height
+    fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
+    if cols == 1 or rows == 1:
+        for ax in axs:
+            ax.set(xlabel='Target', ylabel='Covariate')
+    else:
+        for x in range(axs.shape[0]):
+            for y in range(axs.shape[1]):
+                axs[x, y].set(xlabel='Target', ylabel='Covariate')
+
+    targets = data[:, -1]
+    for i, cov in enumerate(header):
+        if cols == 1 or rows == 1:
+            ind = i
+        else:
+            x = math.floor(i / cols)
+            y = i - cols * x
+            ind = x, y
+        axs[ind].scatter(targets, data[:, -i])
+        axs[ind].set_title(cov)
+
+    fig.tight_layout()
+    return fig
+
 
 def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     """
@@ -20,7 +74,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     ----------
     path : str
         Path to JSON file containing feature ranking results.
-    barwidth : float, optiona;
+    barwidth : float, optional
         Width of the bars.
     figsize : tuple(float, float), optional
         The (width, height) of the figure in inches.
