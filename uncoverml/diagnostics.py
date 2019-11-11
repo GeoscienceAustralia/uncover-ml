@@ -47,9 +47,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
         scores[m].sort(key=lambda a: a[0])
         scores[m] = list(zip(*scores[m]))[1]
             
-    figsize = 15, 9
     fig, ax = plt.subplots(figsize=figsize)
-    barwidth = 0.08
     positions = np.arange(len(covariates))
     for i, (m, s) in enumerate(scores.items()):
         position = positions + i * barwidth
