@@ -92,6 +92,8 @@ class MetadataSummary():
         if config.cross_validate:
             with open(config.scores_file) as sf:
                 self.model_performance_metrics = json.load(sf)
+        else:
+            self.model_performance_metrics = None
 
 
     def write_metadata(self, out_filename):
@@ -110,9 +112,9 @@ class MetadataSummary():
             outf.write("Datetime = %s \n"%self.datetime)
 
             outf.write("\n\n############ Performance Matrics ###########\n\n")
-            #outf.write(str(self.model_performance_metrics))
-            for keys, values in self.model_performance_metrics.items():
-                outf.write("%s = %s\n"%(keys,values))
+            if self.model_performance_metrics:
+                for keys, values in self.model_performance_metrics.items():
+                    outf.write("%s = %s\n"%(keys, values))
 
             outf.write("\n\n############ Configuration ###########\n\n")
 

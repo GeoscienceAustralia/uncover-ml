@@ -243,7 +243,7 @@ class ImageWriter:
 
     nodata_value = np.array(-1e20, dtype='float32')
 
-    def __init__(self, shape, bbox, crs, name, n_subchunks, output_path, output_path_thumbnail,
+    def __init__(self, shape, bbox, crs, name, n_subchunks, outpath,
                  band_tags=None, independent=False, **kwargs):
         """
         pass in additional geotif write options in kwargs
@@ -275,7 +275,8 @@ class ImageWriter:
 
         if mpiops.chunk_index == 0:
             for band in range(self.outbands):
-                f = rasterio.open(self.outpath.format(file_tags[band]), 'w', driver='GTiff',
+                output_filename = self.outpath.format(file_tags[band])
+                f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,
                                   crs=crs,
