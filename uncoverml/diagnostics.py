@@ -9,7 +9,38 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 from matplotlib import colors
+import pandas as pd
 import numpy as np
+import seaborn as sns
+
+def plot_covariate_correlation(path, method='pearson'):
+    """
+    Plots matrix of correlation between covariates.
+
+    Parameters
+    ----------
+    path : str
+        Path to 'rawcovariates' CSV file.
+    method : str, optional
+        Correlation coefficient to calculate. Choices are
+        'pearson', 'kendall', 'spearman'. Default is 'pearson'.
+
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The matrix plot as a matplotlib Figure.
+    """
+    df = pd.read_csv(path)
+    df.drop(df.columns.values[-3:], axis=1, inplace=True)
+    data = df.corr(method=method)
+    mask = np.zeros_like(data)
+    mask[np.triu_indices_from(mask)] = True
+
+    fig, ax = plt.subplots(figsize=(13,10))
+    fig.suptitle('Covariate Correlation', fontsize=16, x=0.44, y=0.93)
+    ax = sns.heatmap(data, vmin=-1., vmax=1., cmap=plt.cm.coolwarm, 
+                     center=0., linewidths=0.1, linecolor=(1, 1, 1), ax=ax)    
+    return fig
 
 def plot_target_scaling(path, bins=20):
     """
@@ -57,7 +88,7 @@ def plot_target_scaling(path, bins=20):
     _color_histogram(*hist_nt)
     _color_histogram(*hist_t)
 
-    fig.suptitle('Target Scaling', x=0.5, y=1.02, ha='center', fontsize=16)
+    fig.suptitle('Target Scaling', x=0.5, y=1.02, fontsize=16)
     fig.tight_layout()
     return fig
 
@@ -158,7 +189,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
         
     ax.set_xlabel('Covariate')
     ax.set_ylabel('Score')
-    ax.set_title('Feature Ranking', loc='left')
+    ax.set_title('Feature Ranking', loc='left', fontsize=16)
     ax.set_xticks([c + (barwidth * len(covariates) / 2) for c in range(len(covariates))])
     ax.set_xticklabels(covariates)
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=False, shadow=True)
