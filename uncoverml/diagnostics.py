@@ -141,6 +141,7 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
         axs[ind].scatter(targets, data[:, -i])
         axs[ind].set_title(cov)
 
+    fig.suptitle('Covariate-Target Intersection', x=0.52, y=1.01, fontsize=16)
     fig.tight_layout()
     return fig
 
