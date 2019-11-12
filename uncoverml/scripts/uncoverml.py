@@ -248,6 +248,7 @@ def predict(config_file, partitions, mask, retain):
 
     # explicitly close output rasters
     image_out.close()
+    print(image_out.file_names)
 
     if config.clustering and config.cluster_analysis:
         if ls.mpiops.chunk_index == 0:
