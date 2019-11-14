@@ -90,7 +90,7 @@ class MetadataSummary():
         self.extent = ((-10, 100),(-40, 140))
 
         if config.cross_validate:
-            with open(config.scores_file) as sf:
+            with open(config.crossval_scores_file) as sf:
                 self.model_performance_metrics = json.load(sf)
         else:
             self.model_performance_metrics = None
