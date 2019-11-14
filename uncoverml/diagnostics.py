@@ -13,6 +13,93 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
+def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
+    """
+    Plots a scatterplot and 2D histogram of real vs predicted values.
+
+    Parameters
+    ----------
+    rc_path : str
+        Path to 'rawcovariates' CSV file.
+    pred_path : str
+        Path to 'prediction' TIF file.
+    bins : int
+        Number of bins for 2D histogram.
+    overlay : bool
+        If True, the histogram will be overlaid on the scatterplot. If False,
+        they will be drawn side-by-side.
+
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The plots as a matplotlib figure.
+    """
+    targets = pd.read_csv(rc_path, float_precision='round_trip')
+    targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
+    tx, ty, tn = targets.columns.values
+    targets = [(x, y, obs) for x, y, obs in zip(targets[tx], targets[ty], targets[tn])]
+
+    targets_ar = np.zeros(len(targets))
+    predict_ar = np.zeros(len(targets))
+
+    with rasterio.open(pred_path) as ds:
+        ar = ds.read(1)
+        for i, (x, y, obs) in enumerate(targets):
+            ind = ds.index(x, y)
+            targets_ar[i] = obs
+            predict_ar[i] = ar[ind]
+
+    def _side_by_side(targets_ar, predict_ar, bins=bins):
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), sharey=True, gridspec_kw={'wspace': 0})
+        
+        for ax in axs:
+            ax.set_xlabel('Real')
+            ax.set_ylabel('Predicted')
+            ax.label_outer()
+
+            bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
+            hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary, alpha=1)
+            divider = make_axes_locatable(axs[1])
+            cb_axis = divider.append_axes('right', size="5%", pad=0.1)
+            fig.colorbar(hist[3], cax=cb_axis)
+            
+            axs[0].scatter(targets_ar, predict_ar)
+            axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
+                        color='r', linewidth=2, label='1:1')
+
+            fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
+            fig.tight_layout()
+            return fig
+
+    def _overlay(targets_ar, predict_ar, bins=bins):
+        fig, ax = plt.subplots(figsize=(15, 7.5))
+        ax.set_xlabel('Real')
+        ax.set_ylabel('Predicted')
+
+        bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
+        hist = ax.hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary)
+        divider = make_axes_locatable(ax)
+        cb_axis = divider.append_axes('right', size="3%", pad=0.1)
+        fig.colorbar(hist[3], cax=cb_axis)
+        
+        ax.scatter(targets_ar, predict_ar, alpha=0.8)
+        ax.plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
+                color='r', linewidth=2, label='1:1')
+        
+
+        fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
+        fig.tight_layout()
+        return fig
+
+    if overlay:
+        return _overlay(targets_ar, predict_ar, bins)
+    else:
+        return _side_by_side(targets_ar, predict_ar, bins)
+    
+
+_overlay(targets_ar, predict_ar)
+_side_by_side(targets_ar, predict_ar)
+
 def plot_covariate_correlation(path, method='pearson'):
     """
     Plots matrix of correlation between covariates.
