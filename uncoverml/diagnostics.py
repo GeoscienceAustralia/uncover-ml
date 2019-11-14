@@ -96,10 +96,6 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     else:
         return _side_by_side(targets_ar, predict_ar, bins)
     
-
-_overlay(targets_ar, predict_ar)
-_side_by_side(targets_ar, predict_ar)
-
 def plot_covariate_correlation(path, method='pearson'):
     """
     Plots matrix of correlation between covariates.
