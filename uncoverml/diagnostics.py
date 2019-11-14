@@ -10,6 +10,7 @@ from collections import defaultdict
 import rasterio
 import matplotlib.pyplot as plt
 from matplotlib import colors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
 import numpy as np
 import seaborn as sns
