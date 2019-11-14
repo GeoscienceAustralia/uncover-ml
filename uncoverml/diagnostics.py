@@ -7,6 +7,7 @@ import json
 import math
 from collections import defaultdict
 
+import rasterio
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import pandas as pd
