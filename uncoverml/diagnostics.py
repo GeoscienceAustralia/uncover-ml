@@ -15,6 +15,42 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
+
+def _real_vs_pred(rc_path, pred_path):
+    """
+    Gives a pair of arrays, the first containing real target values
+    and the second containing predicted values for the corresponding
+    target coordinate.
+
+    Parameters
+    ----------
+    rc_path : str
+        Path to 'rawcovariats' CSV file.
+    pred_path : str
+        Path to 'prediction' TIF file.
+    
+    Returns
+    -------
+    tuple(:obj:numpy.ndarray, :obj:numpy.ndarray)
+        Arrays of targets ([0]) and corresponding predictions ([1]).
+    """
+    targets = pd.read_csv(rc_path, float_precision='round_trip')
+    targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
+    tx, ty, tn = targets.columns.values
+    targets = [(x, y, obs) for x, y, obs in zip(targets[tx], targets[ty], targets[tn])]
+
+    targets_ar = np.zeros(len(targets))
+    predict_ar = np.zeros(len(targets))
+
+    with rasterio.open(pred_path) as ds:
+        ar = ds.read(1)
+        for i, (x, y, obs) in enumerate(targets):
+            ind = ds.index(x, y)
+            targets_ar[i] = obs
+            predict_ar[i] = ar[ind]
+    
+    return targets_ar, predict_ar
+
 def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     """
     Plots a scatterplot and 2D histogram of real vs predicted values.
@@ -36,20 +72,7 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     :obj:matplotlib.figure.Figure
         The plots as a matplotlib figure.
     """
-    targets = pd.read_csv(rc_path, float_precision='round_trip')
-    targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
-    tx, ty, tn = targets.columns.values
-    targets = [(x, y, obs) for x, y, obs in zip(targets[tx], targets[ty], targets[tn])]
-
-    targets_ar = np.zeros(len(targets))
-    predict_ar = np.zeros(len(targets))
-
-    with rasterio.open(pred_path) as ds:
-        ar = ds.read(1)
-        for i, (x, y, obs) in enumerate(targets):
-            ind = ds.index(x, y)
-            targets_ar[i] = obs
-            predict_ar[i] = ar[ind]
+    targets_ar, predict_ar = real_vs_pred(rc_path, pred_path)
 
     def _side_by_side(targets_ar, predict_ar, bins=bins):
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), sharey=True, gridspec_kw={'wspace': 0})
