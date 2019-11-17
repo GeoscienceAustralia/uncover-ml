@@ -140,10 +140,10 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         t = np.atleast_2d(all_targets).T
         data = np.hstack((x_all.data, xy, t))
         np.savetxt(config.raw_covariates,
-                   X=data, delimiter=',', fmt='%.5e', header=header, comments='')
+                   X=data, delimiter=',', header=header, comments='')
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
         np.savetxt(config.raw_covariates_mask,
-                   X=mask, delimiter=',', fmt='%d', header=header, comments='')
+                   X=mask, delimiter=',', header=header, comments='')
 
         if config.plot_intersection:
             fig = diagnostics.plot_covariates_x_targets(config.raw_covariates, cols=2)
