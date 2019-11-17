@@ -16,6 +16,13 @@ import numpy as np
 import seaborn as sns
 
 
+def _color_histogram(N, bins, patches):
+     fracs = N / N.max()
+     norm = colors.Normalize(fracs.min(), fracs.max())
+     for f, p in zip(fracs, patches):
+         color = plt.cm.viridis(norm(f))
+         p.set_facecolor(color)
+
 def _real_vs_pred(rc_path, pred_path):
     """
     Gives a pair of arrays, the first containing real target values
@@ -72,7 +79,7 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     :obj:matplotlib.figure.Figure
         The plots as a matplotlib figure.
     """
-    targets_ar, predict_ar = real_vs_pred(rc_path, pred_path)
+    targets_ar, predict_ar = _real_vs_pred(rc_path, pred_path)
 
     def _side_by_side(targets_ar, predict_ar, bins=bins):
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), sharey=True, gridspec_kw={'wspace': 0})
@@ -82,19 +89,17 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
             ax.set_ylabel('Predicted')
             ax.label_outer()
 
-            bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
-            hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary, alpha=1)
-            divider = make_axes_locatable(axs[1])
-            cb_axis = divider.append_axes('right', size="5%", pad=0.1)
-            fig.colorbar(hist[3], cax=cb_axis)
-            
-            axs[0].scatter(targets_ar, predict_ar)
-            axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
-                        color='r', linewidth=2, label='1:1')
+        bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
+        hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary, alpha=1)
+        divider = make_axes_locatable(axs[1])
+        cb_axis = divider.append_axes('right', size="5%", pad=0.1)
+        fig.colorbar(hist[3], cax=cb_axis)
+        
+        axs[0].scatter(targets_ar, predict_ar)
+        axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
+                    color='r', linewidth=2, label='1:1')
 
-            fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
-            fig.tight_layout()
-            return fig
+        return fig
 
     def _overlay(targets_ar, predict_ar, bins=bins):
         fig, ax = plt.subplots(figsize=(15, 7.5))
@@ -112,14 +117,18 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
                 color='r', linewidth=2, label='1:1')
         
 
-        fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
-        fig.tight_layout()
         return fig
 
     if overlay:
-        return _overlay(targets_ar, predict_ar, bins)
+        fig = _overlay(targets_ar, predict_ar, bins)
     else:
-        return _side_by_side(targets_ar, predict_ar, bins)
+        fig = _side_by_side(targets_ar, predict_ar, bins)
+
+    fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
+    fig.suptitle('Real vs Predicted', x = 0.5, y=1.02, fontsize=16)
+    fig.tight_layout()
+    return fig    
+
     
 def plot_covariate_correlation(path, method='pearson'):
     """
@@ -166,13 +175,6 @@ def plot_target_scaling(path, bins=20):
     :obj:maplotlib.figure.Figure
         The histograms as a matplotlib Figure.
     """
-    def _color_histogram(N, bins, patches):
-     fracs = N / N.max()
-     norm = colors.Normalize(fracs.min(), fracs.max())
-     for f, p in zip(fracs, patches):
-         color = plt.cm.viridis(norm(f))
-         p.set_facecolor(color)
-        
     with open(path) as f:
         data = np.loadtxt(f, delimiter=',', skiprows=1)
          
