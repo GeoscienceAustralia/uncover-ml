@@ -6,6 +6,7 @@ import os
 import json
 import math
 from collections import defaultdict
+from typing import Dict
 
 import rasterio
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
+_CACHE = dict()
 
 def _color_histogram(N, bins, patches):
      fracs = N / N.max()
@@ -41,6 +43,9 @@ def _real_vs_pred(rc_path, pred_path):
     tuple(:obj:numpy.ndarray, :obj:numpy.ndarray)
         Arrays of targets ([0]) and corresponding predictions ([1]).
     """
+    if '_real_vs_pred' in _CACHE:
+        return _CACHE['_real_vs_pred']
+        
     targets = pd.read_csv(rc_path, float_precision='round_trip')
     targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
     tx, ty, tn = targets.columns.values
@@ -55,8 +60,43 @@ def _real_vs_pred(rc_path, pred_path):
             ind = ds.index(x, y)
             targets_ar[i] = obs
             predict_ar[i] = ar[ind]
-    
+
+    _CACHE['_real_vs_pred'] = targets_ar, predict_ar
     return targets_ar, predict_ar
+
+def plot_residual_error(rc_path, pred_path, bis=20,):
+    """
+    Plots a histogram of residual error. Residual is 
+    abs(predicted value - target value). 
+    
+    Parameters
+    ----------
+    rc_path : str
+        Path to 'rawcovariates' CSV file.
+    pred_path : str
+        Path to 'prediction' TIF file.
+    bins : int
+        Number of bins for histogram.
+
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The histogram as a matplotlib Figure.
+    """
+    targets_ar, predict_ar = _real_vs_pred(rc_path, pred_path)
+    residuals = np.absolute(targets_ar - predict_ar)
+
+    figsize = 13.1, 7.5
+    fig, ax = plt.subplots(figsize=figsize)
+
+    hist = ax.hist(residuals, bins=20)
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Residual')
+    _color_histogram(*hist)
+    fig.suptitle('Residual Error', x=0.5, y=1.02, fontsize=16)
+    fig.tight_layout()
+
+    return fig
 
 def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     """
@@ -109,7 +149,7 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
         hist = ax.hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary)
         divider = make_axes_locatable(ax)
-        cb_axis = divider.append_axes('right', size="3%", pad=0.1)
+        cb_axis = divider.append_axes('right', size="2.8%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
         
         ax.scatter(targets_ar, predict_ar, alpha=0.8)
