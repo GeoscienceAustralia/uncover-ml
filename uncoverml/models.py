@@ -645,7 +645,6 @@ def transform_targets(Regressor):
     >>> svr = transform_targets(SVR)(target_transform='Standardise', gamma=0.1)
 
     """
-
     class TransformedRegressor(Regressor):
         # NOTE: All of these explicitly ignore **kwargs on purpose. All generic
         # revrand and scikit learn algorithms don't need them. Custom models

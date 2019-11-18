@@ -23,27 +23,21 @@ from uncoverml.optimise.models import transformed_modelmaps
 
 log = logging.getLogger(__name__)
 
-
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
     'r2_score': lambda y, py, vy, y_t, py_t, vy_t:  r2_score(y, py),
-    'expvar': lambda y, py, vy, y_t, py_t, vy_t:
-    explained_variance_score(y, py),
+    'expvar': lambda y, py, vy, y_t, py_t, vy_t: explained_variance_score(y, py),
     'smse': lambda y, py, vy, y_t, py_t, vy_t: smse(y, py),
     'lins_ccc': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y, py),
     'mll': lambda y, py, vy, y_t, py_t, vy_t: mll(y, py, vy)
 }
 
-
 transformed_regression_metrics = {
-    'r2_score_transformed': lambda y, py, vy, y_t, py_t, vy_t:
-    r2_score(y_t, py_t),
-    'expvar_transformed': lambda y, py, vy, y_t, py_t, vy_t:
-    explained_variance_score(y_t, py_t),
+    'r2_score_transformed': lambda y, py, vy, y_t, py_t, vy_t: r2_score(y_t, py_t),
+    'expvar_transformed': lambda y, py, vy, y_t, py_t, vy_t: explained_variance_score(y_t, py_t),
     'smse_transformed': lambda y, py, vy, y_t, py_t, vy_t: smse(y_t, py_t),
-    'lins_ccc_transformed': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y_t,
-                                                                        py_t),
+    'lins_ccc_transformed': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y_t, py_t),
     'mll_transformed': lambda y, py, vy, y_t, py_t, vy_t: mll(y_t, py_t, vy_t)
 }
 
@@ -65,6 +59,8 @@ classification_metrics = {
         (confusion_matrix(y, ey) / len(y)).tolist()
 }
 
+def adjusted_r2_score(r2, n_samples, n_covariates):
+    return 1 - ((1 - r2) * (n_samples - 1) / (n_samples - n_covariates - 1))
 
 def split_cfold(nsamples, k=5, seed=None):
     """
@@ -136,7 +132,7 @@ def classification_validation_scores(ys, eys, pys):
     return scores
 
 
-def regression_validation_scores(y, ey, model):
+def regression_validation_scores(y, ey, n_covariates, model):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -154,6 +150,8 @@ def regression_validation_scores(y, ey, model):
         The test data outputs
     ey: numpy.array
         The predictions made by the trained model on test data
+    n_covariates: int
+        The number of covariates being used.
 
     Returns
     -------
@@ -192,6 +190,11 @@ def regression_validation_scores(y, ey, model):
 
     for k, m in regression_metrics.items():
         scores[k] = apply_multiple_masked(m, (y, py, vy, y_t, py_t, vy_t))
+
+    scores['adjusted_r2_score'] = adjusted_r2_score(scores['r2_score'], y.shape[0], n_covariates)
+    if 'r2_score_transformed' in scores:
+        scores['adjusted_r2_score_transformed'] = \
+            adjusted_r2_score(scores['r2_score_transformed'], y_t.shape[0], n_covariates)
 
     return scores
 
@@ -387,24 +390,24 @@ def local_crossval(x_all, targets_all, config):
         y_k_pred = predict.predict(x_all[test_mask], model,
                                    fields=fields_pred,
                                    lon_lat=lon_lat_test)
-
         y_pred[fold] = y_k_pred
+        n_covariates = x_all[test_mask].shape[1]
 
         # Regression
         if not classification:
             y_k_test = y[test_mask]
-            y_true[fold] = y_k_test
             fold_scores[fold] = regression_validation_scores(
-                y_k_test, y_k_pred, model)
+                y_k_test, y_k_pred, n_covariates, model)
 
         # Classification
         else:
             y_k_test = model.le.transform(y[test_mask])
-            y_true[fold] = y_k_test
             y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
             fold_scores[fold] = classification_validation_scores(
                 y_k_test, y_k_hard, p_k
             )
+        
+        y_true[fold] = y_k_test
 
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
