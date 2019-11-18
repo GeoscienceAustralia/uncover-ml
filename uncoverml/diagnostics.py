@@ -98,7 +98,7 @@ def plot_residual_error(rc_path, pred_path, bis=20,):
 
     return fig
 
-def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
+def plot_real_vs_pred(rc_path, pred_path, scores_path=None, bins=20, overlay=False):
     """
     Plots a scatterplot and 2D histogram of real vs predicted values.
 
@@ -108,6 +108,9 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
         Path to 'rawcovariates' CSV file.
     pred_path : str
         Path to 'prediction' TIF file.
+    scores_path : str, optional
+        Path to 'crossval_scores' JSON file. If provided, plot will be
+        annotated with validation scores.
     bins : int
         Number of bins for 2D histogram.
     overlay : bool
@@ -122,7 +125,8 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
     targets_ar, predict_ar = _real_vs_pred(rc_path, pred_path)
 
     def _side_by_side(targets_ar, predict_ar, bins=bins):
-        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), sharey=True, gridspec_kw={'wspace': 0})
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), 
+                                sharey=True, gridspec_kw={'wspace': 0})
         
         for ax in axs:
             ax.set_xlabel('Real')
@@ -130,7 +134,8 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
             ax.label_outer()
 
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
-        hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary, alpha=1)
+        hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, 
+                             range=bin_limits, cmap=plt.cm.binary, alpha=1)
         divider = make_axes_locatable(axs[1])
         cb_axis = divider.append_axes('right', size="5%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
@@ -155,20 +160,39 @@ def plot_real_vs_pred(rc_path, pred_path, bins=20, overlay=False):
         ax.scatter(targets_ar, predict_ar, alpha=0.8)
         ax.plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
                 color='r', linewidth=2, label='1:1')
-        
 
         return fig
-
+        
     if overlay:
         fig = _overlay(targets_ar, predict_ar, bins)
     else:
         fig = _side_by_side(targets_ar, predict_ar, bins)
 
-    fig.legend(loc='upper left', bbox_to_anchor=(0.05, 0.96))
-    fig.suptitle('Real vs Predicted', x = 0.5, y=1.02, fontsize=16)
+
+    if scores_path:
+        display_scores = {'R^2               ': 'r2_score',
+                          'Adjusted R^2      ': 'adjusted_r2_score', 
+                          'LCCC              ': 'lins_ccc', 
+                          'Mean Log Loss     ': 'mll',
+                          'Explained Vairance': 'expvar',
+                          'Standarised MSE   ': 'smse'}
+        
+        with open(scores_path) as f:
+            crossval_scores = json.load(f)
+        if any('transformed' in s for s in crossval_scores):
+            for k in display_scores.keys():
+                display_scores[k] += '_transformed'
+        
+        display_string = ''
+        for k, v in display_scores.items():
+            display_string += f'{k} = {crossval_scores[v]:.3f}\n'
+    
+        fig.text(0.055, 0.78, display_string, fontsize=12, fontfamily='monospace')
+    
+    # leg = fig.legend(loc='upper left', bbox_to_anchor=(0.065, 0.965))
+    fig.suptitle('Real vs Predicted', x=0.5, y=1.02, fontsize=16)
     fig.tight_layout()
     return fig    
-
     
 def plot_covariate_correlation(path, method='pearson'):
     """
