@@ -142,7 +142,6 @@ def regression_validation_scores(y, ey, n_covariates, model):
         + smse
         + lins_ccc
         + mll
-        + msll
 
     Parameters
     ----------

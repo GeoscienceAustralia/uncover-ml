@@ -26,7 +26,7 @@ from uncoverml.targets import Targets
 log = logging.getLogger(__name__)
 
 
-_lower_is_better = ['mll', 'msll', 'smse', 'log_loss']
+_lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
 
 
 class ImageSource:
