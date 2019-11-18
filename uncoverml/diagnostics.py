@@ -319,7 +319,6 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     fig.tight_layout()
     return fig
 
-
 def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     """
     Plots a grouped bar chart of feature rank scores, grouped by 
@@ -370,3 +369,67 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=False, shadow=True)
 
     return fig
+
+def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
+    """
+    Plots scatter plots of each covariate intersected with target
+    values. 
+    
+    Parameters
+    ----------
+    path : str
+        Path to 'crossval_scores' JSON file containing intersection
+        of targets and covariates.
+    subplot_width : int
+        Width of each subplot in inches. Default is 8.
+    subplot_height : int
+        Width of each subplot in inches. Default is 4.
+
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The scatter plots as a matplotlib Figure.
+    """
+    with open(path) as f:
+        fr_dict = json.load(f)
+        
+    covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
+    metrics = fr_dict['ranks'].keys()
+
+    # Get scores grouped by metric and ordered by score
+    scores = defaultdict(list)
+    for m in metrics:
+        for cp, s in list(zip(fr_dict['ranks'][m], fr_dict['scores'][m])) :
+            c = os.path.split(cp)[1]
+            scores[m].append((c, s))
+        scores[m].sort(key=lambda a: a[1])
+
+    rows = math.ceil(len(metrics) / 2)
+    cols = 2
+    figsize = cols * subplot_width, rows * subplot_height
+    fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
+    for x in range(axs.shape[0]):
+        for y in range(axs.shape[1]):
+            axs[x, y].set(xlabel='Covariate', ylabel='Score')
+
+    for i, m in enumerate(metrics):
+        x = math.floor(i / cols)
+        y = i - cols * x
+        ind = x, y
+        axs[ind].plot(len(scores[m][0]), scores[m][1])
+        
+    targets = data[:, -1]
+    for i, cov in enumerate(header):
+        if cols == 1 or rows == 1:
+            ind = i
+        else:
+            x = math.floor(i / cols)
+            y = i - cols * x
+            ind = x, y
+        axs[ind].scatter(targets, data[:, -i])
+        axs[ind].set_title(cov)
+
+    fig.suptitle('Covariate-Target Intersection', x=0.52, y=1.01, fontsize=16)
+    fig.tight_layout()
+    return fig
+
