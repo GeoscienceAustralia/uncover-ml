@@ -56,7 +56,7 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.lon_lat == None
     assert not hasattr(c, 'lon')
     assert not hasattr(c, 'lat')
-    assert c.rank_features == False
+    assert c.rank_features == True
     assert c.permutation_importance == False
     assert c.cross_validate == True
     assert c.parallel_validate == True
