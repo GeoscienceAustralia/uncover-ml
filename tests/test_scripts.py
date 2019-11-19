@@ -37,26 +37,11 @@ class TestLearnCommand:
     ]
 
     SIRSAM_RF_IMAGE_OUTPUT = [
-        SIRSAM_RF + '_covariate_0_Clim_Prescott_LindaGregory.png',
-        SIRSAM_RF + '_covariate_0_U_15v1.png',
-        SIRSAM_RF + '_covariate_0_U_TH_15.png',
-        SIRSAM_RF + '_covariate_0_dem_foc2.png',
-        SIRSAM_RF + '_covariate_0_er_depg.png',
-        SIRSAM_RF + '_covariate_0_gg_clip.png',
-        SIRSAM_RF + '_covariate_0_k_15v5.png',
-        SIRSAM_RF + '_covariate_0_tpi_300.png',
-        SIRSAM_RF + '_crossval_results.png',
-        SIRSAM_RF + '_featurerank_expvar.png',
-        SIRSAM_RF + '_featurerank_expvar_transformed.png',
-        SIRSAM_RF + '_featurerank_lins_ccc.png',
-        SIRSAM_RF + '_featurerank_lins_ccc_transformed.png',
-        SIRSAM_RF + '_featurerank_mll.png',
-        SIRSAM_RF + '_featurerank_mll_transformed.png',
-        SIRSAM_RF + '_featurerank_r2_score.png',
-        SIRSAM_RF + '_featurerank_r2_score_transformed.png',
-        SIRSAM_RF + '_featurerank_smse.png',
-        SIRSAM_RF + '_featurerank_smse_transformed.png',
-        SIRSAM_RF + '_featureranks.png'
+        SIRSAM_RF + '_featureranks.png',
+        SIRSAM_RF + '_featurerank_curves.png',
+        SIRSAM_RF + '_intersected.png',
+        SIRSAM_RF + '_correlation.png',
+        SIRSAM_RF + '_target_scaling.png'
     ]
      
    
@@ -181,20 +166,25 @@ def _unpickle(path):
 
 @pytest.mark.predict
 class TestPredictCommand:
-    SIRSAM_RF_MF = 'sirsam_Na_randomforest_multirandomforest'
+    SIRSAM_RF = 'sirsam_Na_randomforest'
     
     SIRSAM_PREDICTION_MAPS = [
-        SIRSAM_RF_MF + '_lower_quantile.tif',
-        SIRSAM_RF_MF + '_lower_quantile_thumbnail.tif',
-        SIRSAM_RF_MF + '_prediction.tif',
-        SIRSAM_RF_MF + '_prediction_thumbnail.tif',
-        SIRSAM_RF_MF + '_upper_quantile.tif',
-        SIRSAM_RF_MF + '_upper_quantile_thumbnail.tif',
-        SIRSAM_RF_MF + '_variance.tif',
-        SIRSAM_RF_MF + '_variance_thumbnail.tif'
+        SIRSAM_RF + '_lower_quantile.tif',
+        SIRSAM_RF + '_lower_quantile_thumbnail.tif',
+        SIRSAM_RF + '_prediction.tif',
+        SIRSAM_RF + '_prediction_thumbnail.tif',
+        SIRSAM_RF + '_upper_quantile.tif',
+        SIRSAM_RF + '_upper_quantile_thumbnail.tif',
+        SIRSAM_RF + '_variance.tif',
+        SIRSAM_RF + '_variance_thumbnail.tif'
+    ]
+    
+    SIRSAM_RF_IMAGE_OUTPUT = [
+        SIRSAM_RF + '_real_vs_pred.png',
+        SIRSAM_RF + '_residual.png'
     ]
         
-    SIRSAM_RF_MF_METADATA = 'metadata.txt'
+    SIRSAM_RF_MF_METADATA = SIRSAM_RF + '_metadata.txt'
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
@@ -211,23 +201,16 @@ class TestPredictCommand:
         request.addfinalizer(finalize)
 
         # Copy precomputed files from learn step to the output directory
-        os.mkdir(sirsam_rf_out)
-        model = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_MODEL)
-        shutil.copyfile(
-            model, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_MODEL))
-        # Scores is required by metadata_profiler if crossval has been performed
-        scores = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        shutil.copyfile(
-            scores, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT))
+        shutil.copytree(sirsam_rf_precomp_learn, sirsam_rf_out)
 
         try:
-            return uncoverml.predict([sirsam_rf_conf, '-p', 20])
+            return uncoverml.predict([sirsam_rf_conf, '-p', 30])
         # Catch SystemExit as it gets raised by Click on command completion
         except SystemExit:
             pass
     
     @staticmethod
-    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA])
+    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA] + SIRSAM_RF_IMAGE_OUTPUT)
     def sirsam_rf_output(request, sirsam_rf_out):
         return os.path.join(sirsam_rf_out, request.param)
     

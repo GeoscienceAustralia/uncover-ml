@@ -246,7 +246,6 @@ def predict(config_file, partitions, mask, retain):
         _logger.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
 
-    # explicitly close output rasters
     image_out.close()
     print(image_out.file_names)
 
@@ -255,13 +254,19 @@ def predict(config_file, partitions, mask, retain):
             ls.predict.final_cluster_analysis(config.n_classes,
                                               config.n_subchunks)
 
-    # ls.predict.final_cluster_analysis(config.n_classes,
-    #                                   config.n_subchunks)
-
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    #FZ: create metadata profile for the ML results
+    if config.plot_real_vs_pred:
+        scores = config.crossval_scores_file if config.cross_validate else None
+        ls.diagnostics.plot_real_vs_pred(config.raw_covariates, 
+                                         config.prediction_file.format('prediction'),
+                                         scores,
+                                         overlay=True).savefig(config.plot_real_vs_pred)
+        ls.diagnostics.plot_residual_error(
+            config.raw_covariates, 
+            config.prediction_file.format('prediction')).savefig(config.plot_residual)
+
     ls.mpiops.run_once(
         write_prediction_metadata,
         model, config, config.metadata_file)

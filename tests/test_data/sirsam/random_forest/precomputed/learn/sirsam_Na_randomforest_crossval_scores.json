@@ -1,4 +1,6 @@
 {
+    "adjusted_r2_score": 0.4977222426090007,
+    "adjusted_r2_score_transformed": 0.5012259724097133,
     "expvar": 0.5234628450325468,
     "expvar_transformed": 0.531611887457396,
     "lins_ccc": 0.6782576696084297,

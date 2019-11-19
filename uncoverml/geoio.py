@@ -451,9 +451,7 @@ def semisupervised_feature_sets(targets, config):
     result = _iterate_sources(f, config)
     return result
 
-
 def unsupervised_feature_sets(config):
-
     frac = config.subsample_fraction
 
     def f(image_source):
@@ -482,21 +480,15 @@ def export_feature_ranks(measures, feats, scores, config):
         score_listing['scores'][measure] = sorted_scores
         score_listing['ranks'][measure] = sorted_features
 
-        # Todo: factor out this plotting
-        # plot the results
-        plt.figure()
-        plt.plot(range(len(sorted_features)), sorted_scores)
-        plt.xticks(range(len(sorted_features)), sorted_features,
-                   rotation='vertical')
-        plt.savefig(config.plot_feature_rank.format(measure))
-
     # Write the results out to a file
     with open(config.feature_ranks_file, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
     if config.plot_feature_ranks:
-        figure = diagnostics.plot_feature_ranks(config.feature_ranks_file)
-        figure.savefig(config.plot_feature_ranks)
+        diagnostics.plot_feature_ranks(
+            config.feature_ranks_file).savefig(config.plot_feature_ranks)
+        diagnostics.plot_feature_rank_curves(
+            config.feature_ranks_file).savefig(config.plot_feature_rank_curves)
 
 def export_model(model, config):
     with open(config.model_file, 'wb') as f:
