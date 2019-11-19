@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 
-from uncoverml import mpiops
+from uncoverml import mpiops, diagnostics
 from uncoverml.krige import krig_dict
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
@@ -38,5 +38,10 @@ def local_learn_model(x_all, targets_all, config):
         y_t = model.target_transform.transform(y)
         np.savetxt(config.transformed_targets_file, X=np.column_stack((y, y_t)),
                    delimiter=',', header=hdr, fmt='%.4e')
+
+    if config.plot_target_scaling:
+        diagnostics.plot_target_scaling(
+            config.transformed_targets_file).savefig(config.plot_target_scaling)
+        
 
     return model

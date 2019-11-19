@@ -146,23 +146,12 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                    X=mask, delimiter=',', header=header, comments='')
 
         if config.plot_intersection:
-            fig = diagnostics.plot_covariates_x_targets(config.raw_covariates, cols=2)
-            fig.savefig(config.plot_intersection)
+            diagnostics.plot_covariates_x_targets(
+                config.raw_covariates, cols=2).savefig(config.plot_intersection)
 
-        # TODO: factor out to diagnostics.py
-        #if config.plot_covariates:
-        #    import matplotlib.pyplot as plt
-        #    for i, name in enumerate(names[:-3]):
-        #        log.info('plotting {}'.format(name))
-        #        plt.figure()
-        #        vals = x_all[:, i]
-        #        vals_no_mask = vals[~vals.mask].data
-        #        plt.scatter(x=list(range(vals_no_mask.shape[0])),
-        #                    y=vals_no_mask.data)
-        #        plt.title(name)
-        #        plt.savefig(config.plot_covariates.format(name.rstrip('.tif')))
-        #        plt.close()
-
+        if config.plot_correlation:
+            diagnostics.plot_covariate_correlation(
+                config.raw_covariates).savefig(config.plot_correlation)
 
 def cull_all_null_rows(feature_sets):
     # cull targets with all null values

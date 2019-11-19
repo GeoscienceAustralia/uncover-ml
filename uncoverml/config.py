@@ -534,14 +534,9 @@ class Config(object):
             self.raw_covariates = None
             self.raw_covariates_mask = None
 
-        if ob.get('plot_covariates', False):
-            self.plot_covariates = _outpath('_covariate_{}.png')
-        else:
-            self.plot_covariates = None
-
         if ob.get('plot_feature_ranks', False):
             self.plot_feature_ranks = _outpath('_featureranks.png')
-            self.plot_feature_rank = _outpath('_featurerank_{}.png')
+            self.plot_feature_rank_curves = _outpath('_featurerank_curves.png')
         else:
             self.plot_feature_ranks = None
             self.plot_feature_rank = None
@@ -550,6 +545,23 @@ class Config(object):
             self.plot_intersection = _outpath('_intersected.png')
         else:
             self.plot_intersection = None
+
+        if ob.get('plot_real_vs_pred', False):
+            self.plot_real_vs_pred = _outpath('_real_vs_pred.png')
+            self.plot_residual = _outpath('_residual.png')
+        else:
+            self.plot_real_vs_pred = None
+            self.plot_residual = None
+
+        if ob.get('plot_correlation', False):
+            self.plot_correlation = _outpath('_correlation.png')
+        else:
+            self.plot_correlation = None
+
+        if ob.get('plot_target_scaling', False):
+            self.plot_target_scaling = _outpath('_target_scaling.png')
+        else:
+            self.plot_target_scaling = None
         
         self.feature_ranks_file = _outpath('_featureranks.json')
         self.crossval_scores_file = _outpath('_crossval_scores.json')
