@@ -501,55 +501,17 @@ def export_crossval(crossval_output, config):
 
     with open(config.crossval_scores_file, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)
-
-    with hdf.open_file(config.crossval_scores_hdf5, 'w') as f:
-        for fld, v in crossval_output.y_pred.items():
-            label = _make_valid_array_name(fld)
-            f.create_array("/", label, obj=v.data)
-            f.create_array("/", label + "_mask", obj=v.mask)
-        f.create_array("/", "y_true", obj=crossval_output.y_true)
-
-    if not crossval_output.classification:
-        create_scatter_plot(config.crossval_scores_hdf5, config, scores)
-
+    
+    to_text = [crossval_output.y_true, crossval_output.y_pred['Prediction']]
+    np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
+               delimiter=',', header='y_true,y_pred')
+   
 def _make_valid_array_name(label):
     label = "_".join(label.split())
     label = ''.join(filter(str.isalnum, label))  # alphanum only
     if label[0].isdigit():
         label = '_' + label
     return label
-
-def create_scatter_plot(outfile_results, config, scores):
-    with hdf.open_file(outfile_results, 'r') as f:
-        prediction = f.get_node("/", "Prediction").read()
-        y_true = f.get_node("/", "y_true").read()
-        to_text = [y_true, prediction]
-        if 'transformedpredict' in f.root:
-            transformed_predict = f.get_node("/", "transformedpredict").read()
-            to_text.append(transformed_predict)
-        np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, delimiter=',',
-                   fmt='%.4e',
-                   header=', '.join(['y_true', 'y_pred', 'y_transformed']),
-                   comments='')
-        plt.figure()
-        plt.scatter(y_true, prediction, label='True vs Prediction')
-        plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
-                 color='r', linewidth=2, label='One to One Line')
-        plt.legend(loc='upper left')
-
-        plt.title('true vs prediction')
-        plt.xlabel('True')
-        plt.ylabel('Prediction')
-        display_score = ['r2_score', 'lins_ccc']
-        score_sring = ''
-        for k in display_score:
-            score_sring += '{}={:0.2f}\n'.format(k, scores[k])
-
-        plt.text(y_true.min() + (y_true.max() - y_true.min())/20,
-                 y_true.min() + (y_true.max() - y_true.min())*3/4,
-                 score_sring)
-        plt.savefig(config.crossval_results_plot)
-
 
 def resample(input_tif, output_tif, ratio, resampling=5):
     """
