@@ -565,7 +565,6 @@ class Config(object):
         
         self.feature_ranks_file = _outpath('_featureranks.json')
         self.crossval_scores_file = _outpath('_crossval_scores.json')
-        self.crossval_scores_hdf5 = _outpath('_crossval_scores.hdf5')
         self.crossval_results_file = _outpath('_crossval_results.csv')
         self.crossval_results_plot = _outpath('_crossval_results.png')
         self.dropped_targets_file = _outpath('_dropped_targets.txt')
