@@ -527,13 +527,6 @@ class Config(object):
         self.output_dir = _grp(ob, 'directory', "'directory' for output is required.")
         self.model_file = ob.get('model', _outpath('.model'))
 
-        if ob.get('raw_covariates', False):
-            self.raw_covariates = _outpath('_rawcovariates.csv')
-            self.raw_covariates_mask = _outpath('_rawcovariates_mask.csv')
-        else:
-            self.raw_covariates = None
-            self.raw_covariates_mask = None
-
         if ob.get('plot_feature_ranks', False):
             self.plot_feature_ranks = _outpath('_featureranks.png')
             self.plot_feature_rank_curves = _outpath('_featurerank_curves.png')
@@ -563,6 +556,8 @@ class Config(object):
         else:
             self.plot_target_scaling = None
         
+        self.raw_covariates = _outpath('_rawcovariates.csv')
+        self.raw_covariates_mask = _outpath('_rawcovariates_mask.csv')
         self.feature_ranks_file = _outpath('_featureranks.json')
         self.crossval_scores_file = _outpath('_crossval_scores.json')
         self.crossval_results_file = _outpath('_crossval_results.csv')
