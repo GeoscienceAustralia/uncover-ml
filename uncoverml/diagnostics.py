@@ -88,6 +88,18 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
     covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
     metrics = fr_dict['ranks'].keys()
+    labels = {
+        'r2_score': 'R^2',
+        'adjusted_r2_score': 'Adjusted R^2', 
+        'lins_ccc': 'LCCC', 
+        'mll': 'Mean Log Loss',
+        'expvar': 'Explained Variance',
+        'smse': 'Standardised MSE',
+    }
+    t_labels = {}
+    for k, v in labels.items():
+        t_labels[k + '_transformed'] = v + ' Transformed'
+    labels.update(t_labels)
 
     # Get scores grouped by metric and ordered by score
     scores = defaultdict(list)
@@ -113,7 +125,7 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
         ind = x, y
         z = list(zip(*scores[m]))
         axs[ind].plot([cov[:8] for cov in z[0]], z[1])
-        axs[ind].set_title(m)
+        axs[ind].set_title(labels[m])
         
     fig.tight_layout()
     return fig
@@ -399,6 +411,21 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
         
     covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
     metrics = fr_dict['ranks'].keys()
+    labels = {
+        'r2_score': 'R^2',
+        'adjusted_r2_score': 'Adjusted R^2', 
+        'lins_ccc': 'LCCC', 
+        'mll': 'Mean Log Loss',
+        'expvar': 'Explained Variance',
+        'smse': 'Standardised MSE'
+    }
+    title = 'Feature Ranking'
+    if any('transformed' in s for s in metrics):
+        # Is transformed model so only display transformed metrics.
+        title = 'Feature Ranking (Transformed Metrics)'
+        for k in list(labels.keys()):
+            labels[k + '_transformed'] = labels.pop(k)
+    metrics = labels.keys()
 
     # Get scores grouped by metric and ordered by covariate
     scores = defaultdict(list)
@@ -413,11 +440,11 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     positions = np.arange(len(covariates))
     for i, (m, s) in enumerate(scores.items()):
         position = positions + i * barwidth
-        ax.bar(position, s, barwidth, label=m)
+        ax.bar(position, s, barwidth, label=labels[m])
         
     ax.set_xlabel('Covariate')
     ax.set_ylabel('Score')
-    ax.set_title('Feature Ranking', loc='left', fontsize=16)
+    ax.set_title(title, loc='left', fontsize=16)
     ax.set_xticks([c + (barwidth * len(covariates) / 2) for c in range(len(covariates))])
     ax.set_xticklabels(covariates)
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=False, shadow=True)
