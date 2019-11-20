@@ -53,7 +53,6 @@ prediction:
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
-  raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   plot_feature_ranks: True
   plot_intersection: True
   plot_real_vs_pred: True
