@@ -25,7 +25,7 @@ def _color_histogram(N, bins, patches):
          color = plt.cm.viridis(norm(f))
          p.set_facecolor(color)
 
-def _real_vs_pred(rc_path, pred_path):
+def _real_vs_pred_from_prediction(rc_path, pred_path):
     """
     Gives a pair of arrays, the first containing real target values
     and the second containing predicted values for the corresponding
@@ -43,8 +43,8 @@ def _real_vs_pred(rc_path, pred_path):
     tuple(:obj:numpy.ndarray, :obj:numpy.ndarray)
         Arrays of targets ([0]) and corresponding predictions ([1]).
     """
-    if '_real_vs_pred' in _CACHE:
-        return _CACHE['_real_vs_pred']
+    if '_real_vs_pred_from_prediction' in _CACHE:
+        return _CACHE['_real_vs_pred_from_prediction']
         
     targets = pd.read_csv(rc_path, float_precision='round_trip')
     targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
@@ -61,8 +61,16 @@ def _real_vs_pred(rc_path, pred_path):
             targets_ar[i] = obs
             predict_ar[i] = ar[ind]
 
-    _CACHE['_real_vs_pred'] = targets_ar, predict_ar
+    _CACHE['_real_vs_pred_from_prediction'] = targets_ar, predict_ar
     return targets_ar, predict_ar
+
+def _real_vs_pred_from_crossval(crossval_path):
+    if '_real_vs_pred_from_crossval' in _CACHE:
+        return _CACHE['_real_vs_pred_from_crossval']
+
+    rvp = pd.read_csv(crossval_path, float_precision='round_trip')
+    targets, predict = np.hsplit(rvp.to_numpy(), 2)
+    return targets.flatten(), predict.flatten()
 
 def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     """
@@ -130,7 +138,7 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     fig.tight_layout()
     return fig
 
-def plot_residual_error(rc_path, pred_path, bis=20,):
+def plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bis=20,):
     """
     Plots a histogram of residual error. Residual is 
     abs(predicted value - target value). 
@@ -149,7 +157,14 @@ def plot_residual_error(rc_path, pred_path, bis=20,):
     :obj:matplotlib.figure.Figure
         The histogram as a matplotlib Figure.
     """
-    targets_ar, predict_ar = _real_vs_pred(rc_path, pred_path)
+    if crossval_path:
+        targets_ar, predict_ar = _real_vs_pred_from_crossval(crossval_path)
+    elif targets_ar and predict_ar:
+        targets_ar, predict_ar = _real_vs_pred_from_prediction(rc_path, pred_path)
+    else:
+        raise ValueError("Must provide either 'crossval_path' or 'rc_path' and 'pred_path' to "
+                         "Real vs Prediction scatter plot.")
+
     residuals = np.absolute(targets_ar - predict_ar)
 
     figsize = 13.1, 7.5
@@ -164,7 +179,9 @@ def plot_residual_error(rc_path, pred_path, bis=20,):
 
     return fig
 
-def plot_real_vs_pred(rc_path, pred_path, scores_path=None, bins=20, overlay=False):
+def plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None, 
+                      scores_path=None, bins=20, overlay=False,
+                      hist_cm=None, scatter_color=None):
     """
     Plots a scatterplot and 2D histogram of real vs predicted values.
 
@@ -188,7 +205,13 @@ def plot_real_vs_pred(rc_path, pred_path, scores_path=None, bins=20, overlay=Fal
     :obj:matplotlib.figure.Figure
         The plots as a matplotlib figure.
     """
-    targets_ar, predict_ar = _real_vs_pred(rc_path, pred_path)
+    if crossval_path:
+        targets_ar, predict_ar = _real_vs_pred_from_crossval(crossval_path)
+    elif targets_ar and predict_ar:
+        targets_ar, predict_ar = _real_vs_pred_from_prediction(rc_path, pred_path)
+    else:
+        raise ValueError("Must provide either 'crossval_path' or 'rc_path' and 'pred_path' to "
+                         "Real vs Prediction scatter plot.")
 
     def _side_by_side(targets_ar, predict_ar, bins=bins):
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), 
@@ -201,12 +224,12 @@ def plot_real_vs_pred(rc_path, pred_path, scores_path=None, bins=20, overlay=Fal
 
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
         hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, 
-                             range=bin_limits, cmap=plt.cm.binary, alpha=1)
+                             range=bin_limits, cmap=hist_cm, cmin=1)
         divider = make_axes_locatable(axs[1])
         cb_axis = divider.append_axes('right', size="5%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
         
-        axs[0].scatter(targets_ar, predict_ar)
+        axs[0].scatter(targets_ar, predict_ar, color=scatter_color)
         axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
                     color='r', linewidth=2, label='1:1')
 
@@ -218,12 +241,12 @@ def plot_real_vs_pred(rc_path, pred_path, scores_path=None, bins=20, overlay=Fal
         ax.set_ylabel('Predicted')
 
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
-        hist = ax.hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=plt.cm.binary)
+        hist = ax.hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=hist_cm, cmin=1)
         divider = make_axes_locatable(ax)
         cb_axis = divider.append_axes('right', size="2.8%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
         
-        ax.scatter(targets_ar, predict_ar, alpha=0.8)
+        ax.scatter(targets_ar, predict_ar, color=scatter_color)
         ax.plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
                 color='r', linewidth=2, label='1:1')
 
