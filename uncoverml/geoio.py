@@ -13,7 +13,6 @@ from rasterio.warp import reproject
 from affine import Affine
 import numpy as np
 import shapefile
-import tables as hdf
 
 from uncoverml import mpiops
 from uncoverml import image
