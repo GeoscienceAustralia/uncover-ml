@@ -1,6 +1,6 @@
 """
 This module contains functionality for plotting validation scores
-and displaying other diagnostic information.
+and other diagnostic information.
 """
 import os
 import json
@@ -65,6 +65,19 @@ def _real_vs_pred_from_prediction(rc_path, pred_path):
     return targets_ar, predict_ar
 
 def _real_vs_pred_from_crossval(crossval_path):
+    """
+    Same as :func:`real_vs_pred_from_prediction` but generates arrays
+    from crossvalidation results file.
+
+    Parameters
+    ----------
+    crossval_path : Path to 'crossval_results' CSV file.
+        
+    Returns
+    -------
+    tuple(:obj:numpy.ndarray, :obj:numpy.ndarray)
+        Arrays of targets ([0]) and corresponding predictions ([1]).
+    """
     if '_real_vs_pred_from_crossval' in _CACHE:
         return _CACHE['_real_vs_pred_from_crossval']
 
@@ -72,73 +85,7 @@ def _real_vs_pred_from_crossval(crossval_path):
     targets, predict = np.hsplit(rvp.to_numpy(), 2)
     return targets.flatten(), predict.flatten()
 
-def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
-    """
-    Plots curves for feature ranking of each metric.
-
-    Parameters
-    ----------
-    path : str
-        Path to 'featureranks' JSON file.
-    subplot_width : int, optional
-        Width of each subplot. Default is 8.
-    subplot_height : int, optional
-        Height of each subplot. Default is 4.
-    
-    Returns
-    -------
-    :obj:matplotlib.figure.Figure
-        The plots as a matplotlib Figure.
-    """
-    with open(path) as f:
-        fr_dict = json.load(f)
-
-    lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
-    covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
-    metrics = fr_dict['ranks'].keys()
-    labels = {
-        'r2_score': 'R^2',
-        'adjusted_r2_score': 'Adjusted R^2', 
-        'lins_ccc': 'LCCC', 
-        'mll': 'Mean Log Loss',
-        'expvar': 'Explained Variance',
-        'smse': 'Standardised MSE',
-    }
-    t_labels = {}
-    for k, v in labels.items():
-        t_labels[k + '_transformed'] = v + ' Transformed'
-    labels.update(t_labels)
-
-    # Get scores grouped by metric and ordered by score
-    scores = defaultdict(list)
-    for m in metrics:
-        for cp, s in list(zip(fr_dict['ranks'][m], fr_dict['scores'][m])) :
-            c = os.path.split(cp)[1]
-            scores[m].append((c, s))
-        scores[m].sort(key=lambda a: a[1])
-        if m in lower_is_better:
-            scores[m].reverse()
-
-    rows = math.ceil(len(metrics) / 2)
-    cols = 2
-    figsize = cols * subplot_width, rows * subplot_height
-    fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
-    for x in range(axs.shape[0]):
-        for y in range(axs.shape[1]):
-            axs[x, y].set(xlabel='Covariate', ylabel='Score')
-            
-    for i, m in enumerate(metrics):
-        x = math.floor(i / cols)
-        y = i - cols * x
-        ind = x, y
-        z = list(zip(*scores[m]))
-        axs[ind].plot([cov[:8] for cov in z[0]], z[1])
-        axs[ind].set_title(labels[m])
-        
-    fig.tight_layout()
-    return fig
-
-def plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bis=20,):
+def plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=20,):
     """
     Plots a histogram of residual error. Residual is 
     abs(predicted value - target value). 
@@ -474,3 +421,69 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
 
     return fig
 
+def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
+    """
+    Plots curves for feature ranking of each metric.
+
+    Parameters
+    ----------
+    path : str
+        Path to 'featureranks' JSON file.
+    subplot_width : int, optional
+        Width of each subplot. Default is 8.
+    subplot_height : int, optional
+        Height of each subplot. Default is 4.
+    
+    Returns
+    -------
+    :obj:matplotlib.figure.Figure
+        The plots as a matplotlib Figure.
+    """
+    with open(path) as f:
+        fr_dict = json.load(f)
+
+    lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
+    covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
+    metrics = fr_dict['ranks'].keys()
+    labels = {
+        'r2_score': 'R^2',
+        'adjusted_r2_score': 'Adjusted R^2', 
+        'lins_ccc': 'LCCC', 
+        'mll': 'Mean Log Loss',
+        'expvar': 'Explained Variance',
+        'smse': 'Standardised MSE',
+    }
+    t_labels = {}
+    for k, v in labels.items():
+        t_labels[k + '_transformed'] = v + ' Transformed'
+    labels.update(t_labels)
+
+    # Get scores grouped by metric and ordered by score
+    scores = defaultdict(list)
+    for m in metrics:
+        for cp, s in list(zip(fr_dict['ranks'][m], fr_dict['scores'][m])) :
+            c = os.path.split(cp)[1]
+            scores[m].append((c, s))
+        scores[m].sort(key=lambda a: a[1])
+        if m in lower_is_better:
+            scores[m].reverse()
+
+    rows = math.ceil(len(metrics) / 2)
+    cols = 2
+    figsize = cols * subplot_width, rows * subplot_height
+    fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
+    for x in range(axs.shape[0]):
+        for y in range(axs.shape[1]):
+            axs[x, y].set(xlabel='Covariate', ylabel='Score')
+            
+    for i, m in enumerate(metrics):
+        x = math.floor(i / cols)
+        y = i - cols * x
+        ind = x, y
+        z = list(zip(*scores[m]))
+        axs[ind].plot([cov[:8] for cov in z[0]], z[1])
+        axs[ind].scatter([cov[:8] for cov in z[0]], z[1])
+        axs[ind].set_title(labels[m])
+        
+    fig.tight_layout()
+    return fig
