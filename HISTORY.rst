@@ -6,15 +6,25 @@ History
 ------------------
 Added
 +++++
-- Diagnostics module for plotting various metrics
-- Diagnostics notebook for viewing plots
+- Diagnostics module for plotting various metrics.
+- Diagnostics notebook for viewing plots.
+
+Changed
++++++++
+- Optional output parameters in config, e.g. plots, are now boolean. User no longer provides a
+  path, instead they are placed in output directory.
+
+Removed
++++++++
+- Old plotting code.
+- HDF5 crossval results file.
 
 0.2.1 (2019-11-07)
 -----------------------
 Added
 +++++
 - Temporary workaround for 'get_image_spec', at least one covariate file is now required
-  even if using pickled data. Will be fixed.
+  even if using pickled data. 
 
 Fixed
 +++++
