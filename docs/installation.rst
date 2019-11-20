@@ -15,7 +15,6 @@ Before installing UncoverML, ensure your OS has the following packages:
 
 - gdal
 - openmpi
-- hdf5
 
 These can be installed with the following commands:
 
