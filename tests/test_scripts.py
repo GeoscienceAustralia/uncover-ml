@@ -39,7 +39,9 @@ class TestLearnCommand:
         SIRSAM_RF + '_featurerank_curves.png',
         SIRSAM_RF + '_intersected.png',
         SIRSAM_RF + '_correlation.png',
-        SIRSAM_RF + '_target_scaling.png'
+        SIRSAM_RF + '_target_scaling.png',
+        SIRSAM_RF + '_real_vs_pred.png',
+        SIRSAM_RF + '_residual.png'
     ]
      
    
@@ -178,8 +180,8 @@ class TestPredictCommand:
     ]
     
     SIRSAM_RF_IMAGE_OUTPUT = [
-        SIRSAM_RF + '_real_vs_pred.png',
-        SIRSAM_RF + '_residual.png'
+        #SIRSAM_RF + '_real_vs_pred.png',
+        #SIRSAM_RF + '_residual.png'
     ]
         
     SIRSAM_RF_MF_METADATA = SIRSAM_RF + '_metadata.txt'
