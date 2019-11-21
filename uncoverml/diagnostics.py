@@ -85,7 +85,13 @@ def _real_vs_pred_from_crossval(crossval_path):
     targets, predict = np.hsplit(rvp.to_numpy(), 2)
     return targets.flatten(), predict.flatten()
 
-def plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=20,):
+def plot_residual_error_crossval(crossval_path, bins=20):
+    return _plot_residual_error(crossval_path=crossval_path, bins=bins)
+
+def plot_residual_error_prediction(rc_path, pred_path, bins=20):
+    return _plot_residual_error(rc_path=rc_path, pred_path=pred_path, bins=bins)
+
+def _plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=20,):
     """
     Plots a histogram of residual error. Residual is 
     abs(predicted value - target value). 
@@ -126,7 +132,17 @@ def plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=2
 
     return fig
 
-def plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None, 
+def plot_real_vs_pred_crossval(crossval_path, scores_path=None, bins=20,
+                               overlay=False, hist_cm=None, scatter_color=None):
+    return _plot_real_vs_pred(crossval_path=crossval_path, bins=bins, overlay=overlay,
+                              hist_cm=hist_cm, scatter_color=scatter_color)
+
+def plot_real_vs_pred_prediction(rc_path, pred_path, scores_path=None, bins=20,
+                                 overlay=False, hist_cm=None, scatter_color=None):
+    return _plot_real_vs_pred(rc_path=rc_path, pred_path=pred_path, bins=bins,
+                                overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color)
+
+def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None, 
                       scores_path=None, bins=20, overlay=False,
                       hist_cm=None, scatter_color=None):
     """
