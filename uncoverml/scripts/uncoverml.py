@@ -257,16 +257,6 @@ def predict(config_file, partitions, mask, retain):
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    if config.plot_real_vs_pred:
-        scores = config.crossval_scores_file if config.cross_validate else None
-        ls.diagnostics.plot_real_vs_pred(config.raw_covariates, 
-                                         config.prediction_file.format('prediction'),
-                                         scores,
-                                         overlay=True).savefig(config.plot_real_vs_pred)
-        ls.diagnostics.plot_residual_error(
-            config.raw_covariates, 
-            config.prediction_file.format('prediction')).savefig(config.plot_residual)
-
     ls.mpiops.run_once(
         write_prediction_metadata,
         model, config, config.metadata_file)

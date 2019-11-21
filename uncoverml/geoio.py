@@ -508,11 +508,14 @@ def export_crossval(crossval_output, config):
                delimiter=',', header='y_true,y_pred')
 
     if config.plot_real_vs_pred:
-        diagnostics.plot_real_vs_pred(
-            crossval_path=config.crossval_results_file,
+        diagnostics.plot_real_vs_pred_crossval(
+            config.crossval_results_file,
             scores_path=config.crossval_scores_file,
             bins=40, overlay=True,
             hist_cm=plt.cm.Oranges, scatter_color='black'
+        ).savefig(config.plot_real_vs_pred)
+        diagnostics.plot_residual_error_crossval(
+            config.crossval_results_file
         ).savefig(config.plot_real_vs_pred)
    
 def _make_valid_array_name(label):
