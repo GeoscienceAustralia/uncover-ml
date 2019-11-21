@@ -14,6 +14,8 @@ from affine import Affine
 import numpy as np
 import shapefile
 
+import matplotlib.pyplot as plt
+
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
@@ -504,6 +506,14 @@ def export_crossval(crossval_output, config):
     to_text = [crossval_output.y_true, crossval_output.y_pred['Prediction']]
     np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
                delimiter=',', header='y_true,y_pred')
+
+    if config.plot_real_vs_pred:
+        diagnostics.plot_real_vs_pred(
+            crossval_path=config.crossval_results_file,
+            scores_path=config.crossval_scores_file,
+            bins=40, overlay=True,
+            hist_cm=plt.cm.Oranges, scatter_color='black'
+        ).savefig(config.plot_real_vs_pred)
    
 def _make_valid_array_name(label):
     label = "_".join(label.split())
