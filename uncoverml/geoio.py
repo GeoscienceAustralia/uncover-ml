@@ -516,7 +516,7 @@ def export_crossval(crossval_output, config):
         ).savefig(config.plot_real_vs_pred)
         diagnostics.plot_residual_error_crossval(
             config.crossval_results_file
-        ).savefig(config.plot_real_vs_pred)
+        ).savefig(config.plot_residual)
    
 def _make_valid_array_name(label):
     label = "_".join(label.split())
