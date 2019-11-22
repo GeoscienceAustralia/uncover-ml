@@ -9,8 +9,8 @@ from collections import defaultdict
 from typing import Dict
 
 import rasterio
+import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
 import numpy as np
@@ -20,7 +20,7 @@ _CACHE = dict()
 
 def _color_histogram(N, bins, patches):
      fracs = N / N.max()
-     norm = colors.Normalize(fracs.min(), fracs.max())
+     norm = matplotlib.colors.Normalize(fracs.min(), fracs.max())
      for f, p in zip(fracs, patches):
          color = plt.cm.viridis(norm(f))
          p.set_facecolor(color)
@@ -134,12 +134,12 @@ def _plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=
 
 def plot_real_vs_pred_crossval(crossval_path, scores_path=None, bins=20,
                                overlay=False, hist_cm=None, scatter_color=None):
-    return _plot_real_vs_pred(crossval_path=crossval_path, bins=bins, overlay=overlay,
-                              hist_cm=hist_cm, scatter_color=scatter_color)
+    return _plot_real_vs_pred(crossval_path=crossval_path, scores_path=scores_path, bins=bins, 
+                              overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color)
 
 def plot_real_vs_pred_prediction(rc_path, pred_path, scores_path=None, bins=20,
                                  overlay=False, hist_cm=None, scatter_color=None):
-    return _plot_real_vs_pred(rc_path=rc_path, pred_path=pred_path, bins=bins,
+    return _plot_real_vs_pred(rc_path=rc_path, pred_path=pred_path, scores_path=scores_path, bins=bins,
                                 overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color)
 
 def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None, 
@@ -348,15 +348,8 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     rows = math.ceil(len(header) / cols)
     figsize = cols * subplot_width, rows * subplot_height
     fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
-    if cols == 1 or rows == 1:
-        for ax in axs:
-            ax.set(xlabel='Target', ylabel='Covariate')
-    else:
-        for x in range(axs.shape[0]):
-            for y in range(axs.shape[1]):
-                axs[x, y].set(xlabel='Target', ylabel='Covariate')
 
-    targets = data[:, -1]
+    targets = data[:,-1]
     for i, cov in enumerate(header):
         if cols == 1 or rows == 1:
             ind = i
@@ -364,7 +357,8 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
             x = math.floor(i / cols)
             y = i - cols * x
             ind = x, y
-        axs[ind].scatter(targets, data[:, -i])
+        axs[ind].set(xlabel='Target', ylabel='Covariate')
+        axs[ind].scatter(targets, data[:,i])
         axs[ind].set_title(cov)
 
     fig.suptitle('Covariate-Target Intersection', x=0.52, y=1.01, fontsize=16)
