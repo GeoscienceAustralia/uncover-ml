@@ -59,7 +59,8 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
         x_all_mask = np.concatenate([a.mask for a in x_all], axis=0)
         x_all = np.ma.masked_array(x_all_data, mask=x_all_mask)
     else:
-        raise ValueError("All targets lie outside image boundaries")
+        raise ValueError(f"Attempting to extract features form {image_source._filename} "
+                          "but all targets lie outside image boundaries")
     assert x_all.shape[0] == targets.observations.shape[0]
     return x_all
 
