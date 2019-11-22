@@ -14,6 +14,7 @@ from affine import Affine
 import numpy as np
 import shapefile
 
+import pyproj
 import matplotlib.pyplot as plt
 
 from uncoverml import mpiops
@@ -189,11 +190,31 @@ def load_shapefile(filename, targetfield):
                          "Candidates: {}".format(record_dict.keys()))
     othervals = record_dict
 
+    # Try to get CRS.
+    prj_file = ps.path.splitext(filename)[0] + '.prj'
+    src_prj, dst_prj = None, None
+    if os.path.exists(prj_file):
+        with open(prj_file, 'r') as f:
+            wkt = f.readline()
+        if pyproj.crs.is_wkt(wkt):
+            src_prj = pyproj.Proj(pyproj.CRS(wkt))
+            if src_prj.crs.to_epsg() != 4326:
+                dst_prj = pyproj.Proj('EPSG:4326')
+        else:
+            log.warning("Found a '.prj' file for target shapefile but text contained is not in "
+                        "'wkt' format. Continuing without reprojecting.")
+    else:
+        log.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
+                    "shapefile is in EPSG:4326 projection or errors will occur.") 
+        
+
     # Get coordinates
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords).squeeze()
+    if src_prj and dst_prj:
+        label_coords = np.array([x for x in pyproj.itransform(p1, p2, label_coords)])
     return label_coords, val, othervals
 
 
