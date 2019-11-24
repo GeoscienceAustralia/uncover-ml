@@ -191,7 +191,7 @@ def load_shapefile(filename, targetfield):
     othervals = record_dict
 
     # Try to get CRS.
-    prj_file = ps.path.splitext(filename)[0] + '.prj'
+    prj_file = os.path.splitext(filename)[0] + '.prj'
     src_prj, dst_prj = None, None
     if os.path.exists(prj_file):
         with open(prj_file, 'r') as f:
@@ -214,7 +214,7 @@ def load_shapefile(filename, targetfield):
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords).squeeze()
     if src_prj and dst_prj:
-        label_coords = np.array([x for x in pyproj.itransform(p1, p2, label_coords)])
+        label_coords = np.array([x for x in pyproj.itransform(src_prj, dst_prj, label_coords, always_xy=True)])
     return label_coords, val, othervals
 
 
