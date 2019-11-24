@@ -421,12 +421,12 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     for i, (m, s) in enumerate(scores.items()):
         position = positions + i * barwidth
         ax.bar(position, s, barwidth, label=labels[m])
-        
+    
     ax.set_xlabel('Covariate')
     ax.set_ylabel('Score')
     ax.set_title(title, loc='left', fontsize=16)
-    ax.set_xticks([c + (barwidth * len(covariates) / 2) for c in range(len(covariates))])
-    ax.set_xticklabels(covariates)
+    ax.set_xticks([c + (barwidth * len(covariates) / 2) - 2 for c in range(len(covariates))])
+    ax.set_xticklabels(covariates, rotation=-45, ha='left')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=False, shadow=True)
 
     return fig
@@ -482,17 +482,18 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     cols = 2
     figsize = cols * subplot_width, rows * subplot_height
     fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
-    for x in range(axs.shape[0]):
-        for y in range(axs.shape[1]):
-            axs[x, y].set(xlabel='Covariate', ylabel='Score')
             
     for i, m in enumerate(metrics):
         x = math.floor(i / cols)
         y = i - cols * x
         ind = x, y
         z = list(zip(*scores[m]))
-        axs[ind].plot([cov[:8] for cov in z[0]], z[1])
-        axs[ind].scatter([cov[:8] for cov in z[0]], z[1])
+        ticks = [i for i in range(len(z[0]))]
+        axs[ind].plot(ticks, z[1])
+        axs[ind].scatter(ticks, z[1])
+        axs[ind].set_xticks(ticks)
+        axs[ind].set_xticklabels(z[0], rotation=-45, ha='left')
+        axs[ind].set(xlabel='Covariate', ylabel='Score')
         axs[ind].set_title(labels[m])
         
     fig.tight_layout()
