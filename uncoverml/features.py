@@ -122,7 +122,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     header = ', '.join(names)
 
     for t in transform_sets:
-        imputer = deepcopy(t.imputer) if impute else None
+        imputer = copy.deepcopy(t.imputer) if impute else None
         dummy_transform = transforms.ImageTransformSet(
             image_transforms=None, imputer=imputer,
             global_transforms=None, is_categorical=t.is_categorical)
