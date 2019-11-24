@@ -2,8 +2,9 @@ import logging
 from collections import OrderedDict
 import numpy as np
 import pickle
-from os.path import basename
 import os
+from os.path import basename
+import copy
 
 from uncoverml import mpiops, patch, transforms, diagnostics
 from uncoverml.image import Image
@@ -98,7 +99,8 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     return x, cull_all_null_rows(feature_sets)
 
 
-def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config):
+def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config, 
+                                          impute=True):
     """
     This function saves raw covariates values at the target locations, i.e.,
     after the targets have been intersected.
@@ -120,8 +122,9 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     header = ', '.join(names)
 
     for t in transform_sets:
+        imputer = deepcopy(t.imputer) if impute else None
         dummy_transform = transforms.ImageTransformSet(
-            image_transforms=None, imputer=None,
+            image_transforms=None, imputer=imputer,
             global_transforms=None, is_categorical=t.is_categorical)
         transform_sets_mod.append(dummy_transform)
 
