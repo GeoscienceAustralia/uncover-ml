@@ -425,7 +425,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
     ax.set_xlabel('Covariate')
     ax.set_ylabel('Score')
     ax.set_title(title, loc='left', fontsize=16)
-    ax.set_xticks([c + (barwidth * len(covariates) / 2) - 2 for c in range(len(covariates))])
+    ax.set_xticks([c + (barwidth * len(metrics) / 2) for c in range(len(covariates))])
     ax.set_xticklabels(covariates, rotation=-45, ha='left')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=False, shadow=True)
 
