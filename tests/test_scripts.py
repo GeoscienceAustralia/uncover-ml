@@ -19,36 +19,35 @@ class TestLearnCommand:
     SIRSAM_RF = 'sirsam_Na_randomforest'
 
     # Group the outputs of the learn command by filetype to make them easier to test.
-    SIRSAM_RF_JSON_OUTPUT = SIRSAM_RF + '_scores.json'
-
-    SIRSAM_RF_HDF_OUTPUT = SIRSAM_RF + '_results.hdf5'
+    SIRSAM_RF_JSON_OUTPUT = [
+        SIRSAM_RF + '_crossval_scores.json',
+        SIRSAM_RF + '_featureranks.json'
+    ]
 
     SIRSAM_RF_FEATURE_DATA = 'features.pk'
     SIRSAM_RF_TARGET_DATA = 'targets.pk'
     SIRSAM_RF_MODEL = SIRSAM_RF + '.model'
 
     SIRSAM_RF_CSV_OUTPUT = [
-        SIRSAM_RF + '_results.csv',
-        'raw_covariates.csv',
-        'raw_covariates_mask.csv'
+        SIRSAM_RF + '_crossval_results.csv',
+        SIRSAM_RF + '_rawcovariates.csv',
+        SIRSAM_RF + '_rawcovariates_mask.csv'
     ]
 
     SIRSAM_RF_IMAGE_OUTPUT = [
-        '0_Clim_Prescott_LindaGregory.png',
-        '0_U_15v1.png',
-        '0_U_TH_15.png',
-        '0_dem_foc2.png',
-        '0_er_depg.png',
-        '0_gg_clip.png',
-        '0_k_15v5.png',
-        '0_tpi_300.png',
-        SIRSAM_RF + '_results.png'
+        SIRSAM_RF + '_featureranks.png',
+        SIRSAM_RF + '_featurerank_curves.png',
+        SIRSAM_RF + '_intersected.png',
+        SIRSAM_RF + '_correlation.png',
+        SIRSAM_RF + '_target_scaling.png',
+        SIRSAM_RF + '_real_vs_pred.png',
+        SIRSAM_RF + '_residual.png'
     ]
-
-    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_JSON_OUTPUT, SIRSAM_RF_HDF_OUTPUT, 
-                         SIRSAM_RF_FEATURE_DATA, SIRSAM_RF_TARGET_DATA, SIRSAM_RF_MODEL]
-    SIRSAM_RF_OUTPUTS += SIRSAM_RF_CSV_OUTPUT \
-                         + SIRSAM_RF_IMAGE_OUTPUT
+     
+   
+    SIRSAM_RF_OUTPUTS = [SIRSAM_RF_FEATURE_DATA, SIRSAM_RF_TARGET_DATA, 
+                         SIRSAM_RF_MODEL]
+    SIRSAM_RF_OUTPUTS += SIRSAM_RF_CSV_OUTPUT + SIRSAM_RF_IMAGE_OUTPUT + SIRSAM_RF_JSON_OUTPUT
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
@@ -103,14 +102,19 @@ class TestLearnCommand:
 
 
     @staticmethod
-    def test_json_outputs_match(sirsam_rf_out, sirsam_rf_precomp_learn):
+    @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
+    def sirsam_rf_json_outputs(request, sirsam_rf_out, sirsam_rf_precomp_learn):
+        return (
+            os.path.join(sirsam_rf_out, request.param),
+            os.path.join(sirsam_rf_precomp_learn, request.param)
+        )
+
+    @staticmethod
+    def test_json_outputs_match(sirsam_rf_json_outputs):
         """
         Test that JSON scores matches precomputed output.
         """
-        test_path = os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        pc_path = \
-            os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        with open(test_path) as tf, open(pc_path) as pf:
+        with open(sirsam_rf_json_outputs[0]) as tf, open(sirsam_rf_json_outputs[1]) as pf:
             test_json = json.load(tf)
             precomp_json = json.load(pf)
         assert test_json == precomp_json
@@ -162,20 +166,25 @@ def _unpickle(path):
 
 @pytest.mark.predict
 class TestPredictCommand:
-    SIRSAM_RF_MF = 'sirsam_Na_randomforest_multirandomforest'
+    SIRSAM_RF = 'sirsam_Na_randomforest'
     
     SIRSAM_PREDICTION_MAPS = [
-        SIRSAM_RF_MF + '_lower_quantile.tif',
-        SIRSAM_RF_MF + '_lower_quantile_thumbnail.tif',
-        SIRSAM_RF_MF + '_prediction.tif',
-        SIRSAM_RF_MF + '_prediction_thumbnail.tif',
-        SIRSAM_RF_MF + '_upper_quantile.tif',
-        SIRSAM_RF_MF + '_upper_quantile_thumbnail.tif',
-        SIRSAM_RF_MF + '_variance.tif',
-        SIRSAM_RF_MF + '_variance_thumbnail.tif'
+        SIRSAM_RF + '_lower_quantile.tif',
+        SIRSAM_RF + '_lower_quantile_thumbnail.tif',
+        SIRSAM_RF + '_prediction.tif',
+        SIRSAM_RF + '_prediction_thumbnail.tif',
+        SIRSAM_RF + '_upper_quantile.tif',
+        SIRSAM_RF + '_upper_quantile_thumbnail.tif',
+        SIRSAM_RF + '_variance.tif',
+        SIRSAM_RF + '_variance_thumbnail.tif'
+    ]
+    
+    SIRSAM_RF_IMAGE_OUTPUT = [
+        #SIRSAM_RF + '_real_vs_pred.png',
+        #SIRSAM_RF + '_residual.png'
     ]
         
-    SIRSAM_RF_MF_METADATA = 'metadata.txt'
+    SIRSAM_RF_MF_METADATA = SIRSAM_RF + '_metadata.txt'
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
@@ -192,23 +201,16 @@ class TestPredictCommand:
         request.addfinalizer(finalize)
 
         # Copy precomputed files from learn step to the output directory
-        os.mkdir(sirsam_rf_out)
-        model = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_MODEL)
-        shutil.copyfile(
-            model, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_MODEL))
-        # Scores is required by metadata_profiler if crossval has been performed
-        scores = os.path.join(sirsam_rf_precomp_learn, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT)
-        shutil.copyfile(
-            scores, os.path.join(sirsam_rf_out, TestLearnCommand.SIRSAM_RF_JSON_OUTPUT))
+        shutil.copytree(sirsam_rf_precomp_learn, sirsam_rf_out)
 
         try:
-            return uncoverml.predict([sirsam_rf_conf, '-p', 20])
+            return uncoverml.predict([sirsam_rf_conf, '-p', 30])
         # Catch SystemExit as it gets raised by Click on command completion
         except SystemExit:
             pass
     
     @staticmethod
-    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA])
+    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA] + SIRSAM_RF_IMAGE_OUTPUT)
     def sirsam_rf_output(request, sirsam_rf_out):
         return os.path.join(sirsam_rf_out, request.param)
     

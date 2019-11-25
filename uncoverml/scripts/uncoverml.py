@@ -95,12 +95,13 @@ def _load_data(config, partitions):
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
 
-        if config.raw_covariates_dir:
+        if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
                                                               transform_sets, targets, config)
 
         if config.rank_features:
+            _logger.info("Ranking features...")
             measures, features, scores = \
                 ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
@@ -236,7 +237,7 @@ def predict(config_file, partitions, mask, retain):
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
-                                     config.n_subchunks, config.output_dir,
+                                     config.n_subchunks, config.prediction_file,
                                      band_tags=predict_tags[0: min(len(predict_tags), 
                                                                    config.outbands)],
                                      **config.geotif_options)
@@ -245,24 +246,20 @@ def predict(config_file, partitions, mask, retain):
         _logger.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
 
-    # explicitly close output rasters
     image_out.close()
+    print(image_out.file_names)
 
     if config.clustering and config.cluster_analysis:
         if ls.mpiops.chunk_index == 0:
             ls.predict.final_cluster_analysis(config.n_classes,
                                               config.n_subchunks)
 
-    # ls.predict.final_cluster_analysis(config.n_classes,
-    #                                   config.n_subchunks)
-
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    #FZ: create metadata profile for the ML results
     ls.mpiops.run_once(
         write_prediction_metadata,
-        model, config, os.path.join(config.output_dir, 'metadata.txt'))
+        model, config, config.metadata_file)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 

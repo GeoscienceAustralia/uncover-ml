@@ -30,10 +30,11 @@ targets:
 # 'parallel' and place it under the 'k-fold' block (it only applies
 # to crossval, trying to make that clearer).
 validation:
+  feature_rank: True
   k-fold:
-   parallel: True
-   folds: 5
-   random_seed: 1
+    parallel: True
+    folds: 5
+    random_seed: 1
 
 # Optimisation remains the same except you no longer need to specify
 # an 'algorithm' argument - it will automatically get this from the
@@ -52,8 +53,12 @@ prediction:
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
   model: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model
-  raw_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
-  plot_covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
+  plot_feature_ranks: True
+  plot_intersection: True
+  plot_real_vs_pred: True
+  plot_correlation: True
+  plot_target_scaling: True
+  
 
 # Will load from pickled data if covariates and targets are present. If any of the files don't
 # exist, covariates and targets will be intersected and data will be dumped to the file specified.
