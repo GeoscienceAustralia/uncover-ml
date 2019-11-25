@@ -13,11 +13,14 @@ from rasterio.warp import reproject
 from affine import Affine
 import numpy as np
 import shapefile
-import tables as hdf
+
+import pyproj
+import matplotlib.pyplot as plt
 
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
+from uncoverml import diagnostics
 from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
@@ -25,7 +28,7 @@ from uncoverml.targets import Targets
 log = logging.getLogger(__name__)
 
 
-_lower_is_better = ['mll', 'msll', 'smse', 'log_loss']
+_lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
 
 
 class ImageSource:
@@ -187,11 +190,31 @@ def load_shapefile(filename, targetfield):
                          "Candidates: {}".format(record_dict.keys()))
     othervals = record_dict
 
+    # Try to get CRS.
+    prj_file = os.path.splitext(filename)[0] + '.prj'
+    src_prj, dst_prj = None, None
+    if os.path.exists(prj_file):
+        with open(prj_file, 'r') as f:
+            wkt = f.readline()
+        if pyproj.crs.is_wkt(wkt):
+            src_prj = pyproj.Proj(pyproj.CRS(wkt))
+            if src_prj.crs.to_epsg() != 4326:
+                dst_prj = pyproj.Proj('EPSG:4326')
+        else:
+            log.warning("Found a '.prj' file for target shapefile but text contained is not in "
+                        "'wkt' format. Continuing without reprojecting.")
+    else:
+        log.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
+                    "shapefile is in EPSG:4326 projection or errors will occur.") 
+        
+
     # Get coordinates
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords).squeeze()
+    if src_prj and dst_prj:
+        label_coords = np.array([x for x in pyproj.itransform(src_prj, dst_prj, label_coords, always_xy=True)])
     return label_coords, val, othervals
 
 
@@ -242,7 +265,7 @@ class ImageWriter:
 
     nodata_value = np.array(-1e20, dtype='float32')
 
-    def __init__(self, shape, bbox, crs, name, n_subchunks, outputdir,
+    def __init__(self, shape, bbox, crs, name, n_subchunks, outpath,
                  band_tags=None, independent=False, **kwargs):
         """
         pass in additional geotif write options in kwargs
@@ -255,9 +278,7 @@ class ImageWriter:
         self.outbands = len(band_tags)
         self.bbox = bbox
         self.name = name
-        self.outputdir = outputdir
-        if not os.path.exists(self.outputdir):
-            os.makedirs(self.outputdir)
+        self.outpath = outpath
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
@@ -276,8 +297,7 @@ class ImageWriter:
 
         if mpiops.chunk_index == 0:
             for band in range(self.outbands):
-                output_filename = os.path.join(outputdir, name + "_" +
-                                               file_tags[band] + ".tif")
+                output_filename = self.outpath.format(file_tags[band])
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,
@@ -380,7 +400,7 @@ def _iterate_sources(f, config):
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
-            name = os.path.abspath(tif)
+            name = os.path.basename(tif)
             image_source = RasterioImageSource(tif)
             x = f(image_source)
             # TODO this may hurt performance. Consider removal
@@ -453,9 +473,7 @@ def semisupervised_feature_sets(targets, config):
     result = _iterate_sources(f, config)
     return result
 
-
 def unsupervised_feature_sets(config):
-
     frac = config.subsample_fraction
 
     def f(image_source):
@@ -469,15 +487,10 @@ def unsupervised_feature_sets(config):
     result = _iterate_sources(f, config)
     return result
 
-
 def export_feature_ranks(measures, feats, scores, config):
-    outfile_ranks = os.path.join(config.output_dir,
-                                 config.name + "_" + config.algorithm +
-                                 "_featureranks.json")
-
     score_listing = dict(scores={}, ranks={})
-    for measure, measure_scores in zip(measures, scores):
 
+    for measure, measure_scores in zip(measures, scores):
         # Sort the scores
         scores = sorted(zip(feats, measure_scores),
                         key=lambda s: s[1])
@@ -489,89 +502,49 @@ def export_feature_ranks(measures, feats, scores, config):
         score_listing['scores'][measure] = sorted_scores
         score_listing['ranks'][measure] = sorted_features
 
-        # plot the results
-        plt.figure()
-        plt.plot(range(len(sorted_features)), sorted_scores)
-        plt.xticks(range(len(sorted_features)), sorted_features,
-                   rotation='vertical')
-        plt.ylabel(measure)
-        plt.savefig('{}.png'.format(measure))
-
     # Write the results out to a file
-    with open(outfile_ranks, 'w') as output_file:
+    with open(config.feature_ranks_file, 'w') as output_file:
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
+
+    if config.plot_feature_ranks:
+        diagnostics.plot_feature_ranks(
+            config.feature_ranks_file).savefig(config.plot_feature_ranks)
+        diagnostics.plot_feature_rank_curves(
+            config.feature_ranks_file).savefig(config.plot_feature_rank_curves)
 
 def export_model(model, config):
     with open(config.model_file, 'wb') as f:
         pickle.dump(model, f)
 
 def export_crossval(crossval_output, config):
-    outfile_scores = os.path.join(config.output_dir,
-                                  config.name + "_scores.json")
-
     # Make sure we convert numpy arrays to lists
     scores = {s: v if np.isscalar(v) else v.tolist()
               for s, v in crossval_output.scores.items()}
 
-    with open(outfile_scores, 'w') as f:
+    with open(config.crossval_scores_file, 'w') as f:
         json.dump(scores, f, sort_keys=True, indent=4)
+    
+    to_text = [crossval_output.y_true, crossval_output.y_pred['Prediction']]
+    np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
+               delimiter=',', fmt='%.4f', header='y_true,y_pred')
 
-    outfile_results = os.path.join(config.output_dir,
-                                   config.name + "_results.hdf5")
-    with hdf.open_file(outfile_results, 'w') as f:
-        for fld, v in crossval_output.y_pred.items():
-            label = _make_valid_array_name(fld)
-            f.create_array("/", label, obj=v.data)
-            f.create_array("/", label + "_mask", obj=v.mask)
-        f.create_array("/", "y_true", obj=crossval_output.y_true)
-
-    if not crossval_output.classification:
-        create_scatter_plot(outfile_results, config, scores)
-
-
+    if config.plot_real_vs_pred:
+        diagnostics.plot_real_vs_pred_crossval(
+            config.crossval_results_file,
+            scores_path=config.crossval_scores_file,
+            bins=40, overlay=True,
+            hist_cm=plt.cm.Oranges, scatter_color='black'
+        ).savefig(config.plot_real_vs_pred)
+        diagnostics.plot_residual_error_crossval(
+            config.crossval_results_file
+        ).savefig(config.plot_residual)
+   
 def _make_valid_array_name(label):
     label = "_".join(label.split())
     label = ''.join(filter(str.isalnum, label))  # alphanum only
     if label[0].isdigit():
         label = '_' + label
     return label
-
-
-def create_scatter_plot(outfile_results, config, scores):
-    true_vs_pred = os.path.join(config.output_dir,
-                                config.name + "_results.csv")
-    true_vs_pred_plot = os.path.join(config.output_dir,
-                                     config.name + "_results.png")
-    with hdf.open_file(outfile_results, 'r') as f:
-        prediction = f.get_node("/", "Prediction").read()
-        y_true = f.get_node("/", "y_true").read()
-        to_text = [y_true, prediction]
-        if 'transformedpredict' in f.root:
-            transformed_predict = f.get_node("/", "transformedpredict").read()
-            to_text.append(transformed_predict)
-        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',',
-                   fmt='%.4e',
-                   header=', '.join(['y_true', 'y_pred', 'y_transformed']),
-                   comments='')
-        plt.figure()
-        plt.scatter(y_true, prediction, label='True vs Prediction')
-        plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
-                 color='r', linewidth=2, label='One to One Line')
-        plt.legend(loc='upper left')
-
-        plt.title('true vs prediction')
-        plt.xlabel('True')
-        plt.ylabel('Prediction')
-        display_score = ['r2_score', 'lins_ccc']
-        score_sring = ''
-        for k in display_score:
-            score_sring += '{}={:0.2f}\n'.format(k, scores[k])
-
-        plt.text(y_true.min() + (y_true.max() - y_true.min())/20,
-                 y_true.min() + (y_true.max() - y_true.min())*3/4,
-                 score_sring)
-        plt.savefig(true_vs_pred_plot)
-
 
 def resample(input_tif, output_tif, ratio, resampling=5):
     """

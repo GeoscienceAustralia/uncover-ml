@@ -2,13 +2,13 @@ import logging
 from collections import OrderedDict
 import numpy as np
 import pickle
-from os.path import basename
 import os
+from os.path import basename
+import copy
 
-from uncoverml import mpiops
+from uncoverml import mpiops, patch, transforms, diagnostics
 from uncoverml.image import Image
 from uncoverml import patch
-from uncoverml import transforms
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +60,8 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
         x_all_mask = np.concatenate([a.mask for a in x_all], axis=0)
         x_all = np.ma.masked_array(x_all_data, mask=x_all_mask)
     else:
-        raise ValueError("All targets lie outside image boundaries")
+        raise ValueError(f"Attempting to extract features form {image_source._filename} "
+                          "but all targets lie outside image boundaries")
     assert x_all.shape[0] == targets.observations.shape[0]
     return x_all
 
@@ -98,7 +99,8 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     return x, cull_all_null_rows(feature_sets)
 
 
-def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config):
+def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config, 
+                                          impute=True):
     """
     This function saves raw covariates values at the target locations, i.e.,
     after the targets have been intersected.
@@ -120,8 +122,9 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     header = ', '.join(names)
 
     for t in transform_sets:
+        imputer = copy.deepcopy(t.imputer) if impute else None
         dummy_transform = transforms.ImageTransformSet(
-            image_transforms=None, imputer=None,
+            image_transforms=None, imputer=imputer,
             global_transforms=None, is_categorical=t.is_categorical)
         transform_sets_mod.append(dummy_transform)
 
@@ -140,24 +143,19 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
         data = np.hstack((x_all.data, xy, t))
-        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates.csv'),
-                   X=data, delimiter=',', fmt='%.4e', header=header, comments='')
+        np.savetxt(config.raw_covariates,
+                   X=data, delimiter=',', header=header, comments='')
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
-        np.savetxt(os.path.join(config.raw_covariates_dir, 'raw_covariates_mask.csv'),
-                   X=mask, delimiter=',', fmt='%d', header=header, comments='')
-        if config.plot_covariates_dir:
-            import matplotlib.pyplot as plt
-            for i, name in enumerate(names[:-3]):
-                log.info('plotting {}'.format(name))
-                plt.figure()
-                vals = x_all[:, i]
-                vals_no_mask = vals[~vals.mask].data
-                plt.scatter(x=list(range(vals_no_mask.shape[0])),
-                            y=vals_no_mask.data)
-                plt.title(name)
-                plt.savefig(os.path.join(config.plot_covariates_dir, name.rstrip('.tif') + '.png'))
-                plt.close()
+        np.savetxt(config.raw_covariates_mask,
+                   X=mask, delimiter=',', header=header, comments='')
 
+        if config.plot_intersection:
+            diagnostics.plot_covariates_x_targets(
+                config.raw_covariates, cols=2).savefig(config.plot_intersection)
+
+        if config.plot_correlation:
+            diagnostics.plot_covariate_correlation(
+                config.raw_covariates).savefig(config.plot_correlation)
 
 def cull_all_null_rows(feature_sets):
     # cull targets with all null values
