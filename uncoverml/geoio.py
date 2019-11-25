@@ -526,7 +526,7 @@ def export_crossval(crossval_output, config):
     
     to_text = [crossval_output.y_true, crossval_output.y_pred['Prediction']]
     np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
-               delimiter=',', header='y_true,y_pred')
+               delimiter=',', fmt='%.4f', header='y_true,y_pred')
 
     if config.plot_real_vs_pred:
         diagnostics.plot_real_vs_pred_crossval(
