@@ -8,6 +8,7 @@ Added
 +++++
 - Diagnostics module for plotting various metrics.
 - Diagnostics notebook for viewing plots.
+- Target coordinates are now automatically reprojected if a *.prj file is provided with the input shapefile.
 
 Changed
 +++++++
