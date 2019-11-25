@@ -160,6 +160,11 @@ class TestLearnCommand:
         p_targets = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_TARGET_DATA))
         assert t_targets == p_targets
 
+    @classmethod
+    def test_multi_random_forest_caching(cls, sirsam_rf_out):
+        model = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
+        assert model._randomforests == model.n_estimators
+
 def _unpickle(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
