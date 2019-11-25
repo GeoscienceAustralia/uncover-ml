@@ -40,7 +40,10 @@ test:
 	pytest ./tests 
 
 coverage:
-	pytest --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
+	pytest --cov=uncoverml ./tests 
+
+ci-test:
+	mpiexec -n 2 pytest --disable-warnings --cov=uncoverml --cache-clear ./tests 
 
 dist: clean
 	python setup.py sdist
