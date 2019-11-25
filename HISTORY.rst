@@ -2,6 +2,12 @@
 
 History
 =======
+Unreleased
+----------
+Fixed
++++++
+- Random forest caching with multirandomforest 
+
 0.3.0 (2019-11-25)
 ------------------
 Added

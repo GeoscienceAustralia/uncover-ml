@@ -23,6 +23,13 @@ def local_learn_model(x_all, targets_all, config):
                               kwargs={'fields': targets_all.fields,
                                       'parallel': True,
                                       'lon_lat': targets_all.positions})
+        if config.multirandomforest:
+            rf_dicts = model._randomforests
+            rf_dicts = mpiops.comm.gather(rf_dicts, root=0)
+            mpiops.comm.barrier()
+            if mpiops.chunk_index == 0:
+                for rf in rf_dicts:
+                    model._randomforests.update(rf)        
     else:
         if mpiops.chunk_index == 0:
             y = targets_all.observations
