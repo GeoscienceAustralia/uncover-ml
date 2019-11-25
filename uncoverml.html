@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>uncoverml package &mdash; UncoverML v0.2.1-1-g7d100fe documentation</title>
+  <title>uncoverml package &mdash; UncoverML v0.3.0-3-ge8a063b documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                v0.2.1-1-g7d100fe
+                v0.3.0-3-ge8a063b
               </div>
             
           
@@ -105,6 +105,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.config">uncoverml.config module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.cubist">uncoverml.cubist module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.cubist_config">uncoverml.cubist_config module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.diagnostics">uncoverml.diagnostics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.features">uncoverml.features module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.filtering">uncoverml.filtering module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.geoio">uncoverml.geoio module</a></li>
@@ -1011,6 +1012,28 @@ will be written.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="uncoverml.config.Config.plot_covariates">
+<code class="sig-name descname">plot_covariates</code><a class="headerlink" href="#uncoverml.config.Config.plot_covariates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to directory where covariate plots will be written.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.plot_feature_ranks_file">
+<code class="sig-name descname">plot_feature_ranks_file</code><a class="headerlink" href="#uncoverml.config.Config.plot_feature_ranks_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to directory where feature rank plot will be written.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="uncoverml.config.Config.model_file">
 <code class="sig-name descname">model_file</code><a class="headerlink" href="#uncoverml.config.Config.model_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Path to the file where model will be saved after
@@ -1485,6 +1508,141 @@ be output.</p></li>
 <div class="section" id="module-uncoverml.cubist_config">
 <span id="uncoverml-cubist-config-module"></span><h2>uncoverml.cubist_config module<a class="headerlink" href="#module-uncoverml.cubist_config" title="Permalink to this headline">¶</a></h2>
 </div>
+<div class="section" id="module-uncoverml.diagnostics">
+<span id="uncoverml-diagnostics-module"></span><h2>uncoverml.diagnostics module<a class="headerlink" href="#module-uncoverml.diagnostics" title="Permalink to this headline">¶</a></h2>
+<p>This module contains functionality for plotting validation scores
+and other diagnostic information.</p>
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_covariate_correlation">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_covariate_correlation</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">method='pearson'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_covariate_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots matrix of correlation between covariates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to ‘rawcovariates’ CSV file.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Correlation coefficient to calculate. Choices are
+‘pearson’, ‘kendall’, ‘spearman’. Default is ‘pearson’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The matrix plot as a matplotlib Figure.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj:matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_covariates_x_targets">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_covariates_x_targets</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">cols=2</em>, <em class="sig-param">subplot_width=8</em>, <em class="sig-param">subplot_height=4</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_covariates_x_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots scatter plots of each covariate intersected with target
+values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to ‘rawcovariates’ CSV file containing intersection
+of targets and covariates.</p></li>
+<li><p><strong>cols</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of columns to split the figure into. Default is 1.</p></li>
+<li><p><strong>subplot_width</strong> (<em>int</em>) – Width of each subplot in inches. Default is 8.</p></li>
+<li><p><strong>subplot_height</strong> (<em>int</em>) – Width of each subplot in inches. Default is 4.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The scatter plots as a matplotlib Figure.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj:matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_feature_rank_curves">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_feature_rank_curves</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">subplot_width=8</em>, <em class="sig-param">subplot_height=4</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_feature_rank_curves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots curves for feature ranking of each metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to ‘featureranks’ JSON file.</p></li>
+<li><p><strong>subplot_width</strong> (<em>int</em><em>, </em><em>optional</em>) – Width of each subplot. Default is 8.</p></li>
+<li><p><strong>subplot_height</strong> (<em>int</em><em>, </em><em>optional</em>) – Height of each subplot. Default is 4.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The plots as a matplotlib Figure.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj:matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_feature_ranks">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_feature_ranks</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">barwidth=0.08</em>, <em class="sig-param">figsize=(15</em>, <em class="sig-param">9)</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_feature_ranks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a grouped bar chart of feature rank scores, grouped by
+covariate. Depending on the number of covariates and metrics being
+calculated you may need to tweak barwidth and figsize so the bars
+fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to JSON file containing feature ranking results.</p></li>
+<li><p><strong>barwidth</strong> (<em>float</em><em>, </em><em>optional</em>) – Width of the bars.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>(</em><em>float</em><em>, </em><em>float</em><em>)</em><em>, </em><em>optional</em>) – The (width, height) of the figure in inches.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The bar chart as a matplotlib Figure.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj:matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_real_vs_pred_crossval">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_crossval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_real_vs_pred_prediction">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_prediction</code><span class="sig-paren">(</span><em class="sig-param">rc_path</em>, <em class="sig-param">pred_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_prediction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_residual_error_crossval">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_residual_error_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_path</em>, <em class="sig-param">bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_residual_error_crossval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_residual_error_prediction">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_residual_error_prediction</code><span class="sig-paren">(</span><em class="sig-param">rc_path</em>, <em class="sig-param">pred_path</em>, <em class="sig-param">bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_residual_error_prediction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.diagnostics.plot_target_scaling">
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_target_scaling</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_target_scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots histograms of target values pre and post-scaling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to ‘transformed_targets’ CSV file.</p></li>
+<li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of value bins for the histograms. Default is 20.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The histograms as a matplotlib Figure.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj:maplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <div class="section" id="module-uncoverml.features">
 <span id="uncoverml-features-module"></span><h2>uncoverml.features module<a class="headerlink" href="#module-uncoverml.features" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -1516,7 +1674,7 @@ will always have targets</p>
 
 <dl class="function">
 <dt id="uncoverml.features.save_intersected_features_and_targets">
-<code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">save_intersected_features_and_targets</code><span class="sig-paren">(</span><em class="sig-param">feature_sets</em>, <em class="sig-param">transform_sets</em>, <em class="sig-param">targets</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.save_intersected_features_and_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">save_intersected_features_and_targets</code><span class="sig-paren">(</span><em class="sig-param">feature_sets</em>, <em class="sig-param">transform_sets</em>, <em class="sig-param">targets</em>, <em class="sig-param">config</em>, <em class="sig-param">impute=True</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.save_intersected_features_and_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function saves raw covariates values at the target locations, i.e.,
 after the targets have been intersected.</p>
 <p>This will save the following two files if they are provided in the
@@ -1644,7 +1802,7 @@ image data.</p></li>
 
 <dl class="class">
 <dt id="uncoverml.geoio.ImageWriter">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">ImageWriter</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">bbox</em>, <em class="sig-param">crs</em>, <em class="sig-param">name</em>, <em class="sig-param">n_subchunks</em>, <em class="sig-param">outputdir</em>, <em class="sig-param">band_tags=None</em>, <em class="sig-param">independent=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.ImageWriter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">ImageWriter</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">bbox</em>, <em class="sig-param">crs</em>, <em class="sig-param">name</em>, <em class="sig-param">n_subchunks</em>, <em class="sig-param">outpath</em>, <em class="sig-param">band_tags=None</em>, <em class="sig-param">independent=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.ImageWriter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="uncoverml.geoio.ImageWriter.close">
@@ -1691,11 +1849,6 @@ independent image writing by different processes, i.e., images are not chunked</
 <dd></dd></dl>
 
 </dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.geoio.create_scatter_plot">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">create_scatter_plot</code><span class="sig-paren">(</span><em class="sig-param">outfile_results</em>, <em class="sig-param">config</em>, <em class="sig-param">scores</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.create_scatter_plot" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.geoio.export_crossval">
@@ -3714,6 +3867,11 @@ psize = pwidth * 2 + 1</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.validate.adjusted_r2_score">
+<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">adjusted_r2_score</code><span class="sig-paren">(</span><em class="sig-param">r2</em>, <em class="sig-param">n_samples</em>, <em class="sig-param">n_covariates</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.adjusted_r2_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.validate.classification_validation_scores">
 <code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">classification_validation_scores</code><span class="sig-paren">(</span><em class="sig-param">ys</em>, <em class="sig-param">eys</em>, <em class="sig-param">pys</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.classification_validation_scores" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the validation scores for a regression prediction
@@ -3799,7 +3957,7 @@ causes the greatest degradation in the performance of the model.</p>
 
 <dl class="function">
 <dt id="uncoverml.validate.regression_validation_scores">
-<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">regression_validation_scores</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">ey</em>, <em class="sig-param">model</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.regression_validation_scores" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">regression_validation_scores</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">ey</em>, <em class="sig-param">n_covariates</em>, <em class="sig-param">model</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.regression_validation_scores" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the validation scores for a regression prediction
 Given the test and training data, as well as the outputs from every model,
 this function calculates all of the applicable metrics in the following
@@ -3811,7 +3969,6 @@ list, and returns a dictionary with the following (possible) keys:</p>
 <li><p>smse</p></li>
 <li><p>lins_ccc</p></li>
 <li><p>mll</p></li>
-<li><p>msll</p></li>
 </ul>
 </div></blockquote>
 <dl class="field-list simple">
@@ -3819,6 +3976,7 @@ list, and returns a dictionary with the following (possible) keys:</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>y</strong> (<em>numpy.array</em>) – The test data outputs</p></li>
 <li><p><strong>ey</strong> (<em>numpy.array</em>) – The predictions made by the trained model on test data</p></li>
+<li><p><strong>n_covariates</strong> (<em>int</em>) – The number of covariates being used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

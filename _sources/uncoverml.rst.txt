@@ -45,6 +45,14 @@ uncoverml.cubist\_config module
    :undoc-members:
    :show-inheritance:
 
+uncoverml.diagnostics module
+----------------------------
+
+.. automodule:: uncoverml.diagnostics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 uncoverml.features module
 -------------------------
 
