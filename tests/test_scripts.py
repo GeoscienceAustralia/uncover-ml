@@ -96,9 +96,9 @@ class TestLearnCommand:
         """
         with open(sirsam_rf_csv_outputs[0]) as test, \
                 open(sirsam_rf_csv_outputs[1]) as precomp:
-            test_ar = np.loadtxt(test, delimiter=',', skiprows=1)
-            precomp_ar = np.loadtxt(precomp, delimiter=',', skiprows=1)
-        assert np.testing.assert_allclose(test_ar, precomp_ar)
+            tl = test.readlines()
+            pl = precomp.readlines()
+        assert tl == pl
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
