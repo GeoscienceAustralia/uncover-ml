@@ -18,6 +18,15 @@ SEED = 665
 RND = np.random.RandomState(SEED)
 random.seed(SEED)
 
+def pytest_addoption(parser):
+    parser.addoption('--num_procs', type=int)
+
+@pytest.fixture(scope='session')
+def num_procs(request):
+    np = request.config.getoption('--num_procs', default=1)
+    np = np if np else 1
+    return np
+
 @pytest.fixture(scope='session')
 def uncover():
     return UNCOVER
