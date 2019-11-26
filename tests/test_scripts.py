@@ -5,6 +5,8 @@ import os
 import shutil
 import pickle
 import json
+import subprocess
+import shlex
 
 import pytest
 import numpy as np
@@ -58,15 +60,13 @@ class TestLearnCommand:
         """
         def finalize():
             if os.path.exists(sirsam_rf_out):
-            	shutil.rmtree(sirsam_rf_out)
+                shutil.rmtree(sirsam_rf_out)
 
         request.addfinalizer(finalize)
 
-        try:
-            return uncoverml.learn([sirsam_rf_conf, '-p', 20])
-        # Catch SystemExit as it gets raised by Click on command completion
-        except SystemExit:
-            pass
+        cmd = ['mpirun', '-n', str(len(os.sched_getaffinity(0))),
+               'uncoverml', 'learn', sirsam_rf_conf]
+        return subprocess.run(cmd, check=True)
     
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_OUTPUTS)
@@ -208,11 +208,9 @@ class TestPredictCommand:
         # Copy precomputed files from learn step to the output directory
         shutil.copytree(sirsam_rf_precomp_learn, sirsam_rf_out)
 
-        try:
-            return uncoverml.predict([sirsam_rf_conf, '-p', 30])
-        # Catch SystemExit as it gets raised by Click on command completion
-        except SystemExit:
-            pass
+        cmd = ['mpirun', '-n', str(len(os.sched_getaffinity(0))),
+               'uncoverml', 'predict', sirsam_rf_conf]
+        return subprocess.run(cmd, check=True)
     
     @staticmethod
     @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA] + SIRSAM_RF_IMAGE_OUTPUT)
