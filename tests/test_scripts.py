@@ -53,7 +53,7 @@ class TestLearnCommand:
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_learning(request, sirsam_rf_conf, sirsam_rf_out):
+    def run_sirsam_random_forest_learning(request, num_procs, sirsam_rf_conf, sirsam_rf_out):
         """
         Run the top level 'learn' command'. Removes generated output on
         completion.
@@ -64,7 +64,7 @@ class TestLearnCommand:
 
         request.addfinalizer(finalize)
 
-        cmd = ['mpirun', '-n', str(len(os.sched_getaffinity(0))),
+        cmd = ['mpirun', '-n', str(num_procs),
                'uncoverml', 'learn', sirsam_rf_conf]
         return subprocess.run(cmd, check=True)
     
@@ -96,10 +96,9 @@ class TestLearnCommand:
         """
         with open(sirsam_rf_csv_outputs[0]) as test, \
                 open(sirsam_rf_csv_outputs[1]) as precomp:
-            test_lines = test.readlines()
-            precomp_lines = precomp.readlines()
-        assert test_lines == precomp_lines
-
+            test_ar = np.loadtxt(test, delimiter=',', skiprows=1)
+            precomp_ar = np.loadtxt(precomp, delimiter=',', skiprows=1)
+        assert np.testing.assert_allclose(test_ar, precomp_ar)
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
@@ -193,7 +192,7 @@ class TestPredictCommand:
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_prediction(request, sirsam_rf_out, sirsam_rf_conf, 
+    def run_sirsam_random_forest_prediction(request, num_procs, sirsam_rf_out, sirsam_rf_conf, 
                                             sirsam_rf_precomp_learn):
         """
         Run the top level 'predict' command'. Removes generated output on
@@ -208,7 +207,7 @@ class TestPredictCommand:
         # Copy precomputed files from learn step to the output directory
         shutil.copytree(sirsam_rf_precomp_learn, sirsam_rf_out)
 
-        cmd = ['mpirun', '-n', str(len(os.sched_getaffinity(0))),
+        cmd = ['mpirun', '-n', str(num_procs),
                'uncoverml', 'predict', sirsam_rf_conf]
         return subprocess.run(cmd, check=True)
     
