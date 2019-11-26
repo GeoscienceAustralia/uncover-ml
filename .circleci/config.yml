@@ -34,7 +34,7 @@ jobs:
          name: Run tests and generate coverage report
          command: | 
            . venv/bin/activate
-           make ci-test
+           make coverage
            codecov
 
       - run: 
