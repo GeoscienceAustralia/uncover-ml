@@ -534,8 +534,7 @@ class RandomForestRegressorMulti():
 
     def fit(self, x, y, *args, **kwargs):
 
-        # set a different random seed for each thread
-        np.random.seed(self.random_state + mpiops.chunk_index)
+        np.random.seed(self.random_state)
 
         if self.parallel:
             process_rfs = np.array_split(range(self.forests),
