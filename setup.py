@@ -44,16 +44,9 @@ class develop(_develop):
         build_cubist()
         _develop.run(self)
 
-# FIXME: incompatible with PyPi
-#def git_desc():
-#    # FIXME: won't work for platforms that don't have git
-#    desc = ['git', 'describe', '--tags', '--dirty=.dirty', '--always']
-#    clean = ['sed', ("s/\\([0-9][0-9]*\\.[0-9][0-9]*\\.[0-9][0-9]*\\)"
-#             "\\(rc[0-9]*\\)\\{0,1\\}-\\([0-9][0-9]*\\)-\\(g.*\\)/\\1\\2.dev\\3.\\4/")]
-#    ps = subprocess.Popen(desc, stdout=subprocess.PIPE)
-#    output = subprocess.check_output(clean, stdin=ps.stdout).decode().strip()
-#    ps.wait()
-#    return output
+def git_desc():
+    desc = ['git', 'describe', '--tags', '--abbrev=0']
+    return subprocess.check_output(clean, stdin=ps.stdout).decode().strip()
 
 setup(
     cmdclass={
@@ -61,7 +54,7 @@ setup(
         'develop': develop
     },
     name='uncover-ml',
-    version='v0.3.0',
+    version=git_desc(),
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme,
