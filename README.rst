@@ -16,7 +16,6 @@ Before you start, make sure your system has the following packages installed,
 
 - gdal (libgdal-dev)
 - openmpi
-- hdf5
 
 And your Python environment has:
 
