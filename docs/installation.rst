@@ -161,6 +161,8 @@ Once these are done, you can install UncoverML with pip:
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
 UncoverML.
 
+When you are finished using UncoverML, don't forget to deactivate your virtual environment using:
+
 .. code:: bash
 
     deactivate
