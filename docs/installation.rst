@@ -44,33 +44,37 @@ Once created, activate the venv with:
 
     source /path/to/your/venv/bin/activate
 
-With your environment activated, there are some packages that must be installed before UncoverML.
-Install these with pip:
+You are now ready to install UncoverML. To install from the repository, clone using git:
+
+.. code:: bash
+
+    git clone git@github.com:GeoscienceAustralia/uncover-ml
+    cd uncover-ml
+
+Before the UncoverML package can be installed, there are some required packages that need to be isntalled first.
 
 .. code:: bash
 
     pip install -U pip setuptools
     pip install -r requirements-pykrige.txt
 
-You are now ready to install UncoverML. The latest stable release can be installed from the 
-Python Package Index using:
-
-.. code:: bash
-    
-    pip install uncoverml
-
-Alternatively to install from the repository, clone using git:
+Once these are done, you can install UncoverML with pip:
 
 .. code:: bash
 
-    git clone git@github.com:GeoscienceAustralia/uncover-ml
-
-Once in the cloned repository, checkout the desired branch and install with pip:
-
-.. code:: bash
-    
-    git checkout branch-to-install
     pip install .
+
+Alternatively, you can install the latest stable release from the Python Package Index.
+Note you will have install some prerequisites:
+
+.. code:: bash
+    
+    pip install -U pip setuptools
+    pip install Cython==0.29.13
+    pip install numpy==1.17.2
+    pip install scipy==1.3.1
+    pip install matplotlib==3.1.1
+    pip install uncover-ml
 
 .. todo::
     
@@ -79,10 +83,16 @@ Once in the cloned repository, checkout the desired branch and install with pip:
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
 UncoverML.
 
+When you are finished using UncoverML, don't forget to deactivate your virtual environment using:
+
+.. code:: bash
+
+    deactivate
+
 HPC
 ---
 
-The following instructions refer specifically to NCI's Raijin, but may be applicable to other
+The following instructions refer specifically to NCI's Raijin and Virtual Desktop (VDI), but may be applicable to other
 HPC environments running PBS and MPI.
 
 The first step is to unload unrequired and load required system modules:
@@ -92,49 +102,63 @@ The first step is to unload unrequired and load required system modules:
     module unload intel-cc
     module unload intel-fc
 
-    module load python3/3.7.2
+    # If on Raijin, you can load either Python 3.6 or 3.7.
+    # But on VDI, you are limited to Python 3.6.
+    module load python3/3.6.2
     module load gdal/2.2.2
     module load openmpi/2.1.1
     moudle load hdf5/1.8.10
     module load geos/3.5.0
 
-It's recommended to use virtualenv on Raijin. Install it with pip:
+.. note::
 
-.. code:: bash
+    You can use Python 3.7 on Raijin by loading the module with `module load python3/3.7.2`.
 
-    pip3 install --user virtualenv virtualenvwrapper
-
-Setup virtualenv by exporting some environment variables and activating the virtualenv wrapper:
-
-.. code:: bash
-
-    export PATH=$HOME/.local/bin:$PATH
-    export PYTHONPATH=$HOME/.local/lib/python3.4/site-packages:$PYTHONPATH
-    export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
-    export LC_ALL=en_AU.UTF-8
-    export LANG=en_AU.UTF-8
-
-    source $HOME/.local/bin/virtualenvwrapper.sh 
-
-For convenience, the above commands can be placed in your ``~/.profile``. This will run the above
-commands everytime you open a new session on Raijin. Alternatively, if you already have a 
+For convenience you can place the above commands in your ``~/.profile``. Alternatively, if you already have a 
 configuration in your profile you'd like to preserve but don't want to type the above commands
 every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` script to perform the above 
 commands as needed.
 
-Create a virtualenv for UncoverML and activate it:
+On Raijin and the VDI, a virtual environment is recommended. To create a virtual environment, run in your shell:
 
 .. code:: bash
 
-    mkvirtualenv --system-site-packages uncoverml
-    workon uncoverml
+    python3 -m venv /path/to/your/venv
 
-Next, clone and install uncoverml:
+where ``/path/to/your/venv`` is the directory where the venv will exist.
+
+Once created, activate the venv with:
 
 .. code:: bash
 
-    git clone git@github.com:geoscienceaustralia/uncover-ml
+    source /path/to/your/venv/bin/activate
+
+With your environment activated, there are some packages that must be installed before UncoverML.
+Install these with pip:
+
+.. code:: bash
+
+    pip install -U pip setuptools
+    pip install -r requirements-pykrige.txt
+
+You are now ready to install UncoverML. To install from the repository, clone using git:
+
+.. code:: bash
+
+    git clone git@github.com:GeoscienceAustralia/uncover-ml
     cd uncover-ml
+
+Before the UncoverML package can be installed, there are some required packages that need to be isntalled first.
+
+.. code:: bash
+
+    pip install -U pip setuptools
+    pip install -r requirements-pykrige.txt
+
+Once these are done, you can install UncoverML with pip:
+
+.. code:: bash
+
     python setup.py install
 
 .. todo::
@@ -145,6 +169,10 @@ Next, clone and install uncoverml:
 
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
 UncoverML.
+
+.. code:: bash
+
+    deactivate
 
 Reusing Shared Virtualenv
 +++++++++++++++++++++++++

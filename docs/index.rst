@@ -14,11 +14,11 @@ Contents:
 
    installation
    usage
+   NICTA Project Report <projectreport>
+   UncoverML API Reference <modules>
    contributing
    authors
    history
-   NICTA Project Report <projectreport>
-   UncoverML API Reference <modules>
 
 Feedback
 --------
