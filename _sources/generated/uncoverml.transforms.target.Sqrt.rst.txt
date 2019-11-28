@@ -1,0 +1,25 @@
+uncoverml.transforms.target.Sqrt
+================================
+
+.. currentmodule:: uncoverml.transforms.target
+
+.. autoclass:: Sqrt
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Sqrt.__init__
+      ~Sqrt.fit
+      ~Sqrt.itransform
+      ~Sqrt.transform
+   
+   
+
+   
+   
+   

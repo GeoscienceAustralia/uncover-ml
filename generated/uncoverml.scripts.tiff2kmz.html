@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>uncoverml.scripts.gridsearch &mdash; UncoverML 0.3.1 documentation</title>
+  <title>uncoverml.scripts.tiff2kmz &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Contributing" href="../contributing.html" />
-    <link rel="prev" title="uncoverml.scripts.tiff2kmz" href="uncoverml.scripts.tiff2kmz.html" /> 
+    <link rel="next" title="uncoverml.scripts.gridsearch" href="uncoverml.scripts.gridsearch.html" />
+    <link rel="prev" title="uncoverml.scripts.gammasensor" href="uncoverml.scripts.gammasensor.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -96,8 +96,8 @@
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">uncoverml.scripts.gridsearch</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">uncoverml.scripts.tiff2kmz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.gridsearch.html">uncoverml.scripts.gridsearch</a></li>
 </ul>
 </li>
 </ul>
@@ -154,13 +154,13 @@
         
           <li><a href="../usage.html">Usage</a> &raquo;</li>
         
-      <li>uncoverml.scripts.gridsearch</li>
+      <li>uncoverml.scripts.tiff2kmz</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/generated/uncoverml.scripts.gridsearch.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/uncoverml.scripts.tiff2kmz.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -173,10 +173,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-uncoverml.scripts.gridsearch">
-<span id="uncoverml-scripts-gridsearch"></span><h1>uncoverml.scripts.gridsearch<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h1>
-<p>Run the various machine learning parameter optimisation using
-scikit-learn GridSearchCv.</p>
+  <div class="section" id="module-uncoverml.scripts.tiff2kmz">
+<span id="uncoverml-scripts-tiff2kmz"></span><h1>uncoverml.scripts.tiff2kmz<a class="headerlink" href="#module-uncoverml.scripts.tiff2kmz" title="Permalink to this headline">¶</a></h1>
+<p>Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.
+National Map).</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
 [[37885,1],0]: A high-performance Open MPI point-to-point messaging module
 was unable to find any relevant network interfaces:
@@ -190,31 +190,19 @@ lower performance.
 NOTE: You can disable this warning by setting the MCA parameter
 btl_base_warn_component_unused to 0.
 --------------------------------------------------------------------------
-Usage: gridsearch [OPTIONS] PIPELINE_FILE
+Usage: tiff2kmz [OPTIONS] TIFF
+
+  Turn a geotiff into a KMZ that can be dragged onto an instance of Terria
+  Map. This also constructs a JPEG of the Geotiff, as it is required for the
+  KMZ.
 
 Options:
-  -p, --partitions INTEGER        divide each node&#39;s data into this many
-                                  partitions
-  -n, --njobs INTEGER             Number of parallel jobs to run. Lower value
-                                  of n reduces memory requirement. By default
-                                  uses all available CPUs
-  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
-                                  Level of logging
-  --help                          Show this message and exit.
+  --outfile PATH      Output file name, if not specified input file name is
+                      used
+  --overlayname TEXT
+  --help              Show this message and exit.
 </pre></div>
 </div>
-<p class="rubric">Functions</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../uncoverml.scripts.html#uncoverml.scripts.gridsearch.setup_pipeline" title="uncoverml.scripts.gridsearch.setup_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_pipeline</span></code></a>(config)</p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
 </div>
 
 
@@ -225,10 +213,10 @@ Options:
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="uncoverml.scripts.gridsearch.html" class="btn btn-neutral float-right" title="uncoverml.scripts.gridsearch" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="uncoverml.scripts.tiff2kmz.html" class="btn btn-neutral float-left" title="uncoverml.scripts.tiff2kmz" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="uncoverml.scripts.gammasensor.html" class="btn btn-neutral float-left" title="uncoverml.scripts.gammasensor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

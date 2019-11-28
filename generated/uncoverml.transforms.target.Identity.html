@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>uncoverml.scripts.gridsearch &mdash; UncoverML 0.3.1 documentation</title>
+  <title>uncoverml.transforms.target.Identity &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -35,9 +35,7 @@
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Contributing" href="../contributing.html" />
-    <link rel="prev" title="uncoverml.scripts.tiff2kmz" href="uncoverml.scripts.tiff2kmz.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,23 +83,9 @@
               
             
             
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../usage.html">Usage</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../usage.html#running-locally">Running locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../usage.html#running-on-hpc">Running on HPC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../usage.html#configuration-file">Configuration File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../usage.html#models">Models</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../usage.html#command-line-interface">Command Line Interface</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">uncoverml.scripts.gridsearch</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../history.html">History</a></li>
@@ -152,15 +136,13 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="../usage.html">Usage</a> &raquo;</li>
-        
-      <li>uncoverml.scripts.gridsearch</li>
+      <li>uncoverml.transforms.target.Identity</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/generated/uncoverml.scripts.gridsearch.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/uncoverml.transforms.target.Identity.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -173,48 +155,40 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-uncoverml.scripts.gridsearch">
-<span id="uncoverml-scripts-gridsearch"></span><h1>uncoverml.scripts.gridsearch<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h1>
-<p>Run the various machine learning parameter optimisation using
-scikit-learn GridSearchCv.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[37885,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
+  <div class="section" id="uncoverml-transforms-target-identity">
+<h1>uncoverml.transforms.target.Identity<a class="headerlink" href="#uncoverml-transforms-target-identity" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="uncoverml.transforms.target.Identity">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.transforms.target.</code><code class="sig-name descname">Identity</code><a class="headerlink" href="#uncoverml.transforms.target.Identity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="uncoverml.transforms.target.Identity.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.transforms.target.Identity.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
 
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: gridsearch [OPTIONS] PIPELINE_FILE
-
-Options:
-  -p, --partitions INTEGER        divide each node&#39;s data into this many
-                                  partitions
-  -n, --njobs INTEGER             Number of parallel jobs to run. Lower value
-                                  of n reduces memory requirement. By default
-                                  uses all available CPUs
-  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
-                                  Level of logging
-  --help                          Show this message and exit.
-</pre></div>
-</div>
-<p class="rubric">Functions</p>
+<p class="rubric">Methods</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../uncoverml.scripts.html#uncoverml.scripts.gridsearch.setup_pipeline" title="uncoverml.scripts.gridsearch.setup_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_pipeline</span></code></a>(config)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#uncoverml.transforms.target.Identity.__init__" title="uncoverml.transforms.target.Identity.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../uncoverml.transforms.html#uncoverml.transforms.target.Identity.fit" title="uncoverml.transforms.target.Identity.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(y)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../uncoverml.transforms.html#uncoverml.transforms.target.Identity.itransform" title="uncoverml.transforms.target.Identity.itransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">itransform</span></code></a>(y_transformed)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../uncoverml.transforms.html#uncoverml.transforms.target.Identity.transform" title="uncoverml.transforms.target.Identity.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(y)</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
 </div>
 
 
@@ -222,15 +196,6 @@ Options:
            
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="uncoverml.scripts.tiff2kmz.html" class="btn btn-neutral float-left" title="uncoverml.scripts.tiff2kmz" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

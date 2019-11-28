@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>uncoverml package &mdash; UncoverML 0.3.0 documentation</title>
+  <title>uncoverml package &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.0
+                0.3.1
               </div>
             
           
@@ -109,6 +109,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.features">uncoverml.features module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.filtering">uncoverml.filtering module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.geoio">uncoverml.geoio module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.git_hash">uncoverml.git_hash module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.image">uncoverml.image module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.interpolate">uncoverml.interpolate module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.krige">uncoverml.krige module</a></li>
@@ -210,7 +211,7 @@
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor">uncoverml.scripts.gammasensor module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch">uncoverml.scripts.gridsearch module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.subsampletargets">uncoverml.scripts.subsampletargets module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#uncoverml-scripts-tiff2kmz-module">uncoverml.scripts.tiff2kmz module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz">uncoverml.scripts.tiff2kmz module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml">uncoverml.scripts.uncoverml module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts">Module contents</a></li>
 </ul>
@@ -1943,6 +1944,9 @@ q3 = 12</p></li>
 <dd></dd></dl>
 
 </div>
+<div class="section" id="module-uncoverml.git_hash">
+<span id="uncoverml-git-hash-module"></span><h2>uncoverml.git_hash module<a class="headerlink" href="#module-uncoverml.git_hash" title="Permalink to this headline">¶</a></h2>
+</div>
 <div class="section" id="module-uncoverml.image">
 <span id="uncoverml-image-module"></span><h2>uncoverml.image module<a class="headerlink" href="#module-uncoverml.image" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -2386,7 +2390,7 @@ is a matrix of the distances from each point in <code class="docutils literal no
 </dd></dl>
 
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">Rbf</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">Rbf</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rbfi</span> <span class="o">=</span> <span class="n">Rbf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>  <span class="c1"># radial basis function interpolator instance</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">xi</span> <span class="o">=</span> <span class="n">yi</span> <span class="o">=</span> <span class="n">zi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>

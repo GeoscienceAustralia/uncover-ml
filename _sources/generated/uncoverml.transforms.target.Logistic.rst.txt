@@ -1,0 +1,25 @@
+uncoverml.transforms.target.Logistic
+====================================
+
+.. currentmodule:: uncoverml.transforms.target
+
+.. autoclass:: Logistic
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Logistic.__init__
+      ~Logistic.fit
+      ~Logistic.itransform
+      ~Logistic.transform
+   
+   
+
+   
+   
+   

@@ -1,0 +1,22 @@
+uncoverml.transforms.impute.NearestNeighboursImputer
+====================================================
+
+.. currentmodule:: uncoverml.transforms.impute
+
+.. autoclass:: NearestNeighboursImputer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~NearestNeighboursImputer.__init__
+   
+   
+
+   
+   
+   

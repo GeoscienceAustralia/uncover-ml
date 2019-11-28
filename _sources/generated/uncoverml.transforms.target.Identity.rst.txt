@@ -1,0 +1,25 @@
+uncoverml.transforms.target.Identity
+====================================
+
+.. currentmodule:: uncoverml.transforms.target
+
+.. autoclass:: Identity
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Identity.__init__
+      ~Identity.fit
+      ~Identity.itransform
+      ~Identity.transform
+   
+   
+
+   
+   
+   
