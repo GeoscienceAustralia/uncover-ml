@@ -46,7 +46,7 @@ class develop(_develop):
 
 def git_desc():
     desc = ['git', 'describe', '--tags', '--abbrev=0']
-    return subprocess.check_output(clean, stdin=ps.stdout).decode().strip()
+    return subprocess.check_output(desc).decode().strip()
 
 setup(
     cmdclass={
