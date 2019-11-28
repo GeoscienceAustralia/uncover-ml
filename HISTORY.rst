@@ -2,11 +2,17 @@
 
 History
 =======
-Unreleased
-----------
+0.3.1 (2019-11-28)
+------------------
+Added
++++++
+- Ability to specify number of processors to run tests with using `pytest --num_procs N tests/`
+- Ability to specify number of partitions to run tests with using `pytest --num_parts N tests/`
+
 Fixed
 +++++
 - Random forest caching with multirandomforest 
+- Random seeds causing different results for multirandomforest when using different number of processors.
 
 0.3.0 (2019-11-25)
 ------------------
@@ -38,7 +44,7 @@ Fixed
 - Prediction thumbnails
 
 0.2.0 (2019-11-05)
------------------
+------------------
 Added
 +++++
 - Python 3.6 and 3.7 support.
