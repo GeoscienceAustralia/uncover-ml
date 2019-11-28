@@ -5,6 +5,8 @@ import os
 import shutil
 import pickle
 import json
+import subprocess
+import shlex
 
 import pytest
 import numpy as np
@@ -51,22 +53,31 @@ class TestLearnCommand:
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_learning(request, sirsam_rf_conf, sirsam_rf_out):
+    def run_sirsam_random_forest_learning(request, num_procs, num_parts, sirsam_rf_conf, sirsam_rf_out):
         """
         Run the top level 'learn' command'. Removes generated output on
         completion.
         """
         def finalize():
             if os.path.exists(sirsam_rf_out):
-            	shutil.rmtree(sirsam_rf_out)
+                shutil.rmtree(sirsam_rf_out)
 
         request.addfinalizer(finalize)
-
-        try:
-            return uncoverml.learn([sirsam_rf_conf, '-p', 20])
-        # Catch SystemExit as it gets raised by Click on command completion
-        except SystemExit:
-            pass
+    
+        # If running with one processor, call uncoverml directly
+        if num_procs == 1:
+            try:
+                uncoverml.learn([sirsam_rf_conf, '-p', num_parts])
+            # Catch SystemExit that gets raised by Click on competion
+            except SystemExit:
+                pass   
+        else:
+            try:
+                cmd = ['mpirun', '-n', str(num_procs),
+                       'uncoverml', 'learn', sirsam_rf_conf, '-p', str(num_parts)]
+                subprocess.run(cmd, check=True, capture_output=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
     
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_OUTPUTS)
@@ -96,10 +107,9 @@ class TestLearnCommand:
         """
         with open(sirsam_rf_csv_outputs[0]) as test, \
                 open(sirsam_rf_csv_outputs[1]) as precomp:
-            test_lines = test.readlines()
-            precomp_lines = precomp.readlines()
-        assert test_lines == precomp_lines
-
+            tl = test.readlines()
+            pl = precomp.readlines()
+        assert tl == pl
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
@@ -160,6 +170,11 @@ class TestLearnCommand:
         p_targets = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_TARGET_DATA))
         assert t_targets == p_targets
 
+    @classmethod
+    def test_multi_random_forest_caching(cls, sirsam_rf_out):
+        model = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
+        assert model._randomforests == model.n_estimators
+
 def _unpickle(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
@@ -188,7 +203,7 @@ class TestPredictCommand:
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_prediction(request, sirsam_rf_out, sirsam_rf_conf, 
+    def run_sirsam_random_forest_prediction(request, num_procs, num_parts, sirsam_rf_out, sirsam_rf_conf, 
                                             sirsam_rf_precomp_learn):
         """
         Run the top level 'predict' command'. Removes generated output on
@@ -203,12 +218,21 @@ class TestPredictCommand:
         # Copy precomputed files from learn step to the output directory
         shutil.copytree(sirsam_rf_precomp_learn, sirsam_rf_out)
 
-        try:
-            return uncoverml.predict([sirsam_rf_conf, '-p', 30])
-        # Catch SystemExit as it gets raised by Click on command completion
-        except SystemExit:
-            pass
-    
+        # If running with one processor, call uncoverml directly
+        if num_procs == 1:
+            try:
+                uncoverml.predict([sirsam_rf_conf, '-p', num_parts])
+            # Catch SystemExit that gets raised by Click on competion
+            except SystemExit:
+                pass   
+        else:
+            try:
+                cmd = ['mpirun', '-n', str(num_procs),
+                       'uncoverml', 'predict', sirsam_rf_conf, '-p', str(num_parts)]
+                subprocess.run(cmd, check=True, capture_output=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
+
     @staticmethod
     @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA] + SIRSAM_RF_IMAGE_OUTPUT)
     def sirsam_rf_output(request, sirsam_rf_out):

@@ -82,8 +82,10 @@ def _real_vs_pred_from_crossval(crossval_path):
         return _CACHE['_real_vs_pred_from_crossval']
 
     rvp = pd.read_csv(crossval_path, float_precision='round_trip')
-    targets, predict = np.hsplit(rvp.to_numpy(), 2)
-    return targets.flatten(), predict.flatten()
+    # Split into the length of columns to support old format of crossval results.
+    arrays = np.hsplit(rvp.to_numpy(), len(rvp.columns))
+    # Only need the first two arrays ([0] = targets, [1] = predictions).
+    return arrays[0].flatten(), arrays[1].flatten()
 
 def plot_residual_error_crossval(crossval_path, bins=20):
     return _plot_residual_error(crossval_path=crossval_path, bins=bins)
@@ -133,18 +135,23 @@ def _plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=
     return fig
 
 def plot_real_vs_pred_crossval(crossval_path, scores_path=None, bins=20,
-                               overlay=False, hist_cm=None, scatter_color=None):
+                               overlay=False, hist_cm=None, scatter_color=None,
+                               figsize=(15, 7.5), point_size=None):
     return _plot_real_vs_pred(crossval_path=crossval_path, scores_path=scores_path, bins=bins, 
-                              overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color)
+                              overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color,
+                              figsize=figsize, point_size=point_size)
 
 def plot_real_vs_pred_prediction(rc_path, pred_path, scores_path=None, bins=20,
-                                 overlay=False, hist_cm=None, scatter_color=None):
+                                 overlay=False, hist_cm=None, scatter_color=None,
+                                 figsize=(15, 7.5), point_size=None):
     return _plot_real_vs_pred(rc_path=rc_path, pred_path=pred_path, scores_path=scores_path, bins=bins,
-                                overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color)
+                                overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color,
+                                figsize=figsize, point_size=point_Size)
 
 def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None, 
                       scores_path=None, bins=20, overlay=False,
-                      hist_cm=None, scatter_color=None):
+                      hist_cm=None, scatter_color=None, figsize=(15, 7.5),
+                      point_size=None):
     """
     Plots a scatterplot and 2D histogram of real vs predicted values.
 
@@ -177,7 +184,7 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
                          "Real vs Prediction scatter plot.")
 
     def _side_by_side(targets_ar, predict_ar, bins=bins):
-        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 7.5), 
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, 
                                 sharey=True, gridspec_kw={'wspace': 0})
         
         for ax in axs:
@@ -192,14 +199,14 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
         cb_axis = divider.append_axes('right', size="5%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
         
-        axs[0].scatter(targets_ar, predict_ar, color=scatter_color)
+        axs[0].scatter(targets_ar, predict_ar, s=point_size, color=scatter_color, alpha=0.8)
         axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
                     color='r', linewidth=2, label='1:1')
 
         return fig
 
     def _overlay(targets_ar, predict_ar, bins=bins):
-        fig, ax = plt.subplots(figsize=(15, 7.5))
+        fig, ax = plt.subplots(figsize=figsize)
         ax.set_xlabel('Real')
         ax.set_ylabel('Predicted')
 
@@ -209,7 +216,7 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
         cb_axis = divider.append_axes('right', size="2.8%", pad=0.1)
         fig.colorbar(hist[3], cax=cb_axis)
         
-        ax.scatter(targets_ar, predict_ar, color=scatter_color)
+        ax.scatter(targets_ar, predict_ar, s=point_size, color=scatter_color, alpha=0.8)
         ax.plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
                 color='r', linewidth=2, label='1:1')
 
