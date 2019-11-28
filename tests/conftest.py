@@ -20,10 +20,17 @@ random.seed(SEED)
 
 def pytest_addoption(parser):
     parser.addoption('--num_procs', type=int)
+    parser.addoption('--num_parts', type=int)
 
 @pytest.fixture(scope='session')
 def num_procs(request):
     np = request.config.getoption('--num_procs', default=1)
+    np = np if np else 1
+    return np
+
+@pytest.fixture(scope='session')
+def num_parts(request):
+    np = request.config.getoption('--num_parts', default=1)
     np = np if np else 1
     return np
 
