@@ -75,7 +75,7 @@ class TestLearnCommand:
             try:
                 cmd = ['mpirun', '-n', str(num_procs),
                        'uncoverml', 'learn', sirsam_rf_conf, '-p', str(num_parts)]
-                subprocess.run(cmd, check=True, capture_output=True)
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
                 raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
     
@@ -229,7 +229,7 @@ class TestPredictCommand:
             try:
                 cmd = ['mpirun', '-n', str(num_procs),
                        'uncoverml', 'predict', sirsam_rf_conf, '-p', str(num_parts)]
-                subprocess.run(cmd, check=True, capture_output=True)
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
                 raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
 
