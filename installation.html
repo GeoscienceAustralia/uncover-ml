@@ -95,11 +95,11 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
-<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 </ul>
 
             
@@ -198,24 +198,28 @@ prevent packages that it requires from conflicting with any existing Python envi
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /path/to/your/venv/bin/activate
 </pre></div>
 </div>
-<p>With your environment activated, there are some packages that must be installed before UncoverML.
-Install these with pip:</p>
+<p>You are now ready to install UncoverML. To install from the repository, clone using git:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:GeoscienceAustralia/uncover-ml
+<span class="nb">cd</span> uncover-ml
+</pre></div>
+</div>
+<p>Before the UncoverML package can be installed, there are some required packages that need to be installed first.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U pip setuptools
 pip install -r requirements-pykrige.txt
 </pre></div>
 </div>
-<p>You are now ready to install UncoverML. The latest stable release can be installed from the
-Python Package Index using:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install uncoverml
+<p>Once these are done, you can install UncoverML with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install .
 </pre></div>
 </div>
-<p>Alternatively to install from the repository, clone using git:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:GeoscienceAustralia/uncover-ml
-</pre></div>
-</div>
-<p>Once in the cloned repository, checkout the desired branch and install with pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout branch-to-install
-pip install .
+<p><strong>Alternatively</strong>, you can install the latest stable release from the Python Package Index.
+Note you will have install some prerequisites:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U pip setuptools
+pip install <span class="nv">Cython</span><span class="o">==</span><span class="m">0</span>.29.13
+pip install <span class="nv">numpy</span><span class="o">==</span><span class="m">1</span>.17.2
+pip install <span class="nv">scipy</span><span class="o">==</span><span class="m">1</span>.3.1
+pip install <span class="nv">matplotlib</span><span class="o">==</span><span class="m">3</span>.1.1
+pip install uncover-ml
 </pre></div>
 </div>
 <div class="admonition-todo admonition" id="id1">
@@ -224,50 +228,56 @@ pip install .
 </div>
 <p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
 UncoverML.</p>
+<p>When you are finished using UncoverML, don’t forget to deactivate your virtual environment using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>deactivate
+</pre></div>
+</div>
 </div>
 <div class="section" id="hpc">
 <h2>HPC<a class="headerlink" href="#hpc" title="Permalink to this headline">¶</a></h2>
-<p>The following instructions refer specifically to NCI’s Raijin, but may be applicable to other
+<p>The following instructions refer specifically to NCI’s Raijin and Virtual Desktop (VDI), but may be applicable to other
 HPC environments running PBS and MPI.</p>
 <p>The first step is to unload unrequired and load required system modules:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module unload intel-cc
 module unload intel-fc
 
-module load python3/3.7.2
+<span class="c1"># If on Raijin, you can load either Python 3.6 or 3.7.</span>
+<span class="c1"># But on VDI, you are limited to Python 3.6.</span>
+module load python3/3.6.2
 module load gdal/2.2.2
 module load openmpi/2.1.1
-moudle load hdf5/1.8.10
 module load geos/3.5.0
 </pre></div>
 </div>
-<p>It’s recommended to use virtualenv on Raijin. Install it with pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3 install --user virtualenv virtualenvwrapper
-</pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can use Python 3.7 on Raijin by loading the module with <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">python3/3.7.2</span></code>.</p>
 </div>
-<p>Setup virtualenv by exporting some environment variables and activating the virtualenv wrapper:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/bin:<span class="nv">$PATH</span>
-<span class="nb">export</span> <span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/lib/python3.4/site-packages:<span class="nv">$PYTHONPATH</span>
-<span class="nb">export</span> <span class="nv">VIRTUALENVWRAPPER_PYTHON</span><span class="o">=</span>/apps/python3/3.4.3/bin/python3
-<span class="nb">export</span> <span class="nv">LC_ALL</span><span class="o">=</span>en_AU.UTF-8
-<span class="nb">export</span> <span class="nv">LANG</span><span class="o">=</span>en_AU.UTF-8
-
-<span class="nb">source</span> <span class="nv">$HOME</span>/.local/bin/virtualenvwrapper.sh
-</pre></div>
-</div>
-<p>For convenience, the above commands can be placed in your <code class="docutils literal notranslate"><span class="pre">~/.profile</span></code>. This will run the above
-commands everytime you open a new session on Raijin. Alternatively, if you already have a
+<p>For convenience you can place the above commands in your <code class="docutils literal notranslate"><span class="pre">~/.profile</span></code>. Alternatively, if you already have a
 configuration in your profile you’d like to preserve but don’t want to type the above commands
 every time, you can source the <code class="docutils literal notranslate"><span class="pre">uncover-ml/pbs/setup_hpc.sh</span></code> script to perform the above
 commands as needed.</p>
-<p>Create a virtualenv for UncoverML and activate it:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkvirtualenv --system-site-packages uncoverml
-workon uncoverml
+<p>On Raijin and the VDI, a virtual environment is recommended. To create a virtual environment, run in your shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 -m venv /path/to/your/venv
 </pre></div>
 </div>
-<p>Next, clone and install uncoverml:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:geoscienceaustralia/uncover-ml
+<p>where <code class="docutils literal notranslate"><span class="pre">/path/to/your/venv</span></code> is the directory where the venv will exist.</p>
+<p>Once created, activate the venv with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /path/to/your/venv/bin/activate
+</pre></div>
+</div>
+<p>You are now ready to install UncoverML. To install from the repository, clone using git:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:GeoscienceAustralia/uncover-ml
 <span class="nb">cd</span> uncover-ml
-python setup.py install
+</pre></div>
+</div>
+<p>Before the UncoverML package can be installed, there are some required packages that need to be installed first.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -U pip setuptools
+pip install -r requirements-pykrige.txt
+</pre></div>
+</div>
+<p>Once these are done, you can install UncoverML with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py install
 </pre></div>
 </div>
 <div class="admonition-todo admonition" id="id2">
@@ -278,6 +288,10 @@ for an average user.</p>
 </div>
 <p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
 UncoverML.</p>
+<p>When you are finished using UncoverML, don’t forget to deactivate your virtual environment using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>deactivate
+</pre></div>
+</div>
 <div class="section" id="reusing-shared-virtualenv">
 <h3>Reusing Shared Virtualenv<a class="headerlink" href="#reusing-shared-virtualenv" title="Permalink to this headline">¶</a></h3>
 <p>An alternative to the above installation is to activate the shared UncoverML virtual environment.
