@@ -40,7 +40,7 @@ test:
 	pytest ./tests 
 
 coverage:
-	pytest --num_procs 2 --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
+	pytest --num_parts 20 --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
 
 dist: clean
 	python setup.py sdist
