@@ -7,14 +7,6 @@ from setuptools.command.build_py import build_py as _build_py
 from setuptools.command.develop import develop as _develop
 
 readme = open('README.rst').read()
-doclink = """
-Documentation
--------------
-
-The full documentation is at 
-http://GeoscienceAustralia.github.io/uncover-ml/.
-"""
-history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 
 def parse_requirements(filename):
@@ -52,10 +44,16 @@ class develop(_develop):
         build_cubist()
         _develop.run(self)
 
-def git_desc():
-    # FIXME: won't work for platforms that don't have git
-    desc = ['git', 'describe', '--long', '--tags', '--dirty', '--always']
-    return subprocess.check_output(desc).decode().strip()
+# FIXME: incompatible with PyPi
+#def git_desc():
+#    # FIXME: won't work for platforms that don't have git
+#    desc = ['git', 'describe', '--tags', '--dirty=.dirty', '--always']
+#    clean = ['sed', ("s/\\([0-9][0-9]*\\.[0-9][0-9]*\\.[0-9][0-9]*\\)"
+#             "\\(rc[0-9]*\\)\\{0,1\\}-\\([0-9][0-9]*\\)-\\(g.*\\)/\\1\\2.dev\\3.\\4/")]
+#    ps = subprocess.Popen(desc, stdout=subprocess.PIPE)
+#    output = subprocess.check_output(clean, stdin=ps.stdout).decode().strip()
+#    ps.wait()
+#    return output
 
 setup(
     cmdclass={
@@ -63,10 +61,10 @@ setup(
         'develop': develop
     },
     name='uncover-ml',
-    version=git_desc(),
+    version='v0.3.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
-    long_description=readme + '\n\n' + doclink + '\n\n' + history,
+    long_description=readme,
     author='Geoscience Australia Mineral Systems Group, NICTA Spatial '
            'Inference Systems Team',
     author_email='John.Wilford@ga.gov.au',
