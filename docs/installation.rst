@@ -51,7 +51,7 @@ You are now ready to install UncoverML. To install from the repository, clone us
     git clone git@github.com:GeoscienceAustralia/uncover-ml
     cd uncover-ml
 
-Before the UncoverML package can be installed, there are some required packages that need to be isntalled first.
+Before the UncoverML package can be installed, there are some required packages that need to be installed first.
 
 .. code:: bash
 
@@ -64,7 +64,7 @@ Once these are done, you can install UncoverML with pip:
 
     pip install .
 
-Alternatively, you can install the latest stable release from the Python Package Index.
+**Alternatively**, you can install the latest stable release from the Python Package Index.
 Note you will have install some prerequisites:
 
 .. code:: bash
@@ -107,12 +107,11 @@ The first step is to unload unrequired and load required system modules:
     module load python3/3.6.2
     module load gdal/2.2.2
     module load openmpi/2.1.1
-    moudle load hdf5/1.8.10
     module load geos/3.5.0
 
 .. note::
 
-    You can use Python 3.7 on Raijin by loading the module with `module load python3/3.7.2`.
+    You can use Python 3.7 on Raijin by loading the module with ``module load python3/3.7.2``.
 
 For convenience you can place the above commands in your ``~/.profile``. Alternatively, if you already have a 
 configuration in your profile you'd like to preserve but don't want to type the above commands
@@ -133,14 +132,6 @@ Once created, activate the venv with:
 
     source /path/to/your/venv/bin/activate
 
-With your environment activated, there are some packages that must be installed before UncoverML.
-Install these with pip:
-
-.. code:: bash
-
-    pip install -U pip setuptools
-    pip install -r requirements-pykrige.txt
-
 You are now ready to install UncoverML. To install from the repository, clone using git:
 
 .. code:: bash
@@ -148,7 +139,7 @@ You are now ready to install UncoverML. To install from the repository, clone us
     git clone git@github.com:GeoscienceAustralia/uncover-ml
     cd uncover-ml
 
-Before the UncoverML package can be installed, there are some required packages that need to be isntalled first.
+Before the UncoverML package can be installed, there are some required packages that need to be installed first.
 
 .. code:: bash
 
