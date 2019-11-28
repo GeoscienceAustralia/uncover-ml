@@ -82,8 +82,10 @@ def _real_vs_pred_from_crossval(crossval_path):
         return _CACHE['_real_vs_pred_from_crossval']
 
     rvp = pd.read_csv(crossval_path, float_precision='round_trip')
-    targets, predict = np.hsplit(rvp.to_numpy(), 2)
-    return targets.flatten(), predict.flatten()
+    # Split into the length of columns to support old format of crossval results.
+    arrays = np.hsplit(rvp.to_numpy(), len(rvp.columns))
+    # Only need the first two arrays ([0] = targets, [1] = predictions).
+    return arrays[0].flatten(), arrays[1].flatten()
 
 def plot_residual_error_crossval(crossval_path, bins=20):
     return _plot_residual_error(crossval_path=crossval_path, bins=bins)
