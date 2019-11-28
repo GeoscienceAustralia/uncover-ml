@@ -55,6 +55,9 @@ Home Page
 Documentation
     http://GeoscienceAustralia.github.io/uncover-ml
 
+Changelog
+    http://GeoscienceAustralia.github.io/uncover-ml/history.html
+
 Issue tracking
     https://github.com/GeoscienceAustralia/uncover-ml/issues
 
