@@ -566,13 +566,20 @@ class RandomForestRegressorMulti():
             print('Train first')
             return
 
-        y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
+        rfs = range(self.forests)
+        #if self.parallel:
+        #    rfs = np.array_split(range(self.forests), mpiops.chunks)[mpiops.chunk_index]
+        #else:
+        #    rfs = range(self.forests)
+    
+        y_pred = np.zeros((x.shape[0], len(rfs) * self.n_estimators))
 
-        for i in range(self.forests):
+        for i in rfs:
             if self.parallel:  # used in training
                 f = self._randomforests['rf_model_{}'.format(i)]
             else:  # used when parallel is false, i.e., during x-val
                 f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
+            print(f"PROCESSOR {mpiops.chunk_index} predicting for 'rf_model_{i}'")
             for m, dt in enumerate(f.estimators_):
                 y_pred[:, i * self.n_estimators + m] = dt.predict(x)
 
@@ -581,7 +588,7 @@ class RandomForestRegressorMulti():
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
-
+        print(f"PROCESSOR RESULT: {y_mean}, {y_var}, {ql}, {qu}")
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
