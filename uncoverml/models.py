@@ -534,7 +534,7 @@ class RandomForestRegressorMulti():
 
     def fit(self, x, y, *args, **kwargs):
 
-        np.random.seed(self.random_state)
+        np.random.seed(self.random_state + mpiops.chunk_index)
 
         if self.parallel:
             process_rfs = np.array_split(range(self.forests),
@@ -567,10 +567,10 @@ class RandomForestRegressorMulti():
             return
 
         rfs = range(self.forests)
-        #if self.parallel:
-        #    rfs = np.array_split(range(self.forests), mpiops.chunks)[mpiops.chunk_index]
-        #else:
-        #    rfs = range(self.forests)
+        if self.parallel:
+            rfs = np.array_split(range(self.forests), mpiops.chunks)[mpiops.chunk_index]
+        else:
+            rfs = range(self.forests)
     
         y_pred = np.zeros((x.shape[0], len(rfs) * self.n_estimators))
 
@@ -580,6 +580,7 @@ class RandomForestRegressorMulti():
             else:  # used when parallel is false, i.e., during x-val
                 f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
             print(f"PROCESSOR {mpiops.chunk_index} predicting for 'rf_model_{i}'")
+            print(f"PROCESSOR {mpiops.chunk_index} RF{i} random state = {f.random_state}")
             for m, dt in enumerate(f.estimators_):
                 y_pred[:, i * self.n_estimators + m] = dt.predict(x)
 
@@ -588,7 +589,7 @@ class RandomForestRegressorMulti():
 
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
-        print(f"PROCESSOR RESULT: {y_mean}, {y_var}, {ql}, {qu}")
+        print(f"PROCESSOR {mpiops.chunk_index} RESULT: {y_mean}, {y_var}, {ql}, {qu}")
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
