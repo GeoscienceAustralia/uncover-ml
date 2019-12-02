@@ -533,9 +533,6 @@ class RandomForestRegressorMulti():
         self._randomforests = {}
 
     def fit(self, x, y, *args, **kwargs):
-
-        np.random.seed(self.random_state)
-
         if self.parallel:
             process_rfs = np.array_split(range(self.forests),
                                          mpiops.chunks)[mpiops.chunk_index]
@@ -545,6 +542,8 @@ class RandomForestRegressorMulti():
         for t in process_rfs:
             print('training forest {} using '
                   'process {}'.format(t, mpiops.chunk_index))
+
+            np.random.seed(self.random_state + t)
 
             # change random state in each forest
             self.kwargs['random_state'] = np.random.randint(0, 10000)
@@ -568,13 +567,13 @@ class RandomForestRegressorMulti():
 
         y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
 
-        for i in range(self.forests):
+        for t in range(self.forests):
             if self.parallel:  # used in training
-                f = self._randomforests['rf_model_{}'.format(i)]
+                f = self._randomforests['rf_model_{}'.format(t)]
             else:  # used when parallel is false, i.e., during x-val
-                f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
+                f = self._randomforests['rf_model_{}_{}'.format(t, mpiops.chunk_index)]
             for m, dt in enumerate(f.estimators_):
-                y_pred[:, i * self.n_estimators + m] = dt.predict(x)
+                y_pred[:, t * self.n_estimators + m] = dt.predict(x)
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)

@@ -247,7 +247,6 @@ def predict(config_file, partitions, mask, retain):
         ls.predict.render_partition(model, i, image_out, config)
 
     image_out.close()
-    print(image_out.file_names)
 
     if config.clustering and config.cluster_analysis:
         if ls.mpiops.chunk_index == 0:
