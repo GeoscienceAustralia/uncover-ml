@@ -533,9 +533,6 @@ class RandomForestRegressorMulti():
         self._randomforests = {}
 
     def fit(self, x, y, *args, **kwargs):
-
-        np.random.seed(self.random_state + mpiops.chunk_index)
-
         if self.parallel:
             process_rfs = np.array_split(range(self.forests),
                                          mpiops.chunks)[mpiops.chunk_index]
@@ -545,6 +542,8 @@ class RandomForestRegressorMulti():
         for t in process_rfs:
             print('training forest {} using '
                   'process {}'.format(t, mpiops.chunk_index))
+
+            np.random.seed(self.random_state + t)
 
             # change random state in each forest
             self.kwargs['random_state'] = np.random.randint(0, 10000)
@@ -568,28 +567,40 @@ class RandomForestRegressorMulti():
 
         rfs = range(self.forests)
         if self.parallel:
-            rfs = np.array_split(range(self.forests), mpiops.chunks)[mpiops.chunk_index]
+            rfs = np.array_split(range(self.forests), 
+				 mpiops.chunks)[mpiops.chunk_index]
         else:
             rfs = range(self.forests)
     
         y_pred = np.zeros((x.shape[0], len(rfs) * self.n_estimators))
 
-        for i in rfs:
+        print(f"processor {mpiops.chunk_index} x shape: {x.shape}")
+
+        for idx, i in enumerate(rfs):
             if self.parallel:  # used in training
                 f = self._randomforests['rf_model_{}'.format(i)]
             else:  # used when parallel is false, i.e., during x-val
                 f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
-            print(f"PROCESSOR {mpiops.chunk_index} predicting for 'rf_model_{i}'")
-            print(f"PROCESSOR {mpiops.chunk_index} RF{i} random state = {f.random_state}")
             for m, dt in enumerate(f.estimators_):
-                y_pred[:, i * self.n_estimators + m] = dt.predict(x)
+                y_pred[:, idx * self.n_estimators + m] = dt.predict(x)
+
+        print(f"processor {mpiops.chunk_index} pred shape: {y_pred.shape}")
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)
 
+        if self.parallel:
+            res = (mpiops.chunk_index, y_mean, y_pred)
+            res = mpiops.comm.gather(res, root=0)
+            mpiops.comm.barrier()
+            if mpiops.chunk_index == 0:
+                res = sorted(res, key=lambda a: a[0])
+                y_mean = np.concatenate(res[1])
+                y_pred = np.concatenate(res[2])
+         
+        print(f"processer {mpiops.chunk_index} y_mean shape: {y_mean.shape} y_var shape: {y_var.shape}")
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
-        print(f"PROCESSOR {mpiops.chunk_index} RESULT: {y_mean}, {y_var}, {ql}, {qu}")
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
