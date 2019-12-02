@@ -2,6 +2,16 @@
 
 History
 =======
+Unreleased (2019-12-xx)
+-----------------------
+Added
++++++
+- Install instructions for VDI
+
+Fixed
++++++
+- MRF results being determined by number of processors used. Changed to provide each random forest with its own RNG seed.
+
 0.3.1 (2019-11-28)
 ------------------
 Added
