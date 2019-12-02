@@ -146,7 +146,7 @@ def test_pix2latlong(pix_size_single, origin_point, is_flipped,
 def test_load_shapefile(shapefile):
     true_lonlats, filename = shapefile
     for i in range(10):
-        lonlats, vals, _ = geoio.load_shapefile(filename, str(i))
+        lonlats, vals, _ = geoio.load_shapefile(filename, str(i), None)
         assert np.all(lonlats == true_lonlats)
         assert all(vals == i)
 
