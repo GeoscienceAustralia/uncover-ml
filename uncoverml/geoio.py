@@ -171,7 +171,7 @@ class ArrayImageSource(ImageSource):
         return data_window
 
 
-def load_shapefile(filename, targetfield):
+def load_shapefile(filename, targetfield, covariate_crs):
     """
     TODO
     """
@@ -191,40 +191,45 @@ def load_shapefile(filename, targetfield):
     othervals = record_dict
 
     # Try to get CRS.
-    prj_file = os.path.splitext(filename)[0] + '.prj'
-    src_prj, dst_prj = None, None
-    if os.path.exists(prj_file):
-        with open(prj_file, 'r') as f:
-            wkt = f.readline()
-        if pyproj.crs.is_wkt(wkt):
-            src_prj = pyproj.Proj(pyproj.CRS(wkt))
-            if src_prj.crs.to_epsg() != 4326:
-                dst_prj = pyproj.Proj('EPSG:4326')
-        else:
-            log.warning("Found a '.prj' file for target shapefile but text contained is not in "
-                        "'wkt' format. Continuing without reprojecting.")
+    if not covariate_crs:
+        log.warning("Could not get covariate CRS for reprojecting target shapefile. Ensure the "
+                    "target shapefile is in the same projection as the covariates or errors will "
+                    "occur.")
     else:
-        log.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
-                    "shapefile is in EPSG:4326 projection or errors will occur.") 
+        prj_file = os.path.splitext(filename)[0] + '.prj'
+        src_prj, dst_prj = None, None
+        if os.path.exists(prj_file):
+            with open(prj_file, 'r') as f:
+                wkt = f.readline()
+            if pyproj.crs.is_wkt(wkt):
+                src_prj = pyproj.Proj(pyproj.CRS(wkt))
+                if src_prj.crs.to_epsg() != covariate_crs.to_epsg():
+                    dst_prj = covariate_crs.to_epsg()
+            else:
+                log.warning("Found a '.prj' file for target shapefile but text contained is not "
+                            "in 'wkt' format. Continuing without reprojecting.")
+        else:
+            log.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
+                        "shapefile is in same projection as the covariates or errors will occur.") 
         
-
     # Get coordinates
     coords = []
     for shape in sf.iterShapes():
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords).squeeze()
     if src_prj and dst_prj:
-        label_coords = np.array([x for x in pyproj.itransform(src_prj, dst_prj, label_coords, always_xy=True)])
+        label_coords = np.array([x for x in pyproj.itransform(src_prj, dst_prj, 
+                                                              label_coords, always_xy=True)])
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield):
+def load_targets(shapefile, targetfield, covariate_crs=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
     """
     if mpiops.chunk_index == 0:
-        lonlat, vals, othervals = load_shapefile(shapefile, targetfield)
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs)
         # sort by y then x
         ordind = np.lexsort(lonlat.T)
         vals = vals[ordind]
@@ -249,7 +254,11 @@ def load_targets(shapefile, targetfield):
     targets = Targets(lonlat, vals, othervals=othervals)
     return targets
 
-
+def get_image_crs(config):
+    image_file = config.feature_sets[0].files[0]
+    im = image.Image(RasterioImageSource(image_file))
+    return im.crs 
+     
 def get_image_spec(model, config):
     # temp workaround, we should have an image spec to check against
     nchannels = len(model.get_predict_tags())

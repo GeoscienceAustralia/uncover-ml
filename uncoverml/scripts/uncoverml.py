@@ -90,7 +90,8 @@ def _load_data(config, partitions):
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
         targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                        targetfield=config.target_property)
+                                        targetfield=config.target_property,
+                                        covariate_crs=ls.geoio.get_image_crs(config))
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
