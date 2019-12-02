@@ -565,42 +565,22 @@ class RandomForestRegressorMulti():
             print('Train first')
             return
 
-        rfs = range(self.forests)
-        if self.parallel:
-            rfs = np.array_split(range(self.forests), 
-				 mpiops.chunks)[mpiops.chunk_index]
-        else:
-            rfs = range(self.forests)
-    
-        y_pred = np.zeros((x.shape[0], len(rfs) * self.n_estimators))
+        y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
 
-        print(f"processor {mpiops.chunk_index} x shape: {x.shape}")
-
-        for idx, i in enumerate(rfs):
+        for t in range(self.forests):
             if self.parallel:  # used in training
-                f = self._randomforests['rf_model_{}'.format(i)]
+                f = self._randomforests['rf_model_{}'.format(t)]
             else:  # used when parallel is false, i.e., during x-val
-                f = self._randomforests['rf_model_{}_{}'.format(i, mpiops.chunk_index)]
+                f = self._randomforests['rf_model_{}_{}'.format(t, mpiops.chunk_index)]
             for m, dt in enumerate(f.estimators_):
-                y_pred[:, idx * self.n_estimators + m] = dt.predict(x)
-
-        print(f"processor {mpiops.chunk_index} pred shape: {y_pred.shape}")
+                y_pred[:, t * self.n_estimators + m] = dt.predict(x)
 
         y_mean = np.mean(y_pred, axis=1)
         y_var = np.var(y_pred, axis=1)
 
-        if self.parallel:
-            res = (mpiops.chunk_index, y_mean, y_pred)
-            res = mpiops.comm.gather(res, root=0)
-            mpiops.comm.barrier()
-            if mpiops.chunk_index == 0:
-                res = sorted(res, key=lambda a: a[0])
-                y_mean = np.concatenate(res[1])
-                y_pred = np.concatenate(res[2])
-         
-        print(f"processer {mpiops.chunk_index} y_mean shape: {y_mean.shape} y_var shape: {y_var.shape}")
         # Determine quantiles
         ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
+
         return y_mean, y_var, ql, qu
 
     def predict(self, x):
