@@ -191,19 +191,20 @@ def load_shapefile(filename, targetfield, covariate_crs):
     othervals = record_dict
 
     # Try to get CRS.
+    src_prj, dst_prj = None, None
     if not covariate_crs:
         log.warning("Could not get covariate CRS for reprojecting target shapefile. Ensure the "
                     "target shapefile is in the same projection as the covariates or errors will "
                     "occur.")
     else:
         prj_file = os.path.splitext(filename)[0] + '.prj'
-        src_prj, dst_prj = None, None
         if os.path.exists(prj_file):
             with open(prj_file, 'r') as f:
                 wkt = f.readline()
             if pyproj.crs.is_wkt(wkt):
                 src_prj = pyproj.Proj(pyproj.CRS(wkt))
                 if src_prj.crs.to_epsg() != covariate_crs.to_epsg():
+                    src_prj = src_prj.crs.to_epsg()
                     dst_prj = covariate_crs.to_epsg()
             else:
                 log.warning("Found a '.prj' file for target shapefile but text contained is not "
