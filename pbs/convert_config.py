@@ -2,7 +2,7 @@ import yaml
 import sys
 
 def convert(path):
-    print("converting UncoverML config...")
+    print("Converting UncoverML config...")
     with open(path) as f:
         old_config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -21,13 +21,18 @@ def convert(path):
 
     if 'validation' in old_config:
         if 'parallel' in old_config['validation']:
-            parallel = old_config['validation'][old_config['validation'].index('parallel')]
+            parallel = True
             del old_config['validation'][old_config['validation'].index('parallel')]
         else:
             parallel = False 
-        for i, e in enumerate(old_config['validation']):
+        temp = old_config['validation']
+        old_config['validation'] = {}
+        for i, e in enumerate(temp):
             if isinstance(e, dict) and 'k-fold' in e:
-                old_config['validation'][i]['k-fold']['parallel'] = parallel
+                old_config['validation'].update(e)
+                old_config['validation']['k-fold']['parallel'] = parallel
+            else:
+                old_config['validation'][e] = True
             break
 
     if 'output' in old_config:
@@ -37,7 +42,7 @@ def convert(path):
         old_config['output']['plot_correlation'] = True
         old_config['output']['plot_target_scaling'] = True
 
-    print(f"saving converted config to 'converted_{path}'")
+    print(f"Done! Saving as 'converted_{path}'")
     with open('converted_' + path, 'w') as f:
         yaml.dump(old_config, f)
 
