@@ -46,6 +46,13 @@ def run_crossval(x_all, targets_all, config):
                                                   targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
+def crop_covariates(config):
+    _logger.info("Cropping covariates...")
+    for s in config.feature_sets:
+        print(f"Old files: {s.files}")
+        s.files = [ls.geoio.crop_tif(f, config.crop_box) for f in s.files]
+        print(f"New files: {s.files}")
+
 @cli.command()
 @click.argument('config_file')
 @click.option('-p', '--partitions', type=int, default=1,
@@ -78,6 +85,8 @@ def _load_data(config, partitions):
         _logger.warning("Using  pickled targets and covariates. Make sure you have"
                         " not changed targets file and/or covariates.")
     else:
+        if config.crop_box:
+            crop_covariates(config)
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
             _logger.info("Memory constraint forcing {} iterations "
@@ -214,6 +223,9 @@ def unsupervised(config):
 def predict(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file)
     model = _load_model(config)
+
+    if config.crop_box:
+        crop_covariates(config)
 
     config.mask = mask if mask else config.mask
     if config.mask:

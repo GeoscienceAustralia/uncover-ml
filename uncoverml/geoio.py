@@ -3,17 +3,20 @@ from __future__ import division
 import os.path
 import os
 import logging
+import tempfile
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import json
 import pickle
+
+import geojson
 import matplotlib.pyplot as plt
 import rasterio
+import rasterio.mask
 from rasterio.warp import reproject
 from affine import Affine
 import numpy as np
 import shapefile
-
 import pyproj
 import matplotlib.pyplot as plt
 
@@ -170,6 +173,34 @@ class ArrayImageSource(ImageSource):
         data_window = self._data[min_x:max_x, :][:, min_y:max_y]
         return data_window
 
+def crop_tif(filename, crop_box, outfile=None):
+    with rasterio.open(filename) as src:
+        if any(c is None for c in crop_box):
+            for i in range(4):
+                crop_box[i] = src.bounds[i] if crop_box[i] is None else crop_box[i]
+        xmin, ymin, xmax, ymax = crop_box
+        gj_box = [
+            {'type': 'Polygon',
+            'coordinates': [[
+                (xmin, ymin), (xmin, ymax), 
+                (xmax, ymax), (xmax, ymin),(xmin, ymin)]]}
+        ]        
+        out_image, out_transform = rasterio.mask.mask(src, gj_box, crop=True)
+        out_meta = src.meta
+        out_meta.update({"driver": "GTiff", 
+                         "height": out_image.shape[1],
+                         "width": out_image.shape[2],
+                         "transform": out_transform})
+
+        if outfile is None:
+            prefix, suffix = os.path.splitext(os.path.basename(filename))
+            _, outfile = tempfile.mkstemp(suffix, prefix)
+            print(outfile)
+
+        with rasterio.open(outfile, "w", **out_meta) as dest:
+            dest.write(out_image)
+
+        return outfile
 
 def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     """

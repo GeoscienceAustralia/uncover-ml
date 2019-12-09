@@ -422,7 +422,7 @@ class Config(object):
                 _logger.warning("'extents' block was specified but no coordinates were given. "
                                 "Cropping will not be performed.")
         else:
-            self.crop_box = None, None, None, None
+            self.crop_box = None
         _logger.info("loaded crop box %s", self.crop_box)
 
         # PICKLING BLOCK
