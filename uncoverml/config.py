@@ -413,7 +413,18 @@ class Config(object):
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
-        
+
+        # EXTENTS
+        exb = s.get('extent')
+        if exb:
+            self.crop_box = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
+            if all(x is None for x in self.crop_box): 
+                _logger.warning("'extents' block was specified but no coordinates were given. "
+                                "Cropping will not be performed.")
+        else:
+            self.crop_box = None, None, None, None
+        _logger.info("loaded crop box %s", self.crop_box)
+
         # PICKLING BLOCK
         pk_block = s.get('pickling')
         if pk_block:
