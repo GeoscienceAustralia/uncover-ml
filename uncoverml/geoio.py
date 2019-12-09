@@ -25,7 +25,7 @@ from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 _lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
@@ -171,11 +171,14 @@ class ArrayImageSource(ImageSource):
         return data_window
 
 
-def load_shapefile(filename, targetfield, covariate_crs):
+def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     """
     TODO
     """
     sf = shapefile.Reader(filename)
+    crop = any(x is not None for x in crop_box)
+    if crop:
+        crop_box = tuple(sf.bbox[i] if crop_box[i] is None else crop_box[i] for i in range(4))
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
     dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
     dtypes = ['float' if (k[0] == 'N' or k[0] == 'F') else '<U{}'.format(k[1])
@@ -193,7 +196,7 @@ def load_shapefile(filename, targetfield, covariate_crs):
     # Try to get CRS.
     src_prj, dst_prj = None, None
     if not covariate_crs:
-        log.warning("Could not get covariate CRS for reprojecting target shapefile. Ensure the "
+        _logger.warning("Could not get covariate CRS for reprojecting target shapefile. Ensure the "
                     "target shapefile is in the same projection as the covariates or errors will "
                     "occur.")
     else:
@@ -207,10 +210,10 @@ def load_shapefile(filename, targetfield, covariate_crs):
                     src_prj = src_prj.crs.to_epsg()
                     dst_prj = covariate_crs.to_epsg()
             else:
-                log.warning("Found a '.prj' file for target shapefile but text contained is not "
+                _logger.warning("Found a '.prj' file for target shapefile but text contained is not "
                             "in 'wkt' format. Continuing without reprojecting.")
         else:
-            log.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
+            _logger.warning("Could not find any '.prj' file for target shapefile. Ensure the target "
                         "shapefile is in same projection as the covariates or errors will occur.") 
         
     # Get coordinates
@@ -219,18 +222,24 @@ def load_shapefile(filename, targetfield, covariate_crs):
         coords.append(list(shape.__geo_interface__['coordinates']))
     label_coords = np.array(coords).squeeze()
     if src_prj and dst_prj:
-        label_coords = np.array([x for x in pyproj.itransform(src_prj, dst_prj, 
-                                                              label_coords, always_xy=True)])
+        label_coords = np.array([coord for coord in pyproj.itransform(src_prj, dst_prj, 
+                                                                      label_coords, always_xy=True)])
+    if crop:
+        def _in_crop_box(coord):
+            return crop_box[0] <= coord[0] <= crop_box[2] \
+                    and crop_box[1] <= coord[1] <= crop_box[3]
+        label_coords = np.array([coord for coord in label_coords if _in_crop_box(coord)])
+
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield, covariate_crs=None):
+def load_targets(shapefile, targetfield, covariate_crs=None, crop_box=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
     """
     if mpiops.chunk_index == 0:
-        lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs)
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, crop_box)
         # sort by y then x
         ordind = np.lexsort(lonlat.T)
         vals = vals[ordind]
@@ -250,7 +259,7 @@ def load_targets(shapefile, targetfield, covariate_crs=None):
     lonlat = mpiops.comm.scatter(lonlat, root=0)
     vals = mpiops.comm.scatter(vals, root=0)
     othervals = mpiops.comm.scatter(othervals, root=0)
-    log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
+    _logger.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
                                                            lonlat.shape[0]))
     targets = Targets(lonlat, vals, othervals=othervals)
     return targets
@@ -350,7 +359,7 @@ class ImageWriter:
             x.data[x.mask] = self.nodata_value
 
         mpiops.comm.barrier()
-        log.info("Writing partition to output file")
+        _logger.info("Writing partition to output file")
 
         if self.independent:
             data = np.ma.transpose(image, [2, 1, 0])  # untranspose
@@ -423,7 +432,7 @@ def _iterate_sources(f, config):
                 missing_percent = missing_percentage(x)
                 t_missing = mpiops.comm.allreduce(
                     missing_percent) / mpiops.chunks
-                log.info("{}: {}px {:2.2f}% missing".format(
+                _logger.info("{}: {}px {:2.2f}% missing".format(
                     name, count, t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
