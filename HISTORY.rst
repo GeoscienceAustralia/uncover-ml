@@ -7,6 +7,7 @@ Unreleased (2019-12-xx)
 Added
 +++++
 - Install instructions for VDI
+- "extents" parameter for config. Providing bounding box will crop targets and covariates.
 
 Fixed
 +++++
