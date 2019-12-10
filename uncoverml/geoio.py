@@ -8,8 +8,8 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import json
 import pickle
+import itertools
 
-import geojson
 import matplotlib.pyplot as plt
 import rasterio
 import rasterio.mask
@@ -172,6 +172,16 @@ class ArrayImageSource(ImageSource):
         # MUST BE EXCLUSIVE
         data_window = self._data[min_x:max_x, :][:, min_y:max_y]
         return data_window
+
+def crop_covariates(config):
+    _logger.info("Cropping covariates...")
+    for s in config.feature_sets:
+        proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
+        new_files = [crop_tif(f, config.crop_box) for f in proc_files]
+        new_files = mpiops.comm.gather(new_files, root=0)
+        mpiops.comm.barrier()
+        if mpiops.chunk_index == 0:
+            s.files = list(itertools.chain(*new_files))
 
 def crop_tif(filename, crop_box, outfile=None):
     with rasterio.open(filename) as src:
