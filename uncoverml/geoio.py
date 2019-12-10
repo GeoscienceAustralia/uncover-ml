@@ -178,10 +178,9 @@ def crop_covariates(config):
     for s in config.feature_sets:
         proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
         new_files = [crop_tif(f, config.crop_box) for f in proc_files]
-        new_files = mpiops.comm.gather(new_files, root=0)
+        new_files = mpiops.comm.allgather(new_files)
         mpiops.comm.barrier()
-        if mpiops.chunk_index == 0:
-            s.files = list(itertools.chain(*new_files))
+        s.files = list(itertools.chain(*new_files))
 
 def crop_tif(filename, crop_box, outfile=None):
     with rasterio.open(filename) as src:
@@ -205,7 +204,6 @@ def crop_tif(filename, crop_box, outfile=None):
         if outfile is None:
             prefix, suffix = os.path.splitext(os.path.basename(filename))
             _, outfile = tempfile.mkstemp(suffix, prefix)
-            print(outfile)
 
         with rasterio.open(outfile, "w", **out_meta) as dest:
             dest.write(out_image)
@@ -217,8 +215,7 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     TODO
     """
     sf = shapefile.Reader(filename)
-    crop = any(x is not None for x in crop_box)
-    if crop:
+    if crop_box:
         crop_box = tuple(sf.bbox[i] if crop_box[i] is None else crop_box[i] for i in range(4))
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
     dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
@@ -265,7 +262,7 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     if src_prj and dst_prj:
         label_coords = np.array([coord for coord in pyproj.itransform(src_prj, dst_prj, 
                                                                       label_coords, always_xy=True)])
-    if crop:
+    if crop_box:
         def _in_crop_box(coord):
             return crop_box[0] <= coord[0] <= crop_box[2] \
                     and crop_box[1] <= coord[1] <= crop_box[3]
