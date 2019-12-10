@@ -185,8 +185,8 @@ def crop_covariates(config):
 def crop_tif(filename, crop_box, outfile=None):
     with rasterio.open(filename) as src:
         if any(c is None for c in crop_box):
-            for i in range(4):
-                crop_box[i] = src.bounds[i] if crop_box[i] is None else crop_box[i]
+            crop_box = \
+                tuple(src.bounds[i] if crop_box[i] is None else crop_box[i] for i in range(4))
         xmin, ymin, xmax, ymax = crop_box
         gj_box = [
             {'type': 'Polygon',
@@ -215,7 +215,7 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     TODO
     """
     sf = shapefile.Reader(filename)
-    if crop_box:
+    if crop_box and any(c is None for c in crop_box):
         crop_box = tuple(sf.bbox[i] if crop_box[i] is None else crop_box[i] for i in range(4))
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
     dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
@@ -267,7 +267,6 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
             return crop_box[0] <= coord[0] <= crop_box[2] \
                     and crop_box[1] <= coord[1] <= crop_box[3]
         label_coords = np.array([coord for coord in label_coords if _in_crop_box(coord)])
-
     return label_coords, val, othervals
 
 

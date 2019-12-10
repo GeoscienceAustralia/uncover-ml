@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from affine import Affine
 import numpy as np
@@ -146,7 +148,7 @@ def test_pix2latlong(pix_size_single, origin_point, is_flipped,
 def test_load_shapefile(shapefile):
     true_lonlats, filename = shapefile
     for i in range(10):
-        lonlats, vals, _ = geoio.load_shapefile(filename, str(i), None)
+        lonlats, vals, _ = geoio.load_shapefile(filename, str(i), None, None)
         assert np.all(lonlats == true_lonlats)
         assert all(vals == i)
 
@@ -244,3 +246,41 @@ def test_Image_split_overlap(array_image_src, num_chunks, overlap_pixels):
     Irecon = np.hstack(Ichunks)
     assert I.shape == Irecon.shape
     assert np.all(I == Irecon)
+
+def test_covariate_cropping(sirsam_covariate_paths):
+    cov = sirsam_covariate_paths[0]
+    with rasterio.open(cov) as ref:
+        ref_shape = ref.shape
+
+    crop_box = None, None, None, None
+    
+    out = geoio.crop_tif(cov, crop_box)
+    
+    # Test that empty crop box results in no change
+    with rasterio.open(out) as test:
+        assert test.shape == ref.shape
+    
+    os.remove(out)
+
+    crop_box = 120.0, -28.0, 121.0, -27.0
+    
+    out = geoio.crop_tif(cov, crop_box)
+    
+    with rasterio.open(out) as test:
+        assert test.shape == (1201, 1201)
+    
+def test_target_cropping(sirsam_target_path):
+    crop_box = None, None, None, None
+    coords, _, _ = geoio.load_shapefile(sirsam_target_path, 'Na_log', None, crop_box)
+    assert len(coords) == 1026
+    
+    crop_box = 120.0, -28.0, 121.0, -27.0
+    coords, _, _ = geoio.load_shapefile(sirsam_target_path, 'Na_log', None, crop_box)
+    assert len(coords) == 654
+
+    def _in_crop_box(coord):
+        return crop_box[0] <= coord[0] <= crop_box[2] \
+                and crop_box[1] <= coord[1] <= crop_box[3]
+
+    assert all(_in_crop_box(c) for c in coords)
+
