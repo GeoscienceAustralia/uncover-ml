@@ -8,6 +8,7 @@ import pickle
 import resource
 from os.path import isfile, splitext, exists
 import os
+import shutil
 import warnings
 
 import click
@@ -301,7 +302,5 @@ def _load_model(config):
         return pickle.load(f)
 
 def _clean_temp_cropfiles(config):
-    for s in config.feature_sets:
-        for f in s.files:
-            os.remove(f)
+    shutil.rmtree(config.tmpdir)   
 

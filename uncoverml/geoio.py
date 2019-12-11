@@ -173,16 +173,51 @@ class ArrayImageSource(ImageSource):
         data_window = self._data[min_x:max_x, :][:, min_y:max_y]
         return data_window
 
-def crop_covariates(config):
+def crop_covariates(config, outdir=None):
+    """
+    Crops the covariate files listed under `config.feature_sets` using
+    the bounds provided under `config.crop_box`.
+    
+    Parameters
+    ----------
+    config : `uncoverml.config.Config`
+        Parsed UncoverML config.
+    outdir : str
+        Aboslute path to directory to store cropped covariates.
+        If not provided, a tmp directory will be created.
+    """
     _logger.info("Cropping covariates...")
+    if outdir is None:
+        config.tmpdir = tempfile.mkdtemp()
+        def _new_fname(fname):
+            return os.path.join(config.tmpdir, os.path.basename(fname))
+    else:
+        def _new_fname(fname):
+            return None
+
     for s in config.feature_sets:
         proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
-        new_files = [crop_tif(f, config.crop_box) for f in proc_files]
+        new_files = [crop_tif(f, config.crop_box, _new_fname(f)) for f in proc_files]
         new_files = mpiops.comm.allgather(new_files)
         mpiops.comm.barrier()
         s.files = list(itertools.chain(*new_files))
 
 def crop_tif(filename, crop_box, outfile=None):
+    """
+    Crops the geotiff using the provided extent.
+    
+    Parameters
+    ----------
+    filename : str
+        Path to the geotiff to be cropped.
+    crop_box : tuple(float, float, float, float)
+        Bounding box to crop by, ordering is (xmin, ymin, xmax, ymax).
+        Data outside bounds will be cropped. Any elements that are None
+        will be substituted with the original bound of the geotiff.
+    outfile : str
+        Path to save cropped geotiff. If not provided, will be saved
+        with original name + random id in tmp directory.
+    """
     with rasterio.open(filename) as src:
         if any(c is None for c in crop_box):
             crop_box = \
@@ -203,7 +238,9 @@ def crop_tif(filename, crop_box, outfile=None):
 
         if outfile is None:
             prefix, suffix = os.path.splitext(os.path.basename(filename))
-            _, outfile = tempfile.mkstemp(suffix, prefix)
+            fd, outfile = tempfile.mkstemp(suffix, prefix)
+            # Close file descriptor because we don't need it
+            os.close(fd)
 
         with rasterio.open(outfile, "w", **out_meta) as dest:
             dest.write(out_image)
