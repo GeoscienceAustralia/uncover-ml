@@ -91,8 +91,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if config.cubist or config.multicubist or config.krige:
-        log.warning("{}: Ignoring preprocessing "
-                    "transform".format(config.algorithm))
+        log.warning("{}: Ignoring preprocessing final transform".format(config.algorithm))
     else:
         if final_transform:
             x = final_transform(x)

@@ -17,11 +17,7 @@ def parse_requirements(filename):
 
 
 def build_cubist():
-    try:
-        from uncoverml import cubist_config
-        out = subprocess.run([cubist_config.invocation, '-h'])
-    except:
-        out = subprocess.run(['./cubist/makecubist', '.'])
+    out = subprocess.run(['./cubist/makecubist', '.'])
     print(out)
 
 class build_py(_build_py):

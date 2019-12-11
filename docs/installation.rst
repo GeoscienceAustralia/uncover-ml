@@ -76,9 +76,16 @@ Note you will have install some prerequisites:
     pip install matplotlib==3.1.1
     pip install uncover-ml
 
-.. todo::
-    
-    Need to include a simple workflow for testing the installation here.
+To ensure the installation has been successful, try running UncoverML against the test data
+included in the repository:
+
+.. code:: bash
+
+   uncoverml learn tests/test_data/sirsam/random_forest/sirsam_Na_randomforest.yaml
+
+This will start training a random forest model on the test data. It may take a few minutes.
+If the script completes successfully (there will be a log message saying "Finished!") then 
+UncoverML has been correctly installed.
 
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
 UncoverML.
@@ -152,11 +159,16 @@ Once these are done, you can install UncoverML with pip:
 
     python setup.py install
 
-.. todo::
-    
-    Need to include a simple workflow for testing the installation here (can be run on login node).
-    Tests don't count because they require dev requirements and shouldn't need to be installed
-    for an average user.
+To ensure the installation has been successful, try running UncoverML against the test data
+included in the repository:
+
+.. code:: bash
+
+   uncoverml learn tests/test_data/sirsam/random_forest/sirsam_Na_randomforest.yaml
+
+This will start training a random forest model on the test data. It may take a few minutes.
+If the script completes successfully (there will be a log message saying "Finished!") then 
+UncoverML has been correctly installed.
 
 This completes the installation. Check out the :ref:`Usage` documentation to get started using
 UncoverML.
