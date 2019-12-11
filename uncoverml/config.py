@@ -105,7 +105,6 @@ class FeatureSetConfig(object):
     """
     def __init__(self, config_dict: dict):
         d = config_dict
-        self.name = d['name']
         if d['type'] not in ('ordinal', 'categorical'):
             _logger.warning("Feature set type must be ordinal or categorical. "
                             "Unknwon option: '%s'. Type has been set to 'ordinal'.",
