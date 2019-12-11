@@ -8,8 +8,8 @@ workflows and possible parameters.
 For a reference to all possible config parameters, view the module
 documentation: :mod:`uncoverml.config`
 
-Random Forest
--------------
+Example - Random Forest
+-----------------------
 
 The first example is a configuration file for a Random Forest model.
 This file can be found in the repository under `tests/test_data/sirsam/random_forest/sirsam_Na_random_forest.yaml`.
@@ -39,7 +39,45 @@ arguments are applicable, refer the documentation for the specific model.
         - standardise
       imputation: mean
 
-The 'features' block 
+The 'features' block contains the features (AKA covariates) to be used for training and prediction.
+UncoverML supports ordinal and categorical data, but they must be provided in separate
+files and the 'type' must be provided (if no type is provided, UncoverML will assume the
+data is ordinal). To provide a separate feature set for 'categorical data', you can
+add another entry under the 'features' block:
+
+.. code:: yaml
+
+  features:
+    - type: ordinal
+      # ...files, transforms, imputation
+    - type: categorical
+      files: 
+        - directory: path/to/categorical/data
+      # ...transforms, imputation
+
+The 'files' field is where paths to covariate data is specified. In this case, a directory
+is provided, so every file in that directory will be treated as part of the feature set.
+Individual paths can be set or a text file with a list of paths. Covariate files must be in
+geotiff format, and each file must have the same dimensions and projection.
+
+'transforms' specifies scaling that will be applied to that set of features. Multiple can be 
+provided. Available transforms are:
+
+- 'centre'
+- 'log'
+- 'sqrt'
+- 'standardise'
+- 'whiten'
+- 'onehot'
+- 'randomhot'
+
+'imputation' is the imputation (filling of no data values) method. Only one can be provided for
+each feature set. Available methods are:
+
+- 'none'
+- 'mean'
+- 'gaus'
+- 'nn' (nearest neighbour)
 
 .. code:: yaml
 
@@ -47,12 +85,29 @@ The 'features' block
     file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
     property: Na_log
 
+The 'targets' block contains details for the training data. 'file' is the path to the shapefile
+containing the targets. 'property' is the name of the field in the shapefile to train on. UncoverML
+works by intersecting patches of the covariate data with corresponding target locations.
+
+.. code:: yaml
+
   validation:
     feature_rank: True
     k-fold:
       parallel: True
       folds: 5
       random_seed: 1
+
+The 'validation' block is optional and contains parameters for performing k-fold cross validation,
+feature ranking and permutation importance. In this config file, 'feature_ranking' has been 
+enabled and 'k-fold' has also been enabled. 'k-fold' cross validation has some parameters to set.
+'parellel' will allow the cross validation to take advantage of multiprocessing: if you are running
+UncoverML with MPI and more than one processor, setting this to 'True' will accelerate the 
+validation. 'folds' is the number of folds to split the training data into. 'random_seed' is the 
+seed provided to numpy for getting random permutations of data to split into folds. The permutation
+is pseudorandom, i.e. using the same seed will provide deterministic results.
+
+.. code:: yaml
 
   prediction:
     quantiles: 0.95
@@ -71,106 +126,3 @@ The 'features' block
     covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
     targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
 
- 
-
-Running locally
----------------
-
-UncoverML uses MPI for parallelization on localhosts and on clusters/high
-performance computers. Here is an example of running the pipeline from the
-command line,
-
-.. code:: console
-
-  $ mpirun -n 4 uncoverml learn -p 10 config.yaml
-
-Breaking this down,
-
-- `mpirun -n 4` instructs MPI to use four processors for the pipeline
-- `uncoverml learn -p 10 config.yaml` runs the learning pipeline (i.e. learns a
-  machine learning model). The `-p 10` flag makes 10 chunks of work for the
-  four workers (this is to limit memory usage, more chunks, less memory usage),
-  and the `config.yaml` is the configuration file for the pipeline.
-
-Similarly, there are two more options,
-
-.. code:: console
-
-  $ mpirun -n 4 uncoverml predict -p 10 config.yaml
-
-Which uses the learned model from the previous command to predict target values
-for all query points, and
-
-.. code:: console
-
-  $ mpirun -n 4 uncoverml cluster config.yaml
-
-Which clusters (unsupervised) all of the data.
-
-Running on HPC
---------------
-
-In the ``pbs`` directory of the repository there are some example scripts and a helper function
-to assist launching batch jobs over multiple nodes with PBS.
-
-.. todo::
-    
-    The PBS scripts and examples are outdated and need to be fixed.
-
-UncoverML uses MPI for parallelization. To run an uncoverml command, use:
-
-.. code:: bash
-
-    mpirun -n <number_of_processors> <command>
-
-An example of PBS job submission script:
-
-.. code:: bash
-
-    #!/bin/bash
-    #PBS -P ge3
-    #PBS -q normal
-    #PBS -l walltime=01:00:00,mem=128GB,ncpus=32,jobfs=20GB
-    #PBS -l wd
-
-    # setup environment
-    module unload intel-cc
-    module unload intel-fc
-    module load python3/3.4.3 python3/3.4.3-matplotlib 
-    module load load hdf5/1.8.10 gdal/2.0.0
-    source $HOME/.profile
-
-    # start the virtualenv
-    workon uncoverml
-
-    # run command
-    mpirun --mca mpi_warn_on_fork 0 uncoverml learn national_gamma_no_zeros.yaml -p 10
-    mpirun --mca mpi_warn_on_fork 0 uncoverml predict national_gamma_no_zeros.model -p 40
-
-where in this case mpirun is able to determine the number of available cores via PBS. This job 
-submits the ``learn`` and ``predict`` jobs one after the other. The `-p 10` or `-p 40` options 
-partitions the input covariates into the specificed number of memory partitions.
-
-For more information on configuring PBS jobs on Raijin, view the 
-`NCI user documentation <https://opus.nci.org.au/display/Help/Raijin+User+Guide>`_. 
-
-Configuration File
-------------------
-
-.. todo:: 
-
-    Need example configurtion file and explanation of parameters.
-
-Models
-------
-
-For an overview of the models available in UncoverML, view the module
-documentation: :mod:`uncoverml.models`
-
-Command Line Interface
-----------------------
-
-UncoverML has several command line options. Select an option below to 
-view its documentation:
-
-.. include:: scripts.rst
