@@ -88,10 +88,14 @@ Models
 ------
 
 For an overview of the models available in UncoverML, view the module
-documentation: :mod:`uncoverml.models`
+documentation: :mod:`uncoverml.models`.
+
+.. _diagnostics:
 
 Diagnostics
 -----------
+
+.. _outputs:
 
 Outputs
 -------
