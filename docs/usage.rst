@@ -82,18 +82,19 @@ partitions the input covariates into the specificed number of memory partitions.
 For more information on configuring PBS jobs on Raijin, view the 
 `NCI user documentation <https://opus.nci.org.au/display/Help/Raijin+User+Guide>`_. 
 
-Configuration File
-------------------
-
-.. todo:: 
-
-    Need example configurtion file and explanation of parameters.
+.. include:: workflows.rst
 
 Models
 ------
 
 For an overview of the models available in UncoverML, view the module
 documentation: :mod:`uncoverml.models`
+
+Diagnostics
+-----------
+
+Outputs
+-------
 
 Command Line Interface
 ----------------------

@@ -1,5 +1,5 @@
-Configuring UncoverML
-=====================
+Configurtion
+------------
 
 UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different 
@@ -8,8 +8,8 @@ workflows and possible parameters.
 For a reference to all possible config parameters, view the module
 documentation: :mod:`uncoverml.config`
 
-Example - Random Forest
------------------------
+General Example - Random Forest
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The first example is a configuration file for a Random Forest model.
 This file can be found in the repository under `tests/test_data/sirsam/random_forest/sirsam_Na_random_forest.yaml`.
@@ -111,7 +111,24 @@ is pseudorandom, i.e. using the same seed will provide deterministic results.
 
   prediction:
     quantiles: 0.95
-    outbands: 10
+    outbands: 4
+
+The 'prediction' block configures the prediction output. 'quantiles' refers to the prediction 
+interval, e.g. '0.95' means that predicted values will fall within the lower and upper quantiles
+95% of the time. 'outbands' specifies the bands to output. Each band will be written as a separate
+geotiff file. For classification, the available outbands is equivalent to the available classes.
+For regression, the first outband is prediction and if the model provides them, the next are
+variance, lower quantile and upper quantile. Some specific models provide further options - refer
+the documentation for the specific model you are using. The 'outbands' number is used as the RHS
+of a slice, so providing '1' for a regression will output prediction (0) and variance (1). 
+
+.. todo
+  
+  'outbands' is currently a bit broken. It gets used a slice for the output bands, so giving
+  some arbitrarily high number will you give you all bands. This will change in future and the
+  user will provide explicit labels for the bands they want.
+  
+.. code:: yaml
 
   output:
     directory: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out
@@ -122,7 +139,32 @@ is pseudorandom, i.e. using the same seed will provide deterministic results.
     plot_correlation: True
     plot_target_scaling: True
 
+The 'output' block controls where outputs will be stored. 'directory' is where all outputs from
+learning, prediction and other commands will be stored. 'model' is a special case, and specifies
+where the '.model' file created from the learn step will be stored and also what model will be
+used in the prediction step. If you want to predict based on a previously learned model, you
+need to change the 'model' field to the path of the model you are using.
+
+There are also various flags for generating plots. If these are set to 'True', then a plot will
+be created. Some plots will only be created if certain steps have been run, e.g. 'plot_feature_ranks'
+will only generate a plot if feature ranking is performed as part of validation. For more details,
+view the section on diagnostics *TODO*.
+
+For a comprehensive list of the outputs each step of UncoverML generates, see the section on
+outputs *TODO*.
+
+.. code:: yaml
+
   pickling:
     covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
     targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
+
+The final block is for 'pickling'. During the learn step, covariates and targets are scaled and
+intersected. Depending on the machine being used and the size of the data, this may take a 
+non-trivial amount of time. In situations where you are tweaking parameters and re-running the 
+learn step, pickling the intersected covariate and target data may save time. The 'covariates' field
+is the path to where the pickle file will be saved to and then read, and the 'targets' file is the
+same but for target data. If these are provied but do not exist, coviarates and targerts will be
+scaled and intersected as normal then pickled to these files for future use. If provided and they
+exist, intersection will be skipped and data will be loaded from these files instead.
 
