@@ -37,7 +37,6 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.pk_load == False
     assert not hasattr(c, 'featurevec')
     assert len(c.feature_sets) == 1
-    assert c.feature_sets[0].name == 'ordinal_features'
     assert c.feature_sets[0].type == 'ordinal'
     assert sorted(c.feature_sets[0].files) == sorted(sirsam_covariate_paths)
     ts = c.feature_sets[0].transform_set
