@@ -259,10 +259,10 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
         for k, v in display_scores.items():
             display_string += f'{k} = {crossval_scores[v]:.3f}\n'
     
-        fig.text(0.055, 0.78, display_string, fontsize=12, fontfamily='monospace')
+        fig.text(0.057, 0.78, display_string, fontsize=12, fontfamily='monospace')
     
     # leg = fig.legend(loc='upper left', bbox_to_anchor=(0.065, 0.965))
-    fig.suptitle('Real vs Predicted', x=0.5, y=1.02, fontsize=16)
+    fig.suptitle('Real vs Predicted', x=0.5, y=0.95, fontsize=16)
     fig.tight_layout()
     return fig    
     
