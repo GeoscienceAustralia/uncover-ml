@@ -18,6 +18,19 @@ import seaborn as sns
 
 _CACHE = dict()
 
+def _suptitle_buffer(axes, topmargin=1):
+     """
+     From 'ImportanceOfBeingErnest' on StackOverflow.
+     """
+     fig = axes.flatten()[0].figure
+     s = fig.subplotpars
+     w, h = fig.get_size_inches()
+
+     figh = h - (1-s.top)*h  + topmargin
+     fig.subplots_adjust(bottom=s.bottom*h/figh, top=1-topmargin/figh)
+     fig.set_figheight(figh)
+
+
 def _color_histogram(N, bins, patches):
      fracs = N / N.max()
      norm = matplotlib.colors.Normalize(fracs.min(), fracs.max())
@@ -282,7 +295,7 @@ def plot_covariate_correlation(path, method='pearson'):
                      center=0., linewidths=0.1, linecolor=(1, 1, 1), ax=ax)    
     return fig
 
-def plot_target_scaling(path, bins=20):
+def plot_target_scaling(path, bins=20, title='Target Scaling', sharey=False):
     """
     Plots histograms of target values pre and post-scaling.
 
@@ -292,6 +305,10 @@ def plot_target_scaling(path, bins=20):
         Path to 'transformed_targets' CSV file.
     bins : int, optional
         The number of value bins for the histograms. Default is 20.
+    title : str, optional
+        The title of the plot. Defaults to 'Target Scaling'.
+    sharey : bool
+        Whether the plots will share a y-axis and scale. Default is False.
 
     Returns
     -------
@@ -305,13 +322,14 @@ def plot_target_scaling(path, bins=20):
     t = data[:, 1]
 
     figsize = 16, 8
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, sharey=True, 
-                            gridspec_kw={'wspace': 0})
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, sharey=sharey, 
+                            gridspec_kw={'wspace': 0} if sharey else {})
 
     for ax in axs:
         ax.set_xlabel('Target Value')
         ax.set_ylabel('Frequency')
-        ax.label_outer()
+        if sharey:
+            ax.label_outer()
 
     axs[0].set_title('Pre-Scaling')
     axs[1].set_title('Post-Scaling')
@@ -321,8 +339,8 @@ def plot_target_scaling(path, bins=20):
     _color_histogram(*hist_nt)
     _color_histogram(*hist_t)
 
-    fig.suptitle('Target Scaling', x=0.5, y=1.02, fontsize=16)
-    fig.tight_layout()
+    fig.suptitle(title, x=0.5, y=0.98, fontsize=16)
+    _suptitle_buffer(axs)
     return fig
 
 def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
@@ -438,6 +456,7 @@ def plot_feature_ranks(path, barwidth=0.08, figsize=(15, 9)):
 
     return fig
 
+
 def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     """
     Plots curves for feature ranking of each metric.
@@ -458,7 +477,6 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
     """
     with open(path) as f:
         fr_dict = json.load(f)
-
     lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
     covariates = sorted([os.path.split(c)[1] for c in next(iter(fr_dict['ranks'].values()))])
     metrics = fr_dict['ranks'].keys()
@@ -484,12 +502,11 @@ def plot_feature_rank_curves(path, subplot_width=8, subplot_height=4):
         scores[m].sort(key=lambda a: a[1])
         if m in lower_is_better:
             scores[m].reverse()
-
+    
     rows = math.ceil(len(metrics) / 2)
     cols = 2
     figsize = cols * subplot_width, rows * subplot_height
     fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
-            
     for i, m in enumerate(metrics):
         x = math.floor(i / cols)
         y = i - cols * x
