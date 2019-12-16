@@ -62,7 +62,8 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
     else:
         raise ValueError(f"Attempting to extract features form {image_source._filename} "
                           "but all targets lie outside image boundaries")
-    assert x_all.shape[0] == targets.observations.shape[0]
+    if x_all.shape[0] != targets.observations.shape[0]:
+        raise ValueError(f"Number of covariate data points ({x_all.shape[0]}) not equal to target data points ({targets.observations.shape[0]})")
     return x_all
 
 

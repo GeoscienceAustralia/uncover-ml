@@ -26,13 +26,13 @@ def covariate_shift_targets(targets):
         #new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
         def _generate_points(old_points, limit):
             new_points = []
-            while new_points < limit:
+            while len(new_points) < limit:
                 new_point = rnd.uniform(np.min(old_points), np.max(old_points))
                 if new_point not in old_points:
                     new_points.append(new_point)
             return new_points
-        new_lons = _generate_points(lons, shp[0] - 1)
-        new_lats = _generate_points(lats, shp[0] - 1)
+        new_lons = _generate_points(lons, shp[0])
+        new_lats = _generate_points(lats, shp[0])
         lonlats = np.column_stack([new_lons, new_lats])
         labels = np.full(shp, label)
         return Targets(lonlats, labels)
