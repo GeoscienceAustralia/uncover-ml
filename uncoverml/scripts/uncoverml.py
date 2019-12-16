@@ -83,6 +83,8 @@ def shiftmap(config_file, partitions):
                                     kwargs={'fields': targets_all.fields,
                                             'lon_lat': targets_all.positions})
 
+    # The below is essentially duplicating the 'predict' command
+    # should refactor to reuse it
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
     outfile_tif = config.name + "_shiftmap"
