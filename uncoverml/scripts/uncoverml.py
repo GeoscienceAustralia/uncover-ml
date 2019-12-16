@@ -27,6 +27,7 @@ import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
+import uncoverml.models
 from uncoverml.transforms import StandardiseTransform
 
 
@@ -41,6 +42,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
               default='INFO', help='Level of logging')
 def cli(verbosity):
     ls.mllog.configure(verbosity)
+
 
 def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all,
@@ -68,8 +70,6 @@ def shiftmap(config_file, partitions):
                                     covariate_crs=ls.geoio.get_image_crs(config),
                                     crop_box=config.crop_box)
     targets = ls.targets.covariate_shift_targets(targets)
-    #print(targets.positions.shape)
-    #print(targets.positions)
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
     features, keep = ls.features.transform_features(image_chunk_sets,
@@ -78,8 +78,36 @@ def shiftmap(config_file, partitions):
                                                      config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
-    print(len(x_all))
-    print(len(targets_all.observations))
+    model = ls.models.LogisticClassifier(random_state=1)
+    ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
+                                    kwargs={'fields': targets_all.fields,
+                                            'lon_lat': targets_all.positions})
+
+    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
+
+    outfile_tif = config.name + "_shiftmap"
+    predict_tags = model.get_predict_tags()
+    if not config.outbands:
+        config.outbands = len(predict_tags)
+
+    image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
+                                     outfile_tif,
+                                     config.n_subchunks, config.prediction_file,
+                                     band_tags=predict_tags[0: min(len(predict_tags), 
+                                                                   config.outbands)],
+                                     **config.geotif_options)
+
+    for i in range(config.n_subchunks):
+        _logger.info("starting to render partition {}".format(i+1))
+        ls.predict.render_partition(model, i, image_out, config)
+
+    image_out.close()
+
+    if config.thumbnails:
+        image_out.output_thumbnails(config.thumbnails)
+
+    if config.crop_box:
+        ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
 @cli.command()
 @click.argument('config_file')
