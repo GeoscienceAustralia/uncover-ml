@@ -22,8 +22,17 @@ def covariate_shift_targets(targets):
         lons = targets.positions[:,0]
         lats = targets.positions[:,1]
         shp = targets.observations.shape
-        new_lons = rnd.uniform(np.min(lons), np.max(lons), shp)
-        new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
+        #new_lons = rnd.uniform(np.min(lons), np.max(lons), shp)
+        #new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
+        def _generate_points(old_points, limit):
+            new_points = []
+            while new_points < limit:
+                new_point = rnd.uniform(np.min(old_points), np.max(old_points))
+                if new_point not in old_points:
+                    new_points.append(new_point)
+            return new_points
+        new_lons = _generate_points(lons, shp[0] - 1)
+        new_lats = _generate_points(lats, shp[0] - 1)
         lonlats = np.column_stack([new_lons, new_lats])
         labels = np.full(shp, label)
         return Targets(lonlats, labels)
@@ -39,11 +48,9 @@ def covariate_shift_targets(targets):
                    np.append(dummy_targets.observations, real_targets.observations, 0),
                    dummy_targets.fields.update(real_targets.fields))
 
-
 def gather_targets(targets, keep, config, node=None):
     # save_dropped_targets(config, keep, targets)
     return gather_targets_main(targets, keep, node)
-
 
 def gather_targets_main(targets, keep, node):
     observations = targets.observations[keep]
