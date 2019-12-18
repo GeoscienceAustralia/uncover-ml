@@ -89,14 +89,13 @@ def shiftmap(config_file, partitions):
     # should refactor to reuse it
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
-    outfile_tif = config.name + "_shiftmap"
     predict_tags = model.get_predict_tags()
+    print(predict_tags)
     if not config.outbands:
         config.outbands = len(predict_tags)
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
-                                     outfile_tif,
-                                     config.n_subchunks, config.prediction_file,
+                                     config.n_subchunks, config.shiftmap_file,
                                      band_tags=predict_tags[0: min(len(predict_tags), 
                                                                    config.outbands)],
                                      **config.geotif_options)
