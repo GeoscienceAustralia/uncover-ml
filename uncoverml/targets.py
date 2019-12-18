@@ -4,7 +4,7 @@ from os.path import join
 import numpy as np
 from uncoverml import mpiops
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Targets:
@@ -16,11 +16,41 @@ class Targets:
         if othervals is not None:
             self.fields = othervals
 
+def covariate_shift_targets(targets):
+    def _dummy_targets(targets, label, seed=1):
+        rnd = np.random.RandomState(seed)
+        lons = targets.positions[:,0]
+        lats = targets.positions[:,1]
+        shp = targets.observations.shape
+        #new_lons = rnd.uniform(np.min(lons), np.max(lons), shp)
+        #new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
+        def _generate_points(old_points, limit):
+            new_points = []
+            while len(new_points) < limit:
+                new_point = rnd.uniform(np.min(old_points), np.max(old_points))
+                if new_point not in old_points:
+                    new_points.append(new_point)
+            return new_points
+        new_lons = _generate_points(lons, shp[0])
+        new_lats = _generate_points(lats, shp[0])
+        lonlats = np.column_stack([new_lons, new_lats])
+        labels = np.full(shp, label)
+        return Targets(lonlats, labels)
+
+    def _label_targets(targets, label):
+        labels = np.full(targets.observations.shape, label)
+        return Targets(targets.positions, labels, targets.fields)
+
+    real_targets = _label_targets(targets, 'training')
+    dummy_targets = _dummy_targets(targets, 'query')
+    _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
+    return Targets(np.append(dummy_targets.positions, real_targets.positions, 0),
+                   np.append(dummy_targets.observations, real_targets.observations, 0),
+                   dummy_targets.fields.update(real_targets.fields))
 
 def gather_targets(targets, keep, config, node=None):
     # save_dropped_targets(config, keep, targets)
     return gather_targets_main(targets, keep, node)
-
 
 def gather_targets_main(targets, keep, node):
     observations = targets.observations[keep]

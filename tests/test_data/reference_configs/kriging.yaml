@@ -1,0 +1,77 @@
+# basic kriging setup
+features:
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: features.pk
+      targets: targets.pk
+  - name: my features 1
+    type: ordinal
+    files:
+      - path: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
+      - path: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: nn
+
+# only used during prediction
+mask:
+  file: /path/to/GA_data/mask/old_mask_test.tif
+  retain: 1
+
+
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+# resampling is performed in sequence. The order of spatial/value is important.
+targets:
+  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
+  property: K_ppm_imp_
+#  resample:
+#    - spatial:
+#        arguments:
+#          rows: 4
+#          cols: 4
+#          bootstrap: False
+#          output_samples: 1000
+#    - value:
+#        arguments:
+#          bins: 10
+#          bootstrap: False
+#          output_samples: 1000
+
+
+learning:
+  algorithm: krige
+  arguments:
+    method: ordinary  # ordinary or universal
+    variogram_model: spherical  # linear, power, gaussian, spherical, exponential
+    verbose: False
+
+
+optimisation:
+  algorithm: krige
+  hyperparameters:
+    method: [ordinary, universal]
+    variogram_model: [linear, power, gaussian, spherical, exponential]
+  optimisation_output: optimisation.csv
+
+# outbands: number of output bands desired.
+# Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',
+# 'Upper quantile', 'Entropy']
+prediction:
+  quantiles: 0.95
+  outbands: 1
+
+validation:
+  - parallel
+  - k-fold:
+      folds: 4
+      random_seed: 1
+
+output:
+  directory: .
