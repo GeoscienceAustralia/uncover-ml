@@ -1,0 +1,145 @@
+# cubist specific config file
+features:
+
+  - name: my features
+    type: ordinal
+    files:
+#      - directory: /path/to/GA-cover
+      - path: /path/to/data/LATITUDE_GRID1.tif
+      - path: /path/to/data/LONGITUDE_GRID1.tif
+    transforms:
+      - centre
+      - standardise
+    imputation: none
+
+#  - name: my features
+#    type: categorical
+#    files:
+#      - directory: /path/to/GA-cover/cat_datasets
+#    transforms:
+#    imputation: nn
+
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation: mean
+  transforms:
+    # - whiten:
+        # keep_fraction: 0.8
+
+# Mask with values=retain will be predicted
+#mask:
+#  file: /path/to/GA-cover/mask/old_mask_test.tif
+#  retain: 1
+
+# resample: choice (value, spatial)
+targets:
+  file: /path/to/data/geochem_sites.shp
+  property: K_ppm_imp_
+
+
+learning:
+  algorithm: cubist
+  arguments:
+    max_rules: 500
+    committee_members: 2
+    unbiased: False
+    max_categories: 5000
+    target_transform: standardise
+#    bootstrap: 200
+    sampling: 70
+    seed: 2
+    extrapolation: 5
+    sampling: 50
+    seed: 2
+    composite_model: True
+    auto: False
+    neighbors: 5
+    calc_usage: True
+    print_output: False
+#    trees: 10
+#    parallel: True
+
+# neighbors: int, number of nearest neighbors to be used (1-9)
+# nearest-neighbor model: predicts the target value of a new case by finding
+# the n most similar cases in the training data,
+# and averaging their target values.
+
+# max_categories: number of max categories in categorical data
+
+# max_rules: use this to control overfitting (int: 1-1000000)
+
+# committee_members: number of committees to use (int: 1-100)
+
+# outdir: directory where intermediate model files are stored
+
+# trees: number of cubist jobs, trees X committee_memebers will be the total
+# number of trees
+
+# extrapolation: allowed max deviation of predictions from
+# training targets float between 0-100.
+
+# bootstrap: use bootstarp (%) to generate samples from input data
+
+# sampling: random sampling expressed in % terms to be  used during training.
+# defaults to 70. If sampling is is chosen very close to 100%,
+# the trees constructed will be more and more similar
+
+# parallel: train cubist jobs in parallel
+
+# unbiased: whether to train unbiased trees. Use unbiased=True for more skewed
+# target distribution
+
+# composite_model: Use rule based model or composite model?
+# composite_model=True improves on rule based models, but in addition
+# does the equivalent of krigging.
+
+# auto: let cubist decide whether to use rule based or composite model.
+# Cubist derives from the training data a heuristic estimate of the accuracy
+# of each type of model, and chooses the form that appears more accurate.
+# The derivation of these estimates requires quite a lot of computation,
+# so leaving the decision to Cubist can result in a noticeable increase
+# in the time required to build a model.
+
+# target_transform: target transform (choice: stardardise, sqrt, log, identity,
+# logistic, rank, kde)
+
+#    algorithm: multicubist
+#    arguments:
+#      outdir: .
+#      print_output: False
+#      trees: 10
+#      max_rules: 5000
+#      committee_members: 20
+#      unbiased: False
+#      max_categories: 5000
+#      extrapolation: 5
+#      target_transform: standardise
+#      bootstrap: 200
+#      sampling: 50
+#      seed: 2
+#      composite_model: True
+#      auto: False
+#      neighbors: 5
+#      parallel: True
+#      calc_usage: True
+
+
+# outbands: number of output bands desired.
+# Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',
+# 'Upper quantile', 'Entropy']
+prediction:
+  quantiles: 0.95
+  outbands: 10
+  thumbnails: 10
+
+validation:
+#  #- feature_rank
+  - parallel
+  - k-fold:
+      folds: 5
+      random_seed: 1
+
+output:
+  directory: .
