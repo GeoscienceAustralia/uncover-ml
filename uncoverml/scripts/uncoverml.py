@@ -55,6 +55,8 @@ def run_crossval(x_all, targets_all, config):
               help='divide each node\'s data into this many partitions')
 def shiftmap(config_file, partitions):
     config = ls.config.Config(config_file)
+    # Force algortihm - this is purely for debug log messages
+    config.algorithm = 'logistic'
     if config.crop_box:
         ls.geoio.crop_covariates(config)
     config.n_subchunks = partitions
