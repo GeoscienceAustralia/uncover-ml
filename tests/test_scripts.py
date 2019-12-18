@@ -9,17 +9,88 @@ import subprocess
 import shlex
 
 import pytest
+import rasterio
 import numpy as np
 
 from uncoverml.scripts import uncoverml
+
+
+SIRSAM_RF = 'sirsam_Na_randomforest'
+
+class TestShiftmap:
+    OUTPUTS = [ 
+        SIRSAM_RF + '_shiftmap.tif', 
+        SIRSAM_RF + '_shiftmap_thumbnail.tif'
+    ]
+
+    @staticmethod
+    @pytest.fixture(scope='class', autouse=True)
+    def run_sirsam_random_forest_shiftmap(request, num_procs, num_parts, sirsam_rf_conf, sirsam_rf_out):
+        """
+        Run the top level 'learn' command'. Removes generated output on
+        completion.
+        """
+        def finalize():
+            if os.path.exists(sirsam_rf_out):
+                shutil.rmtree(sirsam_rf_out)
+
+        request.addfinalizer(finalize)
+    
+        # If running with one processor, call uncoverml directly
+        if num_procs == 1:
+            try:
+                uncoverml.shiftmap([sirsam_rf_conf, '-p', num_parts])
+            # Catch SystemExit that gets raised by Click on competion
+            except SystemExit:
+                pass   
+        else:
+            try:
+                cmd = ['mpirun', '-n', str(num_procs),
+                       'uncoverml', 'shiftmap', sirsam_rf_conf, '-p', str(num_parts)]
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
+
+    @staticmethod
+    @pytest.fixture(params=OUTPUTS)
+    def sirsam_rf_output(request, sirsam_rf_out):
+        return os.path.join(sirsam_rf_out, request.param)
+
+
+    @staticmethod
+    def test_output_exists(sirsam_rf_output):
+        """
+        Test that excepted outputs of 'shiftmap' command exist after
+        running.
+        """
+        assert os.path.exists(sirsam_rf_output)
+
+    @staticmethod
+    @pytest.fixture(params=OUTPUTS)
+    def sirsam_rf_comp_outputs(request, sirsam_rf_out, sirsam_rf_precomp_shiftmap):
+        """
+        """
+        return (
+            os.path.join(sirsam_rf_out, request.param),
+            os.path.join(sirsam_rf_precomp_shiftmap, request.param)
+        )
+
+    @staticmethod
+    def test_outputs_equal(sirsam_rf_comp_outputs): 
+        test = sirsam_rf_comp_outputs[0]
+        ref = sirsam_rf_comp_outputs[1]
+        
+        with rasterio.open(test) as test_img, rasterio.open(ref) as ref_img:
+            test_img_ar = test_img.read()
+            ref_img_ar = ref_img.read()
+          
+        assert np.array_equal(test_img_ar, ref_img_ar)
 
 
 class TestLearnCommand:
     """
     Tests the 'learn' command of the UncomverML CLI.
     """
-    SIRSAM_RF = 'sirsam_Na_randomforest'
-
     # Group the outputs of the learn command by filetype to make them easier to test.
     SIRSAM_RF_JSON_OUTPUT = [
         SIRSAM_RF + '_crossval_scores.json',
@@ -181,8 +252,6 @@ def _unpickle(path):
 
 @pytest.mark.predict
 class TestPredictCommand:
-    SIRSAM_RF = 'sirsam_Na_randomforest'
-    
     SIRSAM_PREDICTION_MAPS = [
         SIRSAM_RF + '_lower_quantile.tif',
         SIRSAM_RF + '_lower_quantile_thumbnail.tif',
