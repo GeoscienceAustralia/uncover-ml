@@ -420,8 +420,16 @@ class Config(object):
             if all(x is None for x in self.crop_box): 
                 _logger.warning("'extents' block was specified but no coordinates were given. "
                                 "Cropping will not be performed.")
+
+            if (self.crop_box[0] and self.crop_box[1])  is not None and self.crop_box[0] >= self.crop_box[1]:
+                raise ValueError(f"Error in provided crop coordinates: xmin ({self.crop_box[0]}) must be less "
+                                 "than xmax ({self.crop_box[1].")
+            elif (self.crop_box[2] and self.crop_box[3]) is not None and self.crop_box[2] >= self.crop_box[3]:
+                raise ValueError(f"Error in provided crop coordinates: ymin ({self.crop_box[2]}) must be less "
+                                 "than ymax ({self.crop_box[3].")
         else:
             self.crop_box = None
+
         _logger.info("loaded crop box %s", self.crop_box)
 
         # PICKLING BLOCK
