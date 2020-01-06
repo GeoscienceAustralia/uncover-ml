@@ -95,6 +95,50 @@ documentation: :mod:`uncoverml.models`.
 Outputs
 -------
 
+UncoverML produces a number of outputs. This section explains what
+they are.
+
+Learn
+~~~~~
+* ``rawcovariates.csv``: a table containg the value from each covariate
+  and the target value for a given point. This is before any scaling or
+  transforms are applied.
+
+* ``rawcovariates_mask.csv``: a table representing the mask for each
+  point, i.e. which coviarates are missing from which coordinates. *Note:* 
+  I think this is currently broken.
+
+* ``transformed_targets.csv``: a table containing untransformed target
+  values in the first column and the transformed value in the other column.
+
+* ``crossval_scores.json``: a simple JSON dictionary containing the scores
+  for each metric evaluated by cross-validation.
+
+* ``crossval_results.csv``: a table containing real target values in the
+  first column and the corresponding prediction from cross-validation
+  in the other column.
+
+* ``featureranks.sjon``: a JSON file containing the results of feature ranking.
+  The 'ranks' dictionary contains covariates grouped by metric and ordered
+  by performance (i.e. how much impact that covariate had on the model
+  when removed) and 'scores' contains the corresponding numerical score.
+
+* ``*.model``: a Python binary file containing data related to the trained
+  model. This does not need to be accessed directly but does need to be
+  provided as part of the ``predict`` step. 
+
+* ``features.pk`` and ``targts.pk``: Python binary files containing 
+  preprocessed targets and covariates. These shouldn't be accessed directly
+  and are part of the ``pickling`` block of the configuration.
+
+Predict
+~~~~~~~
+A number of maps as GeoTIFF files will be generated - there will be
+one map for each band requested as output in the configuration file.
+The map will be named after the band, e.g. ``prediction.tif`` for the
+main prediction band. Downsampled versions of the maps will also be
+generated for use as thumbnails.
+
 .. _diagnostics:
 
 Diagnostics
