@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration &mdash; UncoverML 0.3.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> UncoverML
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">UncoverML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Configuration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/workflows.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>UncoverML workflows are controlled by a YAML configuration file.
+This section provides some examples and explanations of different
+workflows and possible parameters.</p>
+<p>For a reference to all possible config parameters, view the module
+documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.config" title="uncoverml.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.config</span></code></a></p>
+<div class="section" id="learning">
+<h2>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">learning</span><span class="p">:</span>
+  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multirandomforest</span>
+  <span class="nt">arguments</span><span class="p">:</span>
+    <span class="nt">n_estimators</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">target_transform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">log</span>
+    <span class="nt">forests</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">learning</span></code> block specifies the algorithm or model to train. <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>
+is the name of the algorithm. <code class="docutils literal notranslate"><span class="pre">arguments</span></code> specifies a dictionary of
+keyword arguments specific to that model. For reference about what
+arguments are applicable, refer the documentation for the specific model.</p>
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/covariates/</span>
+    <span class="nt">transforms</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">centre</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">standardise</span>
+    <span class="nt">imputation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mean</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">features</span></code> block contains the features (AKA covariates) to be used for training and prediction.
+UncoverML supports ordinal and categorical data, but they must be provided in separate
+files and the <code class="docutils literal notranslate"><span class="pre">type</span></code> must be provided (if no type is provided, UncoverML will assume the
+data is ordinal). To provide a separate feature set for <code class="docutils literal notranslate"><span class="pre">categorical</span> <span class="pre">data</span></code>, you can
+add another entry under the <code class="docutils literal notranslate"><span class="pre">features</span></code> block:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="c1"># ...files, transforms, imputation</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">categorical</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/categorical/data</span>
+    <span class="c1"># ...transforms, imputation</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">files</span></code> field is where paths to covariate data is specified. In this case, a <code class="docutils literal notranslate"><span class="pre">directory</span></code>
+is provided, so every file in that directory will be treated as part of the feature set.
+Individual paths can be set or a text file with multiple paths separated by commas:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate1.tif</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate2.tif</span>
+      <span class="p p-Indicator">-</span> <span class="nt">list</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/list_of_covariates.txt</span>
+</pre></div>
+</div>
+<p>Covariate files must be in geotiff format, and each file must have the same dimensions and
+projection.</p>
+<p><code class="docutils literal notranslate"><span class="pre">transforms</span></code> specifies scaling that will be applied to that set of features. Multiple can be
+provided. Available transforms are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">centre</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sqrt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">standardise</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">whiten</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">onehot</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">randomhot</span></code></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">imputation</span></code> is the imputation (filling of no data values) method. Only one can be provided for
+each feature set. Available methods are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">none</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mean</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaus</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nn</span></code> (nearest neighbour)</p></li>
+</ul>
+</div>
+<div class="section" id="targets">
+<h2>Targets<a class="headerlink" href="#targets" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Na_log</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">targets</span></code> block contains details for the training data. <code class="docutils literal notranslate"><span class="pre">file</span></code> is the path to the shapefile
+containing the targets. <code class="docutils literal notranslate"><span class="pre">property</span></code> is the name of the field in the shapefile to train on. UncoverML
+works by intersecting patches of the covariate data with corresponding target locations.</p>
+</div>
+<div class="section" id="validation">
+<h2>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">validation</span><span class="p">:</span>
+  <span class="nt">feature_rank</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">k-fold</span><span class="p">:</span>
+    <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+    <span class="nt">folds</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+    <span class="nt">random_seed</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">validation</span></code> block is optional and contains parameters for performing k-fold cross validation,
+feature ranking and permutation importance. In this config file, <code class="docutils literal notranslate"><span class="pre">feature_ranking</span></code> has been
+enabled and <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> has also been enabled. <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> cross validation has some parameters to set.
+<code class="docutils literal notranslate"><span class="pre">parellel</span></code> will allow the cross validation to take advantage of multiprocessing: if you are running
+UncoverML with MPI and more than one processor, setting this to <code class="docutils literal notranslate"><span class="pre">True</span></code> will accelerate the
+validation. <code class="docutils literal notranslate"><span class="pre">folds</span></code> is the number of folds to split the training data into. <code class="docutils literal notranslate"><span class="pre">random_seed</span></code> is the
+seed provided to numpy for getting random permutations of data to split into folds. The permutation
+is pseudorandom, i.e. using the same seed will provide deterministic results.</p>
+</div>
+<div class="section" id="prediction">
+<h2>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">prediction</span><span class="p">:</span>
+  <span class="nt">quantiles</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
+  <span class="nt">outbands</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">prediction</span></code> block configures the prediction output. <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> refers to the prediction
+interval, e.g. ‘0.95’ means that predicted values will fall within the lower and upper quantiles
+95% of the time. <code class="docutils literal notranslate"><span class="pre">outbands</span></code> specifies the bands to output. Each band will be written as a separate
+geotiff file. For classification, the available outbands is equivalent to the available classes.
+For regression, the first outband is prediction and if the model provides them, the next are
+variance, lower quantile and upper quantile. Some specific models provide further options - refer
+the documentation for the specific model you are using. The <code class="docutils literal notranslate"><span class="pre">outbands</span></code> number is used as the RHS
+of a slice, so providing ‘1’ for a regression will output prediction (0) and variance (1).</p>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<p>‘outbands’ is currently a bit broken. It gets used a slice for the output bands, so giving
+some arbitrarily high number will you give you all bands. This will change in future and the
+user will provide explicit labels for the bands they want.</p>
+</div>
+</div>
+<div class="section" id="output">
+<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">output</span><span class="p">:</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out</span>
+  <span class="nt">model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model</span>
+  <span class="nt">plot_feature_ranks</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_intersection</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_real_vs_pred</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_correlation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_target_scaling</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">output</span></code> block controls where outputs will be stored. <code class="docutils literal notranslate"><span class="pre">directory</span></code> is where all outputs from
+learning, prediction and other commands will be stored. <code class="docutils literal notranslate"><span class="pre">model</span></code> is a special case, and specifies
+where the ‘.model’ file created from the learn step will be stored and also what model will be
+used in the prediction step. If you want to predict based on a previously learned model, you
+need to change the <code class="docutils literal notranslate"><span class="pre">model</span></code> field to the path of the model you are using.</p>
+<p>There are also various flags for generating plots. If these are set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, then a plot will
+be created. Some plots will only be created if certain steps have been run, e.g. <code class="docutils literal notranslate"><span class="pre">plot_feature_ranks</span></code>
+will only generate a plot if feature ranking is performed as part of validation. For more details,
+view the section on diagnostics: <a class="reference internal" href="usage.html#diagnostics"><span class="std std-ref">Diagnostics</span></a>.</p>
+<p>For a comprehensive list of the outputs each step of UncoverML generates, see the section on
+outputs: <a class="reference internal" href="usage.html#outputs"><span class="std std-ref">Outputs</span></a>.</p>
+</div>
+<div class="section" id="pickling">
+<h2>Pickling<a class="headerlink" href="#pickling" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pickling</span><span class="p">:</span>
+  <span class="nt">covariates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk</span>
+  <span class="nt">targets</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk</span>
+</pre></div>
+</div>
+<p>The final block is for <code class="docutils literal notranslate"><span class="pre">pickling</span></code>. During the learn step, covariates and targets are scaled and
+intersected. Depending on the machine being used and the size of the data, this may take a
+non-trivial amount of time. In situations where you are tweaking parameters and re-running the
+learn step, pickling the intersected covariate and target data may save time. The <code class="docutils literal notranslate"><span class="pre">covariates</span></code> field
+is the path to where the pickle file will be saved to and then read, and the <code class="docutils literal notranslate"><span class="pre">targets</span></code> file is the
+same but for target data. If these are provied but do not exist, coviarates and targerts will be
+scaled and intersected as normal then pickled to these files for future use. If provided and they
+exist, intersection will be skipped and data will be loaded from these files instead.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Geoscience Australia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

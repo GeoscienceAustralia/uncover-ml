@@ -90,8 +90,30 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#running-locally">Running locally</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-on-hpc">Running on HPC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#learning">Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#targets">Targets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validation">Validation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prediction">Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pickling">Pickling</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#outputs">Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#learn">Learn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#predict">Predict</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#diagnostics">Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#covariate-correlation">Covariate Correlation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#feature-ranking">Feature Ranking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#covariate-intersection">Covariate Intersection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-vs-prediction">Real vs. Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#target-scaling">Target Scaling</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#command-line-interface">Command Line Interface</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
@@ -240,17 +262,291 @@ partitions the input covariates into the specificed number of memory partitions.
 <p>For more information on configuring PBS jobs on Raijin, view the
 <a class="reference external" href="https://opus.nci.org.au/display/Help/Raijin+User+Guide">NCI user documentation</a>.</p>
 </div>
-<div class="section" id="configuration-file">
-<h2>Configuration File<a class="headerlink" href="#configuration-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML workflows are controlled by a YAML configuration file.
+This section provides some examples and explanations of different
+workflows and possible parameters.</p>
+<p>For a reference to all possible config parameters, view the module
+documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.config" title="uncoverml.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.config</span></code></a></p>
+<div class="section" id="learning">
+<h3>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">learning</span><span class="p">:</span>
+  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multirandomforest</span>
+  <span class="nt">arguments</span><span class="p">:</span>
+    <span class="nt">n_estimators</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">target_transform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">log</span>
+    <span class="nt">forests</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">learning</span></code> block specifies the algorithm or model to train. <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>
+is the name of the algorithm. <code class="docutils literal notranslate"><span class="pre">arguments</span></code> specifies a dictionary of
+keyword arguments specific to that model. For reference about what
+arguments are applicable, refer the documentation for the specific model.</p>
+</div>
+<div class="section" id="features">
+<h3>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/covariates/</span>
+    <span class="nt">transforms</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">centre</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">standardise</span>
+    <span class="nt">imputation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mean</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">features</span></code> block contains the features (AKA covariates) to be used for training and prediction.
+UncoverML supports ordinal and categorical data, but they must be provided in separate
+files and the <code class="docutils literal notranslate"><span class="pre">type</span></code> must be provided (if no type is provided, UncoverML will assume the
+data is ordinal). To provide a separate feature set for <code class="docutils literal notranslate"><span class="pre">categorical</span> <span class="pre">data</span></code>, you can
+add another entry under the <code class="docutils literal notranslate"><span class="pre">features</span></code> block:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="c1"># ...files, transforms, imputation</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">categorical</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/categorical/data</span>
+    <span class="c1"># ...transforms, imputation</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">files</span></code> field is where paths to covariate data is specified. In this case, a <code class="docutils literal notranslate"><span class="pre">directory</span></code>
+is provided, so every file in that directory will be treated as part of the feature set.
+Individual paths can be set or a text file with multiple paths separated by commas:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
+    <span class="nt">files</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate1.tif</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate2.tif</span>
+      <span class="p p-Indicator">-</span> <span class="nt">list</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/list_of_covariates.txt</span>
+</pre></div>
+</div>
+<p>Covariate files must be in geotiff format, and each file must have the same dimensions and
+projection.</p>
+<p><code class="docutils literal notranslate"><span class="pre">transforms</span></code> specifies scaling that will be applied to that set of features. Multiple can be
+provided. Available transforms are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">centre</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sqrt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">standardise</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">whiten</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">onehot</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">randomhot</span></code></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">imputation</span></code> is the imputation (filling of no data values) method. Only one can be provided for
+each feature set. Available methods are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">none</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mean</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaus</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nn</span></code> (nearest neighbour)</p></li>
+</ul>
+</div>
+<div class="section" id="targets">
+<h3>Targets<a class="headerlink" href="#targets" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Na_log</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">targets</span></code> block contains details for the training data. <code class="docutils literal notranslate"><span class="pre">file</span></code> is the path to the shapefile
+containing the targets. <code class="docutils literal notranslate"><span class="pre">property</span></code> is the name of the field in the shapefile to train on. UncoverML
+works by intersecting patches of the covariate data with corresponding target locations.</p>
+</div>
+<div class="section" id="validation">
+<h3>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">validation</span><span class="p">:</span>
+  <span class="nt">feature_rank</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">k-fold</span><span class="p">:</span>
+    <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+    <span class="nt">folds</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+    <span class="nt">random_seed</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">validation</span></code> block is optional and contains parameters for performing k-fold cross validation,
+feature ranking and permutation importance. In this config file, <code class="docutils literal notranslate"><span class="pre">feature_ranking</span></code> has been
+enabled and <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> has also been enabled. <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> cross validation has some parameters to set.
+<code class="docutils literal notranslate"><span class="pre">parellel</span></code> will allow the cross validation to take advantage of multiprocessing: if you are running
+UncoverML with MPI and more than one processor, setting this to <code class="docutils literal notranslate"><span class="pre">True</span></code> will accelerate the
+validation. <code class="docutils literal notranslate"><span class="pre">folds</span></code> is the number of folds to split the training data into. <code class="docutils literal notranslate"><span class="pre">random_seed</span></code> is the
+seed provided to numpy for getting random permutations of data to split into folds. The permutation
+is pseudorandom, i.e. using the same seed will provide deterministic results.</p>
+</div>
+<div class="section" id="prediction">
+<h3>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">prediction</span><span class="p">:</span>
+  <span class="nt">quantiles</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
+  <span class="nt">outbands</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">prediction</span></code> block configures the prediction output. <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> refers to the prediction
+interval, e.g. ‘0.95’ means that predicted values will fall within the lower and upper quantiles
+95% of the time. <code class="docutils literal notranslate"><span class="pre">outbands</span></code> specifies the bands to output. Each band will be written as a separate
+geotiff file. For classification, the available outbands is equivalent to the available classes.
+For regression, the first outband is prediction and if the model provides them, the next are
+variance, lower quantile and upper quantile. Some specific models provide further options - refer
+the documentation for the specific model you are using. The <code class="docutils literal notranslate"><span class="pre">outbands</span></code> number is used as the RHS
+of a slice, so providing ‘1’ for a regression will output prediction (0) and variance (1).</p>
 <div class="admonition-todo admonition" id="id2">
 <p class="admonition-title">Todo</p>
-<p>Need example configurtion file and explanation of parameters.</p>
+<p>‘outbands’ is currently a bit broken. It gets used a slice for the output bands, so giving
+some arbitrarily high number will you give you all bands. This will change in future and the
+user will provide explicit labels for the bands they want.</p>
+</div>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">output</span><span class="p">:</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out</span>
+  <span class="nt">model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model</span>
+  <span class="nt">plot_feature_ranks</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_intersection</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_real_vs_pred</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_correlation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">plot_target_scaling</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">output</span></code> block controls where outputs will be stored. <code class="docutils literal notranslate"><span class="pre">directory</span></code> is where all outputs from
+learning, prediction and other commands will be stored. <code class="docutils literal notranslate"><span class="pre">model</span></code> is a special case, and specifies
+where the ‘.model’ file created from the learn step will be stored and also what model will be
+used in the prediction step. If you want to predict based on a previously learned model, you
+need to change the <code class="docutils literal notranslate"><span class="pre">model</span></code> field to the path of the model you are using.</p>
+<p>There are also various flags for generating plots. If these are set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, then a plot will
+be created. Some plots will only be created if certain steps have been run, e.g. <code class="docutils literal notranslate"><span class="pre">plot_feature_ranks</span></code>
+will only generate a plot if feature ranking is performed as part of validation. For more details,
+view the section on diagnostics: <a class="reference internal" href="#diagnostics"><span class="std std-ref">Diagnostics</span></a>.</p>
+<p>For a comprehensive list of the outputs each step of UncoverML generates, see the section on
+outputs: <a class="reference internal" href="#outputs"><span class="std std-ref">Outputs</span></a>.</p>
+</div>
+<div class="section" id="pickling">
+<h3>Pickling<a class="headerlink" href="#pickling" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pickling</span><span class="p">:</span>
+  <span class="nt">covariates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk</span>
+  <span class="nt">targets</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk</span>
+</pre></div>
+</div>
+<p>The final block is for <code class="docutils literal notranslate"><span class="pre">pickling</span></code>. During the learn step, covariates and targets are scaled and
+intersected. Depending on the machine being used and the size of the data, this may take a
+non-trivial amount of time. In situations where you are tweaking parameters and re-running the
+learn step, pickling the intersected covariate and target data may save time. The <code class="docutils literal notranslate"><span class="pre">covariates</span></code> field
+is the path to where the pickle file will be saved to and then read, and the <code class="docutils literal notranslate"><span class="pre">targets</span></code> file is the
+same but for target data. If these are provied but do not exist, coviarates and targerts will be
+scaled and intersected as normal then pickled to these files for future use. If provided and they
+exist, intersection will be skipped and data will be loaded from these files instead.</p>
 </div>
 </div>
 <div class="section" id="models">
 <h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
 <p>For an overview of the models available in UncoverML, view the module
-documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.models" title="uncoverml.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.models</span></code></a></p>
+documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.models" title="uncoverml.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.models</span></code></a>.</p>
+</div>
+<div class="section" id="outputs">
+<span id="id3"></span><h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML produces a number of outputs. This section explains what
+they are.</p>
+<div class="section" id="learn">
+<h3>Learn<a class="headerlink" href="#learn" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code>: a table containg the value from each covariate
+and the target value for a given point. This is before any scaling or
+transforms are applied.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rawcovariates_mask.csv</span></code>: a table representing the mask for each
+point, i.e. which coviarates are missing from which coordinates. <em>Note:</em>
+I think this is currently broken.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transformed_targets.csv</span></code>: a table containing untransformed target
+values in the first column and the transformed value in the other column.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crossval_scores.json</span></code>: a simple JSON dictionary containing the scores
+for each metric evaluated by cross-validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crossval_results.csv</span></code>: a table containing real target values in the
+first column and the corresponding prediction from cross-validation
+in the other column.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">featureranks.sjon</span></code>: a JSON file containing the results of feature ranking.
+The ‘ranks’ dictionary contains covariates grouped by metric and ordered
+by performance (i.e. how much impact that covariate had on the model
+when removed) and ‘scores’ contains the corresponding numerical score.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.model</span></code>: a Python binary file containing data related to the trained
+model. This does not need to be accessed directly but does need to be
+provided as part of the <code class="docutils literal notranslate"><span class="pre">predict</span></code> step.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">features.pk</span></code> and <code class="docutils literal notranslate"><span class="pre">targts.pk</span></code>: Python binary files containing
+preprocessed targets and covariates. These shouldn’t be accessed directly
+and are part of the <code class="docutils literal notranslate"><span class="pre">pickling</span></code> block of the configuration.</p></li>
+</ul>
+</div>
+<div class="section" id="predict">
+<h3>Predict<a class="headerlink" href="#predict" title="Permalink to this headline">¶</a></h3>
+<p>A number of maps as GeoTIFF files will be generated - there will be
+one map for each band requested as output in the configuration file.
+The map will be named after the band, e.g. <code class="docutils literal notranslate"><span class="pre">prediction.tif</span></code> for the
+main prediction band. Downsampled versions of the maps will also be
+generated for use as thumbnails.</p>
+</div>
+</div>
+<div class="section" id="diagnostics">
+<span id="id4"></span><h2>Diagnostics<a class="headerlink" href="#diagnostics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="covariate-correlation">
+<h3>Covariate Correlation<a class="headerlink" href="#covariate-correlation" title="Permalink to this headline">¶</a></h3>
+<p>This generates a correlation matrix showing correlation between provided
+covariates. The color/value of each square shows how strong the positive
+or negative correlation is:</p>
+<img alt="Covariate correlation matrix." src="_images/sirsam_Na_randomforest_correlation.png" />
+<p>To generate a correlation matrix, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+so that <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code> is generated, and <code class="docutils literal notranslate"><span class="pre">plot_correlation</span></code>
+must be set to <code class="docutils literal notranslate"><span class="pre">True</span></code> in the configuration.</p>
+</div>
+<div class="section" id="feature-ranking">
+<h3>Feature Ranking<a class="headerlink" href="#feature-ranking" title="Permalink to this headline">¶</a></h3>
+<p>The result of feature ranking can be plotted. This creates two plots.
+One is a grouped bar chart - each colored bar represents a metric,
+the Y-axis is the score of that metric and each group is a feature
+(AKA covariate):</p>
+<img alt="_images/sirsam_Na_randomforest_featureranks.png" src="_images/sirsam_Na_randomforest_featureranks.png" />
+<p>The other plot is a series of curves. Each curve represents a metric,
+with scores on the Y-axis and covarites on the X-axis. Each inflection
+represents what happens to the score when the corresponding covariate
+is removed from the model:</p>
+<img alt="_images/fr_curve.png" src="_images/fr_curve.png" />
+<p>To generate feature rank plots, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+with <code class="docutils literal notranslate"><span class="pre">feature_rank</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code> under the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block
+of the config, and <code class="docutils literal notranslate"><span class="pre">plot_feature_ranks</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<div class="section" id="covariate-intersection">
+<h3>Covariate Intersection<a class="headerlink" href="#covariate-intersection" title="Permalink to this headline">¶</a></h3>
+<p>Covariate intersection can be plotted. These scatter plots, one for
+each covariate, show the corresponding covariate value for each target
+value:</p>
+<img alt="_images/intersection.png" src="_images/intersection.png" />
+<p>To generate intersection plots, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+so that <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code> is generated, and <code class="docutils literal notranslate"><span class="pre">plot_intersection</span></code>
+must be <code class="docutils literal notranslate"><span class="pre">True</span></code> in the configuration.</p>
+</div>
+<div class="section" id="real-vs-prediction">
+<h3>Real vs. Prediction<a class="headerlink" href="#real-vs-prediction" title="Permalink to this headline">¶</a></h3>
+<p>A scatter plot showing the intersection between real vs. predicted values
+can be generated. This comapres the values predicted by the model
+to the actual target values, and is important for validating model.
+It includes several pieces of information. The points show the intersecting
+values. The 2D histogram in the background shows grouping of the points
+(the colorbar on the right-hand side codes the frequency of each grouping).
+The text in the upper-left shows the score from the metrics generated
+by cross-validation:</p>
+<img alt="_images/sirsam_Na_randomforest_real_vs_pred.png" src="_images/sirsam_Na_randomforest_real_vs_pred.png" />
+<p>A histogram of residual error is also generated. This shows bins grouping
+the residual error between intersected points (i.e. the difference between
+a predicted value and the corresponding real value):</p>
+<img alt="_images/sirsam_Na_randomforest_residual.png" src="_images/sirsam_Na_randomforest_residual.png" />
+<p>To generate a real vs. prediction plot, <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> must be enabled
+under the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block of the config, and <code class="docutils literal notranslate"><span class="pre">plot_real_vs_pred</span></code>
+must be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<div class="section" id="target-scaling">
+<h3>Target Scaling<a class="headerlink" href="#target-scaling" title="Permalink to this headline">¶</a></h3>
+<p>A histogram of target scaling can be generated. This shows the distribution
+of the target data pre- and post-scaling:</p>
+<img alt="_images/sirsam_Na_randomforest_target_scaling.png" src="_images/sirsam_Na_randomforest_target_scaling.png" />
+<p>To generate a target scaling histogram, run <code class="docutils literal notranslate"><span class="pre">learn</span></code> with <code class="docutils literal notranslate"><span class="pre">plot_target_scaling</span></code>
+set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
 </div>
 <div class="section" id="command-line-interface">
 <h2>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this headline">¶</a></h2>

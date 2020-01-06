@@ -222,10 +222,14 @@ pip install <span class="nv">matplotlib</span><span class="o">==</span><span cla
 pip install uncover-ml
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="id1">
-<p class="admonition-title">Todo</p>
-<p>Need to include a simple workflow for testing the installation here.</p>
+<p>To ensure the installation has been successful, try running UncoverML against the test data
+included in the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn tests/test_data/sirsam/random_forest/sirsam_Na_randomforest.yaml
+</pre></div>
 </div>
+<p>This will start training a random forest model on the test data. It may take a few minutes.
+If the script completes successfully (there will be a log message saying “Finished!”) then
+UncoverML has been correctly installed.</p>
 <p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
 UncoverML.</p>
 <p>When you are finished using UncoverML, don’t forget to deactivate your virtual environment using:</p>
@@ -235,29 +239,29 @@ UncoverML.</p>
 </div>
 <div class="section" id="hpc">
 <h2>HPC<a class="headerlink" href="#hpc" title="Permalink to this headline">¶</a></h2>
-<p>The following instructions refer specifically to NCI’s Raijin and Virtual Desktop (VDI), but may be applicable to other
+<p>The following instructions refer specifically to NCI’s Gadi and Virtual Desktop (VDI), but may be applicable to other
 HPC environments running PBS and MPI.</p>
-<p>The first step is to unload unrequired and load required system modules:</p>
+<p>The first step is to unload unrequired and load required system modules. The below are compatible with the VDI (and Raijin, for legacy purposes):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module unload intel-cc
 module unload intel-fc
 
-<span class="c1"># If on Raijin, you can load either Python 3.6 or 3.7.</span>
-<span class="c1"># But on VDI, you are limited to Python 3.6.</span>
 module load python3/3.6.2
 module load gdal/2.2.2
 module load openmpi/2.1.1
 module load geos/3.5.0
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>You can use Python 3.7 on Raijin by loading the module with <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">python3/3.7.2</span></code>.</p>
+<p>If you are running on the new Gadi supercomputer, the modules required are different:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module load ptython3/3.7.4
+module load gdal/3.0.2
+module load openmpi/2.1.6
+</pre></div>
 </div>
-<p>For convenience you can place the above commands in your <code class="docutils literal notranslate"><span class="pre">~/.profile</span></code>. Alternatively, if you already have a
-configuration in your profile you’d like to preserve but don’t want to type the above commands
-every time, you can source the <code class="docutils literal notranslate"><span class="pre">uncover-ml/pbs/setup_hpc.sh</span></code> script to perform the above
-commands as needed.</p>
-<p>On Raijin and the VDI, a virtual environment is recommended. To create a virtual environment, run in your shell:</p>
+<p>For convenience you can place the above commands in your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> (<code class="docutils literal notranslate"><span class="pre">~/.profile</span></code> on VDI).
+Alternatively, if you already have a configuration in your profile you’d like to preserve but don’t
+want to type the above commands every time, you can source the <code class="docutils literal notranslate"><span class="pre">uncover-ml/pbs/setup_vdi.sh</span></code> or
+<code class="docutils literal notranslate"><span class="pre">uncover-ml/pbs/setup_gadi.sh</span></code> scripts depending on your platform.</p>
+<p>When using the NCI, a virtual environment is recommended. To create a virtual environment, run in your shell:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 -m venv /path/to/your/venv
 </pre></div>
 </div>
@@ -280,12 +284,14 @@ pip install -r requirements-pykrige.txt
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py install
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="id2">
-<p class="admonition-title">Todo</p>
-<p>Need to include a simple workflow for testing the installation here (can be run on login node).
-Tests don’t count because they require dev requirements and shouldn’t need to be installed
-for an average user.</p>
+<p>To ensure the installation has been successful, try running UncoverML against the test data
+included in the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn tests/test_data/sirsam/random_forest/sirsam_Na_randomforest.yaml
+</pre></div>
 </div>
+<p>This will start training a random forest model on the test data. It may take a few minutes.
+If the script completes successfully (there will be a log message saying “Finished!”) then
+UncoverML has been correctly installed.</p>
 <p>This completes the installation. Check out the <a class="reference internal" href="usage.html#usage"><span class="std std-ref">Usage</span></a> documentation to get started using
 UncoverML.</p>
 <p>When you are finished using UncoverML, don’t forget to deactivate your virtual environment using:</p>

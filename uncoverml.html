@@ -1625,13 +1625,15 @@ fit.</p>
 
 <dl class="function">
 <dt id="uncoverml.diagnostics.plot_target_scaling">
-<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_target_scaling</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_target_scaling" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_target_scaling</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">title='Target Scaling'</em>, <em class="sig-param">sharey=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_target_scaling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots histograms of target values pre and post-scaling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> (<em>str</em>) – Path to ‘transformed_targets’ CSV file.</p></li>
 <li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of value bins for the histograms. Default is 20.</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – The title of the plot. Defaults to ‘Target Scaling’.</p></li>
+<li><p><strong>sharey</strong> (<em>bool</em>) – Whether the plots will share a y-axis and scale. Default is False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1852,6 +1854,40 @@ independent image writing by different processes, i.e., images are not chunked</
 </dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.geoio.crop_covariates">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_covariates</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">outdir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_covariates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crops the covariate files listed under <cite>config.feature_sets</cite> using
+the bounds provided under <cite>config.crop_box</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<cite>uncoverml.config.Config</cite>) – Parsed UncoverML config.</p></li>
+<li><p><strong>outdir</strong> (<em>str</em>) – Aboslute path to directory to store cropped covariates.
+If not provided, a tmp directory will be created.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.geoio.crop_tif">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_tif</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">crop_box</em>, <em class="sig-param">outfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_tif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crops the geotiff using the provided extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the geotiff to be cropped.</p></li>
+<li><p><strong>crop_box</strong> (<em>tuple</em><em>(</em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>)</em>) – Bounding box to crop by, ordering is (xmin, ymin, xmax, ymax).
+Data outside bounds will be cropped. Any elements that are None
+will be substituted with the original bound of the geotiff.</p></li>
+<li><p><strong>outfile</strong> (<em>str</em>) – Path to save cropped geotiff. If not provided, will be saved
+with original name + random id in tmp directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.geoio.export_crossval">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">export_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_output</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.export_crossval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1869,6 +1905,11 @@ independent image writing by different processes, i.e., images are not chunked</
 <dl class="function">
 <dt id="uncoverml.geoio.feature_names">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">feature_names</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.feature_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.geoio.get_image_crs">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">get_image_crs</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.get_image_crs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -1893,13 +1934,13 @@ independent image writing by different processes, i.e., images are not chunked</
 
 <dl class="function">
 <dt id="uncoverml.geoio.load_shapefile">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_shapefile</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">targetfield</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_shapefile" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_shapefile</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">targetfield</em>, <em class="sig-param">covariate_crs</em>, <em class="sig-param">crop_box</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.geoio.load_targets">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield</em>, <em class="sig-param">covariate_crs=None</em>, <em class="sig-param">crop_box=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads the shapefile onto node 0 then distributes it across all
 available nodes</p>
 </dd></dl>
