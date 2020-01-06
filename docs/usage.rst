@@ -90,15 +90,93 @@ Models
 For an overview of the models available in UncoverML, view the module
 documentation: :mod:`uncoverml.models`.
 
+.. _outputs:
+
+Outputs
+-------
+
 .. _diagnostics:
 
 Diagnostics
 -----------
 
-.. _outputs:
+Covariate Correlation
+~~~~~~~~~~~~~~~~~~~~~
+This generates a correlation matrix showing correlation between provided
+covariates. The color/value of each square shows how strong the positive
+or negative correlation is:
 
-Outputs
--------
+.. image:: sirsam_Na_randomforest_correlation.png
+  :alt: Covariate correlation matrix.
+
+To generate a correlation matrix, the ``learn`` command must be run
+so that ``rawcovariates.csv`` is generated, and ``plot_correlation``
+must be set to ``True`` in the configuration.
+
+Feature Ranking
+~~~~~~~~~~~~~~~
+The result of feature ranking can be plotted. This creates two plots.
+One is a grouped bar chart - each colored bar represents a metric,
+the Y-axis is the score of that metric and each group is a feature 
+(AKA covariate):
+
+.. image:: sirsam_Na_randomforest_featureranks.png
+
+The other plot is a series of curves. Each curve represents a metric,
+with scores on the Y-axis and covarites on the X-axis. Each inflection
+represents what happens to the score when the corresponding covariate
+is removed from the model:
+
+.. image:: fr_curve.png
+
+To generate feature rank plots, the ``learn`` command must be run
+with ``feature_rank`` set to ``True`` under the ``validation`` block
+of the config, and ``plot_feature_ranks`` set to ``True``.
+
+Covariate Intersection
+~~~~~~~~~~~~~~~~~~~~~~
+Covariate intersection can be plotted. These scatter plots, one for
+each covariate, show the corresponding covariate value for each target
+value:
+
+.. image:: intersection.png
+
+To generate intersection plots, the ``learn`` command must be run
+so that ``rawcovariates.csv`` is generated, and ``plot_intersection``
+must be ``True`` in the configuration.
+
+Real vs. Prediction
+~~~~~~~~~~~~~~~~~~~
+A scatter plot showing the intersection between real vs. predicted values
+can be generated. This comapres the values predicted by the model
+to the actual target values, and is important for validating model.
+It includes several pieces of information. The points show the intersecting
+values. The 2D histogram in the background shows grouping of the points
+(the colorbar on the right-hand side codes the frequency of each grouping).
+The text in the upper-left shows the score from the metrics generated
+by cross-validation:
+
+.. image:: sirsam_Na_randomforest_real_vs_pred.png
+
+A histogram of residual error is also generated. This shows bins grouping
+the residual error between intersected points (i.e. the difference between
+a predicted value and the corresponding real value):
+
+.. image:: sirsam_Na_randomforest_residual.png
+
+To generate a real vs. prediction plot, ``k-fold`` must be enabled
+under the ``validation`` block of the config, and ``plot_real_vs_pred``
+must be set to ``True``.
+
+Target Scaling
+~~~~~~~~~~~~~~
+A histogram of target scaling can be generated. This shows the distribution
+of the target data pre- and post-scaling:
+
+.. image:: sirsam_Na_randomforest_target_scaling.png
+
+To generate a target scaling histogram, run ``learn`` with ``plot_target_scaling``
+set to ``True``.
 
 Command Line Interface
 ----------------------
