@@ -90,9 +90,7 @@ def shiftmap(config_file, partitions):
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
     predict_tags = model.get_predict_tags()
-    # We only need one band - the 'training' point likelihood
-    predict_tags = [predict_tags[1]]
-    config.outbands = 1
+    config.outbands = len(predict_tags)
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      config.n_subchunks, config.shiftmap_file, config.outbands,
