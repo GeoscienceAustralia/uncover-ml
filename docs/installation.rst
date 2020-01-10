@@ -99,33 +99,35 @@ When you are finished using UncoverML, don't forget to deactivate your virtual e
 HPC
 ---
 
-The following instructions refer specifically to NCI's Raijin and Virtual Desktop (VDI), but may be applicable to other
+The following instructions refer specifically to NCI's Gadi and Virtual Desktop (VDI), but may be applicable to other
 HPC environments running PBS and MPI.
 
-The first step is to unload unrequired and load required system modules:
+The first step is to unload unrequired and load required system modules. The below are compatible with the VDI (and Raijin, for legacy purposes):
 
 .. code:: bash
 
     module unload intel-cc
     module unload intel-fc
 
-    # If on Raijin, you can load either Python 3.6 or 3.7.
-    # But on VDI, you are limited to Python 3.6.
     module load python3/3.6.2
     module load gdal/2.2.2
     module load openmpi/2.1.1
     module load geos/3.5.0
 
-.. note::
+If you are running on the new Gadi supercomputer, the modules required are different:
 
-    You can use Python 3.7 on Raijin by loading the module with ``module load python3/3.7.2``.
+.. code:: bash
+ 
+    module load ptython3/3.7.4
+    module load gdal/3.0.2
+    module load openmpi/2.1.6
 
-For convenience you can place the above commands in your ``~/.profile``. Alternatively, if you already have a 
-configuration in your profile you'd like to preserve but don't want to type the above commands
-every time, you can source the ``uncover-ml/pbs/setup_hpc.sh`` script to perform the above 
-commands as needed.
+For convenience you can place the above commands in your ``~/.bashrc`` (``~/.profile`` on VDI). 
+Alternatively, if you already have a configuration in your profile you'd like to preserve but don't
+want to type the above commands every time, you can source the ``uncover-ml/pbs/setup_vdi.sh`` or 
+``uncover-ml/pbs/setup_gadi.sh`` scripts depending on your platform. 
 
-On Raijin and the VDI, a virtual environment is recommended. To create a virtual environment, run in your shell:
+When using the NCI, a virtual environment is recommended. To create a virtual environment, run in your shell:
 
 .. code:: bash
 

@@ -1,0 +1,48 @@
+learning:
+  algorithm: xgboost
+  arguments:
+    target_transform: standardise
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 20
+
+features:
+  - type: ordinal
+    files:
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/U_15v1.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/U_TH_15.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/dem_foc2.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/er_depg.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/gg_clip.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/k_15v5.tif
+      - path: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/tpi_300.tif
+    transforms:
+      - centre
+    imputation: none
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Cr_log
+
+final_transform: 
+    imputation: mean
+    transforms:
+      - log 
+
+validation:
+  feature_rank: True
+  k-fold:
+    parallel: True
+    folds: 5
+    random_seed: 1
+
+prediction:
+  quantiles: 0.95
+  outbands: 0
+
+output:
+  directory: $UNCOVERML_SRC/tests/test_data/sirsam/xgboost/out
+  model: $UNCOVERML_SRC/tests/test_data/sirsam/xgboost/out/xgboost.model
+  plot_correlation: True
+  plot_target_scaling: True

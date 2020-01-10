@@ -33,9 +33,8 @@ def _image_has_targets(y_min, y_max, im):
 def _extract_from_chunk(image_source, targets, chunk_index, total_chunks,
                         patchsize):
     image_chunk = Image(image_source, chunk_index, total_chunks, patchsize)
-    # figure out which chunks I need to consider
-    y_min = targets.positions[0, 1]
-    y_max = targets.positions[-1, 1]
+    y_min = np.min(targets.positions[:,1])
+    y_max = np.max(targets.positions[:,1])
     if _image_has_targets(y_min, y_max, image_chunk):
         x = patch.patches_at_target(image_chunk, patchsize, targets)
     else:
@@ -62,7 +61,8 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
     else:
         raise ValueError(f"Attempting to extract features form {image_source._filename} "
                           "but all targets lie outside image boundaries")
-    assert x_all.shape[0] == targets.observations.shape[0]
+    if x_all.shape[0] != targets.observations.shape[0]:
+        raise ValueError(f"Number of covariate data points ({x_all.shape[0]}) not equal to target data points ({targets.observations.shape[0]})")
     return x_all
 
 
