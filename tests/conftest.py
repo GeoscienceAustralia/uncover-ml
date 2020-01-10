@@ -282,3 +282,11 @@ def sirsam_rf_precomp_predict(sirsam_rf_precomp):
     Path to SirSam random forest precomputed predict outputs.
     """
     return os.path.join(sirsam_rf_precomp, 'predict')
+
+@pytest.fixture(scope='session')
+def sirsam_rf_precomp_shiftmap(sirsam_rf_precomp):
+    """
+    Path to SirSam random forest precomputed shiftmap outputs.
+    """
+    return os.path.join(sirsam_rf_precomp, 'shiftmap')
+

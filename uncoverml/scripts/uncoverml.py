@@ -27,6 +27,7 @@ import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
+import uncoverml.models
 from uncoverml.transforms import StandardiseTransform
 
 
@@ -42,10 +43,74 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 def cli(verbosity):
     ls.mllog.configure(verbosity)
 
+
 def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all,
                                                   targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def shiftmap(config_file, partitions):
+    config = ls.config.Config(config_file)
+    # Force algortihm - this is purely for debug log messages
+    config.algorithm = 'logistic'
+    if config.crop_box:
+        ls.geoio.crop_covariates(config)
+    config.n_subchunks = partitions
+    if config.n_subchunks > 1:
+        _logger.info("Memory constraint forcing {} iterations "
+                     "through data".format(config.n_subchunks))
+    else:
+        _logger.info("Using memory aggressively: "
+                             "dividing all data between nodes")
+
+    targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                    targetfield=config.target_property,
+                                    covariate_crs=ls.geoio.get_image_crs(config),
+                                    crop_box=config.crop_box)
+    targets = ls.targets.covariate_shift_targets(targets)
+    image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
+    features, keep = ls.features.transform_features(image_chunk_sets,
+                                                    transform_sets,
+                                                    config.final_transform,
+                                                    config)
+    x_all = ls.features.gather_features(features[keep], node=0)
+    targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+    model = ls.models.LogisticClassifier(random_state=1)
+    ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
+                                    kwargs={'fields': targets_all.fields,
+                                            'lon_lat': targets_all.positions})
+
+    # The below is essentially duplicating the 'predict' command
+    # should refactor to reuse it
+    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
+
+    predict_tags = model.get_predict_tags()
+    # We only need one band - the 'training' point likelihood
+    predict_tags = [predict_tags[1]]
+    config.outbands = 1
+
+    image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
+                                     config.n_subchunks, config.shiftmap_file, config.outbands,
+                                     band_tags=predict_tags[0: min(len(predict_tags), 
+                                                                   config.outbands)],
+                                     **config.geotif_options)
+
+    for i in range(config.n_subchunks):
+        _logger.info("starting to render partition {}".format(i+1))
+        ls.predict.render_partition(model, i, image_out, config)
+
+    image_out.close()
+
+    if config.thumbnails:
+        image_out.output_thumbnails(config.thumbnails)
+
+    if config.crop_box:
+        ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
 @cli.command()
 @click.argument('config_file')

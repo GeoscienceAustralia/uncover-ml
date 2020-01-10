@@ -176,7 +176,10 @@ class ArrayImageSource(ImageSource):
 def crop_covariates(config, outdir=None):
     """
     Crops the covariate files listed under `config.feature_sets` using
-    the bounds provided under `config.crop_box`.
+    the bounds provided under `config.crop_box`. The cropped covariates
+    are stored in a temporary directory and the paths in 
+    `config.feature_sets` are redirected to theses files. The caller is
+    responsible for removing the files once they have been created.
     
     Parameters
     ----------
@@ -223,6 +226,16 @@ def crop_tif(filename, crop_box, outfile=None):
             crop_box = \
                 tuple(src.bounds[i] if crop_box[i] is None else crop_box[i] for i in range(4))
         xmin, ymin, xmax, ymax = crop_box
+
+        def _check_bound(comp, crop_bnd, src_bnd, s):
+            if comp:
+                raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})")
+
+        _check_bound(xmin < src.bounds[0], xmin, src.bounds[0], 'xmin')
+        _check_bound(ymin < src.bounds[1], ymin, src.bounds[1], 'ymin')
+        _check_bound(xmax > src.bounds[2], xmax, src.bounds[2], 'xmax')
+        _check_bound(ymax > src.bounds[3], ymax, src.bounds[3], 'ymax')
+
         gj_box = [
             {'type': 'Polygon',
             'coordinates': [[
@@ -358,8 +371,8 @@ class ImageWriter:
 
     nodata_value = np.array(-1e20, dtype='float32')
 
-    def __init__(self, shape, bbox, crs, name, n_subchunks, outpath,
-                 band_tags=None, independent=False, **kwargs):
+    def __init__(self, shape, bbox, crs, n_subchunks, outpath,
+                 outbands, band_tags=None, independent=False, **kwargs):
         """
         pass in additional geotif write options in kwargs
         """
@@ -368,9 +381,8 @@ class ImageWriter:
                                          bbox[0, 1], bbox[1, 1],
                                          shape[0], shape[1])
         self.shape = shape
-        self.outbands = len(band_tags)
+        self.outbands = outbands
         self.bbox = bbox
-        self.name = name
         self.outpath = outpath
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control

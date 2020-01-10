@@ -1,0 +1,370 @@
+# This config demonstrates many of the features available in
+# uncoverml.
+
+features:
+  - name: my pickle files
+    type: pickle
+    files:
+      covariates: features.pk
+      targets: targets.pk
+      featurevec: featurevec.pk  # uncomment for cubist
+      rawcovariates: rawcovariates.csv  # intersected covariates saved as csv
+      rawcovariates_mask: rawcovariates_mask.csv  #
+      train_data_pk: training_data.pk
+      plot_covariates: True
+  - name: my features 1
+    type: ordinal
+    files:
+#      - path: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
+#      - path: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+#      - path: /path/to/GA_data/GA-cover2/relief_dems_3s_mosaic1.tif
+#      - path: /path/to/GA_data/GA-cover2/relief_twi_3s.tif
+#      - directory: /path/to/GA_data/MBV2/
+       - list: /path/to/GA-cover2/sirsam_covariates_ordinal.txt
+    # transforms are performed in order
+    transforms:
+      - centre
+      - standardise
+    imputation: nn
+
+
+# only used during prediction
+mask:
+  file: /path/to/GA_data/mask/old_mask_test.tif
+  retain: 1
+
+# only used during prediction of mlkrige
+lon_lat:  # used for regression kriging, i.e., mlkrige aglo
+  lon: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+  lat: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
+
+preprocessing:
+  # imputation: none
+  # imputation: gaus
+  # imputation: nn
+  imputation:
+  transforms:
+#    - center
+#    - standardise
+    # - whiten:
+        # keep_fraction: 0.8
+
+# resample: choice (value, spatial)
+# bootstrap: bool, sampling with or without replacement
+# output_samples: number of output samples kept
+# bins: for value based resampling only. Number of bins to sample from.
+# rows and cols: for spatial resampling, sample from rows X cols tiles
+# resampling is performed in sequence. The order of spatial/value is important.
+targets:
+  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
+  property: K_ppm_imp_
+#targets:
+#  file: /path/to/GA_data/MBV2/GP_ceno_combine.shp
+#  property: depth
+#  resample:
+#    - spatial:
+#        arguments:
+#          rows: 4
+#          cols: 4
+#          bootstrap: False
+#          output_samples: 1000
+#    - value:
+#        arguments:
+#          bins: 10
+#          bootstrap: False
+#          output_samples: 1000
+
+
+#clustering:
+#  file: /path/to/data/GA-cover/geochem_sites_class1.shp
+#  property: class
+#  algorithm: kmeans
+#  arguments:
+#    n_classes: 5
+#    oversample_factor: 5
+#  cluster_analysis: True
+
+
+#learning:
+#  algorithm: sgdapproxgp
+#  arguments:
+#    target_transform: standardise
+#    kernel: matern52
+#    nbases: 100
+#    maxiter: 10
+
+#learning:
+#  algorithm: depthregress
+#  arguments:
+##    target_transform: standardise
+#    kernel: matern52
+#    ard: True
+#    lenscale: 1.
+#    nbases: 100
+#    maxiter: 18
+#    falloff: 0.1
+#    beta1: 0.3
+#    beta2: 0.5
+
+#learning:
+#  algorithm: approxgp
+#  arguments:
+#    target_transform: rank
+#    kernel: matern52
+#    nbases: 50
+#    maxiter: 10000
+
+
+#learning:
+#  algorithm: sgdbayesreg
+#  arguments:
+#    target_transform: standardise
+#    maxiter: 10
+
+#learning:
+#  algorithm: elasticnet
+#  arguments:
+#    target_transform: standardise
+#    ml_score: True
+
+
+learning:
+  algorithm: xgboost
+  arguments:
+    target_transform: standardise
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 30
+    
+
+
+#learning:
+#  algorithm: huber
+#  arguments:
+#    target_transform: standardise
+#    ml_score: True
+
+
+#learning:
+#  algorithm: cubist
+#  arguments:
+#    max_rules: 500
+#    committee_members: 2
+#    unbiased: False
+#    max_categories: 5000
+#    target_transform: standardise
+##    bootstrap: 200
+#    sampling: 70
+#    seed: 2
+#    extrapolation: 5
+#    sampling: 50
+#    seed: 2
+#    composite_model: True
+#    auto: False
+#    neighbors: 5
+#    calc_usage: True
+#    print_output: False
+##    trees: 10
+##    parallel: True
+
+
+#learning:
+#  algorithm: krige
+#  arguments:
+#    method: ordinary  # ordinary or universal
+#    variogram_model: spherical  # linear, power, gaussian, spherical, exponential
+#    verbose: False
+
+#learning:
+#  algorithm: transformedsvr
+#  arguments:
+#    target_transform: kde
+#    kernel: rbf
+
+#learning:
+#    algorithm: multirandomforest
+#    arguments:
+#      n_estimators: 50
+#      target_transform: kde
+#      forests: 10
+
+#learning:
+#  algorithm: transformedrandomforest
+#  arguments:
+#    n_estimators: 10
+#    target_transform: log
+#    max_depth: 250
+#    max_features: log2
+#    min_samples_split: 10
+
+#learning:
+#  algorithm: mlkrige
+#  arguments:
+#    ml_method: transformedrandomforest
+#    ml_params: {n_estimators: 10,
+#                target_transform: log,
+#                max_depth: 250,
+#                max_features: log2,
+#                min_samples_split: 10}
+#    method: ordinary
+#    variogram_model: linear
+#    n_closest_points: 10
+#    verbose: False
+
+
+#learning:
+#  algorithm: krige
+#  arguments:
+#    method: ordinary
+#    variogram_model: linear
+#    n_closest_points: 20
+#    verbose: False
+
+#learning:
+#  algorithm: transformedbayesreg
+#  arguments:
+#    target_transform: standardise
+#    basis: True
+#    var: 1.0
+#    regulariser: 1.0
+#    tol: 1.0e-08
+#    maxiter: 100000
+
+#learning:
+#  algorithm: gradientboost
+#  arguments:
+#    n_estimators: 50
+#    target_transform: sqrt
+
+
+#learning:
+#  algorithm: transformedgp
+#  arguments:
+#    kernel: rbf
+#    alpha: 1.0e-8
+#    normalize_y: True
+#    n_restarts_optimizer: 3
+
+#learning:
+#  algorithm: sgdregressor
+#  arguments:
+#      target_transform: standardise
+#      n_iter: 1000
+#      penalty: elasticnet
+#      alpha: 0.1
+#      l1_ratio: 0.7
+#      fit_intercept: False
+#      learning_rate: invscaling
+#      loss: huber
+##      random_state: 1
+#      shuffle: True
+#      warm_start: True
+
+
+#n_components : int, float, None or string
+#        Number of components to keep.
+#        if n_components is not set all components are kept::
+#        if n_components == 'mle' and svd_solver == 'full', Minka\'s MLE is used
+#        to guess the dimension
+#        if ``0 < n_components < 1`` and svd_solver == 'full', select the number
+#        of components such that the amount of variance that needs to be
+#        explained is greater than the percentage specified by n_components
+#        n_components cannot be equal to n_features for svd_solver == 'arpack'.
+# svd_solver: {'auto', 'full', 'arpack', 'randomized'}
+# iterated power: int > 0 or 'auto'
+
+optimisation:
+#  featuretransforms:
+#    pca:
+#      n_components: [20]
+#      whiten: [False, True]
+#      svd_solver: ['auto']
+#      iterated_power: ['auto']
+
+#  algorithm: sgdregressor
+#  hyperparameters:
+#      l1_ratio: [0, 0.15, 0.5, 0.75, 1]
+#      kernel: [rbf, matern, quagdratic]
+#      loss: [huber, epsilon_insensitive, squared_epsilon_insensitive]
+#      learning_rate: [optimal, invscaling]
+#      penalty: [l1, l2, elasticnet]
+#      fit_intercept: [True, False]
+#      warm_start: [True, False]
+#      target_transform: [identity, standardise, rank]
+#      alpha: [0.0001, 0.001, 0.01, 0.1]
+#      n_iter: [100]
+
+#  algorithm: transformedrandomforest
+#  hyperparameters:
+#    n_estimators: [100]
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    max_features: [auto, sqrt, log2]
+#    min_samples_split: [2, 4, 10]
+#    max_depth: [2, 5, 10, 20]
+
+
+#  algorithm: gradientboost
+#  hyperparameters:
+#    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    loss: [ls]
+#    max_features: [auto, sqrt, log2]
+#    min_samples_split: [2, 4, 10]
+#    max_depth: [2, 3, 4, 5]
+#    subsample: [1.0, 0.75, 0.5]
+
+#  algorithm: transformedbayesreg
+#  hyperparameters:
+#    target_transform: [rank, identity, standardise, sqrt, log]
+#    maxiter: [100000]
+#    ml_score: [True]
+
+
+  algorithm: elasticnet
+  hyperparameters:
+    alpha: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    l1_ratio: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    target_transform: [rank, identity, standardise, sqrt, log]
+    ml_score: [True]
+    max_iter: [1000000]
+
+#  algorithm: transformedgp
+#  hyperparameters:
+#    kernel: {
+#              'rbf': {length_scale: [1]},
+#              'matern': {length_scale: [1]},
+#              'quadratic': {length_scale: [1]}
+#            }
+#    alpha: [1.0e-10, 1.0e-9, 1.0e-8]
+#    normalize_y: [False, True]
+
+#  algorithm: transformedsvr
+#  hyperparameters:
+#    kernel: [linear, poly, rbf, sigmoid]
+#    target_transform: [identity, standardise, log, sqrt]
+#    C: [1.0, 0.1, 0.01]
+
+  optimisation_output: optimisation.csv
+
+# outbands: number of output bands desired.
+# Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',
+# 'Upper quantile', 'Entropy']
+prediction:
+  quantiles: 0.95
+  outbands: 10
+  thumbnails: 10
+  geotif:
+    compress: 'lzw'
+    bigtiff: 'YES'
+    tiled: True
+
+validation:
+  - feature_rank
+  - purmutation_rank
+  - parallel
+  - k-fold:
+      folds: 5
+      random_seed: 1
+
+output:
+  directory: .
