@@ -48,7 +48,7 @@ def local_learn_model(x_all, targets_all, config):
 
         if config.plot_target_scaling:
             diagnostics.plot_target_scaling(
-                config.transformed_targets_file, title=config.target_property)\
+                config.transformed_targets_file)\
             .savefig(config.plot_target_scaling)
         
 
