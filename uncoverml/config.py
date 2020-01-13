@@ -499,10 +499,15 @@ class Config(object):
             if kfb:
                 self.cross_validate = True
                 self.folds = _grp(kfb, 'folds', "'folds' (number of folds) must be specified "
-                                  "if k-fold cross validation is being used.")
+                                  "if k-fold cross validation and/or feature ranking is being used.")
                 self.crossval_seed = _grp(kfb, 'random_seed', "'random_seed' must be specified "
-                                          "if k-fold cross validation is being used.")
+                                          "if k-fold cross validation and/or feature ranking is being used.")
                 self.parallel_validate = kfb.get('parallel', False)
+            elif self.rank_features:
+                # Feature ranking requires crossval params. Provide defaults if not available.
+                self.folds = 5
+                self.crossval_seed = 1
+                self.parallel_validate = False
         else:
             self.cross_validate = False
             self.rank_features = False
