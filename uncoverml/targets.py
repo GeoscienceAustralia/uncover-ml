@@ -78,6 +78,11 @@ def gather_targets_main(targets, keep, node):
             d[k] = np.ma.concatenate(
                 mpiops.comm.allgather(targets.fields[k][keep]), axis=0)
         result = Targets(p, y, othervals=d)
+        dummies = []
+        for obs, pos in zip(result.observations, result.positions):
+            if obs == 'query':
+                dummies.append(pos)
+        np.savetxt('random_points.txt', np.array(dummies), fmt='%.8f')
     return result
 
 
