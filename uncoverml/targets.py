@@ -49,7 +49,6 @@ def covariate_shift_targets(targets):
                    dummy_targets.fields.update(real_targets.fields))
 
 def gather_targets(targets, keep, config, node=None):
-    # save_dropped_targets(config, keep, targets)
     return gather_targets_main(targets, keep, node)
 
 def gather_targets_main(targets, keep, node):
@@ -77,13 +76,15 @@ def gather_targets_main(targets, keep, node):
         for k in keys:
             d[k] = np.ma.concatenate(
                 mpiops.comm.allgather(targets.fields[k][keep]), axis=0)
-        result = Targets(p, y, othervals=d)
-        dummies = []
-        for obs, pos in zip(result.observations, result.positions):
-            if obs == 'query':
-                dummies.append(pos)
-        np.savetxt('random_points.txt', np.array(dummies), fmt='%.8f')
-    return result
+        return Targets(p, y, othervals=d)
+
+
+def save_dummy_targets(targets, config):
+    dummies = []
+    for obs, pos in zip(result.observations, result.positions):
+        if obs == 'query':
+            dummies.append(pos)
+    np.savetxt(config.shiftmap_points, np.array(dummies), fmt='%.8f')
 
 
 def save_dropped_targets(config, keep, targets):

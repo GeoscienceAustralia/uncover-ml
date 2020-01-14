@@ -80,6 +80,7 @@ def shiftmap(config_file, partitions):
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+    ls.targets.save_dummy_targets(targets, config)
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
                                     kwargs={'fields': targets_all.fields,
