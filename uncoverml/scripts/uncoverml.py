@@ -71,7 +71,10 @@ def shiftmap(config_file, partitions):
                                     targetfield=config.target_property,
                                     covariate_crs=ls.geoio.get_image_crs(config),
                                     crop_box=config.crop_box)
-    targets = ls.targets.covariate_shift_targets(targets)
+
+
+    targets = ls.targets.covariate_shift_targets(targets, ls.geoio.get_image_bounds(config))
+
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
     features, keep = ls.features.transform_features(image_chunk_sets,
@@ -80,7 +83,7 @@ def shiftmap(config_file, partitions):
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
-    ls.targets.save_dummy_targets(targets, config)
+    ls.targets.save_dummy_targets(targets_all, config)
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
                                     kwargs={'fields': targets_all.fields,
