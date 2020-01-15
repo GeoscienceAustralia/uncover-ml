@@ -16,7 +16,7 @@ class Targets:
         if othervals is not None:
             self.fields = othervals
 
-def covariate_shift_targets(targets):
+def covariate_shift_targets(targets, bounds):
     def _dummy_targets(targets, label, seed=1):
         rnd = np.random.RandomState(seed)
         lons = targets.positions[:,0]
@@ -24,15 +24,15 @@ def covariate_shift_targets(targets):
         shp = targets.observations.shape
         #new_lons = rnd.uniform(np.min(lons), np.max(lons), shp)
         #new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
-        def _generate_points(old_points, limit):
+        def _generate_points(lower, upper, limit):
             new_points = []
             while len(new_points) < limit:
-                new_point = rnd.uniform(np.min(old_points), np.max(old_points))
-                if new_point not in old_points:
-                    new_points.append(new_point)
+                #new_point = rnd.uniform(np.min(old_points), np.max(old_points))
+                new_point = rnd.uniform(lower, upper)
+                new_points.append(new_point)
             return new_points
-        new_lons = _generate_points(lons, shp[0])
-        new_lats = _generate_points(lats, shp[0])
+        new_lons = _generate_points(bounds[0][0], bounds[0][1], shp[0])
+        new_lats = _generate_points(bounds[1][0], bounds[1][1], shp[0])
         lonlats = np.column_stack([new_lons, new_lats])
         labels = np.full(shp, label)
         return Targets(lonlats, labels)
@@ -81,10 +81,10 @@ def gather_targets_main(targets, keep, node):
 
 def save_dummy_targets(targets, config):
     dummies = []
-    for obs, pos in zip(result.observations, result.positions):
+    for obs, pos in zip(targets.observations, targets.positions):
         if obs == 'query':
             dummies.append(pos)
-    np.savetxt(config.shiftmap_points, np.array(dummies), fmt='%.8f')
+    np.savetxt(config.shiftmap_points, np.array(dummies), fmt='%.8f', delimiter=',')
 
 
 def save_dropped_targets(config, keep, targets):
