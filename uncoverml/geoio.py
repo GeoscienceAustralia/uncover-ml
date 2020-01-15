@@ -355,6 +355,11 @@ def get_image_crs(config):
     image_file = config.feature_sets[0].files[0]
     im = image.Image(RasterioImageSource(image_file))
     return im.crs 
+
+def get_image_bounds(config):
+    image_file = config.feature_sets[0].files[0]
+    im = image.Image(RasterioImageSource(image_file))
+    return im.bbox
      
 def get_image_spec(model, config):
     # temp workaround, we should have an image spec to check against
