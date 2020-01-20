@@ -16,7 +16,7 @@ class Targets:
         if othervals is not None:
             self.fields = othervals
 
-def covariate_shift_targets(targets, bounds):
+def generate_covariate_shift_targets(targets, bounds):
     def _dummy_targets(targets, label, seed=1):
         rnd = np.random.RandomState(seed)
         lons = targets.positions[:,0]
@@ -37,16 +37,19 @@ def covariate_shift_targets(targets, bounds):
         labels = np.full(shp, label)
         return Targets(lonlats, labels)
 
-    def _label_targets(targets, label):
-        labels = np.full(targets.observations.shape, label)
-        return Targets(targets.positions, labels, targets.fields)
-
-    real_targets = _label_targets(targets, 'training')
+    real_targets = label_targets(targets, 'training')
     dummy_targets = _dummy_targets(targets, 'query')
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
-    return Targets(np.append(dummy_targets.positions, real_targets.positions, 0),
-                   np.append(dummy_targets.observations, real_targets.observations, 0),
-                   dummy_targets.fields.update(real_targets.fields))
+    return merge_targets(real_targets, dummy_targets)
+    
+def merge_targets(a, b):
+    return Targets(np.append(a.positions, b.positions, 0),
+                   np.append(a.observations, b.observations, 0),
+                   a.fields.update(b.fields))
+
+def label_targets(targets, label):
+        labels = np.full(targets.observations.shape, label)
+        return Targets(targets.positions, labels, targets.fields)
 
 def gather_targets(targets, keep, config, node=None):
     return gather_targets_main(targets, keep, node)
