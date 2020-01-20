@@ -470,13 +470,14 @@ class Config(object):
         
         # TARGET BLOCK
         if not self.pk_load:
-            tb = _grp(s, 'targets', "'targets' block my be provided when not loading from "
+            tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
                                     "targets.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
             self.resample = tb.get('resample')
+            self.shiftmap_targets = tb.get('shiftmap')
 
         # FINAL TRANSFORM BLOCK
         ftb = s.get('final_transform')
