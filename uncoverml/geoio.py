@@ -274,6 +274,8 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     records = np.array(sf.records()).T
     record_dict = {k: np.array(r, dtype=d) for k, r, d in zip(
         shapefields, records, dtypes)}
+    if targetfield is None:
+        targetfield = list(record_dict.keys())[0]
     if targetfield in record_dict:
         val = record_dict.pop(targetfield)
     else:
@@ -320,7 +322,7 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield, covariate_crs=None, crop_box=None):
+def load_targets(shapefile, targetfield=None, covariate_crs=None, crop_box=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
