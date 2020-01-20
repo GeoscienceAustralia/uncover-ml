@@ -67,13 +67,22 @@ def shiftmap(config_file, partitions):
         _logger.info("Using memory aggressively: "
                              "dividing all data between nodes")
 
-    targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                    targetfield=config.target_property,
-                                    covariate_crs=ls.geoio.get_image_crs(config),
-                                    crop_box=config.crop_box)
+    real_targets = ls.geoio.load_targets(shapefile=config.target_file,
+                                        targetfield=config.target_property,
+                                        covariate_crs=ls.geoio.get_image_crs(config),
+                                        crop_box=config.crop_box)
 
-
-    targets = ls.targets.covariate_shift_targets(targets, ls.geoio.get_image_bounds(config))
+    # User can provide their own 'query' targets for training shapemap, or we can
+    # generate points.
+    if config.shiftmap_targets:
+        dummy_targets = ls.geoio.load_targets(shapefile=config.shiftmap_targets,
+                                              covariate_crs=ls.geoio.get_image_crs(config),
+                                              crop_box=config.crop_box)
+        dummy_targets = ls.targets.label_targets(dummy_targets, 'query')
+        real_targets = ls.targets.label_targets(real_targets, 'training')
+        targets = ls.targets.merge_targets(dummy_targets, real_targets)
+    else:
+        targets = ls.targets.generate_covariate_shift_targets(real_targets, ls.geoio.get_image_bounds(config))
 
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
