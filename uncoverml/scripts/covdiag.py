@@ -35,7 +35,7 @@ def cli(directory):
     if mpiops.chunk_index == 0:
         diags = list(itertools.chain.from_iterable(diags))
 
-        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
+        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent', 'min', 'max']
         with open('covdiag.csv', 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=fieldnames)
             w.writeheader()
@@ -46,7 +46,7 @@ def cli(directory):
             for diag in diags:
                 pretty_string = printer(diag)
                 print(pretty_string)
-                txtfile.write(pretty_string)
+                txtfile.write(pretty_string + '\n')
 
         print("Finished")
 
@@ -69,13 +69,13 @@ def diagnostic(filename):
     for i in range(1, diag['bands'] + 1):
         band = src.read(i)
         diag['ndv_percent'].append(_percentage(band, src.nodata, diag['width'] * diag['height']))
-        diag['min'] = np.min(band)
-        diag['max'] = np.max(band)
+        diag['min'].append(np.min(band))
+        diag['max'].append(np.max(band))
     src.close()
     return diag
  
 def printer(diag):
-    return (
+    pretty_string = (
         f"Name:   {diag['name']}\n"
         f"Driver: {diag['driver']}\n"
         f"CRS:    {diag['crs']}\n"
@@ -85,11 +85,14 @@ def printer(diag):
         f"Bands:  {diag['bands']}\n" 
         f"NDV:    {diag['nodata']}\n"
         "Band stats:\n"
-        for i in range(diag['bands']):
-            f"\tBand {i + 1}: {diag['ndv_percent'][i]}\n"
-            f"\tBand {i + 1}: {diag['min'][i]}\n"
-            f"\tBand {i + 1}: {diag['max'][i]}\n"
     )
+    for i in range(diag['bands']):
+        pretty_string += (
+            f"\tBand {i + 1} NDV: {diag['ndv_percent'][i]}%\n"
+            f"\tBand {i + 1} min: {diag['min'][i]}\n"
+            f"\tBand {i + 1} max: {diag['max'][i]}\n"
+        )
+    return pretty_string
    
 def _percentage(band, ndv, n_elements):
     return np.count_nonzero(band == ndv) / n_elements * 101
