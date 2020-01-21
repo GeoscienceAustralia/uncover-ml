@@ -3,23 +3,33 @@ import os
 import csv
 from pprint import pprint
 
+import click
 import rasterio
 import numpy  as np
 
-def main(dirname):
+@click.command()
+@click.argument('directory')
+@click.option('-o', '--output', help='output diagnostics to specified file')
+def cli(directory, output):
+    """
+    Will output some basic diagnostic information for each TIF found
+    in the provided directory.
+    """
     diags = []
-    for dirpath, _, filenames in os.walk(dirname):
+    for dirpath, _, filenames in os.walk(directory):
         for f in filenames:
             diags.append(diagnostic(os.path.join(dirpath, f)))
 
-    fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
-    with open('diagnostics.csv', 'w') as csvfile:
-        w = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        w.writeheader()
-        for diag in diags:
-            printer(diag)
-            print()
-            w.writerow(diag)
+    if output:
+        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
+        with open(output, 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            w.writeheader()
+            for diag in diags:
+                w.writerow(diag)
+
+    for diag in diags:
+        printer(diag)
 
 def diagnostic(filename):
     src = rasterio.open(filename)
@@ -49,6 +59,3 @@ def printer(diag):
    
 def _percentage(band, value):
     return np.count_nonzero(band == value) / band.flatten().shape[0] * 100
-
-if __name__ == '__main__':
-    main(sys.argv[1])
