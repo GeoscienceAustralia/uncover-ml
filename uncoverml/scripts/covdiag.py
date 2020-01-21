@@ -13,8 +13,7 @@ from uncoverml import mpiops
 
 @click.command()
 @click.argument('directory')
-@click.option('-o', '--output', help='output diagnostics to specified file')
-def cli(directory, output):
+def cli(directory):
     """
     Will output some basic diagnostic information for each TIF found
     in the provided directory.
@@ -32,19 +31,22 @@ def cli(directory, output):
 
     diags = mpiops.comm.gather(diags, root=0)
     mpiops.comm.barrier()
+
     if mpiops.chunk_index == 0:
         diags = list(itertools.chain.from_iterable(diags))
-        if output:
-            fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
-            with open(output, 'w') as csvfile:
-                w = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                w.writeheader()
-                for diag in diags:
-                    w.writerow(diag)
 
-        for diag in diags:
-            printer(diag)
-            print()
+        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
+        with open('covdiag.csv', 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            w.writeheader()
+            for diag in diags:
+                w.writerow(diag)
+
+        with open('covdiag.txt', 'w') as txtfile:
+            for diag in diags:
+                pretty_string = printer(diag)
+                print(pretty_string)
+                txtfile.write(pretty_string)
 
         print("Finished")
 
@@ -61,23 +63,33 @@ def diagnostic(filename):
     diag['crs'] = diag['crs'].to_string()
     diag['bands'] = diag['count']
     del diag['count']
-    diag['ndv_percent'] = [_percentage(src.read(i), src.nodata, diag['width'] * diag['height']) 
-                           for i in range(1, diag['bands'] + 1)]
+    diag['ndv_percent'] = []
+    diag['min'] = []
+    diag['max'] = []
+    for i in range(1, diag['bands'] + 1):
+        band = src.read(i)
+        diag['ndv_percent'].append(_percentage(band, src.nodata, diag['width'] * diag['height']))
+        diag['min'] = np.min(band)
+        diag['max'] = np.max(band)
     src.close()
     return diag
  
 def printer(diag):
-    print(f"Name:   {diag['name']}")
-    print(f"Driver: {diag['driver']}")
-    print(f"CRS:    {diag['crs']}")
-    print(f"Dtype:  {diag['dtype']}")
-    print(f"Width:  {diag['width']}")
-    print(f"Height: {diag['height']}")
-    print(f"Bands:  {diag['bands']}") 
-    print(f"NDV:    {diag['nodata']}")
-    print("No data percentages:")
-    for i in range(diag['bands']):
-        print(f"\tBand {i + 1}: {diag['ndv_percent'][i]}")
+    return (
+        f"Name:   {diag['name']}\n"
+        f"Driver: {diag['driver']}\n"
+        f"CRS:    {diag['crs']}\n"
+        f"Dtype:  {diag['dtype']}\n"
+        f"Width:  {diag['width']}\n"
+        f"Height: {diag['height']}\n"
+        f"Bands:  {diag['bands']}\n" 
+        f"NDV:    {diag['nodata']}\n"
+        "Band stats:\n"
+        for i in range(diag['bands']):
+            f"\tBand {i + 1}: {diag['ndv_percent'][i]}\n"
+            f"\tBand {i + 1}: {diag['min'][i]}\n"
+            f"\tBand {i + 1}: {diag['max'][i]}\n"
+    )
    
 def _percentage(band, ndv, n_elements):
     return np.count_nonzero(band == ndv) / n_elements * 101
