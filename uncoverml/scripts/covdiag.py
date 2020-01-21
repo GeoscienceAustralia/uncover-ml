@@ -12,16 +12,34 @@ import numpy as np
 from uncoverml import mpiops
 
 @click.command()
-@click.argument('directory')
-def cli(directory):
+@click.argument('path', type=click.Path(exists=True))
+@click.option('-csv', '--csvfile', default='covdiag.csv', type=click.Path(),
+              show_default=True, help='Name of file to store output in CSV format.')
+@click.option('-r', 'recursive', is_flag=True, 
+              help='Process directories recursively.')
+def cli(path, csvfile, recursive):
     """
-    Will output some basic diagnostic information for each TIF found
-    in the provided directory.
+    Will output some basic diagnostic information for geotiffs.
+    If a directory is provided, all geotiffs in the direcotry (and
+    subdirectories if '-r' option is used) will be processed. Providing
+    a single filepath will only process that file.
+    
+    To store the printed output in a txt file, use output redirection:
+    'covdiag /path/to/file >> output.txt'.
     """
     diags = []
-    paths = mpiops.run_once(glob.glob, os.path.join(directory, '*.tif'))
+    if os.path.isdir(path):
+        if recursive:
+            paths = mpiops.run_once(glob.glob, os.path.join(path, '**', '*.tif'), recursive=recursive)
+        else:
+            paths = mpiops.run_once(glob.glob, os.path.join(path, '*.tif'))
+    else:
+        paths = [path]
     if mpiops.chunk_index == 0:
-        print(f"Found {len(paths)} geotiffs, retrieving information...")
+        if not paths:
+            print(f"No geotiffs found.")
+        else:
+            print(f"Found {len(paths)} geotiffs, retrieving information...")
     this_chunk_paths = np.array_split(paths, mpiops.chunks)[mpiops.chunk_index]
     for f in this_chunk_paths:
         diag = diagnostic(f)
@@ -35,21 +53,20 @@ def cli(directory):
     if mpiops.chunk_index == 0:
         diags = list(itertools.chain.from_iterable(diags))
 
-        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent', 'min', 'max']
-        with open('covdiag.csv', 'w') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            w.writeheader()
+        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 
+                      'height', 'bands', 'nodata', 'ndv_percent', 
+                      'min', 'max']
+        if csvfile:
+            with open(csvfile, 'w') as f:
+                w = csv.DictWriter(f, fieldnames=fieldnames)
+                w.writeheader()
+                for diag in diags:
+                    w.writerow(diag)
+                    print(printer(diag))
+        else:
             for diag in diags:
-                w.writerow(diag)
-
-        with open('covdiag.txt', 'w') as txtfile:
-            for diag in diags:
-                pretty_string = printer(diag)
-                print(pretty_string)
-                txtfile.write(pretty_string + '\n')
-
-        print("Finished")
-
+                print(printer(diag))
+        
 def diagnostic(filename):
     try:
         src = rasterio.open(filename)
