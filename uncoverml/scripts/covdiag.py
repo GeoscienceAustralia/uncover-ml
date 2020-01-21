@@ -2,11 +2,14 @@ import sys
 import os
 import glob
 import csv
+import itertools
 from pprint import pprint
 
 import click
 import rasterio
-import numpy  as np
+import numpy as np
+
+from uncoverml import mpiops
 
 @click.command()
 @click.argument('directory')
@@ -17,27 +20,33 @@ def cli(directory, output):
     in the provided directory.
     """
     diags = []
-    paths = glob.glob(os.path.join(directory, '*.tif'))
-    print(f"Found {len(paths)} geotiffs, retrieving informtion...")
-    for f in paths:
+    paths = mpiops.run_once(glob.glob, os.path.join(directory, '*.tif'))
+    if mpiops.chunk_index == 0:
+        print(f"Found {len(paths)} geotiffs, retrieving information...")
+    this_chunk_paths = np.array_split(paths, mpiops.chunks)[mpiops.chunk_index]
+    for f in this_chunk_paths:
         diag = diagnostic(f)
         if diag is not None:
             diags.append(diag)
             print(f"Processed '{f}'")
 
-    if output:
-        fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
-        with open(output, 'w') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            w.writeheader()
-            for diag in diags:
-                w.writerow(diag)
+    diags = mpiops.comm.gather(diags, root=0)
+    mpiops.comm.barrier()
+    if mpiops.chunk_index == 0:
+        diags = list(itertools.chain.from_iterable(diags))
+        if output:
+            fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
+            with open(output, 'w') as csvfile:
+                w = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                w.writeheader()
+                for diag in diags:
+                    w.writerow(diag)
 
-    for diag in diags:
-        printer(diag)
-        print()
+        for diag in diags:
+            printer(diag)
+            print()
 
-    print("Finished")
+        print("Finished")
 
 def diagnostic(filename):
     try:
@@ -52,7 +61,8 @@ def diagnostic(filename):
     diag['crs'] = diag['crs'].to_string()
     diag['bands'] = diag['count']
     del diag['count']
-    diag['ndv_percent'] = [_percentage(src.read(i), src.nodata, diag['width'] * diag['height']) for i in range(1, diag['bands'] + 1)]
+    diag['ndv_percent'] = [_percentage(src.read(i), src.nodata, diag['width'] * diag['height']) 
+                           for i in range(1, diag['bands'] + 1)]
     src.close()
     return diag
  
@@ -70,4 +80,4 @@ def printer(diag):
         print(f"\tBand {i + 1}: {diag['ndv_percent'][i]}")
    
 def _percentage(band, ndv, n_elements):
-    return np.count_nonzero(band == ndv) / n_elements * 100
+    return np.count_nonzero(band == ndv) / n_elements * 101
