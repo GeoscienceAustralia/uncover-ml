@@ -1,5 +1,6 @@
 import sys
 import os
+import glob
 import csv
 from pprint import pprint
 
@@ -16,9 +17,13 @@ def cli(directory, output):
     in the provided directory.
     """
     diags = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            diags.append(diagnostic(os.path.join(dirpath, f)))
+    paths = glob.glob(os.path.join(directory, '*.tif'))
+    print(f"Found {len(paths)} geotiffs, retrieving informtion...")
+    for f in paths:
+        diag = diagnostic(f)
+        if diag is not None:
+            diags.append(diag)
+            print(f"Processed '{f}'")
 
     if output:
         fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 'height', 'bands', 'nodata', 'ndv_percent']
@@ -30,9 +35,16 @@ def cli(directory, output):
 
     for diag in diags:
         printer(diag)
+        print()
+
+    print("Finished")
 
 def diagnostic(filename):
-    src = rasterio.open(filename)
+    try:
+        src = rasterio.open(filename)
+    except rasterio.errors.RasterioIOError:
+        print(f"Couldn't load '{filename}'\n")
+        return None
     diag = {}
     diag['name'] = os.path.basename(filename)
     diag.update(src.meta)
@@ -40,7 +52,7 @@ def diagnostic(filename):
     diag['crs'] = diag['crs'].to_string()
     diag['bands'] = diag['count']
     del diag['count']
-    diag['ndv_percent'] = [_percentage(src.read(i), src.nodata) for i in range(1, diag['bands'] + 1)]
+    diag['ndv_percent'] = [_percentage(src.read(i), src.nodata, diag['width'] * diag['height']) for i in range(1, diag['bands'] + 1)]
     src.close()
     return diag
  
@@ -57,5 +69,5 @@ def printer(diag):
     for i in range(diag['bands']):
         print(f"\tBand {i + 1}: {diag['ndv_percent'][i]}")
    
-def _percentage(band, value):
-    return np.count_nonzero(band == value) / band.flatten().shape[0] * 100
+def _percentage(band, ndv, n_elements):
+    return np.count_nonzero(band == ndv) / n_elements * 100
