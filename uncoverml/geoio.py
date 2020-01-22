@@ -354,6 +354,8 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, crop_box=None)
     return targets
 
 def get_image_crs(config):
+    print(config.feature_sets)
+    print(config.feature_sets[0].files[0])
     image_file = config.feature_sets[0].files[0]
     im = image.Image(RasterioImageSource(image_file))
     return im.crs 
@@ -399,6 +401,11 @@ class ImageWriter:
 
         # file tags don't have spaces
         if band_tags:
+            if self.outbands > len(band_tags):
+                _logger.warning(f"Specified more outbands ({self.outbands}) than there are "
+                                f"prediction tags available ({len(band_tags)}). "
+                                f"Limiting outbands to number of prediction tags.")
+                self.outbands = len(band_tags)
             file_tags = ["_".join(k.lower().split()) for k in band_tags]
         else:
             file_tags = [str(k) for k in range(self.outbands)]
