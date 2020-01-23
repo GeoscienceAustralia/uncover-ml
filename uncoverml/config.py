@@ -591,7 +591,7 @@ class Config(object):
         self.metadata_file = _outpath('_metadata.txt')
         self.optimisation_results_file = _outpath('_optimisation.csv')
         self.prediction_file = _outpath('_{}.tif')
-        self.shiftmap_file = _outpath('_shiftmap.tif')
+        self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.txt')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
