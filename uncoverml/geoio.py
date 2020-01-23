@@ -354,8 +354,6 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, crop_box=None)
     return targets
 
 def get_image_crs(config):
-    print(config.feature_sets)
-    print(config.feature_sets[0].files[0])
     image_file = config.feature_sets[0].files[0]
     im = image.Image(RasterioImageSource(image_file))
     return im.crs 
