@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
 import numpy as np
+from numpy.polynomial.polynomial import polyfit
 import seaborn as sns
 
 _CACHE = dict()
@@ -149,14 +150,14 @@ def _plot_residual_error(crossval_path=None, rc_path=None, pred_path=None, bins=
 
 def plot_real_vs_pred_crossval(crossval_path, scores_path=None, bins=20,
                                overlay=False, hist_cm=None, scatter_color=None,
-                               figsize=(15, 7.5), point_size=None):
+                               figsize=(25, 12.5), point_size=None):
     return _plot_real_vs_pred(crossval_path=crossval_path, scores_path=scores_path, bins=bins, 
                               overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color,
                               figsize=figsize, point_size=point_size)
 
 def plot_real_vs_pred_prediction(rc_path, pred_path, scores_path=None, bins=20,
                                  overlay=False, hist_cm=None, scatter_color=None,
-                                 figsize=(15, 7.5), point_size=None):
+                                 figsize=(25, 12.5), point_size=None):
     return _plot_real_vs_pred(rc_path=rc_path, pred_path=pred_path, scores_path=scores_path, bins=bins,
                                 overlay=overlay, hist_cm=hist_cm, scatter_color=scatter_color,
                                 figsize=figsize, point_size=point_Size)
@@ -201,37 +202,50 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
                                 sharey=True, gridspec_kw={'wspace': 0})
         
         for ax in axs:
-            ax.set_xlabel('Real')
-            ax.set_ylabel('Predicted')
+            ax.set_xlabel('Real', fontsize=20)
+            ax.set_ylabel('Predicted', fontsize=20)
             ax.label_outer()
 
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
-        hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, 
-                             range=bin_limits, cmap=hist_cm, cmin=1)
+        hist = axs[1].hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=hist_cm, cmin=1)
         divider = make_axes_locatable(axs[1])
+        axs[1].tick_params(labelsize=18)
         cb_axis = divider.append_axes('right', size="5%", pad=0.1)
+        cb_axis.tick_params(labelsize=18)
         fig.colorbar(hist[3], cax=cb_axis)
         
         axs[0].scatter(targets_ar, predict_ar, s=point_size, color=scatter_color, alpha=0.8)
         axs[0].plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
-                    color='r', linewidth=2, label='1:1')
+                    color='b', linewidth=2, label='One-to-one')
+        b, m = polyfit(targets_ar, predict_ar, 1)
+        axs[0].plot(targets_ar, b + m * targets_ar, color='r', linewidth=2, label='Regression')
+        axs[0].legend(loc='lower right', fontsize=18)
+        axs[0].tick_params(labelsize=18)
 
         return fig
 
     def _overlay(targets_ar, predict_ar, bins=bins):
         fig, ax = plt.subplots(figsize=figsize)
-        ax.set_xlabel('Real')
-        ax.set_ylabel('Predicted')
+        ax.set_xlabel('Real', fontsize=20)
+        ax.set_ylabel('Predicted', fontsize=20)
 
         bin_limits = ([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()])
         hist = ax.hist2d(targets_ar, predict_ar, bins=bins, range=bin_limits, cmap=hist_cm, cmin=1)
         divider = make_axes_locatable(ax)
         cb_axis = divider.append_axes('right', size="2.8%", pad=0.1)
+        cb_axis.tick_params(labelsize=18)
         fig.colorbar(hist[3], cax=cb_axis)
         
         ax.scatter(targets_ar, predict_ar, s=point_size, color=scatter_color, alpha=0.8)
+        # 1 to 1 line
         ax.plot([targets_ar.min(), targets_ar.max()], [targets_ar.min(), targets_ar.max()],
-                color='r', linewidth=2, label='1:1')
+                color='b', linewidth=2, label='One-to-one')
+        # Regression line
+        b, m = polyfit(targets_ar, predict_ar, 1)
+        ax.plot(targets_ar, b + m * targets_ar, color='r', linewidth=2, label='Regression')
+        ax.legend(loc='lower right', fontsize=18)
+        ax.tick_params(labelsize=18)
+        
 
         return fig
         
@@ -259,10 +273,10 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
         for k, v in display_scores.items():
             display_string += f'{k} = {crossval_scores[v]:.3f}\n'
     
-        fig.text(0.057, 0.78, display_string, fontsize=12, fontfamily='monospace')
+        fig.text(0.044, 0.81, display_string, fontsize=20, fontfamily='monospace')
     
     # leg = fig.legend(loc='upper left', bbox_to_anchor=(0.065, 0.965))
-    fig.suptitle('Real vs Predicted', x=0.5, y=0.95, fontsize=16)
+    fig.suptitle('Real vs Predicted', x=0.5, y=0.96, fontsize=24)
     fig.tight_layout()
     return fig    
     
