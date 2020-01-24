@@ -326,20 +326,20 @@ def plot_target_scaling(path, bins=20, title='Target Scaling', sharey=False):
                             gridspec_kw={'wspace': 0} if sharey else {})
 
     for ax in axs:
-        ax.set_xlabel('Target Value')
-        ax.set_ylabel('Frequency')
+        ax.set_xlabel('Target Value', fontsize=16)
+        ax.set_ylabel('Frequency', fontsize=16)
         if sharey:
             ax.label_outer()
 
-    axs[0].set_title('Pre-Scaling')
-    axs[1].set_title('Post-Scaling')
+    axs[0].set_title('Pre-Scaling', fontsize=18)
+    axs[1].set_title('Post-Scaling', fontsize=18)
     hist_nt = axs[0].hist(nt, bins=bins)
     hist_t = axs[1].hist(t, bins=bins)
 
     _color_histogram(*hist_nt)
     _color_histogram(*hist_t)
 
-    fig.suptitle(title, x=0.5, y=0.98, fontsize=16)
+    fig.suptitle(title, x=0.5, y=0.98, fontsize=20)
     _suptitle_buffer(axs)
     return fig
 
