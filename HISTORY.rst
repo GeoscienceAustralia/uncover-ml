@@ -8,6 +8,15 @@ Added
 +++++
 - Install instructions for VDI
 - "extents" parameter for config. Providing bounding box will crop targets and covariates.
+- "shiftmap" command for generating covariate shift map. Can work with randomly generated targets
+  or user can provide their own shapefile via the 'shiftmap' property of the config 'target' block.
+- "covdiag" command for 'diagnosing' covariate files. Similar to gdalinfo but with room for 
+  additions if required.
+
+Changed
++++++++
+- Tweaked plots.
+- 'pbs' directory is now 'scripts'.
 
 Fixed
 +++++
@@ -31,7 +40,7 @@ Added
 +++++
 - Diagnostics module for plotting various metrics.
 - Diagnostics notebook for viewing plots.
-- Target coordinates are now automatically reprojected if a *.prj file is provided with the input shapefile.
+- Target coordinates are now automatically reprojected if a \*.prj file is provided with the input shapefile.
 
 Changed
 +++++++
