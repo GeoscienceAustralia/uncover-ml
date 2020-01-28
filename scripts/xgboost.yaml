@@ -2,9 +2,25 @@ learning:
   algorithm: xgboost
   arguments:
     target_transform: standardise
-    max_depth: 5
+    max_depth: 3
     learning_rate: 0.1
-    n_estimators: 20
+    n_estimators: 100
+    silent: True
+    objective: "reg:linear"
+    nthread: 1
+    gamma: 0
+    min_child_weight: 1
+    max_delta_step: 0 
+    subsample: 1
+    colsample_bytree: 1
+    colsample_bylevel: 1
+    reg_alpha: 0
+    reg_lambda: 1
+    scale_pos_weight: 1
+    n_job: -1
+    base_score: 0.5
+    random_state: 1
+    missing: None
 
 features:
   - type: ordinal
