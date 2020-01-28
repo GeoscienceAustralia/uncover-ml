@@ -473,7 +473,7 @@ class SGDApproxGP(BasisMakerMixin, GeneralisedLinearModel,
     def __init__(self, kernel='rbf', nbases=50, lenscale=1., var=1.,
                  regulariser=1., ard=True, maxiter=3000, batch_size=10,
                  alpha=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8,
-                 random_state=None, nstarts=500):
+                 random_state=1, nstarts=500):
 
         super().__init__(likelihood=Gaussian(Parameter(var, Positive())),
                          basis=None,
