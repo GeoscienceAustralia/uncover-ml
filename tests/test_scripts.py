@@ -18,9 +18,17 @@ from uncoverml.scripts import uncoverml
 SIRSAM_RF = 'sirsam_Na_randomforest'
 
 class TestShiftmap:
-    OUTPUTS = [ 
-        SIRSAM_RF + '_shiftmap.tif', 
-        SIRSAM_RF + '_shiftmap_thumbnail.tif'
+    IMAGE_OUTPUTS = [ 
+        SIRSAM_RF + '_shiftmap_most_likely.tif', 
+        SIRSAM_RF + '_shiftmap_most_likely_thumbnail.tif',
+        SIRSAM_RF + '_shiftmap_query_0.tif',
+        SIRSAM_RF + '_shiftmap_query_0_thumbnail.tif',
+        SIRSAM_RF + '_shiftmap_training_1.tif',
+        SIRSAM_RF + '_shiftmap_training_1_thumbnail.tif'
+    ]
+
+    OTHER_OUTPUTS = [
+        SIRSAM_RF + '_shiftmap_generated_points.txt',
     ]
 
     @staticmethod
@@ -49,10 +57,10 @@ class TestShiftmap:
                        'uncoverml', 'shiftmap', sirsam_rf_conf, '-p', str(num_parts)]
                 subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
-                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
+                raise RuntimeError(f"'{cmd}' failed with error {e.returncode}: {e.output}")
 
     @staticmethod
-    @pytest.fixture(params=OUTPUTS)
+    @pytest.fixture(params=IMAGE_OUTPUTS + OTHER_OUTPUTS)
     def sirsam_rf_output(request, sirsam_rf_out):
         return os.path.join(sirsam_rf_out, request.param)
 
@@ -66,7 +74,7 @@ class TestShiftmap:
         assert os.path.exists(sirsam_rf_output)
 
     @staticmethod
-    @pytest.fixture(params=OUTPUTS)
+    @pytest.fixture(params=IMAGE_OUTPUTS)
     def sirsam_rf_comp_outputs(request, sirsam_rf_out, sirsam_rf_precomp_shiftmap):
         """
         """
@@ -148,7 +156,7 @@ class TestLearnCommand:
                        'uncoverml', 'learn', sirsam_rf_conf, '-p', str(num_parts)]
                 subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
-                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
+                raise RuntimeError(f"'{cmd}' failed with error {e.returncode}: {e.output}")
     
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_OUTPUTS)
@@ -300,7 +308,7 @@ class TestPredictCommand:
                        'uncoverml', 'predict', sirsam_rf_conf, '-p', str(num_parts)]
                 subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
-                raise RuntimeError(f"'{cmd}' failed with error {e.errorcode}: {e.output}")
+                raise RuntimeError(f"'{cmd}' failed with error {e.returncode}: {e.output}")
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_PREDICTION_MAPS + [SIRSAM_RF_MF_METADATA] + SIRSAM_RF_IMAGE_OUTPUT)
