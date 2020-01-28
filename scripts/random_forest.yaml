@@ -4,6 +4,8 @@ learning:
     n_estimators: 10
     target_transform: log
     forests: 20
+    parallel: True
+    random_state: 1
 
 features:
   - type: ordinal
