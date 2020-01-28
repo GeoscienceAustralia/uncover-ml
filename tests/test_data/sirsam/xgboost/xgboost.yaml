@@ -39,7 +39,7 @@ validation:
 
 prediction:
   quantiles: 0.95
-  outbands: 0
+  outbands: 1
 
 output:
   directory: $UNCOVERML_SRC/tests/test_data/sirsam/xgboost/out
