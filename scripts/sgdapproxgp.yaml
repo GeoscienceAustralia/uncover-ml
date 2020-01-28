@@ -1,0 +1,48 @@
+learning:
+  algorithm: sgdapproxgp
+  arguments:
+    #kernel: rbf 
+    nbases: 50
+    #lenscale: 1
+    #var: 1
+    #regulariser: 1
+    #ard: True
+    #maxiter: 3000
+    #batch_size: 10
+    #alpha: 0.01
+    #beta1: 0.9
+    #beta2: 0.99
+    #epsilon: 1e-8
+    #random_state: 1
+    #nstarts: 500 
+       
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+    imputation: mean
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Cr_log
+
+final_transform: 
+    imputation: mean
+    transforms:
+      - log 
+
+validation:
+  feature_rank: True
+  k-fold:
+    parallel: True
+    folds: 5
+    random_seed: 1
+
+prediction:
+  quantiles: 0.95
+  outbands: 1
+
+output:
+  directory: .
