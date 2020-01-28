@@ -45,4 +45,4 @@ prediction:
   outbands: 1
 
 output:
-  directory: .
+  directory: ./sgdapproxgp_out

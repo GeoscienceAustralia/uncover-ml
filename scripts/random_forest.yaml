@@ -32,7 +32,7 @@ prediction:
   outbands: 10
 
 output:
-  directory: .
+  directory: ./random_forest_out
 
   # By default, model file will be saved in output directory.            #
   # Model can be saved to a specific path if desired, and different      #
@@ -47,6 +47,6 @@ output:
   plot_target_scaling: True
   
 pickling:
-  covariates: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk
-  targets: $UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk
+  covariates: ./randomforest_features.pk
+  targets: ./randomforest_targets.pk
 

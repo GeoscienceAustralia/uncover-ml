@@ -58,6 +58,6 @@ prediction:
   outbands: 1
 
 output:
-  directory: .
+  directory: ./xgboost_out
   plot_correlation: True
   plot_target_scaling: True
