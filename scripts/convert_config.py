@@ -1,5 +1,19 @@
+"""
+This script will convert old (<2.0.0) uncover-ml YAML configs to be 
+compatible with the current versions (0.3.1 as of writing). The older
+'pipeline' configs need to be rewritten in YAML.
+
+To use, run this script and provide it with a config file to convert.
+The result will be placed in the same directory as the provided config,
+with 'converted_' prefixed to the filename:
+
+.. example:: 
+
+    python convert_config.py /path/to/old_config.yaml
+"""
 import yaml
 import sys
+import os
 
 def convert(path):
     print("Converting UncoverML config...")
@@ -42,8 +56,10 @@ def convert(path):
         old_config['output']['plot_correlation'] = True
         old_config['output']['plot_target_scaling'] = True
 
-    print(f"Done! Saving as 'converted_{path}'")
-    with open('converted_' + path, 'w') as f:
+    base, name = os.path.split(path)
+    new_path = os.path.join(base, 'converted_' + name)
+    print(f"Done! Saving as '{new_path}'")
+    with open(new_path, 'w') as f:
         yaml.dump(old_config, f)
 
 if __name__ == '__main__':
