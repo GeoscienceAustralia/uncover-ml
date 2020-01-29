@@ -6,7 +6,10 @@ This section provides some examples and explanations of different
 workflows and possible parameters.
 
 For a reference to all possible config parameters, view the module
-documentation: :mod:`uncoverml.config`
+documentation: :mod:`uncoverml.config`.
+
+In ``scripts`` directory, there some example .YAML files to help you
+get started.
 
 Learning
 ~~~~~~~~
