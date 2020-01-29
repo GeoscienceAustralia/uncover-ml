@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Submit this on a PBS system by running:
+# qsub job_submit_example.sh
+
 #PBS -P ge3
 #PBS -q normal
 #PBS -l walltime=0:10:00,mem=4gb,ncpus=4,wd
