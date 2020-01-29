@@ -1,20 +1,20 @@
 learning:
   algorithm: sgdapproxgp
   arguments:
-    #kernel: rbf 
+    kernel: rbf 
     nbases: 50
-    #lenscale: 1
-    #var: 1
-    #regulariser: 1
-    #ard: True
-    #maxiter: 3000
-    #batch_size: 10
-    #alpha: 0.01
-    #beta1: 0.9
-    #beta2: 0.99
-    #epsilon: 1e-8
-    #random_state: 1
-    #nstarts: 500 
+    lenscale: 1.0
+    var: 1.0
+    regulariser: 1.0
+    ard: True
+    maxiter: 3000
+    batch_size: 10
+    alpha: 0.01
+    beta1: 0.9
+    beta2: 0.99
+    epsilon: 0.00000001
+    random_state: 1
+    nstarts: 500 
        
 features:
   - type: ordinal
