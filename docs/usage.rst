@@ -38,46 +38,23 @@ Which clusters (unsupervised) all of the data.
 Running on HPC
 --------------
 
-In the ``pbs`` directory of the repository there are some example scripts and a helper function
-to assist launching batch jobs over multiple nodes with PBS.
-
-.. todo::
-    
-    The PBS scripts and examples are outdated and need to be fixed.
+In the ``scripts`` directory of the repository there are some example configs and an example
+script, ``job_submit_example.sh``, to assist launching batch jobs over multiple nodes with PBS.
 
 UncoverML uses MPI for parallelization. To run an uncoverml command, use:
 
 .. code:: bash
 
-    mpirun -n <number_of_processors> <command>
+    mpirun -n <number_of_processors> <command> -p <number_of_data_partitions>
 
-An example of PBS job submission script:
+Using more processors for a job will typically reduce the processing time.
+The `-p` option will partition data into the specified number of chunks.
+This is useful for dealing with larger-than-memory datasets. Try experimenting
+with this option if you experience out-of-memory errors.
 
-.. code:: bash
+.. todo::
 
-    #!/bin/bash
-    #PBS -P ge3
-    #PBS -q normal
-    #PBS -l walltime=01:00:00,mem=128GB,ncpus=32,jobfs=20GB
-    #PBS -l wd
-
-    # setup environment
-    module unload intel-cc
-    module unload intel-fc
-    module load python3/3.4.3 python3/3.4.3-matplotlib 
-    module load load hdf5/1.8.10 gdal/2.0.0
-    source $HOME/.profile
-
-    # start the virtualenv
-    workon uncoverml
-
-    # run command
-    mpirun --mca mpi_warn_on_fork 0 uncoverml learn national_gamma_no_zeros.yaml -p 10
-    mpirun --mca mpi_warn_on_fork 0 uncoverml predict national_gamma_no_zeros.model -p 40
-
-where in this case mpirun is able to determine the number of available cores via PBS. This job 
-submits the ``learn`` and ``predict`` jobs one after the other. The `-p 10` or `-p 40` options 
-partitions the input covariates into the specificed number of memory partitions.
+    Change below link to Gadi User Guide when it becomes available.
 
 For more information on configuring PBS jobs on Raijin, view the 
 `NCI user documentation <https://opus.nci.org.au/display/Help/Raijin+User+Guide>`_. 
