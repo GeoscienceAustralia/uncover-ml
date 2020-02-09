@@ -3,6 +3,7 @@ Handles parsing of the configuration file.
 """
 from typing import Optional, List
 import logging
+import sys
 from os import path
 from os import makedirs
 import os
@@ -617,9 +618,12 @@ class Config(object):
             for ev in env_vars:
                 try:
                     ev_val = os.environ[ev]
-                except KeyError:
-                    _logger.exception("Couldn't parse env var '%s' as it hasn't been set", ev)
-                    raise
+                    if not ev_val:
+                        raise ValueError   
+                except (KeyError, ValueError):
+                    _logger.exception("Couldn't parse environment var '%s' as it hasn't been set. "
+                                      "Set the variable or remove it from the config file.", ev)
+                    sys.exit(1)
                 value = re.sub(env_var_pattern, ev_val, value, count=1)
             return value
 
