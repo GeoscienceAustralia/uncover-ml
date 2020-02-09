@@ -54,7 +54,7 @@ validation:
 
 prediction:
   quantiles: 0.95
-  outbands: 1
+  outbands: 4
 
 output:
   directory: ./xgboost_out
