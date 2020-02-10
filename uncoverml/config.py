@@ -363,7 +363,7 @@ class Config(object):
         Name of the property to train clustering against. Required
         if :attr:`~class_file` is provided.
     """
-    def __init__(self, yaml_file: str, cluster=False):
+    def __init__(self, yaml_file):
 
         def _grp(d, k, msg=None):
             """
@@ -382,18 +382,8 @@ class Config(object):
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
-        # LEARNING BLOCK
-        if not cluster:
-            learn_block = _grp(s, 'learning')
-            self.clustering = False
-            self.cluster_analysis = False
-            self.algorithm = _grp(learn_block, 'algorithm',
-                                  "'algorithm' must be provided as part of 'learning' block.")
-            
-            self.algorithm_args = _grp(learn_block, 'arguments',
-                                       "'arguments' must be provided for learning algorithm.")
-        # CLUSTERING BLOCK
-        else:
+        if 'clustering' in s:
+            # CLUSTERING BLOCK
             cb = _grp(s, 'clustering', "'clustering' block must be provided when clustering.")
             self.clustering = True
             self.algorithm = cb.get('algorithm', 'kmeans')
@@ -406,7 +396,16 @@ class Config(object):
                 self.class_property = _grp(cb, 'property', "'property' must be provided when "
                                            "providing a file for semisupervised clustering.")
             self.semi_supervised = self.class_file is not None
-
+        else:
+            # LEARNING BLOCK
+            learn_block = _grp(s, 'learning')
+            self.clustering = False
+            self.cluster_analysis = False
+            self.algorithm = _grp(learn_block, 'algorithm',
+                                  "'algorithm' must be provided as part of 'learning' block.")
+            self.algorithm_args = _grp(learn_block, 'arguments',
+                                       "'arguments' must be provided for learning algorithm.")
+            
         # Set flags based on algorithm being used - these control
         # some special behaviours in the code.
         self.cubist = self.algorithm == 'cubist'
@@ -467,10 +466,9 @@ class Config(object):
         if 'patchsize' in s:
             _logger.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
-
         
         # TARGET BLOCK
-        if not self.pk_load:
+        if not self.pk_load and not self.clustering:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
