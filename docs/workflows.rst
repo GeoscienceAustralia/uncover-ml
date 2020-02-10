@@ -1,6 +1,3 @@
-Configuration
-------------
-
 UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different 
 workflows and possible parameters.
@@ -8,8 +5,8 @@ workflows and possible parameters.
 For a reference to all possible config parameters, view the module
 documentation: :mod:`uncoverml.config`.
 
-In ``scripts`` directory, there some example .YAML files to help you
-get started.
+In `uncover-ml/configs` directory, there some example YAML files to help 
+you get started.
 
 Learning
 ~~~~~~~~
@@ -139,9 +136,9 @@ Clustering
     n_classes: 5
     oversample_factor: 5
 
-The ``clustering`` block is particular to the `cluster` command. When providing a ``clustering``
+The ``clustering`` block is particular to the ``cluster`` command. When providing a ``clustering``
 block, ``learning``, ``targets`` and ``validation`` blocks don't apply and are not required.
-Providing a ``clustering`` block and running the `cluster` will use the K-Means algorith to
+Providing a ``clustering`` block and running the ``cluster`` will use the K-Means algorith to
 cluster the covariates provided in the ``features`` block. By default, clustering is unsupervised.
 If a shapefile containing points with class labels is provided as ``file``, then semi-supervised
 clustering will be performed.
