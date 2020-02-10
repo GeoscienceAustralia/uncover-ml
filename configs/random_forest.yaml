@@ -38,7 +38,7 @@ output:
   # Model can be saved to a specific path if desired, and different      #
   # model files can be loaded for the prediction step if specified here. #
 
-  model: ./random_forest.model
+  model: ./random_forest_out/random_forest.model
 
   plot_feature_ranks: True
   plot_intersection: True
@@ -47,6 +47,6 @@ output:
   plot_target_scaling: True
   
 pickling:
-  covariates: ./randomforest_features.pk
-  targets: ./randomforest_targets.pk
+  covariates: ./random_forest_out/features.pk
+  targets: ./random_forest_out/targets.pk
 
