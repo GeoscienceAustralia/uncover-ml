@@ -14,7 +14,6 @@ clustering:
   #file: /path/to/class_labels.shp
   #property: name_of_class_label_property
  
-  algorithm: kmeans
   n_classes: 5
   oversample_factor: 5
 
