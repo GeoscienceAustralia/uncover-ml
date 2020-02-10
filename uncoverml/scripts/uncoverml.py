@@ -217,7 +217,7 @@ def _load_data(config, partitions):
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help="only use this fraction of the data for learning classes")
 def cluster(config_file, subsample_fraction):
-    config = ls.config.Config(config_file, cluster=True)
+    config = ls.config.Config(config_file)
 
     for f in config.feature_sets:
         if not f.transform_set.global_transforms:
@@ -242,7 +242,6 @@ def cluster(config_file, subsample_fraction):
 def semisupervised(config):
 
     # make sure we're clear that we're clustering
-    config.algorithm = config.clustering_algorithm
     config.cubist = False
     # Get the taregts
     targets = ls.geoio.load_targets(shapefile=config.class_file,
@@ -267,7 +266,6 @@ def semisupervised(config):
 
 def unsupervised(config):
     # make sure we're clear that we're clustering
-    config.algorithm = config.clustering_algorithm
     config.cubist = False
     # Get the image chunks and their associated transforms
     image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
