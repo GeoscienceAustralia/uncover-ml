@@ -128,6 +128,24 @@ validation. ``folds`` is the number of folds to split the training data into. ``
 seed provided to numpy for getting random permutations of data to split into folds. The permutation
 is pseudorandom, i.e. using the same seed will provide deterministic results.
 
+Clustering
+~~~~~~~~~~
+
+.. code:: yaml
+
+  clustering:
+    # file: /path/to/class_labels.shp
+    # property: name_of_class_label_property
+    n_classes: 5
+    oversample_factor: 5
+
+The ``clustering`` block is particular to the `cluster` command. When providing a ``clustering``
+block, ``learning``, ``targets`` and ``validation`` blocks don't apply and are not required.
+Providing a ``clustering`` block and running the `cluster` will use the K-Means algorith to
+cluster the covariates provided in the ``features`` block. By default, clustering is unsupervised.
+If a shapefile containing points with class labels is provided as ``file``, then semi-supervised
+clustering will be performed.
+
 Prediction
 ~~~~~~~~~~
 
