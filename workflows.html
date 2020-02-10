@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Configuration &mdash; UncoverML 0.3.1 documentation</title>
+  <title>Learning &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -136,7 +136,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Configuration</li>
+      <li>Learning</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -155,15 +155,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="configuration">
-<h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
-<p>UncoverML workflows are controlled by a YAML configuration file.
+  <p>UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different
 workflows and possible parameters.</p>
 <p>For a reference to all possible config parameters, view the module
-documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.config" title="uncoverml.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.config</span></code></a></p>
+documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.config" title="uncoverml.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.config</span></code></a>.</p>
+<p>In <cite>uncover-ml/configs</cite> directory, there some example YAML files to help
+you get started.</p>
 <div class="section" id="learning">
-<h2>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h2>
+<h1>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">learning</span><span class="p">:</span>
   <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multirandomforest</span>
   <span class="nt">arguments</span><span class="p">:</span>
@@ -178,7 +178,7 @@ keyword arguments specific to that model. For reference about what
 arguments are applicable, refer the documentation for the specific model.</p>
 </div>
 <div class="section" id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
     <span class="nt">files</span><span class="p">:</span>
@@ -237,7 +237,7 @@ each feature set. Available methods are:</p>
 </ul>
 </div>
 <div class="section" id="targets">
-<h2>Targets<a class="headerlink" href="#targets" title="Permalink to this headline">¶</a></h2>
+<h1>Targets<a class="headerlink" href="#targets" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
   <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp</span>
   <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Na_log</span>
@@ -248,7 +248,7 @@ containing the targets. <code class="docutils literal notranslate"><span class="
 works by intersecting patches of the covariate data with corresponding target locations.</p>
 </div>
 <div class="section" id="validation">
-<h2>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h2>
+<h1>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">validation</span><span class="p">:</span>
   <span class="nt">feature_rank</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
   <span class="nt">k-fold</span><span class="p">:</span>
@@ -266,8 +266,24 @@ validation. <code class="docutils literal notranslate"><span class="pre">folds</
 seed provided to numpy for getting random permutations of data to split into folds. The permutation
 is pseudorandom, i.e. using the same seed will provide deterministic results.</p>
 </div>
+<div class="section" id="clustering">
+<h1>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">clustering</span><span class="p">:</span>
+  <span class="c1"># file: /path/to/class_labels.shp</span>
+  <span class="c1"># property: name_of_class_label_property</span>
+  <span class="nt">n_classes</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+  <span class="nt">oversample_factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">clustering</span></code> block is particular to the <code class="docutils literal notranslate"><span class="pre">cluster</span></code> command. When providing a <code class="docutils literal notranslate"><span class="pre">clustering</span></code>
+block, <code class="docutils literal notranslate"><span class="pre">learning</span></code>, <code class="docutils literal notranslate"><span class="pre">targets</span></code> and <code class="docutils literal notranslate"><span class="pre">validation</span></code> blocks don’t apply and are not required.
+Providing a <code class="docutils literal notranslate"><span class="pre">clustering</span></code> block and running the <code class="docutils literal notranslate"><span class="pre">cluster</span></code> will use the K-Means algorith to
+cluster the covariates provided in the <code class="docutils literal notranslate"><span class="pre">features</span></code> block. By default, clustering is unsupervised.
+If a shapefile containing points with class labels is provided as <code class="docutils literal notranslate"><span class="pre">file</span></code>, then semi-supervised
+clustering will be performed.</p>
+</div>
 <div class="section" id="prediction">
-<h2>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h2>
+<h1>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">prediction</span><span class="p">:</span>
   <span class="nt">quantiles</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
   <span class="nt">outbands</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
@@ -289,7 +305,7 @@ user will provide explicit labels for the bands they want.</p>
 </div>
 </div>
 <div class="section" id="output">
-<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
+<h1>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">output</span><span class="p">:</span>
   <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out</span>
   <span class="nt">model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model</span>
@@ -313,7 +329,7 @@ view the section on diagnostics: <a class="reference internal" href="usage.html#
 outputs: <a class="reference internal" href="usage.html#outputs"><span class="std std-ref">Outputs</span></a>.</p>
 </div>
 <div class="section" id="pickling">
-<h2>Pickling<a class="headerlink" href="#pickling" title="Permalink to this headline">¶</a></h2>
+<h1>Pickling<a class="headerlink" href="#pickling" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pickling</span><span class="p">:</span>
   <span class="nt">covariates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk</span>
   <span class="nt">targets</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk</span>
@@ -327,7 +343,6 @@ is the path to where the pickle file will be saved to and then read, and the <co
 same but for target data. If these are provied but do not exist, coviarates and targerts will be
 scaled and intersected as normal then pickled to these files for future use. If provided and they
 exist, intersection will be skipped and data will be loaded from these files instead.</p>
-</div>
 </div>
 
 

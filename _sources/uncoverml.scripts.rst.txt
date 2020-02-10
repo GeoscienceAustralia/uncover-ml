@@ -4,6 +4,14 @@ uncoverml.scripts package
 Submodules
 ----------
 
+uncoverml.scripts.covdiag module
+--------------------------------
+
+.. automodule:: uncoverml.scripts.covdiag
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 uncoverml.scripts.gammasensor module
 ------------------------------------
 

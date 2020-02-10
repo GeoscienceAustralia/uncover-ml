@@ -106,7 +106,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.features">uncoverml.features module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.filtering">uncoverml.filtering module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.geoio">uncoverml.geoio module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.git_hash">uncoverml.git_hash module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.image">uncoverml.image module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.interpolate">uncoverml.interpolate module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.krige">uncoverml.krige module</a></li>
@@ -208,10 +207,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="uncoverml.scripts.html">uncoverml.scripts package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag">uncoverml.scripts.covdiag module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor">uncoverml.scripts.gammasensor module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch">uncoverml.scripts.gridsearch module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.subsampletargets">uncoverml.scripts.subsampletargets module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz">uncoverml.scripts.tiff2kmz module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#uncoverml-scripts-tiff2kmz-module">uncoverml.scripts.tiff2kmz module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml">uncoverml.scripts.uncoverml module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts">Module contents</a></li>
 </ul>
@@ -571,7 +571,7 @@ that increases with l.</p></li>
 <p>Handles parsing of the configuration file.</p>
 <dl class="class">
 <dt id="uncoverml.config.Config">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">yaml_file</em>, <em class="sig-param">cluster=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">yaml_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class representing the global configuration of the uncoverml
 scripts.</p>
@@ -1605,12 +1605,12 @@ fit.</p>
 
 <dl class="function">
 <dt id="uncoverml.diagnostics.plot_real_vs_pred_crossval">
-<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em>, <em class="sig-param">figsize=(15</em>, <em class="sig-param">7.5)</em>, <em class="sig-param">point_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_crossval" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em>, <em class="sig-param">figsize=(25</em>, <em class="sig-param">12.5)</em>, <em class="sig-param">point_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_crossval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.diagnostics.plot_real_vs_pred_prediction">
-<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_prediction</code><span class="sig-paren">(</span><em class="sig-param">rc_path</em>, <em class="sig-param">pred_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em>, <em class="sig-param">figsize=(15</em>, <em class="sig-param">7.5)</em>, <em class="sig-param">point_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_prediction" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.diagnostics.</code><code class="sig-name descname">plot_real_vs_pred_prediction</code><span class="sig-paren">(</span><em class="sig-param">rc_path</em>, <em class="sig-param">pred_path</em>, <em class="sig-param">scores_path=None</em>, <em class="sig-param">bins=20</em>, <em class="sig-param">overlay=False</em>, <em class="sig-param">hist_cm=None</em>, <em class="sig-param">scatter_color=None</em>, <em class="sig-param">figsize=(25</em>, <em class="sig-param">12.5)</em>, <em class="sig-param">point_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.diagnostics.plot_real_vs_pred_prediction" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -1805,7 +1805,7 @@ image data.</p></li>
 
 <dl class="class">
 <dt id="uncoverml.geoio.ImageWriter">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">ImageWriter</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">bbox</em>, <em class="sig-param">crs</em>, <em class="sig-param">name</em>, <em class="sig-param">n_subchunks</em>, <em class="sig-param">outpath</em>, <em class="sig-param">band_tags=None</em>, <em class="sig-param">independent=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.ImageWriter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">ImageWriter</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">bbox</em>, <em class="sig-param">crs</em>, <em class="sig-param">n_subchunks</em>, <em class="sig-param">outpath</em>, <em class="sig-param">outbands</em>, <em class="sig-param">band_tags=None</em>, <em class="sig-param">independent=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.ImageWriter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="uncoverml.geoio.ImageWriter.close">
@@ -1857,7 +1857,10 @@ independent image writing by different processes, i.e., images are not chunked</
 <dt id="uncoverml.geoio.crop_covariates">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_covariates</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">outdir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_covariates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crops the covariate files listed under <cite>config.feature_sets</cite> using
-the bounds provided under <cite>config.crop_box</cite>.</p>
+the bounds provided under <cite>config.crop_box</cite>. The cropped covariates
+are stored in a temporary directory and the paths in
+<cite>config.feature_sets</cite> are redirected to theses files. The caller is
+responsible for removing the files once they have been created.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1908,6 +1911,11 @@ with original name + random id in tmp directory.</p></li>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.geoio.get_image_bounds">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">get_image_bounds</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.get_image_bounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.geoio.get_image_crs">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">get_image_crs</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.get_image_crs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1940,7 +1948,7 @@ with original name + random id in tmp directory.</p></li>
 
 <dl class="function">
 <dt id="uncoverml.geoio.load_targets">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield</em>, <em class="sig-param">covariate_crs=None</em>, <em class="sig-param">crop_box=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield=None</em>, <em class="sig-param">covariate_crs=None</em>, <em class="sig-param">crop_box=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads the shapefile onto node 0 then distributes it across all
 available nodes</p>
 </dd></dl>
@@ -1984,9 +1992,6 @@ q3 = 12</p></li>
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">unsupervised_feature_sets</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.unsupervised_feature_sets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="module-uncoverml.git_hash">
-<span id="uncoverml-git-hash-module"></span><h2>uncoverml.git_hash module<a class="headerlink" href="#module-uncoverml.git_hash" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-uncoverml.image">
 <span id="uncoverml-image-module"></span><h2>uncoverml.image module<a class="headerlink" href="#module-uncoverml.image" title="Permalink to this headline">¶</a></h2>
@@ -2431,7 +2436,7 @@ is a matrix of the distances from each point in <code class="docutils literal no
 </dd></dl>
 
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">Rbf</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">Rbf</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rbfi</span> <span class="o">=</span> <span class="n">Rbf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>  <span class="c1"># radial basis function interpolator instance</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">xi</span> <span class="o">=</span> <span class="n">yi</span> <span class="o">=</span> <span class="n">zi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
@@ -3438,7 +3443,7 @@ decision tree estimator ouputs.</p>
 
 <dl class="class">
 <dt id="uncoverml.models.SGDApproxGP">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">SGDApproxGP</code><span class="sig-paren">(</span><em class="sig-param">kernel='rbf'</em>, <em class="sig-param">nbases=50</em>, <em class="sig-param">lenscale=1.0</em>, <em class="sig-param">var=1.0</em>, <em class="sig-param">regulariser=1.0</em>, <em class="sig-param">ard=True</em>, <em class="sig-param">maxiter=3000</em>, <em class="sig-param">batch_size=10</em>, <em class="sig-param">alpha=0.01</em>, <em class="sig-param">beta1=0.9</em>, <em class="sig-param">beta2=0.99</em>, <em class="sig-param">epsilon=1e-08</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">nstarts=500</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.SGDApproxGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">SGDApproxGP</code><span class="sig-paren">(</span><em class="sig-param">kernel='rbf'</em>, <em class="sig-param">nbases=50</em>, <em class="sig-param">lenscale=1.0</em>, <em class="sig-param">var=1.0</em>, <em class="sig-param">regulariser=1.0</em>, <em class="sig-param">ard=True</em>, <em class="sig-param">maxiter=3000</em>, <em class="sig-param">batch_size=10</em>, <em class="sig-param">alpha=0.01</em>, <em class="sig-param">beta1=0.9</em>, <em class="sig-param">beta2=0.99</em>, <em class="sig-param">epsilon=1e-08</em>, <em class="sig-param">random_state=1</em>, <em class="sig-param">nstarts=500</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.SGDApproxGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.models.BasisMakerMixin" title="uncoverml.models.BasisMakerMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.BasisMakerMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">revrand.glm.GeneralisedLinearModel</span></code>, <a class="reference internal" href="#uncoverml.models.GLMPredictDistMixin" title="uncoverml.models.GLMPredictDistMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.GLMPredictDistMixin</span></code></a></p>
 <p>An approximate Gaussian process for large scale data using stochastic
 gradients.</p>
@@ -3897,8 +3902,28 @@ psize = pwidth * 2 + 1</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.targets.generate_covariate_shift_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">generate_covariate_shift_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.generate_covariate_shift_targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.targets.label_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">label_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">label</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.label_targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.targets.merge_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">merge_targets</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.merge_targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.targets.save_dropped_targets">
 <code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">save_dropped_targets</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">keep</em>, <em class="sig-param">targets</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.save_dropped_targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.targets.save_dummy_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">save_dummy_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.save_dummy_targets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>

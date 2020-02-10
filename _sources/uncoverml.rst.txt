@@ -77,14 +77,6 @@ uncoverml.geoio module
    :undoc-members:
    :show-inheritance:
 
-uncoverml.git\_hash module
---------------------------
-
-.. automodule:: uncoverml.git_hash
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 uncoverml.image module
 ----------------------
 

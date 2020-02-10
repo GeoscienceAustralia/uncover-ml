@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="UncoverML Project Report (NICTA)" href="../projectreport.html" />
-    <link rel="prev" title="uncoverml.scripts.tiff2kmz" href="uncoverml.scripts.tiff2kmz.html" /> 
+    <link rel="prev" title="uncoverml.scripts.gammasensor" href="uncoverml.scripts.gammasensor.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,7 +88,8 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../usage.html">Usage</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../usage.html#running-locally">Running locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#running">Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#multiprocessing">Multiprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../usage.html#running-on-hpc">Running on HPC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../usage.html#configuration">Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../usage.html#models">Models</a></li>
@@ -98,7 +99,6 @@
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.subsampletargets.html">uncoverml.scripts.subsampletargets</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">uncoverml.scripts.gridsearch</a></li>
 </ul>
 </li>
@@ -179,20 +179,7 @@
 <span id="uncoverml-scripts-gridsearch"></span><h1>uncoverml.scripts.gridsearch<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h1>
 <p>Run the various machine learning parameter optimisation using
 scikit-learn GridSearchCv.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: gridsearch [OPTIONS] PIPELINE_FILE
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: gridsearch [OPTIONS] PIPELINE_FILE
 
 Options:
   -p, --partitions INTEGER        divide each node&#39;s data into this many
@@ -230,7 +217,7 @@ Options:
         <a href="../projectreport.html" class="btn btn-neutral float-right" title="UncoverML Project Report (NICTA)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="uncoverml.scripts.tiff2kmz.html" class="btn btn-neutral float-left" title="uncoverml.scripts.tiff2kmz" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="uncoverml.scripts.gammasensor.html" class="btn btn-neutral float-left" title="uncoverml.scripts.gammasensor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

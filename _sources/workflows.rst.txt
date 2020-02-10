@@ -1,12 +1,12 @@
-Configuration
-------------
-
 UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different 
 workflows and possible parameters.
 
 For a reference to all possible config parameters, view the module
-documentation: :mod:`uncoverml.config`
+documentation: :mod:`uncoverml.config`.
+
+In `uncover-ml/configs` directory, there some example YAML files to help 
+you get started.
 
 Learning
 ~~~~~~~~
@@ -124,6 +124,24 @@ UncoverML with MPI and more than one processor, setting this to ``True`` will ac
 validation. ``folds`` is the number of folds to split the training data into. ``random_seed`` is the 
 seed provided to numpy for getting random permutations of data to split into folds. The permutation
 is pseudorandom, i.e. using the same seed will provide deterministic results.
+
+Clustering
+~~~~~~~~~~
+
+.. code:: yaml
+
+  clustering:
+    # file: /path/to/class_labels.shp
+    # property: name_of_class_label_property
+    n_classes: 5
+    oversample_factor: 5
+
+The ``clustering`` block is particular to the ``cluster`` command. When providing a ``clustering``
+block, ``learning``, ``targets`` and ``validation`` blocks don't apply and are not required.
+Providing a ``clustering`` block and running the ``cluster`` will use the K-Means algorith to
+cluster the covariates provided in the ``features`` block. By default, clustering is unsupervised.
+If a shapefile containing points with class labels is provided as ``file``, then semi-supervised
+clustering will be performed.
 
 Prediction
 ~~~~~~~~~~

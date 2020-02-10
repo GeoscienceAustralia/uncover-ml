@@ -94,6 +94,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">History</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#unreleased-2019-12-xx">Unreleased (2019-12-xx)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
 </ul>
 </li>
@@ -104,23 +105,23 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#id4">0.3.0 (2019-11-25)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id5">Added</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#removed">Removed</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id8">0.2.1 (2019-11-07)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id9">Added</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id10">Fixed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">0.2.1 (2019-11-07)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Fixed</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id11">0.2.0 (2019-11-05)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id12">Added</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id13">Fixed</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id14">Changed</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id15">Removed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">0.2.0 (2019-11-05)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Removed</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id16">0.1.0 (2019-09-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">0.1.0 (2019-09-22)</a></li>
 </ul>
 </li>
 </ul>
@@ -196,6 +197,17 @@
 <ul class="simple">
 <li><p>Install instructions for VDI</p></li>
 <li><p>“extents” parameter for config. Providing bounding box will crop targets and covariates.</p></li>
+<li><p>“shiftmap” command for generating covariate shift map. Can work with randomly generated targets
+or user can provide their own shapefile via the ‘shiftmap’ property of the config ‘target’ block.</p></li>
+<li><p>“covdiag” command for ‘diagnosing’ covariate files. Similar to gdalinfo but with room for
+additions if required.</p></li>
+</ul>
+</div>
+<div class="section" id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Tweaked plots.</p></li>
+<li><p>‘pbs’ directory is now ‘scripts’.</p></li>
 </ul>
 </div>
 <div class="section" id="fixed">
@@ -229,11 +241,11 @@
 <ul class="simple">
 <li><p>Diagnostics module for plotting various metrics.</p></li>
 <li><p>Diagnostics notebook for viewing plots.</p></li>
-<li><p>Target coordinates are now automatically reprojected if a <a href="#id6"><span class="problematic" id="id7">*</span></a>.prj file is provided with the input shapefile.</p></li>
+<li><p>Target coordinates are now automatically reprojected if a *.prj file is provided with the input shapefile.</p></li>
 </ul>
 </div>
-<div class="section" id="changed">
-<h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id6">
+<h3>Changed<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Optional output parameters in config, e.g. plots, are now boolean. User no longer provides a
 path, instead they are placed in output directory.</p></li>
@@ -247,26 +259,26 @@ path, instead they are placed in output directory.</p></li>
 </ul>
 </div>
 </div>
+<div class="section" id="id7">
+<h2>0.2.1 (2019-11-07)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id8">
-<h2>0.2.1 (2019-11-07)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id9">
-<h3>Added<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<h3>Added<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Temporary workaround for ‘get_image_spec’, at least one covariate file is now required
 even if using pickled data.</p></li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h3>Fixed<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id9">
+<h3>Fixed<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Prediction thumbnails</p></li>
 </ul>
 </div>
 </div>
+<div class="section" id="id10">
+<h2>0.2.0 (2019-11-05)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id11">
-<h2>0.2.0 (2019-11-05)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id12">
-<h3>Added<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<h3>Added<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Python 3.6 and 3.7 support.</p></li>
 <li><p>Metadata profiler: a ‘metadata.txt’ file will be generated as part of predict output that
@@ -279,8 +291,8 @@ will allow reproducability of results.</p></li>
 <li><p>Can now provide env vars in YAML config in the form ‘$ENV_VAR’.</p></li>
 </ul>
 </div>
-<div class="section" id="id13">
-<h3>Fixed<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id12">
+<h3>Fixed<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Broken tests due to usage of fixtures and new verison of PyTest</p></li>
 <li><p>Override of MPI pickling.</p></li>
@@ -299,8 +311,8 @@ To make models portable these are longer saved as files but are stored in the mo
 itself.</p></li>
 </ul>
 </div>
-<div class="section" id="id14">
-<h3>Changed<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id13">
+<h3>Changed<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Updated depdency versions.</p></li>
 <li><p>Package version is now dervied from ‘git describe’ command. This is also written to metadata
@@ -321,15 +333,15 @@ file when making predictions.</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id15">
-<h3>Removed<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id14">
+<h3>Removed<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Support for Python versions below 3.6.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id16">
-<h2>0.1.0 (2019-09-22)<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h2>0.1.0 (2019-09-22)<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Start of versioning</p></li>
 </ul>

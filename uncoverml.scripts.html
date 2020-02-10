@@ -106,7 +106,6 @@
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.features">uncoverml.features module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.filtering">uncoverml.filtering module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.geoio">uncoverml.geoio module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.git_hash">uncoverml.git_hash module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.image">uncoverml.image module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.interpolate">uncoverml.interpolate module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.krige">uncoverml.krige module</a></li>
@@ -201,23 +200,23 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
+<div class="section" id="module-uncoverml.scripts.covdiag">
+<span id="uncoverml-scripts-covdiag-module"></span><h2>uncoverml.scripts.covdiag module<a class="headerlink" href="#module-uncoverml.scripts.covdiag" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncoverml.scripts.covdiag.diagnostic">
+<code class="sig-prename descclassname">uncoverml.scripts.covdiag.</code><code class="sig-name descname">diagnostic</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag.diagnostic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.covdiag.printer">
+<code class="sig-prename descclassname">uncoverml.scripts.covdiag.</code><code class="sig-name descname">printer</code><span class="sig-paren">(</span><em class="sig-param">diag</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag.printer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 <div class="section" id="module-uncoverml.scripts.gammasensor">
 <span id="uncoverml-scripts-gammasensor-module"></span><h2>uncoverml.scripts.gammasensor module<a class="headerlink" href="#module-uncoverml.scripts.gammasensor" title="Permalink to this headline">¶</a></h2>
 <p>Run the Gamma sensor prediction/super-resolution pipeline.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: gammasensor [OPTIONS] GEOTIFF
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: gammasensor [OPTIONS] GEOTIFF
 
 Options:
   --invert                        Apply inverse sensor model
@@ -245,20 +244,7 @@ Options:
 <span id="uncoverml-scripts-gridsearch-module"></span><h2>uncoverml.scripts.gridsearch module<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h2>
 <p>Run the various machine learning parameter optimisation using
 scikit-learn GridSearchCv.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: gridsearch [OPTIONS] PIPELINE_FILE
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: gridsearch [OPTIONS] PIPELINE_FILE
 
 Options:
   -p, --partitions INTEGER        divide each node&#39;s data into this many
@@ -280,20 +266,7 @@ Options:
 <div class="section" id="module-uncoverml.scripts.subsampletargets">
 <span id="uncoverml-scripts-subsampletargets-module"></span><h2>uncoverml.scripts.subsampletargets module<a class="headerlink" href="#module-uncoverml.scripts.subsampletargets" title="Permalink to this headline">¶</a></h2>
 <p>Subsample the targets from a shapefile to a new shapefile.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: subsampletargets [OPTIONS] FILENAME
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: subsampletargets [OPTIONS] FILENAME
 
 Options:
   -n, --npoints INTEGER           Number of points to keep
@@ -304,54 +277,13 @@ Options:
 </pre></div>
 </div>
 </div>
-<div class="section" id="module-uncoverml.scripts.tiff2kmz">
-<span id="uncoverml-scripts-tiff2kmz-module"></span><h2>uncoverml.scripts.tiff2kmz module<a class="headerlink" href="#module-uncoverml.scripts.tiff2kmz" title="Permalink to this headline">¶</a></h2>
-<p>Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.
-National Map).</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: tiff2kmz [OPTIONS] TIFF
-
-  Turn a geotiff into a KMZ that can be dragged onto an instance of Terria
-  Map. This also constructs a JPEG of the Geotiff, as it is required for the
-  KMZ.
-
-Options:
-  --outfile PATH      Output file name, if not specified input file name is
-                      used
-  --overlayname TEXT
-  --help              Show this message and exit.
-</pre></div>
-</div>
+<div class="section" id="uncoverml-scripts-tiff2kmz-module">
+<h2>uncoverml.scripts.tiff2kmz module<a class="headerlink" href="#uncoverml-scripts-tiff2kmz-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-uncoverml.scripts.uncoverml">
 <span id="uncoverml-scripts-uncoverml-module"></span><h2>uncoverml.scripts.uncoverml module<a class="headerlink" href="#module-uncoverml.scripts.uncoverml" title="Permalink to this headline">¶</a></h2>
 <p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--------------------------------------------------------------------------
-[[59432,1],0]: A high-performance Open MPI point-to-point messaging module
-was unable to find any relevant network interfaces:
-
-Module: OpenFabrics (openib)
-  Host: ip-172-31-3-225
-
-Another transport will be used instead, although this may result in
-lower performance.
-
-NOTE: You can disable this warning by setting the MCA parameter
-btl_base_warn_component_unused to 0.
---------------------------------------------------------------------------
-Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
 
 Options:
   -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
@@ -362,6 +294,7 @@ Commands:
   cluster
   learn
   predict
+  shiftmap
 </pre></div>
 </div>
 <dl class="function">
