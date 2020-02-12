@@ -271,7 +271,10 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
         
         display_string = ''
         for k, v in display_scores.items():
-            display_string += f'{k} = {crossval_scores[v]:.3f}\n'
+            try:
+                display_string += f'{k} = {crossval_scores[v]:.3f}\n'
+            except KeyError:
+                pass
     
         fig.text(0.044, 0.81, display_string, fontsize=20, fontfamily='monospace')
     
