@@ -475,8 +475,16 @@ class Config(object):
                                     "targets.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
-            self.resample = tb.get('resample')
             self.shiftmap_targets = tb.get('shiftmap')
+            rb = tb.get('resample')
+            if rb:
+                self.spatial_resampling_args = rb.get('spatial')
+                self.value_resampling_args = rb.get('value')
+                if not (self.spatial_resampling_args or self.value_resampling_args):
+                    raise ValueError("No 'spatial' or 'value' arguments supplied, resampling "
+                                     "won't be performed. Provide a 'spatial' or 'value' block "
+                                     "or disable resampling.")
+
 
         # FINAL TRANSFORM BLOCK
         ftb = s.get('final_transform')
@@ -592,6 +600,7 @@ class Config(object):
         self.prediction_file = _outpath('_{}.tif')
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.txt')
+        self.resampled_shapefile_dir = _outpath('_resampled')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
         for p in paths:
