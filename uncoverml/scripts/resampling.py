@@ -98,8 +98,9 @@ def resample_by_magnitude(input_shapefile, output_shapefile,
     result = pd.core.reshape.tile._bins_to_cuts(target, bin_edges,
                                          labels=False,
                                          include_lowest=True)
+
     # add to output df for sampling
-    gdf_out[BIN] = result
+    gdf_out[BIN] = result[0]
 
     dfs_to_concat = []
     validation_dfs_to_concat = []
