@@ -600,7 +600,7 @@ class Config(object):
         self.prediction_file = _outpath('_{}.tif')
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.txt')
-        self.resampled_shapefile_dir = _outpath('_resampled')
+        self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
         for p in paths:
