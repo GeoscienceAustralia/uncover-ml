@@ -69,7 +69,8 @@ setup(
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
             'gridsearch = uncoverml.scripts.gridsearch:cli',
-            'covdiag = uncoverml.scripts.covdiag:cli'
+            'covdiag = uncoverml.scripts.covdiag:cli',
+            'resample = uncoverml.scripts.resampling:cli'
         ]
     },
     install_requires=parse_requirements('requirements.txt'),
