@@ -49,7 +49,6 @@ def test_attributes_exist(config_object, sirsam_rf_conf, sirsam_rf_out,
     assert c.final_transform == None
     assert c.target_file == sirsam_target_path
     assert c.target_property == 'Na_log'
-    assert c.resample == None
     assert c.mask == None
     assert not hasattr(c, 'retain')
     assert c.lon_lat == None
