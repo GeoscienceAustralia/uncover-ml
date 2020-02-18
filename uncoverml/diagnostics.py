@@ -61,7 +61,7 @@ def _real_vs_pred_from_prediction(rc_path, pred_path):
         return _CACHE['_real_vs_pred_from_prediction']
         
     targets = pd.read_csv(rc_path, float_precision='round_trip')
-    targets.drop(list(targets.columns.values)[:-3], axis=1, inplace=True)
+    targets.drop(list(targets.columns.values)[:-5], axis=1, inplace=True)
     tx, ty, tn = targets.columns.values
     targets = [(x, y, obs) for x, y, obs in zip(targets[tx], targets[ty], targets[tn])]
 

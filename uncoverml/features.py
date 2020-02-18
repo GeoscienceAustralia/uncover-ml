@@ -101,24 +101,38 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
 def save_intersected_features_and_targets(feature_sets, transform_sets, targets, config, 
                                           impute=True):
     """
-    This function saves raw covariates values at the target locations, i.e.,
-    after the targets have been intersected.
+    This function saves a table of covariate values and the target 
+    value intersected at each point. It also contains columns for 
+    UID 'index' and a predicted value. 
 
-    This will save the following two files if they are provided in the
-    config file:
-        a) rawcovariates.csv: the covariate values in csv
-        b) rawcovariates_mask.csv: the corresponding mask in csv
+    If the target shapefile contains an 'index' field, this will be
+    used to populate the 'index' column. This is intended to be used
+    as a unique ID for each point in post-processing. If no 'index'
+    field exists this column will be zero filled.
+
+    The 'precition' column is for predicted values created during 
+    cross-validation. Again, this is for post-processing. It will only
+    be populated if cross-validation is run later on. If not, it will
+    be zero filled.
+
+    Two files will be output:
+        .../output_dir/{name_of_config}_rawcovariates.csv
+        .../output_dir/{name_of_config}_rawcovariates_mask.csv
+
     This function will also optionally output intersected covariates scatter
-    plot.
+    plot and covariate correlation matrix plot.
     """
+    uid_field = 'index'
+    uid_on = uid_field in targets.fields
+
     transform_sets_mod = []
     names = ['{}_{}'.format(b, basename(k))
              for ec in feature_sets
              for k in ec
              for b in range(ec[k].shape[3])]
+    names += ['X', 'Y', config.target_property + '(target)', uid_field, 'prediction']
 
-    names += ["X", "Y", config.target_property + "(target)"]
-    header = ', '.join(names)
+    header = ','.join(names)
 
     for t in transform_sets:
         imputer = copy.deepcopy(t.imputer) if impute else None
@@ -136,17 +150,32 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     all_xy = mpiops.comm.gather(targets.positions, root=0)
     all_targets = mpiops.comm.gather(targets.observations, root=0)
 
+    if uid_on:
+        all_idx = mpiops.comm.gather(targets.fields[uid_field])
+
     if mpiops.chunk_index == 0:
         all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
-        data = np.hstack((x_all.data, xy, t))
+        data = [x_all.data, xy, t]
+        if uid_on:
+            all_idx = np.ma.concatenate(all_idx, axis=0)
+            idx = np.atleast_2d(all_idx).T
+            data.append(idx)
+        else:
+            data.append(np.zeros(t.shape))
+
+        # Zeros for prediction values
+        data.append(np.zeros(t.shape))
+        
+        data = np.hstack(data)
         np.savetxt(config.raw_covariates,
-                   X=data, delimiter=',', header=header, comments='')
+                   X=data, fmt='%f', delimiter=',', header=header, comments='')
+
         mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
         np.savetxt(config.raw_covariates_mask,
-                   X=mask, delimiter=',', header=header, comments='')
+                   X=mask, fmt='%f', delimiter=',', header=header, comments='')
 
         if config.plot_intersection:
             diagnostics.plot_covariates_x_targets(

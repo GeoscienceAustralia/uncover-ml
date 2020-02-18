@@ -633,29 +633,6 @@ def export_model(model, config):
     with open(config.model_file, 'wb') as f:
         pickle.dump(model, f)
 
-def export_crossval(crossval_output, config):
-    # Make sure we convert numpy arrays to lists
-    scores = {s: v if np.isscalar(v) else v.tolist()
-              for s, v in crossval_output.scores.items()}
-
-    with open(config.crossval_scores_file, 'w') as f:
-        json.dump(scores, f, sort_keys=True, indent=4)
-    
-    to_text = [crossval_output.y_true, crossval_output.y_pred['Prediction']]
-    np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
-               delimiter=',', fmt='%.4f', header='y_true,y_pred')
-
-    if config.plot_real_vs_pred:
-        diagnostics.plot_real_vs_pred_crossval(
-            config.crossval_results_file,
-            scores_path=config.crossval_scores_file,
-            bins=40, overlay=True,
-            hist_cm=plt.cm.Oranges, scatter_color='black'
-        ).savefig(config.plot_real_vs_pred)
-        diagnostics.plot_residual_error_crossval(
-            config.crossval_results_file
-        ).savefig(config.plot_residual)
-   
 def _make_valid_array_name(label):
     label = "_".join(label.split())
     label = ''.join(filter(str.isalnum, label))  # alphanum only
