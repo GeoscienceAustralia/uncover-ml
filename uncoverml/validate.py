@@ -3,6 +3,8 @@
 from __future__ import division
 import logging
 import copy
+import json
+
 from pathlib import Path
 import numpy as np
 from sklearn.metrics import (explained_variance_score, r2_score,
@@ -11,9 +13,11 @@ from sklearn.metrics import (explained_variance_score, r2_score,
 import eli5
 from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from uncoverml.models import apply_multiple_masked
-from uncoverml import mpiops
+from uncoverml import mpiops, diagnostics
 from uncoverml import predict, geoio
 from uncoverml import features as feat
 from uncoverml import targets as targ
@@ -199,11 +203,57 @@ def regression_validation_scores(y, ey, n_covariates, model):
 
 
 class CrossvalInfo:
-    def __init__(self, scores, y_true, y_pred, classification):
+    def __init__(self, scores, y_true, y_pred, classification, positions):
         self.scores = scores
         self.y_true = y_true
         self.y_pred = y_pred
         self.classification = classification
+        self.positions = positions
+
+    def export_crossval(self, config):
+        """
+        Exports a CSV file containing real target values and their
+        corresponding predicted value generated as part of 
+        cross-validation. 
+
+        Also populates the 'prediction' column of the 'rawcovariates'
+        CSV file. 
+
+        If enabled, the real vs predicted values will be plotted.
+        """
+        # Make sure we convert numpy arrays to lists
+        scores = {s: v if np.isscalar(v) else v.tolist()
+                  for s, v in self.scores.items()}
+
+        with open(config.crossval_scores_file, 'w') as f:
+            json.dump(scores, f, sort_keys=True, indent=4)
+
+        to_text = [self.y_true, self.y_pred['Prediction']]
+
+        np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
+                   delimiter=',', fmt='%.4f', header='y_true,y_pred,pos')
+
+        # Also add prediction values to rawcovariates.csv - yes this file 
+        #  is very overloaded and we need to fix the output situation.
+
+        # Get indicies sorted by location so we can insert the 
+        #  prediction in the correct row.
+        inds = np.lexsort(self.positions.T)
+        rcv = pd.read_csv(config.raw_covariates, delimiter=',')
+        rcv['prediction'] = self.y_pred['Prediction'][inds]
+        rcv.to_csv(config.raw_covariates, sep=',')
+
+        if config.plot_real_vs_pred:
+            diagnostics.plot_real_vs_pred_crossval(
+                config.crossval_results_file,
+                scores_path=config.crossval_scores_file,
+                bins=40, overlay=True,
+                hist_cm=plt.cm.Oranges, scatter_color='black'
+            ).savefig(config.plot_real_vs_pred)
+            diagnostics.plot_residual_error_crossval(
+                config.crossval_results_file
+            ).savefig(config.plot_residual)
+
 
 
 def permutation_importance(model, x_all, targets_all, config):
@@ -361,6 +411,7 @@ def local_crossval(x_all, targets_all, config):
     y_pred = {}
     y_true = {}
     fold_scores = {}
+    pos = {}
 
     # Train and score on each fold
     for fold in fold_node:
@@ -407,10 +458,12 @@ def local_crossval(x_all, targets_all, config):
             )
         
         y_true[fold] = y_k_test
+        pos[fold] = lon_lat_test
 
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
         y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
+        pos = _join_dicts(mpiops.comm.gather(pos, root=0))
         scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
     else:
         scores = fold_scores
@@ -419,6 +472,7 @@ def local_crossval(x_all, targets_all, config):
     if mpiops.chunk_index == 0:
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
+        pos = np.concatenate([pos[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
         scores = {m: np.mean([d[m] for d in scores.values()], axis=0)
                   for m in valid_metrics}
@@ -432,7 +486,7 @@ def local_crossval(x_all, targets_all, config):
         if hasattr(model, '_notransform_predict'):
             y_pred_dict['transformedpredict'] = \
                 model.target_transform.transform(y_pred[:, 0])
-        result = CrossvalInfo(scores, y_true, y_pred_dict, classification)
+        result = CrossvalInfo(scores, y_true, y_pred_dict, classification, pos)
 
     # change back to parallel
     if config.multicubist or config.multirandomforest:
