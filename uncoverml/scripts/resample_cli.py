@@ -263,7 +263,7 @@ def _remove_files(filename, extensions):
             _logger.info('Removed intermediate file {}'.format(filename
                                                            + extension))
 
-def resample(config_file, validation_file=None, validation_points=100):
+def main(config_file, validation_file=None, validation_points=100):
     config = ls.config.Config(config_file)
 
     filename = os.path.splitext(os.path.basename(config.target_file))[0]

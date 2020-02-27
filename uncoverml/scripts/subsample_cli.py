@@ -12,7 +12,7 @@ import click
 import uncoverml.mllog
 
 
-def subsample(filename, outputdir, npoints):
+def main(filename, outputdir, npoints):
     name = os.path.basename(filename).rsplit(".", 1)[0]
 
     # Read the shapefile

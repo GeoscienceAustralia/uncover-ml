@@ -24,7 +24,7 @@ from uncoverml.optimise.models import (
     kernels,
     TransformedSVR
     )
-from uncoverml.scripts.learn import _load_data
+from uncoverml.scripts.learn_cli import _load_data
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import transformed_modelmaps as all_modelmaps
 log = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ def setup_pipeline(config):
     return estimator
 
 
-def grisearch(pipeline_file, partitions, njobs, verbosity):
+def main(pipeline_file, partitions, njobs, verbosity):
     config = ls.config.Config(pipeline_file)
     config.n_jobs = njobs
     estimator = setup_pipeline(config)
