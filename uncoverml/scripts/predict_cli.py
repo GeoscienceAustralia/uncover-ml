@@ -37,15 +37,7 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
-@cli.command()
-@click.argument('config_file')
-@click.option('-p', '--partitions', type=int, default=1,
-              help="divide each node\'s data into this many partitions")
-@click.option('-m', '--mask', type=str, default='',
-              help="mask file used to limit prediction area")
-@click.option('-r', '--retain', type=int, default=None,
-              help="mask values where to predict")
-def predict(config_file, partitions, mask, retain):
+def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file)
     model = _load_model(config)
 

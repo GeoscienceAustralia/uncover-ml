@@ -37,14 +37,7 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
-def run_crossval(x_all, targets_all, config):
-    crossval_results = ls.validate.local_crossval(x_all,
-                                                  targets_all, config)
-    if ls.mpiops.chunk_index == 0:
-        crossval_results.export_crossval(config)
-
-
-def learn(config_file, partitions):
+def main(config_file, partitions):
     config = ls.config.Config(config_file)
     targets_all, x_all = _load_data(config, partitions)
 
@@ -64,6 +57,14 @@ def learn(config_file, partitions):
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
+def run_crossval(x_all, targets_all, config):
+    crossval_results = ls.validate.local_crossval(x_all,
+                                                  targets_all, config)
+    if ls.mpiops.chunk_index == 0:
+        crossval_results.export_crossval(config)
+
 
 def _load_data(config, partitions):
     if config.pk_load:

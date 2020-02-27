@@ -13,7 +13,7 @@ import warnings
 
 import click
 
-import uncoverml as ls
+import uncoverml
 import uncoverml.config
 import uncoverml.features
 import uncoverml.geoio
@@ -26,8 +26,9 @@ import uncoverml.targets
 import uncoverml.models
 from uncoverml.transforms import StandardiseTransform
 from uncoverml.scripts import (
-    shiftmap, learn, cluster, covdiag, gammasensor, gridsearch,
-    resample, subsample, tiff2kmz
+    cluster_cli, covdiag_cli, gammasensor_cli, gridsearch_cli, 
+    learn_cli, predict_cli, resample_cli, shiftmap_cli, subsample_cli, 
+    tiff2kmz_cli
 )
                                
 
@@ -42,7 +43,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 def cli(verbosity):
-    ls.mllog.configure(verbosity)
+    uncoverml.mllog.configure(verbosity)
 
 @cli.command()
 @click.argument('path', type=click.Path(exists=True))
@@ -51,7 +52,7 @@ def cli(verbosity):
 @click.option('-r', 'recursive', is_flag=True, 
               help='Process directories recursively.')
 def covdiag(path, csvfile, recursive):
-    covdiag.covdiag(path, csvfile, recursive)
+    covdiag_cli.main(path, csvfile, recursive)
 
 
 @cli.command()
@@ -71,7 +72,7 @@ def covdiag(path, csvfile, recursive):
               ' at the cost of image sharpness')
 @click.option('-o', '--outputdir', default='.', help='Location to output file')
 def gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute):
-    gammasensor.gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute)
+    gammasensor_cli.main(geotiff, height, absorption, forward, outputdir, noise, impute)
 
 
 @cli.command()
@@ -83,7 +84,7 @@ def gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute):
                    'reduces memory requirement. '
                    'By default uses all available CPUs')
 def gridsearch(pileine_file, partitions, njobs):
-    gridsearch.gridsearch(pileine_file, partitions, njobs)
+    gridsearch_cli.main(pileine_file, partitions, njobs)
 
 
 @cli.command()
@@ -92,13 +93,13 @@ def gridsearch(pileine_file, partitions, njobs):
 @click.option('-n', '--npoints', type=int, default=1000,
               help='Number of points to keep')
 def subsample(filename, outputdir, npoints):
-    subsample.subsample(filename, outputdir, npoints)
+    subsample_cli.main(filename, outputdir, npoints)
 
 
 @cli.command()
 @click.argument('config_file')
 def resample(config_file):
-    resample.resample(config_file)
+    resample_cli.main(config_file)
 
 
 @cli.command()
@@ -107,7 +108,7 @@ def resample(config_file):
         help="Output filename, if not specified then input filename is used")
 @click.option('--overlayname', type=str, default=None)
 def tiff2kmz(tiff, outfile, overlayname):
-    tiff2kmz.tiff2kmz(tiff, outfile, overlayname)
+    tiff2kmz_cli.main(tiff, outfile, overlayname)
 
 
 @cli.command()
@@ -115,7 +116,7 @@ def tiff2kmz(tiff, outfile, overlayname):
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
 def shiftmap(config_file, partitions):
-    shiftmap.shiftmap(config_file, partitions)
+    shiftmap_cli.main(config_file, partitions)
 
 
 @cli.command()
@@ -123,7 +124,7 @@ def shiftmap(config_file, partitions):
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
 def learn(config_file, partitions):
-    learn.learn(config_file, partitions)
+    learn_cli.main(config_file, partitions)
 
 
 @cli.command()
@@ -131,7 +132,7 @@ def learn(config_file, partitions):
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,
               help="only use this fraction of the data for learning classes")
 def cluster(config_file, subsample_fraction):
-    cluster.cluster(config_file, subsample_fraction)
+    cluster_cli.main(config_file, subsample_fraction)
 
 
 @cli.command()
@@ -143,14 +144,14 @@ def cluster(config_file, subsample_fraction):
 @click.option('-r', '--retain', type=int, default=None,
               help="mask values where to predict")
 def predict(config_file, partitions, mask, retain):
-    predict.predict(config_file, partitions, mask, retain)
+    predict_cli.main(config_file, partitions, mask, retain)
 
 
 def _total_gb():
     # given in KB so convert
     my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
     # total_usage = mpiops.comm.reduce(my_usage, root=0)
-    total_usage = ls.mpiops.comm.allreduce(my_usage)
+    total_usage = uncoverml.mpiops.comm.allreduce(my_usage)
     return total_usage
 
 

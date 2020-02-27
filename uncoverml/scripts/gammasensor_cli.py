@@ -38,7 +38,7 @@ def write_data(data, name, in_image, outputdir, forward):
     writer.write(data, 0)
 
 
-def gammasensor(verbosity, geotiff, height, absorption, forward, outputdir, noise,
+def main(verbosity, geotiff, height, absorption, forward, outputdir, noise,
         impute):
     uncoverml.mllog.configure(verbosity)
 

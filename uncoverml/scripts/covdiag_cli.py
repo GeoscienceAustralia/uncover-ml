@@ -11,7 +11,7 @@ import numpy as np
 
 from uncoverml import mpiops
 
-def covdiag(path, csvfile, recursive):
+def main(path, csvfile, recursive):
     """
     Will output some basic diagnostic information for geotiffs.
     If a directory is provided, all geotiffs in the direcotry (and

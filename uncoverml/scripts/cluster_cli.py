@@ -37,7 +37,7 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
-def cluster(config_file, subsample_fraction):
+def main(config_file, subsample_fraction):
     config = ls.config.Config(config_file)
 
     for f in config.feature_sets:
