@@ -13,12 +13,7 @@ from mpi4py import MPI
 from uncoverml import geoio
 
 
-@cl.command()
-@cl.argument('tiff', type=cl.Path(exists=True))
-@cl.option('--outfile', type=cl.Path(exists=False), default=None,
-           help="Output file name, if not specified input file name is used")
-@cl.option('--overlayname', type=str, default=None)
-def main(tiff, outfile, overlayname):
+def tiff2kmz(tiff, outfile, overlayname):
     """
     Turn a geotiff into a KMZ that can be dragged onto an instance of Terria
     Map. This also constructs a JPEG of the Geotiff, as it is required for the

@@ -11,13 +11,7 @@ import numpy as np
 
 from uncoverml import mpiops
 
-@click.command()
-@click.argument('path', type=click.Path(exists=True))
-@click.option('-csv', '--csvfile', default='covdiag.csv', type=click.Path(),
-              show_default=True, help='Name of file to store output in CSV format.')
-@click.option('-r', 'recursive', is_flag=True, 
-              help='Process directories recursively.')
-def cli(path, csvfile, recursive):
+def covdiag(path, csvfile, recursive):
     """
     Will output some basic diagnostic information for geotiffs.
     If a directory is provided, all geotiffs in the direcotry (and

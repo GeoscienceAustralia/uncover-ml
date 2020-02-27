@@ -262,13 +262,8 @@ def _remove_files(filename, extensions):
             remove(filename + extension)
             _logger.info('Removed intermediate file {}'.format(filename
                                                            + extension))
-@click.command()
-@click.argument('config_file')
-@click.option('-v', '--verbosity',
-              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
-              default='INFO', help='Level of logging')
-def cli(config_file, verbosity, validation_file=None, validation_points=100):
-    ls.mllog.configure(verbosity)
+
+def resample(config_file, validation_file=None, validation_points=100):
     config = ls.config.Config(config_file)
 
     filename = os.path.splitext(os.path.basename(config.target_file))[0]
