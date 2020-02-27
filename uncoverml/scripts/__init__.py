@@ -1,0 +1,159 @@
+"""
+Run the uncoverml pipeline for clustering, supervised learning and prediction.
+
+.. program-output:: uncoverml --help
+"""
+import logging
+import pickle
+import resource
+from os.path import isfile, splitext, exists
+import os
+import shutil
+import warnings
+
+import click
+
+import uncoverml as ls
+import uncoverml.config
+import uncoverml.features
+import uncoverml.geoio
+import uncoverml.learn
+import uncoverml.mllog
+import uncoverml.mpiops
+import uncoverml.predict
+import uncoverml.validate
+import uncoverml.targets
+import uncoverml.models
+from uncoverml.transforms import StandardiseTransform
+from uncoverml.scripts import (
+    shiftmap, learn, cluster, covdiag, gammasensor, gridsearch,
+    resample, subsample, tiff2kmz
+)
+                               
+
+_logger = logging.getLogger(__name__)
+# warnings.showwarning = warn_with_traceback
+warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+
+
+@click.group()
+@click.option('-v', '--verbosity',
+              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
+              default='INFO', help='Level of logging')
+def cli(verbosity):
+    ls.mllog.configure(verbosity)
+
+@cli.command()
+@click.argument('path', type=click.Path(exists=True))
+@click.option('-csv', '--csvfile', default='covdiag.csv', type=click.Path(),
+              show_default=True, help='Name of file to store output in CSV format.')
+@click.option('-r', 'recursive', is_flag=True, 
+              help='Process directories recursively.')
+def covdiag(path, csvfile, recursive):
+    covdiag.covdiag(path, csvfile, recursive)
+
+
+@cli.command()
+@click.argument('geotiff')
+@click.option('--invert', 'forward', flag_value=False,
+              help='Apply inverse sensor model')
+@click.option('--apply', 'forward', flag_value=True, default=True,
+              help='Apply forward sensor model')
+@click.option('--height', type=float, required=True, help='height of sensor')
+@click.option('--absorption', type=float,  required=True,
+              help='absorption coeff')
+@click.option('--impute', is_flag=True, help='Use the sensor model to impute'
+              ' missing values in the deconvolution')
+@click.option('--noise', type=float, default=0.001,
+              help='noise coeff for the inverse'
+              ' transform. Increasing this will remove missing data artifacts'
+              ' at the cost of image sharpness')
+@click.option('-o', '--outputdir', default='.', help='Location to output file')
+def gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute):
+    gammasensor.gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute)
+
+
+@cli.command()
+@click.argument('pipeline_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+@click.option('-n', '--njobs', type=int, default=-1,
+              help='Number of parallel jobs to run. Lower value of n '
+                   'reduces memory requirement. '
+                   'By default uses all available CPUs')
+def gridsearch(pileine_file, partitions, njobs):
+    gridsearch.gridsearch(pileine_file, partitions, njobs)
+
+
+@cli.command()
+@click.argument('filename')
+@click.argument('outputdir')
+@click.option('-n', '--npoints', type=int, default=1000,
+              help='Number of points to keep')
+def subsample(filename, outputdir, npoints):
+    subsample.subsample(filename, outputdir, npoints)
+
+
+@cli.command()
+@click.argument('config_file')
+def resample(config_file):
+    resample.resample(config_file)
+
+
+@cli.command()
+@click.argument('tiff', type=click.Path(exists=True))
+@click.option('--outfile', type=click.Path(exists=False), default=None,
+        help="Output filename, if not specified then input filename is used")
+@click.option('--overlayname', type=str, default=None)
+def tiff2kmz(tiff, outfile, overlayname):
+    tiff2kmz.tiff2kmz(tiff, outfile, overlayname)
+
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def shiftmap(config_file, partitions):
+    shiftmap.shiftmap(config_file, partitions)
+
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def learn(config_file, partitions):
+    learn.learn(config_file, partitions)
+
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help="only use this fraction of the data for learning classes")
+def cluster(config_file, subsample_fraction):
+    cluster.cluster(config_file, subsample_fraction)
+
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help="divide each node\'s data into this many partitions")
+@click.option('-m', '--mask', type=str, default='',
+              help="mask file used to limit prediction area")
+@click.option('-r', '--retain', type=int, default=None,
+              help="mask values where to predict")
+def predict(config_file, partitions, mask, retain):
+    predict.predict(config_file, partitions, mask, retain)
+
+
+def _total_gb():
+    # given in KB so convert
+    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
+    # total_usage = mpiops.comm.reduce(my_usage, root=0)
+    total_usage = ls.mpiops.comm.allreduce(my_usage)
+    return total_usage
+
+
+def _clean_temp_cropfiles(config):
+    shutil.rmtree(config.tmpdir)   
+

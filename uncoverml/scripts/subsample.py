@@ -12,18 +12,7 @@ import click
 import uncoverml.mllog
 
 
-@click.command()
-@click.argument('filename')
-@click.option('-n', '--npoints', type=int, default=1000,
-              help='Number of points to keep')
-@click.option('-v', '--verbosity',
-              type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
-              default='INFO', help='Level of logging')
-@click.option('-o', '--outputdir', default='.', help='Location to output file')
-def cli(outputdir, npoints, verbosity, filename):
-
-    # Setup the logging
-    uncoverml.mllog.configure(verbosity)
+def subsample(filename, outputdir, npoints):
     name = os.path.basename(filename).rsplit(".", 1)[0]
 
     # Read the shapefile
