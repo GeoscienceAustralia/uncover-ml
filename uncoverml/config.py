@@ -550,6 +550,11 @@ class Config(object):
         else:
             self.lon_lat = None
 
+        # TARGET SEARCH BLOCK
+        tsb = s.get('target_search')
+        if tsb:
+            self.target_crop_box = tsb.get('xmin'), tsb.get('ymin'), tsb.get('xmax'), tsb.get('ymax')
+
         # OUTPUT BLOCK
         def _outpath(filename):
             return os.path.join(self.output_dir, self.name + f'{filename}')
@@ -600,6 +605,7 @@ class Config(object):
         self.prediction_file = _outpath('_{}.tif')
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.txt')
+        self.target_search_points = _outpath('_target_search_generated_points.txt')
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
