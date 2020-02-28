@@ -16,40 +16,73 @@ class Targets:
         if othervals is not None:
             self.fields = othervals
 
-def generate_covariate_shift_targets(targets, bounds):
-    def _dummy_targets(targets, label, seed=1):
-        rnd = np.random.RandomState(seed)
-        lons = targets.positions[:,0]
-        lats = targets.positions[:,1]
-        shp = targets.observations.shape
-        #new_lons = rnd.uniform(np.min(lons), np.max(lons), shp)
-        #new_lats = rnd.uniform(np.min(lats), np.max(lats), shp)              
-        def _generate_points(lower, upper, limit):
-            new_points = []
-            while len(new_points) < limit:
-                #new_point = rnd.uniform(np.min(old_points), np.max(old_points))
-                new_point = rnd.uniform(lower, upper)
-                new_points.append(new_point)
-            return new_points
-        new_lons = _generate_points(bounds[0][0], bounds[0][1], shp[0])
-        new_lats = _generate_points(bounds[1][0], bounds[1][1], shp[0])
-        lonlats = np.column_stack([new_lons, new_lats])
-        labels = np.full(shp, label)
-        return Targets(lonlats, labels)
 
+def generate_dummy_targets(bounds, label, n_points, seed=1):
+    """
+    Generate dummy points with randomly generated positions.
+
+    Args:
+        bounds (tuple of float, float, float, float): Bounding box
+          to generate targets within of format 
+          (xmin, ymin, xmax, ymax)
+        label (str): Label to assign targets.
+        n_points (int): Number of points to generate.
+        seed (int): Random number generator seed.
+
+    Returns:
+        Targets: A collection of randomly generated targets.
+    """
+    rnd = np.random.RandomState(seed)
+    def _generate_points(lower, upper, limit):
+        new_points = []
+        while len(new_points) < limit:
+            #new_point = rnd.uniform(np.min(old_points), np.max(old_points))
+            new_point = rnd.uniform(lower, upper)
+            new_points.append(new_point)
+        return new_points
+    new_lons = _generate_points(bounds[0], bounds[2], n_points)
+    new_lats = _generate_points(bounds[1], bounds[3], n_points)
+    lonlats = np.column_stack([new_lons, new_lats])
+    labels = np.full(lonlats.shape[0], label)
+    return Targets(lonlats, labels)
+
+
+def generate_covariate_shift_targets(targets, bounds, path=None):
     real_targets = label_targets(targets, 'training')
-    dummy_targets = _dummy_targets(targets, 'query')
+    dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shp[0])
+    if path:
+        save_target_positions(dummy_targets, path)
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
     return merge_targets(real_targets, dummy_targets)
     
 def merge_targets(a, b):
+    """
+    Merges two Target collections.
+    
+    Args:
+        a, b (Target): The Targets to merge.
+
+    Returns:
+        Targets: A single merged collection of targets.
+    """
     return Targets(np.append(a.positions, b.positions, 0),
                    np.append(a.observations, b.observations, 0),
                    a.fields.update(b.fields))
 
 def label_targets(targets, label):
-        labels = np.full(targets.observations.shape, label)
-        return Targets(targets.positions, labels, targets.fields)
+    """
+    Replaces target observations (the target property being trained on)
+    with the given label.
+
+    Args:
+        targets (Targets): A collection of targets to label.
+        label (str): The label to apply.
+
+    Return:
+        Targets: The labelled targets.
+    """
+    labels = np.full(targets.observations.shape, label)
+    return Targets(targets.positions, labels, targets.fields)
 
 def gather_targets(targets, keep, config, node=None):
     return gather_targets_main(targets, keep, node)
@@ -82,12 +115,8 @@ def gather_targets_main(targets, keep, node):
         return Targets(p, y, othervals=d)
 
 
-def save_dummy_targets(targets, config):
-    dummies = []
-    for obs, pos in zip(targets.observations, targets.positions):
-        if obs == 'query':
-            dummies.append(pos)
-    np.savetxt(config.shiftmap_points, np.array(dummies), fmt='%.8f', delimiter=',')
+def save_target_positions(targets, path):
+    np.savetxt(path, targets.positions, fmt='%.8f', delimiter=',')
 
 
 def save_dropped_targets(config, keep, targets):
