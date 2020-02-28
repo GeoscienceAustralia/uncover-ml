@@ -102,8 +102,6 @@ def main(config_file, partitions):
         y_star_all = np.concatenate(y_star)
         _logger.debug(f"y_star_all: {y_star_all.T.shape}")
         _logger.debug(f"{y_star_all.T[1]}")
-        # Out 
-    raise Exception("DIE")
 
     if config.crop_box:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
