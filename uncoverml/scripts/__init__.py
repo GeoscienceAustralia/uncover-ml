@@ -28,7 +28,7 @@ from uncoverml.transforms import StandardiseTransform
 from uncoverml.scripts import (
     cluster_cli, covdiag_cli, gammasensor_cli, gridsearch_cli, 
     learn_cli, predict_cli, resample_cli, shiftmap_cli, subsample_cli, 
-    tiff2kmz_cli
+    tiff2kmz_cli, targetsearch_cli
 )
                                
 
@@ -44,6 +44,15 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
               default='INFO', help='Level of logging')
 def cli(verbosity):
     uncoverml.mllog.configure(verbosity)
+
+
+@cli.command()
+@click.argument('config_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def targetsearch(config_file, partitions):
+    targetsearch_cli.main(config_file, partitions)
+
 
 @cli.command()
 @click.argument('path', type=click.Path(exists=True))
