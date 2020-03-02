@@ -414,23 +414,23 @@ class Config(object):
         self.krige = self.algorithm == 'krige'
 
         # EXTENTS
-        exb = s.get('extent')
+        exb = s.get('extents')
         if exb:
-            self.crop_box = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
-            if all(x is None for x in self.crop_box): 
+            self.extents = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
+            if all(x is None for x in self.extents): 
                 _logger.warning("'extents' block was specified but no coordinates were given. "
                                 "Cropping will not be performed.")
 
-            if (self.crop_box[0] and self.crop_box[1])  is not None and self.crop_box[0] >= self.crop_box[1]:
-                raise ValueError(f"Error in provided crop coordinates: xmin ({self.crop_box[0]}) must be less "
-                                 "than xmax ({self.crop_box[1].")
-            elif (self.crop_box[2] and self.crop_box[3]) is not None and self.crop_box[2] >= self.crop_box[3]:
-                raise ValueError(f"Error in provided crop coordinates: ymin ({self.crop_box[2]}) must be less "
-                                 "than ymax ({self.crop_box[3].")
+            if (self.extents[0] and self.extents[1])  is not None and self.extents[0] >= self.extents[2]:
+                raise ValueError(f"Error in provided crop coordinates: xmin ({self.extents[0]}) must be less "
+                                 f"than xmax ({self.extents[1]}).")
+            elif (self.extents[2] and self.extents[3]) is not None and self.extents[1] >= self.extents[3]:
+                raise ValueError(f"Error in provided crop coordinates: ymin ({self.extents[2]}) must be less "
+                                 f"than ymax ({self.extents[3]}).")
         else:
-            self.crop_box = None
+            self.extents = None
 
-        _logger.info("loaded crop box %s", self.crop_box)
+        _logger.info("loaded crop box %s", self.extents)
 
         # PICKLING BLOCK
         pk_block = s.get('pickling')
@@ -550,10 +550,6 @@ class Config(object):
         else:
             self.lon_lat = None
 
-        # TARGET SEARCH BLOCK
-        tsb = s.get('target_search')
-        if tsb:
-            self.target_crop_box = tsb.get('xmin'), tsb.get('ymin'), tsb.get('xmax'), tsb.get('ymax')
 
         # OUTPUT BLOCK
         def _outpath(filename):
@@ -604,8 +600,9 @@ class Config(object):
         self.optimisation_results_file = _outpath('_optimisation.csv')
         self.prediction_file = _outpath('_{}.tif')
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
-        self.shiftmap_points = _outpath('_shiftmap_generated_points.txt')
-        self.target_search_points = _outpath('_target_search_generated_points.txt')
+        self.shiftmap_points = _outpath('_shiftmap_generated_points.csv')
+        self.targetsearch_generated_points = _outpath('_target_search_generated_points.csv')
+        self.targetsearch_selected_points = _outpath('_target_search_selected_points.csv')
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
