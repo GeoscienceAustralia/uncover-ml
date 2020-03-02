@@ -54,26 +54,26 @@ def main(config_file, partitions):
 
     # Load all targets. These will be labelled 'query'.
     # TODO: Drop targets from prediction area?
-    query_targets = ls.geoio.load_targets(shapefile=config.target_file,
+    real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
                                         crop_box=config.crop_box)
-    query_targets = ls.targets.label_targets(query_targets, 'query')
+    REAL_TARGETS_LABEL = 'a_real'
+    real_targets = ls.targets.label_targets(real_targets, REAL_TARGETS_LABEL)
 
     # Get random sample of targets from within prediction area. These 
     #  will be labelled 'training'.
-    training_targets = ls.targets.generate_dummy_targets(config.target_crop_box, 'training', 
-            query_targets.positions.shape[0])
-    training_targets = ls.targets.label_targets(training_targets, 'training')
-    # Write them out for debug purposes.
-    ls.targets.save_target_positions(training_targets, config.target_search_points)
+    GENERATED_TARGETS_LABEL = 'b_generated'
+    generated_targets = ls.targets.generate_dummy_targets(config.target_crop_box, 
+            GENERATED_TARGETS_LABEL, 
+            real_targets.positions.shape[0])
+    generated_targets = ls.targets.label_targets(generated_targets, GENERATED_TARGETS_LABEL)
 
-    _logger.debug(f"Class 1: {query_targets.positions.shape}, "
-                  f"'{query_targets.observations[0]}' and class 2: "
-                  f"{training_targets.positions.shape}, '{training_targets.observations[0]}'")
+    _logger.debug(f"Class 1: {real_targets.positions.shape}, "
+                  f"'{real_targets.observations[0]}' and class 2: "
+                  f"{generated_targets.positions.shape}, '{generated_targets.observations[0]}'")
 
-    targets = ls.targets.merge_targets(query_targets, training_targets)
-
+    targets = ls.targets.merge_targets(real_targets, generated_targets)
 
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
@@ -81,27 +81,30 @@ def main(config_file, partitions):
                                                     transform_sets,
                                                     config.final_transform,
                                                     config)
+
     x_all = ls.features.gather_features(features[keep], node=0)
+    
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+
+    # Write out targets for debug purpses
+    if mpiops.chunk_index == 0:
+        ls.targets.save_targets(targets_all, config.targetsearch_generated_points)
+
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
                                     kwargs={'fields': targets_all.fields,
                                             'lon_lat': targets_all.positions})
 
-    predict_tags = model.get_predict_tags()
-    _logger.debug(f"Predict tags: {predict_tags}")
-
-    for i in range(config.n_subchunks):
-        _logger.info("starting to precit partition {}".format(i+1))
-        x, _ = ls.predict._get_data(i, config)
-        y_star = ls.predict.predict(x, model, config.quantiles)
-
-    y_star = ls.mpiops.comm.gather(y_star, root=0)
-    ls.mpiops.comm.barrier()
     if ls.mpiops.chunk_index == 0:
-        y_star_all = np.concatenate(y_star)
-        _logger.debug(f"y_star_all: {y_star_all.T.shape}")
-        _logger.debug(f"{y_star_all.T[1]}")
+        y_star = ls.predict.predict(x_all, model, config.quantiles)
+        y_star = y_star[targets_all.observations == REAL_TARGETS_LABEL]
+        real_targets_all = targets_all.positions[targets_all.observations == REAL_TARGETS_LABEL]
+        result = np.rec.fromarrays((real_targets_all.T[0], 
+                                    real_targets_all.T[1],
+                                    y_star.T[2]),
+                                    names='lon,lat,prediction_area_likelihood')
+        np.savetxt(config.targetsearch_selected_points, result, fmt='%.8f,%.8f,%.8f', 
+                   delimiter=',', header='lon,lat,prediction_area_likelihood')
 
     if config.crop_box:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
