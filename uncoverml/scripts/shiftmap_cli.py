@@ -68,8 +68,8 @@ def main(config_file, partitions):
     else:
         bounds = ls.geoio.get_image_bounds(config)
         bounds = (bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1])
-        targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds, 
-                                                              config.shiftmap_points)
+        targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds) 
+                                                              
 
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
@@ -79,6 +79,7 @@ def main(config_file, partitions):
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+    ls.targets.save_targets(targets_all, config.shiftmap_points)
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
                                     kwargs={'fields': targets_all.fields,

@@ -47,11 +47,9 @@ def generate_dummy_targets(bounds, label, n_points, seed=1):
     return Targets(lonlats, labels)
 
 
-def generate_covariate_shift_targets(targets, bounds, path=None):
+def generate_covariate_shift_targets(targets, bounds):
     real_targets = label_targets(targets, 'training')
     dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shp[0])
-    if path:
-        save_target_positions(dummy_targets, path)
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
     return merge_targets(real_targets, dummy_targets)
     
@@ -115,8 +113,10 @@ def gather_targets_main(targets, keep, node):
         return Targets(p, y, othervals=d)
 
 
-def save_target_positions(targets, path):
-    np.savetxt(path, targets.positions, fmt='%.8f', delimiter=',')
+def save_targets(targets, path):
+    ar = np.rec.fromarrays((targets.positions.T[0], targets.positions.T[1], targets.observations),
+                            names='lon,lat,obs')
+    np.savetxt(path, ar, fmt='%.8f,%.8f,%s', delimiter=',', header='lon,lat,obs')
 
 
 def save_dropped_targets(config, keep, targets):
