@@ -613,8 +613,7 @@ class Config(object):
 
         self.targetsearch_generated_points = _outpath('_target_search_generated_points.csv')
         self.targetsearch_selected_points = _outpath('_target_search_selected_points.csv')
-        self.targetsearch_result_data = _outpath('_target_search_result.npy') 
-        self.targetsearch_result_mask = _outpath('_target_search_result_mask.npy') 
+        self.targetsearch_result_data = _outpath('_target_search_result.pk') 
 
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
