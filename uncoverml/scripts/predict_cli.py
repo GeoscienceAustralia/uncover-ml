@@ -41,7 +41,7 @@ def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file)
     model = _load_model(config)
 
-    if config.crop_box:
+    if config.extents:
         ls.geoio.crop_covariates(config)
 
     config.mask = mask if mask else config.mask
@@ -87,7 +87,7 @@ def main(config_file, partitions, mask, retain):
         write_prediction_metadata,
         model, config, config.metadata_file)
 
-    if config.crop_box:
+    if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
