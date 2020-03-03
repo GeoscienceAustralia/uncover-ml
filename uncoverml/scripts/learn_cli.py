@@ -53,7 +53,7 @@ def main(config_file, partitions):
                            targets_all, config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
-    if config.crop_box:
+    if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
@@ -76,7 +76,7 @@ def _load_data(config, partitions):
         _logger.warning("Using  pickled targets and covariates. Make sure you have"
                         " not changed targets file and/or covariates.")
     else:
-        if config.crop_box:
+        if config.extents:
             ls.geoio.crop_covariates(config)
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
@@ -92,11 +92,13 @@ def _load_data(config, partitions):
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
-                                        crop_box=config.crop_box)
+                                        extents=config.extents)
                                             
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
+
+        
 
         if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
@@ -120,7 +122,19 @@ def _load_data(config, partitions):
         x_all = ls.features.gather_features(features[keep], node=0)
 
         # We're doing local models at the moment
-        targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+        targets_all = ls.targets.gather_targets(targets, keep, node=0)
+
+        if config.target_search:
+            # Include targets and covariates from target search
+            with open(config.targetsearch_result_data, 'rb') as f:
+                ts_t, ts_x = pickle.load(f)
+            # Note ordering is important - this will append target search
+            #  to end of other targets, and covariates must be ordered 
+            #  in the same way.
+            _logger.info(f"Including {len(ts_x)} targets from target search")
+            targets_all = ls.targets.merge_targets(targets_all, ts_t)
+            x_all = np.ma.concatenate((x_all, ts_x))
+
 
         # Pickle data if requested.
         if ls.mpiops.chunk_index == 0:
@@ -128,7 +142,7 @@ def _load_data(config, partitions):
                 pickle.dump(x_all, open(config.pk_covariates, 'wb'))
             if config.pk_targets and not os.path.exists(config.pk_targets):
                 pickle.dump(targets_all, open(config.pk_targets, 'wb'))
-
+    
     return targets_all, x_all
 
 def _total_gb():
