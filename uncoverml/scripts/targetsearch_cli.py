@@ -112,10 +112,15 @@ def main(config_file, partitions):
 
         # Match up targets with intersected data that match
         #  classification threshold
-        result = x_all[real_ind]
-        result = result[y_star[real_ind].T[2] >= config.targetsearch_threshold]
-        # And save as binary for reuse in learn step
-        np.save(config.targetsearch_result_data, result.data) 
-        np.save(config.targetsearch_result_mask, result.mask)
-        _logger.info(f"Target search complete. Found {len(result)} targets for inclusion.")
+        threshold_ind = y_star[real_ind].T[2] >= config.targetsearch_threshold
 
+        result_t = ls.targets.Targets(
+                (targets_all.positions[real_ind])[threshold_ind],
+                (targets_all.observations[real_ind])[threshold_ind],
+                {k: (v[real_ind])[threshold_ind] for k, v in targets_all.fields.items()}
+        )
+        result_x = (x_all[real_ind])[threshold_ind]
+        # And save as binary for reuse in learn step
+        with open(config.targetsearch_result_data, 'wb') as f:
+            pickle.dump((result_t, result_x), f) 
+        _logger.info(f"Target search complete. Found {len(threshold_ind)} targets for inclusion.")
