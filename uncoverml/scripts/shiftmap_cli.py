@@ -54,14 +54,14 @@ def main(config_file, partitions):
     real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
-                                        crop_box=config.crop_box)
+                                        crop_box=config.extents)
 
     # User can provide their own 'query' targets for training shapemap, or we can
     # generate points.
     if config.shiftmap_targets:
         dummy_targets = ls.geoio.load_targets(shapefile=config.shiftmap_targets,
                                               covariate_crs=ls.geoio.get_image_crs(config),
-                                              crop_box=config.crop_box)
+                                              crop_box=config.extents)
         dummy_targets = ls.targets.label_targets(dummy_targets, 'query')
         real_targets = ls.targets.label_targets(real_targets, 'training')
         targets = ls.targets.merge_targets(dummy_targets, real_targets)
