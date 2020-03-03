@@ -113,9 +113,17 @@ def gather_targets_main(targets, keep, node):
         return Targets(p, y, othervals=d)
 
 
-def save_targets(targets, path):
-    ar = np.rec.fromarrays((targets.positions.T[0], targets.positions.T[1], targets.observations),
-                            names='lon,lat,obs')
+def save_targets(targets, path, obs_filter=None):
+    if obs_filter:
+        inds = targets.observations == obs_filter
+        lons = targets.positions.T[0][inds]
+        lats = targets.positions.T[1][inds]
+        obs = targets.observations[inds]
+    else:
+        lons = targets.positions.T[0]
+        lats = targets.positions.T[1]
+        obs = targets.observations
+    ar = np.rec.fromarrays((lons, lats, obs), names='lon,lat,obs')
     np.savetxt(path, ar, fmt='%.8f,%.8f,%s', delimiter=',', header='lon,lat,obs')
 
 
