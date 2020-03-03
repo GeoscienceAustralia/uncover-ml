@@ -54,75 +54,75 @@ def main(config_file, partitions):
 
     _logger.info("Loading real targets and generating training targets...")
 
-    # Load all targets. These will be labelled 'query'.
+    # Load all 'real' targets from shapefile.
     # TODO: Drop targets from prediction area?
-    real_targets = ls.geoio.load_targets(shapefile=config.target_file,
-                                        targetfield=config.target_property,
-                                        covariate_crs=ls.geoio.get_image_crs(config))
-    real_targets_unlabelled = real_targets
+    real_targets = ls.geoio.load_targets(
+            shapefile=config.target_file, targetfield=config.target_property, 
+            covariate_crs=ls.geoio.get_image_crs(config))
+
     REAL_TARGETS_LABEL = 'a_real'
-    real_targets = ls.targets.label_targets(real_targets, REAL_TARGETS_LABEL)
+    # Backup original observation values by storing in `fields`
+    ORIGINAL_OBSERVATIONS = 'original'
+    real_targets = ls.targets.label_targets(
+        real_targets, REAL_TARGETS_LABEL, backup_field=ORIGINAL_OBSERVATIONS)
 
-    # Get random sample of targets from within prediction area. These 
-    #  will be labelled 'training'.
-    GENERATED_TARGETS_LABEL = 'b_generated'
-    generated_targets = ls.targets.generate_dummy_targets(config.extents, 
-                                                          GENERATED_TARGETS_LABEL, 
-                                                          real_targets.positions.shape[0])
-    generated_targets = ls.targets.label_targets(generated_targets, GENERATED_TARGETS_LABEL)
+    # Get random sample of points from within prediction area.
+    GEN_TARGETS_LABEL = 'b_generated'
+    gen_targets = ls.targets.generate_dummy_targets(
+            config.extents, GEN_TARGETS_LABEL, 
+            real_targets.positions.shape[0], list(real_targets.fields.keys()))
 
-    _logger.debug(f"Class 1: {real_targets.positions.shape}, "
-                  f"'{real_targets.observations[0]}' and class 2: "
-                  f"{generated_targets.positions.shape}, '{generated_targets.observations[0]}'")
+    _logger.debug(f"Class 1: {real_targets.positions.shape}, '{real_targets.observations[0]}'\t" 
+                  f"Class 2: {gen_targets.positions.shape}, '{gen_targets.observations[0]}'")
 
-    targets = ls.targets.merge_targets(real_targets, generated_targets)
+    targets = ls.targets.concatenate_targets(real_targets, gen_targets)
 
+    # Intersect targets and covariate data.
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
     transform_sets = [k.transform_set for k in config.feature_sets]
-    features, keep = ls.features.transform_features(image_chunk_sets,
-                                                    transform_sets,
-                                                    config.final_transform,
-                                                    config)
+    features, keep = ls.features.transform_features(
+            image_chunk_sets, transform_sets, config.final_transform, config)
 
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, node=0)
-    real_targets_unlabelled_all = ls.targets.gather_targets(real_targets_unlabelled, keep, node=0)
 
     # Write out targets for debug purpses
     if ls.mpiops.chunk_index == 0:
         ls.targets.save_targets(targets_all, config.targetsearch_generated_points,
-                                obs_filter=GENERATED_TARGETS_LABEL)
-
+                                obs_filter=GEN_TARGETS_LABEL)
+    
+    # Train the model
     model = ls.models.LogisticClassifier(random_state=1)
-    ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
-                                    kwargs={'fields': targets_all.fields,
-                                            'lon_lat': targets_all.positions})
+    ls.models.apply_multiple_masked(
+        model.fit, (x_all, targets_all.observations), 
+        kwargs={'fields': targets_all.fields, 'lon_lat': targets_all.positions})
 
+    # Classify
     if ls.mpiops.chunk_index == 0:
         y_star = ls.predict.predict(x_all, model, config.quantiles)
         real_ind = targets_all.observations == REAL_TARGETS_LABEL
 
+        # Filter out generated targets
+        real_pos = targets_all.positions[real_ind]
+        lons, lats = real_pos.T[0], real_pos.T[1]
+        likelihood = y_star[real_ind].T[2]
+
         # Save for debugging/visualisation
-        targets_with_classification = np.rec.fromarrays((targets_all.positions[real_ind].T[0], 
-                                                         targets_all.positions[real_ind].T[1],
-                                                         y_star[real_ind].T[2]),
-                                                         names='lon,lat,prediction_area_likelihood')
-        np.savetxt(config.targetsearch_selected_points, targets_with_classification, 
+        targets_with_likelihood = np.rec.fromarrays(
+            (lons, lats, likelihood), names='lon,lat,prediction_area_likelihood')
+        np.savetxt(config.targetsearch_likelihood, targets_with_likelihood, 
                    fmt='%.8f,%.8f,%.8f', delimiter=',', 
                    header='lon,lat,prediction_area_likelihood')
 
-        # Match up targets with intersected data that match
-        #  classification threshold
-        threshold_ind = y_star[real_ind].T[2] >= config.targetsearch_threshold
-
-        result_t = ls.targets.Targets(
-                (real_targets_unlabelled_all.positions[real_ind])[threshold_ind],
-                (real_targets_unlabelled_all.observations[real_ind])[threshold_ind],
-                {k: (v[real_ind])[threshold_ind] 
-                    for k, v in real_targets_unlabelled_all.fields.items()}
-        )
+        # Get real targets + covariate data for points where 
+        #  classification threshold is met
+        threshold_ind = likelihood >= config.targetsearch_threshold
+        pos = real_pos[threshold_ind]
+        obs = (targets_all.fields[ORIGINAL_OBSERVATIONS][real_ind])[threshold_ind]
+        fields = {k: (v[real_ind])[threshold_ind] for k, v in targets_all.fields.items()}
+        result_t = ls.targets.Targets(pos, obs, fields)
         result_x = (x_all[real_ind])[threshold_ind]
         # And save as binary for reuse in learn step
         with open(config.targetsearch_result_data, 'wb') as f:
             pickle.dump((result_t, result_x), f) 
-        _logger.info(f"Target search complete. Found {len(threshold_ind)} targets for inclusion.")
+        _logger.info(f"Target search complete. Found {len(pos)} targets for inclusion.")
