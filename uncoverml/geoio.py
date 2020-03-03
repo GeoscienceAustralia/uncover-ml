@@ -176,7 +176,7 @@ class ArrayImageSource(ImageSource):
 def crop_covariates(config, outdir=None):
     """
     Crops the covariate files listed under `config.feature_sets` using
-    the bounds provided under `config.crop_box`. The cropped covariates
+    the bounds provided under `config.extents`. The cropped covariates
     are stored in a temporary directory and the paths in 
     `config.feature_sets` are redirected to theses files. The caller is
     responsible for removing the files once they have been created.
@@ -200,12 +200,12 @@ def crop_covariates(config, outdir=None):
 
     for s in config.feature_sets:
         proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
-        new_files = [crop_tif(f, config.crop_box, _new_fname(f)) for f in proc_files]
+        new_files = [crop_tif(f, config.extents, _new_fname(f)) for f in proc_files]
         new_files = mpiops.comm.allgather(new_files)
         mpiops.comm.barrier()
         s.files = list(itertools.chain(*new_files))
 
-def crop_tif(filename, crop_box, outfile=None):
+def crop_tif(filename, extents, outfile=None):
     """
     Crops the geotiff using the provided extent.
     
@@ -213,7 +213,7 @@ def crop_tif(filename, crop_box, outfile=None):
     ----------
     filename : str
         Path to the geotiff to be cropped.
-    crop_box : tuple(float, float, float, float)
+    extents : tuple(float, float, float, float)
         Bounding box to crop by, ordering is (xmin, ymin, xmax, ymax).
         Data outside bounds will be cropped. Any elements that are None
         will be substituted with the original bound of the geotiff.
@@ -222,10 +222,10 @@ def crop_tif(filename, crop_box, outfile=None):
         with original name + random id in tmp directory.
     """
     with rasterio.open(filename) as src:
-        if any(c is None for c in crop_box):
-            crop_box = \
-                tuple(src.bounds[i] if crop_box[i] is None else crop_box[i] for i in range(4))
-        xmin, ymin, xmax, ymax = crop_box
+        if any(c is None for c in extents):
+            extents = \
+                tuple(src.bounds[i] if extents[i] is None else extents[i] for i in range(4))
+        xmin, ymin, xmax, ymax = extents
 
         def _check_bound(comp, crop_bnd, src_bnd, s):
             if comp:
@@ -260,13 +260,13 @@ def crop_tif(filename, crop_box, outfile=None):
 
         return outfile
 
-def load_shapefile(filename, targetfield, covariate_crs, crop_box):
+def load_shapefile(filename, targetfield, covariate_crs, extents):
     """
     TODO
     """
     sf = shapefile.Reader(filename)
-    if crop_box and any(c is None for c in crop_box):
-        crop_box = tuple(sf.bbox[i] if crop_box[i] is None else crop_box[i] for i in range(4))
+    if extents and any(c is None for c in extents):
+        extents = tuple(sf.bbox[i] if extents[i] is None else extents[i] for i in range(4))
     shapefields = [f[0] for f in sf.fields[1:]]  # Skip DeletionFlag
     dtype_flags = [(f[1], f[2]) for f in sf.fields[1:]]  # Skip DeletionFlag
     dtypes = ['float' if (k[0] == 'N' or k[0] == 'F') else '<U{}'.format(k[1])
@@ -314,21 +314,21 @@ def load_shapefile(filename, targetfield, covariate_crs, crop_box):
     if src_prj and dst_prj:
         label_coords = np.array([coord for coord in pyproj.itransform(src_prj, dst_prj, 
                                                                       label_coords, always_xy=True)])
-    if crop_box:
-        def _in_crop_box(coord):
-            return crop_box[0] <= coord[0] <= crop_box[2] \
-                    and crop_box[1] <= coord[1] <= crop_box[3]
-        label_coords = np.array([coord for coord in label_coords if _in_crop_box(coord)])
+    if extents:
+        def _in_extents(coord):
+            return extents[0] <= coord[0] <= extents[2] \
+                    and extents[1] <= coord[1] <= extents[3]
+        label_coords = np.array([coord for coord in label_coords if _in_extents(coord)])
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield=None, covariate_crs=None, crop_box=None):
+def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
     """
     if mpiops.chunk_index == 0:
-        lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, crop_box)
+        lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, extents)
         # sort by y then x
         ordind = np.lexsort(lonlat.T)
         vals = vals[ordind]

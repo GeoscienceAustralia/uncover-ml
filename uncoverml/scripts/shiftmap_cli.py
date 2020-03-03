@@ -41,7 +41,7 @@ def main(config_file, partitions):
     config = ls.config.Config(config_file)
     # Force algortihm - this is purely for debug log messages
     config.algorithm = 'logistic'
-    if config.crop_box:
+    if config.extents:
         ls.geoio.crop_covariates(config)
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
@@ -54,14 +54,14 @@ def main(config_file, partitions):
     real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
-                                        crop_box=config.extents)
+                                        extents=config.extents)
 
     # User can provide their own 'query' targets for training shapemap, or we can
     # generate points.
     if config.shiftmap_targets:
         dummy_targets = ls.geoio.load_targets(shapefile=config.shiftmap_targets,
                                               covariate_crs=ls.geoio.get_image_crs(config),
-                                              crop_box=config.extents)
+                                              extents=config.extents)
         dummy_targets = ls.targets.label_targets(dummy_targets, 'query')
         real_targets = ls.targets.label_targets(real_targets, 'training')
         targets = ls.targets.merge_targets(dummy_targets, real_targets)
@@ -106,7 +106,7 @@ def main(config_file, partitions):
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    if config.crop_box:
+    if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
 
