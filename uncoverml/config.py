@@ -611,9 +611,9 @@ class Config(object):
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.csv')
 
-        self.targetsearch_generated_points = _outpath('_target_search_generated_points.csv')
-        self.targetsearch_selected_points = _outpath('_target_search_selected_points.csv')
-        self.targetsearch_result_data = _outpath('_target_search_result.pk') 
+        self.targetsearch_generated_points = _outpath('_targetsearch_generated_points.csv')
+        self.targetsearch_likelihood = _outpath('_targetsearch_likelihood.csv')
+        self.targetsearch_result_data = _outpath('_targetsearch_result.pk') 
 
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
