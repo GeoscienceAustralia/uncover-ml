@@ -40,8 +40,10 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file)
-    if config.crop_box:
-        ls.geoio.crop_covariates(config)
+    if not config.extents:
+        raise ValueError("Can't perform target search without specifying an extent. Provide the "
+                         "'extents' block in the config file and run again.")
+
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
         _logger.info("Memory constraint forcing {} iterations "
@@ -56,17 +58,16 @@ def main(config_file, partitions):
     # TODO: Drop targets from prediction area?
     real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
-                                        covariate_crs=ls.geoio.get_image_crs(config),
-                                        crop_box=config.crop_box)
+                                        covariate_crs=ls.geoio.get_image_crs(config))
     REAL_TARGETS_LABEL = 'a_real'
     real_targets = ls.targets.label_targets(real_targets, REAL_TARGETS_LABEL)
 
     # Get random sample of targets from within prediction area. These 
     #  will be labelled 'training'.
     GENERATED_TARGETS_LABEL = 'b_generated'
-    generated_targets = ls.targets.generate_dummy_targets(config.target_crop_box, 
-            GENERATED_TARGETS_LABEL, 
-            real_targets.positions.shape[0])
+    generated_targets = ls.targets.generate_dummy_targets(config.extents, 
+                                                          GENERATED_TARGETS_LABEL, 
+                                                          real_targets.positions.shape[0])
     generated_targets = ls.targets.label_targets(generated_targets, GENERATED_TARGETS_LABEL)
 
     _logger.debug(f"Class 1: {real_targets.positions.shape}, "
@@ -87,8 +88,9 @@ def main(config_file, partitions):
     targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
 
     # Write out targets for debug purpses
-    if mpiops.chunk_index == 0:
-        ls.targets.save_targets(targets_all, config.targetsearch_generated_points)
+    if ls.mpiops.chunk_index == 0:
+        ls.targets.save_targets(targets_all, config.targetsearch_generated_points,
+                                obs_filter=GENERATED_TARGETS_LABEL)
 
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
@@ -97,19 +99,23 @@ def main(config_file, partitions):
 
     if ls.mpiops.chunk_index == 0:
         y_star = ls.predict.predict(x_all, model, config.quantiles)
-        y_star = y_star[targets_all.observations == REAL_TARGETS_LABEL]
-        real_targets_all = targets_all.positions[targets_all.observations == REAL_TARGETS_LABEL]
-        result = np.rec.fromarrays((real_targets_all.T[0], 
-                                    real_targets_all.T[1],
-                                    y_star.T[2]),
-                                    names='lon,lat,prediction_area_likelihood')
-        np.savetxt(config.targetsearch_selected_points, result, fmt='%.8f,%.8f,%.8f', 
-                   delimiter=',', header='lon,lat,prediction_area_likelihood')
+        real_ind = targets_all.observations == REAL_TARGETS_LABEL
 
-    if config.crop_box:
-        ls.mpiops.run_once(_clean_temp_cropfiles, config)
+        # Save for debugging/visualisation
+        targets_with_classification = np.rec.fromarrays((targets_all.positions[real_ind].T[0], 
+                                                         targets_all.positions[real_ind].T[1],
+                                                         y_star[real_ind].T[2]),
+                                                         names='lon,lat,prediction_area_likelihood')
+        np.savetxt(config.targetsearch_selected_points, targets_with_classification, 
+                   fmt='%.8f,%.8f,%.8f', delimiter=',', 
+                   header='lon,lat,prediction_area_likelihood')
 
-
-def _clean_temp_cropfiles(config):
-    shutil.rmtree(config.tmpdir)   
+        # Match up targets with intersected data that match
+        #  classification threshold
+        result = x_all[real_ind]
+        result = result[y_star[real_ind].T[2] >= config.targetsearch_threshold]
+        # And save as binary for reuse in learn step
+        np.save(config.targetsearch_result_data, result.data) 
+        np.save(config.targetsearch_result_mask, result.mask)
+        _logger.info(f"Target search complete. Found {len(result)} targets for inclusion.")
 
