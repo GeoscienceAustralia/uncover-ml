@@ -82,7 +82,7 @@ def label_targets(targets, label):
     labels = np.full(targets.observations.shape, label)
     return Targets(targets.positions, labels, targets.fields)
 
-def gather_targets(targets, keep, config, node=None):
+def gather_targets(targets, keep, node=None):
     return gather_targets_main(targets, keep, node)
 
 def gather_targets_main(targets, keep, node):
