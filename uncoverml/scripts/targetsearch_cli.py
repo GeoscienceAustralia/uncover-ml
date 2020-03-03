@@ -59,6 +59,7 @@ def main(config_file, partitions):
     real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config))
+    real_targets_unlabelled = real_targets
     REAL_TARGETS_LABEL = 'a_real'
     real_targets = ls.targets.label_targets(real_targets, REAL_TARGETS_LABEL)
 
@@ -84,8 +85,8 @@ def main(config_file, partitions):
                                                     config)
 
     x_all = ls.features.gather_features(features[keep], node=0)
-    
-    targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+    targets_all = ls.targets.gather_targets(targets, keep, node=0)
+    real_targets_unlabelled_all = ls.targets.gather_targets(real_targets_unlabelled, keep, node=0)
 
     # Write out targets for debug purpses
     if ls.mpiops.chunk_index == 0:
@@ -115,9 +116,10 @@ def main(config_file, partitions):
         threshold_ind = y_star[real_ind].T[2] >= config.targetsearch_threshold
 
         result_t = ls.targets.Targets(
-                (targets_all.positions[real_ind])[threshold_ind],
-                (targets_all.observations[real_ind])[threshold_ind],
-                {k: (v[real_ind])[threshold_ind] for k, v in targets_all.fields.items()}
+                (real_targets_unlabelled_all.positions[real_ind])[threshold_ind],
+                (real_targets_unlabelled_all.observations[real_ind])[threshold_ind],
+                {k: (v[real_ind])[threshold_ind] 
+                    for k, v in real_targets_unlabelled_all.fields.items()}
         )
         result_x = (x_all[real_ind])[threshold_ind]
         # And save as binary for reuse in learn step
