@@ -401,6 +401,8 @@ class Config(object):
             learn_block = _grp(s, 'learning')
             self.clustering = False
             self.cluster_analysis = False
+            self.target_search = learn_block.get('target_search', False)
+            self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = _grp(learn_block, 'arguments',
@@ -590,19 +592,30 @@ class Config(object):
         
         self.raw_covariates = _outpath('_rawcovariates.csv')
         self.raw_covariates_mask = _outpath('_rawcovariates_mask.csv')
+
         self.feature_ranks_file = _outpath('_featureranks.json')
+
         self.crossval_scores_file = _outpath('_crossval_scores.json')
         self.crossval_results_file = _outpath('_crossval_results.csv')
         self.crossval_results_plot = _outpath('_crossval_results.png')
+
         self.dropped_targets_file = _outpath('_dropped_targets.txt')
         self.transformed_targets_file = _outpath('_transformed_targets.csv')
+
         self.metadata_file = _outpath('_metadata.txt')
+
         self.optimisation_results_file = _outpath('_optimisation.csv')
+
         self.prediction_file = _outpath('_{}.tif')
+
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.csv')
+
         self.targetsearch_generated_points = _outpath('_target_search_generated_points.csv')
         self.targetsearch_selected_points = _outpath('_target_search_selected_points.csv')
+        self.targetsearch_result_data = _outpath('_target_search_result.npy') 
+        self.targetsearch_result_mask = _outpath('_target_search_result_mask.npy') 
+
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
         
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
