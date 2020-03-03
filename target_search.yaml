@@ -1,0 +1,60 @@
+learning:
+  algorithm: multirandomforest
+  target_search: True
+  target_search_threshold: 0.7
+  arguments:
+    n_estimators: 10
+    target_transform: identity
+    forests: 20
+    parallel: True
+    random_state: 1
+
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Na_ppm_imp
+
+extents:
+  xmin: 120.302
+  ymin: -27.821
+  xmax: 120.672
+  ymax: -27.275
+
+validation:
+    #  feature_rank: True
+  k-fold:
+    parallel: True
+    folds: 5
+    random_seed: 1
+
+prediction:
+  quantiles: 0.95
+  outbands: 4
+
+output:
+  directory: ./random_forest_out
+
+  # By default, model file will be saved in output directory.            #
+  # Model can be saved to a specific path if desired, and different      #
+  # model files can be loaded for the prediction step if specified here. #
+
+  model: ./random_forest_out/random_forest.model
+
+  #plot_feature_ranks: True
+  #plot_intersection: True
+  #plot_real_vs_pred: True
+  #plot_correlation: True
+  #plot_target_scaling: True
+  
+  #pickling:
+  #  covariates: ./random_forest_out/features.pk
+  #  targets: ./random_forest_out/targets.pk
+
