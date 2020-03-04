@@ -110,7 +110,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     as a unique ID for each point in post-processing. If no 'index'
     field exists this column will be zero filled.
 
-    The 'precition' column is for predicted values created during 
+    The 'prediction' column is for predicted values created during 
     cross-validation. Again, this is for post-processing. It will only
     be populated if cross-validation is run later on. If not, it will
     be zero filled.
@@ -146,14 +146,28 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
-
     all_xy = mpiops.comm.gather(targets.positions, root=0)
     all_targets = mpiops.comm.gather(targets.observations, root=0)
 
     if uid_on:
+        if config.target_search:
+            raise NotImplementedError(
+                "Can't use 'index' columns with target search feature at this time.")
         all_idx = mpiops.comm.gather(targets.fields[uid_field])
 
     if mpiops.chunk_index == 0:
+        if config.target_search:
+            with open(config.targetsearch_result_data, 'rb') as f:
+                ts_t, ts_x = pickle.load(f)
+            # Note ordering is important - this will append target search
+            #  to end of other targets, and covariates must be ordered 
+            #  in the same way.
+            x_all_data = np.concatenate((x_all.data, ts_x.data))
+            x_all_mask = np.concatenate((x_all.mask, ts_x.mask))
+            x_all = np.ma.array(x_all_data, mask=x_all_mask)
+            all_xy.append(ts_t.positions)
+            all_targets.append(ts_t.observations)
+                                                        
         all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
         xy = np.atleast_2d(all_xy)
