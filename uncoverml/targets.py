@@ -18,7 +18,9 @@ class Targets:
 
 def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     """
-    Generate dummy points with randomly generated positions.
+    Generate dummy points with randomly generated positions. Points
+    are generated on node 0 and distributed to other nodes if running
+    in parallel.
 
     Args:
         bounds (tuple of float, float, float, float): Bounding box
@@ -33,21 +35,34 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     Returns:
         Targets: A collection of randomly generated targets.
     """
-    rnd = np.random.RandomState(seed)
-    def _generate_points(lower, upper, limit):
-        new_points = []
-        while len(new_points) < limit:
-            new_point = rnd.uniform(lower, upper)
-            new_points.append(new_point)
-        return new_points
-    new_lons = _generate_points(bounds[0], bounds[2], n_points)
-    new_lats = _generate_points(bounds[1], bounds[3], n_points)
-    lonlats = np.column_stack([new_lons, new_lats])
-    labels = np.full(lonlats.shape[0], label)
-    if field_keys:
-        fields = {k: np.zeros(n_points) for k in field_keys}
+    if mpiops.chunk_index == 0:
+        rnd = np.random.RandomState(seed)
+        def _generate_points(lower, upper, limit):
+            new_points = []
+            while len(new_points) < limit:
+                new_point = rnd.uniform(lower, upper)
+                new_points.append(new_point)
+            return new_points
+        new_lons = _generate_points(bounds[0], bounds[2], n_points)
+        new_lats = _generate_points(bounds[1], bounds[3], n_points)
+        lonlats = np.column_stack([new_lons, new_lats])
+        labels = np.full(lonlats.shape[0], label)
+        if field_keys:
+            fields = {k: np.zeros(n_points) for k in field_keys}
+        else:
+            fields = {}
+        # Split for distribution
+        lonlats = np.array_split(lonlats, mpiops.chunks)
+        labels = np.array_split(labels, mpiops.chunks)
+        split_fields = {k: np.array_split(v, mpiops.chunks) for k, v in fields.items()}
+        fields = [{k: v[i] for k, v in split_fields.items()} for i in range(mpiops.chunks)]
     else:
-        fields = {}
+        lonlats, labels, fields = None, None, None
+
+    lonlats = mpiops.comm.scatter(lonlats, root=0)
+    labels = mpiops.comm.scatter(labels, root=0)
+    fields = mpiops.comm.scatter(fields, root=0)
+    
     return Targets(lonlats, labels, fields)
 
 
@@ -56,7 +71,8 @@ def generate_covariate_shift_targets(targets, bounds):
     dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shp[0])
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
     return concatenate_targets(real_targets, dummy_targets)
-    
+ 
+
 def concatenate_targets(a, b):
     """
     Concatenates two `Targets` objects.
@@ -80,6 +96,7 @@ def concatenate_targets(a, b):
                    np.append(a.observations, b.observations, 0),
                    new_fields)
 
+
 def label_targets(targets, label, backup_field=None):
     """
     Replaces target observations (the target property being trained on)
@@ -100,8 +117,10 @@ def label_targets(targets, label, backup_field=None):
         targets.fields[backup_field] = targets.observations
     return Targets(targets.positions, labels, targets.fields)
 
+
 def gather_targets(targets, keep, node=None):
     return gather_targets_main(targets, keep, node)
+
 
 def gather_targets_main(targets, keep, node):
     observations = targets.observations[keep]

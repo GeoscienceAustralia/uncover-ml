@@ -70,7 +70,8 @@ def main(config_file, partitions):
     GEN_TARGETS_LABEL = 'b_generated'
     gen_targets = ls.targets.generate_dummy_targets(
             config.extents, GEN_TARGETS_LABEL, 
-            real_targets.positions.shape[0], list(real_targets.fields.keys()))
+            real_targets.positions.shape[0] * ls.mpiops.chunks, 
+            field_keys=list(real_targets.fields.keys()))
 
     _logger.debug(f"Class 1: {real_targets.positions.shape}, '{real_targets.observations[0]}'\t" 
                   f"Class 2: {gen_targets.positions.shape}, '{gen_targets.observations[0]}'")
@@ -86,19 +87,16 @@ def main(config_file, partitions):
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
-    # Write out targets for debug purpses
     if ls.mpiops.chunk_index == 0:
+        # Write out targets for debug purpses
         ls.targets.save_targets(targets_all, config.targetsearch_generated_points,
                                 obs_filter=GEN_TARGETS_LABEL)
     
-    # Train the model
-    model = ls.models.LogisticClassifier(random_state=1)
-    ls.models.apply_multiple_masked(
+        # Train the model and classify
+        model = ls.models.LogisticClassifier(random_state=1)
+        ls.models.apply_multiple_masked(
         model.fit, (x_all, targets_all.observations), 
         kwargs={'fields': targets_all.fields, 'lon_lat': targets_all.positions})
-
-    # Classify
-    if ls.mpiops.chunk_index == 0:
         y_star = ls.predict.predict(x_all, model, config.quantiles)
         real_ind = targets_all.observations == REAL_TARGETS_LABEL
 
