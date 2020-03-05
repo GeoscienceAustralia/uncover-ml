@@ -70,12 +70,13 @@ def generate_covariate_shift_targets(targets, bounds):
     real_targets = label_targets(targets, 'training')
     dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shp[0])
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
-    return concatenate_targets(real_targets, dummy_targets)
+    return merge_targets(real_targets, dummy_targets)
  
 
-def concatenate_targets(a, b):
+def merge_targets(a, b):
     """
-    Concatenates two `Targets` objects.
+    Merges two `Targets` objects. They will be sorted the canonical
+    uncover-ml way: lexically by position (y, x).
     
     Args:
         a, b (Target): The Targets to merge.
@@ -92,9 +93,16 @@ def concatenate_targets(a, b):
             new = v
         new_fields[k] = new
 
-    return Targets(np.append(a.positions, b.positions, 0),
-                   np.append(a.observations, b.observations, 0),
-                   new_fields)
+    pos = np.append(a.positions, b.positions, 0)
+    obs = np.append(a.observations, b.observations, 0)
+
+    ordind = np.lexsort(pos.T)
+    pos = pos[ordind]
+    obs = obs[ordind]
+    for k, v in new_fields.items():
+        new_fields[k] = v[ordind]
+
+    return Targets(pos, obs, new_fields)
 
 
 def label_targets(targets, label, backup_field=None):

@@ -132,7 +132,7 @@ def _load_data(config, partitions):
             #  to end of other targets, and covariates must be ordered 
             #  in the same way.
             _logger.info(f"Including {len(ts_x)} targets from target search")
-            targets_all = ls.targets.concatenate_targets(targets_all, ts_t)
+            targets_all = ls.targets.merge_targets(targets_all, ts_t)
             x_all = np.ma.concatenate((x_all, ts_x))
 
 

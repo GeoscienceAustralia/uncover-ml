@@ -64,7 +64,7 @@ def main(config_file, partitions):
                                               extents=config.extents)
         dummy_targets = ls.targets.label_targets(dummy_targets, 'query')
         real_targets = ls.targets.label_targets(real_targets, 'training')
-        targets = ls.targets.concatenate_targets(dummy_targets, real_targets)
+        targets = ls.targets.merge_targets(dummy_targets, real_targets)
     else:
         bounds = ls.geoio.get_image_bounds(config)
         bounds = (bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1])

@@ -76,7 +76,7 @@ def main(config_file, partitions):
     _logger.debug(f"Class 1: {real_targets.positions.shape}, '{real_targets.observations[0]}'\t" 
                   f"Class 2: {gen_targets.positions.shape}, '{gen_targets.observations[0]}'")
 
-    targets = ls.targets.concatenate_targets(real_targets, gen_targets)
+    targets = ls.targets.merge_targets(real_targets, gen_targets)
 
     # Intersect targets and covariate data.
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
@@ -91,7 +91,7 @@ def main(config_file, partitions):
         # Write out targets for debug purpses
         ls.targets.save_targets(targets_all, config.targetsearch_generated_points,
                                 obs_filter=GEN_TARGETS_LABEL)
-    
+
         # Train the model and classify
         model = ls.models.LogisticClassifier(random_state=1)
         ls.models.apply_multiple_masked(
