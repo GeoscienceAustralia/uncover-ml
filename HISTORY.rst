@@ -12,15 +12,24 @@ Added
   or user can provide their own shapefile via the 'shiftmap' property of the config 'target' block.
 - "covdiag" command for 'diagnosing' covariate files. Similar to gdalinfo but with room for 
   additions if required.
+- "shiftmap" command which generates a map of covariate shift.
+- "targetsearch" comamnd which finds targets similar to prediction data outside of prediction area.
+- More demonstration configs.
+- Reimplemented target sampling/binning code (originally by Sudipta).
+- Add an 'index' column to rawcovariates.csv output to allow users to customise plots.
 
 Changed
 +++++++
 - Tweaked plots.
 - 'pbs' directory is now 'scripts'.
+- Moved all CLI commands to be under the 'uncoverml' command.
+- Cleaned up project structure - remove outdated 'pbs' directory and scripts that no longer apply.
 
 Fixed
 +++++
-- MRF results being determined by number of processors used. Changed to provide each random forest with its own RNG seed.
+- MRF results being determined by number of processors used. Changed to provide each random forest 
+  with its own RNG seed.
+- Crash when plotting feature ranking if the using a model without 'MLL' metric.
 
 0.3.1 (2019-11-28)
 ------------------
@@ -40,7 +49,8 @@ Added
 +++++
 - Diagnostics module for plotting various metrics.
 - Diagnostics notebook for viewing plots.
-- Target coordinates are now automatically reprojected if a \*.prj file is provided with the input shapefile.
+- Target coordinates are now automatically reprojected if a \*.prj file is provided with the input 
+  shapefile.
 
 Changed
 +++++++
