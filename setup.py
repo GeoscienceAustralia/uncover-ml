@@ -69,7 +69,6 @@ setup(
     },
     install_requires=parse_requirements('requirements.txt'),
     extras_require={
-        'kmz': parse_requirements('requirements-kmz.txt'),
         'dev': parse_requirements('requirements-dev.txt'),
     },
     license="Apache Software License 2.0",
