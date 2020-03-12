@@ -44,7 +44,10 @@ class TestShiftmap:
                 shutil.rmtree(sirsam_rf_out)
 
         request.addfinalizer(finalize)
-    
+        
+        # Clear out pickled files (and other outputs)
+        finalize()
+
         # If running with one processor, call uncoverml directly
         if num_procs == 1:
             try:
@@ -189,7 +192,12 @@ class TestLearnCommand:
                 open(sirsam_rf_csv_outputs[1]) as precomp:
             tl = test.readlines()
             pl = precomp.readlines()
-        assert tl == pl
+            del tl[0]
+            del pl[0]
+            for t, p in zip(tl, pl):
+                t_ar = np.array([float(x) for x in t.split(',')])
+                p_ar = np.array([float(x) for x in p.split(',')])
+                assert np.allclose(t_ar, p_ar)
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
