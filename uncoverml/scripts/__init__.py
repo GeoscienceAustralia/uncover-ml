@@ -92,8 +92,8 @@ def gammasensor(geotiff, height, absorption, forward, outputdir, noise, impute):
               help='Number of parallel jobs to run. Lower value of n '
                    'reduces memory requirement. '
                    'By default uses all available CPUs')
-def gridsearch(pileine_file, partitions, njobs):
-    gridsearch_cli.main(pileine_file, partitions, njobs)
+def gridsearch(pipeline_file, partitions, njobs):
+    gridsearch_cli.main(pipeline_file, partitions, njobs)
 
 
 @cli.command()
