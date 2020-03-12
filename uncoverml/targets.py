@@ -68,7 +68,7 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
 
 def generate_covariate_shift_targets(targets, bounds):
     real_targets = label_targets(targets, 'training')
-    dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shp[0])
+    dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shape[0])
     _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
     return merge_targets(real_targets, dummy_targets)
  
@@ -86,11 +86,14 @@ def merge_targets(a, b):
     """
     new_fields = {}
     for k, v in a.fields.items():
-        ar = b.fields.get(k)
+        ar = b.fields.get(k, np.zeros(len(v)))
         if ar is not None:
             new = np.concatenate((v, ar))
-        else:
-            new = v
+        # Pad out with zeros so len(v(a+b)) == len(a) + len(b) as it's
+        #  execpted there's the same number of values per key as there
+        #  is positions/observations.
+        total_len = len(a.positions) + len(b.positions)
+        new = np.pad(new, (0, abs(len(new) - total_len)), constant_values=0)
         new_fields[k] = new
 
     pos = np.append(a.positions, b.positions, 0)
