@@ -37,7 +37,6 @@ algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 
 def setup_pipeline(config):
-    config.optimisation['algorithm'] = config.algorithm
     if config.optimisation['algorithm'] not in algos:
         raise ConfigException('optimisation algo must exist in algos dict')
     steps = []
@@ -87,7 +86,7 @@ def setup_pipeline(config):
     return estimator
 
 
-def main(pipeline_file, partitions, njobs, verbosity):
+def main(pipeline_file, partitions, njobs):
     config = ls.config.Config(pipeline_file)
     config.n_jobs = njobs
     estimator = setup_pipeline(config)
