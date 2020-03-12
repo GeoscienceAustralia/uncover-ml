@@ -39,6 +39,10 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file)
+    if config.pk_load:
+        raise ValueError("Can't create covariate shiftmap when loading from pickled data. Remove "
+                         "'pickling' block from config and provide 'targets' and 'features' blocks.")
+
     # Force algortihm - this is purely for debug log messages
     config.algorithm = 'logistic'
     if config.extents:
@@ -67,7 +71,7 @@ def main(config_file, partitions):
         targets = ls.targets.merge_targets(dummy_targets, real_targets)
     else:
         bounds = ls.geoio.get_image_bounds(config)
-        bounds = (bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1])
+        bounds = (bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1])
         targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds) 
                                                               
 
@@ -78,7 +82,7 @@ def main(config_file, partitions):
                                                     config.final_transform,
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
-    targets_all = ls.targets.gather_targets(targets, keep, config, node=0)
+    targets_all = ls.targets.gather_targets(targets, keep, node=0)
     ls.targets.save_targets(targets_all, config.shiftmap_points)
     model = ls.models.LogisticClassifier(random_state=1)
     ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
