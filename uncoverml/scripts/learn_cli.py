@@ -38,7 +38,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 def main(config_file, partitions):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, learning=True)
     targets_all, x_all = _load_data(config, partitions)
 
     if config.cross_validate:

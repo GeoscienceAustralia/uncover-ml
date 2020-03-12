@@ -363,7 +363,8 @@ class Config(object):
         Name of the property to train clustering against. Required
         if :attr:`~class_file` is provided.
     """
-    def __init__(self, yaml_file):
+    def __init__(self, yaml_file, clustering=False, learning=False, resampling=False,
+                 predicting=False):
 
         def _grp(d, k, msg=None):
             """
@@ -382,7 +383,7 @@ class Config(object):
             s = yaml.load(f, Loader=Config.yaml_loader)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
-        if 'clustering' in s:
+        if clustering:
             # CLUSTERING BLOCK
             cb = _grp(s, 'clustering', "'clustering' block must be provided when clustering.")
             self.clustering = True
@@ -396,7 +397,7 @@ class Config(object):
                 self.class_property = _grp(cb, 'property', "'property' must be provided when "
                                            "providing a file for semisupervised clustering.")
             self.semi_supervised = self.class_file is not None
-        else:
+        elif learning:
             # LEARNING BLOCK
             learn_block = _grp(s, 'learning')
             self.clustering = False
@@ -408,13 +409,15 @@ class Config(object):
             self.algorithm_args = _grp(learn_block, 'arguments',
                                        "'arguments' must be provided for learning algorithm.")
             
-        # Set flags based on algorithm being used - these control
-        # some special behaviours in the code.
-        self.cubist = self.algorithm == 'cubist'
-        self.multicubist = self.algorithm == 'multicubist'
-        self.multirandomforest = self.algorithm == 'multirandomforest'
-        self.krige = self.algorithm == 'krige'
-
+            # Set flags based on algorithm being used - these control
+            # some special behaviours in the code.
+            self.cubist = self.algorithm == 'cubist'
+            self.multicubist = self.algorithm == 'multicubist'
+            self.multirandomforest = self.algorithm == 'multirandomforest'
+            self.krige = self.algorithm == 'krige'
+        else:
+            self.clustering = False
+        
         # EXTENTS
         exb = s.get('extents')
         if exb:
@@ -458,11 +461,12 @@ class Config(object):
         # FEATURES BLOCK
         # Todo: fix get_image_spec so features are optional if using pickled data.
         # if not self.pk_load:
-        _logger.warning("'features' are required even when loading from pickled data - this is "
-                        "a work around for getting image specifications. Needs to be fixed.")
-        features = _grp(s, 'features', "'features' block must be provided when not loading "
-                        "from pickled data.")
-        self.feature_sets = [FeatureSetConfig(f) for f in features]
+        if not resampling:
+            _logger.warning("'features' are required even when loading from pickled data - this " 
+                            "is a work around for getting image specifications. Needs to be fixed.")
+            features = _grp(s, 'features', "'features' block must be provided when not loading "
+                            "from pickled data.")
+            self.feature_sets = [FeatureSetConfig(f) for f in features]
 
         # Not yet implemented.
         if 'patchsize' in s:
@@ -529,28 +533,29 @@ class Config(object):
         self.optimisation = s.get('optimisation')
 
         # PREDICT BLOCK
-        pb = _grp(s, 'prediction', "'prediction' block must be provided.")
-        self.geotif_options = pb.get('geotif', {})
-        self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of "
-                              "prediction block.")
-        self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
-                             "block.")
-        self.thumbnails = pb.get('thumbnails', 10)
-        mb = s.get('mask')
-        if mb:
-            self.mask = mb.get('file') 
-            self.mask = None if not os.path.exists(self.mask) else self.mask
-            if self.mask:
-                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
-                                   "prediction mask.")
-        else:
-            self.mask = None
-        
-        if self.krige:
-            # Todo: don't know if lon/lat is compulsory or not for kriging
-            self.lon_lat = s.get('lon_lat')
-        else:
-            self.lon_lat = None
+        if predicting:
+            pb = _grp(s, 'prediction', "'prediction' block must be provided.")
+            self.geotif_options = pb.get('geotif', {})
+            self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of "
+                                  "prediction block.")
+            self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
+                                 "block.")
+            self.thumbnails = pb.get('thumbnails', 10)
+            mb = s.get('mask')
+            if mb:
+                self.mask = mb.get('file') 
+                self.mask = None if not os.path.exists(self.mask) else self.mask
+                if self.mask:
+                    self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
+                                       "prediction mask.")
+            else:
+                self.mask = None
+            
+            if self.krige:
+                # Todo: don't know if lon/lat is compulsory or not for kriging
+                self.lon_lat = s.get('lon_lat')
+            else:
+                self.lon_lat = None
 
 
         # OUTPUT BLOCK

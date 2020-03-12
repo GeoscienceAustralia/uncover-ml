@@ -264,7 +264,7 @@ def _remove_files(filename, extensions):
                                                            + extension))
 
 def main(config_file, validation_file=None, validation_points=100):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, resampling=True)
 
     filename = os.path.splitext(os.path.basename(config.target_file))[0]
     out_shpfile = config.resampled_shapefile_dir.format(filename)
