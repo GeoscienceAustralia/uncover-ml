@@ -405,12 +405,13 @@ class Config(object):
             self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
-            self.algorithm_args = _grp(learn_block, 'arguments',
-                                       "'arguments' must be provided for learning algorithm.")
+            self.algorithm_args = learn_block.get('arguments')
+            self.bootstrap = learn_block.get('bootstrap')
         else:
             self.clustering = False
             self.target_search = False
             self.algorithm = None
+            self.bootstrap = False
 
         # Set flags based on algorithm being used - these control
         # some special behaviours in the code.
@@ -488,7 +489,10 @@ class Config(object):
             if rb:
                 self.spatial_resampling_args = rb.get('spatial')
                 self.value_resampling_args = rb.get('value')
-                if not (self.spatial_resampling_args or self.value_resampling_args):
+                # If we're bootstrapping we'll provide default resample
+                #  params if they don't exist
+                if not (self.spatial_resampling_args or self.value_resampling_args) \
+                        and not self.bootstrap:
                     raise ValueError("No 'spatial' or 'value' arguments supplied, resampling "
                                      "won't be performed. Provide a 'spatial' or 'value' block "
                                      "or disable resampling.")
