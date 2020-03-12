@@ -12,7 +12,7 @@ import pytest
 import rasterio
 import numpy as np
 
-from uncoverml.scripts import uncoverml
+import uncoverml.scripts
 
 
 SIRSAM_RF = 'sirsam_Na_randomforest'
@@ -28,12 +28,13 @@ class TestShiftmap:
     ]
 
     OTHER_OUTPUTS = [
-        SIRSAM_RF + '_shiftmap_generated_points.txt',
+        SIRSAM_RF + '_shiftmap_generated_points.csv',
     ]
 
     @staticmethod
     @pytest.fixture(scope='class', autouse=True)
-    def run_sirsam_random_forest_shiftmap(request, num_procs, num_parts, sirsam_rf_conf, sirsam_rf_out):
+    def run_sirsam_random_forest_shiftmap(request, num_procs, num_parts, sirsam_rf_conf, 
+                                          sirsam_rf_out):
         """
         Run the top level 'learn' command'. Removes generated output on
         completion.
@@ -47,7 +48,7 @@ class TestShiftmap:
         # If running with one processor, call uncoverml directly
         if num_procs == 1:
             try:
-                uncoverml.shiftmap([sirsam_rf_conf, '-p', num_parts])
+                uncoverml.scripts.shiftmap([sirsam_rf_conf, '-p', num_parts])
             # Catch SystemExit that gets raised by Click on competion
             except SystemExit:
                 pass   
@@ -146,7 +147,7 @@ class TestLearnCommand:
         # If running with one processor, call uncoverml directly
         if num_procs == 1:
             try:
-                uncoverml.learn([sirsam_rf_conf, '-p', num_parts])
+                uncoverml.scripts.learn([sirsam_rf_conf, '-p', num_parts])
             # Catch SystemExit that gets raised by Click on competion
             except SystemExit:
                 pass   
@@ -298,7 +299,7 @@ class TestPredictCommand:
         # If running with one processor, call uncoverml directly
         if num_procs == 1:
             try:
-                uncoverml.predict([sirsam_rf_conf, '-p', num_parts])
+                uncoverml.scripts.predict([sirsam_rf_conf, '-p', num_parts])
             # Catch SystemExit that gets raised by Click on competion
             except SystemExit:
                 pass   
