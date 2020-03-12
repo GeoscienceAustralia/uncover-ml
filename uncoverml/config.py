@@ -145,7 +145,6 @@ class FeatureSetConfig(object):
         self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g, is_categorical)
                                                           
 
-
 class Config(object):
     """
     Class representing the global configuration of the uncoverml
@@ -408,15 +407,18 @@ class Config(object):
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = _grp(learn_block, 'arguments',
                                        "'arguments' must be provided for learning algorithm.")
-            
-            # Set flags based on algorithm being used - these control
-            # some special behaviours in the code.
-            self.cubist = self.algorithm == 'cubist'
-            self.multicubist = self.algorithm == 'multicubist'
-            self.multirandomforest = self.algorithm == 'multirandomforest'
-            self.krige = self.algorithm == 'krige'
         else:
             self.clustering = False
+            self.target_search = False
+            self.algorithm = None
+
+        # Set flags based on algorithm being used - these control
+        # some special behaviours in the code.
+        self.cubist = self.algorithm == 'cubist'
+        self.multicubist = self.algorithm == 'multicubist'
+        self.multirandomforest = self.algorithm == 'multirandomforest'
+        self.krige = self.algorithm == 'krige'
+
         
         # EXTENTS
         exb = s.get('extents')

@@ -1,0 +1,27 @@
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Na_ppm_imp
+
+output:
+  directory: ./optimisation_out
+
+optimisation:
+  algorithm: transformedrandomforest
+  hyperparameters:
+    target_transform: [identity, standardise, log, sqrt]
+    n_estimators: [10, 20, 50]
+    max_features: ["auto", "sqrt", "log2"]
+    min_samples_split: [2, 5, 10]
+    min_samples_leaf: [1, 5, 10]
+    max_depth: [10, 20, 100]
+    ml_score: [False]
+
