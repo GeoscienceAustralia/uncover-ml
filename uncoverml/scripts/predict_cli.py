@@ -38,7 +38,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 def main(config_file, partitions, mask, retain):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, predicting=True)
     model = _load_model(config)
 
     if config.extents:

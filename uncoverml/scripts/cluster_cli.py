@@ -38,7 +38,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 def main(config_file, subsample_fraction):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, clustering=True)
 
     for f in config.feature_sets:
         if not f.transform_set.global_transforms:
