@@ -407,6 +407,8 @@ class Config(object):
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = learn_block.get('arguments')
             self.bootstrap = learn_block.get('bootstrap')
+            if self.bootstrap:
+                self.bootstrap_models = self.boostrap.get('models', 100)
         else:
             self.clustering = False
             self.target_search = False
@@ -438,7 +440,7 @@ class Config(object):
         else:
             self.extents = None
 
-        _logger.info("loaded crop box %s", self.extents)
+        _logger.debug("loaded crop box %s", self.extents)
 
         # PICKLING BLOCK
         pk_block = s.get('pickling')
