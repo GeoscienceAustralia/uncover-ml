@@ -233,6 +233,37 @@ def sirsam_target_path(data_sirsam):
     """
     return os.path.join(data_sirsam, 'targets', 'geochem_sites_log.shp')
 
+# Sir Samuel resampling
+@pytest.fixture(scope='session')
+def sirsam_resample(data_sirsam):
+    """
+    Path to SirSam resampling outputs.
+    """
+    return os.path.join(data_sirsam, 'resampling')
+
+@pytest.fixture(scope='session')
+def sirsam_rs_out(sirsam_resample, sirsam_target_path):
+    """
+    Path to ss resample output directory.
+    """
+    return os.path.join(sirsam_resample, 'out', 
+                        os.path.splitext(os.path.basename(sirsam_target_path))[0] + '_resampled')
+
+@pytest.fixture(scope='session')
+def sirsam_rs_precomp(sirsam_resample, sirsam_target_path):
+    """
+    Path to precompued resample outputs.
+    """
+    return os.path.join(sirsam_resample, 'precomputed',
+                        os.path.splitext(os.path.basename(sirsam_target_path))[0] + '_resampled')
+
+@pytest.fixture(scope='session')
+def sirsam_rs_conf(sirsam_resample):
+    """
+    Path to resampling config.
+    """
+    return os.path.join(sirsam_resample, 'resampling.yaml')
+
 # Sir Samuel random forest
 @pytest.fixture(scope='session')
 def sirsam_rf(data_sirsam):

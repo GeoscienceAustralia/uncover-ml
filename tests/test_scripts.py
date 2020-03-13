@@ -1,5 +1,5 @@
 """
-Tests for CLI commands.
+Integration tests for CLI commands.
 """
 import os
 import shutil
@@ -11,11 +11,68 @@ import shlex
 import pytest
 import rasterio
 import numpy as np
+import pandas as pd
+import geopandas as gpd
 
 import uncoverml.scripts
 
 
 SIRSAM_RF = 'sirsam_Na_randomforest'
+
+class TestResample:
+    @staticmethod
+    @pytest.fixture(scope='class', autouse=True)
+    def run_sirsam_random_forest_resampling(request, sirsam_rs_conf, sirsam_rs_out):
+        """
+        Run the 'resample' command. Remove generated output on 
+        completion.
+        """
+        def finalize():
+            if os.path.exists(sirsam_rs_out):
+                shutil.rmtree(sirsam_rs_out)
+
+        request.addfinalizer(finalize)
+        try:
+            uncoverml.scripts.resample([sirsam_rs_conf])
+        # Catch SystemExit that gets raised by Click on completion.
+        except SystemExit:
+            pass
+        
+    @staticmethod
+    @pytest.fixture(scope='class')
+    def output_filenames(sirsam_target_path):
+        target_name = os.path.splitext(os.path.basename(sirsam_target_path))[0]
+        exts = ['.cpg', '.dbf', '.prj', '.shp', '.shx']
+        files = [target_name + '_resampled' + ext for ext in exts]
+        return files
+
+    @staticmethod
+    @pytest.fixture(scope='class')
+    def shapefile_output(sirsam_rs_out, output_filenames):
+        return [os.path.join(sirsam_rs_out, f) for f in output_filenames]
+
+    @staticmethod
+    @pytest.fixture(scope='class')
+    def precomputed_output(sirsam_rs_precomp, output_filenames):
+        return [os.path.join(sirsam_rs_precomp, f) for f in output_filenames]
+
+    @staticmethod
+    def test_output_exists(shapefile_output):
+        for f in shapefile_output:
+            assert os.path.exists(f)
+    
+    # Outputs for resampling are random in terms of shape.
+    # TODO: Work out a better comparison.
+    #@staticmethod
+    #def test_output_meets_baseline(shapefile_output, precomputed_output):
+    #    test_shapefile = [f for f in shapefile_output if f.endswith('.shp')][0]
+    #    precomp_shapefile = [f for f in precomputed_output if f.endswith('.shp')][0]
+
+    #    test_gdf = gpd.read_file(test_shapefile)
+    #    precomp_gdf = gpd.read_file(precomp_shapefile)
+    #    assert abs(test_gdf.shape[0] - precomp_gdf.shape[0]) <= 20
+    #    pd.testing.assert_frame_equal(test_gdf, precomp_gdf)
+
 
 class TestShiftmap:
     IMAGE_OUTPUTS = [ 
