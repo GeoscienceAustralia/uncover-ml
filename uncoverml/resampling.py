@@ -16,9 +16,11 @@ import pandas as pd
 import pandas.core.algorithms as algos
 import numpy as np
 from shapely.geometry import Polygon
+from fiona.errors import DriverError
 
 import uncoverml as ls
 import uncoverml.mllog
+import uncoverml.targets
 
 
 BIN = 'bin'
@@ -26,8 +28,25 @@ GEOMETRY = 'geometry'
 _logger = logging.getLogger(__name__)
 
 
-def filter_fields(fields_to_keep, input_shapefile):
-    gdf = gpd.read_file(input_shapefile)
+def prepapre_dataframe(data, fields_to_keep):
+    if isinstance(data, gpd.GeoDataFrame):
+        gdf = data
+    elif isinstance(data, ls.targets.Targets):
+        gdf = data.to_geodataframe()
+    # Try to treat as shapefile.
+    else:
+        try:
+            gdf = gpd.read_file(data)
+        except DriverError:
+            _logger.error(
+                "Couldn't read data for resampling. Ensure a valid "
+                "shapefile path or Targets object is being provided "
+                "as input.")
+            raise
+    return filter_fields(fields_to_keep, gdf)
+
+
+def filter_fields(fields_to_keep, gdf):
     fields_to_keep = [GEOMETRY] + list(fields_to_keep)  # add geometry
     original_fields = gdf.columns
     for f in fields_to_keep:
@@ -37,52 +56,38 @@ def filter_fields(fields_to_keep, input_shapefile):
     return gdf_out
 
 
-def strip_shapefile(input_shapefile, output_shapefile, *fields_to_keep):
-    """
-    Parameters
-    ----------
-    input_shapefile
-    output_shapefile
-    args features to keep in the output shapefile
-    Returns
-    -------
-    """
-
-    gdf_out = filter_fields(fields_to_keep, input_shapefile)
-    gdf_out.to_file(output_shapefile)
-
-
-def resample_by_magnitude(input_shapefile, output_shapefile, target_field, bins=10,
+def resample_by_magnitude(input_data, target_field, bins=10,
                           fields_to_keep=[], bootstrap=True, output_samples=None,
-                          validation_file=None, validation_points=100):
+                          validation=False, validation_points=100):
     """
     Parameters
     ----------
-    input_shapefile: str
-    output_shapefile: str
-    target_field: str
+    input_gdf : geopandas.GeoDataFrame
+        Geopandas dataframe containing targets to be resampled.
+    target_field : str
         target field name based on which resampling is performed. Field 
         must exist in the input_shapefile
-    bins: int
+    bins : int
         number of bins for sampling
-    fields_to_keep: list
+    fields_to_keep : list
         of strings to store in the output shapefile
-    bootstrap: bool, optional
+    bootstrap : bool, optional
         whether to sample with replacement or not
-    output_samples: int, optional
+    output_samples : int, optional
         number of samples in the output shpfile. If not provided, the 
         output samples will be assumed to be the same as the original 
         shapefile
-    validation_file: str, optional
+    validation : bool, optional
         validation file name
-    validation_points: int, optional
+    validation_points : int, optional
         approximate number of points in the validation shapefile
+
     Returns
     -------
 
     """
     _logger.info("Resampling shapefile by values...")
-    if bootstrap and validation_file:
+    if bootstrap and validation:
         raise ValueError('bootstrapping should not be use while'
                          'creating a validation shapefile.')
 
@@ -90,7 +95,7 @@ def resample_by_magnitude(input_shapefile, output_shapefile, target_field, bins=
         fields_to_keep.append(target_field)
     else:
         fields_to_keep = [target_field]
-    gdf_out = filter_fields(fields_to_keep, input_shapefile)
+    gdf_out = prepapre_dataframe(input_data, fields_to_keep)
 
     # the idea is stolen from pandas.qcut
     # pd.qcut does not work for cases when it result in non-unique bin edges
@@ -110,7 +115,7 @@ def resample_by_magnitude(input_shapefile, output_shapefile, target_field, bins=
     samples_per_bin = total_samples // bins
 
     validate_array = np.ones(bins, dtype=np.bool)
-    if validation_file and bins > validation_points:
+    if validation and bins > validation_points:
         validate_array[validation_points:] = False
         np.random.shuffle(validate_array)
 
@@ -127,17 +132,17 @@ def resample_by_magnitude(input_shapefile, output_shapefile, target_field, bins=
 
     final_df = pd.concat(dfs_to_concat)
     final_df.sort_index(inplace=True)
-    final_df.drop(BIN, axis=1).to_file(output_shapefile)
-    if validation_file:
+    output_gdf = final_df.drop(BIN, axis=1)
+    if validation:
         validation_df = pd.concat(validation_dfs_to_concat)
-        validation_df.to_file(validation_file)
-        _logger.info('Wrote validation shapefile {}'.format(validation_file))
-    return output_shapefile
+        return output_gdf, validation_df
+    else:
+        return output_gdf
 
 
-def resample_spatially(input_shapefile, output_shapefile, target_field, rows=10, cols=10,
+def resample_spatially(input_data, target_field, rows=10, cols=10,
                        fields_to_keep=[], bootstrap=True, output_samples=None,
-                       validation_file=None, validation_points=100):
+                       validation_points=100):
     """
     Parameters
     ----------
@@ -157,8 +162,6 @@ def resample_spatially(input_shapefile, output_shapefile, target_field, rows=10,
         number of samples in the output shpfile. If not provided, the 
         output samples will be assumed to be the same as the original 
         shapefile
-    validation_file: str, optional
-        validation file name
     validation_points: int, optional
         approximate number of points in the validation shapefile
 
@@ -169,16 +172,12 @@ def resample_spatially(input_shapefile, output_shapefile, target_field, rows=10,
     """
     _logger.info("Resampling shapefile spatially...")
 
-    if bootstrap and validation_file:
-        raise ValueError('bootstrapping should not be use while'
-                         'creating a validation shapefile.')
-
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
         fields_to_keep = [target_field]
 
-    gdf_out = filter_fields(fields_to_keep, input_shapefile)
+    gdf_out = prepapre_dataframe(input_data, fields_to_keep)
 
     minx, miny, maxx, maxy = gdf_out[GEOMETRY].total_bounds
     x_grid = np.linspace(minx, maxx, num=cols+1)
@@ -215,10 +214,8 @@ def resample_spatially(input_shapefile, output_shapefile, target_field, rows=10,
                 validation_dfs_to_concat.append(v_df)
         else:
             _logger.info('{}th {} does not contain any sample'.format(i, p))
-    final_df = pd.concat(df_to_concat)
-    final_df.to_file(output_shapefile)
-
-    return output_shapefile
+    output_gdf = pd.concat(df_to_concat)
+    return output_gdf
 
 
 def _sample_without_replacement(df, samples_per_group, validate):
