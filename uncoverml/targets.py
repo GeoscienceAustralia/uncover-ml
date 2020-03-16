@@ -2,6 +2,8 @@ import logging
 from os.path import join
 
 import numpy as np
+import pandas as pd
+import geopandas as gpd
 from uncoverml import mpiops
 
 _logger = logging.getLogger(__name__)
@@ -15,6 +17,29 @@ class Targets:
         if othervals is not None:
             self.fields = othervals
 
+    def to_geodataframe(self):
+        """
+        Returns a copy of the targets as a geopandas dataframe.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame
+        """
+        df = pd.DataFrame({
+            'observations': self.observations,
+            'lon': self.positions[:,0],
+            'lat': self.positions[:,1],
+        })
+        for k, v in self.fields.items():
+            df[k] = v
+        gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
+        return gdf
+
+    def from_dataframe(self):
+        """
+        """
+        pass
+
 
 def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     """
@@ -22,18 +47,24 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     are generated on node 0 and distributed to other nodes if running
     in parallel.
 
-    Args:
-        bounds (tuple of float, float, float, float): Bounding box
-          to generate targets within of format 
-          (xmin, ymin, xmax, ymax)
-        label (str): Label to assign targets.
-        n_points (int): Nuber of points to generate.
-        field_keys (list of str, optional): List of keys to add to 
-            `fields` property.
-        seed (int, optional): Random number generator seed.
+    Parameters
+    ----------
+    bounds : tuple of float
+        Bounding box to generate targets within, of format
+        (xmin, ymin, xmax, ymax).
+    label : str 
+        Label to assign generated targets.
+    n_points : int
+        Number of points to generate
+    field_keys : list of str, optional
+        List of keys to add to `fields` property.
+    seed : int, optional
+        Random number generator seed.
 
-    Returns:
-        Targets: A collection of randomly generated targets.
+    Returns
+    -------
+    Targets
+        A collection of randomly generated targets.
     """
     if mpiops.chunk_index == 0:
         rnd = np.random.RandomState(seed)
