@@ -35,10 +35,28 @@ class Targets:
         gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
         return gdf
 
-    def from_dataframe(self):
+    @classmethod
+    def from_geodataframe(cls, gdf, observations_field='observations'):
         """
+        Returns a `Targets` object from a geopandas dataframe. 
+        One column  will be taken as the main 'observations' field. All
+        remaining non-geometry columns will be stored in the `fields`
+        property.
+
+        Parameters
+        ----------
+        observations_field : str
+            Name of the column in the dataframe that is the main 
+            target observation (the field to train on).
+
+        Returns
+        -------
+        Targets
         """
-        pass
+        obs = gdf[observations_field]
+        positions = np.asarray([[g.x, g.y] for g in gdf.geometry])
+        fields = [c for c in gdf.columns if c != observations_field and c != 'geometry']
+        return cls(positions, obs, fields)
 
 
 def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):

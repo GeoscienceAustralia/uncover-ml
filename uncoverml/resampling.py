@@ -86,7 +86,6 @@ def resample_by_magnitude(input_data, target_field, bins=10,
     -------
 
     """
-    _logger.info("Resampling shapefile by values...")
     if bootstrap and validation:
         raise ValueError('bootstrapping should not be use while'
                          'creating a validation shapefile.')
@@ -170,8 +169,6 @@ def resample_spatially(input_data, target_field, rows=10, cols=10,
     output_shapefile name
 
     """
-    _logger.info("Resampling shapefile spatially...")
-
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
@@ -213,7 +210,7 @@ def resample_spatially(input_data, target_field, rows=10, cols=10,
                 df_to_concat.append(_df)
                 validation_dfs_to_concat.append(v_df)
         else:
-            _logger.info('{}th {} does not contain any sample'.format(i, p))
+            _logger.debug('{}th {} does not contain any sample'.format(i, p))
     output_gdf = pd.concat(df_to_concat)
     return output_gdf
 

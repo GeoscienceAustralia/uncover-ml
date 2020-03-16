@@ -42,28 +42,25 @@ def main(config_file, partitions):
     targets_all, x_all = _load_data(config, partitions)
 
     if config.cross_validate:
-        run_crossval(x_all, targets_all, config)
+        crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
+        ls.mpiops.run_once(crossval_results.export_crossval(config))
 
-    _logger.info("Learning full {} model".format(config.algorithm))
-    model = ls.learn.local_learn_model(x_all, targets_all, config)
-
-    # use trained model
-    if config.permutation_importance:
-        ls.mpiops.run_once(ls.validate.permutation_importance, model, x_all,
-                           targets_all, config)
+    if config.bootstrap:
+        _logger.info(f"Bootstrapping model {config.bootstrap_models} times")
+        model = ls.learn.bootstrap_model(x_all, targets_all, config)
+    else:
+        _logger.info("Learning full {} model".format(config.algorithm))
+        model = ls.learn.local_learn_model(x_all, targets_all, config)
+        # use trained model
+        if config.permutation_importance:
+            ls.mpiops.run_once(
+                ls.validate.permutation_importance, model, x_all, targets_all, config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
-
-
-def run_crossval(x_all, targets_all, config):
-    crossval_results = ls.validate.local_crossval(x_all,
-                                                  targets_all, config)
-    if ls.mpiops.chunk_index == 0:
-        crossval_results.export_crossval(config)
 
 
 def _load_data(config, partitions):

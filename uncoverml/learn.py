@@ -3,18 +3,50 @@ import os
 
 import numpy as np
 
-from uncoverml import mpiops, diagnostics
+from uncoverml import mpiops, diagnostics, resampling
+from uncoverml.targets import Targets
 from uncoverml.krige import krig_dict
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
 
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
+
+def bootstrap_model(x_all, targets_all, config):
+    """
+    Use bootstrap resampling on target data to generate an ensemble of
+    models, allowing for probabilistic predictions.
+
+    Parameters
+    ----------
+    x_all
+        Array of covariate data, containing data at target locations.
+    targets_all : Targets
+        Collection of training targets.
+    n : int
+        Number of models to train (each model is trained on 
+        separately resampled training data).
+
+    Returns
+    -------
+    list of models
+        A list of uncoverml `Model`s, each trained on bootstrapped
+        training data.
+    """
+    models = []
+    for i in range(config.bootstrap_models):
+        bootstrapped_targets = Targets.from_geodataframe(
+            resampling.resample_by_magnitude(targets_all, 'observations', bootstrap=True))
+        bs_inds = [np.where(targets_all.positions == p)[0][0] 
+                   for p in bootstrapped_targets.positions]
+        bootstrapped_x = x_all[bs_inds]
+        models.append(local_learn_model(bootstrapped_x, bootstrapped_targets, config))
+        _logger.info(f"Trained model {i + 1} of {config.bootstrap_models}")
+    return models
 
 
 def local_learn_model(x_all, targets_all, config):
-
     model = None
     if config.multicubist or config.multirandomforest:
         y = targets_all.observations

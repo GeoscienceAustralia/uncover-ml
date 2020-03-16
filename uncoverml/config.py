@@ -408,7 +408,7 @@ class Config(object):
             self.algorithm_args = learn_block.get('arguments')
             self.bootstrap = learn_block.get('bootstrap')
             if self.bootstrap:
-                self.bootstrap_models = self.boostrap.get('models', 100)
+                self.bootstrap_models = self.bootstrap.get('models', 100)
         else:
             self.clustering = False
             self.target_search = False
