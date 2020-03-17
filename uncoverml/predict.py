@@ -211,15 +211,18 @@ def render_partition(model, subchunk, image_out, config, bootstrapping=False,
     if bootstrapping:
         model_chunks = model[:bs_predictions]
         predictions = []
+        # In case model outputs multiple bands, make sure we calculate
+        #  mean and std on correct output ('Prediction' band).
+        pred_index = model[0].get_predict_tags().index('Prediction')
         for i, m in enumerate(model_chunks):
             print(f"Process {mpiops.chunk_index}: Predicting bootstrapped model {i + 1} "
                   f"of {len(model_chunks)}")
             predictions.append(predict(x, m, interval=config.quantiles,
                                lon_lat=_get_lon_lat(subchunk, config)))
         # Calculate mean and std of predictions
-        predictions = np.squeeze(np.array(predictions))
-        mean = np.ma.mean(predictions, axis=0)
-        std = np.ma.std(predictions, axis=0)
+        predictions = np.array(predictions).T[pred_index]
+        mean = np.ma.mean(predictions, axis=1)
+        std = np.ma.std(predictions, axis=1)
         y_star = np.column_stack([mean, std])
     else:
         y_star = predict(x, model, interval=config.quantiles,
