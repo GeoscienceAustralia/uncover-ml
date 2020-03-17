@@ -396,7 +396,7 @@ class Config(object):
                 self.class_property = _grp(cb, 'property', "'property' must be provided when "
                                            "providing a file for semisupervised clustering.")
             self.semi_supervised = self.class_file is not None
-        else:
+        elif learning:
             # LEARNING BLOCK
             learn_block = _grp(s, 'learning')
             self.clustering = False
@@ -409,13 +409,13 @@ class Config(object):
             self.bootstrap = learn_block.get('bootstrap')
             if self.bootstrap:
                 self.bootstrap_models = self.bootstrap.get('models', 100)
+        else:
+            self.bootstrap = False
+            self.algorithm = None
+            self.clustering = False
+            self.cluster_analysis = False
 
-        # Set flags based on algorithm being used - these control
-        # some special behaviours in the code.
-        self.cubist = self.algorithm == 'cubist'
-        self.multicubist = self.algorithm == 'multicubist'
-        self.multirandomforest = self.algorithm == 'multirandomforest'
-        self.krige = self.algorithm == 'krige'
+        self.set_algo_flags()
 
         
         # EXTENTS
@@ -474,7 +474,7 @@ class Config(object):
         self.patchsize = 0
         
         # TARGET BLOCK
-        if not self.pk_load and not self.clustering:
+        if not self.pk_load and not clustering:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
@@ -633,6 +633,14 @@ class Config(object):
         for p in paths:
             if p:
                 makedirs(p, exist_ok=True)
+
+    def set_algo_flags(self):
+        # Set flags based on algorithm being used - these control
+        # some special behaviours in the code.
+        self.cubist = self.algorithm == 'cubist'
+        self.multicubist = self.algorithm == 'multicubist'
+        self.multirandomforest = self.algorithm == 'multirandomforest'
+        self.krige = self.algorithm == 'krige'
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
