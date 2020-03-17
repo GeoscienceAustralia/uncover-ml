@@ -5,7 +5,7 @@ learning:
   # Turn on pseudoprobablity by adding 'bootstrap' argument
   bootstrap:
     # Number of models to train (== number of times to resample data)
-    models: 100
+    models: 10
     
 
 features:
@@ -20,9 +20,7 @@ features:
 targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_ppm_imp
-  # Can customise the resampling parameters if desired
-  # If model bootstrapping is enabled but this block isn't supplied
-  #  then default resampling parameters will be used
+  # Need to set resampling parameters for bootstrapping the model.
   resample:
    # No need to set the 'bootstrap' argument when bootstrapping models,
    #  it will be forced to True regardless of what is set here

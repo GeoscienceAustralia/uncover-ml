@@ -35,14 +35,25 @@ def bootstrap_model(x_all, targets_all, config):
         training data.
     """
     models = []
+    transforms = []
+    if config.value_resampling_args:
+        transforms.append((resampling.resample_by_magnitude, config.value_resampling_args))
+    if config.spatial_resampling_args:
+        transforms.append((resampling.resample_spatially, config.spatial_resampling_args))
     for i in range(config.bootstrap_models):
-        bootstrapped_targets = Targets.from_geodataframe(
-            resampling.resample_by_magnitude(targets_all, 'observations', bootstrap=True))
+
+        target_data = targets_all
+        for func, kwargs in transforms:
+            target_data = func(target_data, 'observations', bootstrap=True)
+
+        bootstrapped_targets = Targets.from_geodataframe(target_data)
         bs_inds = [np.where(targets_all.positions == p)[0][0] 
                    for p in bootstrapped_targets.positions]
         bootstrapped_x = x_all[bs_inds]
         models.append(local_learn_model(bootstrapped_x, bootstrapped_targets, config))
+
         _logger.info(f"Trained model {i + 1} of {config.bootstrap_models}")
+
     return models
 
 
