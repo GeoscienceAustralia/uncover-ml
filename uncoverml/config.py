@@ -483,6 +483,9 @@ class Config(object):
                                         "specifying targets.")
             self.shiftmap_targets = tb.get('shiftmap')
             rb = tb.get('resample')
+            if self.bootstrap and rb is None:
+                raise ValueError("'resampling' parameters must be provided when training "
+                                 "boostrapped models.")
             if rb:
                 self.spatial_resampling_args = rb.get('spatial')
                 self.value_resampling_args = rb.get('value')
