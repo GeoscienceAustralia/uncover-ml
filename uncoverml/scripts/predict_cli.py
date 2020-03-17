@@ -29,6 +29,7 @@ import uncoverml.validate
 import uncoverml.targets
 import uncoverml.models
 from uncoverml.transforms import StandardiseTransform
+from uncoverml.learn import all_modelmaps
 
 
 _logger = logging.getLogger(__name__)
@@ -36,6 +37,17 @@ _logger = logging.getLogger(__name__)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
+def _algo_for_model(model, config):
+    """
+    Work out the algorithm for the model we have.
+    """
+    for k, v in all_modelmaps.items():
+        if isinstance(model, v):
+            config.algorithm = k
+            config.set_algo_flags()
+            _logger.info("Model algorithm detected as '%s'", k)
+            return
+    raise NameError("Model algorithm not recognised by uncoverml")
 
 def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file, predicting=True)
@@ -44,6 +56,11 @@ def main(config_file, partitions, mask, retain):
     #  ensemble. If we have collections of models for different 
     #  reasons in future, will have to add specific config args.
     bootstrapping = isinstance(model, list)
+    if bootstrapping:
+        _algo_for_model(model[0], config)
+    else:
+        _algo_for_model(model, config)
+
     if bootstrapping and config.bootstrap_predictions is None:
         config.bootstrap_predictions = len(model)
     elif bootstrapping and config.bootstrap_predictions > len(model):
