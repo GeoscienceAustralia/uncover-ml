@@ -81,7 +81,6 @@ def main(config_file, partitions, mask, retain):
         image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
     if bootstrapping:
-        # TODO: Make our own tags
         predict_tags = ['mean', 'std']
     else:
         predict_tags = model.get_predict_tags()
