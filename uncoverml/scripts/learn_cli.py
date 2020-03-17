@@ -43,7 +43,7 @@ def main(config_file, partitions):
 
     if config.cross_validate:
         crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
-        ls.mpiops.run_once(crossval_results.export_crossval(config))
+        ls.mpiops.run_once(crossval_results.export_crossval, config)
 
     if config.bootstrap:
         _logger.info(f"Bootstrapping model {config.bootstrap_models} times")
