@@ -396,7 +396,7 @@ class Config(object):
                 self.class_property = _grp(cb, 'property', "'property' must be provided when "
                                            "providing a file for semisupervised clustering.")
             self.semi_supervised = self.class_file is not None
-        elif learning:
+        else:
             # LEARNING BLOCK
             learn_block = _grp(s, 'learning')
             self.clustering = False
@@ -409,11 +409,6 @@ class Config(object):
             self.bootstrap = learn_block.get('bootstrap')
             if self.bootstrap:
                 self.bootstrap_models = self.bootstrap.get('models', 100)
-        else:
-            self.clustering = False
-            self.target_search = False
-            self.algorithm = None
-            self.bootstrap = False
 
         # Set flags based on algorithm being used - these control
         # some special behaviours in the code.
@@ -549,6 +544,7 @@ class Config(object):
             self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
                                  "block.")
             self.thumbnails = pb.get('thumbnails', 10)
+            self.bootstrap_predictions = pb.get('bootstrap')
             mb = s.get('mask')
             if mb:
                 self.mask = mb.get('file') 

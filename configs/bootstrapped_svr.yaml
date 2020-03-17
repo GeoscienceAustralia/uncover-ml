@@ -1,0 +1,45 @@
+learning:
+  algorithm: svr
+  arguments:
+    target_transform: log
+  # Turn on pseudoprobablity by adding 'bootstrap' argument
+  bootstrap:
+    # Number of models to train (== number of times to resample data)
+    models: 100
+    
+
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Na_ppm_imp
+  # Can customise the resampling parameters if desired
+  # If model bootstrapping is enabled but this block isn't supplied
+  #  then default resampling parameters will be used
+  resample:
+   # No need to set the 'bootstrap' argument when bootstrapping models,
+   #  it will be forced to True regardless of what is set here
+   spatial:
+     rows: 10
+     cols: 10
+   value:
+     bins: 10
+
+prediction:
+  quantiles: 0.95
+  # Outbands ignored for bootstrapped models - defaults to [mean, std]
+  outbands: 4
+  # Number of models to run. If number here is more than the number
+  # of bootstrapped models available, a warning will be given and all
+  # models will run predictions. If not provided, will run all models.
+  bootstrap: 10
+
+output:
+  directory: ./bootstrapped_svr_out

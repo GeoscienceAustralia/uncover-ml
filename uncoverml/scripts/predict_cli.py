@@ -40,6 +40,21 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file, predicting=True)
     model = _load_model(config)
+    # If we have a list of models, assume it's a bootstrap 
+    #  ensemble. If we have collections of models for different 
+    #  reasons in future, will have to add specific config args.
+    bootstrapping = isinstance(model, list)
+    if bootstrapping and config.bootstrap_predictions is None:
+        config.bootstrap_predictions = len(model)
+    elif bootstrapping and config.bootstrap_predictions > len(model):
+        config.bootstrap_predictions = len(model)
+        _logger.warning("Number of predictions to perform (set by prediction 'bootstrap' "
+                        "parameter is less than number of bootstrapped models available "
+                        f"({len(model)}). Running predictions on all available models.")
+    elif not bootstrapping and config.bootstrap_predictions:
+        _logger.warning("'bootstrap' was provided as part of prediction configuration, but a "
+                        "non-enesemble/bootstrapped model was provided. Running a single "
+                        "prediction instead.")
 
     if config.extents:
         ls.geoio.crop_covariates(config)
@@ -60,18 +75,27 @@ def main(config_file, partitions, mask, retain):
     else:
         _logger.info("Using memory aggressively: dividing all data between nodes")
 
-    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
+    if bootstrapping:
+        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model[0], config)
+    else:
+        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
-    predict_tags = model.get_predict_tags()
+    if bootstrapping:
+        # TODO: Make our own tags
+        predict_tags = ['mean', 'std']
+    else:
+        predict_tags = model.get_predict_tags()
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      config.n_subchunks, config.prediction_file, config.outbands,
                                      band_tags=predict_tags, **config.geotif_options)
-                                     
 
+    print(f"subchunks: {config.n_subchunks}")
     for i in range(config.n_subchunks):
         _logger.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(model, i, image_out, config)
+        ls.predict.render_partition(
+            model, i, image_out, config, bootstrapping=bootstrapping, 
+            bs_predictions=config.bootstrap_predictions)
 
     image_out.close()
 

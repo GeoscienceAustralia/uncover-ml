@@ -1,5 +1,5 @@
 import logging
-from itertools import compress
+from itertools import compress, chain
 import numpy as np
 import csv
 from sklearn.ensemble import BaseEnsemble
@@ -12,7 +12,7 @@ from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.krige import krig_dict
 from uncoverml import transforms
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
 modelmaps.update(transformed_modelmaps)
 modelmaps.update(krig_dict)
@@ -149,13 +149,13 @@ def _get_data(subchunk, config):
             x = np.ma.zeros((mask_x.shape[0], len(features_names)),
                             dtype=np.bool)
             x.mask = True
-            log.info('Partition {} covariates are not loaded as '
+            _logger.info('Partition {} covariates are not loaded as '
                      'the partition is entirely masked.'.format(subchunk + 1))
             return x, features_names
 
     transform_sets = [k.transform_set for k in config.feature_sets]
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
-    log.info("Applying feature transforms")
+    _logger.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
 
@@ -191,7 +191,7 @@ def _mask_rows(x, subchunk, config):
                                                config.patchsize)
         mask_data = mask_data.reshape(mask_data.shape[0], 1)
         mask_x = mask_data.data[:, 0] != config.retain
-        log.info('Areas with mask={} will be predicted'.format(config.retain))
+        _logger.info('Areas with mask={} will be predicted'.format(config.retain))
 
         assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
                                               'mask and inputs'
@@ -201,15 +201,30 @@ def _mask_rows(x, subchunk, config):
     return x
 
 
-def render_partition(model, subchunk, image_out, config):
-
+def render_partition(model, subchunk, image_out, config, bootstrapping=False,
+                     bs_predictions=1):
     x, feature_names = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
-    log.info("Loaded {:2.4f}GB of image data".format(total_gb))
+    _logger.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
-    log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x, model, interval=config.quantiles,
-                     lon_lat=_get_lon_lat(subchunk, config))
+    _logger.info("Predicting targets for {}.".format(alg))
+    if bootstrapping:
+        model_chunks = model[:bs_predictions]
+        predictions = []
+        for i, m in enumerate(model_chunks):
+            print(f"Process {mpiops.chunk_index}: Predicting bootstrapped model {i + 1} "
+                  f"of {len(model_chunks)}")
+            predictions.append(predict(x, m, interval=config.quantiles,
+                               lon_lat=_get_lon_lat(subchunk, config)))
+        # Calculate mean and std of predictions
+        predictions = np.squeeze(np.array(predictions))
+        mean = np.ma.mean(predictions, axis=0)
+        std = np.ma.std(predictions, axis=0)
+        y_star = np.column_stack([mean, std])
+    else:
+        y_star = predict(x, model, interval=config.quantiles,
+                         lon_lat=_get_lon_lat(subchunk, config))
+
     if config.clustering and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     # cluster_analysis(x, y_star, subchunk, config, feature_names)
@@ -231,7 +246,7 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
         list of strings corresponding to ordered feature names
 
     """
-    log.info('Writing cluster analysis results for '
+    _logger.info('Writing cluster analysis results for '
              'partition {}'.format(partition_no))
     mode = 'w' if partition_no == 0 else 'a'
 
@@ -297,7 +312,7 @@ def _flotify(arr):
 
 def final_cluster_analysis(n_classes, n_paritions):
 
-    log.info('Performing final cluster analysis')
+    _logger.info('Performing final cluster analysis')
 
     with open('cluster_contributions.csv', 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
