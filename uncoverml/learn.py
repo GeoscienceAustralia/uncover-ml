@@ -39,16 +39,17 @@ def bootstrap_model(x_all, targets_all, config):
         training data.
     """
     models = []
-    for i in range(config.bootstrap_models):
-        target_data = resampling.resample_by_magnitude(
-            targets_all, 'observations', bins=1, bootstrap=True)
-        bootstrapped_targets = Targets.from_geodataframe(target_data)
-        bs_inds = [np.where(targets_all.positions == p)[0][0] 
-                   for p in bootstrapped_targets.positions]
-        bootstrapped_x = x_all[bs_inds]
-        models.append(local_learn_model(bootstrapped_x, bootstrapped_targets, config))
-
-        _logger.info(f"Trained model {i + 1} of {config.bootstrap_models}")
+    if mpiops.chunk_index == 0:
+        iterations = np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index]
+        for i in range(config.bootstrap_models):
+            target_data = resampling.resample_by_magnitude(
+                targets_all, 'observations', bins=1, bootstrap=True)
+            bootstrapped_targets = Targets.from_geodataframe(target_data)
+            bs_inds = [np.where(targets_all.positions == p)[0][0] 
+                       for p in bootstrapped_targets.positions]
+            bootstrapped_x = x_all[bs_inds]
+            models.append(local_learn_model(bootstrapped_x, bootstrapped_targets, config))
+            _logger.info(f"Trained model {i + 1} of {config.bootstrap_models}")
 
     return models
 
