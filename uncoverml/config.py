@@ -483,20 +483,12 @@ class Config(object):
                                         "specifying targets.")
             self.shiftmap_targets = tb.get('shiftmap')
             rb = tb.get('resample')
-            if self.bootstrap and rb is None:
-                raise ValueError("'resampling' parameters must be provided when training "
-                                 "boostrapped models.")
             if rb:
                 self.spatial_resampling_args = rb.get('spatial')
                 self.value_resampling_args = rb.get('value')
-                # If we're bootstrapping we'll provide default resample
-                #  params if they don't exist
-                if not (self.spatial_resampling_args or self.value_resampling_args) \
-                        and not self.bootstrap:
-                    raise ValueError("No 'spatial' or 'value' arguments supplied, resampling "
-                                     "won't be performed. Provide a 'spatial' or 'value' block "
-                                     "or disable resampling.")
-
+                if not (self.spatial_resampling_args or self.value_resampling_args):
+                    raise ValueError("At least one of 'spatial' or 'value' resampling parameters "
+                                     "must be provided when resampling.")
 
         # FINAL TRANSFORM BLOCK
         ftb = s.get('final_transform')

@@ -13,6 +13,10 @@ from uncoverml.optimise.models import transformed_modelmaps
 _logger = logging.getLogger(__name__)
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
 
+# Should we put this in a model class?
+# We could try and create a BootstrapEnsemble container class that 
+#  takes a model as an init argument.
+# Similar to multirandomforest but more generic.
 def bootstrap_model(x_all, targets_all, config):
     """
     Use bootstrap resampling on target data to generate an ensemble of
@@ -35,17 +39,9 @@ def bootstrap_model(x_all, targets_all, config):
         training data.
     """
     models = []
-    transforms = []
-    if config.value_resampling_args:
-        transforms.append((resampling.resample_by_magnitude, config.value_resampling_args))
-    if config.spatial_resampling_args:
-        transforms.append((resampling.resample_spatially, config.spatial_resampling_args))
     for i in range(config.bootstrap_models):
-
-        target_data = targets_all
-        for func, kwargs in transforms:
-            target_data = func(target_data, 'observations', bootstrap=True)
-
+        target_data = resampling.resample_by_magnitude(
+            targets_all, 'observations', bins=1, bootstrap=True)
         bootstrapped_targets = Targets.from_geodataframe(target_data)
         bs_inds = [np.where(targets_all.positions == p)[0][0] 
                    for p in bootstrapped_targets.positions]
