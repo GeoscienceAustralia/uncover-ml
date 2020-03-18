@@ -122,15 +122,16 @@ def _load_data(config, partitions):
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
         if config.target_search:
-            # Include targets and covariates from target search
-            with open(config.targetsearch_result_data, 'rb') as f:
-                ts_t, ts_x = pickle.load(f)
-            # Note ordering is important - this will append target search
-            #  to end of other targets, and covariates must be ordered 
-            #  in the same way.
-            _logger.info(f"Including {len(ts_x)} targets from target search")
-            targets_all = ls.targets.merge_targets(targets_all, ts_t)
-            x_all = np.ma.concatenate((x_all, ts_x))
+            if ls.mpiops.chunk_index == 0:
+                # Include targets and covariates from target search
+                with open(config.targetsearch_result_data, 'rb') as f:
+                    ts_t, ts_x = pickle.load(f)
+                # Note ordering is important - this will append target search
+                #  to end of other targets, and covariates must be ordered 
+                #  in the same way.
+                _logger.info(f"Including {len(ts_x)} targets from target search")
+                targets_all = ls.targets.merge_targets(targets_all, ts_t)
+                x_all = np.ma.concatenate((x_all, ts_x))
 
 
         # Pickle data if requested.
