@@ -15,9 +15,75 @@ import pandas as pd
 import geopandas as gpd
 
 import uncoverml.scripts
+from uncoverml.models import SVRTransformed
 
 
 SIRSAM_RF = 'sirsam_Na_randomforest'
+
+class TestBootstrap:
+    output_files = [
+        'bootstrapping_mean_thumbnail.tif',
+        'bootstrapping_mean.tif',
+        'bootstrapping_std_thumbnail.tif',
+        'bootstrapping_std.tif',
+        'bootstrapping_metadata.txt',
+        'bootstrapping.model'
+    ]
+
+    @staticmethod
+    @pytest.fixture(scope='class', autouse=True)
+    def run_sirsam_bootstrap(request, num_procs, num_parts, sirsam_bs_conf, sirsam_bs_out):
+        """
+        Run the 'resample' command. Remove generated output on 
+        completion.
+        """
+        def finalize():
+            if os.path.exists(sirsam_bs_out):
+                shutil.rmtree(sirsam_bs_out)
+
+        # If running with one processor, call uncoverml directly
+        if num_procs == 1:
+            try:
+                uncoverml.scripts.learn([sirsam_bs_conf, '-p', num_parts])
+            # Catch SystemExit that gets raised by Click on competion
+            except SystemExit:
+                pass   
+            try:
+                uncoverml.scripts.predict([sirsam_bs_conf, '-p', num_parts])
+            except SystemExit:
+                pass
+        else:
+            try:
+                cmd = ['mpirun', '-n', str(num_procs),
+                       'uncoverml', 'learn', sirsam_bs_conf, '-p', str(num_parts)]
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"'{cmd}' failed with error {e.returncode}: {e.output}")
+            try:
+                cmd = ['mpirun', '-n', str(num_procs),
+                       'uncoverml', 'predict', sirsam_bs_conf, '-p', str(num_parts)]
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"'{cmd}' failed with error {e.returncode}: {e.output}")
+
+    @classmethod
+    @pytest.fixture(scope='class')
+    def generated_output(cls, sirsam_bs_out):
+        return [os.path.join(sirsam_bs_out, f) for f in cls.output_files]
+
+    @staticmethod
+    def test_output_exists(generated_output):
+        for f in generated_output:
+            assert os.path.exists(f)
+
+    @staticmethod
+    def test_model_contains_multiple_models(sirsam_bs_out):
+        models = _unpickle(os.path.join(sirsam_bs_out, 'bootstrapping.model'))
+        assert isinstance(models, list)
+        assert len(models) == 10
+        assert all([isinstance(m, SVRTransformed) for m in models])
+
+
 
 class TestResample:
     @staticmethod
@@ -279,10 +345,9 @@ class TestLearnCommand:
         """
         Test that generated model matches precomputed model.
         """
-        t_dict = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
-        p_dict = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_MODEL))
-        assert t_dict['model'] == p_dict['model']
-        assert t_dict['config'] == p_dict['config']
+        t_model = _unpickle(os.path.join(sirsam_rf_out, cls.SIRSAM_RF_MODEL))
+        p_model = _unpickle(os.path.join(sirsam_rf_precomp_learn, cls.SIRSAM_RF_MODEL))
+        assert t_model == p_model
 
     @classmethod
     def test_training_data_matches(cls, sirsam_rf_out, sirsam_rf_precomp_learn):
