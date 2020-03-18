@@ -3,6 +3,7 @@ from itertools import compress, chain
 import numpy as np
 import csv
 from sklearn.ensemble import BaseEnsemble
+from scipy.stats import norm
 
 from uncoverml import features
 from uncoverml import mpiops
@@ -221,9 +222,10 @@ def render_partition(model, subchunk, image_out, config, bootstrapping=False,
                                lon_lat=_get_lon_lat(subchunk, config)))
         # Calculate mean and std of predictions
         predictions = np.array(predictions).T[pred_index]
-        mean = np.ma.mean(predictions, axis=1)
-        std = np.ma.std(predictions, axis=1)
-        y_star = np.column_stack([mean, std])
+        y_mean = np.ma.mean(predictions, axis=1)
+        y_var = np.ma.var(predictions, axis=1)
+        ql, qu = norm.interval(config.quantiles, loc=y_mean, scale=np.sqrt(y_var))
+        y_star = np.column_stack([y_mean, y_var, ql, qu])
     else:
         y_star = predict(x, model, interval=config.quantiles,
                          lon_lat=_get_lon_lat(subchunk, config))

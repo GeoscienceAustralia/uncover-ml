@@ -98,7 +98,7 @@ def main(config_file, partitions, mask, retain):
         image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
     if bootstrapping:
-        predict_tags = ['mean', 'std']
+        predict_tags = ['Prediction', 'Variance', 'Lower quantile', 'Upper quantile']
     else:
         predict_tags = model.get_predict_tags()
 
