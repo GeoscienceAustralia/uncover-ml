@@ -405,7 +405,7 @@ class Config(object):
             self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
-            self.algorithm_args = learn_block.get('arguments')
+            self.algorithm_args = learn_block.get('arguments', {})
             self.bootstrap = learn_block.get('bootstrap')
             if self.bootstrap:
                 self.bootstrap_models = self.bootstrap.get('models', 100)
@@ -474,7 +474,7 @@ class Config(object):
         self.patchsize = 0
         
         # TARGET BLOCK
-        if not self.pk_load and not clustering:
+        if not clustering:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
