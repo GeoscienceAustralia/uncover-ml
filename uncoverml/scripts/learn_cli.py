@@ -45,11 +45,10 @@ def main(config_file, partitions):
         crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
         ls.mpiops.run_once(crossval_results.export_crossval, config)
 
+    _logger.info("Learning full {} model".format(config.algorithm))
     if config.bootstrap:
-        _logger.info(f"Bootstrapping model {config.bootstrap_models} times")
         model = ls.learn.bootstrap_model(x_all, targets_all, config)
     else:
-        _logger.info("Learning full {} model".format(config.algorithm))
         model = ls.learn.local_learn_model(x_all, targets_all, config)
         # use trained model
         if config.permutation_importance:
@@ -117,7 +116,6 @@ def _load_data(config, partitions):
         # learn the model
         # local models need all data
         x_all = ls.features.gather_features(features[keep], node=0)
-
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
