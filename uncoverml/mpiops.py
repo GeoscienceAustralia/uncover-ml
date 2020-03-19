@@ -23,6 +23,37 @@ chunk_index = comm.Get_rank()
 the rank of the node.
 """
 
+def create_shared_array(data, item_size, root=0):
+    if chunk_index == root:
+        shape = data.shape
+        dtype = data.dtype
+        size = np.prod(shape) * item_size
+    else:
+        shape = None
+        dtype = None
+        size = 0
+
+    comm.barrier()
+
+    shape = comm.bcast(shape, root=root)
+    dtype = comm.bcast(dtype, root=root)
+        
+    win = MPI.Win.Allocate_shared(size, item_size, comm=comm)
+
+    buf, _ = win.Shared_query(root)
+    shared = np.ndarray(buffer=buf, dtype=dtype, shape=shape)
+
+    # Copy data into shared arrays - is there a better way than 
+    #  iterating the whole thing?
+    if chunk_index == root:
+        for index, x in np.ndenumerate(data):
+            shared[index] = x
+
+    comm.barrier()
+
+    # Make sure to call `shared = None` and `win.free()` to deallocate 
+    #  the shared memory when done with it.
+    return shared, win        
 
 def run_once(f, *args, **kwargs):
     """Run a function on one node, broadcast result to all
