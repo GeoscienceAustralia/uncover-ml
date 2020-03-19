@@ -2,6 +2,7 @@ import logging
 import os
 
 import numpy as np
+from mpi4py import MPI
 
 from uncoverml import mpiops, diagnostics, resampling
 from uncoverml.targets import Targets
@@ -39,17 +40,50 @@ def bootstrap_model(x_all, targets_all, config):
         training data.
     """
     models = []
+
+    item_size = MPI.DOUBLE.Get_size()
+
     if mpiops.chunk_index == 0:
-        iterations = np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index]
+        obs = targets_all.observations
+    else:
+        obs = None
+
+    shared_x, x_win = mpiops.create_shared_array(x_all, item_size)
+    shared_t, t_win = mpiops.create_shared_array(obs, item_size)
+
+    # Resample the required amount of times and create a collection of
+    # indicies for accesing shared data. We do this so we don't 
+    # duplicate the data in the process of resampling on multiple 
+    # nodes. Resampling is quick so should be okay.
+    if mpiops.chunk_index == 0:
+        inds = []
+        _logger.info("Bootstrapping data %s times", config.bootstrap_models)
         for i in range(config.bootstrap_models):
             target_data = resampling.resample_by_magnitude(
                 targets_all, 'observations', bins=1, bootstrap=True)
             bootstrapped_targets = Targets.from_geodataframe(target_data)
-            bs_inds = [np.where(targets_all.positions == p)[0][0] 
-                       for p in bootstrapped_targets.positions]
-            bootstrapped_x = x_all[bs_inds]
-            models.append(local_learn_model(bootstrapped_x, bootstrapped_targets, config))
-            _logger.info(f"Trained model {i + 1} of {config.bootstrap_models}")
+            inds.append([np.where(targets_all.positions == p)[0][0] 
+                           for p in bootstrapped_targets.positions])
+    else:
+        inds = None
+    
+    _logger.info("Bootstrapping complete, training models...")
+
+    inds = mpiops.comm.bcast(inds, root=0)
+    inds = np.array_split(inds, mpiops.chunks)[mpiops.chunk_index]
+
+    for i, ind in enumerate(inds):
+        bootstrapped_x = shared_x[ind]
+        bootstrapped_t = shared_t[ind]
+        model = all_modelmaps[config.algorithm](**config.algorithm_args)
+        apply_multiple_masked(model.fit, (bootstrapped_x, bootstrapped_t))
+        models.append(model)
+        print(f"Processor {mpiops.chunk_index}: trained model {i + 1} of {len(inds)}")
+
+    shared_x = None
+    x_win.Free()
+    shared_t = None
+    t_win.Free()
 
     return models
 
