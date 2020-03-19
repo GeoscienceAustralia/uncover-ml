@@ -29,15 +29,15 @@ GEOMETRY = 'geometry'
 _logger = logging.getLogger(__name__)
 
 
-def bootstrap_data_indicies(targets, samples=None, random_state=1):
+def bootstrap_data_indicies(positions, samples=None, random_state=1):
     """
     Returns indicies for accessing bootstrapped views of 
     target/covariate data.
     """
-    boot = sklearn.utils.resample(targets.positions, n_samples=samples, random_state=random_state)
+    boot = sklearn.utils.resample(positions, n_samples=samples, random_state=random_state)
     ordind = np.lexsort(boot.T)
     boot = boot[ordind]
-    return [np.where(targets.positions == p)[0][0] 
+    return [np.where(positions == p)[0][0] 
             for p in boot]
 
 

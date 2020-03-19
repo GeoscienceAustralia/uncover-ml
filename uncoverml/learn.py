@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import itertools
 
 import numpy as np
 from mpi4py import MPI
@@ -46,41 +47,45 @@ def bootstrap_model(x_all, targets_all, config):
 
     if mpiops.chunk_index == 0:
         obs = targets_all.observations
+        pos = targets_all.positions
     else:
         obs = None
+        pos = None
 
     shared_x, x_win = mpiops.create_shared_array(x_all, item_size)
     shared_t, t_win = mpiops.create_shared_array(obs, item_size)
+    shared_p, p_win = mpiops.create_shared_array(pos, item_size)
 
-    # Resample the required amount of times and create a collection of
-    # indicies for accesing shared data. We do this so we don't 
-    # duplicate the data in the process of resampling on multiple 
-    # nodes. Resampling is quick so should be okay.
-    if mpiops.chunk_index == 0:
-        if config.bootstrap_pickle is not None \
-                and os.path.exists(os.path.abspath(config.bootstrap_pickle)):
+    if config.bootstrap_pickle is not None \
+            and os.path.exists(os.path.abspath(config.bootstrap_pickle)):
+        if mpiops.chunk_index == 0:
             _logger.info("Loading bootstrapped data views from file...")
             with open(os.path.abspath(config.bootstrap_pickle), 'rb') as f:
                 inds = pickle.load(f)
-            _logger.info(f"Loaded {len(inds)} data views")
         else:
-            inds = []
-            _logger.info("Bootstrapping data %s times", config.bootstrap_models)
-            for i in range(config.bootstrap_models):
-                inds.append(resampling.bootstrap_data_indicies(
-                    targets_all, targets_all.observations.shape[0]))
-                _logger.info(f"Bootstrapped {i + 1} of {config.bootstrap_models}")
-            if config.bootstrap_pickle:
-                _logger.info("Pickling bootstrapped data views...")
-                with open(os.path.abspath(config.bootstrap_pickle), 'wb') as f:
-                    pickle.dump(inds, f)
+            inds = None
+        inds = mpiops.comm.bcast(inds, root=0)
+        _logger.info(f"Loaded {len(inds)} data views")
+        inds = np.array_split(inds, mpiops.chunks)[mpiops.chunk_index]
     else:
-        inds = None
-    
-    _logger.info("Bootstrapping complete, training models...")
+       _logger.info("Bootstrapping data %s times", config.bootstrap_models)
+       iterations = np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index]
+       inds = []
+       for i in iterations:
+           inds.append(resampling.bootstrap_data_indicies(shared_p, max(shared_p.shape)))
+           print(f"Processor {mpiops.chunk_index}: bootstrapped {i + 1} of {len(iterations)}")
 
-    inds = mpiops.comm.bcast(inds, root=0)
-    inds = np.array_split(inds, mpiops.chunks)[mpiops.chunk_index]
+       if config.bootstrap_pickle:
+           all_inds = mpiops.comm.gather(inds, root=0)
+           if mpiops.chunk_index == 0:
+               all_inds = list(itertools.chain.from_iterable(all_inds))
+               with open(os.path.abspath(config.bootstrap_pickle), 'wb') as f:
+                   pickle.dump(all_inds, f)
+               _logger.info("Pickled bootstrapped data views...")
+    
+       _logger.info("Bootstrapping complete, training models...")
+
+    mpiops.comm.barrier()
 
     for i, ind in enumerate(inds):
         bootstrapped_x = shared_x[ind]
@@ -90,6 +95,8 @@ def bootstrap_model(x_all, targets_all, config):
         models.append(model)
         print(f"Processor {mpiops.chunk_index}: trained model {i + 1} of {len(inds)}")
 
+    mpiops.comm.barrier()
+    _logger.info(f"Complete! {config.bootstrap_models} trained")
     shared_x = None
     x_win.Free()
     shared_t = None
