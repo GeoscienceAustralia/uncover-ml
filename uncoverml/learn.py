@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 
 import numpy as np
 from mpi4py import MPI
@@ -56,12 +57,23 @@ def bootstrap_model(x_all, targets_all, config):
     # duplicate the data in the process of resampling on multiple 
     # nodes. Resampling is quick so should be okay.
     if mpiops.chunk_index == 0:
-        inds = []
-        _logger.info("Bootstrapping data %s times", config.bootstrap_models)
-        for i in range(config.bootstrap_models):
-            inds.append(resampling.bootstrap_data_indicies(
-                targets_all, targets_all.observations.shape[0]))
-            _logger.info(f"Bootstrapped {i + 1} of {config.bootstrap_models}")
+        if config.bootstrap_pickle is not None \
+                and os.path.exists(os.path.abspath(config.bootstrap_pickle)):
+            _logger.info("Loading bootstrapped data views from file...")
+            with open(os.path.abspath(config.bootstrap_pickle), 'rb') as f:
+                inds = pickle.load(f)
+            _logger.info(f"Loaded {len(inds)} data views")
+        else:
+            inds = []
+            _logger.info("Bootstrapping data %s times", config.bootstrap_models)
+            for i in range(config.bootstrap_models):
+                inds.append(resampling.bootstrap_data_indicies(
+                    targets_all, targets_all.observations.shape[0]))
+                _logger.info(f"Bootstrapped {i + 1} of {config.bootstrap_models}")
+            if config.bootstrap_pickle:
+                _logger.info("Pickling bootstrapped data views...")
+                with open(os.path.abspath(config.bootstrap_pickle), 'wb') as f:
+                    pickle.dump(inds, f)
     else:
         inds = None
     
