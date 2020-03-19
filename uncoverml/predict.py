@@ -215,6 +215,7 @@ def render_partition(model, subchunk, image_out, config, bootstrapping=False,
         # In case model outputs multiple bands, make sure we calculate
         #  mean and std on correct output ('Prediction' band).
         pred_index = model[0].get_predict_tags().index('Prediction')
+        model_chunks = np.array_split(model_chunks, mpiops.chunks)[mpiops.chunk_index]
         for i, m in enumerate(model_chunks):
             print(f"Process {mpiops.chunk_index}: Predicting bootstrapped model {i + 1} "
                   f"of {len(model_chunks)}")
