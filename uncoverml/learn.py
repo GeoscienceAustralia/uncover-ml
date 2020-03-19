@@ -73,7 +73,7 @@ def bootstrap_model(x_all, targets_all, config):
        inds = []
        for i in range(iterations):
            inds.append(resampling.bootstrap_data_indicies(shared_p, max(shared_p.shape)))
-           print(f"Processor {mpiops.chunk_index}: bootstrapped {i + 1} of {iterations}")
+           _logger.info(f":mpi:bootstrapped {i + 1} of {iterations}")
 
        if config.bootstrap_pickle:
            all_inds = mpiops.comm.gather(inds, root=0)
@@ -93,7 +93,7 @@ def bootstrap_model(x_all, targets_all, config):
         model = all_modelmaps[config.algorithm](**config.algorithm_args)
         apply_multiple_masked(model.fit, (bootstrapped_x, bootstrapped_t))
         models.append(model)
-        print(f"Processor {mpiops.chunk_index}: trained model {i + 1} of {len(inds)}")
+        _logger.info(f":mpi:Trained model {i + 1} of {len(inds)}")
 
     mpiops.comm.barrier()
     _logger.info(f"Complete! {config.bootstrap_models} trained")

@@ -25,7 +25,7 @@ from uncoverml.learn import all_modelmaps as modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
@@ -257,7 +257,7 @@ class CrossvalInfo:
 
 
 def permutation_importance(model, x_all, targets_all, config):
-    log.info("Computing permutation importance!!")
+    _logger.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
         raise AttributeError("Only the following can be used for permutation "
                              "importance {}".format(
@@ -332,7 +332,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
                 transform_sets_leaveout.pop(i)
 
         fname = name.rstrip(".tif")
-        log.info("Computing {} feature importance of {}"
+        _logger.info("Computing {} feature importance of {}"
                  .format(config.algorithm, fname))
         x, keep = feat.transform_features(image_chunks_leaveout,
                                           transform_sets_leaveout,
@@ -393,7 +393,7 @@ def local_crossval(x_all, targets_all, config):
     if (mpiops.chunk_index != 0) and (not config.parallel_validate):
         return
 
-    log.info("Validating with {} folds".format(config.folds))
+    _logger.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
     y = targets_all.observations
@@ -416,7 +416,7 @@ def local_crossval(x_all, targets_all, config):
     # Train and score on each fold
     for fold in fold_node:
 
-        print("Training fold {} of {} using process {}".format(
+        _logger.info(":mpi:Training fold {} of {}".format(
             fold + 1, config.folds, mpiops.chunk_index))
         train_mask = cv_indices != fold
         test_mask = ~ train_mask
@@ -479,7 +479,7 @@ def local_crossval(x_all, targets_all, config):
         score_string = "Validation complete:\n"
         for metric, score in scores.items():
             score_string += "{}\t= {}\n".format(metric, score)
-        log.info(score_string)
+        _logger.info(score_string)
 
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, y_pred.T))
