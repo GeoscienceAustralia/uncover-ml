@@ -185,18 +185,22 @@ def gather_targets(targets, keep, node=None):
 def gather_targets_main(targets, keep, node):
     observations = targets.observations[keep]
     positions = targets.positions[keep]
-    if node:
-        y = np.ma.concatenate(mpiops.comm.gather(observations,
-                                                 root=node), axis=0)
-        p = np.ma.concatenate(mpiops.comm.gather(positions,
-                                                 root=node),
-                              axis=0)
+    if node is not None:
+        y = mpiops.comm.gather(observations, root=node)
+        p = mpiops.comm.gather(positions, root=node)
         d = {}
         keys = sorted(list(targets.fields.keys()))
         for k in keys:
-            d[k] = np.ma.concatenate(
-                mpiops.comm.gather(targets.fields[k][keep], root=node), axis=0)
-        result = Targets(p, y, othervals=d)
+            d[k] = mpiops.comm.gather(targets.fields[k][keep], root=node)
+            
+        if mpiops.chunk_index == node:
+            y = np.ma.concatenate(y, axis=0)
+            p = np.ma.concatenate(p, axis=0)
+            for k in keys:
+                d[k] = np.ma.concatenate(d[k], axis=0)
+            result = Targets(p, y, othervals=d)
+        else:
+            result = None
     else:
         y = np.ma.concatenate(mpiops.comm.allgather(
             observations), axis=0)
@@ -207,7 +211,8 @@ def gather_targets_main(targets, keep, node):
         for k in keys:
             d[k] = np.ma.concatenate(
                 mpiops.comm.allgather(targets.fields[k][keep]), axis=0)
-        return Targets(p, y, othervals=d)
+        result = Targets(p, y, othervals=d)
+    return result
 
 
 def save_targets(targets, path, obs_filter=None):

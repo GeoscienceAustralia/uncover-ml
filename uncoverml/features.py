@@ -215,8 +215,12 @@ def cull_all_null_rows(feature_sets):
 
 
 def gather_features(x, node=None):
-    if node:
-        x_all = np.ma.vstack(mpiops.comm.gather(x, root=node))
+    if node is not None:
+        x = mpiops.comm.gather(x, root=node)
+        if mpiops.chunk_index == node:
+            x_all = np.ma.vstack(x)
+        else:
+            x_all = None
     else:
         x_all = np.ma.vstack(mpiops.comm.allgather(x))
     return x_all
