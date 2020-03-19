@@ -69,11 +69,11 @@ def bootstrap_model(x_all, targets_all, config):
         inds = np.array_split(inds, mpiops.chunks)[mpiops.chunk_index]
     else:
        _logger.info("Bootstrapping data %s times", config.bootstrap_models)
-       iterations = np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index]
+       iterations = len(np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index])
        inds = []
-       for i in iterations:
+       for i in range(iterations):
            inds.append(resampling.bootstrap_data_indicies(shared_p, max(shared_p.shape)))
-           print(f"Processor {mpiops.chunk_index}: bootstrapped {i + 1} of {len(iterations)}")
+           print(f"Processor {mpiops.chunk_index}: bootstrapped {i + 1} of {iterations}")
 
        if config.bootstrap_pickle:
            all_inds = mpiops.comm.gather(inds, root=0)
