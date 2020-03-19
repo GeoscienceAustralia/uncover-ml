@@ -64,7 +64,7 @@ def bootstrap_model(x_all, targets_all, config):
             bootstrapped_targets = Targets.from_geodataframe(target_data)
             inds.append([np.where(targets_all.positions == p)[0][0] 
                            for p in bootstrapped_targets.positions])
-            _logger.info("Bootstrapped {i + 1} of {config.bootstrap_models}")
+            _logger.info(f"Bootstrapped {i + 1} of {config.bootstrap_models}")
     else:
         inds = None
     
