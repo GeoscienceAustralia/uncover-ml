@@ -64,13 +64,19 @@ def main(config_file, partitions):
 
 def _load_data(config, partitions):
     if config.pk_load:
-        x_all = pickle.load(open(config.pk_covariates, 'rb'))
-        targets_all = pickle.load(open(config.pk_targets, 'rb'))
-        if config.cubist or config.multicubist:
-            config.algorithm_args['feature_type'] = \
-                pickle.load(open(config.pk_featurevec, 'rb'))
-        _logger.warning("Using  pickled targets and covariates. Make sure you have"
-                        " not changed targets file and/or covariates.")
+        if ls.mpiops.chunk_index == 0:
+            x_all = pickle.load(open(config.pk_covariates, 'rb'))
+            targets_all = pickle.load(open(config.pk_targets, 'rb'))
+            if config.cubist or config.multicubist:
+                config.algorithm_args['feature_type'] = \
+                    pickle.load(open(config.pk_featurevec, 'rb'))
+            _logger.warning("Using  pickled targets and covariates. Make sure you have"
+                            " not changed targets file and/or covariates.")
+        else:
+            x_all = None
+            targets_all = None
+            if config.cubist or config.multicubist:
+                config.algorithm_args['feature_type'] = None
     else:
         if config.extents:
             ls.geoio.crop_covariates(config)
