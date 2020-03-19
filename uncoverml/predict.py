@@ -99,21 +99,17 @@ def _fix_for_corrupt_data(x, feature_names):
     float32, and additionally mask these areas. Just masking was not enough.
 
     Warns about covariates that cause issues.
-
-    Function uses print instead of log.warn as we only print logs from
-    process 0.
-
     """
     x_isnan = np.isnan(x)
 
     if x_isnan.any():
-        print("Warning: Nans were found in unmasked areas."
-              "Check your covariates for possible nodatavalue, datatype,"
-              "min/max values.")
+        _logger.warning(":mpi:Nans were found in unmasked areas."
+                        "Check your covariates for possible nodatavalue, datatype,"
+                        "min/max values.")
         problem_feature_names = \
             list(compress(feature_names, x_isnan.any(axis=0)))
-        print("Warning: These features were found to be have problems with "
-              "nans present:\n{}".format(problem_feature_names))
+        _logger.warning(":mpi: These features were found to be have problems with "
+                        "nans present:\n{}".format(problem_feature_names))
 
     x.mask += x_isnan
 
@@ -130,11 +126,11 @@ def _fix_for_corrupt_data(x, feature_names):
         problem_feature_names = \
             list(compress(feature_names, ~isfinite.all(axis=0)))
 
-        print("Warning: Float64 data was truncated to float32 max/min values."
-              "Check your covariates for possible nodatavalue, datatype, "
-              "min/max values.")
-        print("Warning: These features were found to be have problems with "
-              "float32 conversion:\n{}".format(problem_feature_names))
+        _logger.warning(":mpi:Float64 data was truncated to float32 max/min values."
+                        "Check your covariates for possible nodatavalue, datatype, "
+                        "min/max values.")
+        _logger.warning(":mpi:These features were found to be have problems with "
+                        "float32 conversion:\n{}".format(problem_feature_names))
     return x
 
 
@@ -217,8 +213,7 @@ def render_partition(model, subchunk, image_out, config, bootstrapping=False,
         pred_index = model[0].get_predict_tags().index('Prediction')
         model_chunks = np.array_split(model_chunks, mpiops.chunks)[mpiops.chunk_index]
         for i, m in enumerate(model_chunks):
-            print(f"Process {mpiops.chunk_index}: Predicting bootstrapped model {i + 1} "
-                  f"of {len(model_chunks)}")
+            _logger.info(f":mpi:Predicting bootstrapped model {i + 1} of {len(model_chunks)}")
             predictions.append(predict(x, m, interval=config.quantiles,
                                lon_lat=_get_lon_lat(subchunk, config)))
         # Calculate mean and std of predictions

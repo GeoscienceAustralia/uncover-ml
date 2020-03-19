@@ -106,7 +106,6 @@ def main(config_file, partitions, mask, retain):
                                      config.n_subchunks, config.prediction_file, config.outbands,
                                      band_tags=predict_tags, **config.geotif_options)
 
-    print(f"subchunks: {config.n_subchunks}")
     for i in range(config.n_subchunks):
         _logger.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(

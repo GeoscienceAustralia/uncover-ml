@@ -17,7 +17,7 @@ import operator
 import csv
 from uncoverml import mpiops
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 CONTINUOUS = 2
 CATEGORICAL = 3
 STR1 = re.compile('^Evaluation on training data', re.MULTILINE)
@@ -156,19 +156,19 @@ class Cubist:
 
         if auto and composite_model:
             self.auto = False
-            log.info('Both auto and composite model ware chosen. Disabling '
+            _logger.info('Both auto and composite model ware chosen. Disabling '
                      'auto and using composite model instead. To let cubist'
                      'auto decide, use composite_model=False, or comment out.')
 
         if composite_model and neighbors:
-            log.info('Supplied neighbors will be used for composite model. '
+            _logger.info('Supplied neighbors will be used for composite model. '
                      'To let cubist decide the number of neighbors, do not '
                      'supply neighbors with config and choose '
                      'composite_model=True')
             self.composite_model = False
 
         if auto and neighbors:
-            log.info('Supplied neighbors will be used for composite model. '
+            _logger.info('Supplied neighbors will be used for composite model. '
                      'To let cubist decide the number of neighbors, do not '
                      'supply neighbors with config.')
             self.auto = False
@@ -176,7 +176,7 @@ class Cubist:
         # make sure seed is only used with sampling
         if (not sampling) and seed:
             seed = None
-            log.info('Supplied random seed was not used as sampling % was not'
+            _logger.info('Supplied random seed was not used as sampling % was not'
                      'provided')
         self.seed = seed
         self.extrapolation = extrapolation
@@ -305,7 +305,7 @@ class Cubist:
 
         # We can't make predictions until we have trained the model
         if not self._trained:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         # Determine which rule to run on each row and then run the regression
@@ -356,7 +356,7 @@ class Cubist:
 
         except ImportError:
             self._remove_files(['.tmp', '.names', '.data', '.model'])
-            print('\nCubist not installed, please run makecubist first')
+            _logger.error(':mpi:Cubist not installed, please run makecubist first')
             import sys
             sys.exit()
 
@@ -482,8 +482,7 @@ class MultiCubist:
             temp_calc_usage = False  # dont calc usage stats for x-val
 
         for t in process_trees:
-            print('training tree {} using '
-                  'process {}'.format(t, mpiops.chunk_index))
+            _logger.info(':mpi:training tree {} using process {}'.format(t, mpiops.chunk_index))
 
             cube = Cubist(name=join(self.temp_dir, temp_ + '_{}'.format(t)),
                           print_output=self.print_output,
@@ -551,7 +550,7 @@ class MultiCubist:
 
         # We can't make predictions until we have trained the model
         if not self._trained:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         n, _ = x.shape
@@ -633,8 +632,9 @@ class MultiCubist:
                         try:
                             cube_row = CubistReportRow(*args)
                         except TypeError:
-                            print(args, "Parsing error. Cubist "
-                                        "summary won't be created")
+                            _logger.error(":mpi:Parsing error. Cubist summary won' be created: {}"
+                                          .format(args))
+
 
                         covariates.append(cube_row)
             results[t] = sorted(covariates, key=operator.attrgetter('feature'))

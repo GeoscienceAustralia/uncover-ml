@@ -17,9 +17,14 @@ def configure(verbosity):
 
 class MPIStreamHandler(logging.StreamHandler):
     """
-    Only logs messages from Node 0
+    If message stars with ':mpi:', the message will be logged 
+    regardless of node (the ':mpi:' will be removed from the message).
+    Otherwise, only node 0 will emit messages.
     """
     def emit(self, record):
+        if record.msg.startswith(':mpi:'):
+            record.msg = record.msg.replace(':mpi:', '')
+            super().emit(record)
         if mpiops.chunk_index == 0:
             super().emit(record)
 
@@ -31,7 +36,7 @@ class ElapsedFormatter():
         name = record.name
         t = int(round(record.relativeCreated/1000.0))
         msg = record.getMessage()
-        logstr = "+{}s {}:{} {}".format(t, name, lvl, msg)
+        logstr = "+{}s {} {} [P{}]: {}".format(t, lvl, name, mpiops.chunk_index, msg)
         return logstr
 
 

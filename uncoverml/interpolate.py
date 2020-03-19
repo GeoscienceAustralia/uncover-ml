@@ -3,7 +3,7 @@ from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator, \
     Rbf, CloughTocher2DInterpolator
 from sklearn.base import BaseEstimator, RegressorMixin
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
@@ -26,7 +26,7 @@ class SKLearnLinearNDInterpolator(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         if self._interpolator is None:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         return self._interpolator(X)
@@ -53,7 +53,7 @@ class SKLearnNearestNDInterpolator(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         if self._interpolator is None:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
         return self._interpolator(X)
 
@@ -81,7 +81,7 @@ class SKLearnRbf(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         if self._interpolator is None:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         return self._interpolator(* X.T)
@@ -119,48 +119,7 @@ class SKLearnCT(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         if self._interpolator is None:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         return self._interpolator(X)
-
-
-# interpolators = {
-#     'linear': SKLearnLinearNDInterpolator,
-#     'nn': SKLearnNearestNDInterpolator,
-#     'rbf': SKLearnRbf
-# }
-#
-#
-# if __name__ == '__main__':
-#     import numpy as np
-#     x = np.array([-4386795.73911443, -1239996.25110694, -3974316.43669208,
-#                   1560260.49911342,  4977361.53694849, -1996458.01768192,
-#                   5888021.46423068,  2969439.36068243,   562498.56468588,
-#                   4940040.00457585])
-#
-#     y = np.array([-572081.11495993, -5663387.07621326,  3841976.34982795,
-#                   3761230.61316845,  -942281.80271223,  5414546.28275767,
-#                   1320445.40098735, -4234503.89305636,  4621185.12249923,
-#                   1172328.8107458])
-#
-#     z = np.array([ 4579159.6898615 ,  2649940.2481702 ,  3171358.81564312,
-#                    4892740.54647532,  3862475.79651847,  2707177.605241  ,
-#                    2059175.83411223,  3720138.47529587,  4345385.04025412,
-#                    3847493.83999694])
-#
-#     X = np.vstack([x, y]).T
-#     model = interpolators['rbf']()
-#
-#     model.fit(X, z)
-#
-#     Xp = np.linspace(min(x), max(x), 5)
-#     Yp = np.linspace(min(y), max(y), 5)
-#     Xs, Ys = np.meshgrid(Xp, Yp)
-#
-#     #
-#     Xc = np.vstack([Xs.flatten(), Ys.flatten()])
-#
-#     print(Xp.shape, Xs.shape, Xc.shape)
-#     di = model.predict(Xc)
-#     print(di.shape)

@@ -29,6 +29,7 @@ Decision Tree Regression    \+ \+ \+              \+ \+ \+            \+ \+ \+ \
 import os
 import pickle
 import warnings
+import logging
 from itertools import chain
 from os.path import join, isdir, abspath
 import numpy as np
@@ -63,6 +64,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Module constants
 #
 
+_logger = logging.getLogger(__name__)
 QUADORDER = 5  # Order of quadrature used for transforming probabilistic vals
 
 
@@ -540,8 +542,7 @@ class RandomForestRegressorMulti():
             process_rfs = range(self.forests)
 
         for t in process_rfs:
-            print('training forest {} using '
-                  'process {}'.format(t, mpiops.chunk_index))
+            _logger.info(':mpi:training forest {} using process {}'.format(t, mpiops.chunk_index))
 
             np.random.seed(self.random_state + t)
 
@@ -562,7 +563,7 @@ class RandomForestRegressorMulti():
     def predict_dist(self, x, interval=0.95, *args, **kwargs):
         # We can't make predictions until we have trained the model
         if not self._trained:
-            print('Train first')
+            _logger.warning(':mpi:Train first')
             return
 
         y_pred = np.zeros((x.shape[0], self.forests * self.n_estimators))
