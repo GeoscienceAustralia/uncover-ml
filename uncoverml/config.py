@@ -409,6 +409,7 @@ class Config(object):
             self.bootstrap = learn_block.get('bootstrap')
             if self.bootstrap:
                 self.bootstrap_models = self.bootstrap.get('models', 100)
+                self.bootstrap_pickle = self.bootstrap.get('pickle')
         else:
             self.bootstrap = False
             self.algorithm = None
