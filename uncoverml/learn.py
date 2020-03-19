@@ -59,11 +59,8 @@ def bootstrap_model(x_all, targets_all, config):
         inds = []
         _logger.info("Bootstrapping data %s times", config.bootstrap_models)
         for i in range(config.bootstrap_models):
-            target_data = resampling.resample_by_magnitude(
-                targets_all, 'observations', bins=1, bootstrap=True)
-            bootstrapped_targets = Targets.from_geodataframe(target_data)
-            inds.append([np.where(targets_all.positions == p)[0][0] 
-                           for p in bootstrapped_targets.positions])
+            inds.append(resampling.bootstrap_data_indicies(
+                targets_all, targets_all.observations.shape[0]))
             _logger.info(f"Bootstrapped {i + 1} of {config.bootstrap_models}")
     else:
         inds = None

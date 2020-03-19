@@ -15,6 +15,7 @@ import geopandas as gpd
 import pandas as pd
 import pandas.core.algorithms as algos
 import numpy as np
+import sklearn
 from shapely.geometry import Polygon
 from fiona.errors import DriverError
 
@@ -26,6 +27,18 @@ import uncoverml.targets
 BIN = 'bin'
 GEOMETRY = 'geometry'
 _logger = logging.getLogger(__name__)
+
+
+def bootstrap_data_indicies(targets, samples=None, random_state=1):
+    """
+    Returns indicies for accessing bootstrapped views of 
+    target/covariate data.
+    """
+    boot = sklearn.utils.resample(targets.positions, n_samples=samples, random_state=random_state)
+    ordind = np.lexsort(boot.T)
+    boot = boot[ordind]
+    return [np.where(targets.positions == p)[0][0] 
+            for p in boot]
 
 
 def prepapre_dataframe(data, fields_to_keep):
