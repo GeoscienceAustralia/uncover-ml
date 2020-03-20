@@ -23,14 +23,32 @@ chunk_index = comm.Get_rank()
 the rank of the node.
 """
 
-def create_shared_array(data, item_size, root=0):
+def create_shared_array(data, root=0, writeable=False):
+    """
+    Create a shared numpy array among MPI nodes.
+
+    Caution: any node with a handle on the shared array can modify its
+    contents. To be safe, the shared array is set to read-only by 
+    default.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The numpy array to share.
+    root : int
+        Rank of the root node that contains the original data.
+    writeable : bool
+        Whether or not the resulting shared array is writeable.
+    """
     if chunk_index == root:
         shape = data.shape
         dtype = data.dtype
+        item_size = dtype.itemsize
         size = np.prod(shape) * item_size
     else:
         shape = None
         dtype = None
+        item_size = 0
         size = 0
 
     comm.barrier()
@@ -48,6 +66,7 @@ def create_shared_array(data, item_size, root=0):
     if chunk_index == root:
         for index, x in np.ndenumerate(data):
             shared[index] = x
+        shared.flags.writeable = writeable
 
     comm.barrier()
 
