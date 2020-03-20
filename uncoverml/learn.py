@@ -102,6 +102,10 @@ def bootstrap_model(x_all, targets_all, config):
     shared_t = None
     t_win.Free()
 
+    # Gather models onto master
+    models = mpiops.comm.gather(models, root=0)
+    if mpiops.chunk_index == 0:
+        models = list(itertools.chain.from_iterable(models))
     return models
 
 
