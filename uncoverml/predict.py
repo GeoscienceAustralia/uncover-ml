@@ -4,6 +4,7 @@ import numpy as np
 import csv
 from sklearn.ensemble import BaseEnsemble
 from scipy.stats import norm
+import pickle
 
 from uncoverml import features
 from uncoverml import mpiops
@@ -210,13 +211,15 @@ def render_partition(model, subchunk, image_out, config, bootstrapping=False,
         predictions = []
         # In case model outputs multiple bands, make sure we calculate
         #  mean and std on correct output ('Prediction' band).
-        pred_index = model[0].get_predict_tags().index('Prediction')
-        model_chunks = np.array_split(model_chunks, mpiops.chunks)[mpiops.chunk_index]
+        try:
+            pred_index = model[0].get_predict_tags().index('Prediction')
+        except:
+            pred_index = 0
         for i, m in enumerate(model_chunks):
             _logger.info(f":mpi:Predicting bootstrapped model {i + 1} of {len(model_chunks)}")
             predictions.append(predict(x, m, interval=config.quantiles,
                                lon_lat=_get_lon_lat(subchunk, config)))
-        # Calculate mean and std of predictions
+
         predictions = np.array(predictions).T[pred_index]
         y_mean = np.ma.mean(predictions, axis=1)
         y_var = np.ma.var(predictions, axis=1)
