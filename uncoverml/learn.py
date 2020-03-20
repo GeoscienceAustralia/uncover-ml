@@ -43,8 +43,6 @@ def bootstrap_model(x_all, targets_all, config):
     """
     models = []
 
-    item_size = MPI.DOUBLE.Get_size()
-
     if mpiops.chunk_index == 0:
         obs = targets_all.observations
         pos = targets_all.positions
@@ -52,9 +50,9 @@ def bootstrap_model(x_all, targets_all, config):
         obs = None
         pos = None
 
-    shared_x, x_win = mpiops.create_shared_array(x_all, item_size)
-    shared_t, t_win = mpiops.create_shared_array(obs, item_size)
-    shared_p, p_win = mpiops.create_shared_array(pos, item_size)
+    shared_x, x_win = mpiops.create_shared_array(x_all)
+    shared_t, t_win = mpiops.create_shared_array(obs) 
+    shared_p, p_win = mpiops.create_shared_array(pos)
 
     if config.bootstrap_pickle is not None \
             and os.path.exists(os.path.abspath(config.bootstrap_pickle)):
@@ -72,7 +70,8 @@ def bootstrap_model(x_all, targets_all, config):
        iterations = len(np.array_split(range(config.bootstrap_models), mpiops.chunks)[mpiops.chunk_index])
        inds = []
        for i in range(iterations):
-           inds.append(resampling.bootstrap_data_indicies(shared_p, max(shared_p.shape)))
+           inds.append(resampling.bootstrap_data_indicies(shared_p, max(shared_p.shape), 
+               random_state=mpiops.chunk_index + 1 + i))
            _logger.info(f":mpi:bootstrapped {i + 1} of {iterations}")
 
        if config.bootstrap_pickle:
