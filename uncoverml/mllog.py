@@ -25,7 +25,7 @@ class MPIStreamHandler(logging.StreamHandler):
         if record.msg.startswith(':mpi:'):
             record.msg = record.msg.replace(':mpi:', '')
             super().emit(record)
-        if mpiops.chunk_index == 0:
+        elif mpiops.chunk_index == 0:
             super().emit(record)
 
 
