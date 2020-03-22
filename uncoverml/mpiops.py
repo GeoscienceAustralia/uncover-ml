@@ -25,7 +25,13 @@ the rank of the node.
 
 def create_shared_array(data, root=0, writeable=False):
     """
-    Create a shared numpy array among MPI nodes.
+    Create a shared numpy array among MPI nodes. To access the data,
+    refer to the return numpy array 'shared'. The second return value
+    is the MPI window. This doesn't need to be interacted with except
+    when deallocating the memory.
+
+    When finished with the data, set `shared = None` and call 
+    `win.Free()`.
 
     Caution: any node with a handle on the shared array can modify its
     contents. To be safe, the shared array is set to read-only by 
@@ -39,6 +45,10 @@ def create_shared_array(data, root=0, writeable=False):
         Rank of the root node that contains the original data.
     writeable : bool
         Whether or not the resulting shared array is writeable.
+
+    Returns
+    -------
+    tuple of numpy.ndarray, MPI window
     """
     if chunk_index == root:
         shape = data.shape
