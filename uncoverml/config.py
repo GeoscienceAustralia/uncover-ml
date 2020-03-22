@@ -379,7 +379,17 @@ class Config(object):
 
         Config._configure_pyyaml()
         with open(yaml_file, 'r') as f:
-            s = yaml.load(f, Loader=Config.yaml_loader)
+            try:
+                s = yaml.load(f, Loader=Config.yaml_loader)
+            except UnicodeDecodeError:
+                if yaml_file.endswith('.model'):
+                    _logger.error("You're attempting to run uncoverml but have provided the "
+                                  "'.model' file instead of the '.yaml' config file. The predict "
+                                  "now requires the configuration file and not the model. Please "
+                                  "try rerunning the command with the configuration file.")
+                else:
+                    _logger.error("Couldn't parse the yaml file. Ensure you've provided the correct "
+                                  "file as config file and that the YAML is valid.")
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
         if 'clustering' in s:
