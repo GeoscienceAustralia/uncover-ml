@@ -3,6 +3,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 .. program-output:: uncoverml --help
 """
+from collections import namedtuple
 import logging
 import pickle
 import resource
@@ -36,14 +37,19 @@ _logger = logging.getLogger(__name__)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
+SharedTrainingData = namedtuple('TrainingData', 
+                          ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file, learning=True)
-    targets_all, x_all = _load_data(config, partitions)
+    training_data = _load_data(config, partitions)
+    targets_all = training_data.targets_all
+    x_all = training_data.x_all
 
     if config.cross_validate:
         crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
-        ls.mpiops.run_once(crossval_results.export_crossval, config)
+        if crossval_results:
+            ls.mpiops.run_once(crossval_results.export_crossval, config)
 
     _logger.info("Learning full {} model".format(config.algorithm))
     if config.bootstrap:
@@ -59,8 +65,9 @@ def main(config_file, partitions):
     if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
-    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    ls.geoio.deallocate_shared_training_data(training_data)
 
+    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 def _load_data(config, partitions):
     if config.pk_load:
@@ -99,8 +106,6 @@ def _load_data(config, partitions):
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
-
-        
 
         if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
@@ -144,8 +149,8 @@ def _load_data(config, partitions):
                 pickle.dump(x_all, open(config.pk_covariates, 'wb'))
             if config.pk_targets and not os.path.exists(config.pk_targets):
                 pickle.dump(targets_all, open(config.pk_targets, 'wb'))
-    
-    return targets_all, x_all
+ 
+    return ls.geoio.create_shared_training_data(targets_all, x_all)
 
 def _total_gb():
     # given in KB so convert
