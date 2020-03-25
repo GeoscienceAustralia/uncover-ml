@@ -633,11 +633,11 @@ def kernelize(classifier):
 
 def bootstrap_model(model):
     class BootstrappedModel():
-        def __init__(self, n_models, *args, **kwargs):
+        def __init__(self, n_models=100, *args, **kwargs):
             # 'bootstrap' attr is dinky workaround for checking if a 
             # model is a bootstrap model (can't get at BootstrappedModel
             # class as it's in scope of factory function).
-            self.bootstrap = bootstrap
+            self.bootstrap = 'bootstrap'
             self.n_models = n_models
             self.models = [model(*args, **kwargs) for i in range(self.n_models)]
 
