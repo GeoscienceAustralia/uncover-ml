@@ -1,13 +1,9 @@
 learning:
-  algorithm: svr
+  algorithm: bootstrapsvr
   arguments:
     target_transform: log
-  # Turn on pseudoprobablity by adding 'bootstrap' argument
-  bootstrap:
-    # Number of models to train (== number of times to resample data)
-    models: 100
-    pickle: ./bootstrap_pickle.pk
-    
+    # The number of models to bootstrap
+    n_models: 100
 
 features:
   - type: ordinal
@@ -24,8 +20,6 @@ targets:
 
 prediction:
   quantiles: 0.95
-  # Outbands ignored for bootstrapped models - defaults to [mean, std]
-  outbands: 4
   # Number of models to run. If number here is more than the number
   # of bootstrapped models available, a warning will be given and all
   # models will run predictions. If not provided, will run all models.

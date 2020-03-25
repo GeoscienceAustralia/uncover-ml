@@ -252,7 +252,7 @@ class TagsMixin():
 
         # Regression
         tags = ['Prediction']
-        if hasattr(self, 'predict_dist'):
+        if hasattr(self, 'predict_dist') or hasattr(self, 'bootstrap'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
 
         if hasattr(self, 'entropy_reduction'):
@@ -633,7 +633,7 @@ def kernelize(classifier):
 
 def bootstrap_model(model):
     class BootstrappedModel():
-        def __init__(self, n_models, bootstrap='bootstrap', models=[], *args, **kwargs):
+        def __init__(self, n_models, *args, **kwargs):
             # 'bootstrap' attr is dinky workaround for checking if a 
             # model is a bootstrap model (can't get at BootstrappedModel
             # class as it's in scope of factory function).
@@ -658,8 +658,9 @@ def bootstrap_model(model):
                 self.models = list(chain.from_iterable(models))
 
 
-        def predict(self, X, interval=0.95, *args, **kwargs):
-            n_predictions = kwargs.pop('bootstrap_predictions', len(self.models))
+        def predict(self, X, interval=0.95, bootstrap_predictions=None, *args, **kwargs):
+            n_predictions = bootstrap_predictions if bootstrap_predictions is not None \
+                else len(self.models)
             model_chunks = self.models[:n_predictions]
             predictions = []
             for i, m in enumerate(model_chunks):
@@ -669,7 +670,7 @@ def bootstrap_model(model):
 
             predictions = np.array(predictions)
             y_mean = np.ma.mean(predictions, axis=0)
-            y_var = np.ma.mean(predictions, axis=0)
+            y_var = np.ma.var(predictions, axis=0)
             ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
             return y_mean, y_var, ql, qu
 
@@ -1035,7 +1036,7 @@ class TransformedRbfInterpolator(transform_targets(SKLearnRbf), TagsMixin):
 class TransformedCTInterpolator(transform_targets(SKLearnCT), TagsMixin):
     pass
 
-class BootstrappedSVR(bootstrap_model(SVRTransformed)):
+class BootstrappedSVR(bootstrap_model(SVRTransformed), TagsMixin):
     pass
 
 
