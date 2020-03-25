@@ -109,6 +109,7 @@ def bootstrap_model(x_all, targets_all, config):
 
 
 def local_learn_model(x_all, targets_all, config):
+    mpiops.comm.barrier()
     model = None
     if config.multicubist or config.multirandomforest:
         y = targets_all.observations

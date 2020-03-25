@@ -5,7 +5,7 @@ import os
 import logging
 import tempfile
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import json
 import pickle
 import itertools
@@ -33,6 +33,8 @@ _logger = logging.getLogger(__name__)
 
 _lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
 
+SharedTrainingData = namedtuple(
+        'TrainingData', ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
 
 class ImageSource:
     __metaclass__ = ABCMeta
@@ -695,3 +697,33 @@ def resample(input_tif, output_tif, ratio, resampling=5):
         dest.write(new_arr, b + 1)
     src.close()
     dest.close()
+
+SharedTrainingData = namedtuple(
+        'TrainingData', ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
+
+def create_shared_training_data(targets_all, x_all):
+    x_all, x_win = mpiops.create_shared_array(x_all)
+
+    if targets_all is None:
+        targets_all = Targets(None, None, None)
+    targets_all.observations, obs_win = mpiops.create_shared_array(targets_all.observations)
+    targets_all.positions, pos_win = mpiops.create_shared_array(targets_all.positions)
+
+    field_keys = list(targets_all.fields.keys()) if mpiops.chunk_index == 0 else None
+    field_keys = mpiops.comm.bcast(field_keys, root=0)
+
+    field_wins = []
+    for k in field_keys:
+        v = targets_all.fields[k] if mpiops.chunk_index == 0 else None
+        shared_v, field_win = mpiops.create_shared_array(v)
+        targets_all.fields[k] = shared_v
+        field_wins.append(field_win)
+
+    return SharedTrainingData(targets_all, x_all, obs_win, pos_win, field_wins, x_win)
+
+def deallocate_shared_training_data(training_data):
+    training_data.obs_win.Free()
+    training_data.pos_win.Free()
+    training_data.x_win.Free()
+    for win in training_data.field_wins:
+        win.Free()
