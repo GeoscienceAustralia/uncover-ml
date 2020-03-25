@@ -1,9 +1,11 @@
 learning:
+  # 'bootstrapsvr' is a wrapper around 'transformedsvr'
   algorithm: bootstrapsvr
   arguments:
     target_transform: log
     # The number of models to bootstrap
     n_models: 100
+    # Provide the rest of your 'transformedsvr' arguments as normal
 
 features:
   - type: ordinal
