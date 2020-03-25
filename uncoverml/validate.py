@@ -340,9 +340,21 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
                                           config)
         x_all = feat.gather_features(x[keep], node=0)
         targets_all = targ.gather_targets_main(targets, keep, node=0)
+
+
+        # Feature ranking occurs before top-level shared training data
+        # is created, so share the memory now so we can parallel 
+        # validate.
+        if config.parallel_validate:
+            training_data = geoio.create_shared_training_data(targets_all, x_all)
+            targets_all = training_data.targets_all
+            x_all = training_data.x_all
+        
         results = local_crossval(x_all, targets_all, config)
         feature_scores[fname] = results
 
+        geoio.deallocate_shared_training_data(training_data)
+    
     # Get the different types of score from one of the outputs
     if mpiops.chunk_index == 0:
         measures = list(next(feature_scores.values().__iter__()).scores.keys())
