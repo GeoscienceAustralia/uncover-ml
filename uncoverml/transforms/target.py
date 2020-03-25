@@ -62,7 +62,7 @@ class Log(Identity):
 
     def transform(self, y):
 
-        y += self.offset
+        y = y + self.offset
         if self.replace_zeros:
             if isinstance(y, np.ma.masked_array):
                 y._sharedmask = False
