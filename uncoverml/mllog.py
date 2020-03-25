@@ -49,3 +49,14 @@ def warn_with_traceback(message, category, filename, lineno, line=None):
     log = sys.stderr
     log.write(warnings.formatwarning(
         message, category, filename, lineno, line))
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Add MPI index to exception traceback.
+    """
+    exc_msg = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    exc_msg.insert(0, 'Uncaught exception on processor {}\n'.format(mpiops.chunk_index))
+    exc_msg = "".join(exc_msg)
+    print(exc_msg, file=sys.stderr)
+
+sys.excepthook = handle_exception
