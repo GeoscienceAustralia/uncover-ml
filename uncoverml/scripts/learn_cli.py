@@ -52,14 +52,11 @@ def main(config_file, partitions):
             ls.mpiops.run_once(crossval_results.export_crossval, config)
 
     _logger.info("Learning full {} model".format(config.algorithm))
-    if config.bootstrap:
-        model = ls.learn.bootstrap_model(x_all, targets_all, config)
-    else:
-        model = ls.learn.local_learn_model(x_all, targets_all, config)
-        # use trained model
-        if config.permutation_importance:
-            ls.mpiops.run_once(
-                ls.validate.permutation_importance, model, x_all, targets_all, config)
+    model = ls.learn.local_learn_model(x_all, targets_all, config)
+    # use trained model
+    if config.permutation_importance:
+        ls.mpiops.run_once(
+            ls.validate.permutation_importance, model, x_all, targets_all, config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     if config.extents:

@@ -54,6 +54,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
 
 from uncoverml import mpiops
+from uncoverml.resampling import bootstrap_data_indicies
 from uncoverml.interpolate import SKLearnNearestNDInterpolator, \
     SKLearnLinearNDInterpolator, SKLearnRbf, SKLearnCT
 from uncoverml.cubist import Cubist
@@ -627,6 +628,54 @@ def kernelize(classifier):
     return ClassifierRBF
 
 #
+# Bootstrap Model Factory
+#
+
+def bootstrap_model(model):
+    class BootstrappedModel():
+        def __init__(self, n_models, bootstrap='bootstrap', models=[], *args, **kwargs):
+            # 'bootstrap' attr is dinky workaround for checking if a 
+            # model is a bootstrap model (can't get at BootstrappedModel
+            # class as it's in scope of factory function).
+            self.bootstrap = bootstrap
+            self.n_models = n_models
+            self.models = [model(*args, **kwargs) for i in range(self.n_models)]
+
+        def fit(self, X, y, lon_lat, *args, **kwargs):
+            _logger.info('Training %s bootstrapped models', self.n_models)
+
+            models = np.array_split(self.models, mpiops.chunks)[mpiops.chunk_index]
+            for i, m in enumerate(models):
+                inds = bootstrap_data_indicies(lon_lat, max(lon_lat.shape),
+                    random_state=mpiops.chunk_index + 1 + i)
+                bsx = X[inds]
+                bsy = y[inds]
+                m.fit(bsx, bsy)
+                _logger.info(':mpi:Trained model %s of %s', i + 1, len(models))
+
+            models = mpiops.comm.gather(models, root=0)
+            if mpiops.chunk_index == 0:
+                self.models = list(chain.from_iterable(models))
+
+
+        def predict(self, X, interval=0.95, *args, **kwargs):
+            n_predictions = kwargs.pop('bootstrap_predictions', len(self.models))
+            model_chunks = self.models[:n_predictions]
+            predictions = []
+            for i, m in enumerate(model_chunks):
+                _logger.info(f":mpi:Predicting bootstrapped model %s of %s", 
+                    i + 1, len(model_chunks))
+                predictions.append(m.predict(X, *args, **kwargs))
+
+            predictions = np.array(predictions)
+            y_mean = np.ma.mean(predictions, axis=0)
+            y_var = np.ma.mean(predictions, axis=0)
+            ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
+            return y_mean, y_var, ql, qu
+
+    return BootstrappedModel
+
+#
 # Target Transformer factory
 #
 
@@ -669,7 +718,6 @@ def transform_targets(Regressor):
 
             Ey_t = self._notransform_predict(X, *args, **kwargs)
             Ey = self.target_transform.itransform(Ey_t)
-
             return Ey
 
         if hasattr(Regressor, 'predict_dist'):
@@ -803,6 +851,8 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
 
         return dist
 
+
+# Define transformed models
 
 class KNearestNeighborTransformed(transform_targets(CustomKNeighborsRegressor),
                                   TagsMixin):
@@ -985,6 +1035,9 @@ class TransformedRbfInterpolator(transform_targets(SKLearnRbf), TagsMixin):
 class TransformedCTInterpolator(transform_targets(SKLearnCT), TagsMixin):
     pass
 
+class BootstrappedSVR(bootstrap_model(SVRTransformed)):
+    pass
+
 
 class MaskRows:
 
@@ -1068,6 +1121,10 @@ def apply_multiple_masked(func, data, *args, **kwargs):
 #
 
 # Add all models available to the learning pipeline here!
+bootstrapped = {
+    'bootstrapsvr': BootstrappedSVR
+}
+
 regressors = {
     'randomforest': RandomForestTransformed,
     'multirandomforest': MultiRandomForestTransformed,
@@ -1101,7 +1158,7 @@ classifiers = {
     'boostedtrees': GradBoostedTrees
 }
 
-modelmaps = {**classifiers, **regressors, **interpolators}
+modelmaps = {**classifiers, **regressors, **interpolators, **bootstrapped}
 
 # Add all kernels for the approximate Gaussian processes here!
 basismap = {

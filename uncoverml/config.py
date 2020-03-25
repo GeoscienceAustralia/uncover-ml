@@ -406,10 +406,6 @@ class Config(object):
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = learn_block.get('arguments', {})
-            self.bootstrap = learn_block.get('bootstrap')
-            if self.bootstrap:
-                self.bootstrap_models = self.bootstrap.get('models', 100)
-                self.bootstrap_pickle = self.bootstrap.get('pickle')
         else:
             self.bootstrap = False
             self.algorithm = None
@@ -634,6 +630,7 @@ class Config(object):
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
+        self.bootstrap = self.algorithm.startswith('bootstrap')
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
