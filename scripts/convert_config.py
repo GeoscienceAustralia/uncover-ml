@@ -30,9 +30,6 @@ def convert(path):
             del old_config['features'][index]
             break
 
-    if 'optimisation' in old_config:
-        del old_config['optimisation']['algorithm']
-
     if 'validation' in old_config:
         if 'parallel' in old_config['validation']:
             parallel = True
