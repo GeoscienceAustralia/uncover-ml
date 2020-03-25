@@ -32,11 +32,13 @@ def predict(data, model, interval=0.95, **kwargs):
     # Regression
     else:
         def pred(X):
-            if hasattr(model, 'predict_dist'):
+            if hasattr(model, 'bootstrap'):
+                Ey, Vy, ql, qu = model.predict(X, interval, **kwargs)
+                predres = np.column_stack((Ey, Vy, ql, qu))
+            elif hasattr(model, 'predict_dist'):
                 Ey, Vy, ql, qu = model.predict_dist(X, interval, **kwargs)
                 predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
                                      ql[:, np.newaxis], qu[:, np.newaxis]))
-
             else:
                 predres = np.reshape(model.predict(X, **kwargs),
                                      newshape=(len(X), 1))
@@ -199,35 +201,16 @@ def _mask_rows(x, subchunk, config):
     return x
 
 
-def render_partition(model, subchunk, image_out, config, bootstrapping=False,
-                     bs_predictions=1):
+def render_partition(model, subchunk, image_out, config):
     x, feature_names = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     _logger.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     _logger.info("Predicting targets for {}.".format(alg))
-    if bootstrapping:
-        model_chunks = model[:bs_predictions]
-        predictions = []
-        # In case model outputs multiple bands, make sure we calculate
-        #  mean and std on correct output ('Prediction' band).
-        try:
-            pred_index = model[0].get_predict_tags().index('Prediction')
-        except:
-            pred_index = 0
-        for i, m in enumerate(model_chunks):
-            _logger.info(f":mpi:Predicting bootstrapped model {i + 1} of {len(model_chunks)}")
-            predictions.append(predict(x, m, interval=config.quantiles,
-                               lon_lat=_get_lon_lat(subchunk, config)))
-
-        predictions = np.array(predictions).T[pred_index]
-        y_mean = np.ma.mean(predictions, axis=1)
-        y_var = np.ma.var(predictions, axis=1)
-        ql, qu = norm.interval(config.quantiles, loc=y_mean, scale=np.sqrt(y_var))
-        y_star = np.column_stack([y_mean, y_var, ql, qu])
-    else:
-        y_star = predict(x, model, interval=config.quantiles,
-                         lon_lat=_get_lon_lat(subchunk, config))
+    
+    y_star = predict(x, model, interval=config.quantiles,
+                     lon_lat=_get_lon_lat(subchunk, config),
+                     bootstrap_predictions=config.bootstrap_predictions)
 
     if config.clustering and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)

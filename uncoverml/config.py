@@ -630,7 +630,8 @@ class Config(object):
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
-        self.bootstrap = self.algorithm.startswith('bootstrap')
+        if self.algorithm is not None:
+            self.bootstrap = self.algorithm.startswith('bootstrap')
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""

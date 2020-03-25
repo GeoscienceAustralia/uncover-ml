@@ -52,19 +52,15 @@ def _algo_for_model(model, config):
 def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file, predicting=True)
     model = _load_model(config)
-    # If we have a list of models, assume it's a bootstrap 
-    #  ensemble. If we have collections of models for different 
-    #  reasons in future, will have to add specific config args.
-    bootstrapping = isinstance(model, list)
+
+    bootstrapping = hasattr(model, 'bootstrap')
     if bootstrapping:
-        _algo_for_model(model[0], config)
+        _algo_for_model(model.models[0], config)
     else:
         _algo_for_model(model, config)
 
-    if bootstrapping and config.bootstrap_predictions is None:
-        config.bootstrap_predictions = len(model)
-    elif bootstrapping and config.bootstrap_predictions > len(model):
-        config.bootstrap_predictions = len(model)
+    if bootstrapping and config.bootstrap_predictions > len(model.models):
+        config.bootstrap_predictions = len(model.models)
         _logger.warning("Number of predictions to perform (set by prediction 'bootstrap' "
                         "parameter is less than number of bootstrapped models available "
                         f"({len(model)}). Running predictions on all available models.")
@@ -93,14 +89,11 @@ def main(config_file, partitions, mask, retain):
         _logger.info("Using memory aggressively: dividing all data between nodes")
 
     if bootstrapping:
-        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model[0], config)
+        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model.models[0], config)
     else:
         image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
-    if bootstrapping:
-        predict_tags = ['Prediction', 'Variance', 'Lower quantile', 'Upper quantile']
-    else:
-        predict_tags = model.get_predict_tags()
+    predict_tags = model.get_predict_tags()
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      config.n_subchunks, config.prediction_file, config.outbands,
@@ -108,9 +101,7 @@ def main(config_file, partitions, mask, retain):
 
     for i in range(config.n_subchunks):
         _logger.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(
-            model, i, image_out, config, bootstrapping=bootstrapping, 
-            bs_predictions=config.bootstrap_predictions)
+        ls.predict.render_partition(model, i, image_out, config)
 
     image_out.close()
 
