@@ -78,10 +78,10 @@ class TestBootstrap:
 
     @staticmethod
     def test_model_contains_multiple_models(sirsam_bs_out):
-        models = _unpickle(os.path.join(sirsam_bs_out, 'bootstrapping.model'))
-        assert isinstance(models, list)
-        assert len(models) == 10
-        assert all([isinstance(m, SVRTransformed) for m in models])
+        model = _unpickle(os.path.join(sirsam_bs_out, 'bootstrapping.model'))
+        assert hasattr(model, 'bootstrap')
+        assert len(model.models) == 10
+        assert all([isinstance(m, SVRTransformed) for m in model.models])
 
 
 
