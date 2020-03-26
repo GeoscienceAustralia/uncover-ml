@@ -1,9 +1,8 @@
 learning:
-  algorithm: svr
+  algorithm: bootstrapsvr
   arguments:
     target_transform: identity
-  bootstrap:
-    models: 10
+    n_models: 10
 
 features:
   - type: ordinal
@@ -17,12 +16,6 @@ features:
 targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_log
-  resample:
-    spatial:
-      rows: 10
-      cols: 10
-    value:
-      bins: 10
 
 prediction:
   quantiles: 0.95
