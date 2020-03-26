@@ -262,6 +262,26 @@ def crop_tif(filename, extents, outfile=None):
 
         return outfile
 
+def number_of_targets(filename):
+    """
+    Convenience function for getting number of targets in shapefile.
+    Useful for generating an equal number of points on the root 
+    processor when it only has a chunk of the real targets and so 
+    doesn't know how many targets there are.
+
+    Parameters
+    ----------
+    filename : str 
+        Path to targets shapefile.
+
+    Returns
+    -------
+    int 
+        Number of records in the shapefile.
+    """
+    sf = shapefile.Reader(filename)
+    return sf.numRecords
+
 def load_shapefile(filename, targetfield, covariate_crs, extents):
     """
     TODO
@@ -350,8 +370,7 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     lonlat = mpiops.comm.scatter(lonlat, root=0)
     vals = mpiops.comm.scatter(vals, root=0)
     othervals = mpiops.comm.scatter(othervals, root=0)
-    _logger.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
-                                                           lonlat.shape[0]))
+    _logger.info(":mpi:Assigned {} targets".format(lonlat.shape[0]))
     targets = Targets(lonlat, vals, othervals=othervals)
     return targets
 
