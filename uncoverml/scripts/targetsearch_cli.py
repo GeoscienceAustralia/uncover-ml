@@ -39,7 +39,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 def main(config_file, partitions):
-    config = ls.config.Config(config_file)
+    config = ls.config.Config(config_file, learning=True, predicting=True)
     if not config.extents:
         raise ValueError("Can't perform target search without specifying an extent. Provide the "
                          "'extents' block in the config file and run again.")
@@ -66,12 +66,12 @@ def main(config_file, partitions):
     real_targets = ls.targets.label_targets(
         real_targets, REAL_TARGETS_LABEL, backup_field=ORIGINAL_OBSERVATIONS)
 
+    num_targets = ls.geoio.number_of_targets(config.target_file)
     # Get random sample of points from within prediction area.
     GEN_TARGETS_LABEL = 'b_generated'
     gen_targets = ls.targets.generate_dummy_targets(
             config.extents, GEN_TARGETS_LABEL, 
-            real_targets.positions.shape[0] * ls.mpiops.chunks, 
-            field_keys=list(real_targets.fields.keys()))
+            num_targets, field_keys=list(real_targets.fields.keys()))
 
     _logger.debug(f"Class 1: {real_targets.positions.shape}, '{real_targets.observations[0]}'\t" 
                   f"Class 2: {gen_targets.positions.shape}, '{gen_targets.observations[0]}'")
@@ -94,9 +94,7 @@ def main(config_file, partitions):
 
         # Train the model and classify
         model = ls.models.LogisticClassifier(random_state=1)
-        ls.models.apply_multiple_masked(
-        model.fit, (x_all, targets_all.observations), 
-        kwargs={'fields': targets_all.fields, 'lon_lat': targets_all.positions})
+        ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations))
         y_star = ls.predict.predict(x_all, model, config.quantiles)
         real_ind = targets_all.observations == REAL_TARGETS_LABEL
 
