@@ -41,7 +41,8 @@ def main(config_file, partitions):
     config = ls.config.Config(config_file, predicting=True)
     if config.pk_load:
         raise ValueError("Can't create covariate shiftmap when loading from pickled data. Remove "
-                         "'pickling' block from config and provide 'targets' and 'features' blocks.")
+                         "'pickling' block from config and provide 'targets' and 'features' "
+                         "blocks.")
 
     # Force algortihm - this is purely for debug log messages
     config.algorithm = 'logistic'
@@ -59,6 +60,8 @@ def main(config_file, partitions):
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
                                         extents=config.extents)
+    
+    ls.mpiops.comm.barrier()
 
     # User can provide their own 'query' targets for training shapemap, or we can
     # generate points.
@@ -72,7 +75,8 @@ def main(config_file, partitions):
     else:
         bounds = ls.geoio.get_image_bounds(config)
         bounds = (bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1])
-        targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds) 
+        num_targets = ls.geoio.number_of_targets(config.target_file)
+        targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds, num_targets) 
                                                               
 
     image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
@@ -83,11 +87,16 @@ def main(config_file, partitions):
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, node=0)
-    ls.targets.save_targets(targets_all, config.shiftmap_points)
-    model = ls.models.LogisticClassifier(random_state=1)
-    ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
-                                    kwargs={'fields': targets_all.fields,
-                                            'lon_lat': targets_all.positions})
+    if ls.mpiops.chunk_index == 0:
+        ls.targets.save_targets(targets_all, config.shiftmap_points, 'query')
+        model = ls.models.LogisticClassifier(random_state=1)
+        ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
+                                        kwargs={'fields': targets_all.fields,
+                                                'lon_lat': targets_all.positions})
+    else:
+        model = None
+
+    model = ls.mpiops.comm.bcast(model, root=0)
 
     # The below is essentially duplicating the 'predict' command
     # should refactor to reuse it

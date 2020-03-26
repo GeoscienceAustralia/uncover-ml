@@ -4,7 +4,7 @@ from os.path import join
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from uncoverml import mpiops
+from uncoverml import mpiops, geoio
 
 _logger = logging.getLogger(__name__)
 
@@ -94,12 +94,13 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
             return new_points
         new_lons = _generate_points(bounds[0], bounds[2], n_points)
         new_lats = _generate_points(bounds[1], bounds[3], n_points)
-        lonlats = np.column_stack([new_lons, new_lats])
+        lonlats = np.column_stack([sorted(new_lons), sorted(new_lats)])
         labels = np.full(lonlats.shape[0], label)
         if field_keys:
             fields = {k: np.zeros(n_points) for k in field_keys}
         else:
             fields = {}
+        _logger.info("Generated %s dummy targets", len(lonlats))
         # Split for distribution
         lonlats = np.array_split(lonlats, mpiops.chunks)
         labels = np.array_split(labels, mpiops.chunks)
@@ -115,10 +116,9 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     return Targets(lonlats, labels, fields)
 
 
-def generate_covariate_shift_targets(targets, bounds):
+def generate_covariate_shift_targets(targets, bounds, n_points):
     real_targets = label_targets(targets, 'training')
-    dummy_targets = generate_dummy_targets(bounds, 'query', targets.observations.shape[0])
-    _logger.info("Generated %s dummy targets for covariate shift", len(dummy_targets.observations))
+    dummy_targets = generate_dummy_targets(bounds, 'query', n_points)
     return merge_targets(real_targets, dummy_targets)
  
 
