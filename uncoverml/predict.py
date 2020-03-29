@@ -32,13 +32,9 @@ def predict(data, model, interval=0.95, **kwargs):
     # Regression
     else:
         def pred(X):
-            if hasattr(model, '__bootstrapped_model__'):
-                Ey, Vy, ql, qu = model.predict(X, interval, **kwargs)
-                predres = np.column_stack((Ey, Vy, ql, qu))
-            elif hasattr(model, 'predict_dist'):
+            if hasattr(model, 'predict_dist'):
                 Ey, Vy, ql, qu = model.predict_dist(X, interval, **kwargs)
-                predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
-                                     ql[:, np.newaxis], qu[:, np.newaxis]))
+                predres = np.column_stack((Ey, Vy, ql, qu))
             else:
                 predres = np.reshape(model.predict(X, **kwargs),
                                      newshape=(len(X), 1))

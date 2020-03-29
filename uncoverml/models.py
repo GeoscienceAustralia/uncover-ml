@@ -252,7 +252,7 @@ class TagsMixin():
 
         # Regression
         tags = ['Prediction']
-        if hasattr(self, 'predict_dist') or hasattr(self, '__bootstrappped_model__'):
+        if hasattr(self, 'predict_dist'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
 
         if hasattr(self, 'entropy_reduction'):
@@ -658,7 +658,7 @@ def bootstrap_model(model):
                 self.models = list(chain.from_iterable(models))
 
 
-        def predict(self, X, interval=0.95, bootstrap_predictions=None, *args, **kwargs):
+        def predict_dist(self, X, interval=0.95, bootstrap_predictions=None, *args, **kwargs):
             n_predictions = bootstrap_predictions if bootstrap_predictions is not None \
                 else len(self.models)
             model_chunks = self.models[:n_predictions]
