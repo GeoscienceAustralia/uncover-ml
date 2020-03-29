@@ -32,7 +32,7 @@ def predict(data, model, interval=0.95, **kwargs):
     # Regression
     else:
         def pred(X):
-            if hasattr(model, 'bootstrap'):
+            if hasattr(model, '__bootstrapped_model__'):
                 Ey, Vy, ql, qu = model.predict(X, interval, **kwargs)
                 predres = np.column_stack((Ey, Vy, ql, qu))
             elif hasattr(model, 'predict_dist'):

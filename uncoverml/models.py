@@ -252,7 +252,7 @@ class TagsMixin():
 
         # Regression
         tags = ['Prediction']
-        if hasattr(self, 'predict_dist') or hasattr(self, 'bootstrap'):
+        if hasattr(self, 'predict_dist') or hasattr(self, '__bootstrappped_model__'):
             tags.extend(['Variance', 'Lower quantile', 'Upper quantile'])
 
         if hasattr(self, 'entropy_reduction'):
@@ -637,7 +637,7 @@ def bootstrap_model(model):
             # 'bootstrap' attr is dinky workaround for checking if a 
             # model is a bootstrap model (can't get at BootstrappedModel
             # class as it's in scope of factory function).
-            self.bootstrap = 'bootstrap'
+            self.__bootstrapped_model__ = 'bootstrap'
             self.n_models = n_models
             self.models = [model(*args, **kwargs) for i in range(self.n_models)]
 

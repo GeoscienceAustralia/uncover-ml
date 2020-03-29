@@ -53,7 +53,7 @@ def main(config_file, partitions, mask, retain):
     config = ls.config.Config(config_file, predicting=True)
     model = _load_model(config)
 
-    bootstrapping = hasattr(model, 'bootstrap')
+    bootstrapping = hasattr(model, '__bootstrapped_model__')
     if bootstrapping:
         _algo_for_model(model.models[0], config)
     else:
