@@ -28,18 +28,9 @@ BIN = 'bin'
 GEOMETRY = 'geometry'
 _logger = logging.getLogger(__name__)
 
-
-def bootstrap_data_indicies(positions, samples=None, random_state=1):
-    """
-    Returns indicies for accessing bootstrapped views of 
-    target/covariate data.
-    """
-    boot = sklearn.utils.resample(positions, n_samples=samples, random_state=random_state)
-    ordind = np.lexsort(boot.T)
-    boot = boot[ordind]
-    return [np.where(positions == p)[0][0] 
-            for p in boot]
-
+def bootstrap_data_indicies(population, samples=None, random_state=1):
+    samples = population if samples is None else samples
+    return np.random.RandomState(random_state).randint(0, population, samples)
 
 def prepapre_dataframe(data, fields_to_keep):
     if isinstance(data, gpd.GeoDataFrame):

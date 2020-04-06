@@ -646,8 +646,7 @@ def bootstrap_model(model):
 
             models = np.array_split(self.models, mpiops.chunks)[mpiops.chunk_index]
             for i, m in enumerate(models):
-                inds = bootstrap_data_indicies(lon_lat, max(lon_lat.shape),
-                    random_state=mpiops.chunk_index + 1 + i)
+                inds = bootstrap_data_indicies(len(y), random_state=mpiops.chunk_index + 1 + i)
                 bsx = X[inds]
                 bsy = y[inds]
                 m.fit(bsx, bsy)
