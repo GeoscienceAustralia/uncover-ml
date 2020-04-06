@@ -7,6 +7,12 @@ learning:
     n_models: 100
     # Provide the rest of your 'transformedsvr' arguments as normal
 
+validation:
+    k-fold:
+        folds: 5
+        parallel: False
+        random_seed: 1
+
 features:
   - type: ordinal
     files:
@@ -26,6 +32,7 @@ prediction:
   # of bootstrapped models available, a warning will be given and all
   # models will run predictions. If not provided, will run all models.
   bootstrap: 50
+  outbands: 4
 
 output:
   directory: ./bootstrapped_svr_out

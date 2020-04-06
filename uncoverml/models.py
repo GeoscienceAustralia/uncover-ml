@@ -633,18 +633,23 @@ def kernelize(classifier):
 
 def bootstrap_model(model):
     class BootstrappedModel():
-        def __init__(self, n_models=100, *args, **kwargs):
+        def __init__(self, n_models=100, parallel=True, *args, **kwargs):
             # 'bootstrap' attr is dinky workaround for checking if a 
             # model is a bootstrap model (can't get at BootstrappedModel
             # class as it's in scope of factory function).
             self.__bootstrapped_model__ = 'bootstrap'
             self.n_models = n_models
             self.models = [model(*args, **kwargs) for i in range(self.n_models)]
+            self.parallel = parallel
 
         def fit(self, X, y, lon_lat, *args, **kwargs):
             _logger.info('Training %s bootstrapped models', self.n_models)
 
-            models = np.array_split(self.models, mpiops.chunks)[mpiops.chunk_index]
+            if self.parallel:
+                models = np.array_split(self.models, mpiops.chunks)[mpiops.chunk_index]
+            else:
+                models = self.models
+
             for i, m in enumerate(models):
                 inds = bootstrap_data_indicies(len(y), random_state=mpiops.chunk_index + 1 + i)
                 bsx = X[inds]
@@ -652,9 +657,10 @@ def bootstrap_model(model):
                 m.fit(bsx, bsy)
                 _logger.info(':mpi:Trained model %s of %s', i + 1, len(models))
 
-            models = mpiops.comm.gather(models, root=0)
-            if mpiops.chunk_index == 0:
-                self.models = list(chain.from_iterable(models))
+            if self.parallel:
+                models = mpiops.comm.gather(models, root=0)
+                if mpiops.chunk_index == 0:
+                    self.models = list(chain.from_iterable(models))
 
 
         def predict_dist(self, X, interval=0.95, bootstrap_predictions=None, *args, **kwargs):
