@@ -398,13 +398,19 @@ def local_crossval(x_all, targets_all, config):
         A dictionary containing all of the cross validation metrics, evaluated
         on the unseen data subset.
     """
-    if (mpiops.chunk_index != 0) and (not config.parallel_validate):
+    parallel_model = config.multicubist or config.multirandomforest or config.bootstrap
+    #if config.parallel_validate and parallel_model:
+    #    config.algorithm_args['parallel'] = False
+    #elif not config.parallel_validate and not parallel_model and mpiops.chunk_index != 0:
+    #    return
+    if config.bootstrap and config.parallel_validate:
+        config.alrgorithm_args['parallel'] = False
+    elif not config.parallel_validate and mpiops.chunk_index != 0:
         return
 
-    # run cross validation in parallel, but one thread for each fold
-    if config.multicubist or config.multirandomforest or config.bootstrap:
+    if config.multicubist or config.multirandomforest:
         config.algorithm_args['parallel'] = False
-
+   
     _logger.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
@@ -427,7 +433,6 @@ def local_crossval(x_all, targets_all, config):
 
     # Train and score on each fold
     for fold in fold_node:
-
         _logger.info(":mpi:Training fold {} of {}".format(
             fold + 1, config.folds, mpiops.chunk_index))
         train_mask = cv_indices != fold
@@ -448,28 +453,31 @@ def local_crossval(x_all, targets_all, config):
                               lon_lat=lon_lat_train)
 
         # Testing
-        y_k_pred = predict.predict(x_all[test_mask], model,
-                                   fields=fields_pred,
-                                   lon_lat=lon_lat_test)
-        y_pred[fold] = y_k_pred
-        n_covariates = x_all[test_mask].shape[1]
-
-        # Regression
-        if not classification:
-            y_k_test = y[test_mask]
-            fold_scores[fold] = regression_validation_scores(
-                y_k_test, y_k_pred, n_covariates, model)
-
-        # Classification
+        if not config.parallel_validate and mpiops.chunk_index != 0:
+            continue
         else:
-            y_k_test = model.le.transform(y[test_mask])
-            y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
-            fold_scores[fold] = classification_validation_scores(
-                y_k_test, y_k_hard, p_k
-            )
-        
-        y_true[fold] = y_k_test
-        pos[fold] = lon_lat_test
+            y_k_pred = predict.predict(x_all[test_mask], model,
+                                       fields=fields_pred,
+                                       lon_lat=lon_lat_test)
+            y_pred[fold] = y_k_pred
+            n_covariates = x_all[test_mask].shape[1]
+
+            # Regression
+            if not classification:
+                y_k_test = y[test_mask]
+                fold_scores[fold] = regression_validation_scores(
+                    y_k_test, y_k_pred, n_covariates, model)
+
+            # Classification
+            else:
+                y_k_test = model.le.transform(y[test_mask])
+                y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
+                fold_scores[fold] = classification_validation_scores(
+                    y_k_test, y_k_hard, p_k
+                )
+            
+            y_true[fold] = y_k_test
+            pos[fold] = lon_lat_test
 
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
@@ -499,8 +507,7 @@ def local_crossval(x_all, targets_all, config):
                 model.target_transform.transform(y_pred[:, 0])
         result = CrossvalInfo(scores, y_true, y_pred_dict, classification, pos)
 
-    # change back to parallel
-    if config.multicubist or config.multirandomforest or config.bootstrap:
+    if parallel_model:
         config.algorithm_args['parallel'] = True
 
     return result
