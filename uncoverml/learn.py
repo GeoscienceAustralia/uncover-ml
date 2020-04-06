@@ -22,7 +22,7 @@ def local_learn_model(x_all, targets_all, config):
     if config.multicubist or config.multirandomforest or config.bootstrap:
         y = targets_all.observations
         model = all_modelmaps[config.algorithm](**config.algorithm_args)
-        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, parallel=True, 
+        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields,
                               lon_lat=targets_all.positions)
         if config.multirandomforest:
             rf_dicts = model._randomforests

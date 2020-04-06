@@ -398,12 +398,12 @@ def local_crossval(x_all, targets_all, config):
         A dictionary containing all of the cross validation metrics, evaluated
         on the unseen data subset.
     """
-    # run cross validation in parallel, but one thread for each fold
-    if config.multicubist or config.multirandomforest:
-        config.algorithm_args['parallel'] = False
-
     if (mpiops.chunk_index != 0) and (not config.parallel_validate):
         return
+
+    # run cross validation in parallel, but one thread for each fold
+    if config.multicubist or config.multirandomforest or config.bootstrap:
+        config.algorithm_args['parallel'] = False
 
     _logger.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
@@ -444,9 +444,8 @@ def local_crossval(x_all, targets_all, config):
 
         # Train on this fold
         x_train = x_all[train_mask]
-        apply_multiple_masked(model.fit, data=(x_train, y_k_train),
-                              kwargs={'fields': fields_train,
-                                      'lon_lat': lon_lat_train})
+        apply_multiple_masked(model.fit, data=(x_train, y_k_train), fields=fields_train,
+                              lon_lat=lon_lat_train)
 
         # Testing
         y_k_pred = predict.predict(x_all[test_mask], model,
@@ -501,7 +500,7 @@ def local_crossval(x_all, targets_all, config):
         result = CrossvalInfo(scores, y_true, y_pred_dict, classification, pos)
 
     # change back to parallel
-    if config.multicubist or config.multirandomforest:
+    if config.multicubist or config.multirandomforest or config.bootstrap:
         config.algorithm_args['parallel'] = True
 
     return result
