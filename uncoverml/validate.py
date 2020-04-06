@@ -405,7 +405,7 @@ def local_crossval(x_all, targets_all, config):
     #    return
     if config.bootstrap and config.parallel_validate:
         config.alrgorithm_args['parallel'] = False
-    elif not config.parallel_validate and mpiops.chunk_index != 0:
+    elif not config.bootstrap and not config.parallel_validate and mpiops.chunk_index != 0:
         return
 
     if config.multicubist or config.multirandomforest:
