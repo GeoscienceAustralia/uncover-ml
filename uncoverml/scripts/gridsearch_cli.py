@@ -92,7 +92,9 @@ def main(pipeline_file, partitions, njobs):
     estimator = setup_pipeline(config)
     log.info('Running optimisation for {}'.format(config.optimisation['algorithm']))
 
-    targets_all, x_all = _load_data(config, partitions)
+    training_data = _load_data(config, partitions)
+    targets_all = training_data.targets_all
+    x_all = training_data.x_all
     
     log.info("Optimising {} model".format(config.optimisation['algorithm']))
     # Runs 'fit' on selected model ('estimator' in scikit-learn) with 

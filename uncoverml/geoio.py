@@ -20,12 +20,12 @@ import shapefile
 import pyproj
 import matplotlib.pyplot as plt
 
+from uncoverml import targets
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
 from uncoverml import diagnostics
 from uncoverml.transforms import missing_percentage
-from uncoverml.targets import Targets
 
 
 _logger = logging.getLogger(__name__)
@@ -371,8 +371,8 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     vals = mpiops.comm.scatter(vals, root=0)
     othervals = mpiops.comm.scatter(othervals, root=0)
     _logger.info(":mpi:Assigned {} targets".format(lonlat.shape[0]))
-    targets = Targets(lonlat, vals, othervals=othervals)
-    return targets
+    loaded_targets = targets.Targets(lonlat, vals, othervals=othervals)
+    return loaded_targets
 
 def get_image_crs(config):
     image_file = config.feature_sets[0].files[0]
@@ -551,7 +551,7 @@ def _iterate_sources(f, config):
                 missing_percent = missing_percentage(x)
                 t_missing = mpiops.comm.allreduce(
                     missing_percent) / mpiops.chunks
-                _logger.info("{}: {}px {:2.2f}% missing".format(
+                _logger.info("{}: {}px {:3.2f}% missing".format(
                     name, count, t_missing))
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
@@ -724,7 +724,7 @@ def create_shared_training_data(targets_all, x_all):
     x_all, x_win = mpiops.create_shared_array(x_all)
 
     if targets_all is None:
-        targets_all = Targets(None, None, None)
+        targets_all = targets.Targets(None, None, None)
     targets_all.observations, obs_win = mpiops.create_shared_array(targets_all.observations)
     targets_all.positions, pos_win = mpiops.create_shared_array(targets_all.positions)
 
