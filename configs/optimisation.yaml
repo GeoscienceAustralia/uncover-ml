@@ -23,5 +23,4 @@ optimisation:
     min_samples_split: [2, 5, 10]
     min_samples_leaf: [1, 5, 10]
     max_depth: [10, 20, 100]
-    ml_score: [False]
 

@@ -421,6 +421,7 @@ class Config(object):
             self.algorithm = None
             self.clustering = False
             self.cluster_analysis = False
+            self.target_search = False
 
         self.set_algo_flags()
 
