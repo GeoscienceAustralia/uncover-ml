@@ -22,10 +22,14 @@ SIRSAM_RF = 'sirsam_Na_randomforest'
 
 class TestBootstrap:
     output_files = [
-        'bootstrapping_mean_thumbnail.tif',
-        'bootstrapping_mean.tif',
-        'bootstrapping_std_thumbnail.tif',
-        'bootstrapping_std.tif',
+        'bootstrapping_lower_quantile_thumbnail.tif',
+        'bootstrapping_lower_quantile.tif',
+        'bootstrapping_upper_quantile_thumbnail.tif',
+        'bootstrapping_upper_quantile.tif',
+        'bootstrapping_prediction_thumbnail.tif',
+        'bootstrapping_prediction.tif',
+        'bootstrapping_variance_thumbnail.tif',
+        'bootstrapping_variance.tif',
         'bootstrapping_metadata.txt',
         'bootstrapping.model'
     ]
