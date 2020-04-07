@@ -17,6 +17,8 @@ Added
 - More demonstration configs.
 - Reimplemented target sampling/binning code (originally by Sudipta).
 - Add an 'index' column to rawcovariates.csv output to allow users to customise plots.
+- Bootstrap SVR model.
+- User defined metrics for optimisation.
 
 Changed
 +++++++
@@ -24,6 +26,7 @@ Changed
 - 'pbs' directory is now 'scripts'.
 - Moved all CLI commands to be under the 'uncoverml' command.
 - Cleaned up project structure - remove outdated 'pbs' directory and scripts that no longer apply.
+- Training data is now shared via MPI shared memory during the learn step.
 
 Fixed
 +++++
