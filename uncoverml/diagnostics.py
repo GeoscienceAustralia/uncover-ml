@@ -306,10 +306,16 @@ def plot_covariate_correlation(path, method='pearson'):
     mask = np.zeros_like(data)
     mask[np.triu_indices_from(mask)] = True
 
-    fig, ax = plt.subplots(figsize=(13,10))
-    fig.suptitle('Covariate Correlation', fontsize=16, x=0.44, y=0.93)
+    fig, ax = plt.subplots(figsize=(15,12))
+    ax.set_title("Covariate Correlation", fontsize=16)
+    divider = make_axes_locatable(ax)
+    cb_ax = divider.append_axes('right', size="2.8%", pad=0.1)
+
     ax = sns.heatmap(data, vmin=-1., vmax=1., cmap=plt.cm.coolwarm, 
-                     center=0., linewidths=0.1, linecolor=(1, 1, 1), ax=ax)    
+                     center=0., linewidths=0.1, linecolor=(1, 1, 1), cbar_ax=cb_ax, ax=ax)    
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=45, ha='right')
+    fig.tight_layout()
     return fig
 
 def plot_target_scaling(path, bins=20, title='Target Scaling', sharey=False):
