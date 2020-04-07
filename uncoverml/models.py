@@ -679,6 +679,9 @@ def bootstrap_model(model):
             ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
             return y_mean, y_var, ql, qu
 
+        def predict(self, X, bootstrap_predictions=None):
+            return self.predict_dist(X, bootstrap_predictions=bootstrap_predictions)[0]
+
     return BootstrappedModel
 
 #
