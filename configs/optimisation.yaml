@@ -16,6 +16,14 @@ output:
 
 optimisation:
   algorithm: transformedrandomforest
+  # If multiple scorers are specified, then results are sorted by the 
+  # first scorer in the list.
+  # If scorers aren't provided, then the default `score` method of the
+  # model is used.
+  scorers: ['r2', 'expvar', 'smse', 'lins_ccc']
+  # Other available scorers:
+  # Classification: 'accuracy'
+  # Classification w/ probability: 'log_loss', 'auc'
   hyperparameters:
     target_transform: [identity, standardise, log, sqrt]
     n_estimators: [10, 20, 50]
@@ -23,4 +31,3 @@ optimisation:
     min_samples_split: [2, 5, 10]
     min_samples_leaf: [1, 5, 10]
     max_depth: [10, 20, 100]
-
