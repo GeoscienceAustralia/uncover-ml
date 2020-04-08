@@ -275,8 +275,10 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
                 display_string += f'{k} = {crossval_scores[v]:.3f}\n'
             except KeyError:
                 pass
-    
-        fig.text(0.044, 0.81, display_string, fontsize=20, fontfamily='monospace')
+        
+        axs = fig.axes
+        fig.text(0.01, 0.8, display_string, fontsize=20, fontfamily='monospace', 
+                    transform=axs[0].transAxes, wrap=True)
     
     # leg = fig.legend(loc='upper left', bbox_to_anchor=(0.065, 0.965))
     fig.suptitle('Real vs Predicted', x=0.5, y=0.96, fontsize=24)
