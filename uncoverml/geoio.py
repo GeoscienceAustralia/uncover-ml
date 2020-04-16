@@ -221,7 +221,7 @@ def crop_mask(config, outdir=None):
         new_mask = crop_tif(config.mask, config.extents, _new_fname(config.mask))
         config.mask = new_mask
 
-def crop_tif(filename, extents, outfile=None):
+def crop_tif(filename, extents, outfile=None, strict=False):
     """
     Crops the geotiff using the provided extent.
     
@@ -242,10 +242,17 @@ def crop_tif(filename, extents, outfile=None):
             extents = \
                 tuple(src.bounds[i] if extents[i] is None else extents[i] for i in range(4))
         xmin, ymin, xmax, ymax = extents
-
+        _logger.info(f":mpi:Cropping {filename}")
         def _check_bound(comp, crop_bnd, src_bnd, s):
             if comp:
-                raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})")
+                if strict:
+                    raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})")
+                else:
+                    _logger.info(f":mpi:Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})."
+                                  " Leaving bound as is.")
+                    return src_bnd
+            else:
+                return crop_bnd
 
         _check_bound(xmin < src.bounds[0], xmin, src.bounds[0], 'xmin')
         _check_bound(ymin < src.bounds[1], ymin, src.bounds[1], 'ymin')
