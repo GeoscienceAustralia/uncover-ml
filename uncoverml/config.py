@@ -636,8 +636,6 @@ class Config(object):
             if p:
                 makedirs(p, exist_ok=True)
 
-        self._tmpdir = tmpdir
-
     @property
     def tmpdir(self):
         if self._tmpdir is None:
@@ -653,11 +651,6 @@ class Config(object):
         self.krige = self.algorithm == 'krige'
         if self.algorithm is not None:
             self.bootstrap = self.algorithm.startswith('bootstrap')
-
-    def mk_tmpdir(self):
-        if self.tmpdir is None:
-            self.tmpdir = tempfile.mkdtemp()
-            
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
