@@ -201,7 +201,9 @@ def crop_covariates(config, outdir=None):
 
     for s in config.feature_sets:
         proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
-        new_files = [crop_tif(f, config.extents, _new_fname(f)) for f in proc_files]
+        new_files = [crop_tif(f, config.extents, 
+                              config.extents_are_pixel_coordinates, _new_fname(f)) 
+                     for f in proc_files]
         new_files = mpiops.comm.allgather(new_files)
         mpiops.comm.barrier()
         s.files = list(itertools.chain(*new_files))
@@ -218,10 +220,11 @@ def crop_mask(config, outdir=None):
         def _new_fname(fname):
             return os.path.join(outdir, os.path.basename(fname))
     if mpiops.chunk_index == 0:
-        new_mask = crop_tif(config.mask, config.extents, _new_fname(config.mask))
+        new_mask = crop_tif(config.mask, config.extents, config.extents_are_pixel_coordinates, 
+                            _new_fname(config.mask))
         config.mask = new_mask
 
-def crop_tif(filename, extents, outfile=None, strict=False):
+def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=False):
     """
     Crops the geotiff using the provided extent.
     
@@ -246,19 +249,35 @@ def crop_tif(filename, extents, outfile=None, strict=False):
         def _check_bound(comp, crop_bnd, src_bnd, s):
             if comp:
                 if strict:
-                    raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})")
+                    raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image"
+                                     f" ({src_bnd})")
                 else:
-                    _logger.info(f":mpi:Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image ({src_bnd})."
-                                  " Leaving bound as is.")
+                    _logger.info(f":mpi:Crop coordinate '{s}' ({crop_bnd}) is out of bounds of "
+                                 f" image ({src_bnd}). Leaving bound as is.")
                     return src_bnd
             else:
                 return crop_bnd
 
-        _check_bound(xmin < src.bounds[0], xmin, src.bounds[0], 'xmin')
-        _check_bound(ymin < src.bounds[1], ymin, src.bounds[1], 'ymin')
-        _check_bound(xmax > src.bounds[2], xmax, src.bounds[2], 'xmax')
-        _check_bound(ymax > src.bounds[3], ymax, src.bounds[3], 'ymax')
+        if pixel_coordinates:
+            src_xmin = 1
+            src_ymin = 1
+            src_xmax = src.width
+            src_ymax = src.height
+        else:
+            src_xmin, src_ymin, src_xmax, src_ymax = src.bounds
 
+        _check_bound(xmin < src_xmin, xmin, src_xmin, 'xmin')
+        _check_bound(ymin < src_ymin, ymin, src_ymin, 'ymin')
+        _check_bound(xmax > src_xmax, xmax, src_xmax, 'xmax')
+        _check_bound(ymax > src_ymax, ymax, src_ymax, 'ymax')
+
+        if pixel_coordinates:
+            rw, rh = src.res        
+            xmin = xmin * rw + src.bounds[0] 
+            ymin = ymin * rh + src.bounds[1]
+            xmax = xmax * rw + src.bounds[0]
+            ymax = ymax * rh + src.bounds[1]
+        print(xmin, ymin, xmax, ymax)
         gj_box = [
             {'type': 'Polygon',
             'coordinates': [[
@@ -404,6 +423,11 @@ def get_image_bounds(config):
     image_file = config.feature_sets[0].files[0]
     im = image.Image(RasterioImageSource(image_file))
     return im.bbox
+
+def get_image_pixel_res(config):
+    image_file = config.feature_sets[0].files[0]
+    im = image.Image(RasterioImageSource(image_file))
+    return im.pixsize_x, im.pixsize_y
      
 def get_image_spec(model, config):
     # temp workaround, we should have an image spec to check against
