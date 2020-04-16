@@ -636,6 +636,8 @@ class Config(object):
             if p:
                 makedirs(p, exist_ok=True)
 
+        self._tmpdir = None
+
     @property
     def tmpdir(self):
         if self._tmpdir is None:
