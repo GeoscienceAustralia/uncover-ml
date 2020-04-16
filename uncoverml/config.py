@@ -3,6 +3,7 @@ Handles parsing of the configuration file.
 """
 from typing import Optional, List
 import logging
+import tempfile
 import sys
 from os import path
 from os import makedirs
@@ -635,6 +636,14 @@ class Config(object):
             if p:
                 makedirs(p, exist_ok=True)
 
+        self._tmpdir = tmpdir
+
+    @property
+    def tmpdir(self):
+        if self._tmpdir is None:
+            self._tmpdir = tempfile.mkdtemp()
+        return self._tmpdir
+
     def set_algo_flags(self):
         # Set flags based on algorithm being used - these control
         # some special behaviours in the code.
@@ -644,6 +653,11 @@ class Config(object):
         self.krige = self.algorithm == 'krige'
         if self.algorithm is not None:
             self.bootstrap = self.algorithm.startswith('bootstrap')
+
+    def mk_tmpdir(self):
+        if self.tmpdir is None:
+            self.tmpdir = tempfile.mkdtemp()
+            
 
     yaml_loader = yaml.SafeLoader
     """The PyYaml loader to use."""
