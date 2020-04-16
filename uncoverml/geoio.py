@@ -193,12 +193,11 @@ def crop_covariates(config, outdir=None):
     """
     _logger.info("Cropping covariates...")
     if outdir is None:
-        config.tmpdir = tempfile.mkdtemp()
         def _new_fname(fname):
             return os.path.join(config.tmpdir, os.path.basename(fname))
     else:
         def _new_fname(fname):
-            return None
+            return os.path.join(outdir, os.path.basename(fname))
 
     for s in config.feature_sets:
         proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
@@ -206,6 +205,21 @@ def crop_covariates(config, outdir=None):
         new_files = mpiops.comm.allgather(new_files)
         mpiops.comm.barrier()
         s.files = list(itertools.chain(*new_files))
+
+def crop_mask(config, outdir=None):
+    """
+    Crops the prediction mask listed under `config.mask`.
+    """
+    _logger.info("Cropping prediction mask...")
+    if outdir is None:
+        def _new_fname(fname):
+            return os.path.join(config.tmpdir, os.path.basename(fname))
+    else:
+        def _new_fname(fname):
+            return os.path.join(outdir, os.path.basename(fname))
+    if mpiops.chunk_index == 0:
+        new_mask = crop_tif(config.mask, config.extents, _new_fname(config.mask))
+        config.mask = new_mask
 
 def crop_tif(filename, extents, outfile=None):
     """

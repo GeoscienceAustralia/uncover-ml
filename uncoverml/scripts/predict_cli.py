@@ -80,6 +80,8 @@ def main(config_file, partitions, mask, retain):
             config.mask = ''
             _logger.info("A mask was provided, but the file does not exist on "
                          "disc or is not a file.")
+        elif config.extents:
+            ls.geoio.crop_mask(config)
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
