@@ -95,10 +95,22 @@ def _load_data(config, partitions):
         # Make the targets
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
+        if config.extents_are_pixel_coordinates:
+            pw, ph = ls.geoio.get_image_pixel_res(config)
+            bounds = ls.geoio.get_image_bounds(config)
+            xmin, ymin, xmax, ymax = config.extents
+            xmin = xmin * pw + bounds[0][0]
+            ymin = ymin * ph + bounds[1][0]
+            xmax = xmax * pw + bounds[0][0]
+            ymax = ymax * ph + bounds[1][0]
+            target_extents = xmin, ymin, xmax, ymax
+        else:
+            target_extents = config.extents
+
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
-                                        extents=config.extents)
+                                        extents=target_extents)
                                             
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
@@ -107,7 +119,8 @@ def _load_data(config, partitions):
         if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(image_chunk_sets,
-                                                              transform_sets, targets, config)
+                                                              transform_sets, targets, config, 
+                                                              impute=False)
 
         if config.rank_features:
             _logger.info("Ranking features...")
