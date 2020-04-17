@@ -95,7 +95,7 @@ def _load_data(config, partitions):
         # Make the targets
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
-        if config.extents_are_pixel_coordinates:
+        if config.extents and config.extents_are_pixel_coordinates:
             pw, ph = ls.geoio.get_image_pixel_res(config)
             bounds = ls.geoio.get_image_bounds(config)
             xmin, ymin, xmax, ymax = config.extents
