@@ -239,7 +239,6 @@ class CrossvalInfo:
         np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
                    delimiter=',', fmt='%.4f', header='y_true,y_pred,pos')
 
-
         if os.path.exists(config.raw_covariates) and os.path.exists(config.raw_covariates_mask):
             # Also add prediction values to rawcovariates.csv - yes this file 
             # is very overloaded and we need to fix the output situation.
@@ -269,13 +268,6 @@ class CrossvalInfo:
             rcv['prediction'] = masked_predictions
             rcv.to_csv(config.raw_covariates, sep=',')
 
-        else:
-            _logger.warning("Cross-validation results are being exported but rawcovariates.csv "
-                            "and/or raw_covaraites_mask.csv do not exist in output directory. "
-                            "Cross-validation predictions won't be added to rawcovariates table "
-                            "and 'Real vs Pred' will not be plotted. To resolve this, re-run "
-                            "learn without using pickled covariate and target data.")
-            
             if config.plot_real_vs_pred:
                 diagnostics.plot_real_vs_pred_crossval(
                     config.crossval_results_file,
@@ -287,7 +279,12 @@ class CrossvalInfo:
                     config.crossval_results_file
                 ).savefig(config.plot_residual)
 
-
+        else:
+            _logger.warning("Cross-validation results are being exported but rawcovariates.csv "
+                            "and/or raw_covaraites_mask.csv do not exist in output directory. "
+                            "Cross-validation predictions won't be added to rawcovariates table "
+                            "and 'Real vs Pred' will not be plotted. To resolve this, re-run "
+                            "learn without using pickled covariate and target data.")
 
 def permutation_importance(model, x_all, targets_all, config):
     _logger.info("Computing permutation importance!!")
