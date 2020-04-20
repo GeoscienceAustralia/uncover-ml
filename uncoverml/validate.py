@@ -4,6 +4,7 @@ from __future__ import division
 import logging
 import copy
 import json
+import os
 
 from pathlib import Path
 import numpy as np
@@ -220,6 +221,11 @@ class CrossvalInfo:
         CSV file. 
 
         If enabled, the real vs predicted values will be plotted.
+
+        Parameters
+        ----------
+        config: Config
+            Uncover-ml config object.
         """
         # Make sure we convert numpy arrays to lists
         scores = {s: v if np.isscalar(v) else v.tolist()
@@ -233,26 +239,53 @@ class CrossvalInfo:
         np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
                    delimiter=',', fmt='%.4f', header='y_true,y_pred,pos')
 
-        # Also add prediction values to rawcovariates.csv - yes this file 
-        #  is very overloaded and we need to fix the output situation.
 
-        # Get indicies sorted by location so we can insert the 
-        #  prediction in the correct row.
-        inds = np.lexsort(self.positions.T)
-        rcv = pd.read_csv(config.raw_covariates, delimiter=',')
-        rcv['prediction'] = self.y_pred['Prediction'][inds]
-        rcv.to_csv(config.raw_covariates, sep=',')
+        if os.path.exists(config.raw_covariates) and os.path.exists(config.raw_covariates_mask):
+            # Also add prediction values to rawcovariates.csv - yes this file 
+            # is very overloaded and we need to fix the output situation.
+            # Get indicies sorted by location so we can insert the 
+            # prediction in the correct row.
+            inds = np.lexsort(self.positions.T)
+            sorted_predictions = self.y_pred['Prediction'][inds]
 
-        if config.plot_real_vs_pred:
-            diagnostics.plot_real_vs_pred_crossval(
-                config.crossval_results_file,
-                scores_path=config.crossval_scores_file,
-                bins=40, overlay=True,
-                hist_cm=plt.cm.Oranges, scatter_color='black'
-            ).savefig(config.plot_real_vs_pred)
-            diagnostics.plot_residual_error_crossval(
-                config.crossval_results_file
-            ).savefig(config.plot_residual)
+            # If null rows have been dropped, we need to add these to 
+            # the prediction array - otherwise we'll get a length 
+            # mismatch error between number of predictions and number 
+            # of rows in the table.
+            masked_rcv = pd.read_csv(config.raw_covariates_mask, delimiter=',')
+            mask = masked_rcv.apply(np.sum, axis=1).to_numpy().astype(bool)
+            masked_predictions = np.zeros(mask.shape)
+
+            pred_iter = np.nditer(sorted_predictions)
+            mask_iter = np.nditer(mask, flags=['c_index'])
+            with pred_iter, mask_iter:
+                while not mask_iter.finished:
+                    if mask_iter[0]:
+                        masked_predictions[mask_iter.index] = pred_iter[0]
+                        pred_iter.iternext()
+                    mask_iter.iternext()
+
+            rcv = pd.read_csv(config.raw_covariates, delimiter=',')
+            rcv['prediction'] = masked_predictions
+            rcv.to_csv(config.raw_covariates, sep=',')
+
+        else:
+            _logger.warning("Cross-validation results are being exported but rawcovariates.csv "
+                            "and/or raw_covaraites_mask.csv do not exist in output directory. "
+                            "Cross-validation predictions won't be added to rawcovariates table "
+                            "and 'Real vs Pred' will not be plotted. To resolve this, re-run "
+                            "learn without using pickled covariate and target data.")
+            
+            if config.plot_real_vs_pred:
+                diagnostics.plot_real_vs_pred_crossval(
+                    config.crossval_results_file,
+                    scores_path=config.crossval_scores_file,
+                    bins=40, overlay=True,
+                    hist_cm=plt.cm.Oranges, scatter_color='black'
+                ).savefig(config.plot_real_vs_pred)
+                diagnostics.plot_residual_error_crossval(
+                    config.crossval_results_file
+                ).savefig(config.plot_residual)
 
 
 
