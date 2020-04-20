@@ -60,10 +60,8 @@ def _real_vs_pred_from_prediction(rc_path, pred_path):
     if '_real_vs_pred_from_prediction' in _CACHE:
         return _CACHE['_real_vs_pred_from_prediction']
         
-    targets = pd.read_csv(rc_path, float_precision='round_trip')
-    targets.drop(list(targets.columns.values)[:-5], axis=1, inplace=True)
-    tx, ty, tn = targets.columns.values
-    targets = [(x, y, obs) for x, y, obs in zip(targets[tx], targets[ty], targets[tn])]
+    df = pd.read_csv(rc_path, float_precision='round_trip')
+    targets = [(x, y, obs) for x, y, obs in zip(df['X'], df['Y'], df['target'])]
 
     targets_ar = np.zeros(len(targets))
     predict_ar = np.zeros(len(targets))
@@ -303,7 +301,7 @@ def plot_covariate_correlation(path, method='pearson'):
         The matrix plot as a matplotlib Figure.
     """
     df = pd.read_csv(path)
-    df.drop(df.columns.values[-3:], axis=1, inplace=True)
+    df.drop([n for n in df.columns.values if not n.endswith('.tif')], axis=1, inplace=True)
     data = df.corr(method=method)
     mask = np.zeros_like(data)
     mask[np.triu_indices_from(mask)] = True
@@ -391,16 +389,16 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
         The scatter plots as a matplotlib Figure.
     """
     with open(path) as f:
-        header = f.readline().strip().split(',')[:-3]
-        header = [h.replace('.tif', '') for h in header]
+        header = f.readline().strip().split(',')
+        covs = [h.replace('.tif', '') for h in header if h.endswith('.tif')]
         data = np.loadtxt(f, delimiter=',', skiprows=1)
 
-    rows = math.ceil(len(header) / cols)
+    rows = math.ceil(len(covs) / cols)
     figsize = cols * subplot_width, rows * subplot_height
     fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
 
-    targets = data[:,-1]
-    for i, cov in enumerate(header):
+    targets = data[:,header.index('target')]
+    for i, cov in enumerate(covs):
         if cols == 1 or rows == 1:
             ind = i
         else:
