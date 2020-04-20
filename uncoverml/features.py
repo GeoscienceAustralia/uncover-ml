@@ -130,7 +130,7 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                  for ec in feature_sets
                  for k in ec
                  for b in range(ec[k].shape[3])]
-    other_names = ['X', 'Y', config.target_property + '(target)', uid_field, 'prediction']
+    other_names = ['X', 'Y', 'target', uid_field, 'prediction']
 
     header = ','.join(cov_names + other_names)
     mask_header =','.join(cov_names)
