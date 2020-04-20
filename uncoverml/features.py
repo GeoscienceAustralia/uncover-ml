@@ -126,13 +126,14 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     uid_on = uid_field in targets.fields
 
     transform_sets_mod = []
-    names = ['{}_{}'.format(b, basename(k))
-             for ec in feature_sets
-             for k in ec
-             for b in range(ec[k].shape[3])]
-    names += ['X', 'Y', config.target_property + '(target)', uid_field, 'prediction']
+    cov_names = ['{}_{}'.format(b, basename(k))
+                 for ec in feature_sets
+                 for k in ec
+                 for b in range(ec[k].shape[3])]
+    other_names = ['X', 'Y', config.target_property + '(target)', uid_field, 'prediction']
 
-    header = ','.join(names)
+    header = ','.join(cov_names + other_names)
+    mask_header =','.join(cov_names)
 
     for t in transform_sets:
         imputer = copy.deepcopy(t.imputer) if impute else None
@@ -186,10 +187,10 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         data = np.hstack(data)
         np.savetxt(config.raw_covariates,
                    X=data, fmt='%f', delimiter=',', header=header, comments='')
-
-        mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
+        
         np.savetxt(config.raw_covariates_mask,
-                   X=mask, fmt='%f', delimiter=',', header=header, comments='')
+                   X=~x_all.mask.astype(bool), fmt='%f', delimiter=',', header=mask_header, 
+                   comments='')
 
         if config.plot_intersection:
             diagnostics.plot_covariates_x_targets(
