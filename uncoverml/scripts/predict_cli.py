@@ -50,8 +50,15 @@ def _algo_for_model(model, config):
     raise NameError("Model algorithm not recognised by uncoverml")
 
 def main(config_file, partitions, mask, retain):
+    _logger.info(
+        "'features' and 'final_transform' are taken from values saved during the `learn` step. "
+        "Any new parameters added to 'features' or 'final_transform' blocks in config since this "
+        "model was trained will not take effect."
+    )
     config = ls.config.Config(config_file, predicting=True)
-    model = _load_model(config)
+    model, feature_sets, final_transform = _load_model(config)
+    config.feature_sets = feature_sets
+    config.final_transform = final_transform
 
     bootstrapping = hasattr(model, '__bootstrapped_model__')
     if bootstrapping:
