@@ -33,9 +33,6 @@ _logger = logging.getLogger(__name__)
 
 _lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
 
-SharedTrainingData = namedtuple(
-        'TrainingData', ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
-
 class ImageSource:
     __metaclass__ = ABCMeta
 
@@ -277,7 +274,6 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
             ymin = ymin * rh + src.bounds[1]
             xmax = xmax * rw + src.bounds[0]
             ymax = ymax * rh + src.bounds[1]
-        print(xmin, ymin, xmax, ymax)
         gj_box = [
             {'type': 'Polygon',
             'coordinates': [[
@@ -697,7 +693,7 @@ def export_feature_ranks(measures, feats, scores, config):
 
 def export_model(model, config):
     with open(config.model_file, 'wb') as f:
-        pickle.dump(model, f)
+        pickle.dump((model, config.feature_sets, config.final_transform), f)
 
 def _make_valid_array_name(label):
     label = "_".join(label.split())
