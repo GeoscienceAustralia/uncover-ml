@@ -28,7 +28,7 @@ from uncoverml.transforms import StandardiseTransform
 from uncoverml.scripts import (
     cluster_cli, covdiag_cli, gammasensor_cli, gridsearch_cli, 
     learn_cli, predict_cli, resample_cli, shiftmap_cli, subsample_cli, 
-    tiff2kmz_cli, targetsearch_cli
+    tiff2kmz_cli, targetsearch_cli, modelfix_cli
 )
                                
 
@@ -45,6 +45,10 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 def cli(verbosity):
     uncoverml.mllog.configure(verbosity)
 
+@cli.command()
+@click.argument('config_file')
+def modelfix(config_file):
+    modelfix_cli.main(config_file)
 
 @cli.command()
 @click.argument('config_file')
