@@ -56,7 +56,20 @@ def main(config_file, partitions, mask, retain):
         "model was trained will not take effect."
     )
     config = ls.config.Config(config_file, predicting=True)
-    model, feature_sets, final_transform = _load_model(config)
+
+    try:
+        model, feature_sets, final_transform = _load_model(config)
+    except TypeError:
+        _logger.error(
+            "Model data does not contain transform information. This is most likely because you're "
+            "using an old model before fixes were made to covariate transforms. To remedy, run the "
+            "command `uncoverml modelfix config.yaml`. This requires that the config contains the "
+            "same parameters used when training the model. If this config or training data no "
+            "longer exists or has been modified, you will have to retrain the model using "
+            "`uncoverml learn config.yaml` before prediction."
+        )
+        raise
+
     config.feature_sets = feature_sets
     config.final_transform = final_transform
 
