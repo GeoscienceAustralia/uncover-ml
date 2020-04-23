@@ -33,9 +33,6 @@ _logger = logging.getLogger(__name__)
 
 _lower_is_better = ['mll', 'mll_transformed', 'smse', 'smse_transformed']
 
-SharedTrainingData = namedtuple(
-        'TrainingData', ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
-
 class ImageSource:
     __metaclass__ = ABCMeta
 
