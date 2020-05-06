@@ -7,7 +7,7 @@ from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
                              confusion_matrix)
 from sklearn.metrics import make_scorer
-from sklearn.metrics.scorer import _ProbaScorer, _ThresholdScorer, _PredictScorer, _BaseScorer
+from sklearn.metrics._scorer import _BaseScorer
 from revrand.metrics import lins_ccc, mll, smse
 
 from uncoverml.validate import _binarizer
