@@ -7,9 +7,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
-                                  ElasticNet)
-from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
-                                                      DEFAULT_EPSILON)
+                                  ElasticNet,
+                                  SGDRegressor)
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
@@ -24,6 +23,8 @@ from uncoverml.transforms import target as transforms
 # import copy as cp
 log = logging.getLogger(__name__)
 
+# from sklearn.linear_model._stochastic_gradient
+DEFAULT_EPSILON = 0.1
 
 class TransformMixin:
 
