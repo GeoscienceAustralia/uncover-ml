@@ -79,11 +79,14 @@ def main(config_file, partitions, mask, retain):
     else:
         _algo_for_model(model, config)
 
-    if bootstrapping and config.bootstrap_predictions > len(model.models):
-        config.bootstrap_predictions = len(model.models)
-        _logger.warning("Number of predictions to perform (set by prediction 'bootstrap' "
-                        "parameter is less than number of bootstrapped models available "
-                        f"({len(model)}). Running predictions on all available models.")
+    if bootstrapping:
+        if config.bootstrap_predictions is None:
+            config.bootstrap_predictions = len(model.models)
+        elif config.bootstrap_predictions > len(model.models):
+            config.bootstrap_predictions = len(model.models)
+            _logger.warning("Number of predictions to perform (set by prediction 'bootstrap' "
+                            "parameter is less than number of bootstrapped models available "
+                            f"({len(model)}). Running predictions on all available models.")
     elif not bootstrapping and config.bootstrap_predictions:
         _logger.warning("'bootstrap' was provided as part of prediction configuration, but a "
                         "non-enesemble/bootstrapped model was provided. Running a single "
