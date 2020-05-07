@@ -117,8 +117,8 @@ def main(config_file, partitions):
         obs = (targets_all.fields[ORIGINAL_OBSERVATIONS][real_ind])[threshold_ind]
         fields = {k: (v[real_ind])[threshold_ind] for k, v in targets_all.fields.items()}
         result_t = ls.targets.Targets(pos, obs, fields)
-        result_x = (x_all[real_ind])[threshold_ind]
+        # result_x = (x_all[real_ind])[threshold_ind]
         # And save as binary for reuse in learn step
         with open(config.targetsearch_result_data, 'wb') as f:
-            pickle.dump((result_t, result_x), f) 
+            pickle.dump(result_t, f) 
         _logger.info(f"Target search complete. Found {len(pos)} targets for inclusion.")

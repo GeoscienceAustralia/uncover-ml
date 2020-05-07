@@ -393,22 +393,31 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
         lonlat = lonlat[ordind]
         for k, v in othervals.items():
             othervals[k] = v[ordind]
-
-        lonlat = np.array_split(lonlat, mpiops.chunks)
-        vals = np.array_split(vals, mpiops.chunks)
-        split_othervals = {k: np.array_split(v, mpiops.chunks)
-                           for k, v in othervals.items()}
-        othervals = [{k: v[i] for k, v in split_othervals.items()}
-                     for i in range(mpiops.chunks)]
-    else:
+    else: 
         lonlat, vals, othervals = None, None, None
 
-    lonlat = mpiops.comm.scatter(lonlat, root=0)
-    vals = mpiops.comm.scatter(vals, root=0)
-    othervals = mpiops.comm.scatter(othervals, root=0)
-    _logger.info(":mpi:Assigned {} targets".format(lonlat.shape[0]))
-    loaded_targets = targets.Targets(lonlat, vals, othervals=othervals)
+    return distribute_targets(lonlat, vals, othervals)
+
+
+def distribute_targets(positions, observations, fields):
+    """
+    Distributes a target object across all nodes
+    """
+    if mpiops.chunk_index == 0:
+        positions = np.array_split(positions, mpiops.chunks)
+        observations = np.array_split(observations, mpiops.chunks)
+        split_fields = {k: np.array_split(v, mpiops.chunks)
+                        for k, v in fields.items()}
+        fields = [{k: v[i] for k, v in split_fields.items()}
+                     for i in range(mpiops.chunks)]
+
+    positions = mpiops.comm.scatter(positions, root=0)
+    observations = mpiops.comm.scatter(observations, root=0)
+    fields = mpiops.comm.scatter(fields, root=0)
+    _logger.info(":mpi:Assigned {} targets".format(positions.shape[0]))
+    loaded_targets = targets.Targets(positions, observations, othervals=fields)
     return loaded_targets
+
 
 def get_image_crs(config):
     image_file = config.feature_sets[0].files[0]
