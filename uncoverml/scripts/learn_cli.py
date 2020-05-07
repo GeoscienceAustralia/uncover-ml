@@ -111,6 +111,18 @@ def _load_data(config, partitions):
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
                                         extents=target_extents)
+
+        if config.target_search:
+            if ls.mpiops.chunk_index == 0:
+                # Include targets and covariates from target search
+                with open(config.targetsearch_result_data, 'rb') as f:
+                    ts_t = pickle.load(f)
+                pos, obs, fields = ts_t.positions, ts_t.observations, ts_t.fields
+            else:
+                pos, obs, fields = None, None, None
+
+            ts_t = ls.geoio.distribute_targets(pos, obs, fields)
+            targets = ls.targets.merge_targets(targets, ts_t)
                                             
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
@@ -139,19 +151,6 @@ def _load_data(config, partitions):
         x_all = ls.features.gather_features(features[keep], node=0)
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
-
-        if config.target_search:
-            if ls.mpiops.chunk_index == 0:
-                # Include targets and covariates from target search
-                with open(config.targetsearch_result_data, 'rb') as f:
-                    ts_t, ts_x = pickle.load(f)
-                # Note ordering is important - this will append target search
-                #  to end of other targets, and covariates must be ordered 
-                #  in the same way.
-                _logger.info(f"Including {len(ts_x)} targets from target search")
-                targets_all = ls.targets.merge_targets(targets_all, ts_t)
-                x_all = np.ma.concatenate((x_all, ts_x))
-
 
         # Pickle data if requested.
         if ls.mpiops.chunk_index == 0:
