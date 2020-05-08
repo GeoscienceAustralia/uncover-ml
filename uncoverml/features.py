@@ -157,18 +157,6 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         all_idx = mpiops.comm.gather(targets.fields[uid_field])
 
     if mpiops.chunk_index == 0:
-        if config.target_search:
-            with open(config.targetsearch_result_data, 'rb') as f:
-                ts_t, ts_x = pickle.load(f)
-            # Note ordering is important - this will append target search
-            #  to end of other targets, and covariates must be ordered 
-            #  in the same way.
-            x_all_data = np.concatenate((x_all.data, ts_x.data))
-            x_all_mask = np.concatenate((x_all.mask, ts_x.mask))
-            x_all = np.ma.array(x_all_data, mask=x_all_mask)
-            all_xy.append(ts_t.positions)
-            all_targets.append(ts_t.observations)
-                                                        
         all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
         xy = np.atleast_2d(all_xy)
