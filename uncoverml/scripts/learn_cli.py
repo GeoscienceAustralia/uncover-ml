@@ -83,6 +83,17 @@ def _load_data(config, partitions):
                 config.algorithm_args['feature_type'] = None
     else:
         if config.extents:
+            if config.extents_are_pixel_coordinates:
+                pw, ph = ls.geoio.get_image_pixel_res(config)
+                bounds = ls.geoio.get_image_bounds(config)
+                xmin, ymin, xmax, ymax = config.extents
+                xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
+                ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
+                xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
+                ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
+                target_extents = xmin, ymin, xmax, ymax
+            else:
+                target_extents = config.extents
             ls.geoio.crop_covariates(config)
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
@@ -95,17 +106,6 @@ def _load_data(config, partitions):
         # Make the targets
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
-        if config.extents and config.extents_are_pixel_coordinates:
-            pw, ph = ls.geoio.get_image_pixel_res(config)
-            bounds = ls.geoio.get_image_bounds(config)
-            xmin, ymin, xmax, ymax = config.extents
-            xmin = xmin * pw + bounds[0][0]
-            ymin = ymin * ph + bounds[1][0]
-            xmax = xmax * pw + bounds[0][0]
-            ymax = ymax * ph + bounds[1][0]
-            target_extents = xmin, ymin, xmax, ymax
-        else:
-            target_extents = config.extents
 
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
