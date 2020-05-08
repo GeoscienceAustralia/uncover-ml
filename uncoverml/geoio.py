@@ -239,8 +239,13 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
     """
     with rasterio.open(filename) as src:
         if any(c is None for c in extents):
+            if pixel_coordinates:
+                bounds = (0, 0, src.width, src.height)
+            else:
+                bounds = src.bounds
             extents = \
-                tuple(src.bounds[i] if extents[i] is None else extents[i] for i in range(4))
+                tuple(bounds[i] if extents[i] is None else extents[i] for i in range(4))
+
         xmin, ymin, xmax, ymax = extents
         _logger.info(f":mpi:Cropping {filename}")
         def _check_bound(comp, crop_bnd, src_bnd, s):
@@ -256,8 +261,8 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
                 return crop_bnd
 
         if pixel_coordinates:
-            src_xmin = 1
-            src_ymin = 1
+            src_xmin = 0
+            src_ymin = 0
             src_xmax = src.width
             src_ymax = src.height
         else:
@@ -269,11 +274,12 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
         _check_bound(ymax > src_ymax, ymax, src_ymax, 'ymax')
 
         if pixel_coordinates:
-            rw, rh = src.res        
+            rw, rh = src.res
             xmin = xmin * rw + src.bounds[0] 
             ymin = ymin * rh + src.bounds[1]
             xmax = xmax * rw + src.bounds[0]
             ymax = ymax * rh + src.bounds[1]
+
         gj_box = [
             {'type': 'Polygon',
             'coordinates': [[
