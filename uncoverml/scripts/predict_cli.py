@@ -70,7 +70,11 @@ def main(config_file, partitions, mask, retain):
         )
         raise
 
-    config.feature_sets = feature_sets
+    # Todo: add 'name' param to feature sets and replace transform set
+    # based on name rather than on ordering
+    for i, fs in enumerate(config.feature_sets):
+        fs.transform_set = feature_sets[i].transform_set
+
     config.final_transform = final_transform
 
     bootstrapping = hasattr(model, '__bootstrapped_model__')
