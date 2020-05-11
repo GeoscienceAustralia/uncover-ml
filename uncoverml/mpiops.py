@@ -136,6 +136,10 @@ max0_op = MPI.Op.Create(max_axis_0, commute=True)
 min0_op = MPI.Op.Create(min_axis_0, commute=True)
 
 
+def count_targets(targets):
+    return comm.allreduce(len(targets.positions))
+
+
 def count(x):
     x_n_local = np.ma.count(x, axis=0).ravel()
     x_n = comm.allreduce(x_n_local, op=sum0_op)
