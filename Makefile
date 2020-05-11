@@ -42,9 +42,13 @@ test:
 coverage:
 	pytest --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
 
-hardware_test:
+partition_test:
 	pytest --disable-warnings ./tests/test_scripts.py --num_parts 2
+
+processor_test:
 	pytest --disable-warnings ./tests/test_scripts.py --num_procs 2
+
+hardware_test: partition_test processor_test
 	pytest --disable-warnings ./tests/test_scripts.py --num_parts 2 --num_procs 2
 
 dist: clean
