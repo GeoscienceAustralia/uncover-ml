@@ -82,10 +82,10 @@ def _load_data(config, partitions):
             if config.cubist or config.multicubist:
                 config.algorithm_args['feature_type'] = None
     else:
+        bounds = ls.geoio.get_image_bounds(config)
         if config.extents:
             if config.extents_are_pixel_coordinates:
                 pw, ph = ls.geoio.get_image_pixel_res(config)
-                bounds = ls.geoio.get_image_bounds(config)
                 xmin, ymin, xmax, ymax = config.extents
                 xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
                 ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
@@ -95,6 +95,9 @@ def _load_data(config, partitions):
             else:
                 target_extents = config.extents
             ls.geoio.crop_covariates(config)
+        else:
+            target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
+
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
             _logger.info("Memory constraint forcing {} iterations "
