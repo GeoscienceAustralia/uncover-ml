@@ -37,10 +37,15 @@ lint:
 	pylint uncoverml
 
 test:
-	pytest ./tests 
+	pytest --disable-warnings ./tests 
 
 coverage:
-	pytest --num_parts 20 --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
+	pytest --disable-warnings --cov=uncoverml --cache-clear --cov-fail-under=30 ./tests 
+
+hardware_test:
+	pytest --disable-warnings ./tests/test_scripts.py --num_parts 2
+	pytest --disable-warnings ./tests/test_scripts.py --num_procs 2
+	pytest --disable-warnings ./tests/test_scripts.py --num_parts 2 --num_procs 2
 
 dist: clean
 	python setup.py sdist
