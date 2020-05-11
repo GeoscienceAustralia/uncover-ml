@@ -437,9 +437,9 @@ class Config(object):
 
             if (self.extents[0] and self.extents[1])  is not None and self.extents[0] >= self.extents[2]:
                 raise ValueError(f"Error in provided crop coordinates: xmin ({self.extents[0]}) must be less "
-                                 f"than xmax ({self.extents[1]}).")
+                                 f"than xmax ({self.extents[2]}).")
             elif (self.extents[2] and self.extents[3]) is not None and self.extents[1] >= self.extents[3]:
-                raise ValueError(f"Error in provided crop coordinates: ymin ({self.extents[2]}) must be less "
+                raise ValueError(f"Error in provided crop coordinates: ymin ({self.extents[1]}) must be less "
                                  f"than ymax ({self.extents[3]}).")
             self.extents_are_pixel_coordinates = exb.get('pixel_coordinates', False)
         else:
