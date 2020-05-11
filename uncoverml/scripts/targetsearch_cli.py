@@ -59,6 +59,7 @@ def main(config_file, partitions):
     real_targets = ls.geoio.load_targets(
             shapefile=config.target_file, targetfield=config.target_property, 
             covariate_crs=ls.geoio.get_image_crs(config))
+    num_targets = ls.mpiops.count_targets(real_targets)
 
     REAL_TARGETS_LABEL = 'a_real'
     # Backup original observation values by storing in `fields`
@@ -66,7 +67,6 @@ def main(config_file, partitions):
     real_targets = ls.targets.label_targets(
         real_targets, REAL_TARGETS_LABEL, backup_field=ORIGINAL_OBSERVATIONS)
 
-    num_targets = ls.geoio.number_of_targets(config.target_file)
     # Get random sample of points from within prediction area.
     GEN_TARGETS_LABEL = 'b_generated'
     gen_targets = ls.targets.generate_dummy_targets(

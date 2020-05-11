@@ -304,25 +304,6 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
 
         return outfile
 
-def number_of_targets(filename):
-    """
-    Convenience function for getting number of targets in shapefile.
-    Useful for generating an equal number of points on the root 
-    processor when it only has a chunk of the real targets and so 
-    doesn't know how many targets there are.
-
-    Parameters
-    ----------
-    filename : str 
-        Path to targets shapefile.
-
-    Returns
-    -------
-    int 
-        Number of records in the shapefile.
-    """
-    sf = shapefile.Reader(filename)
-    return sf.numRecords
 
 def load_shapefile(filename, targetfield, covariate_crs, extents):
     """

@@ -46,8 +46,22 @@ def main(config_file, partitions):
 
     # Force algortihm - this is purely for debug log messages
     config.algorithm = 'logistic'
+    bounds = ls.geoio.get_image_bounds(config)
     if config.extents:
+        if config.extents_are_pixel_coordinates:
+            pw, ph = ls.geoio.get_image_pixel_res(config)
+            xmin, ymin, xmax, ymax = config.extents
+            xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
+            ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
+            xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
+            ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
+            target_extents = xmin, ymin, xmax, ymax
+        else:
+            target_extents = config.extents
         ls.geoio.crop_covariates(config)
+    else:
+        target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
+
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
         _logger.info("Memory constraint forcing {} iterations "
@@ -59,7 +73,7 @@ def main(config_file, partitions):
     real_targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=ls.geoio.get_image_crs(config),
-                                        extents=config.extents)
+                                        extents=target_extents)
     
     ls.mpiops.comm.barrier()
 
@@ -75,7 +89,7 @@ def main(config_file, partitions):
     else:
         bounds = ls.geoio.get_image_bounds(config)
         bounds = (bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1])
-        num_targets = ls.geoio.number_of_targets(config.target_file)
+        num_targets = ls.mpiops.count_targets(real_targets)
         targets = ls.targets.generate_covariate_shift_targets(real_targets, bounds, num_targets) 
                                                               
 
