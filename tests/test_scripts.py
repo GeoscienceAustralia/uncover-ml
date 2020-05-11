@@ -223,7 +223,7 @@ class TestShiftmap:
             test_img_ar = test_img.read()
             ref_img_ar = ref_img.read()
           
-        assert np.array_equal(test_img_ar, ref_img_ar)
+        assert np.allclose(test_img_ar, ref_img_ar)
 
 
 class TestLearnCommand:
