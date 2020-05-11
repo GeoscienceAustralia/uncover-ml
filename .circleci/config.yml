@@ -37,6 +37,12 @@ jobs:
            make coverage
            codecov
 
+      - run:
+          name: Run hardware tests
+          command: |
+              . venv/bin/activate
+              make hardware_test
+
       - run: 
          name: Deploy docs
          command: |
