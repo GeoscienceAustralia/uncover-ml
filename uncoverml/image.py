@@ -3,7 +3,7 @@ import logging
 
 from affine import Affine
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def construct_splits(npixels, nchunks, overlap=0):
@@ -31,16 +31,16 @@ class Image:
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
         if nchunks == 1 and overlap != 0:
-            log.warn("Ignoring overlap when 1 chunk present")
+            _logger.warn("Ignoring overlap when 1 chunk present")
             overlap = 0
 
         self.chunk_idx = chunk_idx
         self.nchunks = nchunks
         self.source = source
 
-        log.debug("Image has resolution {}".format(source.full_resolution))
-        log.debug("Image has datatype {}".format(source.dtype))
-        log.debug("Image missing value: {}".format(source.nodata_value))
+        _logger.debug("Image has resolution {}".format(source.full_resolution))
+        _logger.debug("Image has datatype {}".format(source.dtype))
+        _logger.debug("Image missing value: {}".format(source.nodata_value))
 
         self._full_res = source.full_resolution
         self._start_lon = source.origin_longitude
@@ -202,6 +202,7 @@ class Image:
 
         if (not all(np.logical_and(x >= 0, x < self.resolution[0]))) or \
                 (not all(np.logical_and(y >= 0, y < self.resolution[1]))):
+
             raise ValueError("Queried location is not in the image!")
 
         return result
