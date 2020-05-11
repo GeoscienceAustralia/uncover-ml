@@ -302,13 +302,6 @@ def sirsam_rf_out(sirsam_rf):
     return os.path.join(sirsam_rf, 'out')
 
 @pytest.fixture(scope='session')
-def sirsam_rf_tmp(sirsam_rf):
-    """
-    Path to SirSam random forest temp directory.
-    """
-    return os.path.join(sirsam_rf, 'results')
-
-@pytest.fixture(scope='session')
 def sirsam_rf_conf(sirsam_rf):
     """
     Path to SirSam random forest test config.
