@@ -252,22 +252,29 @@ def test_covariate_cropping(sirsam_covariate_paths):
     with rasterio.open(cov) as ref:
         ref_shape = ref.shape
 
-    crop_box = None, None, None, None
-    
-    out = geoio.crop_tif(cov, crop_box)
-    
     # Test that empty crop box results in no change
+    crop_box = None, None, None, None
+    out = geoio.crop_tif(cov, crop_box)
     with rasterio.open(out) as test:
         assert test.shape == ref.shape
     
     os.remove(out)
 
-    crop_box = 120.0, -28.0, 121.0, -27.0
-    
-    out = geoio.crop_tif(cov, crop_box)
-    
+    # Test pixel coordinates
+    crop_box = 0, 0, 10, 10
+    out = geoio.crop_tif(cov, crop_box, pixel_coordinates=True)
     with rasterio.open(out) as test:
-        assert test.shape == (1201, 1201)
+        assert test.shape == (10, 10)
+
+    os.remove(out)
+
+    # Test GIS coordinates
+    crop_box = 121.365, -27.4, 121.4, -27.45
+    out = geoio.crop_tif(cov, crop_box)
+    with rasterio.open(out) as test:
+        assert test.shape == (61, 43)
+
+    os.remove(out)
     
 def test_target_cropping(sirsam_target_path):
     crop_box = None, None, None, None
