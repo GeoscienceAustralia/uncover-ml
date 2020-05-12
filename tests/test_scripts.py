@@ -322,9 +322,16 @@ class TestLearnCommand:
             del tl[0]
             del pl[0]
             for t, p in zip(tl, pl):
-                t_ar = np.array([float(x) for x in t.split(',')])
-                p_ar = np.array([float(x) for x in p.split(',')])
-                assert np.allclose(t_ar, p_ar)
+                t_ar = []
+                p_ar = []
+                for x, y in zip(t.split(','), p.split(',')):
+                    assert type(x) == type(y)
+                    try:
+                        t_ar.append(float(x))
+                        p_ar.append(float(y))
+                    except ValueError:
+                        assert x == y
+            assert np.allclose(np.array(t_ar), np.array(p_ar))
 
     @staticmethod
     @pytest.fixture(params=SIRSAM_RF_JSON_OUTPUT)
