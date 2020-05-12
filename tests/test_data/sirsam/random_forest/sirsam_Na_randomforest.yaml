@@ -17,6 +17,7 @@ features:
 targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_log
+  write_to_csv: [SITEID]
 
 validation:
   feature_rank: True

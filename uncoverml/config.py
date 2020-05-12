@@ -492,6 +492,7 @@ class Config(object):
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
             self.target_weight_property = tb.get('weight_property')
+            self.fields_to_write_to_csv = tb.get('write_to_csv')
             self.shiftmap_targets = tb.get('shiftmap')
             rb = tb.get('resample')
             if rb:

@@ -122,15 +122,21 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     This function will also optionally output intersected covariates scatter
     plot and covariate correlation matrix plot.
     """
-    uid_field = 'index'
-    uid_on = uid_field in targets.fields
+    if config.fields_to_write_to_csv:
+        for f in config.fields_to_write_to_csv:
+            if f not in targets.fields:
+                raise ValueError(f"write_to_csv field '{f}' does not exist in shapefile records")
 
     transform_sets_mod = []
     cov_names = ['{}_{}'.format(b, basename(k))
                  for ec in feature_sets
                  for k in ec
                  for b in range(ec[k].shape[3])]
-    other_names = ['X', 'Y', 'target', uid_field, 'prediction']
+
+    other_names = ['X', 'Y', 'target', 'prediction']
+
+    if config.fields_to_write_to_csv:
+        other_names = config.fields_to_write_to_csv + other_names
 
     header = ','.join(cov_names + other_names)
     mask_header =','.join(cov_names)
@@ -150,31 +156,30 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     all_xy = mpiops.comm.gather(targets.positions, root=0)
     all_targets = mpiops.comm.gather(targets.observations, root=0)
 
-    if uid_on:
+    if config.fields_to_write_to_csv:
         if config.target_search:
             raise NotImplementedError(
-                "Can't use 'index' columns with target search feature at this time.")
-        all_idx = mpiops.comm.gather(targets.fields[uid_field])
+                "Can't write 'write_to_csv' columns with target search feature at this time.")
+        field_values = []
+        for f in config.fields_to_write_to_csv:
+            field_values.append(mpiops.comm.gather(targets.fields[f]))
 
     if mpiops.chunk_index == 0:
+        data = [x_all.data]
+        if config.fields_to_write_to_csv:
+            for f, v  in zip(config.fields_to_write_to_csv, field_values):
+                data.append(np.atleast_2d(np.ma.concatenate(v, axis=0)).T)
         all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
-        data = [x_all.data, xy, t]
-        if uid_on:
-            all_idx = np.ma.concatenate(all_idx, axis=0)
-            idx = np.atleast_2d(all_idx).T
-            data.append(idx)
-        else:
-            data.append(np.zeros(t.shape))
-
+        data += [xy, t]
         # Zeros for prediction values
         data.append(np.zeros(t.shape))
-        
         data = np.hstack(data)
+
         np.savetxt(config.raw_covariates,
-                   X=data, fmt='%f', delimiter=',', header=header, comments='')
+                   X=data, fmt='%s', delimiter=',', header=header, comments='')
         
         np.savetxt(config.raw_covariates_mask,
                    X=~x_all.mask.astype(bool), fmt='%f', delimiter=',', header=mask_header, 
