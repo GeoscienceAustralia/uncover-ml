@@ -1,4 +1,33 @@
+"""
+12-05-2020 15:50:35 AEST - brenainn.moushall@ga.gov.au
+
+Not 100% sure about this module. It appears to duplicate a lot of what
+uncoverml.models does. My assumption is it's to allow these models to
+work correctly with optimisation/gridsearchCV. However these models
+get used outside the optimisation process as well which is odd (the
+model map is imported in uncoverml.learn and they can be suppled in the 
+config). 
+
+Some models are almost the exact same - the difference being models 
+in here have baked-in sklearn default parameters, some of which have 
+changed over time, so the default parameters provided by sklearn in 
+uncoverml.models will produce discrepancies if the default parameters in 
+these models haven't been updated to match.
+
+Some models only exist in this module, such as Huber and XGBoost, and
+some models only exist in the uncoverml.models module.
+
+It's pretty confusing and also leads to doublehandling - if you want
+to modify some implementation of model functions, you have to do it in
+both of these modules.
+
+# TODO: work out why this module exists and if possible, refactor models
+back to single module, or at least refactor shared functionality into
+one place to eliminate doublehandling.
+"""
 import logging
+import inspect
+
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
@@ -31,7 +60,12 @@ class TransformMixin:
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
+        # Hack to check if we can apply sample weights
+        if 'sample_weight' in inspect.signature(super().fit).parameters.keys() \
+                and 'sample_weight' in kwargs.keys():
+            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        else:
+            return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
 
@@ -264,7 +298,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
 
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+    def __init__(self, kernel='rbf', degree=3, gamma='scale', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1,
                  target_transform='identity'):

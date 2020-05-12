@@ -491,6 +491,7 @@ class Config(object):
                                     "targets.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
+            self.target_weight_property = tb.get('weight_property')
             self.shiftmap_targets = tb.get('shiftmap')
             rb = tb.get('resample')
             if rb:

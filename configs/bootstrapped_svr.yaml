@@ -1,5 +1,5 @@
 learning:
-  # 'bootstrapsvr' is a wrapper around 'transformedsvr'
+  # 'bootstrapsvr' is a wrapper around 'svr'
   algorithm: bootstrapsvr
   arguments:
     target_transform: log
