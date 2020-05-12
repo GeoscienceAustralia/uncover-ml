@@ -451,6 +451,16 @@ class TestPredictCommand:
         return os.path.join(sirsam_rf_out, request.param)
     
     @staticmethod
+    @pytest.fixture(params=SIRSAM_PREDICTION_MAPS)
+    def sirsam_rf_comp_outputs(request, sirsam_rf_out, sirsam_rf_precomp_predict):
+        """
+        """
+        return (
+            os.path.join(sirsam_rf_out, request.param),
+            os.path.join(sirsam_rf_precomp_predict, request.param)
+        )
+
+    @staticmethod
     def test_output_exists(sirsam_rf_output):
         """
         Test that excepted outputs of 'predict' command exist after
@@ -458,3 +468,13 @@ class TestPredictCommand:
         """
         assert os.path.exists(sirsam_rf_output)
 
+    @staticmethod
+    def test_outputs_equal(sirsam_rf_comp_outputs): 
+        test = sirsam_rf_comp_outputs[0]
+        ref = sirsam_rf_comp_outputs[1]
+        
+        with rasterio.open(test) as test_img, rasterio.open(ref) as ref_img:
+            test_img_ar = test_img.read()
+            ref_img_ar = ref_img.read()
+          
+        assert np.allclose(test_img_ar, ref_img_ar)
