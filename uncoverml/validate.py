@@ -469,6 +469,10 @@ def local_crossval(x_all, targets_all, config):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
+        if config.target_weight_property:
+            y_k_weight = targets_all.fields[config.target_weight_property][train_mask]
+        else:
+            y_k_weight = None
         lon_lat_train = lon_lat[train_mask]
         lon_lat_test = lon_lat[test_mask]
 
@@ -480,7 +484,8 @@ def local_crossval(x_all, targets_all, config):
         # Train on this fold
         x_train = x_all[train_mask]
         apply_multiple_masked(model.fit, data=(x_train, y_k_train), fields=fields_train,
-                              lon_lat=lon_lat_train)
+                              lon_lat=lon_lat_train, 
+                              sample_weight=y_k_weight)
 
         # Testing
         if not config.parallel_validate and mpiops.chunk_index != 0:

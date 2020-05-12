@@ -25,7 +25,7 @@ Extremely Randomized Reg.   \+ \+ \+              \+ \+ \+ \+         \+ \+     
 Decision Tree Regression    \+ \+ \+              \+ \+ \+            \+ \+ \+ \+       No
 ==========================  ====================  ==================  ================  =============
 """
-
+import inspect
 import os
 import pickle
 import warnings
@@ -716,8 +716,12 @@ def transform_targets(Regressor):
 
             self.target_transform.fit(y)
             y_t = self.target_transform.transform(y)
-
-            return super().fit(X, y_t)
+            # Hack to check if we can apply sample weights
+            if 'sample_weight' in inspect.signature(super().fit).parameters.keys() \
+                    and 'sample_weight' in kwargs.keys():
+                return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+            else:
+                return super().fit(X, y_t)
 
         def _notransform_predict(self, X, *args, **kwargs):
             Ey = super().predict(X)
