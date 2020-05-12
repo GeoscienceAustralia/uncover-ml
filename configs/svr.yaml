@@ -1,0 +1,31 @@
+learning:
+  algorithm: transformedsvr
+  arguments:
+    target_transform: log
+
+validation:
+  k-fold:
+    folds: 5
+    parallel: True
+    random_seed: 1
+
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: /home/bren/data_uncoverml/weighted_sirsam/sirsam_weighted.shp
+  property: Na_ppm_imp
+  weight_property: weight
+
+prediction:
+  quantiles: 0.95
+  outbands: 4
+
+output:
+  directory: ./svr_out
