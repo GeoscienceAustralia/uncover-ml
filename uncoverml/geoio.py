@@ -359,11 +359,17 @@ def load_shapefile(filename, targetfield, covariate_crs, extents):
     if src_prj and dst_prj:
         label_coords = np.array([coord for coord in pyproj.itransform(src_prj, dst_prj, 
                                                                       label_coords, always_xy=True)])
+    # Create a filter for points that aren't inside image bounds
     if extents:
         def _in_extents(coord):
             return extents[0] <= coord[0] <= extents[2] \
                     and extents[1] <= coord[1] <= extents[3]
-        label_coords = np.array([coord for coord in label_coords if _in_extents(coord)])
+        in_image = np.array([_in_extents(coord) for coord in label_coords])
+        label_coords = label_coords[in_image]
+        val = val[in_image]
+        for k, v in othervals.items():
+            othervals[k] = v[in_image]
+    
     return label_coords, val, othervals
 
 
@@ -374,10 +380,10 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     """
     if mpiops.chunk_index == 0:
         lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, extents)
-        # sort by y then x
+        # Sort by Y,X 
         ordind = np.lexsort(lonlat.T)
-        vals = vals[ordind]
         lonlat = lonlat[ordind]
+        vals = vals[ordind]
         for k, v in othervals.items():
             othervals[k] = v[ordind]
     else: 
