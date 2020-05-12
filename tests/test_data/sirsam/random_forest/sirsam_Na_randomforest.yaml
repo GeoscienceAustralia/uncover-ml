@@ -1,5 +1,5 @@
 learning:
-  algorithm: multirandomforest
+  algorithm: randomforest
   arguments:
     n_estimators: 10
     target_transform: log

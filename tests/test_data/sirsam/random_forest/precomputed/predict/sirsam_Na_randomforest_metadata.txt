@@ -1,0 +1,112 @@
+# Metadata Profile for the Prediction Results
+
+############ Software Environment ###########
+
+Creator = bren 
+Computer = ubuntu 
+ML Algorithm = randomforest 
+Version = 0.3.1
+Datetime = 2020-05-12 16:21:21 
+
+
+############ Performance Matrics ###########
+
+
+
+############ Configuration ###########
+
+uncoverml.config.Config(
+  _tmpdir = None, 
+  algorithm = 'randomforest', 
+  bootstrap = False, 
+  bootstrap_predictions = None, 
+  cluster_analysis = False, 
+  clustering = False, 
+  cross_validate = True, 
+  crossval_results_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_crossval_results.csv', 
+  crossval_results_plot = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_crossval_results.png', 
+  crossval_scores_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_crossval_scores.json', 
+  crossval_seed = 1, 
+  cubist = False, 
+  dropped_targets_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_dropped_targets.txt', 
+  extents = None, 
+  feature_ranks_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_featureranks.json', 
+  feature_sets = [
+      uncoverml.config.FeatureSetConfig(
+        files = [
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/Clim_Prescott_LindaGregory.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/dem_foc2.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/er_depg.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/gg_clip.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/k_15v5.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/tpi_300.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/U_15v1.tif', 
+            '/home/bren/uncoverml/tests/test_data/sirsam/covariates/U_TH_15.tif'
+          ], 
+        transform_set = uncoverml.transforms.transformset.ImageTransformSet(global_transforms = [...], image_transforms = [...], imputer = uncoverml.transforms.impute.MeanImputer(...), is_categorical = False), 
+        type = 'ordinal'
+      )
+    ], 
+  final_transform = None, 
+  folds = 5, 
+  geotif_options = {}, 
+  krige = False, 
+  lon_lat = None, 
+  mask = None, 
+  metadata_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_metadata.txt', 
+  model_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model', 
+  multicubist = False, 
+  multirandomforest = False, 
+  n_subchunks = 1, 
+  name = 'sirsam_Na_randomforest', 
+  optimisation = None, 
+  optimisation_results_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_optimisation.csv', 
+  outbands = 10, 
+  output_dir = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout', 
+  parallel_validate = True, 
+  patchsize = 0, 
+  permutation_importance = False, 
+  pk_covariates = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/out/features.pk', 
+  pk_load = True, 
+  pk_targets = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/out/targets.pk', 
+  plot_correlation = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_correlation.png', 
+  plot_feature_rank_curves = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_featurerank_curves.png', 
+  plot_feature_ranks = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_featureranks.png', 
+  plot_intersection = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_intersected.png', 
+  plot_real_vs_pred = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_real_vs_pred.png', 
+  plot_residual = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_residual.png', 
+  plot_target_scaling = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_target_scaling.png', 
+  prediction_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_{}.tif', 
+  quantiles = 0.95, 
+  rank_features = False, 
+  raw_covariates = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_rawcovariates.csv', 
+  raw_covariates_mask = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_rawcovariates_mask.csv', 
+  resampled_shapefile_dir = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/{}_resampled', 
+  shiftmap_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_shiftmap_{}.tif', 
+  shiftmap_points = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_shiftmap_generated_points.csv', 
+  shiftmap_targets = None, 
+  target_file = '/home/bren/uncoverml/tests/test_data/sirsam/targets/geochem_sites_log.shp', 
+  target_property = 'Na_log', 
+  target_search = False, 
+  target_weight_property = None, 
+  targetsearch_generated_points = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_targetsearch_generated_points.csv', 
+  targetsearch_likelihood = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_targetsearch_likelihood.csv', 
+  targetsearch_result_data = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_targetsearch_result.pk', 
+  thumbnails = 10, 
+  tmpdir = '/tmp/tmpx1nly3rr', 
+  transformed_targets_file = '/home/bren/uncoverml/tests/test_data/sirsam/random_forest/predout/sirsam_Na_randomforest_transformed_targets.csv', 
+  yaml_loader = <class 'yaml.loader.SafeLoader'>
+)
+
+############ Model ###########
+
+uncoverml.models.RandomForestTransformed(
+  _abc_impl = _abc_data(), 
+  _estimator_type = 'regressor', 
+  ..., 
+  verbose = 0, 
+  warm_start = False
+)
+
+############ The End of Metadata ###########
+
