@@ -391,13 +391,13 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     with open(path) as f:
         header = f.readline().strip().split(',')
         covs = [h.replace('.tif', '') for h in header if h.endswith('.tif')]
-        data = np.loadtxt(f, delimiter=',', skiprows=1)
+        data = np.loadtxt(f, delimiter=',', skiprows=1, dtype='<U254')
 
     rows = math.ceil(len(covs) / cols)
     figsize = cols * subplot_width, rows * subplot_height
     fig, axs = plt.subplots(ncols=cols, nrows=rows, figsize=figsize)
 
-    targets = data[:,header.index('target')]
+    targets = data[:,header.index('target')].astype(float)
     for i, cov in enumerate(covs):
         if cols == 1 or rows == 1:
             ind = i
@@ -406,7 +406,7 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
             y = i - cols * x
             ind = x, y
         axs[ind].set(xlabel='Target', ylabel='Covariate')
-        axs[ind].scatter(targets, data[:,i])
+        axs[ind].scatter(targets, data[:,i].astype(float))
         axs[ind].set_title(cov)
 
     fig.suptitle('Covariate-Target Intersection', x=0.52, y=1.01, fontsize=16)

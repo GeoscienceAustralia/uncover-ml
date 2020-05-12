@@ -22,10 +22,16 @@ targets:
   file: /home/bren/data_uncoverml/weighted_sirsam/sirsam_weighted.shp
   property: Na_ppm_imp
   weight_property: weight
+  write_to_csv: [LITHNAME, weight, SITEID]
 
 prediction:
   quantiles: 0.95
   outbands: 4
 
 output:
+  plot_feature_ranks: True
+  plot_intersection: True
+  plot_real_vs_pred: True
+  plot_correlation: True
+  plot_target_scaling: True
   directory: ./svr_out
