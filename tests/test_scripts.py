@@ -349,7 +349,16 @@ class TestLearnCommand:
         with open(sirsam_rf_json_outputs[0]) as tf, open(sirsam_rf_json_outputs[1]) as pf:
             test_json = json.load(tf)
             precomp_json = json.load(pf)
-        assert test_json == precomp_json
+            print(type(test_json))
+        for (tk, tv), (pk, pv) in zip(test_json.items(), precomp_json.items()):
+            print(type(tv), type(pv))
+            assert type(tv) == type(pv)
+            if type(tv) == str:
+                assert tv == pv
+            elif type(tv) == dict:
+                assert tv == pv
+            else:
+                assert np.allclose(np.array(float(tv)), np.array(float(pv)))
 
     @classmethod
     def test_model_outputs_match(cls, sirsam_rf_out, sirsam_rf_precomp_learn):
