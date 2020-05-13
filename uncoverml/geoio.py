@@ -254,8 +254,8 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
                     raise ValueError(f"Crop coordinate '{s}' ({crop_bnd}) is out of bounds of image"
                                      f" ({src_bnd})")
                 else:
-                    _logger.info(f":mpi:Crop coordinate '{s}' ({crop_bnd}) is out of bounds of "
-                                 f" image ({src_bnd}). Leaving bound as is.")
+                    _logger.info(f":mpi:Crop coordinate '{s}' ({crop_bnd}) is out of bounds or "
+                                 f"same as image ({src_bnd}). Leaving bound as is.")
                     return src_bnd
             else:
                 return crop_bnd
@@ -268,10 +268,10 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
         else:
             src_xmin, src_ymin, src_xmax, src_ymax = src.bounds
 
-        xmin = _check_bound(xmin < src_xmin, xmin, src_xmin, 'xmin')
-        ymin = _check_bound(ymin < src_ymin, ymin, src_ymin, 'ymin')
-        xmax = _check_bound(xmax > src_xmax, xmax, src_xmax, 'xmax')
-        ymax = _check_bound(ymax > src_ymax, ymax, src_ymax, 'ymax')
+        xmin = _check_bound(xmin <= src_xmin, xmin, src_xmin, 'xmin')
+        ymin = _check_bound(ymin <= src_ymin, ymin, src_ymin, 'ymin')
+        xmax = _check_bound(xmax >= src_xmax, xmax, src_xmax, 'xmax')
+        ymax = _check_bound(ymax >= src_ymax, ymax, src_ymax, 'ymax')
         if pixel_coordinates:
             rw, rh = src.res
             xmin = xmin * rw + src.bounds[0] 
