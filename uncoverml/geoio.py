@@ -268,11 +268,10 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
         else:
             src_xmin, src_ymin, src_xmax, src_ymax = src.bounds
 
-        _check_bound(xmin < src_xmin, xmin, src_xmin, 'xmin')
-        _check_bound(ymin < src_ymin, ymin, src_ymin, 'ymin')
-        _check_bound(xmax > src_xmax, xmax, src_xmax, 'xmax')
-        _check_bound(ymax > src_ymax, ymax, src_ymax, 'ymax')
-
+        xmin = _check_bound(xmin < src_xmin, xmin, src_xmin, 'xmin')
+        ymin = _check_bound(ymin < src_ymin, ymin, src_ymin, 'ymin')
+        xmax = _check_bound(xmax > src_xmax, xmax, src_xmax, 'xmax')
+        ymax = _check_bound(ymax > src_ymax, ymax, src_ymax, 'ymax')
         if pixel_coordinates:
             rw, rh = src.res
             xmin = xmin * rw + src.bounds[0] 
