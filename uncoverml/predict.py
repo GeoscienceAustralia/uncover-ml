@@ -56,18 +56,10 @@ def predict(data, model, interval=0.95, **kwargs):
     return result
 
 
-def _mask(subchunk, config):
-    extracted_mask = mask_subchunks(subchunk, config)
-    mask_x = extracted_mask.reshape(extracted_mask.shape[0], 1)
-    mask_x.mask = mask_x.data != config.retain
-    return mask_x
-
-
-def mask_subchunks(subchunk, config):
+def _load_mask(subchunk, config):
     image_source = geoio.RasterioImageSource(config.mask)
-    result = features.extract_subchunks(image_source, subchunk,
-                                        config.n_subchunks, config.patchsize)
-    return result
+    return features.extract_subchunks(image_source, subchunk,
+                                      config.n_subchunks, config.patchsize)
 
 
 def _fix_for_corrupt_data(x, feature_names):
@@ -134,32 +126,20 @@ def _fix_for_corrupt_data(x, feature_names):
 
 
 def _get_data(subchunk, config):
-    features_names = geoio.feature_names(config)
-
     # NOTE: This returns an *untransformed* x,
     # which is ok as we just need dummies here
-    if config.mask:
-        mask_x = _mask(subchunk, config)
-        all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
-        if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
-            x = np.ma.zeros((mask_x.shape[0], len(features_names)),
-                            dtype=np.bool)
-            x.mask = True
-            _logger.info('Partition {} covariates are not loaded as '
-                     'the partition is entirely masked.'.format(subchunk + 1))
-            return x, features_names
-
     transform_sets = [k.transform_set for k in config.feature_sets]
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     _logger.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets,
                                     config.final_transform, config)[0]
-
+    features_names = geoio.feature_names(config)
     # only check/correct float32 conversion for Ensemble models
     if not config.clustering:
         if (isinstance(modelmaps[config.algorithm](), BaseEnsemble) or
                 config.multirandomforest):
             x = _fix_for_corrupt_data(x, features_names)
+
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -181,19 +161,29 @@ def _get_lon_lat(subchunk, config):
 
 def _mask_rows(x, subchunk, config):
     if config.mask:
-        mask_source = geoio.RasterioImageSource(config.mask)
-        mask_data = features.extract_subchunks(mask_source, subchunk,
-                                               config.n_subchunks,
-                                               config.patchsize)
-        mask_data = mask_data.reshape(mask_data.shape[0], 1)
-        mask_x = mask_data.data[:, 0] != config.retain
-        _logger.info('Areas with mask={} will be predicted'.format(config.retain))
-
-        assert x.shape[0] == mask_x.shape[0], 'shape mismatch of ' \
-                                              'mask and inputs'
-        mask = np.tile(mask_x, (x.shape[1], 1)).T
-        x.mask += mask
-
+        mask = _load_mask(subchunk, config)
+        mask = mask.reshape(mask.shape[0], 1)
+        mask.mask = mask.data != config.retain
+        all_mask = np.ma.vstack(mpiops.comm.allgather(mask))
+        if all(all_mask.mask):
+            x = np.ma.zeros((x.shape[0], len(geoio.feature_names(config))),
+                            dtype=np.bool)
+            x.mask = True
+            _logger.info('Partition {} covariates are not loaded as '
+                     'the partition is entirely masked.'.format(subchunk + 1))
+            return x
+        else:
+            _logger.info('Areas with mask={} will be predicted'.format(config.retain))
+            mask_x = mask.data[:, 0] != config.retain
+            if x.shape[0] != mask.shape[0]:
+                raise ValueError(
+                    f"Covariate images and provided mask are different sizes (mask shape axis 0: "
+                    f"{mask.shape[0]}, image shape axis 0: {x.shape[0]}). Solutions: disable the "
+                    f"mask by removing it from the config, or provide a mask that fits the images, "
+                    f"or use the cropping 'extents' parameter to crop all data to the smaller of "
+                    f"the mask or image size."
+                )
+            x.mask += np.tile(mask_x, (x.shape[1], 1)).T
     return x
 
 
