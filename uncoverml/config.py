@@ -414,6 +414,8 @@ class Config(object):
             self.cluster_analysis = False
             self.target_search = learn_block.get('target_search', False)
             self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
+            tsexb = learn_block.get('target_search_extents')
+            self.targetsearch_extents, self.tse_are_pixel_coordinates = Config.parse_extents(tsexb)
             self.algorithm = _grp(learn_block, 'algorithm',
                                   "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = learn_block.get('arguments', {})
@@ -429,21 +431,7 @@ class Config(object):
         
         # EXTENTS
         exb = s.get('extents')
-        if exb:
-            self.extents = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
-            if all(x is None for x in self.extents): 
-                _logger.warning("'extents' block was specified but no coordinates or pixel values "
-                                "were given. Cropping will not be performed.")
-
-            if (self.extents[0] and self.extents[1])  is not None and self.extents[0] >= self.extents[2]:
-                raise ValueError(f"Error in provided crop coordinates: xmin ({self.extents[0]}) must be less "
-                                 f"than xmax ({self.extents[2]}).")
-            elif (self.extents[2] and self.extents[3]) is not None and self.extents[1] >= self.extents[3]:
-                raise ValueError(f"Error in provided crop coordinates: ymin ({self.extents[1]}) must be less "
-                                 f"than ymax ({self.extents[3]}).")
-            self.extents_are_pixel_coordinates = exb.get('pixel_coordinates', False)
-        else:
-            self.extents = None
+        self.extents, self.extents_are_pixel_coordinates = Config.parse_extents(exb)
 
         _logger.debug("loaded crop box %s", self.extents)
 
@@ -640,6 +628,26 @@ class Config(object):
                 makedirs(p, exist_ok=True)
 
         self._tmpdir = None
+
+    @staticmethod
+    def parse_extents(exb):
+        if exb is not None:
+            extents = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
+            if all(x is None for x in extents): 
+                _logger.warning("'extents' block was specified but no coordinates or pixel values "
+                                "were given. Cropping will not be performed.")
+
+            if (extents[0] and extents[1])  is not None and extents[0] > extents[2]:
+                raise ValueError(f"Error in provided crop coordinates: xmin ({extents[0]}) must be less "
+                                 f"than xmax ({extents[2]}).")
+            elif (extents[2] and extents[3]) is not None and extents[1] > extents[3]:
+                raise ValueError(f"Error in provided crop coordinates: ymin ({extents[1]}) must be less "
+                                 f"than ymax ({extents[3]}).")
+            extents_are_pixel_coordinates = exb.get('pixel_coordinates', False)
+            return extents, extents_are_pixel_coordinates
+        else:
+            return None, None
+
 
     @property
     def tmpdir(self):
