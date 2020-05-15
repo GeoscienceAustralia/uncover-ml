@@ -472,7 +472,7 @@ class Config(object):
         self.patchsize = 0
         
         # TARGET BLOCK
-        if not clustering:
+        if not predicting and not clustering:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "

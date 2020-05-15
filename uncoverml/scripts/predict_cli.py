@@ -41,6 +41,10 @@ def _algo_for_model(model, config):
     """
     Work out the algorithm for the model we have.
     """
+    if isinstance(model, ls.cluster.KMeans):
+        _logger.info("Model algorithm detected as 'kmeans'")
+        config.clustering = True
+        return
     for k, v in all_modelmaps.items():
         if isinstance(model, v):
             config.algorithm = k
