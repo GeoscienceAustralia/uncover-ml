@@ -1,0 +1,19 @@
+clustering:
+  n_classes: 5
+  oversample_factor: 5
+
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+        - standardise
+    imputation: mean
+
+prediction:
+  outbands: 5
+  quantiles: 0.95
+
+output:
+  directory: ./clustering_out
+
