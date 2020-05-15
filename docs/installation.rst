@@ -159,6 +159,12 @@ Once these are done, you can install UncoverML with pip:
 
 .. code:: bash
 
+    pip install .
+
+On the VDI you may have to use ``setup.py`` to install:
+
+.. code:: bash
+
     python setup.py install
 
 To ensure the installation has been successful, try running UncoverML against the test data
@@ -180,14 +186,4 @@ When you are finished using UncoverML, don't forget to deactivate your virtual e
 .. code:: bash
 
     deactivate
-
-Reusing Shared Virtualenv
-+++++++++++++++++++++++++
-
-An alternative to the above installation is to activate the shared UncoverML virtual environment. 
-On Raijin, activate by running:
-
-.. code:: bash
-
-    source /g/data/ge3/john/uncover-ml/create_uncoverml_env.sh
 
