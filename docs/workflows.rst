@@ -4,10 +4,10 @@ Workflows
 UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different 
 workflows, the required configuration, uncoverml commands and the
-produced outputs.
+produced outputs
 
-In `uncover-ml/configs` directory, there some example YAML files to help 
-you get started.
+There some example YAML files in the *uncover-ml/configs* directory
+to help you get started.
 
 .. _learn_and_predict:
 
@@ -346,6 +346,7 @@ To generate a real vs. prediction plot, ``k-fold`` must be enabled
 under the ``validation`` block of the config, and ``plot_real_vs_pred``
 must be set to ``True``.
 
+.. _Multiprocessing and Paritioning:
 
 Multiprocessing and Partitioning
 --------------------------------
@@ -417,7 +418,7 @@ For example:
 
 This command will split the feature data into 48 even chunks and
 distribute it amongst the CPUs. Each chunk will then be split into 
-5 partitions (the ``-p 5``) parameter and loaded, predicted on and 
+5 partitions (the ``-p 5`` parameter) and loaded, predicted on and 
 written out sequentially, reducing memory usage.
 
 Optimisation
@@ -455,8 +456,7 @@ An example config for performing optimisation on
 
   - ``r2``, ``expar``, ``smse`` and ``lins_ccc`` are the availble
   regression model parameters. 
-  - For classification, ``accuracy``, ``log_loss`` and ``auc`` are 
-    also applicable.
+  - ``accuracy``, ``log_loss`` and ``auc`` are applicable to classifers.
 
 - ``hyperparameters``: contains lists of values for various algorithm
   parameters - view the documentation for the algorithm to know 
@@ -520,14 +520,14 @@ extra parameters. To run:
 
 Covariate shiftmaps will be written to the output directory:
 
-- shiftmap_generated_points.csv: a table of the randomly generated
+- ``shiftmap_generated_points.csv``: a table of the randomly generated
   points which can be used for validation and debugging.
-- shiftmap_query_0.tif: a map showing the likelihood of each pixel
+- ``shiftmap_query_0.tif``: a map showing the likelihood of each pixel
   beloning to the 'query' class. Areas of uncertainty (0.4 - 0.6 for
   example) are areas with similar distributions to the training data.
-- shiftmap_training_1.tif: same as above but inverted; shows the 
+- ``shiftmap_training_1.tif``: same as above but inverted; shows the 
   likelihood of each pixel belonging to the training class.
-- most_likely.tif: a map showing which class each pixel is most 
+- ``most_likely.tif``: a map showing which class each pixel is most 
   likely to belong. This can be ignored as it does not help demonstrate
   the covariate shift, but is left for debugging purposes.
 
@@ -567,11 +567,11 @@ block of the config:
         n_estimators: 10
         target_transform: log
 
-- target_search: a boolean of whether or not to use targetsearch
+- ``target_search``: a boolean of whether or not to use targetsearch
 - target_search_threshold: the likelihood threshold a training point
   must surpass to be included in found points (i.e. how similar a 
   training points feature distribution is to the study area)
-- target_search_extents: extents defining the study area. Target search
+- ``target_search_extents``: extents defining the study area. Target search
   will select points from the training targets that have a similar 
   feature distribution to this study area.
 
@@ -586,11 +586,11 @@ To select and return the targets, first run ``targetsearch``:
 
 In the output directory, there are three files:
 
-- targetsearch_generated_points.csv: a list of points that were randomly
+- ``targetsearch_generated_points.csv``: a list of points that were randomly
   generated in the study area, used for validation and debugging.
-- targetsearch_likelihood: the likelihood of each training target 
+- ``targetsearch_likelihood``: the likelihood of each training target 
   belonging to the study area
-- targetsearch_result.pk: a Python binary file containing the training
+- ``targetsearch_result.pk``: a Python binary file containing the training
   targets that have surpassed the ``target_search_threshold``.
 
 Once the targets have been selected, they can be used in training a 
@@ -629,11 +629,11 @@ Cropping is performed by providing the ``extents`` block in the config:
       xmax: 121
       ymax: -21
 
-- pixel_coordinates: boolean indicating wheter to treat the given crop
+- ``pixel_coordinates``: boolean indicating wheter to treat the given crop
   coordinates as pixels (True) or as coordinates in the CRS used by 
   the covariate geotiffs (False). If using pixel coordinates, these
   start at 0 and extend to the width and height of the image, inclusive.
-- xmin, ymin, xmax, ymax: coordinates of the crop box. If not provided 
+- ``xmin``, ``ymin``, ``xmax``, ``ymax``: coordinates of the crop box. If not provided 
   or out of bounds of the covariate images, then the default bound of 
   the covariate bounds is used respectively.
 
@@ -652,7 +652,7 @@ This is very useful for speeding up jobs or in situations where the
 data is too large for memory. It's also convenient when providing 
 covariates of different sizes. UncoverML doesn't support this, but by
 setting the extents as the smallest intersecting area of the covariates,
-a homogenous stack of feature data can be generated and used for 
+an intersecting stack of feature data can be generated and used for 
 training and prediction.
 
 Using cropping to perform parallel predictions
@@ -679,8 +679,8 @@ multiple prediction configs, each one predicting on a chunk of the data:
     directory: path/to/output/directory
 
 Repeat this, providing the extents for each chunk until the whole
-dataset is covered by a config file. Once you have ``chunk1.yaml``,
-``chunk2.yaml`` etc., submit them as individual prediction jobs:
+dataset is covered. Once you have ``chunk1.yaml``, ``chunk2.yaml`` 
+etc., submit them as individual prediction jobs:
 
 .. code:: bash
 
@@ -744,14 +744,138 @@ belong to.
 Weighted Samples
 ----------------
 
+Some models support a ``sample_weight`` parameter. Look at the 
+documentation of the ``fit`` method for the selected algorithm 
+to see if this is available.
+
+Sample weights can be provided by creating a weight field in your
+target shapefile. Weights are integer values that signify the relative
+importance of a sample. Weights of 0 mean the sample will be excluded
+entirely.
+
+Config
+~~~~~~
+
+Weights are applied by providing the name of the weight field to the 
+``targets`` block.
+
+.. code:: yaml
+
+    targets:
+      file: path/to/targets/shapefile.shp
+      property: training_field
+      weight_property: weight_field
+
+Running
+~~~~~~~
+
+Run learning as normal:
+
+.. code:: bash
+
+    uncoverml learn config.yaml
+
+There will be a log info message stating *'Sample weights are being 
+provided to fit method'* when the model is trained. If the model does
+not support sample weights, then there will be a log info message 
+*'Model does not support sample weights, weights are being ignored'* and
+unweighted training will continue.
+
 Prediction Mask
 ---------------
+
+A crop mask can be provided when performing predictions. This mask will
+cause prediction to only predict and write values that have a certain
+mask value. This is useful for masking out no data areas such as the 
+ocean, or limiting predictions to an area of interest to increase
+performance.
+
+The geotiff must be the same size as the provided covariates. Cropping
+also applies to prediction masks.
+
+Config
+~~~~~~
+
+To supply a mask, add the ``mask`` block to your config:
+
+.. code:: yaml
+
+    mask:
+      file: path/to/mask.tif
+      retain: 1
+
+- ``file``: path to the mask geotiff
+- ``retain``: value in the mask denoting which pixels to predict
+
+Running
+~~~~~~~
+
+Run prediction as normal:
+
+.. code:: bash
+    
+    uncoverml predict config.yaml
 
 Adding fields to output table
 -----------------------------
 
+Any field in the target shapefile can be written to the ``rawcovariates.csv``
+output table. This can be helpful for validation and debugging, e.g.
+including the type or category of the sample in the results.
+
+Config
+~~~~~~
+
+To include fields in the output table, add the ``write_to_csv``
+parameter to your ``targets`` block:
+
+.. code:: yaml
+
+    targets:
+      file: path/to/targets/shapefile.shp
+      property: training_field
+      write_to_csv: [type, site_id]
+
+- ``write_to_csv``: list of names of shapefile fields to include in 
+  the ``rawcovariates.csv`` output table.
+
+Running
+~~~~~~~
+
+Run ``learn`` as normal and the fields will be included in the output
+table:
+
+.. code:: bash
+
+    uncoverml learn config.yaml
+
 Covariate Diagnostics
 ---------------------
 
+UncoverML includes a ``covdiag`` command for convenience. This will
+output some basic diagnostics for your covariates.
 
+Running
+~~~~~~~
+
+Covdiag can be run on a single covariate:
+
+.. code:: bash
+
+    uncoverml covdiag path/to/tif
+
+
+Or on a directory. Adding ``-r`` flag will explore the directory
+recursively, outputting diagnostics for all tiffs in all subdirectories.
+
+.. code:: bash 
+
+    uncoverml covdiag path/to/covariate/directory -r 
+
+By default, output is delivered to the console. To save to a textfile,
+use output redirection:
+
+.. code:: bash
+
+    uncoverml covdiag /path/to/covariate/directory >> output.txt
 
