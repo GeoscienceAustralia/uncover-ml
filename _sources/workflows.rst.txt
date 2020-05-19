@@ -468,7 +468,7 @@ An example config for performing optimisation on
   combinations. 
 
   - ``r2``, ``expar``, ``smse`` and ``lins_ccc`` are the availble
-  regression model parameters. 
+    regression model parameters. 
   - ``accuracy``, ``log_loss`` and ``auc`` are applicable to classifers.
 
 - ``hyperparameters``: contains lists of values for various algorithm
