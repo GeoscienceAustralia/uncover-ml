@@ -1003,7 +1003,7 @@ class RandomForestClassifier(encode_targets(RFC), TagsMixin):
     """
     Random Forest for muli-class classification.
 
-    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
     """
     pass
 

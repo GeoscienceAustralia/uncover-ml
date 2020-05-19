@@ -293,6 +293,8 @@ ensemble of SVR models predicting on bootstrapped (resampled) data.
   - If ``parallel`` is True, this model can be trained using multiple processors.
     See :ref:`Multiprocessing and Partitioning`.
 
+.. _optimisable-models:
+
 Random Forest (Optimisable)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
