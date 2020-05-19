@@ -89,7 +89,7 @@ Stochastic Gradient Descent Bayes Regression/Standard Linear Model
 
 **Documentation and parameters:**
 
-- `NICA Revrand <http://nicta.github.io/revrand/glm.html>`_
+- `NICTA Revrand <http://nicta.github.io/revrand/glm.html>`_
 - :class:`uncoverml.models.SGDLinearReg`
 
 **Additional parameters:**
@@ -220,7 +220,7 @@ Cubist
 **Documentation and parameters:**
 
 - `Rule-Quest <https://www.rulequest.com/cubist-info.html>`_
-- :class:`uncoverml.cubst.Cubist`
+- :class:`uncoverml.cubist.Cubist`
 
 **Additional parameters:**
 
@@ -238,7 +238,7 @@ Multi Cubist
 **Documentation and parameters:**
 
 - `Rule-Quest <https://www.rulequest.com/cubist-info.html>`_
-- :class:`uncoverml.cubst.MultiCubist`
+- :class:`uncoverml.cubist.MultiCubist`
 
 **Additional parameters:**
 
