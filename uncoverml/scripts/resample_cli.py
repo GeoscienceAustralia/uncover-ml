@@ -43,3 +43,4 @@ def main(config_file, validation=False, validation_points=100):
 
     gdf.to_file(output_shapefile)
 
+    _logger.info("Resampling complete. Resampled targets saved to '{}'".format(output_shapefile))

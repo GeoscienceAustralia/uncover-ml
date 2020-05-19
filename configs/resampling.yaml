@@ -2,14 +2,15 @@ targets:
   file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
   property: Na_ppm_imp
   resample:
-    spatial:
-      rows: 10
-      cols: 10
-      bootstrap: False
+      #spatial:
+      #  rows: 10
+      #  cols: 10
+      #  bootstrap: False
     value:
-      bins: 10
+      bins: 3
       bootstrap: True
-
+      output_samples: 1000
+      interval: linear #percentile
 
 output:
   directory: ./resampling_out

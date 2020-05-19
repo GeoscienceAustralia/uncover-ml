@@ -60,7 +60,7 @@ def filter_fields(fields_to_keep, gdf):
     return gdf_out
 
 
-def resample_by_magnitude(input_data, target_field, bins=10,
+def resample_by_magnitude(input_data, target_field, bins=10, interval='percentile',
                           fields_to_keep=[], bootstrap=True, output_samples=None,
                           validation=False, validation_points=100):
     """
@@ -94,17 +94,24 @@ def resample_by_magnitude(input_data, target_field, bins=10,
         raise ValueError('bootstrapping should not be use while'
                          'creating a validation shapefile.')
 
+    if interval not in ['percentile', 'linear']:
+        _logger.warning("Interval method '{}' not recognised, defaulting to 'percentile'"
+                        .format(interval))
+        interval = 'percentile'
+
     if len(fields_to_keep):
         fields_to_keep.append(target_field)
     else:
         fields_to_keep = [target_field]
     gdf_out = prepapre_dataframe(input_data, fields_to_keep)
-
     # the idea is stolen from pandas.qcut
     # pd.qcut does not work for cases when it result in non-unique bin edges
     target = gdf_out[target_field].values
-    bin_edges = algos.quantile(
-        np.unique(target), np.linspace(0, 1, bins+1))
+    if interval == 'percentile':
+        bin_edges = algos.quantile(
+            np.unique(target), np.linspace(0, 1, bins+1))
+    elif interval == 'linear':
+        bin_edges = np.linspace(np.min(target), np.max(target), bins + 1)
     result = pd.core.reshape.tile._bins_to_cuts(target, bin_edges,
                                          labels=False,
                                          include_lowest=True)
