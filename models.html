@@ -1,0 +1,785 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Models &mdash; UncoverML 0.3.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UncoverML Project Report (NICTA)" href="projectreport.html" />
+    <link rel="prev" title="Workflows" href="workflows.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> UncoverML
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#regressors">Regressors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#random-forest">Random Forest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-random-forest">Multi Random Forest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bayes-regression-standard-linear-model">Bayes Regression/Standard Linear Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stochastic-gradient-descent-bayes-regression-standard-linear-model">Stochastic Gradient Descent Bayes Regression/Standard Linear Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#approximate-gaussian-process">Approximate Gaussian Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stochastic-gradient-descent-approximate-gaussian-process">Stochastic Gradient Descent Approximate Gaussian Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#support-vector-regression">Support Vector Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#automatic-relevance-determination-regression">Automatic Relevance Determination Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#decision-tree">Decision Tree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extra-tree">Extra Tree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cubist">Cubist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-cubist">Multi Cubist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#k-nearest-neighbour">K Nearest Neighbour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bootstrapped-svr">Bootstrapped SVR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#random-forest-optimisable">Random Forest (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gradient-boost-optimisable">Gradient Boost (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gaussian-process-regressor-optimisable">Gaussian Process Regressor (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stochastic-gradient-descent-regressor-optimisable">Stochastic Gradient Descent Regressor (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#support-vector-regression-optimisable">Support Vector Regression (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ordinary-least-squares-regression-optimisable">Ordinary Least Squares Regression (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#elastic-net-optimisable">Elastic Net (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#huber-optimisable">Huber (Optimisable)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xgboost-optimisable">XGBoost (Optimisable)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#interpolators">Interpolators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linear-nd-interpolator">Linear ND Interpolator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nearest-nd-interpolator">Nearest ND Interpolator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rbf-interpolator">RBF Interpolator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ct-interpolator">CT Interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#classifiers">Classifiers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#logistic-classififer">Logistic Classififer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logistic-rbf-classifier">Logistic RBF Classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#random-forest-classifier">Random Forest Classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#suport-vector-classifier">Suport Vector Classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#boosted-trees">Boosted Trees</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">UncoverML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/models.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="models">
+<h1>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h1>
+<p>UncoverML has a variety of algorithms to choose from.</p>
+<p><em>Config</em> shows the <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> parameter to add to the <code class="docutils literal notranslate"><span class="pre">learning</span></code> block of the
+config to use the model.</p>
+<p>The majority of models are subclassed from models available in scikit-learn
+or the NICTA Revrand package. Follow the links under <em>Documentation and parameters</em>
+to view the specific model documentation and available parameters from these resources.</p>
+<p><em>Additional parameters</em> covers parameters specific to
+UncoverML that can be added to the <code class="docutils literal notranslate"><span class="pre">arguments</span></code> section of the <code class="docutils literal notranslate"><span class="pre">learning</span></code>
+block.</p>
+<div class="section" id="regressors">
+<h2>Regressors<a class="headerlink" href="#regressors" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="random-forest">
+<h3>Random Forest<a class="headerlink" href="#random-forest" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">randomforest</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html">Scikit Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.RandomForestTransformed" title="uncoverml.models.RandomForestTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.RandomForestTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="multi-random-forest">
+<h3>Multi Random Forest<a class="headerlink" href="#multi-random-forest" title="Permalink to this headline">¶</a></h3>
+<p>An ensemble of Random Forest predictors.</p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multirandomforest</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p>See <a class="reference internal" href="#random-forest"><span class="std std-ref">Random Forest</span></a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.MultiRandomForestTransformed" title="uncoverml.models.MultiRandomForestTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.MultiRandomForestTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">forests</span></code>: number of Random Forest submodels</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: boolean, whether to train this model in parallel</p>
+<ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">parallel</span></code> is True, this model can be trained using multiple processors.
+See <a class="reference internal" href="workflows.html#multiprocessing-and-partitioning"><span class="std std-ref">Multiprocessing and Partitioning</span></a>.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="bayes-regression-standard-linear-model">
+<h3>Bayes Regression/Standard Linear Model<a class="headerlink" href="#bayes-regression-standard-linear-model" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bayesreg</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://nicta.github.io/revrand/slm.html">NICTA Revrand</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.LinearReg" title="uncoverml.models.LinearReg"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.LinearReg</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="stochastic-gradient-descent-bayes-regression-standard-linear-model">
+<h3>Stochastic Gradient Descent Bayes Regression/Standard Linear Model<a class="headerlink" href="#stochastic-gradient-descent-bayes-regression-standard-linear-model" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sgdbayesreg</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://nicta.github.io/revrand/glm.html">NICA Revrand</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.SGDLinearReg" title="uncoverml.models.SGDLinearReg"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.SGDLinearReg</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="approximate-gaussian-process">
+<h3>Approximate Gaussian Process<a class="headerlink" href="#approximate-gaussian-process" title="Permalink to this headline">¶</a></h3>
+<p>Subclass of <a class="reference internal" href="#bayes-regression-standard-linear-model"><span class="std std-ref">Bayes Regression/Standard Linear Model</span></a></p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">approxgp</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://nicta.github.io/revrand/slm.html">NICTA Revrand</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.ApproxGP" title="uncoverml.models.ApproxGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.ApproxGP</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="stochastic-gradient-descent-approximate-gaussian-process">
+<h3>Stochastic Gradient Descent Approximate Gaussian Process<a class="headerlink" href="#stochastic-gradient-descent-approximate-gaussian-process" title="Permalink to this headline">¶</a></h3>
+<p>Subclass of <a class="reference internal" href="#stochastic-gradient-descent-bayes-regression-standard-linear-model"><span class="std std-ref">Stochastic Gradient Descent Bayes Regression/Standard Linear Model</span></a></p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sgdapproxgp</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://nicta.github.io/revrand/glm.html">NICTA Revrand</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.SGDApproxGP" title="uncoverml.models.SGDApproxGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.SGDApproxGP</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="support-vector-regression">
+<h3>Support Vector Regression<a class="headerlink" href="#support-vector-regression" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svr</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/dev/modules/generated/sklearn.svm.SVR.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.SVRTransformed" title="uncoverml.models.SVRTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.SVRTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="automatic-relevance-determination-regression">
+<h3>Automatic Relevance Determination Regression<a class="headerlink" href="#automatic-relevance-determination-regression" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ardregression</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/dev/modules/generated/sklearn.linear_model.ARDRegression.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.ARDRegressionTransformed" title="uncoverml.models.ARDRegressionTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.ARDRegressionTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="decision-tree">
+<h3>Decision Tree<a class="headerlink" href="#decision-tree" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">decisiontree</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/dev/modules/generated/sklearn.tree.DecisionTreeRegressor.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.DecisionTreeTransformed" title="uncoverml.models.DecisionTreeTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.DecisionTreeTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="extra-tree">
+<h3>Extra Tree<a class="headerlink" href="#extra-tree" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">extratree</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://scikit-learn.org/dev/modules/generated/sklearn.tree.ExtraTreeRegressor.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.ExtraTreeTransformed" title="uncoverml.models.ExtraTreeTransformed"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.ExtraTreeTransformed</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="cubist">
+<h3>Cubist<a class="headerlink" href="#cubist" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">cubist</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.rulequest.com/cubist-info.html">Rule-Quest</a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.cubst.Cubist</span></code></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="multi-cubist">
+<h3>Multi Cubist<a class="headerlink" href="#multi-cubist" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multicubist</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.rulequest.com/cubist-info.html">Rule-Quest</a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.cubst.MultiCubist</span></code></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trees</span></code>: number of Cubist submodels to train</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: boolean, whether to train this model in parallel</p>
+<ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">parallel</span></code> is True, this model can be trained using multiple processors.
+See <a class="reference internal" href="workflows.html#multiprocessing-and-partitioning"><span class="std std-ref">Multiprocessing and Partitioning</span></a>.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="k-nearest-neighbour">
+<h3>K Nearest Neighbour<a class="headerlink" href="#k-nearest-neighbour" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nnr</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html">Scikit-Learn</a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.CustomNeighborsRegressor</span></code></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="bootstrapped-svr">
+<h3>Bootstrapped SVR<a class="headerlink" href="#bootstrapped-svr" title="Permalink to this headline">¶</a></h3>
+<p>Allows probabilistic predictions for SVR by taking statistics from an
+ensemble of SVR models predicting on bootstrapped (resampled) data.</p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bootstrapsvr</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p>See <a class="reference internal" href="#support-vector-regression"><span class="std std-ref">Support Vector Regression</span></a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.BootstrappedSVR" title="uncoverml.models.BootstrappedSVR"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.BootstrappedSVR</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_models</span></code>: int, number of models to train (i.e. number of times to resample data)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: boolean, whether to train this model in parallel</p>
+<ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">parallel</span></code> is True, this model can be trained using multiple processors.
+See <a class="reference internal" href="workflows.html#multiprocessing-and-partitioning"><span class="std std-ref">Multiprocessing and Partitioning</span></a>.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="random-forest-optimisable">
+<span id="optimisable-models"></span><h3>Random Forest (Optimisable)<a class="headerlink" href="#random-forest-optimisable" title="Permalink to this headline">¶</a></h3>
+<p>This is a subclass of <a class="reference internal" href="#random-forest"><span class="std std-ref">Random Forest</span></a> structured to be compatible
+with optimisation.</p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedrandomforest</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p>See <a class="reference internal" href="#random-forest"><span class="std std-ref">Random Forest</span></a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedForestRegressor" title="uncoverml.optimise.models.TransformedForestRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedForestRegressor</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="gradient-boost-optimisable">
+<h3>Gradient Boost (Optimisable)<a class="headerlink" href="#gradient-boost-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gradientboost</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedGradientBoost" title="uncoverml.optimise.models.TransformedGradientBoost"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedGradientBoost</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="gaussian-process-regressor-optimisable">
+<h3>Gaussian Process Regressor (Optimisable)<a class="headerlink" href="#gaussian-process-regressor-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedgp</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedGPRegressor" title="uncoverml.optimise.models.TransformedGPRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedGPRegressor</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="stochastic-gradient-descent-regressor-optimisable">
+<h3>Stochastic Gradient Descent Regressor (Optimisable)<a class="headerlink" href="#stochastic-gradient-descent-regressor-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sgdregressor</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedSGDRegressor" title="uncoverml.optimise.models.TransformedSGDRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedSGDRegressor</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="support-vector-regression-optimisable">
+<h3>Support Vector Regression (Optimisable)<a class="headerlink" href="#support-vector-regression-optimisable" title="Permalink to this headline">¶</a></h3>
+<p>Duplicate of ref:<cite>Support Vector Regression</cite> structured to be
+compatible with optimisation.</p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedsvr</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p>See <a class="reference internal" href="#support-vector-regression"><span class="std std-ref">Support Vector Regression</span></a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedSVR" title="uncoverml.optimise.models.TransformedSVR"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedSVR</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="ordinary-least-squares-regression-optimisable">
+<h3>Ordinary Least Squares Regression (Optimisable)<a class="headerlink" href="#ordinary-least-squares-regression-optimisable" title="Permalink to this headline">¶</a></h3>
+<p>Subclass of base scikit-learn <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html">LinearRegression</a>.</p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ols</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedOLS" title="uncoverml.optimise.models.TransformedOLS"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedOLS</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="elastic-net-optimisable">
+<h3>Elastic Net (Optimisable)<a class="headerlink" href="#elastic-net-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">elasticnet</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.TransformedElasticNet" title="uncoverml.optimise.models.TransformedElasticNet"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformedElasticNet</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="huber-optimisable">
+<h3>Huber (Optimisable)<a class="headerlink" href="#huber-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">huber</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.HuberRegressor.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.Huber" title="uncoverml.optimise.models.Huber"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.Huber</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="xgboost-optimisable">
+<h3>XGBoost (Optimisable)<a class="headerlink" href="#xgboost-optimisable" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">xgboost</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn">XGBoost</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.optimise.html#uncoverml.optimise.models.XGBoost" title="uncoverml.optimise.models.XGBoost"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.XGBoost</span></code></a></p></li>
+</ul>
+<p><strong>Additional parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="interpolators">
+<h2>Interpolators<a class="headerlink" href="#interpolators" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="linear-nd-interpolator">
+<h3>Linear ND Interpolator<a class="headerlink" href="#linear-nd-interpolator" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">linear</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.LinearNDInterpolator.html">Scipy</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.interpolate.SKLearnLinearNDInterpolator" title="uncoverml.interpolate.SKLearnLinearNDInterpolator"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.interpolate.SKLearnLinearNDInterpolator</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="nearest-nd-interpolator">
+<h3>Nearest ND Interpolator<a class="headerlink" href="#nearest-nd-interpolator" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nn</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.NearestNDInterpolator.html">Scipy</a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.interpolate.NearestNDInterpolator</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="rbf-interpolator">
+<h3>RBF Interpolator<a class="headerlink" href="#rbf-interpolator" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rbf</span>
+</pre></div>
+</div>
+<p><strong>Documentation and paramters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.Rbf.html">Scipy</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.interpolate.SKLearnRbf" title="uncoverml.interpolate.SKLearnRbf"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.interpolate.SKLearnRbf</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="ct-interpolator">
+<h3>CT Interpolator<a class="headerlink" href="#ct-interpolator" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">cubic2d</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.CloughTocher2DInterpolator.html">Scipy</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.interpolate.SKLearnCT" title="uncoverml.interpolate.SKLearnCT"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.interpolate.SKLearnCT</span></code></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="classifiers">
+<h2>Classifiers<a class="headerlink" href="#classifiers" title="Permalink to this headline">¶</a></h2>
+<p>Label encoding is performed implictly on UncoverML classifiers.</p>
+<div class="section" id="logistic-classififer">
+<h3>Logistic Classififer<a class="headerlink" href="#logistic-classififer" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">logistic</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.LogisticClassifier" title="uncoverml.models.LogisticClassifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.LogisticClassifier</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="logistic-rbf-classifier">
+<h3>Logistic RBF Classifier<a class="headerlink" href="#logistic-rbf-classifier" title="Permalink to this headline">¶</a></h3>
+<p>Kernelized version of <span class="xref std std-ref">LogisticClassifier</span></p>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">logisticrbf</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">Scikit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.LogisticRBF" title="uncoverml.models.LogisticRBF"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.LogisticRBF</span></code></a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.kernelize" title="uncoverml.models.kernelize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uncoverml.models.kernelize()</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="random-forest-classifier">
+<h3>Random Forest Classifier<a class="headerlink" href="#random-forest-classifier" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">forestclassifier</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.RandomForestClassifier" title="uncoverml.models.RandomForestClassifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.RandomForestClassifier</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="suport-vector-classifier">
+<h3>Suport Vector Classifier<a class="headerlink" href="#suport-vector-classifier" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html">Scitkit-Learn</a></p></li>
+<li><p><a class="reference internal" href="uncoverml.html#uncoverml.models.SupportVectorClassifier" title="uncoverml.models.SupportVectorClassifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.SupportVectorClassifier</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="boosted-trees">
+<h3>Boosted Trees<a class="headerlink" href="#boosted-trees" title="Permalink to this headline">¶</a></h3>
+<p><strong>Config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boostedtrees</span>
+</pre></div>
+</div>
+<p><strong>Documentation and parameters:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html">Scikit-Learn</a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.GradientBoostingClassifier</span></code></p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="projectreport.html" class="btn btn-neutral float-right" title="UncoverML Project Report (NICTA)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="workflows.html" class="btn btn-neutral float-left" title="Workflows" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Geoscience Australia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

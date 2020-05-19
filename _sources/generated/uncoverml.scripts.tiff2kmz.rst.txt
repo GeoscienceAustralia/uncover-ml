@@ -1,0 +1,6 @@
+uncoverml.scripts.tiff2kmz
+==========================
+
+.. currentmodule:: uncoverml.scripts
+
+.. autodata:: tiff2kmz

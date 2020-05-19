@@ -13,7 +13,9 @@ Contents:
    :maxdepth: 2
 
    installation
-   usage
+   cli
+   workflows
+   models
    NICTA Project Report <projectreport>
    UncoverML API Reference <modules>
    contributing

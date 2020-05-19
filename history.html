@@ -86,7 +86,9 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
@@ -201,6 +203,12 @@
 or user can provide their own shapefile via the ‘shiftmap’ property of the config ‘target’ block.</p></li>
 <li><p>“covdiag” command for ‘diagnosing’ covariate files. Similar to gdalinfo but with room for
 additions if required.</p></li>
+<li><p>“targetsearch” comamnd which finds targets similar to prediction data outside of prediction area.</p></li>
+<li><p>More demonstration configs.</p></li>
+<li><p>Reimplemented target sampling/binning code (originally by Sudipta).</p></li>
+<li><p>Add an ‘index’ column to rawcovariates.csv output to allow users to customise plots.</p></li>
+<li><p>Bootstrap SVR model.</p></li>
+<li><p>User defined metrics for optimisation.</p></li>
 </ul>
 </div>
 <div class="section" id="changed">
@@ -208,12 +216,17 @@ additions if required.</p></li>
 <ul class="simple">
 <li><p>Tweaked plots.</p></li>
 <li><p>‘pbs’ directory is now ‘scripts’.</p></li>
+<li><p>Moved all CLI commands to be under the ‘uncoverml’ command.</p></li>
+<li><p>Cleaned up project structure - remove outdated ‘pbs’ directory and scripts that no longer apply.</p></li>
+<li><p>Training data is now shared via MPI shared memory during the learn step.</p></li>
 </ul>
 </div>
 <div class="section" id="fixed">
 <h3>Fixed<a class="headerlink" href="#fixed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>MRF results being determined by number of processors used. Changed to provide each random forest with its own RNG seed.</p></li>
+<li><p>MRF results being determined by number of processors used. Changed to provide each random forest
+with its own RNG seed.</p></li>
+<li><p>Crash when plotting feature ranking if the using a model without ‘MLL’ metric.</p></li>
 </ul>
 </div>
 </div>
@@ -241,7 +254,8 @@ additions if required.</p></li>
 <ul class="simple">
 <li><p>Diagnostics module for plotting various metrics.</p></li>
 <li><p>Diagnostics notebook for viewing plots.</p></li>
-<li><p>Target coordinates are now automatically reprojected if a *.prj file is provided with the input shapefile.</p></li>
+<li><p>Target coordinates are now automatically reprojected if a *.prj file is provided with the input
+shapefile.</p></li>
 </ul>
 </div>
 <div class="section" id="id6">

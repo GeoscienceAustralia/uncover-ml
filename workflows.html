@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Learning &mdash; UncoverML 0.3.1 documentation</title>
+  <title>Workflows &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="uncoverml.scripts.gridsearch" href="generated/uncoverml.scripts.gridsearch.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,9 +85,79 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Workflows</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#learn-and-predict">Learn and Predict</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#config">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#model-validation">Model Validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#diagnostics">Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#covariate-correlation">Covariate Correlation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#feature-ranking">Feature Ranking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#covariate-intersection">Covariate Intersection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-vs-prediction">Real vs. Prediction</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#multiprocessing-and-partitioning">Multiprocessing and Partitioning</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#learning">Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prediction">Prediction</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#optimisation">Optimisation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#shiftmap">Shiftmap</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#target-search">Target Search</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cropping">Cropping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Running</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-cropping-to-perform-parallel-predictions">Using cropping to perform parallel predictions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#clustering">Clustering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#weighted-samples">Weighted Samples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#prediction-mask">Prediction Mask</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-fields-to-output-table">Adding fields to output table</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#covariate-diagnostics">Covariate Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Running</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
@@ -136,7 +208,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Learning</li>
+      <li>Workflows</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -155,160 +227,268 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <p>UncoverML workflows are controlled by a YAML configuration file.
+  <div class="section" id="workflows">
+<h1>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h1>
+<p>UncoverML workflows are controlled by a YAML configuration file.
 This section provides some examples and explanations of different
-workflows and possible parameters.</p>
-<p>For a reference to all possible config parameters, view the module
-documentation: <a class="reference internal" href="uncoverml.html#module-uncoverml.config" title="uncoverml.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.config</span></code></a>.</p>
-<p>In <cite>uncover-ml/configs</cite> directory, there some example YAML files to help
-you get started.</p>
-<div class="section" id="learning">
-<h1>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h1>
+workflows, the required configuration, uncoverml commands and the
+produced outputs</p>
+<p>There some example YAML files in the <em>uncover-ml/configs</em> directory
+to help you get started.</p>
+<div class="section" id="learn-and-predict">
+<span id="id1"></span><h2>Learn and Predict<a class="headerlink" href="#learn-and-predict" title="Permalink to this headline">¶</a></h2>
+<p>The most common task in UncoverML is using it train a model and then
+perform a prediction. This requires:</p>
+<ul class="simple">
+<li><p>A config file with necessary parameters</p></li>
+<li><p>A set of geotiffs containing covariate/feature data</p></li>
+<li><p>A shapefile containing training targets</p></li>
+</ul>
+<div class="section" id="config">
+<h3>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
+<p>An example of a learn/predict config:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">learning</span><span class="p">:</span>
-  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">multirandomforest</span>
+  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedrandomforest</span>
   <span class="nt">arguments</span><span class="p">:</span>
     <span class="nt">n_estimators</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
     <span class="nt">target_transform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">log</span>
-    <span class="nt">forests</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">learning</span></code> block specifies the algorithm or model to train. <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>
-is the name of the algorithm. <code class="docutils literal notranslate"><span class="pre">arguments</span></code> specifies a dictionary of
-keyword arguments specific to that model. For reference about what
-arguments are applicable, refer the documentation for the specific model.</p>
-</div>
-<div class="section" id="features">
-<h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+
+<span class="nt">features</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
     <span class="nt">files</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/covariates/</span>
+      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariates/directory</span>
     <span class="nt">transforms</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">centre</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">standardise</span>
     <span class="nt">imputation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mean</span>
+
+<span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/training/target/shapefile</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Na_log</span>
+
+<span class="nt">prediction</span><span class="p">:</span>
+  <span class="nt">quantiles</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
+  <span class="nt">outbands</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+
+<span class="nt">output</span><span class="p">:</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/store/output</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">features</span></code> block contains the features (AKA covariates) to be used for training and prediction.
-UncoverML supports ordinal and categorical data, but they must be provided in separate
-files and the <code class="docutils literal notranslate"><span class="pre">type</span></code> must be provided (if no type is provided, UncoverML will assume the
-data is ordinal). To provide a separate feature set for <code class="docutils literal notranslate"><span class="pre">categorical</span> <span class="pre">data</span></code>, you can
-add another entry under the <code class="docutils literal notranslate"><span class="pre">features</span></code> block:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">learning</span></code> block specifies the algorithm/model to train:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">algorithm</span></code>: the name of the algorithm</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arguments</span></code>: a dictionary of keyword arguments specific to that
+algorithm. See <em>models page</em> for available algorithms and links to
+their documentation to understand what parameters are available for
+each algorithm.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">target_transform</span></code>: this argument is specific to UncoverML and an
+addition to the algorithm’s base arguments. Target values will be
+transformed using this method before being passed to the algorithm’s
+<code class="docutils literal notranslate"><span class="pre">fit</span></code> and <code class="docutils literal notranslate"><span class="pre">predict</span></code> methods.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">identity</span></code>: identity transform - does nothing to the data. This
+is the default option if <code class="docutils literal notranslate"><span class="pre">target_transform</span></code> is not provided.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">standardise</span></code>: applies a standarisation transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sqrt</span></code>: applies a square root transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code>: applies a log10 transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logistic</span></code>: applies a logistic transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rank</span></code>: apply a RankGauss transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kde</span></code>: apply a KDE transform.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">features</span></code> block contains the features/covariates to be used for
+training and prediction:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: UncoverML supports ordinal and categorical data, but they
+must be provided in separate sets and the <code class="docutils literal notranslate"><span class="pre">type</span></code> must be provided
+(if no type is provided, UncoverML will assume the data is ordinal).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">files</span></code>: The location of the geotiffs. Multiple entries can be
+provided for <code class="docutils literal notranslate"><span class="pre">files</span></code> and can be of type <code class="docutils literal notranslate"><span class="pre">directory</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>
+or <code class="docutils literal notranslate"><span class="pre">list</span></code></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">directory</span></code>: Path to a directory. All geotiffs within this
+directory will be loaded as features.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">path</span></code>: Path to a geotiff file. This will be loaded as a feature.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code>: Path to a text file. Each line of the text file is a path
+to a geotiff and geotiff will be loaded as a feature.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transforms</span></code>: Transforms to use for scaling features. Multiple
+transforms can be applied to each set of features specified.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">centre</span></code>: applies a centre transform (demeans the data).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">standardise</span></code>: applies a standarisation transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code>: applies a log10 transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sqrt</span></code>: applies a square root transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">whiten</span></code>: applies a Whiten transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">onehot</span></code>: performs OneHot encoding</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">randomhot</span></code>: performs RandomHot encoding.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">imputation</span></code>: the imputer to use for filling missing values in the
+provided features.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mean</span></code>: mean imputation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gauss</span></code>: Gauss imputation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nn</span></code>: nearest neighbour imputation.</p></li>
+</ul>
+</li>
+</ul>
+<p><em>Geotiffs must be the same size and resolution, otherwise an exception
+will be raised.</em></p>
+<p>Multiple feature sets can be specified for different types of data, or
+for applying different transforms:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
-    <span class="c1"># ...files, transforms, imputation</span>
   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">categorical</span>
     <span class="nt">files</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/categorical/data</span>
-    <span class="c1"># ...transforms, imputation</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">files</span></code> field is where paths to covariate data is specified. In this case, a <code class="docutils literal notranslate"><span class="pre">directory</span></code>
-is provided, so every file in that directory will be treated as part of the feature set.
-Individual paths can be set or a text file with multiple paths separated by commas:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">features</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/categorical/feature</span>
+    <span class="nt">transforms</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">onehot</span>
   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ordinal</span>
     <span class="nt">files</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate1.tif</span>
-      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/covariate2.tif</span>
-      <span class="p p-Indicator">-</span> <span class="nt">list</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/list_of_covariates.txt</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">list path/to/feature/list.txt</span>
+    <span class="nt">transforms</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">standardise</span>
+    <span class="nt">imputation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nn</span>
 </pre></div>
 </div>
-<p>Covariate files must be in geotiff format, and each file must have the same dimensions and
-projection.</p>
-<p><code class="docutils literal notranslate"><span class="pre">transforms</span></code> specifies scaling that will be applied to that set of features. Multiple can be
-provided. Available transforms are:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">targets</span></code> block specifies the training targets to be used:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">centre</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sqrt</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">standardise</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">whiten</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">onehot</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">randomhot</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: path to the shapefile containing training targets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">property</span></code>: name of the field in the shapefile to be used as
+training value</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">imputation</span></code> is the imputation (filling of no data values) method. Only one can be provided for
-each feature set. Available methods are:</p>
+<p><em>At least some of the targets in the shapefile must intersect with the
+provided features. Targets outside of the feature area will be
+ignored</em></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">prediction</span></code> block specifies what outbands to generate and the
+quantile interval for producing upper and lower quantile maps:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">none</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">mean</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gaus</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">nn</span></code> (nearest neighbour)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">quantiles</span></code>: a value between 0 and 1 representing the prediction
+interval. E.g. ‘0.95’ means the predicted values will fall within
+the lower and upper quantiles 95% of the time.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">outbands</span></code>:  each band will be written as a separate
+geotiff file. For classification, the available outbands is equivalent
+to the available classes. For regression, the first outband is
+prediction and if the model provides them, the next are variance,
+lower quantile and upper quantile. Some specific models provide
+further options - refer the documentation for the specific model you
+are using. The <code class="docutils literal notranslate"><span class="pre">outbands</span></code> number is used as the RHS of a slice, so
+providing ‘1’ for a regression will output prediction (0) and
+variance (1).</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">output</span></code> block directs UncoverML where to store learning and
+prediction outputs.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">directory</span></code>: path to a directory to store the outputs. Will be
+created if it does not exist. All outputs are prefixed with the
+config file name.</p></li>
 </ul>
 </div>
-<div class="section" id="targets">
-<h1>Targets<a class="headerlink" href="#targets" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
-  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp</span>
-  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Na_log</span>
+<div class="section" id="running">
+<h3>Running<a class="headerlink" href="#running" title="Permalink to this headline">¶</a></h3>
+<p>To run this workflow, first train the model:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">targets</span></code> block contains details for the training data. <code class="docutils literal notranslate"><span class="pre">file</span></code> is the path to the shapefile
-containing the targets. <code class="docutils literal notranslate"><span class="pre">property</span></code> is the name of the field in the shapefile to train on. UncoverML
-works by intersecting patches of the covariate data with corresponding target locations.</p>
+<p>Once the command is complete, outputs will exist in the directory
+specified in the <code class="docutils literal notranslate"><span class="pre">output</span></code> block.</p>
+<p>For learning, these are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code>: a table containg the value from each covariate
+and the target value for a given point. This is before any scaling or
+transforms are applied.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rawcovariates_mask.csv</span></code>: a table representing the mask for each
+point, i.e. which coviarates are missing from which coordinates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transformed_targets.csv</span></code>: a table containing untransformed target
+values in the first column and the transformed value in the other
+column.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.model</span></code>: a Python binary file containing the trained model. It
+is not accesed directly but is used as part of the preidciton step.</p></li>
+</ul>
+<p>Predictions can then be performed across the entire feature space:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml predict config.yaml
+</pre></div>
 </div>
-<div class="section" id="validation">
-<h1>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h1>
+<p>Upon completion, prediction maps will be written to the output
+directory. There will be one map for each band requested as output in
+the configuration file. The map will be named after the band,
+e.g. <code class="docutils literal notranslate"><span class="pre">prediction.tif</span></code> for the main prediction band. Downsampled
+versions of the maps will also be generated for use as thumbnails.</p>
+</div>
+</div>
+<div class="section" id="model-validation">
+<h2>Model Validation<a class="headerlink" href="#model-validation" title="Permalink to this headline">¶</a></h2>
+<p>Validation can be performed during the training process to generate
+model performance metrics. UncoverML supports three validation methods:
+k-fold cross validation, feature ranking and permutation importance.</p>
+<div class="section" id="id2">
+<h3>Config<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>To perform validation, the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block must be provided
+in your config file. The usual parameters for learning must be provided
+(see <a class="reference internal" href="#learn-and-predict"><span class="std std-ref">Learn and Predict</span></a>).</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">validation</span><span class="p">:</span>
   <span class="nt">feature_rank</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">permutation_importance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
   <span class="nt">k-fold</span><span class="p">:</span>
-    <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+    <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
     <span class="nt">folds</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
     <span class="nt">random_seed</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">validation</span></code> block is optional and contains parameters for performing k-fold cross validation,
-feature ranking and permutation importance. In this config file, <code class="docutils literal notranslate"><span class="pre">feature_ranking</span></code> has been
-enabled and <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> has also been enabled. <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> cross validation has some parameters to set.
-<code class="docutils literal notranslate"><span class="pre">parellel</span></code> will allow the cross validation to take advantage of multiprocessing: if you are running
-UncoverML with MPI and more than one processor, setting this to <code class="docutils literal notranslate"><span class="pre">True</span></code> will accelerate the
-validation. <code class="docutils literal notranslate"><span class="pre">folds</span></code> is the number of folds to split the training data into. <code class="docutils literal notranslate"><span class="pre">random_seed</span></code> is the
-seed provided to numpy for getting random permutations of data to split into folds. The permutation
-is pseudorandom, i.e. using the same seed will provide deterministic results.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_rank</span></code>: a boolean that turns feature ranking on or off.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permutation_importance</span></code>: a boolean that turns permutation
+importance on or off.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">k-fold</span></code>: k-fold cross validation parameters</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: a boolean that specifies whether folds are trained
+and predicted in parallel.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">folds</span></code>: the number of folds to split training data into.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">random_seed</span></code>: an integer used as the seed for the random number
+generator that splits folds. Using the same seed will produce
+determinstic fold splits.</p></li>
+</ul>
+</li>
+</ul>
 </div>
-<div class="section" id="clustering">
-<h1>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">clustering</span><span class="p">:</span>
-  <span class="c1"># file: /path/to/class_labels.shp</span>
-  <span class="c1"># property: name_of_class_label_property</span>
-  <span class="nt">n_classes</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
-  <span class="nt">oversample_factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+<div class="section" id="id3">
+<h3>Running<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>Model validation is performed as part of the training process. To
+perform model validation, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">clustering</span></code> block is particular to the <code class="docutils literal notranslate"><span class="pre">cluster</span></code> command. When providing a <code class="docutils literal notranslate"><span class="pre">clustering</span></code>
-block, <code class="docutils literal notranslate"><span class="pre">learning</span></code>, <code class="docutils literal notranslate"><span class="pre">targets</span></code> and <code class="docutils literal notranslate"><span class="pre">validation</span></code> blocks don’t apply and are not required.
-Providing a <code class="docutils literal notranslate"><span class="pre">clustering</span></code> block and running the <code class="docutils literal notranslate"><span class="pre">cluster</span></code> will use the K-Means algorith to
-cluster the covariates provided in the <code class="docutils literal notranslate"><span class="pre">features</span></code> block. By default, clustering is unsupervised.
-If a shapefile containing points with class labels is provided as <code class="docutils literal notranslate"><span class="pre">file</span></code>, then semi-supervised
-clustering will be performed.</p>
-</div>
-<div class="section" id="prediction">
-<h1>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">prediction</span><span class="p">:</span>
-  <span class="nt">quantiles</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.95</span>
-  <span class="nt">outbands</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">prediction</span></code> block configures the prediction output. <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> refers to the prediction
-interval, e.g. ‘0.95’ means that predicted values will fall within the lower and upper quantiles
-95% of the time. <code class="docutils literal notranslate"><span class="pre">outbands</span></code> specifies the bands to output. Each band will be written as a separate
-geotiff file. For classification, the available outbands is equivalent to the available classes.
-For regression, the first outband is prediction and if the model provides them, the next are
-variance, lower quantile and upper quantile. Some specific models provide further options - refer
-the documentation for the specific model you are using. The <code class="docutils literal notranslate"><span class="pre">outbands</span></code> number is used as the RHS
-of a slice, so providing ‘1’ for a regression will output prediction (0) and variance (1).</p>
-<div class="admonition-todo admonition" id="id1">
-<p class="admonition-title">Todo</p>
-<p>‘outbands’ is currently a bit broken. It gets used a slice for the output bands, so giving
-some arbitrarily high number will you give you all bands. This will change in future and the
-user will provide explicit labels for the bands they want.</p>
+<p>Once complete, validation results will be in the output directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">crossval_results.csv</span></code>: A table of target values and corresponding
+predicted value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crossval_scores.json</span></code>: A dictionary containing the value for each
+metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">featureranks.json</span></code>: Dictionaries containing feature rank results.
+The <code class="docutils literal notranslate"><span class="pre">ranks</span></code> dictionary presents the most important feature by its
+impact on each metric (which feature caused the most degredation of
+the metric when excluded from training). The <code class="docutils literal notranslate"><span class="pre">scores</span></code> dictionary
+contains the corresponding value for each rank.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permutation_importance.csv</span></code>: The permutation importance results.</p></li>
+</ul>
+<p>In addition to these, the ‘prediction’ column of <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code>
+will be filled with the corresponding prediction value generated
+during cross-validation.</p>
 </div>
 </div>
-<div class="section" id="output">
-<h1>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="diagnostics">
+<h2>Diagnostics<a class="headerlink" href="#diagnostics" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML can generate diagnostic plots. These are controlled by
+additional parameters in the <code class="docutils literal notranslate"><span class="pre">output</span></code> block:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">output</span><span class="p">:</span>
-  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out</span>
-  <span class="nt">model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/sirsam_Na_randomforest.model</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/output/directory</span>
   <span class="nt">plot_feature_ranks</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
   <span class="nt">plot_intersection</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
   <span class="nt">plot_real_vs_pred</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
@@ -316,33 +496,527 @@ user will provide explicit labels for the bands they want.</p>
   <span class="nt">plot_target_scaling</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">output</span></code> block controls where outputs will be stored. <code class="docutils literal notranslate"><span class="pre">directory</span></code> is where all outputs from
-learning, prediction and other commands will be stored. <code class="docutils literal notranslate"><span class="pre">model</span></code> is a special case, and specifies
-where the ‘.model’ file created from the learn step will be stored and also what model will be
-used in the prediction step. If you want to predict based on a previously learned model, you
-need to change the <code class="docutils literal notranslate"><span class="pre">model</span></code> field to the path of the model you are using.</p>
-<p>There are also various flags for generating plots. If these are set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, then a plot will
-be created. Some plots will only be created if certain steps have been run, e.g. <code class="docutils literal notranslate"><span class="pre">plot_feature_ranks</span></code>
-will only generate a plot if feature ranking is performed as part of validation. For more details,
-view the section on diagnostics: <a class="reference internal" href="usage.html#diagnostics"><span class="std std-ref">Diagnostics</span></a>.</p>
-<p>For a comprehensive list of the outputs each step of UncoverML generates, see the section on
-outputs: <a class="reference internal" href="usage.html#outputs"><span class="std std-ref">Outputs</span></a>.</p>
+<div class="section" id="covariate-correlation">
+<h3>Covariate Correlation<a class="headerlink" href="#covariate-correlation" title="Permalink to this headline">¶</a></h3>
+<p>This generates a correlation matrix showing correlation between provided
+covariates. The color/value of each square shows how strong the positive
+or negative correlation is:</p>
+<img alt="Covariate correlation matrix." src="_images/sirsam_Na_randomforest_correlation.png" />
+<p>To generate a correlation matrix, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+with <code class="docutils literal notranslate"><span class="pre">plot_correlation</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code> in the configuration.</p>
 </div>
-<div class="section" id="pickling">
-<h1>Pickling<a class="headerlink" href="#pickling" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pickling</span><span class="p">:</span>
-  <span class="nt">covariates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/features.pk</span>
-  <span class="nt">targets</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$UNCOVERML_SRC/tests/test_data/sirsam/random_forest/out/targets.pk</span>
+<div class="section" id="feature-ranking">
+<h3>Feature Ranking<a class="headerlink" href="#feature-ranking" title="Permalink to this headline">¶</a></h3>
+<p>The result of feature ranking can be plotted. This creates two plots.
+One is a grouped bar chart - each colored bar represents a metric,
+the Y-axis is the score of that metric and each group is a feature
+(AKA covariate):</p>
+<img alt="_images/sirsam_Na_randomforest_featureranks.png" src="_images/sirsam_Na_randomforest_featureranks.png" />
+<p>The other plot is a series of curves. Each curve represents a metric,
+with scores on the Y-axis and covarites on the X-axis. Each inflection
+represents what happens to the score when the corresponding covariate
+is removed from the model:</p>
+<img alt="_images/fr_curve.png" src="_images/fr_curve.png" />
+<p>To generate feature rank plots, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+with <code class="docutils literal notranslate"><span class="pre">feature_rank</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code> under the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block
+of the config, and <code class="docutils literal notranslate"><span class="pre">plot_feature_ranks</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<div class="section" id="covariate-intersection">
+<h3>Covariate Intersection<a class="headerlink" href="#covariate-intersection" title="Permalink to this headline">¶</a></h3>
+<p>Covariate intersection can be plotted. These scatter plots, one for
+each covariate, show the corresponding covariate value for each target
+value:</p>
+<img alt="_images/intersection.png" src="_images/intersection.png" />
+<p>To generate intersection plots, the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command must be run
+and <code class="docutils literal notranslate"><span class="pre">plot_intersection</span></code> must be <code class="docutils literal notranslate"><span class="pre">True</span></code> in the configuration.</p>
+</div>
+<div class="section" id="real-vs-prediction">
+<h3>Real vs. Prediction<a class="headerlink" href="#real-vs-prediction" title="Permalink to this headline">¶</a></h3>
+<p>A scatter plot showing the intersection between real vs. predicted values
+can be generated. This comapres the values predicted by the model
+to the actual target values, and is important for validating model.
+It includes several pieces of information. The points show the intersecting
+values. The 2D histogram in the background shows grouping of the points
+(the colorbar on the right-hand side codes the frequency of each grouping).
+The text in the upper-left shows the score from the metrics generated
+by cross-validation:</p>
+<img alt="_images/sirsam_Na_randomforest_real_vs_pred.png" src="_images/sirsam_Na_randomforest_real_vs_pred.png" />
+<p>A histogram of residual error is also generated. This shows bins grouping
+the residual error between intersected points (i.e. the difference between
+a predicted value and the corresponding real value):</p>
+<img alt="_images/sirsam_Na_randomforest_residual.png" src="_images/sirsam_Na_randomforest_residual.png" />
+<p>To generate a real vs. prediction plot, <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> must be enabled
+under the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block of the config, and <code class="docutils literal notranslate"><span class="pre">plot_real_vs_pred</span></code>
+must be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</div>
+<div class="section" id="multiprocessing-and-partitioning">
+<span id="multiprocessing-and-paritioning"></span><h2>Multiprocessing and Partitioning<a class="headerlink" href="#multiprocessing-and-partitioning" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML supports parllelization using MPI and also supports
+partitioning for large datasets. When and how to use these depends
+on the task being performed.</p>
+<div class="section" id="learning">
+<h3>Learning<a class="headerlink" href="#learning" title="Permalink to this headline">¶</a></h3>
+<p>When running <code class="docutils literal notranslate"><span class="pre">learn</span></code>, it can be beneficial to use multiple processors
+to train folds for k-fold cross validation in parallel. For example,
+if you have enabled crossval with 5 folds and set <code class="docutils literal notranslate"><span class="pre">parallel:</span> <span class="pre">True</span></code> in
+the <code class="docutils literal notranslate"><span class="pre">k-fold</span></code> block, then you can train the folds in parallel using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="m">5</span> uncoverml learn config.yaml
 </pre></div>
 </div>
-<p>The final block is for <code class="docutils literal notranslate"><span class="pre">pickling</span></code>. During the learn step, covariates and targets are scaled and
-intersected. Depending on the machine being used and the size of the data, this may take a
-non-trivial amount of time. In situations where you are tweaking parameters and re-running the
-learn step, pickling the intersected covariate and target data may save time. The <code class="docutils literal notranslate"><span class="pre">covariates</span></code> field
-is the path to where the pickle file will be saved to and then read, and the <code class="docutils literal notranslate"><span class="pre">targets</span></code> file is the
-same but for target data. If these are provied but do not exist, coviarates and targerts will be
-scaled and intersected as normal then pickled to these files for future use. If provided and they
-exist, intersection will be skipped and data will be loaded from these files instead.</p>
+<p>This will speed up the cross-validation process.</p>
+<p>If not utilising parallel crossval, there is no benefit to using
+multiple processors. A model can only be trained on a single processor,
+so to avoid wasting compute resources, train models with 1 processor:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
+<span class="c1"># equivalent to `mpirun -n 1 uncoverml learn config.yaml`</span>
+</pre></div>
+</div>
+<p>An exception is when learning an enseble model. Examples are
+<code class="docutils literal notranslate"><span class="pre">bootstrapsvr</span></code> and <code class="docutils literal notranslate"><span class="pre">multirandomforest</span></code>. These are ensembles of
+several individual models. When training an ensemble model, it can be
+beneficial to run with multiple processors as each processor can train
+a submodel. Note that running with more processors than there are
+submodels to train will waste compute resources as the remainder
+(n_processors - n_models) processors will have no work to perform.</p>
+<p>For example, if you were training a <code class="docutils literal notranslate"><span class="pre">bootstrapsvr</span></code> model with 100
+models, and you were running on a single HPC node with 48 cpus, you
+can run in parallel using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="m">48</span> uncoverml learn config.yaml
+</pre></div>
+</div>
+<p>This will greatly reduce the training time of an ensemble model.</p>
+</div>
+<div class="section" id="prediction">
+<h3>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h3>
+<p>Prediction gains the most benefits from multiprocessing and
+partitioning. Because the model is already trained, prediction can be
+done by splitting up the feature space into chunks and distributing
+them to processors to speed up prediction. These chunks can then also
+be further partitioned and loaded sequentially on each processor to
+reduce memory usage.</p>
+<p>While multiple CPUs will speed up prediction, partitioning will have
+an impact on speed, as it increases I/O overhead. However, it allows
+prediction on larger-than-memory datasets.</p>
+<p>For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="m">48</span> uncoverml predict config.yaml -p <span class="m">5</span>
+</pre></div>
+</div>
+<p>This command will split the feature data into 48 even chunks and
+distribute it amongst the CPUs. Each chunk will then be split into
+5 partitions (the <code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">5</span></code> parameter) and loaded, predicted on and
+written out sequentially, reducing memory usage.</p>
+</div>
+</div>
+<div class="section" id="optimisation">
+<h2>Optimisation<a class="headerlink" href="#optimisation" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML provides a framework for using scikit-learn’s GridSearchCV
+to perform hyperparameter tuning. This allows cross-validation to be
+performed with different combinations of parameters.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only some models are compatible with optimisation. This is because
+models must be structued in a way compatible with scikit-learn’s
+GridSearchCV. This involves:</p>
+<ul class="simple">
+<li><p>having all arguments explicitly listed in the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> signature (no varargs)</p></li>
+<li><p>having the expected functions (<code class="docutils literal notranslate"><span class="pre">fit</span></code>, <code class="docutils literal notranslate"><span class="pre">predict</span></code>, etc.)</p></li>
+<li><p>implemeting the <code class="docutils literal notranslate"><span class="pre">get_params</span></code> and <code class="docutils literal notranslate"><span class="pre">set_params</span></code> functions
+defined by <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html">Base Estimator</a></p></li>
+</ul>
+<p>Optimisable models are listed in the <a class="reference internal" href="models.html#optimisable-models"><span class="std std-ref">models section</span></a>.</p>
+</div>
+<div class="section" id="id4">
+<h3>Config<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>An example config for performing optimisation on
+<cite>transformedrandomforest</cite>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">optimisation</span><span class="p">:</span>
+  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedrandomforest</span>
+  <span class="nt">scorers</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">r2</span><span class="p p-Indicator">,</span> <span class="nv">expvar</span><span class="p p-Indicator">,</span> <span class="nv">smse</span><span class="p p-Indicator">,</span> <span class="nv">lins_ccc</span><span class="p p-Indicator">]</span>
+  <span class="nt">hyperparameters</span><span class="p">:</span>
+      <span class="nt">target_transform</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">identity</span><span class="p p-Indicator">,</span> <span class="nv">standardise</span><span class="p p-Indicator">,</span> <span class="nv">log</span><span class="p p-Indicator">,</span> <span class="nv">sqrt</span><span class="p p-Indicator">]</span>
+      <span class="nt">n_estimator</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">,</span> <span class="nv">20</span><span class="p p-Indicator">,</span> <span class="nv">50</span><span class="p p-Indicator">]</span>
+      <span class="nt">max_features</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">auto</span><span class="p p-Indicator">,</span> <span class="nv">sqrt</span><span class="p p-Indicator">,</span> <span class="nv">log2</span><span class="p p-Indicator">]</span>
+      <span class="nt">min_samples_split</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span> <span class="nv">5</span><span class="p p-Indicator">,</span> <span class="nv">10</span><span class="p p-Indicator">]</span>
+      <span class="nt">min_samples_leaf</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span> <span class="nv">5</span><span class="p p-Indicator">,</span> <span class="nv">10</span><span class="p p-Indicator">]</span>
+      <span class="nt">max_depth</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">,</span> <span class="nv">20</span><span class="p p-Indicator">,</span> <span class="nv">100</span><span class="p p-Indicator">]</span>
+
+<span class="nt">output</span><span class="p">:</span>
+    <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/output/directory</span>
+</pre></div>
+</div>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">algorithm</span></code>: name of the algorithm to optimise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scorers</span></code>: a list of metrics to consider when ranking parameter
+combinations.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">r2</span></code>, <code class="docutils literal notranslate"><span class="pre">expar</span></code>, <code class="docutils literal notranslate"><span class="pre">smse</span></code> and <code class="docutils literal notranslate"><span class="pre">lins_ccc</span></code> are the availble</p></li>
+</ul>
+<p>regression model parameters.
+- <code class="docutils literal notranslate"><span class="pre">accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">log_loss</span></code> and <code class="docutils literal notranslate"><span class="pre">auc</span></code> are applicable to classifers.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hyperparameters</span></code>: contains lists of values for various algorithm
+parameters - view the documentation for the algorithm to know
+parameters are available. Every permutation of the given parameters
+will be scored using cross-validation.</p></li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h3>Running<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>Optimisation is run using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml gridsearch config.yaml -n <span class="m">10</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">10</span></code> is the number of parallel workers to use. Gridsearch
+uses the joblib backend, so don’t use <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> to execute it, but
+rather set <code class="docutils literal notranslate"><span class="pre">-n</span></code> to the number of processors you have available.</p>
+<p>The output will be in the output directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">optimisation.csv</span></code>: a table of gridsearch results. For details,
+see the documentation for <code class="docutils literal notranslate"><span class="pre">cv_results_</span></code> attribute in the
+<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html">sklearn docs</a>.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="shiftmap">
+<h2>Shiftmap<a class="headerlink" href="#shiftmap" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML has a <code class="docutils literal notranslate"><span class="pre">shiftmap</span></code> feature that generates a map of the
+covariate shift in your feature space. ‘Covariate shift’ is the shifting
+of covariate distributions across different areas.</p>
+<p>The idea behind shitmap is to generate ‘dummy’ targets, equal in number
+to the provided training targets. These dummy targets are distributed
+randomly across the feature space.</p>
+<p>The two sets of targets (dummy and real) are labelled ‘query’ and
+‘training’ respectively. A logistic classifier is then trained on these
+targets and classification maps are generated.</p>
+<p>Areas where the classifier can’t distinguish between the two classes
+(e.g. 0.4 - 0.6 certainty for one or the other class) means the
+covariate data in that area has a similar distribution to the provided
+training data. In theory, these are areas where the model can be
+extrapolated and will perform well, as the distrubtion is similar to
+the provided training data. Areas with a strong covariate shift
+(e.g. 0 - 0.4, 0.6 - 1 certainty for either class) may not be suitable
+for extrapolating the model due to differences in distribution between
+training data and feature data.</p>
+<div class="section" id="id6">
+<h3>Running<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Shiftmap</span></code> requires a standard learning config and doesn’t require
+extra parameters. To run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml shiftmap config.yaml
+</pre></div>
+</div>
+<p>Covariate shiftmaps will be written to the output directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shiftmap_generated_points.csv</span></code>: a table of the randomly generated
+points which can be used for validation and debugging.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shiftmap_query_0.tif</span></code>: a map showing the likelihood of each pixel
+beloning to the ‘query’ class. Areas of uncertainty (0.4 - 0.6 for
+example) are areas with similar distributions to the training data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shiftmap_training_1.tif</span></code>: same as above but inverted; shows the
+likelihood of each pixel belonging to the training class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">most_likely.tif</span></code>: a map showing which class each pixel is most
+likely to belong. This can be ignored as it does not help demonstrate
+the covariate shift, but is left for debugging purposes.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="target-search">
+<h2>Target Search<a class="headerlink" href="#target-search" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML implements a novel <code class="docutils literal notranslate"><span class="pre">targetsearch</span></code> command. Targetsearch
+is used to help find subsets of training points that are similar to
+a particular study area.</p>
+<p>For example, you might have a national dataset of geochem points and you
+want to predict the potassium content for a much smaller study area.
+Instead of supplying the entire geochem dataset, you can use target
+search to determine which points in the dataset are most similar to
+the study area (i.e. which points have a similar distribution of
+feature date) and these are the points are used in addition to the
+provided training targets for training the model.</p>
+<div class="section" id="id7">
+<h3>Config<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>Target searching is performed by adding parameters to the <code class="docutils literal notranslate"><span class="pre">learning</span></code>
+block of the config:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">learning</span><span class="p">:</span>
+  <span class="nt">target_search</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">target_search_threshold</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.8</span>
+  <span class="nt">target_search_extents</span><span class="p">:</span>
+    <span class="nt">xmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">120</span>
+    <span class="nt">ymin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-20</span>
+    <span class="nt">xmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">121</span>
+    <span class="nt">ymax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-21</span>
+  <span class="nt">algorithm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">transformedrandomforest</span>
+  <span class="nt">arguments</span><span class="p">:</span>
+    <span class="nt">n_estimators</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">target_transform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">log</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target_search</span></code>: a boolean of whether or not to use targetsearch</p></li>
+<li><p>target_search_threshold: the likelihood threshold a training point
+must surpass to be included in found points (i.e. how similar a
+training points feature distribution is to the study area)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">target_search_extents</span></code>: extents defining the study area. Target search
+will select points from the training targets that have a similar
+feature distribution to this study area.</p></li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>Running<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>To select and return the targets, first run <code class="docutils literal notranslate"><span class="pre">targetsearch</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml targetsearch config.yaml
+</pre></div>
+</div>
+<p>In the output directory, there are three files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">targetsearch_generated_points.csv</span></code>: a list of points that were randomly
+generated in the study area, used for validation and debugging.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">targetsearch_likelihood</span></code>: the likelihood of each training target
+belonging to the study area</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">targetsearch_result.pk</span></code>: a Python binary file containing the training
+targets that have surpassed the <code class="docutils literal notranslate"><span class="pre">target_search_threshold</span></code>.</p></li>
+</ul>
+<p>Once the targets have been selected, they can be used in training a
+model by passing the same config to the <code class="docutils literal notranslate"><span class="pre">learn</span></code> command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
+</pre></div>
+</div>
+<p>Learning will run as normal, with the addition that the targets selected
+by <code class="docutils literal notranslate"><span class="pre">target_search</span></code> will be included with the provided training targets
+and used to train the model.</p>
+</div>
+</div>
+<div class="section" id="cropping">
+<h2>Cropping<a class="headerlink" href="#cropping" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML has a built-in cropping function that is useful for a
+variety of purposes. By providing a bounding box of <code class="docutils literal notranslate"><span class="pre">xmin</span></code>, <code class="docutils literal notranslate"><span class="pre">xmax</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ymin</span></code>, <code class="docutils literal notranslate"><span class="pre">ymax</span></code>, all geotiffs provided to the uncoverml command will
+be cropped to this extent before processing takes place.</p>
+<p>Original files will be maintained and the cropped versions are stored
+temporarily then removed by UncoverML on completion.</p>
+<div class="section" id="id9">
+<h3>Config<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p>Cropping is performed by providing the <code class="docutils literal notranslate"><span class="pre">extents</span></code> block in the config:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">extents</span><span class="p">:</span>
+  <span class="nt">pixel_coordinates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+  <span class="nt">xmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">120</span>
+  <span class="nt">ymin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-20</span>
+  <span class="nt">xmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">121</span>
+  <span class="nt">ymax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-21</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pixel_coordinates</span></code>: boolean indicating wheter to treat the given crop
+coordinates as pixels (True) or as coordinates in the CRS used by
+the covariate geotiffs (False). If using pixel coordinates, these
+start at 0 and extend to the width and height of the image, inclusive.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xmin</span></code>, <code class="docutils literal notranslate"><span class="pre">ymin</span></code>, <code class="docutils literal notranslate"><span class="pre">xmax</span></code>, <code class="docutils literal notranslate"><span class="pre">ymax</span></code>: coordinates of the crop box. If not provided
+or out of bounds of the covariate images, then the default bound of
+the covariate bounds is used respectively.</p></li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>Running<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>Cropping applies to the <code class="docutils literal notranslate"><span class="pre">learn</span></code>, <code class="docutils literal notranslate"><span class="pre">predict</span></code>, <code class="docutils literal notranslate"><span class="pre">shiftmap</span></code> and
+<code class="docutils literal notranslate"><span class="pre">targetsearch</span></code> commands of UncoverML.</p>
+<p>Running learn with the above extents in the config will crop the
+provided covariates to that extent, and the model will be trained on
+the remaining data. Similarly, running prediction with the extents block
+will crop the covariates and only predict on the remaining data.</p>
+<p>This is very useful for speeding up jobs or in situations where the
+data is too large for memory. It’s also convenient when providing
+covariates of different sizes. UncoverML doesn’t support this, but by
+setting the extents as the smallest intersecting area of the covariates,
+an intersecting stack of feature data can be generated and used for
+training and prediction.</p>
+</div>
+<div class="section" id="using-cropping-to-perform-parallel-predictions">
+<h3>Using cropping to perform parallel predictions<a class="headerlink" href="#using-cropping-to-perform-parallel-predictions" title="Permalink to this headline">¶</a></h3>
+<p>Another use is for running parallel prediction jobs. For large-scale
+jobs, particularly when using ensemble models and on HPC platforms, it
+can be beneficial to break up prediction into multiple jobs and launch
+them in parallel.</p>
+<p>To achieve this, first train the model on your full dataset. Then create
+multiple prediction configs, each one predicting on a chunk of the data:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">extents</span><span class="p">:</span>
+  <span class="nt">pixel_coordinates</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">xmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+  <span class="nt">ymin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+  <span class="nt">xmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1000</span>
+  <span class="nt">ymax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1000</span>
+
+<span class="nt">output</span><span class="p">:</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/output/directory</span>
+</pre></div>
+</div>
+<p>Repeat this, providing the extents for each chunk until the whole
+dataset is covered. Once you have <code class="docutils literal notranslate"><span class="pre">chunk1.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">chunk2.yaml</span></code>
+etc., submit them as individual prediction jobs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml predict chunk1.yaml
+</pre></div>
+</div>
+<p>Doing so for each chunk config.</p>
+<p>Upon completion you will have multiple prediction maps prefixed with
+the config name, e.g. <cite>chunk1_prediction.tif</cite>. Using a GIS viewer
+or other program, you can then stitch the prediction chunks together.</p>
+</div>
+</div>
+<div class="section" id="clustering">
+<h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML supports k-means clustering.</p>
+<div class="section" id="id11">
+<h3>Config<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>When providing a <code class="docutils literal notranslate"><span class="pre">clustering</span></code> block, <code class="docutils literal notranslate"><span class="pre">learning</span></code>, <code class="docutils literal notranslate"><span class="pre">validation</span></code> and
+<code class="docutils literal notranslate"><span class="pre">targets</span></code> blocks don’t apply and are not required. <code class="docutils literal notranslate"><span class="pre">features</span></code> must
+be provided for training and prediction and <code class="docutils literal notranslate"><span class="pre">prediction</span></code> block for
+predicting the k-means model.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">clustering</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/class_labels.shp</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">name_of_class_label_property</span>
+  <span class="nt">n_classes</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+  <span class="nt">oversample_factor</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>file: path to shapefile containg labels. This is optional. If provided
+then semi-supervised clustering is performed, other clutering is
+unsupervised.</p></li>
+<li><p>property: the name of the class label property in the shapefile. Only
+required if a shapefile has been provided and semi-supervised
+clustering is being performed.</p></li>
+<li><p>n_classes: the number of classes to cluster the data into.</p></li>
+<li><p>oversample_factor: controls the number of samples drawn as part of
+the initialisation step. More processors used will increase the
+total number of samples drawn. Consider values of 1 for more than
+16 processors.</p></li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>Running<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml cluster config.yaml
+</pre></div>
+</div>
+<p>will train and output the k-means model file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml predict config.yaml
+</pre></div>
+</div>
+<p>will produce a map showing which pixel each class is most likely to
+belong to.</p>
+</div>
+</div>
+<div class="section" id="weighted-samples">
+<h2>Weighted Samples<a class="headerlink" href="#weighted-samples" title="Permalink to this headline">¶</a></h2>
+<p>Some models support a <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter. Look at the
+documentation of the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method for the selected algorithm
+to see if this is available.</p>
+<p>Sample weights can be provided by creating a weight field in your
+target shapefile. Weights are integer values that signify the relative
+importance of a sample. Weights of 0 mean the sample will be excluded
+entirely.</p>
+<div class="section" id="id13">
+<h3>Config<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>Weights are applied by providing the name of the weight field to the
+<code class="docutils literal notranslate"><span class="pre">targets</span></code> block.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/targets/shapefile.shp</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">training_field</span>
+  <span class="nt">weight_property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">weight_field</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id14">
+<h3>Running<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<p>Run learning as normal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
+</pre></div>
+</div>
+<p>There will be a log info message stating <em>‘Sample weights are being
+provided to fit method’</em> when the model is trained. If the model does
+not support sample weights, then there will be a log info message
+<em>‘Model does not support sample weights, weights are being ignored’</em> and
+unweighted training will continue.</p>
+</div>
+</div>
+<div class="section" id="prediction-mask">
+<h2>Prediction Mask<a class="headerlink" href="#prediction-mask" title="Permalink to this headline">¶</a></h2>
+<p>A crop mask can be provided when performing predictions. This mask will
+cause prediction to only predict and write values that have a certain
+mask value. This is useful for masking out no data areas such as the
+ocean, or limiting predictions to an area of interest to increase
+performance.</p>
+<p>The geotiff must be the same size as the provided covariates. Cropping
+also applies to prediction masks.</p>
+<div class="section" id="id15">
+<h3>Config<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>To supply a mask, add the <code class="docutils literal notranslate"><span class="pre">mask</span></code> block to your config:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">mask</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/mask.tif</span>
+  <span class="nt">retain</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: path to the mask geotiff</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retain</span></code>: value in the mask denoting which pixels to predict</p></li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>Running<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<p>Run prediction as normal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml predict config.yaml
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="adding-fields-to-output-table">
+<h2>Adding fields to output table<a class="headerlink" href="#adding-fields-to-output-table" title="Permalink to this headline">¶</a></h2>
+<p>Any field in the target shapefile can be written to the <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code>
+output table. This can be helpful for validation and debugging, e.g.
+including the type or category of the sample in the results.</p>
+<div class="section" id="id17">
+<h3>Config<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<p>To include fields in the output table, add the <code class="docutils literal notranslate"><span class="pre">write_to_csv</span></code>
+parameter to your <code class="docutils literal notranslate"><span class="pre">targets</span></code> block:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/targets/shapefile.shp</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">training_field</span>
+  <span class="nt">write_to_csv</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">type</span><span class="p p-Indicator">,</span> <span class="nv">site_id</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">write_to_csv</span></code>: list of names of shapefile fields to include in
+the <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code> output table.</p></li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h3>Running<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<p>Run <code class="docutils literal notranslate"><span class="pre">learn</span></code> as normal and the fields will be included in the output
+table:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn config.yaml
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="covariate-diagnostics">
+<h2>Covariate Diagnostics<a class="headerlink" href="#covariate-diagnostics" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML includes a <code class="docutils literal notranslate"><span class="pre">covdiag</span></code> command for convenience. This will
+output some basic diagnostics for your covariates.</p>
+<div class="section" id="id19">
+<h3>Running<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<p>Covdiag can be run on a single covariate:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml covdiag path/to/tif
+</pre></div>
+</div>
+<p>Or on a directory. Adding <code class="docutils literal notranslate"><span class="pre">-r</span></code> flag will explore the directory
+recursively, outputting diagnostics for all tiffs in all subdirectories.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml covdiag path/to/covariate/directory -r
+</pre></div>
+</div>
+<p>By default, output is delivered to the console. To save to a textfile,
+use output redirection:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml covdiag /path/to/covariate/directory &gt;&gt; output.txt
+</pre></div>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -350,6 +1024,15 @@ exist, intersection will be skipped and data will be loaded from these files ins
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="models.html" class="btn btn-neutral float-right" title="Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="generated/uncoverml.scripts.gridsearch.html" class="btn btn-neutral float-left" title="uncoverml.scripts.gridsearch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

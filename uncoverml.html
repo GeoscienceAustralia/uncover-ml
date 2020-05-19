@@ -87,7 +87,9 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">UncoverML API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">uncoverml package</a><ul>
@@ -117,6 +119,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.mpiops">uncoverml.mpiops module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.patch">uncoverml.patch module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.predict">uncoverml.predict module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.resampling">uncoverml.resampling module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.targets">uncoverml.targets module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml.validate">uncoverml.validate module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-uncoverml">Module contents</a></li>
@@ -210,8 +213,8 @@
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag">uncoverml.scripts.covdiag module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor">uncoverml.scripts.gammasensor module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch">uncoverml.scripts.gridsearch module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.subsampletargets">uncoverml.scripts.subsampletargets module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#uncoverml-scripts-tiff2kmz-module">uncoverml.scripts.tiff2kmz module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#uncoverml-scripts-subsampletargets-module">uncoverml.scripts.subsampletargets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz">uncoverml.scripts.tiff2kmz module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml">uncoverml.scripts.uncoverml module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts">Module contents</a></li>
 </ul>
@@ -571,7 +574,7 @@ that increases with l.</p></li>
 <p>Handles parsing of the configuration file.</p>
 <dl class="class">
 <dt id="uncoverml.config.Config">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">yaml_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">yaml_file</em>, <em class="sig-param">clustering=False</em>, <em class="sig-param">learning=False</em>, <em class="sig-param">resampling=False</em>, <em class="sig-param">predicting=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class representing the global configuration of the uncoverml
 scripts.</p>
@@ -1194,6 +1197,21 @@ if <a class="reference internal" href="#uncoverml.config.Config.class_file" titl
 </dl>
 </dd></dl>
 
+<dl class="method">
+<dt id="uncoverml.config.Config.parse_extents">
+<em class="property">static </em><code class="sig-name descname">parse_extents</code><span class="sig-paren">(</span><em class="sig-param">exb</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config.parse_extents" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.config.Config.set_algo_flags">
+<code class="sig-name descname">set_algo_flags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.config.Config.set_algo_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.config.Config.tmpdir">
+<em class="property">property </em><code class="sig-name descname">tmpdir</code><a class="headerlink" href="#uncoverml.config.Config.tmpdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="uncoverml.config.Config.yaml_loader">
 <code class="sig-name descname">yaml_loader</code><a class="headerlink" href="#uncoverml.config.Config.yaml_loader" title="Permalink to this definition">¶</a></dt>
@@ -1678,18 +1696,24 @@ will always have targets</p>
 <dl class="function">
 <dt id="uncoverml.features.save_intersected_features_and_targets">
 <code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">save_intersected_features_and_targets</code><span class="sig-paren">(</span><em class="sig-param">feature_sets</em>, <em class="sig-param">transform_sets</em>, <em class="sig-param">targets</em>, <em class="sig-param">config</em>, <em class="sig-param">impute=True</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.save_intersected_features_and_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function saves raw covariates values at the target locations, i.e.,
-after the targets have been intersected.</p>
-<p>This will save the following two files if they are provided in the
-config file:</p>
-<blockquote>
-<div><ol class="loweralpha simple">
-<li><p>rawcovariates.csv: the covariate values in csv</p></li>
-<li><p>rawcovariates_mask.csv: the corresponding mask in csv</p></li>
-</ol>
-</div></blockquote>
+<dd><p>This function saves a table of covariate values and the target
+value intersected at each point. It also contains columns for
+UID ‘index’ and a predicted value.</p>
+<p>If the target shapefile contains an ‘index’ field, this will be
+used to populate the ‘index’ column. This is intended to be used
+as a unique ID for each point in post-processing. If no ‘index’
+field exists this column will be zero filled.</p>
+<p>The ‘prediction’ column is for predicted values created during
+cross-validation. Again, this is for post-processing. It will only
+be populated if cross-validation is run later on. If not, it will
+be zero filled.</p>
+<dl class="simple">
+<dt>Two files will be output:</dt><dd><p>…/output_dir/{name_of_config}_rawcovariates.csv
+…/output_dir/{name_of_config}_rawcovariates_mask.csv</p>
+</dd>
+</dl>
 <p>This function will also optionally output intersected covariates scatter
-plot.</p>
+plot and covariate correlation matrix plot.</p>
 </dd></dl>
 
 <dl class="function">
@@ -1853,11 +1877,22 @@ independent image writing by different processes, i.e., images are not chunked</
 
 </dd></dl>
 
+<dl class="attribute">
+<dt id="uncoverml.geoio.SharedTrainingData">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">SharedTrainingData</code><a class="headerlink" href="#uncoverml.geoio.SharedTrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.geoio.TrainingData</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.geoio.create_shared_training_data">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">create_shared_training_data</code><span class="sig-paren">(</span><em class="sig-param">targets_all</em>, <em class="sig-param">x_all</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.create_shared_training_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="function">
 <dt id="uncoverml.geoio.crop_covariates">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_covariates</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">outdir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_covariates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crops the covariate files listed under <cite>config.feature_sets</cite> using
-the bounds provided under <cite>config.crop_box</cite>. The cropped covariates
+the bounds provided under <cite>config.extents</cite>. The cropped covariates
 are stored in a temporary directory and the paths in
 <cite>config.feature_sets</cite> are redirected to theses files. The caller is
 responsible for removing the files once they have been created.</p>
@@ -1873,14 +1908,20 @@ If not provided, a tmp directory will be created.</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.geoio.crop_mask">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_mask</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">outdir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crops the prediction mask listed under <cite>config.mask</cite>.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.geoio.crop_tif">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_tif</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">crop_box</em>, <em class="sig-param">outfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_tif" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">crop_tif</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">extents</em>, <em class="sig-param">pixel_coordinates=False</em>, <em class="sig-param">outfile=None</em>, <em class="sig-param">strict=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.crop_tif" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crops the geotiff using the provided extent.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filename</strong> (<em>str</em>) – Path to the geotiff to be cropped.</p></li>
-<li><p><strong>crop_box</strong> (<em>tuple</em><em>(</em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>)</em>) – Bounding box to crop by, ordering is (xmin, ymin, xmax, ymax).
+<li><p><strong>extents</strong> (<em>tuple</em><em>(</em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>)</em>) – Bounding box to crop by, ordering is (xmin, ymin, xmax, ymax).
 Data outside bounds will be cropped. Any elements that are None
 will be substituted with the original bound of the geotiff.</p></li>
 <li><p><strong>outfile</strong> (<em>str</em>) – Path to save cropped geotiff. If not provided, will be saved
@@ -1891,9 +1932,15 @@ with original name + random id in tmp directory.</p></li>
 </dd></dl>
 
 <dl class="function">
-<dt id="uncoverml.geoio.export_crossval">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">export_crossval</code><span class="sig-paren">(</span><em class="sig-param">crossval_output</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.export_crossval" title="Permalink to this definition">¶</a></dt>
+<dt id="uncoverml.geoio.deallocate_shared_training_data">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">deallocate_shared_training_data</code><span class="sig-paren">(</span><em class="sig-param">training_data</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.deallocate_shared_training_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.geoio.distribute_targets">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">distribute_targets</code><span class="sig-paren">(</span><em class="sig-param">positions</em>, <em class="sig-param">observations</em>, <em class="sig-param">fields</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.distribute_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributes a target object across all nodes</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.geoio.export_feature_ranks">
@@ -1921,6 +1968,11 @@ with original name + random id in tmp directory.</p></li>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.geoio.get_image_pixel_res">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">get_image_pixel_res</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.get_image_pixel_res" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.geoio.get_image_spec">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">get_image_spec</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.get_image_spec" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1942,13 +1994,13 @@ with original name + random id in tmp directory.</p></li>
 
 <dl class="function">
 <dt id="uncoverml.geoio.load_shapefile">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_shapefile</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">targetfield</em>, <em class="sig-param">covariate_crs</em>, <em class="sig-param">crop_box</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_shapefile" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_shapefile</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">targetfield</em>, <em class="sig-param">covariate_crs</em>, <em class="sig-param">extents</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>TODO</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.geoio.load_targets">
-<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield=None</em>, <em class="sig-param">covariate_crs=None</em>, <em class="sig-param">crop_box=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">load_targets</code><span class="sig-paren">(</span><em class="sig-param">shapefile</em>, <em class="sig-param">targetfield=None</em>, <em class="sig-param">covariate_crs=None</em>, <em class="sig-param">extents=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.load_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads the shapefile onto node 0 then distributes it across all
 available nodes</p>
 </dd></dl>
@@ -2972,7 +3024,9 @@ in order to make the ML results traceable and reproduceable (provenance)</p>
 <dt id="uncoverml.mllog.MPIStreamHandler">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.mllog.</code><code class="sig-name descname">MPIStreamHandler</code><span class="sig-paren">(</span><em class="sig-param">stream=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mllog.MPIStreamHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">logging.StreamHandler</span></code></p>
-<p>Only logs messages from Node 0</p>
+<p>If message stars with ‘:mpi:’, the message will be logged
+regardless of node (the ‘:mpi:’ will be removed from the message).
+Otherwise, only node 0 will emit messages.</p>
 <dl class="method">
 <dt id="uncoverml.mllog.MPIStreamHandler.emit">
 <code class="sig-name descname">emit</code><span class="sig-paren">(</span><em class="sig-param">record</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mllog.MPIStreamHandler.emit" title="Permalink to this definition">¶</a></dt>
@@ -2991,6 +3045,12 @@ output to the stream.</p>
 <dt id="uncoverml.mllog.configure">
 <code class="sig-prename descclassname">uncoverml.mllog.</code><code class="sig-name descname">configure</code><span class="sig-paren">(</span><em class="sig-param">verbosity</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mllog.configure" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.mllog.handle_exception">
+<code class="sig-prename descclassname">uncoverml.mllog.</code><code class="sig-name descname">handle_exception</code><span class="sig-paren">(</span><em class="sig-param">exc_type</em>, <em class="sig-param">exc_value</em>, <em class="sig-param">exc_traceback</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mllog.handle_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add MPI index to exception traceback.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.mllog.warn_with_traceback">
@@ -3149,6 +3209,12 @@ commencing optimisation at the best candidate.</p></li>
 </dd></dl>
 
 <dl class="class">
+<dt id="uncoverml.models.BootstrappedSVR">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">BootstrappedSVR</code><span class="sig-paren">(</span><em class="sig-param">n_models=100</em>, <em class="sig-param">parallel=True</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.BootstrappedSVR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.BootstrappedModel</span></code>, <a class="reference internal" href="#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
 <dt id="uncoverml.models.CubistMultiTransformed">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">CubistMultiTransformed</code><span class="sig-paren">(</span><em class="sig-param">target_transform='identity'</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.CubistMultiTransformed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TransformedRegressor</span></code>, <a class="reference internal" href="#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
@@ -3167,7 +3233,7 @@ commencing optimisation at the best candidate.</p></li>
 <dl class="class">
 <dt id="uncoverml.models.CustomKNeighborsRegressor">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">CustomKNeighborsRegressor</code><span class="sig-paren">(</span><em class="sig-param">n_neighbors=10</em>, <em class="sig-param">weights='distance'</em>, <em class="sig-param">algorithm='auto'</em>, <em class="sig-param">leaf_size=30</em>, <em class="sig-param">metric='minkowski'</em>, <em class="sig-param">p=2</em>, <em class="sig-param">metric_params=None</em>, <em class="sig-param">n_jobs=1</em>, <em class="sig-param">min_distance=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.CustomKNeighborsRegressor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.neighbors.regression.KNeighborsRegressor</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.neighbors._regression.KNeighborsRegressor</span></code></p>
 </dd></dl>
 
 <dl class="class">
@@ -3396,13 +3462,13 @@ the query inputs, X of shape (Ns,).</p></li>
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">RandomForestClassifier</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.RandomForestClassifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.EncodedClassifier</span></code>, <a class="reference internal" href="#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 <p>Random Forest for muli-class classification.</p>
-<p><a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html</a></p>
+<p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="uncoverml.models.RandomForestRegressor">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">RandomForestRegressor</code><span class="sig-paren">(</span><em class="sig-param">n_estimators='warn'</em>, <em class="sig-param">criterion='mse'</em>, <em class="sig-param">max_depth=None</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_features='auto'</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">min_impurity_decrease=0.0</em>, <em class="sig-param">min_impurity_split=None</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">oob_score=False</em>, <em class="sig-param">n_jobs=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">warm_start=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.RandomForestRegressor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.ensemble.forest.RandomForestRegressor</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">RandomForestRegressor</code><span class="sig-paren">(</span><em class="sig-param">n_estimators=100</em>, <em class="sig-param">criterion='mse'</em>, <em class="sig-param">max_depth=None</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_features='auto'</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">min_impurity_decrease=0.0</em>, <em class="sig-param">min_impurity_split=None</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">oob_score=False</em>, <em class="sig-param">n_jobs=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">ccp_alpha=0.0</em>, <em class="sig-param">max_samples=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.RandomForestRegressor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.ensemble._forest.RandomForestRegressor</span></code></p>
 <p>Implements a “probabilistic” output by looking at the variance of the
 decision tree estimator ouputs.</p>
 <dl class="method">
@@ -3617,6 +3683,11 @@ algorithm. This depends on the prediction methods implemented (e.g.
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.models.bootstrap_model">
+<code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">bootstrap_model</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.bootstrap_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.models.encode_targets">
 <code class="sig-prename descclassname">uncoverml.models.</code><code class="sig-name descname">encode_targets</code><span class="sig-paren">(</span><em class="sig-param">Classifier</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.models.encode_targets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -3677,9 +3748,43 @@ the rank of the node.</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.mpiops.count_targets">
+<code class="sig-prename descclassname">uncoverml.mpiops.</code><code class="sig-name descname">count_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mpiops.count_targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.mpiops.covariance">
 <code class="sig-prename descclassname">uncoverml.mpiops.</code><code class="sig-name descname">covariance</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mpiops.covariance" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.mpiops.create_shared_array">
+<code class="sig-prename descclassname">uncoverml.mpiops.</code><code class="sig-name descname">create_shared_array</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">root=0</em>, <em class="sig-param">writeable=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.mpiops.create_shared_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a shared numpy array among MPI nodes. To access the data,
+refer to the return numpy array ‘shared’. The second return value
+is the MPI window. This doesn’t need to be interacted with except
+when deallocating the memory.</p>
+<p>When finished with the data, set <cite>shared = None</cite> and call
+<cite>win.Free()</cite>.</p>
+<p>Caution: any node with a handle on the shared array can modify its
+contents. To be safe, the shared array is set to read-only by
+default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – The numpy array to share.</p></li>
+<li><p><strong>root</strong> (<em>int</em>) – Rank of the root node that contains the original data.</p></li>
+<li><p><strong>writeable</strong> (<em>bool</em>) – Whether or not the resulting shared array is writeable.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple of numpy.ndarray, MPI window</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.mpiops.eigen_decomposition">
@@ -3863,11 +3968,6 @@ psize = pwidth * 2 + 1</p>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="uncoverml.predict.mask_subchunks">
-<code class="sig-prename descclassname">uncoverml.predict.</code><code class="sig-name descname">mask_subchunks</code><span class="sig-paren">(</span><em class="sig-param">subchunk</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.predict.mask_subchunks" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
 <dt id="uncoverml.predict.predict">
 <code class="sig-prename descclassname">uncoverml.predict.</code><code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">model</em>, <em class="sig-param">interval=0.95</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.predict.predict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -3883,17 +3983,125 @@ psize = pwidth * 2 + 1</p>
 <dd></dd></dl>
 
 </div>
+<div class="section" id="module-uncoverml.resampling">
+<span id="uncoverml-resampling-module"></span><h2>uncoverml.resampling module<a class="headerlink" href="#module-uncoverml.resampling" title="Permalink to this headline">¶</a></h2>
+<p>Module for shapefile resampling methods.
+This code was originailly developed by Sudipta Basak.
+(<a class="reference external" href="https://github.com/basaks">https://github.com/basaks</a>)</p>
+<p>See <cite>uncoverml.scripts.shiftmap_cli</cite> for a resampling CLI.</p>
+<dl class="function">
+<dt id="uncoverml.resampling.bootstrap_data_indicies">
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">bootstrap_data_indicies</code><span class="sig-paren">(</span><em class="sig-param">population</em>, <em class="sig-param">samples=None</em>, <em class="sig-param">random_state=1</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.bootstrap_data_indicies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.resampling.filter_fields">
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">filter_fields</code><span class="sig-paren">(</span><em class="sig-param">fields_to_keep</em>, <em class="sig-param">gdf</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.filter_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.resampling.prepapre_dataframe">
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">prepapre_dataframe</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">fields_to_keep</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.prepapre_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.resampling.resample_by_magnitude">
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">resample_by_magnitude</code><span class="sig-paren">(</span><em class="sig-param">input_data</em>, <em class="sig-param">target_field</em>, <em class="sig-param">bins=10</em>, <em class="sig-param">fields_to_keep=[]</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">output_samples=None</em>, <em class="sig-param">validation=False</em>, <em class="sig-param">validation_points=100</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.resample_by_magnitude" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_gdf</strong> (<em>geopandas.GeoDataFrame</em>) – Geopandas dataframe containing targets to be resampled.</p></li>
+<li><p><strong>target_field</strong> (<em>str</em>) – target field name based on which resampling is performed. Field
+must exist in the input_shapefile</p></li>
+<li><p><strong>bins</strong> (<em>int</em>) – number of bins for sampling</p></li>
+<li><p><strong>fields_to_keep</strong> (<em>list</em>) – of strings to store in the output shapefile</p></li>
+<li><p><strong>bootstrap</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to sample with replacement or not</p></li>
+<li><p><strong>output_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – number of samples in the output shpfile. If not provided, the
+output samples will be assumed to be the same as the original
+shapefile</p></li>
+<li><p><strong>validation</strong> (<em>bool</em><em>, </em><em>optional</em>) – validation file name</p></li>
+<li><p><strong>validation_points</strong> (<em>int</em><em>, </em><em>optional</em>) – approximate number of points in the validation shapefile</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.resampling.resample_spatially">
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">resample_spatially</code><span class="sig-paren">(</span><em class="sig-param">input_data</em>, <em class="sig-param">target_field</em>, <em class="sig-param">rows=10</em>, <em class="sig-param">cols=10</em>, <em class="sig-param">fields_to_keep=[]</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">output_samples=None</em>, <em class="sig-param">validation_points=100</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.resample_spatially" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_shapefile</strong> – </p></li>
+<li><p><strong>output_shapefile</strong> – </p></li>
+<li><p><strong>target_field</strong> (<em>str</em>) – target field name based on which resampling is performed. Field
+must exist in the input_shapefile</p></li>
+<li><p><strong>rows</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins in y</p></li>
+<li><p><strong>cols</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins in x</p></li>
+<li><p><strong>fields_to_keep</strong> (<em>list of strings to store in the output shapefile</em>) – </p></li>
+<li><p><strong>bootstrap</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to sample with replacement or not</p></li>
+<li><p><strong>output_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – number of samples in the output shpfile. If not provided, the
+output samples will be assumed to be the same as the original
+shapefile</p></li>
+<li><p><strong>validation_points</strong> (<em>int</em><em>, </em><em>optional</em>) – approximate number of points in the validation shapefile</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output_shapefile name</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <div class="section" id="module-uncoverml.targets">
 <span id="uncoverml-targets-module"></span><h2>uncoverml.targets module<a class="headerlink" href="#module-uncoverml.targets" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="uncoverml.targets.Targets">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">Targets</code><span class="sig-paren">(</span><em class="sig-param">lonlat</em>, <em class="sig-param">vals</em>, <em class="sig-param">othervals=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.Targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="uncoverml.targets.Targets.from_geodataframe">
+<em class="property">classmethod </em><code class="sig-name descname">from_geodataframe</code><span class="sig-paren">(</span><em class="sig-param">gdf</em>, <em class="sig-param">observations_field='observations'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.Targets.from_geodataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a <cite>Targets</cite> object from a geopandas dataframe.
+One column  will be taken as the main ‘observations’ field. All
+remaining non-geometry columns will be stored in the <cite>fields</cite>
+property.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>observations_field</strong> (<em>str</em>) – Name of the column in the dataframe that is the main
+target observation (the field to train on).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets">Targets</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="uncoverml.targets.Targets.to_geodataframe">
+<code class="sig-name descname">to_geodataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.Targets.to_geodataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a copy of the targets as a geopandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>geopandas.GeoDataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.targets.gather_targets">
-<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">gather_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">keep</em>, <em class="sig-param">config</em>, <em class="sig-param">node=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.gather_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">gather_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">keep</em>, <em class="sig-param">node=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.gather_targets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -3903,18 +4111,76 @@ psize = pwidth * 2 + 1</p>
 
 <dl class="function">
 <dt id="uncoverml.targets.generate_covariate_shift_targets">
-<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">generate_covariate_shift_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.generate_covariate_shift_targets" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">generate_covariate_shift_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">bounds</em>, <em class="sig-param">n_points</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.generate_covariate_shift_targets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.targets.generate_dummy_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">generate_dummy_targets</code><span class="sig-paren">(</span><em class="sig-param">bounds</em>, <em class="sig-param">label</em>, <em class="sig-param">n_points</em>, <em class="sig-param">field_keys=[]</em>, <em class="sig-param">seed=1</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.generate_dummy_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate dummy points with randomly generated positions. Points
+are generated on node 0 and distributed to other nodes if running
+in parallel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bounds</strong> (<em>tuple of float</em>) – Bounding box to generate targets within, of format
+(xmin, ymin, xmax, ymax).</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – Label to assign generated targets.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em>) – Number of points to generate</p></li>
+<li><p><strong>field_keys</strong> (<em>list of str</em><em>, </em><em>optional</em>) – List of keys to add to <cite>fields</cite> property.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Random number generator seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A collection of randomly generated targets.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets">Targets</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.targets.label_targets">
-<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">label_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">label</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.label_targets" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">label_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">label</em>, <em class="sig-param">backup_field=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.label_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replaces target observations (the target property being trained on)
+with the given label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targets</strong> (<a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets"><em>Targets</em></a>) – A collection of targets to label.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – The label to apply.</p></li>
+<li><p><strong>backup_field</strong> (<em>str</em>) – If present, copies the original observation
+data to the <cite>fields</cite> property with the provided string
+as the key.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The labelled targets.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets">Targets</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.targets.merge_targets">
 <code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">merge_targets</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.merge_targets" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Merges two <cite>Targets</cite> objects. They will be sorted the canonical
+uncover-ml way: lexically by position (y, x).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>b</strong> (<em>a</em><em>,</em>) – The Targets to merge.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A single merged collection of targets.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets">Targets</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.targets.save_dropped_targets">
@@ -3922,9 +4188,20 @@ psize = pwidth * 2 + 1</p>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="uncoverml.targets.save_dummy_targets">
-<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">save_dummy_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.save_dummy_targets" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="uncoverml.targets.save_targets">
+<code class="sig-prename descclassname">uncoverml.targets.</code><code class="sig-name descname">save_targets</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">path</em>, <em class="sig-param">obs_filter=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.targets.save_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves target positions and observation data to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targets</strong> (<a class="reference internal" href="#uncoverml.targets.Targets" title="uncoverml.targets.Targets"><em>Targets</em></a>) – The targets to save.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Path to file to save as.</p></li>
+<li><p><strong>obs_filter</strong> (<em>any</em><em>, </em><em>optional</em>) – If provided, will only save points
+that have this observation data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-uncoverml.validate">
@@ -3932,8 +4209,24 @@ psize = pwidth * 2 + 1</p>
 <p>Scripts for validation</p>
 <dl class="class">
 <dt id="uncoverml.validate.CrossvalInfo">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">CrossvalInfo</code><span class="sig-paren">(</span><em class="sig-param">scores</em>, <em class="sig-param">y_true</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">classification</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.CrossvalInfo" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">CrossvalInfo</code><span class="sig-paren">(</span><em class="sig-param">scores</em>, <em class="sig-param">y_true</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">classification</em>, <em class="sig-param">positions</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.CrossvalInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="uncoverml.validate.CrossvalInfo.export_crossval">
+<code class="sig-name descname">export_crossval</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.CrossvalInfo.export_crossval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports a CSV file containing real target values and their
+corresponding predicted value generated as part of
+cross-validation.</p>
+<p>Also populates the ‘prediction’ column of the ‘rawcovariates’
+CSV file.</p>
+<p>If enabled, the real vs predicted values will be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#uncoverml.config.Config" title="uncoverml.config.Config"><em>Config</em></a>) – Uncover-ml config object.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="function">

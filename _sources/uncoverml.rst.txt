@@ -165,6 +165,14 @@ uncoverml.predict module
    :undoc-members:
    :show-inheritance:
 
+uncoverml.resampling module
+---------------------------
+
+.. automodule:: uncoverml.resampling
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 uncoverml.targets module
 ------------------------
 

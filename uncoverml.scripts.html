@@ -87,7 +87,9 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">UncoverML API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="uncoverml.html">uncoverml package</a><ul class="current">
@@ -117,6 +119,7 @@
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.mpiops">uncoverml.mpiops module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.patch">uncoverml.patch module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.predict">uncoverml.predict module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.resampling">uncoverml.resampling module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.targets">uncoverml.targets module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml.validate">uncoverml.validate module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="uncoverml.html#module-uncoverml">Module contents</a></li>
@@ -202,86 +205,24 @@
 </div>
 <div class="section" id="module-uncoverml.scripts.covdiag">
 <span id="uncoverml-scripts-covdiag-module"></span><h2>uncoverml.scripts.covdiag module<a class="headerlink" href="#module-uncoverml.scripts.covdiag" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="uncoverml.scripts.covdiag.diagnostic">
-<code class="sig-prename descclassname">uncoverml.scripts.covdiag.</code><code class="sig-name descname">diagnostic</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag.diagnostic" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.scripts.covdiag.printer">
-<code class="sig-prename descclassname">uncoverml.scripts.covdiag.</code><code class="sig-name descname">printer</code><span class="sig-paren">(</span><em class="sig-param">diag</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag.printer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </div>
 <div class="section" id="module-uncoverml.scripts.gammasensor">
 <span id="uncoverml-scripts-gammasensor-module"></span><h2>uncoverml.scripts.gammasensor module<a class="headerlink" href="#module-uncoverml.scripts.gammasensor" title="Permalink to this headline">¶</a></h2>
-<p>Run the Gamma sensor prediction/super-resolution pipeline.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: gammasensor [OPTIONS] GEOTIFF
-
-Options:
-  --invert                        Apply inverse sensor model
-  --apply                         Apply forward sensor model
-  --height FLOAT                  height of sensor  [required]
-  --absorption FLOAT              absorption coeff  [required]
-  --impute                        Use the sensor model to impute missing
-                                  values in the deconvolution
-  --noise FLOAT                   noise coeff for the inverse transform.
-                                  Increasing this will remove missing data
-                                  artifacts at the cost of image sharpness
-  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
-                                  Level of logging
-  -o, --outputdir TEXT            Location to output file
-  --help                          Show this message and exit.
-</pre></div>
-</div>
-<dl class="function">
-<dt id="uncoverml.scripts.gammasensor.write_data">
-<code class="sig-prename descclassname">uncoverml.scripts.gammasensor.</code><code class="sig-name descname">write_data</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">name</em>, <em class="sig-param">in_image</em>, <em class="sig-param">outputdir</em>, <em class="sig-param">forward</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gammasensor.write_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </div>
 <div class="section" id="module-uncoverml.scripts.gridsearch">
 <span id="uncoverml-scripts-gridsearch-module"></span><h2>uncoverml.scripts.gridsearch module<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h2>
-<p>Run the various machine learning parameter optimisation using
-scikit-learn GridSearchCv.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: gridsearch [OPTIONS] PIPELINE_FILE
-
-Options:
-  -p, --partitions INTEGER        divide each node&#39;s data into this many
-                                  partitions
-  -n, --njobs INTEGER             Number of parallel jobs to run. Lower value
-                                  of n reduces memory requirement. By default
-                                  uses all available CPUs
-  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
-                                  Level of logging
-  --help                          Show this message and exit.
-</pre></div>
 </div>
-<dl class="function">
-<dt id="uncoverml.scripts.gridsearch.setup_pipeline">
-<code class="sig-prename descclassname">uncoverml.scripts.gridsearch.</code><code class="sig-name descname">setup_pipeline</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gridsearch.setup_pipeline" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<div class="section" id="uncoverml-scripts-subsampletargets-module">
+<h2>uncoverml.scripts.subsampletargets module<a class="headerlink" href="#uncoverml-scripts-subsampletargets-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-uncoverml.scripts.subsampletargets">
-<span id="uncoverml-scripts-subsampletargets-module"></span><h2>uncoverml.scripts.subsampletargets module<a class="headerlink" href="#module-uncoverml.scripts.subsampletargets" title="Permalink to this headline">¶</a></h2>
-<p>Subsample the targets from a shapefile to a new shapefile.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: subsampletargets [OPTIONS] FILENAME
-
-Options:
-  -n, --npoints INTEGER           Number of points to keep
-  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
-                                  Level of logging
-  -o, --outputdir TEXT            Location to output file
-  --help                          Show this message and exit.
-</pre></div>
-</div>
-</div>
-<div class="section" id="uncoverml-scripts-tiff2kmz-module">
-<h2>uncoverml.scripts.tiff2kmz module<a class="headerlink" href="#uncoverml-scripts-tiff2kmz-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.scripts.tiff2kmz">
+<span id="uncoverml-scripts-tiff2kmz-module"></span><h2>uncoverml.scripts.tiff2kmz module<a class="headerlink" href="#module-uncoverml.scripts.tiff2kmz" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-uncoverml.scripts.uncoverml">
 <span id="uncoverml-scripts-uncoverml-module"></span><h2>uncoverml.scripts.uncoverml module<a class="headerlink" href="#module-uncoverml.scripts.uncoverml" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-uncoverml.scripts">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncoverml.scripts" title="Permalink to this headline">¶</a></h2>
 <p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
 
@@ -292,37 +233,21 @@ Options:
 
 Commands:
   cluster
+  covdiag
+  gammasensor
+  gridsearch
   learn
+  modelfix
   predict
+  resample
   shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
 </pre></div>
 </div>
-<dl class="function">
-<dt id="uncoverml.scripts.uncoverml.run_crossval">
-<code class="sig-prename descclassname">uncoverml.scripts.uncoverml.</code><code class="sig-name descname">run_crossval</code><span class="sig-paren">(</span><em class="sig-param">x_all</em>, <em class="sig-param">targets_all</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.uncoverml.run_crossval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.scripts.uncoverml.semisupervised">
-<code class="sig-prename descclassname">uncoverml.scripts.uncoverml.</code><code class="sig-name descname">semisupervised</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.uncoverml.semisupervised" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.scripts.uncoverml.unsupervised">
-<code class="sig-prename descclassname">uncoverml.scripts.uncoverml.</code><code class="sig-name descname">unsupervised</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.uncoverml.unsupervised" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="uncoverml.scripts.uncoverml.write_prediction_metadata">
-<code class="sig-prename descclassname">uncoverml.scripts.uncoverml.</code><code class="sig-name descname">write_prediction_metadata</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">config</em>, <em class="sig-param">out_filename='metadata.txt'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.uncoverml.write_prediction_metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p>write the metadata for this prediction result, into a human-readable txt file.
-in order to make the ML results traceable and reproduceable (provenance)
-:return:</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-uncoverml.scripts">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncoverml.scripts" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

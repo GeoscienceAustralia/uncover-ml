@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>&lt;no title&gt; &mdash; UncoverML 0.3.1 documentation</title>
+  <title>Command Line Interface &mdash; UncoverML 0.3.1 documentation</title>
   
 
   
@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="uncoverml.scripts.uncoverml" href="generated/uncoverml.scripts.uncoverml.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,9 +85,16 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gridsearch.html">uncoverml.scripts.gridsearch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-on-hpc">Running on HPC</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
@@ -138,13 +147,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>&lt;no title&gt;</li>
+      <li>Command Line Interface</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/scripts.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/cli.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -157,7 +166,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <table class="longtable docutils align-default">
+  <div class="section" id="command-line-interface">
+<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this headline">¶</a></h1>
+<p>UncoverML is controlled by submitting a YAML configuration file to a
+series of commands. For example, to run a learn -&gt; predict workflow:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">uncoverml learn config.yaml</span>
+<span class="go">uncoverml predict config.yaml</span>
+</pre></div>
+</div>
+<p>UncoverML has several command line options available:</p>
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -180,12 +198,35 @@
 </tr>
 </tbody>
 </table>
+<p>See the <a class="reference internal" href="workflows.html#workflows"><span class="std std-ref">Workflows</span></a> for examples on using these commands.</p>
+<div class="section" id="running-on-hpc">
+<h2>Running on HPC<a class="headerlink" href="#running-on-hpc" title="Permalink to this headline">¶</a></h2>
+<p>In the <code class="docutils literal notranslate"><span class="pre">scripts</span></code> directory of the repository there are some example
+configs and an example script, <code class="docutils literal notranslate"><span class="pre">job_submit_example.sh</span></code>, to assist
+with launching batch jobs over multiple nodes with PBS.</p>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<p>Change below link to Gadi User Guide when it becomes available.</p>
+</div>
+<p>For more information on configuring PBS jobs on the NCI, view the
+<a class="reference external" href="https://opus.nci.org.au/display/Help/Raijin+User+Guide">NCI user documentation</a>.</p>
+</div>
+</div>
 
 
            </div>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="generated/uncoverml.scripts.uncoverml.html" class="btn btn-neutral float-right" title="uncoverml.scripts.uncoverml" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
