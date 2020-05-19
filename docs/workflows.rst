@@ -428,6 +428,19 @@ UncoverML provides a framework for using scikit-learn's GridSearchCV
 to perform hyperparameter tuning. This allows cross-validation to be
 performed with different combinations of parameters. 
 
+.. note::
+
+    Only some models are compatible with optimisation. This is because
+    models must be structued in a way compatible with scikit-learn's
+    GridSearchCV. This involves:
+
+    - having all arguments explicitly listed in the ``__init__`` signature (no varargs)
+    - having the expected functions (``fit``, ``predict``, etc.)
+    - implemeting the ``get_params`` and ``set_params`` functions 
+      defined by `Base Estimator <https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html>`_
+
+    Optimisable models are listed in the :ref:`models section <optimisable-models>`.
+
 Config
 ~~~~~~
 
@@ -455,7 +468,7 @@ An example config for performing optimisation on
   combinations. 
 
   - ``r2``, ``expar``, ``smse`` and ``lins_ccc`` are the availble
-  regression model parameters. 
+    regression model parameters. 
   - ``accuracy``, ``log_loss`` and ``auc`` are applicable to classifers.
 
 - ``hyperparameters``: contains lists of values for various algorithm
