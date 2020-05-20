@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="uncoverml.scripts.uncoverml" href="generated/uncoverml.scripts.uncoverml.html" />
+    <link rel="next" title="Workflows" href="workflows.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
@@ -88,10 +88,6 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.uncoverml.html">uncoverml.scripts.uncoverml</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gammasensor.html">uncoverml.scripts.gammasensor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.tiff2kmz.html">uncoverml.scripts.tiff2kmz</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/uncoverml.scripts.gridsearch.html">uncoverml.scripts.gridsearch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-on-hpc">Running on HPC</a></li>
 </ul>
 </li>
@@ -175,29 +171,29 @@ series of commands. For example, to run a learn -&gt; predict workflow:</p>
 </pre></div>
 </div>
 <p>UncoverML has several command line options available:</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml" title="uncoverml.scripts.uncoverml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">uncoverml</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">subsampletargets</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor" title="uncoverml.scripts.gammasensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gammasensor</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz" title="uncoverml.scripts.tiff2kmz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tiff2kmz</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch" title="uncoverml.scripts.gridsearch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gridsearch</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+...
+</pre></div>
+</div>
 <p>See the <a class="reference internal" href="workflows.html#workflows"><span class="std std-ref">Workflows</span></a> for examples on using these commands.</p>
 <div class="section" id="running-on-hpc">
 <h2>Running on HPC<a class="headerlink" href="#running-on-hpc" title="Permalink to this headline">¶</a></h2>
@@ -221,7 +217,7 @@ with launching batch jobs over multiple nodes with PBS.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="generated/uncoverml.scripts.uncoverml.html" class="btn btn-neutral float-right" title="uncoverml.scripts.uncoverml" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="workflows.html" class="btn btn-neutral float-right" title="Workflows" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

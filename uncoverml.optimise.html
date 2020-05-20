@@ -206,25 +206,20 @@
 <div class="section" id="module-uncoverml.optimise.models">
 <span id="uncoverml-optimise-models-module"></span><h2>uncoverml.optimise.models module<a class="headerlink" href="#module-uncoverml.optimise.models" title="Permalink to this headline">¶</a></h2>
 <p>12-05-2020 15:50:35 AEST - <a class="reference external" href="mailto:brenainn&#46;moushall&#37;&#52;&#48;ga&#46;gov&#46;au">brenainn<span>&#46;</span>moushall<span>&#64;</span>ga<span>&#46;</span>gov<span>&#46;</span>au</a></p>
-<p>Not 100% sure about this module. It appears to duplicate a lot of what
-uncoverml.models does. My assumption is it’s to allow these models to
-work correctly with optimisation/gridsearchCV. However these models
-get used outside the optimisation process as well which is odd (the
-model map is imported in uncoverml.learn and they can be suppled in the
-config).</p>
-<p>Some models are almost the exact same - the difference being models
-in here have baked-in sklearn default parameters, some of which have
-changed over time, so the default parameters provided by sklearn in
-uncoverml.models will produce discrepancies if the default parameters in
-these models haven’t been updated to match.</p>
-<p>Some models only exist in this module, such as Huber and XGBoost, and
-some models only exist in the uncoverml.models module.</p>
-<p>It’s pretty confusing and also leads to doublehandling - if you want
-to modify some implementation of model functions, you have to do it in
-both of these modules.</p>
-<p># TODO: work out why this module exists and if possible, refactor models
-back to single module, or at least refactor shared functionality into
-one place to eliminate doublehandling.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only some models are compatible with optimisation. This is because
+models must be structued in a way compatible with scikit-learn’s
+GridSearchCV. This involves:</p>
+<ul class="simple">
+<li><p>having all arguments explicitly listed in the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> signature (no varargs)</p></li>
+<li><p>having the expected functions (<code class="docutils literal notranslate"><span class="pre">fit</span></code>, <code class="docutils literal notranslate"><span class="pre">predict</span></code>, etc.)</p></li>
+<li><p>implemeting the <code class="docutils literal notranslate"><span class="pre">get_params</span></code> and <code class="docutils literal notranslate"><span class="pre">set_params</span></code> functions
+defined by <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html">Base Estimator</a></p></li>
+</ul>
+</div>
+<p># TODO: refactor all models to have an interface compatible with GCV
+# and consolidate to a single module.</p>
 <dl class="class">
 <dt id="uncoverml.optimise.models.Huber">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">Huber</code><span class="sig-paren">(</span><em class="sig-param">epsilon=1.35</em>, <em class="sig-param">max_iter=100</em>, <em class="sig-param">alpha=0.0001</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">fit_intercept=True</em>, <em class="sig-param">tol=1e-05</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.Huber" title="Permalink to this definition">¶</a></dt>

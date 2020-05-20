@@ -261,7 +261,7 @@ K Nearest Neighbour
 **Documentation and parameters:**
 
 - `Scikit-Learn <https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html>`_
-- :class:`uncoverml.models.CustomNeighborsRegressor`
+- :class:`uncoverml.models.CustomKNeighborsRegressor`
 
 **Additional parameters:**
 
@@ -373,7 +373,7 @@ Stochastic Gradient Descent Regressor (Optimisable)
 Support Vector Regression (Optimisable)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Duplicate of ref:`Support Vector Regression` structured to be 
+Duplicate of :ref:`Support Vector Regression` structured to be 
 compatible with optimisation.
 
 **Config:**
@@ -493,7 +493,7 @@ Nearest ND Interpolator
 **Documentation and parameters:**
 
 - `Scipy <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.NearestNDInterpolator.html>`_
-- :class:`uncoverml.interpolate.NearestNDInterpolator`
+- :class:`uncoverml.interpolate.SKLearnNearestNDInterpolator`
 
 RBF Interpolator
 ~~~~~~~~~~~~~~~~
@@ -599,5 +599,5 @@ Boosted Trees
 **Documentation and parameters:**
 
 - `Scikit-Learn <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html>`_
-- :class:`uncoverml.models.GradientBoostingClassifier`
+- :class:`uncoverml.models.GradBoostedTrees`
 

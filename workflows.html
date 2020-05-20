@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Models" href="models.html" />
-    <link rel="prev" title="uncoverml.scripts.gridsearch" href="generated/uncoverml.scripts.gridsearch.html" /> 
+    <link rel="prev" title="Command Line Interface" href="cli.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -151,8 +151,13 @@
 <li class="toctree-l3"><a class="reference internal" href="#id18">Running</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#resampling">Resampling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">Running</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#covariate-diagnostics">Covariate Diagnostics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id19">Running</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">Running</a></li>
 </ul>
 </li>
 </ul>
@@ -610,7 +615,8 @@ written out sequentially, reducing memory usage.</p>
 </div>
 <div class="section" id="optimisation">
 <h2>Optimisation<a class="headerlink" href="#optimisation" title="Permalink to this headline">¶</a></h2>
-<p>UncoverML provides a framework for using scikit-learn’s GridSearchCV
+<p>UncoverML provides a framework for using scikit-learn’s
+<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html">GridSearchCV</a>
 to perform hyperparameter tuning. This allows cross-validation to be
 performed with different combinations of parameters.</p>
 <div class="admonition note">
@@ -752,7 +758,7 @@ block of the config:</p>
 </div>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">target_search</span></code>: a boolean of whether or not to use targetsearch</p></li>
-<li><p>target_search_threshold: the likelihood threshold a training point
+<li><p><code class="docutils literal notranslate"><span class="pre">target_search_threshold</span></code>: the likelihood threshold a training point
 must surpass to be included in found points (i.e. how similar a
 training points feature distribution is to the study area)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">target_search_extents</span></code>: extents defining the study area. Target search
@@ -877,14 +883,14 @@ predicting the k-means model.</p>
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>file: path to shapefile containg labels. This is optional. If provided
+<li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: path to shapefile containg labels. This is optional. If provided
 then semi-supervised clustering is performed, other clutering is
 unsupervised.</p></li>
-<li><p>property: the name of the class label property in the shapefile. Only
+<li><p><code class="docutils literal notranslate"><span class="pre">property</span></code>: the name of the class label property in the shapefile. Only
 required if a shapefile has been provided and semi-supervised
 clustering is being performed.</p></li>
-<li><p>n_classes: the number of classes to cluster the data into.</p></li>
-<li><p>oversample_factor: controls the number of samples drawn as part of
+<li><p><code class="docutils literal notranslate"><span class="pre">n_classes</span></code>: the number of classes to cluster the data into.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oversample_factor</span></code>: controls the number of samples drawn as part of
 the initialisation step. More processors used will increase the
 total number of samples drawn. Consider values of 1 for more than
 16 processors.</p></li>
@@ -995,12 +1001,97 @@ table:</p>
 </div>
 </div>
 </div>
+<div class="section" id="resampling">
+<h2>Resampling<a class="headerlink" href="#resampling" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML has a <code class="docutils literal notranslate"><span class="pre">resample</span></code> tool that allows a target shapefile to be
+resampled based on value or spatial parameters.</p>
+<div class="section" id="id19">
+<h3>Config<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<p>Resampling requires a <code class="docutils literal notranslate"><span class="pre">targets</span></code> block with additional resampling
+parameters and an <code class="docutils literal notranslate"><span class="pre">output</span></code> block specifying a directory.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+  <span class="nt">file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/targets/shapefile</span>
+  <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">target_field_name</span>
+  <span class="nt">resample</span><span class="p">:</span>
+    <span class="nt">spatial</span><span class="p">:</span>
+      <span class="nt">rows</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+      <span class="nt">cols</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+      <span class="nt">bootstrap</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+      <span class="nt">output_samples</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1000</span>
+      <span class="nt">fields_to_keep</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">type</span><span class="p p-Indicator">,</span> <span class="nv">site_id</span><span class="p p-Indicator">]</span>
+    <span class="nt">value</span><span class="p">:</span>
+      <span class="nt">bins</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+      <span class="nt">bootstrap</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+      <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">linear</span>
+      <span class="nt">fields_to_keep</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">type</span><span class="p p-Indicator">,</span> <span class="nv">site_id</span><span class="p p-Indicator">]</span>
+
+<span class="nt">output</span><span class="p">:</span>
+  <span class="nt">directory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">./resampling_out</span>
+</pre></div>
+</div>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: path to the target shapefile</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">property</span></code>: name of the target observation field</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resample</span></code>: the resampling arguments</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">spatial</span></code>: arguments for spatial resampling
+- <code class="docutils literal notranslate"><span class="pre">rows</span></code>, <code class="docutils literal notranslate"><span class="pre">cols</span></code>: int, the number of rows and columns to divide</p>
+<blockquote>
+<div><p>the shapefile area into. Each resulting cell is a bin.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bootstrap</span></code>: boolean, whether to sample with replacement. If
+true, then duplicate samples are allowed, otherwise each value
+will only be sampled once at most.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_samples</span></code>: int, the number of output samples. This is
+the total number, so the number of samples in each bin is equal
+to (output_samples // bins)). If <code class="docutils literal notranslate"><span class="pre">bootstrap</span></code> is false and
+there are not enough samples in a bin to fulfill the requested
+number, then all samples will be taken and the bin will be short
+of samples.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fields_to_keep</span></code>: by default, the only value preserved in
+the resulting resampled shapefile is the property specified by
+<code class="docutils literal notranslate"><span class="pre">property</span></code>. To keep additional fields, add them to this
+parameter.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: arguments for value resampling
+- <code class="docutils literal notranslate"><span class="pre">bins</span></code>: the number of bins to divide samples into.
+- <code class="docutils literal notranslate"><span class="pre">interval</span></code>: <code class="docutils literal notranslate"><span class="pre">linear</span></code> or <code class="docutils literal notranslate"><span class="pre">percentile</span></code>, the method for</p>
+<blockquote>
+<div><p>determining bin edges. If <code class="docutils literal notranslate"><span class="pre">linear</span></code> then bin edges will be taken
+at equally spaced intervals from the min to the max of the
+target values.</p>
+<p>E.g., if bins is 3 and the data range is 0 to 300, then the
+bins will be 0 to 100, 100 to 200 and 200 to 300.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">percentile</span></code> then the bin edges will be the Nth percentile
+value of the target data, with the percentiles being the result
+of linearally spacing the number of bin edges between 0 to 1.</p>
+<p>E.g., if bins is 3, then the bins will cover from 0 to 33rd percentile,
+33rd to 66th percentile and 66th to 100th percentile.</p>
+</div></blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id20">
+<h3>Running<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<p>To perform resampling, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml resample config.yaml
+</pre></div>
+</div>
+<p>Output will be in the output directory, with the resampled shapefile
+in a subdirectory having the original shapefile name appended with
+‘resampled’.</p>
+</div>
+</div>
 <div class="section" id="covariate-diagnostics">
 <h2>Covariate Diagnostics<a class="headerlink" href="#covariate-diagnostics" title="Permalink to this headline">¶</a></h2>
 <p>UncoverML includes a <code class="docutils literal notranslate"><span class="pre">covdiag</span></code> command for convenience. This will
 output some basic diagnostics for your covariates.</p>
-<div class="section" id="id19">
-<h3>Running<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id21">
+<h3>Running<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
 <p>Covdiag can be run on a single covariate:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml covdiag path/to/tif
 </pre></div>
@@ -1030,7 +1121,7 @@ use output redirection:</p>
         <a href="models.html" class="btn btn-neutral float-right" title="Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/uncoverml.scripts.gridsearch.html" class="btn btn-neutral float-left" title="uncoverml.scripts.gridsearch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="cli.html" class="btn btn-neutral float-left" title="Command Line Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

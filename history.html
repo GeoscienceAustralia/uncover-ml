@@ -94,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#unreleased-2019-12-xx">Unreleased (2019-12-xx)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-2019-12-ongoing">Unreleased (2019-12 - ongoing)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
@@ -192,8 +192,8 @@
             
   <div class="section" id="history">
 <h1>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="unreleased-2019-12-xx">
-<h2>Unreleased (2019-12-xx)<a class="headerlink" href="#unreleased-2019-12-xx" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="unreleased-2019-12-ongoing">
+<h2>Unreleased (2019-12 - ongoing)<a class="headerlink" href="#unreleased-2019-12-ongoing" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="added">
 <h3>Added<a class="headerlink" href="#added" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
@@ -206,9 +206,11 @@ additions if required.</p></li>
 <li><p>“targetsearch” comamnd which finds targets similar to prediction data outside of prediction area.</p></li>
 <li><p>More demonstration configs.</p></li>
 <li><p>Reimplemented target sampling/binning code (originally by Sudipta).</p></li>
-<li><p>Add an ‘index’ column to rawcovariates.csv output to allow users to customise plots.</p></li>
 <li><p>Bootstrap SVR model.</p></li>
 <li><p>User defined metrics for optimisation.</p></li>
+<li><p>Addition of writing aribtrary fields to rawcovariates.csv.</p></li>
+<li><p>Sample weighting for certain models</p></li>
+<li><p>Doc overhaul</p></li>
 </ul>
 </div>
 <div class="section" id="changed">
@@ -219,6 +221,8 @@ additions if required.</p></li>
 <li><p>Moved all CLI commands to be under the ‘uncoverml’ command.</p></li>
 <li><p>Cleaned up project structure - remove outdated ‘pbs’ directory and scripts that no longer apply.</p></li>
 <li><p>Training data is now shared via MPI shared memory during the learn step.</p></li>
+<li><p>Models are now exported with their TransformSet objects, so the transform statistics can be
+reused for prediction. Previsouly the entire Config object was pickled.</p></li>
 </ul>
 </div>
 <div class="section" id="fixed">
@@ -226,7 +230,7 @@ additions if required.</p></li>
 <ul class="simple">
 <li><p>MRF results being determined by number of processors used. Changed to provide each random forest
 with its own RNG seed.</p></li>
-<li><p>Crash when plotting feature ranking if the using a model without ‘MLL’ metric.</p></li>
+<li><p>Crash when plotting feature ranking if using a model without ‘MLL’ metric.</p></li>
 </ul>
 </div>
 </div>

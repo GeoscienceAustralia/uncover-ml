@@ -11,7 +11,8 @@ series of commands. For example, to run a learn -> predict workflow:
 
 UncoverML has several command line options available: 
 
-.. include:: scripts.rst
+.. program-output:: uncoverml
+    :ellipsis: 20
 
 See the :ref:`workflows` for examples on using these commands.
 
