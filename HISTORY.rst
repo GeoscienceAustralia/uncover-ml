@@ -2,7 +2,7 @@
 
 History
 =======
-Unreleased (2019-12-xx)
+Unreleased (2019-12 - ongoing)
 -----------------------
 Added
 +++++
@@ -15,9 +15,11 @@ Added
 - "targetsearch" comamnd which finds targets similar to prediction data outside of prediction area.
 - More demonstration configs.
 - Reimplemented target sampling/binning code (originally by Sudipta).
-- Add an 'index' column to rawcovariates.csv output to allow users to customise plots.
 - Bootstrap SVR model.
 - User defined metrics for optimisation.
+- Addition of writing aribtrary fields to rawcovariates.csv.
+- Sample weighting for certain models
+- Doc overhaul
 
 Changed
 +++++++
@@ -26,12 +28,14 @@ Changed
 - Moved all CLI commands to be under the 'uncoverml' command.
 - Cleaned up project structure - remove outdated 'pbs' directory and scripts that no longer apply.
 - Training data is now shared via MPI shared memory during the learn step.
+- Models are now exported with their TransformSet objects, so the transform statistics can be
+  reused for prediction. Previsouly the entire Config object was pickled.
 
 Fixed
 +++++
 - MRF results being determined by number of processors used. Changed to provide each random forest 
   with its own RNG seed.
-- Crash when plotting feature ranking if the using a model without 'MLL' metric.
+- Crash when plotting feature ranking if using a model without 'MLL' metric.
 
 0.3.1 (2019-11-28)
 ------------------
