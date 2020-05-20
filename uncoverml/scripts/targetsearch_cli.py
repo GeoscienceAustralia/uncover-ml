@@ -40,25 +40,45 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file, learning=True, predicting=True)
-    if not config.extents:
-        raise ValueError("Can't perform target search without specifying an extent. Provide the "
-                         "'extents' block in the config file and run again.")
-
     config.n_subchunks = partitions
-    if config.n_subchunks > 1:
-        _logger.info("Memory constraint forcing {} iterations "
-                     "through data".format(config.n_subchunks))
+    bounds = ls.geoio.get_image_bounds(config)
+    if config.targetsearch_extents is None:
+        _logger.info("No target search extents were provided, looking for targets in full "
+                     "feature space.")
+        config.targetsearch_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
+        config.tse_are_pixel_coordinates = False
     else:
-        _logger.info("Using memory aggressively: "
-                             "dividing all data between nodes")
+        if config.tse_are_pixel_coordinates:
+            pw, ph = ls.geoio.get_image_pixel_res(config)
+            xmin, ymin, xmax, ymax = config.extents
+            xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
+            ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
+            xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
+            ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
+            config.targetsearch_extents = xmin, ymin, xmax, ymax
 
     _logger.info("Loading real targets and generating training targets...")
+
+    if config.extents:
+        if config.extents_are_pixel_coordinates:
+            pw, ph = ls.geoio.get_image_pixel_res(config)
+            xmin, ymin, xmax, ymax = config.extents
+            xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
+            ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
+            xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
+            ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
+            target_extents = xmin, ymin, xmax, ymax
+        else:
+            target_extents = config.extents
+        ls.geoio.crop_covariates(config)
+    else:
+        target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
 
     # Load all 'real' targets from shapefile.
     # TODO: Drop targets from prediction area?
     real_targets = ls.geoio.load_targets(
             shapefile=config.target_file, targetfield=config.target_property, 
-            covariate_crs=ls.geoio.get_image_crs(config))
+            covariate_crs=ls.geoio.get_image_crs(config), extents=target_extents)
     num_targets = ls.mpiops.count_targets(real_targets)
 
     REAL_TARGETS_LABEL = 'a_real'
@@ -70,7 +90,7 @@ def main(config_file, partitions):
     # Get random sample of points from within prediction area.
     GEN_TARGETS_LABEL = 'b_generated'
     gen_targets = ls.targets.generate_dummy_targets(
-            config.extents, GEN_TARGETS_LABEL, 
+            config.targetsearch_extents, GEN_TARGETS_LABEL, 
             num_targets, field_keys=list(real_targets.fields.keys()))
 
     _logger.debug(f"Class 1: {real_targets.positions.shape}, '{real_targets.observations[0]}'\t" 
