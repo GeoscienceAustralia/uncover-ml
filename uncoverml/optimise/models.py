@@ -1,29 +1,20 @@
 """
 12-05-2020 15:50:35 AEST - brenainn.moushall@ga.gov.au
 
-Not 100% sure about this module. It appears to duplicate a lot of what
-uncoverml.models does. My assumption is it's to allow these models to
-work correctly with optimisation/gridsearchCV. However these models
-get used outside the optimisation process as well which is odd (the
-model map is imported in uncoverml.learn and they can be suppled in the 
-config). 
+.. note:: 
 
-Some models are almost the exact same - the difference being models 
-in here have baked-in sklearn default parameters, some of which have 
-changed over time, so the default parameters provided by sklearn in 
-uncoverml.models will produce discrepancies if the default parameters in 
-these models haven't been updated to match.
+    Only some models are compatible with optimisation. This is because
+    models must be structued in a way compatible with scikit-learn's
+    GridSearchCV. This involves:
 
-Some models only exist in this module, such as Huber and XGBoost, and
-some models only exist in the uncoverml.models module.
+    - having all arguments explicitly listed in the ``__init__`` signature (no varargs)
+    - having the expected functions (``fit``, ``predict``, etc.)
+    - implemeting the ``get_params`` and ``set_params`` functions
+      defined by `Base Estimator <https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html>`_
 
-It's pretty confusing and also leads to doublehandling - if you want
-to modify some implementation of model functions, you have to do it in
-both of these modules.
 
-# TODO: work out why this module exists and if possible, refactor models
-back to single module, or at least refactor shared functionality into
-one place to eliminate doublehandling.
+# TODO: refactor all models to have an interface compatible with GCV
+# and consolidate to a single module.
 """
 import logging
 import inspect
