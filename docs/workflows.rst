@@ -862,6 +862,89 @@ table:
 
     uncoverml learn config.yaml
 
+Resampling
+----------
+
+UncoverML has a ``resample`` tool that allows a target shapefile to be
+resampled based on value or spatial parameters.
+
+Config
+~~~~~~
+
+Resampling requires a ``targets`` block with additional resampling 
+parameters and an ``output`` block specifying a directory.
+
+.. code:: yaml
+
+    targets:
+      file: path/to/targets/shapefile
+      property: target_field_name
+      resample:
+        spatial:
+          rows: 10
+          cols: 10
+          bootstrap: False
+          output_samples: 1000
+          fields_to_keep: [type, site_id]
+        value:
+          bins: 3
+          bootstrap: True
+          interval: linear
+          fields_to_keep: [type, site_id]
+
+    output:
+      directory: ./resampling_out
+
+- ``file``: path to the target shapefile
+- ``property``: name of the target observation field
+- ``resample``: the resampling arguments
+
+  - ``spatial``: arguments for spatial resampling
+    - ``rows``, ``cols``: int, the number of rows and columns to divide
+      the shapefile area into. Each resulting cell is a bin.
+    - ``bootstrap``: boolean, whether to sample with replacement. If 
+      true, then duplicate samples are allowed, otherwise each value
+      will only be sampled once at most.
+    - ``output_samples``: int, the number of output samples. This is 
+      the total number, so the number of samples in each bin is equal
+      to (output_samples // bins)). If ``bootstrap`` is false and 
+      there are not enough samples in a bin to fulfill the requested
+      number, then all samples will be taken and the bin will be short
+      of samples.
+    - ``fields_to_keep``: by default, the only value preserved in 
+      the resulting resampled shapefile is the property specified by
+      ``property``. To keep additional fields, add them to this 
+      parameter.
+  - ``value``: arguments for value resampling
+    - ``bins``: the number of bins to divide samples into.
+    - ``interval``: ``linear`` or ``percentile``, the method for 
+      determining bin edges. If ``linear`` then bin edges will be taken
+      at equally spaced intervals from the min to the max of the 
+      target values.
+
+      E.g., if bins is 3 and the data range is 0 to 300, then the 
+      bins will be 0 to 100, 100 to 200 and 200 to 300.
+
+      If ``percentile`` then the bin edges will be the Nth percentile
+      value of the target data, with the percentiles being the result
+      of linearally spacing the number of bin edges between 0 to 1.
+
+      E.g., if bins is 3, then the bins will cover from 0 to 33rd percentile,
+      33rd to 66th percentile and 66th to 100th percentile.
+
+Running
+~~~~~~~
+
+To perform resampling, run:
+
+.. code:: bash
+
+    uncoverml resample config.yaml
+
+Output will be in the output directory, with the resampled shapefile 
+in a subdirectory having the original shapefile name appended with
+'resampled'.
+
 Covariate Diagnostics
 ---------------------
 
