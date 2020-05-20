@@ -424,7 +424,8 @@ written out sequentially, reducing memory usage.
 Optimisation
 ------------
 
-UncoverML provides a framework for using scikit-learn's GridSearchCV
+UncoverML provides a framework for using scikit-learn's 
+`GridSearchCV <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html>`_
 to perform hyperparameter tuning. This allows cross-validation to be
 performed with different combinations of parameters. 
 
@@ -581,7 +582,7 @@ block of the config:
         target_transform: log
 
 - ``target_search``: a boolean of whether or not to use targetsearch
-- target_search_threshold: the likelihood threshold a training point
+- ``target_search_threshold``: the likelihood threshold a training point
   must surpass to be included in found points (i.e. how similar a 
   training points feature distribution is to the study area)
 - ``target_search_extents``: extents defining the study area. Target search
@@ -726,14 +727,14 @@ predicting the k-means model.
     n_classes: 5
     oversample_factor: 5
 
-- file: path to shapefile containg labels. This is optional. If provided
+- ``file``: path to shapefile containg labels. This is optional. If provided
   then semi-supervised clustering is performed, other clutering is
   unsupervised.
-- property: the name of the class label property in the shapefile. Only
+- ``property``: the name of the class label property in the shapefile. Only
   required if a shapefile has been provided and semi-supervised 
   clustering is being performed.
-- n_classes: the number of classes to cluster the data into.
-- oversample_factor: controls the number of samples drawn as part of 
+- ``n_classes``: the number of classes to cluster the data into.
+- ``oversample_factor``: controls the number of samples drawn as part of 
   the initialisation step. More processors used will increase the 
   total number of samples drawn. Consider values of 1 for more than
   16 processors.
