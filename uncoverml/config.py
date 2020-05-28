@@ -501,6 +501,10 @@ class Config(object):
         # VALIDATION BLOCK
         vb = s.get('validation')
         if vb:
+            oos = vb.get('out_of_sample')
+            if oos:
+                self.oos_percentage = oos.get('percentage', None)
+            self.out_of_sample_validation = oos is not None
             self.rank_features = vb.get('feature_rank', False)
             if self.pk_load and self.rank_features:
                 _logger.warning("Feature ranking cannot be performed when loading covariates and "
@@ -509,7 +513,6 @@ class Config(object):
             self.permutation_importance = vb.get('permutation_importance', False)
             kfb = vb.get('k-fold')
             if kfb:
-                self.cross_validate = True
                 self.folds = _grp(kfb, 'folds', "'folds' (number of folds) must be specified "
                                   "if k-fold cross validation and/or feature ranking is being used.")
                 self.crossval_seed = _grp(kfb, 'random_seed', "'random_seed' must be specified "
@@ -521,8 +524,8 @@ class Config(object):
                 self.folds = 5
                 self.crossval_seed = 1
                 self.parallel_validate = False
+            self.cross_validate = kfb is not None
         else:
-            self.cross_validate = False
             self.rank_features = False
             self.permutation_importance = False
             self.parallel_validate = False
@@ -603,6 +606,8 @@ class Config(object):
         self.crossval_scores_file = _outpath('_crossval_scores.json')
         self.crossval_results_file = _outpath('_crossval_results.csv')
         self.crossval_results_plot = _outpath('_crossval_results.png')
+        self.oos_scores_file = _outpath('_oos_scores.json')
+        self.oos_results_file = _outpath('_oos_results.csv')
 
         self.dropped_targets_file = _outpath('_dropped_targets.txt')
         self.transformed_targets_file = _outpath('_transformed_targets.csv')

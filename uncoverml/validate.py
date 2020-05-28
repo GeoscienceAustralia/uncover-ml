@@ -102,7 +102,6 @@ def split_cfold(nsamples, k=5, seed=None):
 
     return cvinds, cvassigns
 
-
 def classification_validation_scores(ys, eys, pys):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
@@ -234,10 +233,10 @@ class CrossvalInfo:
         with open(config.crossval_scores_file, 'w') as f:
             json.dump(scores, f, sort_keys=True, indent=4)
 
-        to_text = [self.y_true, self.y_pred['Prediction']]
+        to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
 
         np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
-                   delimiter=',', fmt='%.4f', header='y_true,y_pred,pos')
+                   delimiter=',', fmt='%.4f', header='y_true,y_pred,x,y')
 
         if os.path.exists(config.raw_covariates) and os.path.exists(config.raw_covariates_mask):
             # Also add prediction values to rawcovariates.csv - yes this file 
@@ -286,6 +285,21 @@ class CrossvalInfo:
                             "and 'Real vs Pred' will not be plotted. To resolve this, re-run "
                             "learn without using pickled covariate and target data.")
 
+
+class OOSInfo(CrossvalInfo):
+    def export_scores(self, config):
+        scores = {s: v if np.isscalar(v) else v.tolist()
+                  for s, v in self.scores.items()}
+
+        with open(config.oos_scores_file, 'w') as f:
+            json.dump(scores, f, sort_keys=True, indent=4)
+
+        to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
+
+        np.savetxt(config.oos_results_file, X=np.vstack(to_text).T, 
+                   delimiter=',', fmt='%.4f', header='y_true,y_pred,x,y')
+
+
 def permutation_importance(model, x_all, targets_all, config):
     _logger.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
@@ -315,6 +329,33 @@ def permutation_importance(model, x_all, targets_all, config):
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
 
+def out_of_sample_validation(model, targets, features):
+    _logger.info("Performing out-of-sample validation...")
+    classification = hasattr(model, 'predict_proba')
+    obs = targets.observations
+    fields = targets.fields
+    pos = targets.positions
+    pred = predict.predict(features, model,
+                           fields=fields,
+                           lon_lat=pos)
+
+    if classification:
+        hard, p = pred[:, 0], pred[:, 1:]
+        scores = classification_validation_scores(obs, hard, p)
+    else:
+        scores = regression_validation_scores(obs, pred, features.shape[1], model)
+
+    _logger.info("Out of sample validation complete, scores:")
+    _logger.info(f"{scores}")
+
+    result_tags = model.get_predict_tags()
+    y_pred_dict = dict(zip(result_tags, pred.T))
+    if hasattr(model, '_notransform_predict'):
+        y_pred_dict['transformedpredict'] = \
+            model.target_transform.transform(pred[:, 0])
+    
+    return OOSInfo(scores, obs, y_pred_dict, classification, pos)
+    
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
     """ Ranks the importance of the features based on their performance.
@@ -429,10 +470,6 @@ def local_crossval(x_all, targets_all, config):
         on the unseen data subset.
     """
     parallel_model = config.multicubist or config.multirandomforest or config.bootstrap
-    #if config.parallel_validate and parallel_model:
-    #    config.algorithm_args['parallel'] = False
-    #elif not config.parallel_validate and not parallel_model and mpiops.chunk_index != 0:
-    #    return
     if config.bootstrap and config.parallel_validate:
         config.alrgorithm_args['parallel'] = False
     elif not config.bootstrap and not config.parallel_validate and mpiops.chunk_index != 0:
@@ -465,9 +502,10 @@ def local_crossval(x_all, targets_all, config):
     for fold in fold_node:
         _logger.info(":mpi:Training fold {} of {}".format(
             fold + 1, config.folds, mpiops.chunk_index))
+
         train_mask = cv_indices != fold
         test_mask = ~ train_mask
-
+    
         y_k_train = y[train_mask]
         if config.target_weight_property:
             y_k_weight = targets_all.fields[config.target_weight_property][train_mask]
