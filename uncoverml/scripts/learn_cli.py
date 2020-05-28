@@ -42,7 +42,7 @@ SharedTrainingData = namedtuple('TrainingData',
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file, learning=True)
-    training_data = _load_data(config, partitions)
+    training_data, oos_data = _load_data(config, partitions)
     targets_all = training_data.targets_all
     x_all = training_data.x_all
 
@@ -57,6 +57,13 @@ def main(config_file, partitions):
     if config.permutation_importance:
         ls.mpiops.run_once(
             ls.validate.permutation_importance, model, x_all, targets_all, config)
+
+    if config.out_of_sample_validation and oos_data is not None:
+        oos_targets = oos_data.targets_all
+        oos_features = oos_data.x_all
+        if ls.mpiops.chunk_index == 0:
+            oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features)
+            oos_results.export_scores(config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     if config.extents:
@@ -81,6 +88,7 @@ def _load_data(config, partitions):
             targets_all = None
             if config.cubist or config.multicubist:
                 config.algorithm_args['feature_type'] = None
+        oos_data = None
     else:
         bounds = ls.geoio.get_image_bounds(config)
         if config.extents:
@@ -126,7 +134,34 @@ def _load_data(config, partitions):
 
             ts_t = ls.geoio.distribute_targets(pos, obs, fields)
             targets = ls.targets.merge_targets(targets, ts_t)
-                                            
+
+        # If using out-of-sample validation, split off a percentage of data before transformation
+        if config.out_of_sample_validation:
+            if config.oos_percentage is not None:
+                num_targets = int(len(targets.observations) * config.oos_percentage)
+                num_targets = len(np.array_split(np.arange(0, num_targets), 
+                                  ls.mpiops.chunks)[ls.mpiops.chunk_index])
+                inds = np.zeros(targets.observations.shape, dtype=bool)
+                inds[:num_targets] = True
+                np.random.shuffle(inds)
+                oos_pos = targets.positions[inds]
+                oos_obs = targets.observations[inds]
+                oos_fields = {}
+                for k, v in targets.fields.items():
+                    oos_fields[k] = v[inds]
+                oos_targets = ls.targets.Targets(oos_pos, oos_obs, oos_fields)
+
+                _logger.info(f":mpi: oos targets = {len(oos_targets.observations)}")
+
+                targets.positions = targets.positions[~inds]
+                targets.observations = targets.observations[~inds]
+                for k, v in targets.fields.items():
+                    targets.fields[k] = v[~inds]
+
+                _logger.info(f":mpi: targets = {len(targets.observations)}")
+
+                oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
+
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
@@ -143,17 +178,32 @@ def _load_data(config, partitions):
                 ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
 
+
+
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
         features, keep = ls.features.transform_features(image_chunk_sets,
                                                         transform_sets,
                                                         config.final_transform,
                                                         config)
+
         # learn the model
         # local models need all data
         x_all = ls.features.gather_features(features[keep], node=0)
         # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
+
+
+        # Transform out-of-sample features after training data transform is performed so we use
+        # the same statistics.
+        if config.out_of_sample_validation:
+            oos_features, keep = ls.features.transform_features(oos_image_chunk_sets, transform_sets,
+                                                                config.final_transform, config)
+            oos_targets = ls.targets.gather_targets(oos_targets, keep, node=0)
+            oos_features = ls.features.gather_features(oos_features[keep], node=0)
+            oos_data = ls.geoio.create_shared_training_data(oos_targets, oos_features)
+        else:
+            oos_data = None
 
         # Pickle data if requested.
         if ls.mpiops.chunk_index == 0:
@@ -162,7 +212,7 @@ def _load_data(config, partitions):
             if config.pk_targets and not os.path.exists(config.pk_targets):
                 pickle.dump(targets_all, open(config.pk_targets, 'wb'))
  
-    return ls.geoio.create_shared_training_data(targets_all, x_all)
+    return ls.geoio.create_shared_training_data(targets_all, x_all), oos_data
 
 def _total_gb():
     # given in KB so convert
