@@ -609,6 +609,7 @@ class Config(object):
         self.crossval_results_plot = _outpath('_crossval_results.png')
         self.oos_scores_file = _outpath('_oos_scores.json')
         self.oos_results_file = _outpath('_oos_results.csv')
+        self.oos_targets_file = _outpath('_oos_targets.shp')
 
         self.dropped_targets_file = _outpath('_dropped_targets.txt')
         self.transformed_targets_file = _outpath('_transformed_targets.csv')

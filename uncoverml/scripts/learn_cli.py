@@ -150,6 +150,7 @@ def _load_data(config, partitions):
                 for k, v in targets.fields.items():
                     oos_fields[k] = v[inds]
                 oos_targets = ls.targets.Targets(oos_pos, oos_obs, oos_fields)
+                oos_targets.to_geodataframe().to_file(config.oos_targets_file)
 
                 targets.positions = targets.positions[~inds]
                 targets.observations = targets.observations[~inds]
