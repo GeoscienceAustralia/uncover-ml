@@ -431,8 +431,8 @@ versions of the maps will also be generated for use as thumbnails.</p>
 <div class="section" id="model-validation">
 <h2>Model Validation<a class="headerlink" href="#model-validation" title="Permalink to this headline">¶</a></h2>
 <p>Validation can be performed during the training process to generate
-model performance metrics. UncoverML supports three validation methods:
-k-fold cross validation, feature ranking and permutation importance.</p>
+model performance metrics. UncoverML supports k-fold cross validation,
+out-of-sample validation, feature ranking and permutation importance.</p>
 <div class="section" id="id2">
 <h3>Config<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>To perform validation, the <code class="docutils literal notranslate"><span class="pre">validation</span></code> block must be provided
@@ -441,6 +441,9 @@ in your config file. The usual parameters for learning must be provided
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">validation</span><span class="p">:</span>
   <span class="nt">feature_rank</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
   <span class="nt">permutation_importance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="nt">out_of_sample</span><span class="p">:</span>
+    <span class="nt">percentage</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span>
+    <span class="nt">shapefile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/shapefile</span>
   <span class="nt">k-fold</span><span class="p">:</span>
     <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
     <span class="nt">folds</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
@@ -451,6 +454,17 @@ in your config file. The usual parameters for learning must be provided
 <li><p><code class="docutils literal notranslate"><span class="pre">feature_rank</span></code>: a boolean that turns feature ranking on or off.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">permutation_importance</span></code>: a boolean that turns permutation
 importance on or off.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">out_of_sample</span></code>: out-of-sample validation parameters</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">percentage</span></code>: float between 0 and 1, the percentage of targets
+to withold from the training data to be used for post-learning
+validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shapefile</span></code>: path to a shapefile containing targets to be used
+in out-of-sample valiadtion. <code class="docutils literal notranslate"><span class="pre">percentage</span></code> has priority over
+<code class="docutils literal notranslate"><span class="pre">shapefile</span></code> - if both are provided then the shapefile argument
+will be ignored.</p></li>
+</ul>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">k-fold</span></code>: k-fold cross validation parameters</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: a boolean that specifies whether folds are trained
@@ -473,15 +487,22 @@ perform model validation, run:</p>
 <p>Once complete, validation results will be in the output directory:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">crossval_results.csv</span></code>: A table of target values and corresponding
-predicted value.</p></li>
+predicted value for k-fold.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">crossval_scores.json</span></code>: A dictionary containing the value for each
-metric.</p></li>
+metric for k-fold.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">featureranks.json</span></code>: Dictionaries containing feature rank results.
 The <code class="docutils literal notranslate"><span class="pre">ranks</span></code> dictionary presents the most important feature by its
 impact on each metric (which feature caused the most degredation of
 the metric when excluded from training). The <code class="docutils literal notranslate"><span class="pre">scores</span></code> dictionary
 contains the corresponding value for each rank.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">permutation_importance.csv</span></code>: The permutation importance results.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oos_results.csv</span></code>: A table of targets values and corresponding
+predicted value for out-of-sample validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oos_scores.json</span></code>: A dictionary containing the value for each
+metric for out-of-sample validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oos_targets.shp</span></code>: If <code class="docutils literal notranslate"><span class="pre">percentage</span></code> was provided as part of
+out-of-sample arguments, the withheld targets will be saved to this
+shapefile for reuse.</p></li>
 </ul>
 <p>In addition to these, the ‘prediction’ column of <code class="docutils literal notranslate"><span class="pre">rawcovariates.csv</span></code>
 will be filled with the corresponding prediction value generated

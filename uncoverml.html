@@ -4006,7 +4006,7 @@ This code was originailly developed by Sudipta Basak.
 
 <dl class="function">
 <dt id="uncoverml.resampling.resample_by_magnitude">
-<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">resample_by_magnitude</code><span class="sig-paren">(</span><em class="sig-param">input_data</em>, <em class="sig-param">target_field</em>, <em class="sig-param">bins=10</em>, <em class="sig-param">fields_to_keep=[]</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">output_samples=None</em>, <em class="sig-param">validation=False</em>, <em class="sig-param">validation_points=100</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.resample_by_magnitude" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.resampling.</code><code class="sig-name descname">resample_by_magnitude</code><span class="sig-paren">(</span><em class="sig-param">input_data</em>, <em class="sig-param">target_field</em>, <em class="sig-param">bins=10</em>, <em class="sig-param">interval='percentile'</em>, <em class="sig-param">fields_to_keep=[]</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">output_samples=None</em>, <em class="sig-param">validation=False</em>, <em class="sig-param">validation_points=100</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.resampling.resample_by_magnitude" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -4229,6 +4229,17 @@ CSV file.</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="uncoverml.validate.OOSInfo">
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">OOSInfo</code><span class="sig-paren">(</span><em class="sig-param">scores</em>, <em class="sig-param">y_true</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">classification</em>, <em class="sig-param">positions</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.OOSInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#uncoverml.validate.CrossvalInfo" title="uncoverml.validate.CrossvalInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.validate.CrossvalInfo</span></code></a></p>
+<dl class="method">
+<dt id="uncoverml.validate.OOSInfo.export_scores">
+<code class="sig-name descname">export_scores</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.OOSInfo.export_scores" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="function">
 <dt id="uncoverml.validate.adjusted_r2_score">
 <code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">adjusted_r2_score</code><span class="sig-paren">(</span><em class="sig-param">r2</em>, <em class="sig-param">n_samples</em>, <em class="sig-param">n_covariates</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.adjusted_r2_score" title="Permalink to this definition">¶</a></dt>
@@ -4312,6 +4323,11 @@ causes the greatest degradation in the performance of the model.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.validate.out_of_sample_validation">
+<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">out_of_sample_validation</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">targets</em>, <em class="sig-param">features</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.out_of_sample_validation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.validate.permutation_importance">
