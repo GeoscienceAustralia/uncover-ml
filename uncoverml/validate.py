@@ -346,7 +346,8 @@ def out_of_sample_validation(model, targets, features):
         scores = regression_validation_scores(obs, pred, features.shape[1], model)
 
     _logger.info("Out of sample validation complete, scores:")
-    _logger.info(f"{scores}")
+    for k, v in scores.items():
+        _logger.info(f"{k}: {v}")
 
     result_tags = model.get_predict_tags()
     y_pred_dict = dict(zip(result_tags, pred.T))

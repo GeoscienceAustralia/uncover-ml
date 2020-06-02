@@ -70,6 +70,8 @@ def main(config_file, partitions):
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     ls.geoio.deallocate_shared_training_data(training_data)
+    if oos_data is not None:
+        ls.geoio.deallocate_shared_training_data(oos_data)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
