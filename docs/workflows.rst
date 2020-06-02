@@ -205,8 +205,8 @@ Model Validation
 ----------------
 
 Validation can be performed during the training process to generate
-model performance metrics. UncoverML supports three validation methods:
-k-fold cross validation, feature ranking and permutation importance.
+model performance metrics. UncoverML supports k-fold cross validation, 
+out-of-sample validation, feature ranking and permutation importance.
 
 Config
 ~~~~~~
@@ -220,6 +220,9 @@ in your config file. The usual parameters for learning must be provided
     validation:
       feature_rank: True
       permutation_importance: True
+      out_of_sample:
+        percentage: 0.2
+        shapefile: /path/to/shapefile
       k-fold:
         parallel: False
         folds: 5
@@ -228,6 +231,16 @@ in your config file. The usual parameters for learning must be provided
 - ``feature_rank``: a boolean that turns feature ranking on or off.
 - ``permutation_importance``: a boolean that turns permutation 
   importance on or off.
+- ``out_of_sample``: out-of-sample validation parameters
+
+  - ``percentage``: float between 0 and 1, the percentage of targets
+    to withold from the training data to be used for post-learning
+    validation.
+  - ``shapefile``: path to a shapefile containing targets to be used
+    in out-of-sample valiadtion. ``percentage`` has priority over 
+    ``shapefile`` - if both are provided then the shapefile argument
+    will be ignored.
+
 - ``k-fold``: k-fold cross validation parameters
 
   - ``parallel``: a boolean that specifies whether folds are trained
@@ -250,15 +263,22 @@ perform model validation, run:
 Once complete, validation results will be in the output directory:
 
 - ``crossval_results.csv``: A table of target values and corresponding
-  predicted value.
+  predicted value for k-fold.
 - ``crossval_scores.json``: A dictionary containing the value for each
-  metric.
+  metric for k-fold.
 - ``featureranks.json``: Dictionaries containing feature rank results.
   The ``ranks`` dictionary presents the most important feature by its
   impact on each metric (which feature caused the most degredation of 
   the metric when excluded from training). The ``scores`` dictionary
   contains the corresponding value for each rank.
 - ``permutation_importance.csv``: The permutation importance results.
+- ``oos_results.csv``: A table of targets values and corresponding
+  predicted value for out-of-sample validation.
+- ``oos_scores.json``: A dictionary containing the value for each 
+  metric for out-of-sample validation.
+- ``oos_targets.shp``: If ``percentage`` was provided as part of 
+  out-of-sample arguments, the withheld targets will be saved to this
+  shapefile for reuse.
 
 In addition to these, the 'prediction' column of ``rawcovariates.csv``
 will be filled with the corresponding prediction value generated
