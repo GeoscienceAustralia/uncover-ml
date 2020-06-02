@@ -331,32 +331,39 @@ def permutation_importance(model, x_all, targets_all, config):
 
 def out_of_sample_validation(model, targets, features):
     _logger.info("Performing out-of-sample validation...")
+    model = mpiops.comm.bcast(model, root=0)
     classification = hasattr(model, 'predict_proba')
-    obs = targets.observations
-    fields = targets.fields
-    pos = targets.positions
+    pos = np.array_split(targets.positions, mpiops.chunks)[mpiops.chunk_index]
+    fields = {}
+    for k, v in targets.fields.items():
+        fields[k] = np.array_split(v, mpiops.chunks)[mpiops.chunk_index]
+    features = np.array_split(features, mpiops.chunks)[mpiops.chunk_index]
     pred = predict.predict(features, model,
                            fields=fields,
                            lon_lat=pos)
 
-    if classification:
-        hard, p = pred[:, 0], pred[:, 1:]
-        scores = classification_validation_scores(obs, hard, p)
+    pred = mpiops.comm.gather(pred, root=0)
+    if mpiops.chunk_index == 0:
+        pred = np.concatenate(pred)
+        if classification:
+            hard, p = pred[:, 0], pred[:, 1:]
+            scores = classification_validation_scores(targets.observations, hard, p)
+        else:
+            scores = regression_validation_scores(targets.observations, pred, features.shape[1], model)
+
+        _logger.info("Out of sample validation complete, scores:")
+        for k, v in scores.items():
+            _logger.info(f"{k}: {v}")
+
+        result_tags = model.get_predict_tags()
+        y_pred_dict = dict(zip(result_tags, pred.T))
+        if hasattr(model, '_notransform_predict'):
+            y_pred_dict['transformedpredict'] = \
+                model.target_transform.transform(pred[:, 0])
+        
+        return OOSInfo(scores, targets.observations, y_pred_dict, classification, targets.positions)
     else:
-        scores = regression_validation_scores(obs, pred, features.shape[1], model)
-
-    _logger.info("Out of sample validation complete, scores:")
-    for k, v in scores.items():
-        _logger.info(f"{k}: {v}")
-
-    result_tags = model.get_predict_tags()
-    y_pred_dict = dict(zip(result_tags, pred.T))
-    if hasattr(model, '_notransform_predict'):
-        y_pred_dict['transformedpredict'] = \
-            model.target_transform.transform(pred[:, 0])
-    
-    return OOSInfo(scores, obs, y_pred_dict, classification, pos)
-    
+        return None
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
     """ Ranks the importance of the features based on their performance.
