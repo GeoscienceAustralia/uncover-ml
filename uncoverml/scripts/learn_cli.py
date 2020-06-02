@@ -61,8 +61,8 @@ def main(config_file, partitions):
     if config.out_of_sample_validation and oos_data is not None:
         oos_targets = oos_data.targets_all
         oos_features = oos_data.x_all
-        if ls.mpiops.chunk_index == 0:
-            oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features)
+        oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features)
+        if oos_results:
             oos_results.export_scores(config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
@@ -140,9 +140,7 @@ def _load_data(config, partitions):
         # If using out-of-sample validation, split off a percentage of data before transformation
         if config.out_of_sample_validation:
             if config.oos_percentage is not None:
-                num_targets = int(len(targets.observations) * config.oos_percentage)
-                num_targets = len(np.array_split(np.arange(0, num_targets), 
-                                  ls.mpiops.chunks)[ls.mpiops.chunk_index])
+                num_targets = int(np.around(len(targets.observations) * config.oos_percentage))
                 inds = np.zeros(targets.observations.shape, dtype=bool)
                 inds[:num_targets] = True
                 np.random.shuffle(inds)
@@ -152,7 +150,6 @@ def _load_data(config, partitions):
                 for k, v in targets.fields.items():
                     oos_fields[k] = v[inds]
                 oos_targets = ls.targets.Targets(oos_pos, oos_obs, oos_fields)
-                oos_targets.to_geodataframe().to_file(config.oos_targets_file)
 
                 targets.positions = targets.positions[~inds]
                 targets.observations = targets.observations[~inds]
@@ -213,6 +210,8 @@ def _load_data(config, partitions):
             oos_targets = ls.targets.gather_targets(oos_targets, keep, node=0)
             oos_features = ls.features.gather_features(oos_features[keep], node=0)
             oos_data = ls.geoio.create_shared_training_data(oos_targets, oos_features)
+            if ls.mpiops.chunk_index == 0 and config.oos_percentage:
+                oos_targets.to_geodataframe().to_file(config.oos_targets_file)
         else:
             oos_data = None
 
