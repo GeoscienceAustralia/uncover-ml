@@ -150,6 +150,12 @@ def _load_data(config, partitions):
                 for k, v in targets.fields.items():
                     oos_fields[k] = v[inds]
                 oos_targets = ls.targets.Targets(oos_pos, oos_obs, oos_fields)
+
+                targets.positions = targets.positions[~inds]
+                targets.observations = targets.observations[~inds]
+                for k, v in targets.fields.items():
+                    targets.fields[k] = v[~inds]
+
             elif config.oos_shapefile is not None:
                 oos_targets = ls.geoio.load_targets(shapefile=config.oos_shapefile,
                                                     targetfield=config.target_property,
@@ -161,12 +167,6 @@ def _load_data(config, partitions):
 
             _logger.info(f":mpi: oos targets = {len(oos_targets.observations)}")
 
-            targets.positions = targets.positions[~inds]
-            targets.observations = targets.observations[~inds]
-            for k, v in targets.fields.items():
-                targets.fields[k] = v[~inds]
-
-            _logger.info(f":mpi: targets = {len(targets.observations)}")
 
             oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
 
