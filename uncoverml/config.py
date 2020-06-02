@@ -504,6 +504,7 @@ class Config(object):
             oos = vb.get('out_of_sample')
             if oos:
                 self.oos_percentage = oos.get('percentage', None)
+                self.oos_shapefile = oos.get('shapefile', None)
             self.out_of_sample_validation = oos is not None
             self.rank_features = vb.get('feature_rank', False)
             if self.pk_load and self.rank_features:

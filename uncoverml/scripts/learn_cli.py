@@ -150,17 +150,25 @@ def _load_data(config, partitions):
                 for k, v in targets.fields.items():
                     oos_fields[k] = v[inds]
                 oos_targets = ls.targets.Targets(oos_pos, oos_obs, oos_fields)
+            elif config.oos_shapefile is not None:
+                oos_targets = ls.geoio.load_targets(shapefile=config.oos_shapefile,
+                                                    targetfield=config.target_property,
+                                                    covariate_crs=ls.geoio.get_image_crs(config),
+                                                    extents=target_extents)
+            else:
+                _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
+                             "'shapefile' parameter was provided.")
 
-                _logger.info(f":mpi: oos targets = {len(oos_targets.observations)}")
+            _logger.info(f":mpi: oos targets = {len(oos_targets.observations)}")
 
-                targets.positions = targets.positions[~inds]
-                targets.observations = targets.observations[~inds]
-                for k, v in targets.fields.items():
-                    targets.fields[k] = v[~inds]
+            targets.positions = targets.positions[~inds]
+            targets.observations = targets.observations[~inds]
+            for k, v in targets.fields.items():
+                targets.fields[k] = v[~inds]
 
-                _logger.info(f":mpi: targets = {len(targets.observations)}")
+            _logger.info(f":mpi: targets = {len(targets.observations)}")
 
-                oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
+            oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
 
         # Get the image chunks and their associated transforms
         image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
