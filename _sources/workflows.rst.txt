@@ -135,7 +135,8 @@ The ``targets`` block specifies the training targets to be used:
 
 - ``file``: path to the shapefile containing training targets
 - ``property``: name of the field in the shapefile to be used as 
-  training value
+  training value. If not provided then the first field of the shapefile
+  will be used.
 
 *At least some of the targets in the shapefile must intersect with the
 provided features. Targets outside of the feature area will be 
@@ -223,6 +224,7 @@ in your config file. The usual parameters for learning must be provided
       out_of_sample:
         percentage: 0.2
         shapefile: /path/to/shapefile
+        property: name_of_field
       k-fold:
         parallel: False
         folds: 5
@@ -237,9 +239,15 @@ in your config file. The usual parameters for learning must be provided
     to withold from the training data to be used for post-learning
     validation.
   - ``shapefile``: path to a shapefile containing targets to be used
-    in out-of-sample valiadtion. ``percentage`` has priority over 
-    ``shapefile`` - if both are provided then the shapefile argument
-    will be ignored.
+    in out-of-sample validation. 
+  - ``property``: name of the field in the shapefile to use as training
+    value. If not provided then the first field of the shapefile will be
+    used.
+
+.. note::
+
+    ``precentage`` has priority over ``shapefile`` - if both are 
+    provided then the shapefile argument will be ignored.
 
 - ``k-fold``: k-fold cross validation parameters
 

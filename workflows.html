@@ -367,7 +367,8 @@ for applying different transforms:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: path to the shapefile containing training targets</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">property</span></code>: name of the field in the shapefile to be used as
-training value</p></li>
+training value. If not provided then the first field of the shapefile
+will be used.</p></li>
 </ul>
 <p><em>At least some of the targets in the shapefile must intersect with the
 provided features. Targets outside of the feature area will be
@@ -444,6 +445,7 @@ in your config file. The usual parameters for learning must be provided
   <span class="nt">out_of_sample</span><span class="p">:</span>
     <span class="nt">percentage</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span>
     <span class="nt">shapefile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/shapefile</span>
+    <span class="nt">property</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">name_of_field</span>
   <span class="nt">k-fold</span><span class="p">:</span>
     <span class="nt">parallel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
     <span class="nt">folds</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
@@ -460,11 +462,19 @@ importance on or off.</p></li>
 to withold from the training data to be used for post-learning
 validation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">shapefile</span></code>: path to a shapefile containing targets to be used
-in out-of-sample valiadtion. <code class="docutils literal notranslate"><span class="pre">percentage</span></code> has priority over
-<code class="docutils literal notranslate"><span class="pre">shapefile</span></code> - if both are provided then the shapefile argument
-will be ignored.</p></li>
+in out-of-sample validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">property</span></code>: name of the field in the shapefile to use as training
+value. If not provided then the first field of the shapefile will be
+used.</p></li>
 </ul>
 </li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">precentage</span></code> has priority over <code class="docutils literal notranslate"><span class="pre">shapefile</span></code> - if both are
+provided then the shapefile argument will be ignored.</p>
+</div>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">k-fold</span></code>: k-fold cross validation parameters</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>: a boolean that specifies whether folds are trained
