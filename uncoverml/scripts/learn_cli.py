@@ -53,6 +53,7 @@ def main(config_file, partitions):
 
     _logger.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
     # use trained model
     if config.permutation_importance:
         ls.mpiops.run_once(
@@ -61,11 +62,10 @@ def main(config_file, partitions):
     if config.out_of_sample_validation and oos_data is not None:
         oos_targets = oos_data.targets_all
         oos_features = oos_data.x_all
-        oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features)
+        oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features, config)
         if oos_results:
             oos_results.export_scores(config)
 
-    ls.mpiops.run_once(ls.geoio.export_model, model, config)
     if config.extents:
         ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
@@ -90,6 +90,8 @@ def _load_data(config, partitions):
             targets_all = None
             if config.cubist or config.multicubist:
                 config.algorithm_args['feature_type'] = None
+        if config.out_of_sample_validation:
+            _logger.warning("Can't perform out-of-sample validation when loading from pickled data")
         oos_data = None
     else:
         bounds = ls.geoio.get_image_bounds(config)
@@ -125,6 +127,8 @@ def _load_data(config, partitions):
                                         covariate_crs=ls.geoio.get_image_crs(config),
                                         extents=target_extents)
 
+        _logger.info(f":mpi:Assigned {targets.observations.shape[0]} targets")
+
         if config.target_search:
             if ls.mpiops.chunk_index == 0:
                 # Include targets and covariates from target search
@@ -158,15 +162,13 @@ def _load_data(config, partitions):
 
             elif config.oos_shapefile is not None:
                 oos_targets = ls.geoio.load_targets(shapefile=config.oos_shapefile,
-                                                    targetfield=config.target_property,
+                                                    targetfield=config.oos_property,
                                                     covariate_crs=ls.geoio.get_image_crs(config),
                                                     extents=target_extents)
+
             else:
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
-
-            _logger.info(f":mpi: oos targets = {len(oos_targets.observations)}")
-
 
             oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
 
@@ -185,8 +187,6 @@ def _load_data(config, partitions):
             measures, features, scores = \
                 ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
-
-
 
         # need to add cubist cols to config.algorithm_args
         # keep: bool array corresponding to rows that are retained
@@ -211,6 +211,8 @@ def _load_data(config, partitions):
             oos_features = ls.features.gather_features(oos_features[keep], node=0)
             oos_data = ls.geoio.create_shared_training_data(oos_targets, oos_features)
             if ls.mpiops.chunk_index == 0 and config.oos_percentage:
+                _logger.info(f"{oos_targets.observations.shape[0]} targets withheld for "
+                             f"out-of-sample validation. Saved to {config.oos_targets_file}")
                 oos_targets.to_geodataframe().to_file(config.oos_targets_file)
         else:
             oos_data = None

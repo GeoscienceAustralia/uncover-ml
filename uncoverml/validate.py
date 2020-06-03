@@ -5,6 +5,7 @@ import logging
 import copy
 import json
 import os
+import pickle
 
 from pathlib import Path
 import numpy as np
@@ -329,8 +330,12 @@ def permutation_importance(model, x_all, targets_all, config):
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
 
-def out_of_sample_validation(model, targets, features):
-    _logger.info("Performing out-of-sample validation...")
+def out_of_sample_validation(model, targets, features, config):
+    _logger.info(
+        f"Performing out-of-sample validation with {targets.observations.shape[0]} targets...")
+    if mpiops.chunk_index != 0:
+        with open(config.model_file, 'rb') as f:
+            model, _, _ = pickle.load(f)
     model = mpiops.comm.bcast(model, root=0)
     classification = hasattr(model, 'predict_proba')
     pos = np.array_split(targets.positions, mpiops.chunks)[mpiops.chunk_index]

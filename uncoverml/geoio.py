@@ -406,7 +406,6 @@ def distribute_targets(positions, observations, fields):
     positions = mpiops.comm.scatter(positions, root=0)
     observations = mpiops.comm.scatter(observations, root=0)
     fields = mpiops.comm.scatter(fields, root=0)
-    _logger.info(":mpi:Assigned {} targets".format(positions.shape[0]))
     loaded_targets = targets.Targets(positions, observations, othervals=fields)
     return loaded_targets
 
