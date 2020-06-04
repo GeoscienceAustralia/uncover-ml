@@ -151,7 +151,7 @@ def main(pipeline_file, partitions, njobs):
     estimator, scoring = setup_pipeline(config)
     _logger.info('Running optimisation for {}'.format(config.optimisation['algorithm']))
 
-    training_data = _load_data(config, partitions)
+    training_data, _ = _load_data(config, partitions)
     targets_all = training_data.targets_all
     x_all = training_data.x_all
     
