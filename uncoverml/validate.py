@@ -333,6 +333,7 @@ def permutation_importance(model, x_all, targets_all, config):
 def out_of_sample_validation(model, targets, features, config):
     _logger.info(
         f"Performing out-of-sample validation with {targets.observations.shape[0]} targets...")
+    mpiops.barrier()
     if mpiops.chunk_index != 0:
         with open(config.model_file, 'rb') as f:
             model, _, _ = pickle.load(f)
