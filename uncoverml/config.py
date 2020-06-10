@@ -117,32 +117,42 @@ class FeatureSetConfig(object):
         is_categorical = d['type'] == 'categorical'
 
         # get list of all the files
-        files = []
-        for source in d['files']:
-            key = next(iter(source.keys()))
-            if key == 'path':
-                files.append(path.abspath(source[key]))
-            elif key == 'directory':
-                glob_string = path.join(path.abspath(source[key]), "*.tif")
-                f_list = glob.glob(glob_string)
-                files.extend(f_list)
-            elif key == 'list':
-                csvfile = path.abspath(source[key])
-                with open(csvfile, 'r') as f:
-                    reader = csv.reader(f)
-                    tifs = list(reader)
-                    tifs = [f[0].strip() for f in tifs
-                            if (len(f) > 0 and f[0].strip() and
-                                f[0].strip()[0] != '#')]
-                for f in tifs:
-                    files.append(path.abspath(f))
+        if 'files' in d:
+            self.tabular = False
+            files = []
+            for source in d['files']:
+                key = next(iter(source.keys()))
+                if key == 'path':
+                    files.append(path.abspath(source[key]))
+                elif key == 'directory':
+                    glob_string = path.join(path.abspath(source[key]), "*.tif")
+                    f_list = glob.glob(glob_string)
+                    files.extend(f_list)
+                elif key == 'list':
+                    csvfile = path.abspath(source[key])
+                    with open(csvfile, 'r') as f:
+                        reader = csv.reader(f)
+                        tifs = list(reader)
+                        tifs = [f[0].strip() for f in tifs
+                                if (len(f) > 0 and f[0].strip() and
+                                    f[0].strip()[0] != '#')]
+                    for f in tifs:
+                        files.append(path.abspath(f))
 
-        self.files = sorted(files, key=str.lower)
-        n_files = len(self.files)
+            self.files = sorted(files, key=str.lower)
+            n_feat = len(self.files)
+            _logger.debug("Loaded feature set with files: {self.files}")
+        elif 'table' in d:
+            self.tabular = True
+            self.fields = sorted(d['table']['fields'], key=str.lower)
+            n_feat = len(self.fields)
+            self.ndv = d['table'].get('ndv', None)
+            _logger.debug(f"Loaded feature set with fields: {self.fields}")
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
                                                     d['imputation'],
-                                                    n_files)
+                                                    n_feat)
+        
         self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g, is_categorical)
                                                           
 
@@ -465,6 +475,15 @@ class Config(object):
             features = _grp(s, 'features', "'features' block must be provided when not loading "
                             "from pickled data.")
             self.feature_sets = [FeatureSetConfig(f) for f in features]
+            # Mixing tabular and image features not currently supported
+            if any(f.tabular for f in self.feature_sets):
+                self.tabular_prediction = True
+                if not all(f.tabular for f in self.feature_sets):
+                    raise ValueError(
+                        "Mixing tabular and image features not currently supported. Ensure "
+                        "features are only sourced from 'files' or 'table' but not both.")
+            else:
+                self.tabular_prediction = False
 
         # Not yet implemented.
         if 'patchsize' in s:
@@ -479,6 +498,7 @@ class Config(object):
                                     "targets.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
+            self.target_drop_field = tb.get('drop', None)
             self.target_weight_property = tb.get('weight_property')
             self.fields_to_write_to_csv = tb.get('write_to_csv')
             self.shiftmap_targets = tb.get('shiftmap')

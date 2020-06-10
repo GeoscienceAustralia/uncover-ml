@@ -372,13 +372,26 @@ def load_shapefile(filename, targetfield, covariate_crs, extents):
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
+def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None, drop=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
     """
     if mpiops.chunk_index == 0:
         lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, extents)
+        if drop is not None:
+            if np.dtype(type(drop)) != lonlat.dtype:
+                raise TypeError(
+                    f"'drop' value datatype '{np.dtype(type(drop))}' does not match target value "
+                    f"datatype '{vals.dtype}'. Change 'drop' to a compatible datatype or remove it.")
+            else:
+                drop_inds = vals != drop
+                vals = vals[drop_inds]
+                lonlat = lonlat[drop_inds]
+                for k, v in othervals.items():
+                    othervals[k] = v[drop_inds]
+                _logger.debug(f"Dropped {np.count_nonzero(~drop_inds)} targets with "
+                              f"{targetfield} == {drop}")
         # Sort by Y,X 
         ordind = np.lexsort(lonlat.T)
         lonlat = lonlat[ordind]

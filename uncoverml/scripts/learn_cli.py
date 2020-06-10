@@ -14,8 +14,6 @@ import warnings
 
 import click
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
 
 import uncoverml as ls
 import uncoverml.cluster
@@ -33,12 +31,8 @@ from uncoverml.transforms import StandardiseTransform
 
 
 _logger = logging.getLogger(__name__)
-# warnings.showwarning = warn_with_traceback
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
-
-SharedTrainingData = namedtuple('TrainingData', 
-                          ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
 
 def main(config_file, partitions):
     config = ls.config.Config(config_file, learning=True)
@@ -94,38 +88,38 @@ def _load_data(config, partitions):
             _logger.warning("Can't perform out-of-sample validation when loading from pickled data")
         oos_data = None
     else:
-        bounds = ls.geoio.get_image_bounds(config)
-        if config.extents:
-            if config.extents_are_pixel_coordinates:
-                pw, ph = ls.geoio.get_image_pixel_res(config)
-                xmin, ymin, xmax, ymax = config.extents
-                xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
-                ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
-                xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
-                ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
-                target_extents = xmin, ymin, xmax, ymax
+        if not config.tabular_prediction:
+            bounds = ls.geoio.get_image_bounds(config)
+            if config.extents:
+                if config.extents_are_pixel_coordinates:
+                    pw, ph = ls.geoio.get_image_pixel_res(config)
+                    xmin, ymin, xmax, ymax = config.extents
+                    xmin = xmin * pw + bounds[0][0] if xmin is not None else bounds[0][0]
+                    ymin = ymin * ph + bounds[1][0] if ymin is not None else bounds[1][0]
+                    xmax = xmax * pw + bounds[0][0] if xmax is not None else bounds[0][1]
+                    ymax = ymax * ph + bounds[1][0] if ymax is not None else bounds[1][1]
+                    target_extents = xmin, ymin, xmax, ymax
+                else:
+                    target_extents = config.extents
+                ls.geoio.crop_covariates(config)
             else:
-                target_extents = config.extents
-            ls.geoio.crop_covariates(config)
+                target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
+            covariate_crs=ls.geoio.get_image_crs(config)
         else:
-            target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
+            target_extents = None
+            covariate_crs = None
 
         config.n_subchunks = partitions
-        if config.n_subchunks > 1:
-            _logger.info("Memory constraint forcing {} iterations "
-                         "through data".format(config.n_subchunks))
-        else:
-            _logger.info("Using memory aggressively: "
-                         "dividing all data between nodes")
 
-        # Make the targets
+         # Make the targets
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
-
+        
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
-                                        covariate_crs=ls.geoio.get_image_crs(config),
-                                        extents=target_extents)
+                                        covariate_crs=covariate_crs,
+                                        extents=target_extents,
+                                        drop=config.target_drop_field)
 
         _logger.info(f":mpi:Assigned {targets.observations.shape[0]} targets")
 
@@ -141,6 +135,7 @@ def _load_data(config, partitions):
             ts_t = ls.geoio.distribute_targets(pos, obs, fields)
             targets = ls.targets.merge_targets(targets, ts_t)
 
+        # TODO: refactor out-of-sample out of script module
         # If using out-of-sample validation, split off a percentage of data before transformation
         if config.out_of_sample_validation:
             if config.oos_percentage is not None:
@@ -163,49 +158,51 @@ def _load_data(config, partitions):
             elif config.oos_shapefile is not None:
                 oos_targets = ls.geoio.load_targets(shapefile=config.oos_shapefile,
                                                     targetfield=config.oos_property,
-                                                    covariate_crs=ls.geoio.get_image_crs(config),
-                                                    extents=target_extents)
+                                                    covariate_crs=covariate_crs,
+                                                    extents=target_extents,
+                                                    drop=config.target_drop_field)
 
             else:
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
+            if config.tabular_prediction:
+                oos_feature_chunks = ls.features.feature_from_targets(
+                    targets, config.feature_sets)
+            else:
+                oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
-            oos_image_chunk_sets = ls.geoio.image_feature_sets(oos_targets, config)
+        if config.tabular_prediction:
+            feature_chunks = ls.features.features_from_targets(targets, config.feature_sets)
+        else:
+            feature_chunks = ls.geoio.image_feature_sets(targets, config)
 
-        # Get the image chunks and their associated transforms
-        image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
         transform_sets = [k.transform_set for k in config.feature_sets]
 
         if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
-            ls.features.save_intersected_features_and_targets(image_chunk_sets,
+            ls.features.save_intersected_features_and_targets(feature_chunks,
                                                               transform_sets, targets, config, 
                                                               impute=False)
 
         if config.rank_features:
             _logger.info("Ranking features...")
             measures, features, scores = \
-                ls.validate.local_rank_features(image_chunk_sets, transform_sets, targets, config)
+                ls.validate.local_rank_features(feature_chunks, transform_sets, targets, config)
             ls.mpiops.run_once(ls.geoio.export_feature_ranks, measures, features, scores, config)
 
-        # need to add cubist cols to config.algorithm_args
-        # keep: bool array corresponding to rows that are retained
-        features, keep = ls.features.transform_features(image_chunk_sets,
+        features, keep = ls.features.transform_features(feature_chunks,
                                                         transform_sets,
                                                         config.final_transform,
                                                         config)
 
-        # learn the model
-        # local models need all data
         x_all = ls.features.gather_features(features[keep], node=0)
-        # We're doing local models at the moment
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
 
         # Transform out-of-sample features after training data transform is performed so we use
         # the same statistics.
         if config.out_of_sample_validation:
-            oos_features, keep = ls.features.transform_features(oos_image_chunk_sets, transform_sets,
+            oos_features, keep = ls.features.transform_features(oos_feature_chunks, transform_sets,
                                                                 config.final_transform, config)
             oos_targets = ls.targets.gather_targets(oos_targets, keep, node=0)
             oos_features = ls.features.gather_features(oos_features[keep], node=0)
@@ -227,9 +224,7 @@ def _load_data(config, partitions):
     return ls.geoio.create_shared_training_data(targets_all, x_all), oos_data
 
 def _total_gb():
-    # given in KB so convert
     my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    # total_usage = mpiops.comm.reduce(my_usage, root=0)
     total_usage = ls.mpiops.comm.allreduce(my_usage)
     return total_usage
 

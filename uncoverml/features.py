@@ -10,8 +10,19 @@ from uncoverml import mpiops, patch, transforms, diagnostics
 from uncoverml.image import Image
 from uncoverml import patch
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
+def features_from_targets(targets, feature_sets):
+    if not all(fs.tabular for fs in feature_sets):
+        raise TypeError("Can not extract features from targets using non tabular feature set")
+    table_chunks = OrderedDict()
+    for fs in feature_sets:
+        for f in fs.fields:
+            vals = targets.fields[f]
+            mask = vals == fs.ndv
+            table_chunks[f] = np.ma.masked_array(vals, mask)
+    _logger.debug(f"Loaded table data {table_chunks}")
+    return [table_chunks]
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
     equiv_chunks = n_subchunks * mpiops.chunks
@@ -72,7 +83,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
     # TODO remove this when cubist gets removed
     if config.cubist or config.multicubist:
         feature_vec = OrderedDict()
-        log.warning("Cubist: ignoring preprocessing transform")
+        _logger.warning("Cubist: ignoring preprocessing transform")
         names = ['{}_{}'.format(b, k)
                  for ec in feature_sets
                  for k in ec
@@ -86,12 +97,12 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         config.algorithm_args['feature_type'] = feature_vec
         if mpiops.chunk_index == 0 \
                 and config.pk_featurevec and not os.path.exists(config.pk_featurevec):
-            log.info('Saving featurevec for reuse')
+            _logger.info('Saving featurevec for reuse')
             pickle.dump(feature_vec, open(config.pk_featurevec, 'wb'))
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if config.cubist or config.multicubist or config.krige:
-        log.warning("{}: Ignoring preprocessing final transform".format(config.algorithm))
+        _logger.warning("{}: Ignoring preprocessing final transform".format(config.algorithm))
     else:
         if final_transform:
             x = final_transform(x)
@@ -128,11 +139,9 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                 raise ValueError(f"write_to_csv field '{f}' does not exist in shapefile records")
 
     transform_sets_mod = []
-    cov_names = ['{}_{}'.format(b, basename(k))
-                 for ec in feature_sets
-                 for k in ec
-                 for b in range(ec[k].shape[3])]
-
+    cov_names = []
+    for fs in feature_sets:
+        cov_names.extend(fs.keys())
     other_names = ['X', 'Y', 'target', 'prediction']
 
     if config.fields_to_write_to_csv:
@@ -177,7 +186,6 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
         # Zeros for prediction values
         data.append(np.zeros(t.shape))
         data = np.hstack(data)
-
         np.savetxt(config.raw_covariates,
                    X=data, fmt='%s', delimiter=',', header=header, comments='')
         
@@ -221,7 +229,7 @@ def gather_features(x, node=None):
 
 
 def remove_missing(x, targets=None):
-    log.info("Stripping out missing data")
+    _logger.info("Stripping out missing data")
     classes = targets.observations if targets else None
     if np.ma.count_masked(x) > 0:
         no_missing_x = np.sum(x.mask, axis=1) == 0
