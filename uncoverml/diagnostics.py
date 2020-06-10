@@ -390,7 +390,7 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
     """
     with open(path) as f:
         header = f.readline().strip().split(',')
-        covs = [h.replace('.tif', '') for h in header if h.endswith('.tif')]
+        covs = [h.replace('.tif', '') if h.endswith('.tif') else h for h in header]
         data = np.loadtxt(f, delimiter=',', skiprows=1, dtype='<U254')
 
     rows = math.ceil(len(covs) / cols)
