@@ -772,13 +772,11 @@ def transform_targets(Regressor):
                 return Ey, Vy, ql, qu
 
         def __expec_int(self, x, mu, std):
-
             px = _normpdf(x, mu, std)
             Ex = self.target_transform.itransform(x) * px
             return Ex
 
         def __var_int(self, x, Ex, mu, std):
-
             px = _normpdf(x, mu, std)
             Vx = (self.target_transform.itransform(x) - Ex) ** 2 * px
             return Vx
@@ -1193,5 +1191,7 @@ _SQRT2PI = np.sqrt(2 * np.pi)
 # Faster than calling scipy's norm.pdf for quadrature. This is called with HIGH
 # frequency!
 def _normpdf(x, mu, std):
-
+    if std == 0:
+        _logger.warning("STD of 0 in _normpdf, stabilising with very small value")
+        std += np.nextafter(np.float32(0), np.float32(1))
     return 1. / (_SQRT2PI * std) * np.exp(-0.5 * ((x - mu) / std)**2)
