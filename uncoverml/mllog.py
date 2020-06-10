@@ -22,12 +22,11 @@ class MPIStreamHandler(logging.StreamHandler):
     Otherwise, only node 0 will emit messages.
     """
     def emit(self, record):
-        if record.msg.startswith(':mpi:'):
+        if isinstance(record.msg, str) and record.msg.startswith(':mpi:'):
             record.msg = record.msg.replace(':mpi:', '')
             super().emit(record)
-        elif mpiops.chunk_index == 0:
+        else:
             super().emit(record)
-
 
 class ElapsedFormatter():
 
