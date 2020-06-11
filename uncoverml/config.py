@@ -142,11 +142,12 @@ class FeatureSetConfig(object):
             self.files = sorted(files, key=str.lower)
             n_feat = len(self.files)
             _logger.debug("Loaded feature set with files: {self.files}")
-        elif 'table' in d:
+        elif 'shapefile' in d:
             self.tabular = True
-            self.fields = sorted(d['table']['fields'], key=str.lower)
+            self.fields = sorted(d['shapefile']['fields'], key=str.lower)
             n_feat = len(self.fields)
-            self.ndv = d['table'].get('ndv', None)
+            self.file = d['shapefile']['file']
+            self.ndv = d['shapefile'].get('ndv', None)
             _logger.debug(f"Loaded feature set with fields: {self.fields}")
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
@@ -498,7 +499,7 @@ class Config(object):
                                     "targets.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
-            self.target_drop_field = tb.get('drop', None)
+            self.target_drop_values = tb.get('drop', None)
             self.target_weight_property = tb.get('weight_property')
             self.fields_to_write_to_csv = tb.get('write_to_csv')
             self.shiftmap_targets = tb.get('shiftmap')
@@ -551,6 +552,8 @@ class Config(object):
             self.rank_features = False
             self.permutation_importance = False
             self.parallel_validate = False
+            self.out_of_sample_validation = False
+            self.cross_validate = False
 
         # OPTIMISATION BLOCK
         # Note: optimisation options get parsed in scripts/gridsearch.py

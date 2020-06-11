@@ -6,11 +6,82 @@ import os
 from os.path import basename
 import copy
 
+import uncoverml  # Get around `geoio` circular import in features_from_shapefile
 from uncoverml import mpiops, patch, transforms, diagnostics
 from uncoverml.image import Image
 from uncoverml import patch
 
 _logger = logging.getLogger(__name__)
+
+def features_from_shapefile(targets, feature_sets, target_drop_values):
+    """Extract covariates from a shapefile. This is done by intersecting
+    targets with the shapefile. The shapefile must have the same number
+    of rows as there are targets.
+
+    Drop target values here for tabular predictions. This is mainly 
+    for convenience if there are classes or points in the target file
+    that we don't want to predict on for whatever reason (e.g. 
+    out-of-sample validation purposes). It's done here rather than
+    when targets are first loaded so we don't also have to handle a 
+    mask + targets being returned from target loading as the mask won't
+    be required in most situations.
+
+    Parameters
+    ----------
+    targets: `uncoverml.targets.Targets`
+        An `uncoverml.targets.Targets` object that has been loaded from
+        a shapefile.
+    feature_sets: list of `uncoverml.config.FeatureSetConfig`
+        A list of feature sets of 'tabular' type (sourced from 
+        shapefiles). Each set must have an attribute `file` that points
+        to the shapefile to load and attribute `fields` which is the 
+        list of fields to retrieve as covariates from the file.
+    target_drop_values: list of any
+        A list of values where if target observation is equal to value
+        that row is dropped and also won't be intersected with the 
+        covariates.
+    """
+    if not all(fs.tabular for fs in feature_sets):
+        raise TypeError("Can not extract features from non-shapefile sources")
+
+    # Drop 'target_drop_values' from targets before intersection
+    if target_drop_values is not None:
+        for tdv in target_drop_values:
+            if np.dtype(type(tdv)).kind != targets.observations.dtype.kind:
+                raise TypeError(
+                    f"Value '{tdv}' to drop from target property field has dtype "
+                    f"'{np.dtype(type(tdv))} which is incompatible with target property "
+                    f"dtype {targets.observations.dtype}. Change this value to a compatible dtype.")
+        keep = ~np.isin(targets.observations, target_drop_values)
+        targets.observations = targets.observations[keep]
+        targets.positions = targets.positions[keep]
+        for k, v in targets.fields.items():
+            targets.fields[k] = v[keep]
+        _logger.info(f"Dropped {np.count_nonzero(~keep)} rows from targets that contained values "
+                     f"{target_drop_values}")
+    else:
+        keep = np.ones(targets.observations.shape)
+
+    # Intersect with covariate shapefiles
+    table_chunks = OrderedDict()
+    for fs in feature_sets:
+        # Hack: load the covariate shapefile as Targets object to make loading easier. Set the 
+        # first field as `targetfield` because otherwise it will take the first coulmn as 
+        # `targetfield` by default and we won't know if that's a value we want or not. So 
+        # `observations` is always the first covariate field and any remaining are in `fields`
+        features_as_targets = uncoverml.geoio.load_targets(fs.file, targetfield=fs.fields[0])
+        for i, f in enumerate(fs.fields):
+            # First field is loaded as observations
+            if i == 0:
+                vals = features_as_targets.observations[keep]
+            else:
+                vals = features_as_targets.fields[f][keep]
+            mask = vals == fs.ndv
+            table_chunks[f] = np.ma.masked_array(vals, mask)
+
+    _logger.debug("loaded table data {table_chunks}")
+    # Wrap in a list to make it compatible with functions that expect chunks loaded from images
+    return [table_chunks]    
 
 def features_from_targets(targets, feature_sets):
     if not all(fs.tabular for fs in feature_sets):
