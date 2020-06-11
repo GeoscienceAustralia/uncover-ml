@@ -118,8 +118,7 @@ def _load_data(config, partitions):
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=covariate_crs,
-                                        extents=target_extents,
-                                        drop=config.target_drop_field)
+                                        extents=target_extents)
 
         _logger.info(f":mpi:Assigned {targets.observations.shape[0]} targets")
 
@@ -159,20 +158,20 @@ def _load_data(config, partitions):
                 oos_targets = ls.geoio.load_targets(shapefile=config.oos_shapefile,
                                                     targetfield=config.oos_property,
                                                     covariate_crs=covariate_crs,
-                                                    extents=target_extents,
-                                                    drop=config.target_drop_field)
+                                                    extents=target_extents)
 
             else:
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
             if config.tabular_prediction:
-                oos_feature_chunks = ls.features.feature_from_targets(
-                    targets, config.feature_sets)
+                oos_feature_chunks = ls.features.features_from_shapefile(
+                    oos_targets, config.feature_sets, config.target_drop_values)
             else:
                 oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
         if config.tabular_prediction:
-            feature_chunks = ls.features.features_from_targets(targets, config.feature_sets)
+            feature_chunks = ls.features.features_from_shapefile(
+                    targets, config.feature_sets, config.target_drop_values)
         else:
             feature_chunks = ls.geoio.image_feature_sets(targets, config)
 
