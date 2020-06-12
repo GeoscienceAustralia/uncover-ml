@@ -643,6 +643,8 @@ class Config(object):
         self.optimisation_results_file = _outpath('_optimisation.csv')
 
         self.prediction_file = _outpath('_{}.tif')
+        self.prediction_shapefile = _outpath('_prediction')
+        self.prediction_prjfile = _outpath('_prediction.prj')
 
         self.shiftmap_file = _outpath('_shiftmap_{}.tif')
         self.shiftmap_points = _outpath('_shiftmap_generated_points.csv')

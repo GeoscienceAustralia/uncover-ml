@@ -9,6 +9,7 @@ from collections import OrderedDict, namedtuple
 import json
 import pickle
 import itertools
+import shutil
 
 import matplotlib.pyplot as plt
 import rasterio
@@ -302,6 +303,42 @@ def crop_tif(filename, extents, pixel_coordinates=False, outfile=None, strict=Fa
             dest.write(out_image)
 
         return outfile
+
+def write_shapefile_prediction(pred, pred_tags, positions, config):
+    _logger.info("Prediction complete, writing shapefile...")
+    pred = mpiops.comm.gather(pred, root=0)
+    positions = mpiops.comm.gather(positions, root=0)
+    if mpiops.chunk_index == 0:
+        # Concatenate predicitions and positions 
+        pred = np.vstack(pred)
+        positions = np.vstack(positions)
+        # Sort all predictions and positions by Y, X
+        ordind = np.lexsort(positions.T)
+        pred = pred[ordind]
+        positions = positions[ordind]
+        # Get shapetype and projection for a shapefile covariate
+        r = shapefile.Reader(config.feature_sets[0].file)
+        shapetype = r.shapeType
+        r.close()
+        # Attempt to copy the covariate .prj file
+        src_prj = os.path.splitext(config.feature_sets[0].file)[0] + '.prj' 
+        if os.path.exists(src_prj):
+            shutil.copy(src_prj, config.prediction_prjfile)
+        else:
+            _logger.warning(
+                "Can't read feature .prj file! Prediction shapefile will be written without "
+                "a .prj file. You will need to manage the lack of CRS using your GIS "
+                "software.")
+        w = shapefile.Writer(config.prediction_shapefile)
+        w.shapeType = shapetype
+        for tag in pred_tags:
+            w.field(tag, 'N', decimal=3)
+        for p, pos in zip(pred, positions):
+            w.record(*p)
+            w.point(pos[0], pos[1])
+        w.close()
+        _logger.info(
+            f"Shapefile writing complete, result available at {config.prediction_shapefile}")
 
 
 def load_shapefile(filename, targetfield, covariate_crs, extents):
