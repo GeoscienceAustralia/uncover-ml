@@ -135,7 +135,8 @@ The ``targets`` block specifies the training targets to be used:
 
 - ``file``: path to the shapefile containing training targets
 - ``property``: name of the field in the shapefile to be used as 
-  training value
+  training value. If not provided then the first field of the shapefile
+  will be used.
 
 *At least some of the targets in the shapefile must intersect with the
 provided features. Targets outside of the feature area will be 
@@ -201,6 +202,81 @@ the configuration file. The map will be named after the band,
 e.g. ``prediction.tif`` for the main prediction band. Downsampled 
 versions of the maps will also be generated for use as thumbnails.
 
+Shapefile Predictions
+---------------------
+
+.. note:: 
+
+    This is a prototype feature that is only available on branch
+    ``bren-tabular``.
+
+Besides images, feature data can also be extracted from shapefiles. If
+this method is used, then the prediction will be written out as a 
+shapefile.
+
+Config
+~~~~~~
+
+To use shapefiles, the ``feature`` block of the config must be modified:
+
+.. code:: yaml
+
+    features:
+    - type: ordinal
+    shapefile:
+      file: /path/to/shapefile
+      fields:
+        - field1
+        - field2
+        - field3
+      ndv: None
+      transforms:
+        - standardise
+      imputation: mean
+
+It's similar to the structure for using geotiffs with some changes:
+
+-  ``shapefile``: this starts the shapefile block and signifies that
+   shapefile training and prediction is being used. *Note that currently
+   it is not possible to mix shapefile and image features. An error 
+   will occur if you attempt to do so*.
+   
+   - ``file``: path to the shapefile containing features. The file 
+     you provide must have the same number of records as your target
+     shapefile, and must have the same geometries.
+   - ``fields``: a list of fields in the shapefile that will be used
+     as covariates.
+   - ``ndv``: the no data value for the shapefile. Samples with this 
+     value will be masked out when training and predicting.
+
+There's also the addition of the ``drop`` parameter to the targets block:
+
+.. code:: yaml
+
+    targets:
+      file: ...
+      property: ...
+      drop: ['unknown', 'undefined']
+
+- ``drop``: a list of values to drop from the targets. Rows where the
+  ``property`` field contains one of these values will be dropped
+  when intersecting features and targets. This is for convenience of
+  training on files with missing data that you want to predict. You can
+  drop the rows containing the missing data for training, and then 
+  predict on the full shapefile.
+
+Running
+~~~~~~~
+
+Employ the same ``learn`` and ``predict`` commands as you would for 
+learning and prediction in the :ref:`learn and predict <learn_and_predict>`
+section.
+
+The output will be the same as with image-based predictions, but instead
+of geotiffs, predictions will be written to a shapefile:
+
+- ``..._prediction.*``: shapefile containing predicted values.
+
 Model Validation
 ----------------
 
@@ -223,6 +299,7 @@ in your config file. The usual parameters for learning must be provided
       out_of_sample:
         percentage: 0.2
         shapefile: /path/to/shapefile
+        property: name_of_field
       k-fold:
         parallel: False
         folds: 5
@@ -237,9 +314,15 @@ in your config file. The usual parameters for learning must be provided
     to withold from the training data to be used for post-learning
     validation.
   - ``shapefile``: path to a shapefile containing targets to be used
-    in out-of-sample valiadtion. ``percentage`` has priority over 
-    ``shapefile`` - if both are provided then the shapefile argument
-    will be ignored.
+    in out-of-sample validation. 
+  - ``property``: name of the field in the shapefile to use as training
+    value. If not provided then the first field of the shapefile will be
+    used.
+
+.. note::
+
+    ``precentage`` has priority over ``shapefile`` - if both are 
+    provided then the shapefile argument will be ignored.
 
 - ``k-fold``: k-fold cross validation parameters
 
