@@ -100,58 +100,62 @@ def main(config_file, partitions, mask, retain):
                         "non-enesemble/bootstrapped model was provided. Running a single "
                         "prediction instead.")
 
-    if config.extents:
-        ls.geoio.crop_covariates(config)
-
-    config.mask = mask if mask else config.mask
-    if config.mask:
-        config.retain = retain if retain else config.retain
-
-        if not isfile(config.mask):
-            config.mask = ''
-            _logger.info("A mask was provided, but the file does not exist on "
-                         "disc or is not a file.")
-        elif config.extents:
-            ls.geoio.crop_mask(config)
-
-    config.n_subchunks = partitions
-    if config.n_subchunks > 1:
-        _logger.info("Memory contstraint forcing {} iterations "
-                     "through data".format(config.n_subchunks))
+    if config.tabular_prediction:
+        ls.predict.shapefile_prediction(config, model)
     else:
-        _logger.info("Using memory aggressively: dividing all data between nodes")
+        if config.extents:
+            ls.geoio.crop_covariates(config)
 
-    if bootstrapping:
-        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model.models[0], config)
-    else:
-        image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
+        config.mask = mask if mask else config.mask
+        if config.mask:
+            config.retain = retain if retain else config.retain
 
-    predict_tags = model.get_predict_tags()
+            if not isfile(config.mask):
+                config.mask = ''
+                _logger.info("A mask was provided, but the file does not exist on "
+                             "disc or is not a file.")
+            elif config.extents:
+                ls.geoio.crop_mask(config)
 
-    image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
-                                     config.n_subchunks, config.prediction_file, config.outbands,
-                                     band_tags=predict_tags, **config.geotif_options)
+        config.n_subchunks = partitions
+        if config.n_subchunks > 1:
+            _logger.info("Memory contstraint forcing {} iterations "
+                         "through data".format(config.n_subchunks))
+        else:
+            _logger.info("Using memory aggressively: dividing all data between nodes")
 
-    for i in range(config.n_subchunks):
-        _logger.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(model, i, image_out, config)
+        if bootstrapping:
+            image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model.models[0], config)
+        else:
+            image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
-    image_out.close()
+        predict_tags = model.get_predict_tags()
 
-    if config.clustering and config.cluster_analysis:
-        if ls.mpiops.chunk_index == 0:
-            ls.predict.final_cluster_analysis(config.n_classes,
-                                              config.n_subchunks)
+        image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
+                                         config.n_subchunks, config.prediction_file, config.outbands,
+                                         band_tags=predict_tags, **config.geotif_options)
 
-    if config.thumbnails:
-        image_out.output_thumbnails(config.thumbnails)
+        for i in range(config.n_subchunks):
+            _logger.info("starting to render partition {}".format(i+1))
+            ls.predict.render_partition(model, i, image_out, config)
+
+        image_out.close()
+
+        if config.clustering and config.cluster_analysis:
+            if ls.mpiops.chunk_index == 0:
+                ls.predict.final_cluster_analysis(config.n_classes,
+                                                  config.n_subchunks)
+
+        if config.thumbnails:
+            image_out.output_thumbnails(config.thumbnails)
+
+        
+        if config.extents:
+            ls.mpiops.run_once(_clean_temp_cropfiles, config)
 
     ls.mpiops.run_once(
-        write_prediction_metadata,
-        model, config, config.metadata_file)
-
-    if config.extents:
-        ls.mpiops.run_once(_clean_temp_cropfiles, config)
+            write_prediction_metadata,
+            model, config, config.metadata_file)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 

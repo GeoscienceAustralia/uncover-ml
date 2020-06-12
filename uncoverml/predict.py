@@ -126,8 +126,6 @@ def _fix_for_corrupt_data(x, feature_names):
 
 
 def _get_data(subchunk, config):
-    # NOTE: This returns an *untransformed* x,
-    # which is ok as we just need dummies here
     transform_sets = [k.transform_set for k in config.feature_sets]
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     _logger.info("Applying feature transforms")
@@ -186,7 +184,19 @@ def _mask_rows(x, subchunk, config):
             x.mask += np.tile(mask_x, (x.shape[1], 1)).T
     return x
 
+def shapefile_prediction(config, model):
+    feature_chunks, positions = features.features_from_shapefile(config.feature_sets)
+    transforms = [fs.transform_set for fs in config.feature_sets]
+    # Don't need second return val 'keep' mask
+    x, _ = features.transform_features(feature_chunks, transforms, 
+                                       config.final_transform, config)
+    _logger.info(f":mpi:Predicting on {x.shape[0]} samples across {x.shape[1]} features...")
+    y_star = predict(x, model, interval=config.quantiles,
+                     lon_lat=positions,
+                     bootstrap_predictions=config.bootstrap_predictions)
 
+    geoio.write_shapefile_prediction(y_star, model.get_predict_tags(), positions, config)
+    
 def render_partition(model, subchunk, image_out, config):
     x, feature_names = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
