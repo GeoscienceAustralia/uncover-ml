@@ -25,7 +25,7 @@ class MPIStreamHandler(logging.StreamHandler):
         if isinstance(record.msg, str) and record.msg.startswith(':mpi:'):
             record.msg = record.msg.replace(':mpi:', '')
             super().emit(record)
-        else:
+        elif mpiops.chunk_index == 0:
             super().emit(record)
 
 class ElapsedFormatter():
