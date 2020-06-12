@@ -164,13 +164,13 @@ def _load_data(config, partitions):
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
             if config.tabular_prediction:
-                oos_feature_chunks = ls.features.features_from_shapefile(
+                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(
                     oos_targets, config.feature_sets, config.target_drop_values)
             else:
                 oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
         if config.tabular_prediction:
-            feature_chunks = ls.features.features_from_shapefile(
+            feature_chunks, _ = ls.features.intersect_shapefile_features(
                     targets, config.feature_sets, config.target_drop_values)
         else:
             feature_chunks = ls.geoio.image_feature_sets(targets, config)
