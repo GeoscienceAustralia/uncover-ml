@@ -13,7 +13,7 @@ from uncoverml import patch
 
 _logger = logging.getLogger(__name__)
 
-def features_from_shapefile(targets, feature_sets, target_drop_values):
+def intersect_shapefile_features(targets, feature_sets, target_drop_values):
     """Extract covariates from a shapefile. This is done by intersecting
     targets with the shapefile. The shapefile must have the same number
     of rows as there are targets.
@@ -62,38 +62,39 @@ def features_from_shapefile(targets, feature_sets, target_drop_values):
     else:
         keep = np.ones(targets.observations.shape)
 
-    # Intersect with covariate shapefiles
-    table_chunks = OrderedDict()
+    return features_from_shapefile(feature_sets, keep)
+
+
+def features_from_shapefile(feature_sets, mask=None):
+    table_chunks = list()
     for fs in feature_sets:
-        # Hack: load the covariate shapefile as Targets object to make loading easier. Set the 
-        # first field as `targetfield` because otherwise it will take the first coulmn as 
+        # Hack: load the covariate shapefile as Targets object to reuse that loading code (handles
+        # shapefile IO and ensures ordering is correct). 
+        # Set the first field as `targetfield` because otherwise it will take the first coulmn as 
         # `targetfield` by default and we won't know if that's a value we want or not. So 
         # `observations` is always the first covariate field and any remaining are in `fields`
+        chunkset = OrderedDict()
         features_as_targets = uncoverml.geoio.load_targets(fs.file, targetfield=fs.fields[0])
         for i, f in enumerate(fs.fields):
             # First field is loaded as observations
             if i == 0:
-                vals = features_as_targets.observations[keep]
+                vals = features_as_targets.observations[mask]
             else:
-                vals = features_as_targets.fields[f][keep]
-            mask = vals == fs.ndv
-            table_chunks[f] = np.ma.masked_array(vals, mask)
-
+                vals = features_as_targets.fields[f][mask]
+            positions = features_as_targets.positions[mask]
+            # Chunks should be of shape (n_samples,) - squeeze out empty dimensions
+            # These dims occur if mask is None
+            vals = np.squeeze(vals)
+            positions = np.squeeze(positions)
+            invalid = vals == fs.ndv
+            chunkset[f] = np.ma.masked_array(vals, invalid)
+        table_chunks.append(chunkset)
     _logger.debug("loaded table data {table_chunks}")
-    # Wrap in a list to make it compatible with functions that expect chunks loaded from images
-    return [table_chunks]    
+    for tc in table_chunks:
+        for k, c in tc.items():
+            print(k, c.shape)
+    return table_chunks, positions
 
-def features_from_targets(targets, feature_sets):
-    if not all(fs.tabular for fs in feature_sets):
-        raise TypeError("Can not extract features from targets using non tabular feature set")
-    table_chunks = OrderedDict()
-    for fs in feature_sets:
-        for f in fs.fields:
-            vals = targets.fields[f]
-            mask = vals == fs.ndv
-            table_chunks[f] = np.ma.masked_array(vals, mask)
-    _logger.debug(f"Loaded table data {table_chunks}")
-    return [table_chunks]
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
     equiv_chunks = n_subchunks * mpiops.chunks
