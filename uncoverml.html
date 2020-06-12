@@ -1684,9 +1684,44 @@ will always have targets</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.features.features_from_shapefile">
+<code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">features_from_shapefile</code><span class="sig-paren">(</span><em class="sig-param">feature_sets</em>, <em class="sig-param">mask=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.features_from_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.features.gather_features">
 <code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">gather_features</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">node=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.gather_features" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.features.intersect_shapefile_features">
+<code class="sig-prename descclassname">uncoverml.features.</code><code class="sig-name descname">intersect_shapefile_features</code><span class="sig-paren">(</span><em class="sig-param">targets</em>, <em class="sig-param">feature_sets</em>, <em class="sig-param">target_drop_values</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.features.intersect_shapefile_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract covariates from a shapefile. This is done by intersecting
+targets with the shapefile. The shapefile must have the same number
+of rows as there are targets.</p>
+<p>Drop target values here for tabular predictions. This is mainly
+for convenience if there are classes or points in the target file
+that we don’t want to predict on for whatever reason (e.g.
+out-of-sample validation purposes). It’s done here rather than
+when targets are first loaded so we don’t also have to handle a
+mask + targets being returned from target loading as the mask won’t
+be required in most situations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targets</strong> (<cite>uncoverml.targets.Targets</cite>) – An <cite>uncoverml.targets.Targets</cite> object that has been loaded from
+a shapefile.</p></li>
+<li><p><strong>feature_sets</strong> (list of <cite>uncoverml.config.FeatureSetConfig</cite>) – A list of feature sets of ‘tabular’ type (sourced from
+shapefiles). Each set must have an attribute <cite>file</cite> that points
+to the shapefile to load and attribute <cite>fields</cite> which is the
+list of fields to retrieve as covariates from the file.</p></li>
+<li><p><strong>target_drop_values</strong> (<em>list of any</em>) – A list of values where if target observation is equal to value
+that row is dropped and also won’t be intersected with the
+covariates.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="uncoverml.features.remove_missing">
@@ -2042,6 +2077,11 @@ q3 = 12</p></li>
 <dl class="function">
 <dt id="uncoverml.geoio.unsupervised_feature_sets">
 <code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">unsupervised_feature_sets</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.unsupervised_feature_sets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.geoio.write_shapefile_prediction">
+<code class="sig-prename descclassname">uncoverml.geoio.</code><code class="sig-name descname">write_shapefile_prediction</code><span class="sig-paren">(</span><em class="sig-param">pred</em>, <em class="sig-param">pred_tags</em>, <em class="sig-param">positions</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.geoio.write_shapefile_prediction" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -3978,6 +4018,11 @@ psize = pwidth * 2 + 1</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="uncoverml.predict.shapefile_prediction">
+<code class="sig-prename descclassname">uncoverml.predict.</code><code class="sig-name descname">shapefile_prediction</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">model</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.predict.shapefile_prediction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="uncoverml.predict.write_mean_and_sd">
 <code class="sig-prename descclassname">uncoverml.predict.</code><code class="sig-name descname">write_mean_and_sd</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">writer</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.predict.write_mean_and_sd" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -4247,7 +4292,7 @@ CSV file.</p>
 
 <dl class="function">
 <dt id="uncoverml.validate.classification_validation_scores">
-<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">classification_validation_scores</code><span class="sig-paren">(</span><em class="sig-param">ys</em>, <em class="sig-param">eys</em>, <em class="sig-param">pys</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.classification_validation_scores" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">uncoverml.validate.</code><code class="sig-name descname">classification_validation_scores</code><span class="sig-paren">(</span><em class="sig-param">ys</em>, <em class="sig-param">eys</em>, <em class="sig-param">pys</em>, <em class="sig-param">labels</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.validate.classification_validation_scores" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the validation scores for a regression prediction
 Given the test and training data, as well as the outputs from every model,
 this function calculates all of the applicable metrics in the following
