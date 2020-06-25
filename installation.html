@@ -89,6 +89,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#ubuntu-18-04">Ubuntu 18.04</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hpc">HPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#windows-10">Windows 10</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
@@ -300,6 +301,137 @@ UncoverML.</p>
 <p>When you are finished using UncoverML, don’t forget to deactivate your virtual environment using:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>deactivate
 </pre></div>
+</div>
+</div>
+<div class="section" id="windows-10">
+<h2>Windows 10<a class="headerlink" href="#windows-10" title="Permalink to this headline">¶</a></h2>
+<p>UncoverML can be run on Windows 10 with the help of Anaconda.
+This guide is intended for general users, but some steps have extra
+notes pertaining to installing on Geoscience Australia Windows devices.</p>
+<p>Microsoft MPI is required to use UncoverML on Windows.
+Download MS-MPI from the <a class="reference external" href="https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi">MS-MPI website</a>
+and install.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On Geoscience Australia devices, you will need to install MS-MPI via the Software Center
+(may be named MS-MPI SDK or similar).</p>
+</div>
+<p>Download Anaconda from the <a class="reference external" href="https://www.anaconda.com/products/individual#windows">Anaconda website</a>
+and install.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On Geoscience Australia devices, you will need to install Anaconda from the Software Center.</p>
+</div>
+<p>Once installed, open the Anaconda navigator and create a new environment:</p>
+<ul class="simple">
+<li><p>Select ‘Environments’ in left sidebar</p></li>
+<li><p>At the bottom of the screen, select ‘Create’</p></li>
+</ul>
+<img alt="_images/anaconda_step1.png" src="_images/anaconda_step1.png" />
+<p>We’ll use Anaconda to install some required packages:</p>
+<ul class="simple">
+<li><p>Select the environment you have just created</p></li>
+<li><p>In the package list window, select ‘Not installed’ from the filter
+drop down menu</p></li>
+<li><p>Type ‘gdal’ into the search bar and click ‘Update index…’</p></li>
+<li><p>Once the packages have been found, select the checkboxes for ‘gdal’
+and ‘libgdal’ and click ‘Apply’. A window will display showing required
+depencies to install. Accept these and continue.</p></li>
+</ul>
+<img alt="_images/anaconda_step2_install_packages.png" src="_images/anaconda_step2_install_packages.png" />
+<p>Repeat the above process for the following packages (‘Update index…’ doesn’t need to be clicked again):</p>
+<ul class="simple">
+<li><p>rasterio</p></li>
+<li><p>fiona</p></li>
+</ul>
+<p>Once complete, open a terminal with your environment activated by clicking the right-facing arrow
+next to your environment name and selecting ‘Open Terminal’.</p>
+<p>Install the MPI Python library:</p>
+<ul class="simple">
+<li><p>In the terminal, run:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install -c intel mpi4py
+</pre></div>
+</div>
+<p>Now clone the UncoverML repository:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Cloning the repository can be done through Git Bash or your
+preferred git client. In this case it’s done through the Windows
+CMD terminal for convenience.</p>
+</div>
+<ul class="simple">
+<li><p>Navigate to your desired directory</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;DRIVE_LETTER&gt;:</span></code> will change drives in the Windows CMD terminal and
+<code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">&lt;path&gt;</span></code> will change directories.</p></li>
+</ul>
+</li>
+<li><p>Clone the repository using <cite>git clone https://github.com/GeoscienceAustralia/uncover-ml.git</cite></p>
+<ul>
+<li><p>If you do not have git installed, you can install it using Anaconda navigator
+using the <span class="xref std std-ref">method above</span></p></li>
+</ul>
+</li>
+<li><p>Once cloned, cd into the repository using <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">uncover-ml</span></code></p></li>
+<li><p>By default, the repository will be on the master branch. UncoverML is under heavy development
+at this time and master releases are infrequent. It’s recommended to switch to the develop branch
+using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">develop</span></code></p></li>
+</ul>
+<p>Pip can now be used to install UncoverML into our Anaconda environment:</p>
+<ul class="simple">
+<li><p>In the terminal, run:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -r requirements-pykrige.txt
+pip install .
+</pre></div>
+</div>
+<p>UncoverML will now be installed in your Anaconda environment.</p>
+<p>To test that it’s operational, run the included Windows test config:</p>
+<ul>
+<li><p>Modify the example config to point to your uncover-ml repository so that the test data can be
+found:</p>
+<ul class="simple">
+<li><p>Open <code class="docutils literal notranslate"><span class="pre">...\uncover-ml\configs\windows_random_forest.yaml</span></code> in a text editor and modify the</p></li>
+</ul>
+<p>section of the file paths on lines 13, 20, 35 and 41 that contain <code class="docutils literal notranslate"><span class="pre">path\to\uncoverml</span></code>
+to the path to where you cloned the uncover-ml repository. For example, if I cloned
+the repository to <code class="docutils literal notranslate"><span class="pre">C:\Users\bmous</span></code> then this would become <code class="docutils literal notranslate"><span class="pre">C:\Users\bmous\uncover-ml\rest-of-path</span></code></p>
+</li>
+<li><p>In the terminal, run:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml learn configs<span class="se">\w</span>indows_random_forest.yaml
+</pre></div>
+</div>
+<p>This trains a multirandomforest model on some test data</p>
+<ul class="simple">
+<li><p>In the terminal, run:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uncoverml predict configs<span class="se">\w</span>indows_random_forest.yaml
+</pre></div>
+</div>
+<p>This performs a prediction on the test data using the trained model</p>
+<p>If the installation and execution was successful, then the results will be available
+in <code class="docutils literal notranslate"><span class="pre">...path</span> <span class="pre">to</span> <span class="pre">uncover-ml</span> <span class="pre">repository\random_forest_out</span></code>.</p>
+<p>On Windows, multiprocessing can be utilised by running UncoverML commands using <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec -n <span class="m">4</span> uncoverml learn configs<span class="se">\w</span>indows_random_forest.yaml
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">4</span></code> specifies to run the training with 4 processors.</p>
+<p>With that the installation is complete. Read the documentation further to learn how to
+fully utilise UncoverML. When you want to run UncoverML on Windows, make sure to launch
+a terminal from Anaconda Navigator using your UncoverML environment.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may get a Windows firewall warning asking for exceptions for mpiexec and
+Hydra proxy. These can be safely cancelled. The networking requirement of
+MPI will work on local machines without setting firewall rules.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The Cubist functionality is currently not available when using Windows.
+This requires further work in making Cubist compatible with Windows and
+writing a Cubist install script for Windows.</p>
 </div>
 </div>
 </div>
