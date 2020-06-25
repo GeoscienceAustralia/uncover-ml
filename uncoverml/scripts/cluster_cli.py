@@ -5,7 +5,6 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil
@@ -28,6 +27,7 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 import uncoverml.models
+import uncoverml.scripts
 from uncoverml.transforms import StandardiseTransform
 
 
@@ -58,7 +58,7 @@ def main(config_file, subsample_fraction):
         semisupervised(config)
     else:
         unsupervised(config)
-    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
 
 def semisupervised(config):
 
@@ -102,10 +102,3 @@ def unsupervised(config):
     _logger.info("Clustering image")
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
-
-def _total_gb():
-    # given in KB so convert
-    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    # total_usage = mpiops.comm.reduce(my_usage, root=0)
-    total_usage = ls.mpiops.comm.allreduce(my_usage)
-    return total_usage

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import platform
 import os
 import sys
 import subprocess
@@ -7,7 +8,7 @@ from setuptools.command.build_py import build_py as _build_py
 from setuptools.command.develop import develop as _develop
 
 readme = open('README.rst').read()
-
+is_windows = platform.system() == 'Windows'
 
 def parse_requirements(filename):
     """Gets list of requirements from a requirements file.
@@ -17,8 +18,11 @@ def parse_requirements(filename):
 
 
 def build_cubist():
-    out = subprocess.run(['./cubist/makecubist', '.'])
-    print(out)
+    if is_windows:
+        print("Skipping cubist install on Windows")
+    else:
+        out = subprocess.run(['./cubist/makecubist', '.'])
+        print(out)
 
 class build_py(_build_py):
     """ Override to ensure cubist is installed.

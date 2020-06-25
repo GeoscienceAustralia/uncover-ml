@@ -58,14 +58,13 @@ def create_shared_array(data, root=0, writeable=False):
     else:
         shape = None
         dtype = None
-        item_size = 0
-        size = 0
+        item_size = 1
+        size = 1
 
     comm.barrier()
 
     shape = comm.bcast(shape, root=root)
     dtype = comm.bcast(dtype, root=root)
-        
     win = MPI.Win.Allocate_shared(size, item_size, comm=comm)
 
     buf, _ = win.Shared_query(root)
