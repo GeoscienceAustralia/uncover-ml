@@ -187,3 +187,149 @@ When you are finished using UncoverML, don't forget to deactivate your virtual e
 
     deactivate
 
+Windows 10
+----------
+
+UncoverML can be run on Windows 10 with the help of Anaconda. 
+This guide is intended for general users, but some steps have extra
+notes pertaining to installing on Geoscience Australia Windows devices.
+
+Microsoft MPI is required to use UncoverML on Windows. 
+Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi>`_
+and install.
+
+.. note:: 
+    
+    On Geoscience Australia devices, you will need to install MS-MPI via the Software Center
+    (may be named MS-MPI SDK or similar).
+
+Download Anaconda from the `Anaconda website <https://www.anaconda.com/products/individual#windows>`_
+and install.
+
+.. note::
+
+    On Geoscience Australia devices, you will need to install Anaconda from the Software Center.
+
+Once installed, open the Anaconda navigator and create a new environment:
+
+- Select 'Environments' in left sidebar
+- At the bottom of the screen, select 'Create'
+
+.. image:: anaconda_step1.png
+
+.. _install_anaconda_packages::
+
+We'll use Anaconda to install some required packages:
+
+- Select the environment you have just created
+- In the package list window, select 'Not installed' from the filter 
+  drop down menu
+- Type 'gdal' into the search bar and click 'Update index...'
+- Once the packages have been found, select the checkboxes for 'gdal'
+  and 'libgdal' and click 'Apply'. A window will display showing required
+  depencies to install. Accept these and continue.
+
+.. image:: anaconda_step2_install_packages.png
+
+Repeat the above process for the following packages ('Update index...' doesn't need to be clicked again):
+
+- rasterio
+- fiona
+
+Once complete, open a terminal with your environment activated by clicking the right-facing arrow
+next to your environment name and selecting 'Open Terminal'.
+
+Install the MPI Python library:
+
+- In the terminal, run:
+
+.. code:: bash
+
+    conda install -c intel mpi4py
+
+Now clone the UncoverML repository:
+
+.. note:: 
+
+    Cloning the repository can be done through Git Bash or your 
+    preferred git client. In this case it's done through the Windows
+    CMD terminal for convenience.
+
+- Navigate to your desired directory
+
+  - ``<DRIVE_LETTER>:`` will change drives in the Windows CMD terminal and
+    ``cd <path>`` will change directories. 
+
+- Clone the repository using `git clone https://github.com/GeoscienceAustralia/uncover-ml.git`
+
+  - If you do not have git installed, you can install it using Anaconda navigator 
+    using the :ref:`method above <install_anaconda_packages>`
+
+- Once cloned, cd into the repository using ``cd uncover-ml``
+- By default, the repository will be on the master branch. UncoverML is under heavy development 
+  at this time and master releases are infrequent. It's recommended to switch to the develop branch
+  using ``git checkout develop``
+
+Pip can now be used to install UncoverML into our Anaconda environment:
+
+- In the terminal, run:
+
+.. code:: bash
+
+  pip install -r requirements-pykrige.txt
+  pip install . 
+
+UncoverML will now be installed in your Anaconda environment.
+
+To test that it's operational, run the included Windows test config:
+
+- Modify the example config to point to your uncover-ml repository so that the test data can be
+  found:
+
+  - Open ``...\uncover-ml\configs\windows_random_forest.yaml`` in a text editor and modify the 
+  section of the file paths on lines 13, 20, 35 and 41 that contain ``path\to\uncoverml``
+  to the path to where you cloned the uncover-ml repository. For example, if I cloned
+  the repository to ``C:\Users\bmous`` then this would become ``C:\Users\bmous\uncover-ml\rest-of-path``
+
+- In the terminal, run:
+
+.. code:: bash
+
+    uncoverml learn configs\windows_random_forest.yaml
+
+This trains a multirandomforest model on some test data
+
+- In the terminal, run:
+
+.. code:: bash
+
+  uncoverml predict configs\windows_random_forest.yaml
+
+This performs a prediction on the test data using the trained model
+
+If the installation and execution was successful, then the results will be available
+in ``...path to uncover-ml repository\random_forest_out``.
+
+On Windows, multiprocessing can be utilised by running UncoverML commands using ``mpiexec``:
+
+.. code:: bash
+
+    mpiexec -n 4 uncoverml learn configs\windows_random_forest.yaml
+
+Where ``-n 4`` specifies to run the training with 4 processors.
+
+With that the installation is complete. Read the documentation further to learn how to
+fully utilise UncoverML. When you want to run UncoverML on Windows, make sure to launch
+a terminal from Anaconda Navigator using your UncoverML environment.
+
+.. note:: 
+
+    You may get a Windows firewall warning asking for exceptions for mpiexec and
+    Hydra proxy. These can be safely cancelled. The networking requirement of 
+    MPI will work on local machines without setting firewall rules.
+
+.. warning::
+
+    The Cubist functionality is currently not available when using Windows.
+    This requires further work in making Cubist compatible with Windows and 
+    writing a Cubist install script for Windows.
