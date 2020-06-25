@@ -795,9 +795,17 @@ def encode_targets(Classifier):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.le = LabelEncoder()
+            self.prefitted = False
+
+        def prefit_encoder(self, y):
+            self.prefitted = True
+            return self.le.fit_transform(y)
 
         def fit(self, X, y, **kwargs):
-            y_t = self.le.fit_transform(y)
+            if self.prefitted:
+                y_t = self.le.transform(y)
+            else:
+                y_t = self.le.fit_transform(y)
             return super().fit(X, y_t)
 
         def predict_proba(self, X, **kwargs):

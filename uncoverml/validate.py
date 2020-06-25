@@ -55,10 +55,12 @@ def _binarizer(y, p, func, **kwargs):
     score = func(yb, p, **kwargs)
     return score
 
+def _logloss(y, p, labels):
+    return log_loss(y, p, labels=labels)
 
 classification_metrics = {
     'accuracy': lambda y, ey, p: accuracy_score(y, ey),
-    'log_loss': lambda y, ey, p: log_loss(y, p),
+    'log_loss': log_loss,
     'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
     'mean_confusion': lambda y, ey, p: (confusion_matrix(y, ey)).tolist(),
     'mean_confusion_normalized': lambda y, ey, p:
@@ -103,7 +105,7 @@ def split_cfold(nsamples, k=5, seed=None):
 
     return cvinds, cvassigns
 
-def classification_validation_scores(ys, eys, pys):
+def classification_validation_scores(ys, eys, pys, labels):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -132,7 +134,10 @@ def classification_validation_scores(ys, eys, pys):
     pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
 
     for k, m in classification_metrics.items():
-        scores[k] = apply_multiple_masked(m, (ys, eys, pys))
+        if k == 'log_loss':
+            scores[k] = apply_multiple_masked(m, (ys, eys, pys), labels=labels)
+        else:
+            scores[k] = apply_multiple_masked(m, (ys, eys, pys))
 
     return scores
 
@@ -496,6 +501,8 @@ def local_crossval(x_all, targets_all, config):
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
     y = targets_all.observations
+    if classification:
+        labels = model.prefit_encoder(y)
     lon_lat = targets_all.positions
     _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
 
@@ -534,11 +541,14 @@ def local_crossval(x_all, targets_all, config):
         fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
 
         # Train on this fold
-        x_train = x_all[train_mask]
+        x_train = x_all[train_mask] 
         apply_multiple_masked(model.fit, data=(x_train, y_k_train), fields=fields_train,
                               lon_lat=lon_lat_train, 
                               sample_weight=y_k_weight)
 
+        for dtc in model.estimators_:
+            print(dtc.tree_.impurity)
+    
         # Testing
         if not config.parallel_validate and mpiops.chunk_index != 0:
             continue
@@ -560,7 +570,7 @@ def local_crossval(x_all, targets_all, config):
                 y_k_test = model.le.transform(y[test_mask])
                 y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
                 fold_scores[fold] = classification_validation_scores(
-                    y_k_test, y_k_hard, p_k
+                    y_k_test, y_k_hard, p_k, labels
                 )
             
             y_true[fold] = y_k_test
