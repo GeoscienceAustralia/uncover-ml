@@ -6,7 +6,7 @@ click==7.0
 eli5==0.10.1
 geopandas==0.6.3
 matplotlib==3.1.1
-mpi4py==3.0.2
+mpi4py>=3.0.2
 numpy==1.17.2
 pandas==0.25.1
 pillow==7.0.0

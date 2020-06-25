@@ -7,7 +7,6 @@ covariate transform fixes were applied.
 from collections import namedtuple
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil
@@ -30,6 +29,7 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 import uncoverml.models
+import uncoverml.scripts
 from uncoverml.transforms import StandardiseTransform
 
 
@@ -71,7 +71,7 @@ def main(config_file):
         f"been made ({config.model_file + '_backup'}). It's recommended to keep this safe as this "
         f"is still experimental."
     )
-    _logger.info("Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
 
 def _load_data(config):
     if config.extents:
@@ -115,14 +115,6 @@ def _load_data(config):
             "TIF files. While your model will still work, this may have negative impacts on "
             "the model's performance."
         )
-        
-
-def _total_gb():
-    # given in KB so convert
-    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    # total_usage = mpiops.comm.reduce(my_usage, root=0)
-    total_usage = ls.mpiops.comm.allreduce(my_usage)
-    return total_usage
 
 def _clean_temp_cropfiles(config):
     shutil.rmtree(config.tmpdir)   

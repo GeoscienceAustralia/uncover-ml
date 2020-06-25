@@ -5,7 +5,6 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil

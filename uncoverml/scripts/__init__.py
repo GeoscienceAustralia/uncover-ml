@@ -3,9 +3,11 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 .. program-output:: uncoverml --help
 """
+import platform
+if not platform.system() == "Windows":
+    import resource
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil
@@ -160,11 +162,15 @@ def predict(config_file, partitions, mask, retain):
     predict_cli.main(config_file, partitions, mask, retain)
 
 
-def _total_gb():
-    # given in KB so convert
-    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    # total_usage = mpiops.comm.reduce(my_usage, root=0)
-    total_usage = uncoverml.mpiops.comm.allreduce(my_usage)
+def total_gb():
+    if platform.system() == 'Windows':
+        _logger.info("Resource usage not yet implemented on Windows. Setting memory usage as 0.")
+        total_usage = 0.0
+    else:
+        # given in KB so convert
+        my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
+        # total_usage = mpiops.comm.reduce(my_usage, root=0)
+        total_usage = uncoverml.mpiops.comm.allreduce(my_usage)
     return total_usage
 
 
