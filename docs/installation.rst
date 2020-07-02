@@ -215,6 +215,10 @@ Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/messa
 and install.
 
 .. note:: 
+You need to install the .msi and .exe files.  Also, add the to your PATH environment variable the install location, for example: C:\Program Files (x86)\Microsoft SDKs\MPI
+You also need a python version of 3.7 or 3.6, 3.8 will not currently work.
+
+.. note:: 
     
     On Geoscience Australia devices, you will need to install MS-MPI via the Software Center
     (may be named MS-MPI SDK or similar).
