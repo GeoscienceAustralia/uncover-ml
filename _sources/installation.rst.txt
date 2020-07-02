@@ -1,6 +1,9 @@
 Installation
 ============
 
+UncoverML requires Python 3.6 or 3.7 on all platforms. 
+Python 3.8 is currently untested and not supported.
+
 Ubuntu 18.04
 ------------
 
@@ -213,6 +216,10 @@ notes pertaining to installing on Geoscience Australia Windows devices.
 Microsoft MPI is required to use UncoverML on Windows. 
 Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi>`_
 and install.
+
+You need to install the ``.msi`` and ``.exe`` files.  
+Also, add to your ``PATH`` environment variable the install location, 
+for example: ``C:\\Program Files (x86)\\Microsoft SDKs\\MPI``.
 
 .. note:: 
     
