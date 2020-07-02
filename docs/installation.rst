@@ -1,6 +1,9 @@
 Installation
 ============
 
+UncoverML requires Python 3.6 or 3.7 on all platforms. 
+Python 3.8 is currently untested and not supported.
+
 Ubuntu 18.04
 ------------
 
@@ -214,10 +217,9 @@ Microsoft MPI is required to use UncoverML on Windows.
 Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi>`_
 and install.
 
-.. note:: 
-
-You need to install the .msi and .exe files.  Also, add the to your PATH environment variable the install location, for example: C:\\Program Files (x86)\\Microsoft SDKs\\MPI
-You also need a python version of 3.7 or 3.6, 3.8 will not currently work.
+You need to install the ``.msi`` and ``.exe`` files.  
+Also, add to your ``PATH`` environment variable the install location, 
+for example: ``C:\\Program Files (x86)\\Microsoft SDKs\\MPI``.
 
 .. note:: 
     
