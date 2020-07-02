@@ -51,6 +51,14 @@ You are now ready to install UncoverML. To install from the repository, clone us
     git clone git@github.com:GeoscienceAustralia/uncover-ml
     cd uncover-ml
 
+By default, the repository will be on the master branch. UncoverML is under heavy development 
+at this time and master releases are infrequent. It's recommended to switch to the develop branch
+using:
+
+.. code:: bash
+
+    git checkout develop
+
 Before the UncoverML package can be installed, there are some required packages that need to be installed first.
 
 .. code:: bash
