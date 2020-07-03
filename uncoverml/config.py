@@ -125,6 +125,9 @@ class FeatureSetConfig(object):
             elif key == 'directory':
                 glob_string = path.join(path.abspath(source[key]), "*.tif")
                 f_list = glob.glob(glob_string)
+                if not f_list:
+                    _logger.warning(f"No feature files were found in directory "
+                                    f"'{source[key]}'.")
                 files.extend(f_list)
             elif key == 'list':
                 csvfile = path.abspath(source[key])
@@ -134,9 +137,20 @@ class FeatureSetConfig(object):
                     tifs = [f[0].strip() for f in tifs
                             if (len(f) > 0 and f[0].strip() and
                                 f[0].strip()[0] != '#')]
-                for f in tifs:
+                for f in tifs:             
                     files.append(path.abspath(f))
 
+        fnf_err = False
+        for f in files:
+            if not path.exists(f):
+                _logger.warning(f"Feature file '{f}' does not exist.")
+                fnf_err = True
+        if fnf_err or not files:
+            raise FileNotFoundError("One or more of the provided feature files "
+                                    "does not exist. Check that the paths under "
+                                    "'files' in the 'features' block of the config "
+                                    "are correct.")
+        
         self.files = sorted(files, key=str.lower)
         n_files = len(self.files)
 
@@ -464,6 +478,7 @@ class Config(object):
                             "is a work around for getting image specifications. Needs to be fixed.")
             features = _grp(s, 'features', "'features' block must be provided when not loading "
                             "from pickled data.")
+            print("loading features")
             self.feature_sets = [FeatureSetConfig(f) for f in features]
 
         # Not yet implemented.
@@ -477,6 +492,9 @@ class Config(object):
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
                                     "targets.")
+            if not path.exists(self.target_file):
+                raise FileNotFoundError("Target shapefile provided in config does not exist. Check "
+                                        "that the 'file' property of the 'targets' block is correct.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
                                         "specifying targets.")
             self.target_weight_property = tb.get('weight_property')
@@ -549,10 +567,11 @@ class Config(object):
             mb = s.get('mask')
             if mb:
                 self.mask = mb.get('file') 
-                self.mask = None if not os.path.exists(self.mask) else self.mask
-                if self.mask:
-                    self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
-                                       "prediction mask.")
+                if not os.path.exists(self.mask):
+                    raise FileNotFoundError("Mask file provided in config does not exist. Check that "
+                                            "the 'file' property of the 'mask' block is correct.")
+                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
+                                   "prediction mask.")
             else:
                 self.mask = None
             
