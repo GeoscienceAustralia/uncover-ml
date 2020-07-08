@@ -747,8 +747,8 @@ predicting the k-means model.
     n_classes: 5
     oversample_factor: 5
 
-- ``file``: path to shapefile containg labels. This is optional. If provided
-  then semi-supervised clustering is performed, other clustering is
+- ``file``: path to shapefile containing labels. This is optional. If provided
+  then semi-supervised clustering is performed, other clutering is
   unsupervised.
 - ``property``: the name of the class label property in the shapefile. Only
   required if a shapefile has been provided and semi-supervised 
