@@ -21,6 +21,7 @@ Contents:
    cli
    workflows
    models
+   dev
    NICTA Project Report <projectreport>
    UncoverML API Reference <modules>
    contributing
