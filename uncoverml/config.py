@@ -638,6 +638,9 @@ class Config(object):
 
     @staticmethod
     def parse_extents(exb):
+        """
+        Validates extents parameters.
+        """
         if exb is not None:
             extents = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
             if all(x is None for x in extents): 
@@ -658,11 +661,19 @@ class Config(object):
 
     @property
     def tmpdir(self):
+        """
+        Convenience method for creating tmpdir needed by some UncoverML
+        functionality.
+        """
         if self._tmpdir is None:
             self._tmpdir = tempfile.mkdtemp()
         return self._tmpdir
 
     def set_algo_flags(self):
+        """
+        Convenience method for setting boolean flags based on the
+        algorithm being used.
+        """
         # Set flags based on algorithm being used - these control
         # some special behaviours in the code.
         self.cubist = self.algorithm == 'cubist'
