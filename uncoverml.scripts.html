@@ -87,9 +87,9 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">Developer Docs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">UncoverML API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="uncoverml.html">uncoverml package</a><ul class="current">
@@ -203,23 +203,353 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-uncoverml.scripts.covdiag">
-<span id="uncoverml-scripts-covdiag-module"></span><h2>uncoverml.scripts.covdiag module<a class="headerlink" href="#module-uncoverml.scripts.covdiag" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.scripts.cluster_cli">
+<span id="uncoverml-scripts-cluster-cli-module"></span><h2>uncoverml.scripts.cluster_cli module<a class="headerlink" href="#module-uncoverml.scripts.cluster_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
 </div>
-<div class="section" id="module-uncoverml.scripts.gammasensor">
-<span id="uncoverml-scripts-gammasensor-module"></span><h2>uncoverml.scripts.gammasensor module<a class="headerlink" href="#module-uncoverml.scripts.gammasensor" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncoverml.scripts.cluster_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.cluster_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">subsample_fraction</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.cluster_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.cluster_cli.semisupervised">
+<code class="sig-prename descclassname">uncoverml.scripts.cluster_cli.</code><code class="sig-name descname">semisupervised</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.cluster_cli.semisupervised" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.cluster_cli.unsupervised">
+<code class="sig-prename descclassname">uncoverml.scripts.cluster_cli.</code><code class="sig-name descname">unsupervised</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.cluster_cli.unsupervised" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="module-uncoverml.scripts.gridsearch">
-<span id="uncoverml-scripts-gridsearch-module"></span><h2>uncoverml.scripts.gridsearch module<a class="headerlink" href="#module-uncoverml.scripts.gridsearch" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.scripts.covdiag_cli">
+<span id="uncoverml-scripts-covdiag-cli-module"></span><h2>uncoverml.scripts.covdiag_cli module<a class="headerlink" href="#module-uncoverml.scripts.covdiag_cli" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncoverml.scripts.covdiag_cli.diagnostic">
+<code class="sig-prename descclassname">uncoverml.scripts.covdiag_cli.</code><code class="sig-name descname">diagnostic</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag_cli.diagnostic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.covdiag_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.covdiag_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">csvfile</em>, <em class="sig-param">recursive</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Will output some basic diagnostic information for geotiffs.
+If a directory is provided, all geotiffs in the direcotry (and
+subdirectories if ‘-r’ option is used) will be processed. Providing
+a single filepath will only process that file.</p>
+<p>To store the printed output in a txt file, use output redirection:
+‘covdiag /path/to/file &gt;&gt; output.txt’.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.covdiag_cli.printer">
+<code class="sig-prename descclassname">uncoverml.scripts.covdiag_cli.</code><code class="sig-name descname">printer</code><span class="sig-paren">(</span><em class="sig-param">diag</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.covdiag_cli.printer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="uncoverml-scripts-subsampletargets-module">
-<h2>uncoverml.scripts.subsampletargets module<a class="headerlink" href="#uncoverml-scripts-subsampletargets-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.scripts.gammasensor_cli">
+<span id="uncoverml-scripts-gammasensor-cli-module"></span><h2>uncoverml.scripts.gammasensor_cli module<a class="headerlink" href="#module-uncoverml.scripts.gammasensor_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the Gamma sensor prediction/super-resolution pipeline.</p>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/bren/.venvs/uml37/lib/python3.7/site-packages/uncoverml/scripts/gammasensor_cli.py:docstring of uncoverml.scripts.gammasensor_cli.main</span>, line 6)</p>
+<p>Command 'gammasensor --help' failed: [Errno 2] No such file or directory: 'gammasensor': 'gammasensor'</p>
 </div>
-<div class="section" id="module-uncoverml.scripts.tiff2kmz">
-<span id="uncoverml-scripts-tiff2kmz-module"></span><h2>uncoverml.scripts.tiff2kmz module<a class="headerlink" href="#module-uncoverml.scripts.tiff2kmz" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncoverml.scripts.gammasensor_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.gammasensor_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">verbosity</em>, <em class="sig-param">geotiff</em>, <em class="sig-param">height</em>, <em class="sig-param">absorption</em>, <em class="sig-param">forward</em>, <em class="sig-param">outputdir</em>, <em class="sig-param">noise</em>, <em class="sig-param">impute</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gammasensor_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.gammasensor_cli.write_data">
+<code class="sig-prename descclassname">uncoverml.scripts.gammasensor_cli.</code><code class="sig-name descname">write_data</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">name</em>, <em class="sig-param">in_image</em>, <em class="sig-param">outputdir</em>, <em class="sig-param">forward</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gammasensor_cli.write_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="module-uncoverml.scripts.uncoverml">
-<span id="uncoverml-scripts-uncoverml-module"></span><h2>uncoverml.scripts.uncoverml module<a class="headerlink" href="#module-uncoverml.scripts.uncoverml" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-uncoverml.scripts.gridsearch_cli">
+<span id="uncoverml-scripts-gridsearch-cli-module"></span><h2>uncoverml.scripts.gridsearch_cli module<a class="headerlink" href="#module-uncoverml.scripts.gridsearch_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the various machine learning parameter optimisation using
+scikit-learn GridSearchCv.</p>
+<dl class="simple">
+<dt>Available scorers:</dt><dd><dl class="simple">
+<dt>Regression:</dt><dd><p>‘r2’, ‘expvar’, ‘smse’, ‘lins_ccc’</p>
+</dd>
+<dt>Classification:</dt><dd><p>‘accuracy’</p>
+</dd>
+<dt>Classification with probability:</dt><dd><p>‘log_loss’, ‘auc’</p>
+</dd>
+</dl>
+</dd>
+<dt>Not yet implemented:</dt><dd><dl class="simple">
+<dt>Regression with variance (models w/ <cite>predict_dist</cite>):</dt><dd><p>‘mll’</p>
+</dd>
+<dt>Classification:</dt><dd><p>‘mean_confusion’, ‘mean_confusion_normalized’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>If no scorers are provided, then the default <cite>score</cite> method of the model
+will be used.</p>
+<p>Note that GridSearchCV is run with <cite>refit</cite> set to False. This is because
+the <cite>_best_estimator</cite> (best model found by GridSearchCV) is never used
+to predict anything, so fitting it is a waste.</p>
+<p>If you ever do want to use refit, keep in mind that if you use mutliple
+scorers, refit needs to be set to the name of a scorer used to find the
+best parameters for refitting the model.</p>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/bren/.venvs/uml37/lib/python3.7/site-packages/uncoverml/scripts/gridsearch_cli.py:docstring of uncoverml.scripts.gridsearch_cli.main</span>, line 32)</p>
+<p>Command 'gridsearch --help' failed: [Errno 2] No such file or directory: 'gridsearch': 'gridsearch'</p>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.gridsearch_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.gridsearch_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">pipeline_file</em>, <em class="sig-param">partitions</em>, <em class="sig-param">njobs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gridsearch_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.gridsearch_cli.setup_pipeline">
+<code class="sig-prename descclassname">uncoverml.scripts.gridsearch_cli.</code><code class="sig-name descname">setup_pipeline</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.gridsearch_cli.setup_pipeline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.learn_cli">
+<span id="uncoverml-scripts-learn-cli-module"></span><h2>uncoverml.scripts.learn_cli module<a class="headerlink" href="#module-uncoverml.scripts.learn_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="uncoverml.scripts.learn_cli.SharedTrainingData">
+<code class="sig-prename descclassname">uncoverml.scripts.learn_cli.</code><code class="sig-name descname">SharedTrainingData</code><a class="headerlink" href="#uncoverml.scripts.learn_cli.SharedTrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.scripts.learn_cli.TrainingData</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.learn_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.learn_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">partitions</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.learn_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.modelfix_cli">
+<span id="uncoverml-scripts-modelfix-cli-module"></span><h2>uncoverml.scripts.modelfix_cli module<a class="headerlink" href="#module-uncoverml.scripts.modelfix_cli" title="Permalink to this headline">¶</a></h2>
+<p>This command is used to hotfix models that were trained before the
+covariate transform fixes were applied.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.modelfix_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.modelfix_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.modelfix_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.predict_cli">
+<span id="uncoverml-scripts-predict-cli-module"></span><h2>uncoverml.scripts.predict_cli module<a class="headerlink" href="#module-uncoverml.scripts.predict_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.predict_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.predict_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">partitions</em>, <em class="sig-param">mask</em>, <em class="sig-param">retain</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.predict_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="uncoverml.scripts.predict_cli.write_prediction_metadata">
+<code class="sig-prename descclassname">uncoverml.scripts.predict_cli.</code><code class="sig-name descname">write_prediction_metadata</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">config</em>, <em class="sig-param">out_filename='metadata.txt'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.predict_cli.write_prediction_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>write the metadata for this prediction result, into a human-readable txt file.
+in order to make the ML results traceable and reproduceable (provenance)
+:return:</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.resample_cli">
+<span id="uncoverml-scripts-resample-cli-module"></span><h2>uncoverml.scripts.resample_cli module<a class="headerlink" href="#module-uncoverml.scripts.resample_cli" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="uncoverml.scripts.resample_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.resample_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">validation=False</em>, <em class="sig-param">validation_points=100</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.resample_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.shiftmap_cli">
+<span id="uncoverml-scripts-shiftmap-cli-module"></span><h2>uncoverml.scripts.shiftmap_cli module<a class="headerlink" href="#module-uncoverml.scripts.shiftmap_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.shiftmap_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.shiftmap_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">partitions</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.shiftmap_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.subsample_cli">
+<span id="uncoverml-scripts-subsample-cli-module"></span><h2>uncoverml.scripts.subsample_cli module<a class="headerlink" href="#module-uncoverml.scripts.subsample_cli" title="Permalink to this headline">¶</a></h2>
+<p>Subsample the targets from a shapefile to a new shapefile.</p>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/bren/.venvs/uml37/lib/python3.7/site-packages/uncoverml/scripts/subsample_cli.py:docstring of uncoverml.scripts.subsample_cli.main</span>, line 6)</p>
+<p>Command 'subsampletargets --help' failed: [Errno 2] No such file or directory: 'subsampletargets': 'subsampletargets'</p>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.subsample_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.subsample_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">outputdir</em>, <em class="sig-param">npoints</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.subsample_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.targetsearch_cli">
+<span id="uncoverml-scripts-targetsearch-cli-module"></span><h2>uncoverml.scripts.targetsearch_cli module<a class="headerlink" href="#module-uncoverml.scripts.targetsearch_cli" title="Permalink to this headline">¶</a></h2>
+<p>Run the uncoverml pipeline for clustering, supervised learning and prediction.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Usage: uncoverml [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -v, --verbosity [DEBUG|INFO|WARNING|ERROR]
+                                  Level of logging
+  --help                          Show this message and exit.
+
+Commands:
+  cluster
+  covdiag
+  gammasensor
+  gridsearch
+  learn
+  modelfix
+  predict
+  resample
+  shiftmap
+  subsample
+  targetsearch
+  tiff2kmz
+/home/bren/.venvs/uml37/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.metrics.scorer module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.metrics. Anything that cannot be imported from sklearn.metrics is now part of the private API.
+  warnings.warn(message, FutureWarning)
+</pre></div>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.targetsearch_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.targetsearch_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">partitions</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.targetsearch_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-uncoverml.scripts.tiff2kmz_cli">
+<span id="uncoverml-scripts-tiff2kmz-cli-module"></span><h2>uncoverml.scripts.tiff2kmz_cli module<a class="headerlink" href="#module-uncoverml.scripts.tiff2kmz_cli" title="Permalink to this headline">¶</a></h2>
+<p>Convert a Geotiff to a KMZ archive for display on Google and Cesium maps (e.g.
+National Map).</p>
+<div class="system-message">
+<p class="system-message-title">System Message: ERROR/6 (<span class="docutils literal">/home/bren/.venvs/uml37/lib/python3.7/site-packages/uncoverml/scripts/tiff2kmz_cli.py:docstring of uncoverml.scripts.tiff2kmz_cli.main</span>, line 7)</p>
+<p>Command 'tiff2kmz --help' failed: [Errno 2] No such file or directory: 'tiff2kmz': 'tiff2kmz'</p>
+</div>
+<dl class="function">
+<dt id="uncoverml.scripts.tiff2kmz_cli.main">
+<code class="sig-prename descclassname">uncoverml.scripts.tiff2kmz_cli.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">tiff</em>, <em class="sig-param">outfile</em>, <em class="sig-param">overlayname</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.scripts.tiff2kmz_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turn a geotiff into a KMZ that can be dragged onto an instance of Terria
+Map. This also constructs a JPEG of the Geotiff, as it is required for the
+KMZ.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-uncoverml.scripts">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-uncoverml.scripts" title="Permalink to this headline">¶</a></h2>

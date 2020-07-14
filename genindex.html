@@ -86,9 +86,9 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">Developer Docs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
@@ -244,11 +244,15 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.image.bbox2affine">bbox2affine() (in module uncoverml.image)</a>
 </li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.bootstrap">bootstrap (uncoverml.config.Config attribute)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.resampling.bootstrap_data_indicies">bootstrap_data_indicies() (in module uncoverml.resampling)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.models.bootstrap_model">bootstrap_model() (in module uncoverml.models)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.bootstrap_predictions">bootstrap_predictions (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.BootstrappedSVR">BootstrappedSVR (class in uncoverml.models)</a>
 </li>
@@ -280,8 +284,6 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.class_file">class_file (uncoverml.config.Config attribute)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.class_property">class_property (uncoverml.config.Config attribute)</a>
-</li>
       <li><a href="uncoverml.html#uncoverml.validate.classification_validation_scores">classification_validation_scores() (in module uncoverml.validate)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.ImageWriter.close">close() (uncoverml.geoio.ImageWriter method)</a>
@@ -291,8 +293,6 @@
       <li><a href="uncoverml.html#uncoverml.predict.cluster_analysis">cluster_analysis() (in module uncoverml.predict)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.clustering">clustering (uncoverml.config.Config attribute)</a>
-</li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.clustering_algorithm">clustering_algorithm (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.mpiops.comm">comm (in module uncoverml.mpiops)</a>
 </li>
@@ -308,10 +308,10 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.cubist.cond_line">cond_line() (in module uncoverml.cubist)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.config.Config">Config (class in uncoverml.config)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.config.ConfigException">ConfigException</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.mllog.configure">configure() (in module uncoverml.mllog)</a>
@@ -386,6 +386,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.interpolate.SKLearnRbf.di">di (uncoverml.interpolate.SKLearnRbf attribute)</a>
 </li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.covdiag_cli.diagnostic">diagnostic() (in module uncoverml.scripts.covdiag_cli)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.geoio.distribute_targets">distribute_targets() (in module uncoverml.geoio)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.predict.div0">div0() (in module uncoverml.predict)</a>
@@ -418,13 +420,17 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.validate.CrossvalInfo.export_crossval">export_crossval() (uncoverml.validate.CrossvalInfo method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.geoio.export_feature_ranks">export_feature_ranks() (in module uncoverml.geoio)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.geoio.export_model">export_model() (in module uncoverml.geoio)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.validate.OOSInfo.export_scores">export_scores() (uncoverml.validate.OOSInfo method)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.extents">extents (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.extents_are_pixel_coordinates">extents_are_pixel_coordinates (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.features.extract_features">extract_features() (in module uncoverml.features)</a>
 </li>
@@ -449,6 +455,8 @@
       <li><a href="uncoverml.html#uncoverml.config.Config.feature_sets">feature_sets (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.FeatureSetConfig">FeatureSetConfig (class in uncoverml.config)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.fields_to_write_to_csv">fields_to_write_to_csv (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.FeatureSetConfig.files">files (uncoverml.config.FeatureSetConfig attribute)</a>
 </li>
@@ -524,7 +532,7 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.targets.generate_dummy_targets">generate_dummy_targets() (in module uncoverml.targets)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.geotif_options">geotif_options (uncoverml.config.Config attribute)</a>
+      <li><a href="uncoverml.html#uncoverml.config.Config.geotiff_options">geotiff_options (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.MaskRows.get_complete_rows">get_complete_rows() (uncoverml.models.MaskRows static method)</a>
 </li>
@@ -694,6 +702,32 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.cluster_cli.main">main() (in module uncoverml.scripts.cluster_cli)</a>
+
+      <ul>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.covdiag_cli.main">(in module uncoverml.scripts.covdiag_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.gammasensor_cli.main">(in module uncoverml.scripts.gammasensor_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.gridsearch_cli.main">(in module uncoverml.scripts.gridsearch_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.learn_cli.main">(in module uncoverml.scripts.learn_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.modelfix_cli.main">(in module uncoverml.scripts.modelfix_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.predict_cli.main">(in module uncoverml.scripts.predict_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.resample_cli.main">(in module uncoverml.scripts.resample_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.shiftmap_cli.main">(in module uncoverml.scripts.shiftmap_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.subsample_cli.main">(in module uncoverml.scripts.subsample_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.targetsearch_cli.main">(in module uncoverml.scripts.targetsearch_cli)</a>
+</li>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.tiff2kmz_cli.main">(in module uncoverml.scripts.tiff2kmz_cli)</a>
+</li>
+      </ul></li>
       <li><a href="uncoverml.html#uncoverml.config.Config.mask">mask (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.MaskRows">MaskRows (class in uncoverml.models)</a>
@@ -706,6 +740,8 @@
         <li><a href="uncoverml.html#uncoverml.mpiops.mean">(in module uncoverml.mpiops)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.impute.MeanImputer">MeanImputer (class in uncoverml.transforms.impute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.targets.merge_targets">merge_targets() (in module uncoverml.targets)</a>
@@ -718,8 +754,6 @@
 </li>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.transformset.missing_percentage">missing_percentage() (in module uncoverml.transforms.transformset)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.krige.MLKrigeBase.ml_prediction">ml_prediction() (uncoverml.krige.MLKrigeBase method)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.krige.MLKrige">MLKrige (class in uncoverml.krige)</a>
@@ -729,8 +763,6 @@
       <li><a href="uncoverml.html#uncoverml.krige.MLKrigePredictDistMixin">MLKrigePredictDistMixin (class in uncoverml.krige)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.krige.MLKrigePreidctDist">MLKrigePreidctDist (class in uncoverml.krige)</a>
-</li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.model_file">model_file (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.mllog.MPIStreamHandler">MPIStreamHandler (class in uncoverml.mllog)</a>
 </li>
@@ -788,16 +820,24 @@
 </li>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.onehot.OneHotTransform">OneHotTransform (class in uncoverml.transforms.onehot)</a>
 </li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.oos_percentage">oos_percentage (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.oos_property">oos_property (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.oos_shapefile">oos_shapefile (uncoverml.config.Config attribute)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.validate.OOSInfo">OOSInfo (class in uncoverml.validate)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.optimisation">optimisation (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.ImageSource.origin_latitude">origin_latitude() (uncoverml.geoio.ImageSource property)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.geoio.ImageSource.origin_longitude">origin_longitude() (uncoverml.geoio.ImageSource property)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncoverml.html#uncoverml.geoio.ImageSource.origin_longitude">origin_longitude() (uncoverml.geoio.ImageSource property)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.out_of_sample_validation">out_of_sample_validation (uncoverml.config.Config attribute)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.validate.out_of_sample_validation">out_of_sample_validation() (in module uncoverml.validate)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.outbands">outbands (uncoverml.config.Config attribute)</a>
@@ -848,19 +888,13 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.ImageSource.pixsize_y">pixsize_y() (uncoverml.geoio.ImageSource property)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.pk_covariates">pk_covariates (uncoverml.config.Config attribute)</a>
-</li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.pk_featurevec">pk_featurevec (uncoverml.config.Config attribute)</a>
+      <li><a href="uncoverml.html#uncoverml.config.Config.pk_covarates">pk_covarates (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.pk_load">pk_load (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.pk_targets">pk_targets (uncoverml.config.Config attribute)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.plot_covaraites_dir">plot_covaraites_dir (uncoverml.config.Config attribute)</a>
-</li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_covariate_correlation">plot_covariate_correlation() (in module uncoverml.diagnostics)</a>
-</li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.plot_covariates">plot_covariates (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_covariates_x_targets">plot_covariates_x_targets() (in module uncoverml.diagnostics)</a>
 </li>
@@ -868,22 +902,20 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_feature_ranks">plot_feature_ranks() (in module uncoverml.diagnostics)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.plot_feature_ranks_file">plot_feature_ranks_file (uncoverml.config.Config attribute)</a>
-</li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_real_vs_pred_crossval">plot_real_vs_pred_crossval() (in module uncoverml.diagnostics)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_real_vs_pred_prediction">plot_real_vs_pred_prediction() (in module uncoverml.diagnostics)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_residual_error_crossval">plot_residual_error_crossval() (in module uncoverml.diagnostics)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_residual_error_prediction">plot_residual_error_prediction() (in module uncoverml.diagnostics)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.diagnostics.plot_target_scaling">plot_target_scaling() (in module uncoverml.diagnostics)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.patch.point_patches">point_patches() (in module uncoverml.patch)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.linear.PositiveTransform">PositiveTransform (class in uncoverml.transforms.linear)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.mpiops.power">power() (in module uncoverml.mpiops)</a>
@@ -942,6 +974,8 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.resampling.prepapre_dataframe">prepapre_dataframe() (in module uncoverml.resampling)</a>
 </li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.covdiag_cli.printer">printer() (in module uncoverml.scripts.covdiag_cli)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -974,8 +1008,6 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.RasterioImageSource">RasterioImageSource (class in uncoverml.geoio)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.raw_covariates_dir">raw_covariates_dir (uncoverml.config.Config attribute)</a>
-</li>
       <li><a href="uncoverml.html#uncoverml.cubist.read_data">read_data() (in module uncoverml.cubist)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.cubist.Rule.regress">regress() (uncoverml.cubist.Rule method)</a>
@@ -989,8 +1021,6 @@
       <li><a href="uncoverml.html#uncoverml.features.remove_missing">remove_missing() (in module uncoverml.features)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.predict.render_partition">render_partition() (in module uncoverml.predict)</a>
-</li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.resample">resample (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.resample">resample() (in module uncoverml.geoio)</a>
 </li>
@@ -1026,11 +1056,11 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.krige.MLKrigeBase.score">score() (uncoverml.krige.MLKrigeBase method)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.scores_file">scores_file (uncoverml.config.Config attribute)</a>
-</li>
       <li><a href="uncoverml.html#uncoverml.mpiops.sd">sd() (in module uncoverml.mpiops)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.semisupervised">semisupervised (uncoverml.config.Config attribute)</a>
+      <li><a href="uncoverml.html#uncoverml.config.Config.semi_supervised">semi_supervised (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.cluster_cli.semisupervised">semisupervised() (in module uncoverml.scripts.cluster_cli)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.geoio.semisupervised_feature_sets">semisupervised_feature_sets() (in module uncoverml.geoio)</a>
 </li>
@@ -1040,17 +1070,25 @@
 </li>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.onehot.sets">sets() (in module uncoverml.transforms.onehot)</a>
 </li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.gridsearch_cli.setup_pipeline">setup_pipeline() (in module uncoverml.scripts.gridsearch_cli)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.models.SGDApproxGP">SGDApproxGP (class in uncoverml.models)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.SGDApproxGPTransformed">SGDApproxGPTransformed (class in uncoverml.models)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.SGDLinearReg">SGDLinearReg (class in uncoverml.models)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.models.SGDLinearRegTransformed">SGDLinearRegTransformed (class in uncoverml.models)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.geoio.SharedTrainingData">SharedTrainingData (in module uncoverml.geoio)</a>
+
+      <ul>
+        <li><a href="uncoverml.scripts.html#uncoverml.scripts.learn_cli.SharedTrainingData">(in module uncoverml.scripts.learn_cli)</a>
+</li>
+      </ul></li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.shiftmap_targets">shiftmap_targets (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.interpolate.SKLearnCT">SKLearnCT (class in uncoverml.interpolate)</a>
 </li>
@@ -1061,6 +1099,8 @@
       <li><a href="uncoverml.html#uncoverml.interpolate.SKLearnRbf">SKLearnRbf (class in uncoverml.interpolate)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.interpolate.SKLearnRbf.smooth">smooth (uncoverml.interpolate.SKLearnRbf attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.spatial_resampling_args">spatial_resampling_args (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.validate.split_cfold">split_cfold() (in module uncoverml.validate)</a>
 </li>
@@ -1094,13 +1134,19 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.target_file">target_file (uncoverml.config.Config attribute)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.Config.target_propery">target_propery (uncoverml.config.Config attribute)</a>
+      <li><a href="uncoverml.html#uncoverml.config.Config.target_property">target_property (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.target_search">target_search (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.target_search_extents">target_search_extents (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.target_search_threshold">target_search_threshold (uncoverml.config.Config attribute)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.target_weight_property">target_weight_property (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.targets.Targets">Targets (class in uncoverml.targets)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.thumbnails">thumbnails (uncoverml.config.Config attribute)</a>
-</li>
-      <li><a href="generated/uncoverml.scripts.tiff2kmz.html#uncoverml.scripts.tiff2kmz">tiff2kmz (in module uncoverml.scripts)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.Config.tmpdir">tmpdir() (uncoverml.config.Config property)</a>
 </li>
@@ -1128,10 +1174,10 @@
       </ul></li>
       <li><a href="uncoverml.html#uncoverml.features.transform_features">transform_features() (in module uncoverml.features)</a>
 </li>
-      <li><a href="uncoverml.html#uncoverml.config.FeatureSetConfig.transform_set">transform_set (uncoverml.config.FeatureSetConfig attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncoverml.html#uncoverml.config.FeatureSetConfig.transform_set">transform_set (uncoverml.config.FeatureSetConfig attribute)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.models.transform_targets">transform_targets() (in module uncoverml.models)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.TransformedCTInterpolator">TransformedCTInterpolator (class in uncoverml.models)</a>
@@ -1167,6 +1213,8 @@
       <li><a href="uncoverml.html#uncoverml.models.MaskRows.trim_mask">trim_mask() (uncoverml.models.MaskRows method)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.models.MaskRows.trim_masks">trim_masks() (uncoverml.models.MaskRows method)</a>
+</li>
+      <li><a href="uncoverml.html#uncoverml.config.Config.tse_are_pixel_coordinates">tse_are_pixel_coordinates (uncoverml.config.Config attribute)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.config.FeatureSetConfig.type">type (uncoverml.config.FeatureSetConfig attribute)</a>
 </li>
@@ -1216,25 +1264,41 @@
 </li>
       <li><a href="uncoverml.optimise.html#module-uncoverml.optimise.models">uncoverml.optimise.models (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncoverml.optimise.html#module-uncoverml.optimise.scorers">uncoverml.optimise.scorers (module)</a>
+</li>
       <li><a href="uncoverml.html#module-uncoverml.patch">uncoverml.patch (module)</a>
 </li>
       <li><a href="uncoverml.html#module-uncoverml.predict">uncoverml.predict (module)</a>
 </li>
       <li><a href="uncoverml.html#module-uncoverml.resampling">uncoverml.resampling (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.scripts.html#module-uncoverml.scripts">uncoverml.scripts (module)</a>
 </li>
-      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag">uncoverml.scripts.covdiag (module)</a>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.cluster_cli">uncoverml.scripts.cluster_cli (module)</a>
 </li>
-      <li><a href="generated/uncoverml.scripts.gammasensor.html#module-uncoverml.scripts.gammasensor">uncoverml.scripts.gammasensor (module)</a>, <a href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor">[1]</a>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag_cli">uncoverml.scripts.covdiag_cli (module)</a>
 </li>
-      <li><a href="generated/uncoverml.scripts.gridsearch.html#module-uncoverml.scripts.gridsearch">uncoverml.scripts.gridsearch (module)</a>, <a href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch">[1]</a>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor_cli">uncoverml.scripts.gammasensor_cli (module)</a>
 </li>
-      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz">uncoverml.scripts.tiff2kmz (module)</a>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch_cli">uncoverml.scripts.gridsearch_cli (module)</a>
 </li>
-      <li><a href="generated/uncoverml.scripts.uncoverml.html#module-uncoverml.scripts.uncoverml">uncoverml.scripts.uncoverml (module)</a>, <a href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml">[1]</a>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.learn_cli">uncoverml.scripts.learn_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.modelfix_cli">uncoverml.scripts.modelfix_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.predict_cli">uncoverml.scripts.predict_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.resample_cli">uncoverml.scripts.resample_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.shiftmap_cli">uncoverml.scripts.shiftmap_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.subsample_cli">uncoverml.scripts.subsample_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.targetsearch_cli">uncoverml.scripts.targetsearch_cli (module)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz_cli">uncoverml.scripts.tiff2kmz_cli (module)</a>
 </li>
       <li><a href="uncoverml.html#module-uncoverml.targets">uncoverml.targets (module)</a>
 </li>
@@ -1256,6 +1320,8 @@
 </li>
       <li><a href="uncoverml.html#uncoverml.mpiops.unique">unique() (in module uncoverml.mpiops)</a>
 </li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.cluster_cli.unsupervised">unsupervised() (in module uncoverml.scripts.cluster_cli)</a>
+</li>
       <li><a href="uncoverml.html#uncoverml.geoio.unsupervised_feature_sets">unsupervised_feature_sets() (in module uncoverml.geoio)</a>
 </li>
   </ul></td>
@@ -1263,6 +1329,10 @@
 
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="uncoverml.html#uncoverml.config.Config.value_resampling_args">value_resampling_args (uncoverml.config.Config attribute)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="uncoverml.html#uncoverml.cubist.variance_with_mean">variance_with_mean() (in module uncoverml.cubist)</a>
 </li>
@@ -1278,15 +1348,19 @@
 </li>
       <li><a href="uncoverml.transforms.html#uncoverml.transforms.linear.WhitenTransform">WhitenTransform (class in uncoverml.transforms.linear)</a>
 </li>
+      <li><a href="uncoverml.html#uncoverml.geoio.ImageWriter.write">write() (uncoverml.geoio.ImageWriter method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="uncoverml.html#uncoverml.geoio.ImageWriter.write">write() (uncoverml.geoio.ImageWriter method)</a>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.gammasensor_cli.write_data">write_data() (in module uncoverml.scripts.gammasensor_cli)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.cubist.write_dict">write_dict() (in module uncoverml.cubist)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.predict.write_mean_and_sd">write_mean_and_sd() (in module uncoverml.predict)</a>
 </li>
       <li><a href="uncoverml.html#uncoverml.metadata_profiler.MetadataSummary.write_metadata">write_metadata() (uncoverml.metadata_profiler.MetadataSummary method)</a>
+</li>
+      <li><a href="uncoverml.scripts.html#uncoverml.scripts.predict_cli.write_prediction_metadata">write_prediction_metadata() (in module uncoverml.scripts.predict_cli)</a>
 </li>
   </ul></td>
 </tr></table>

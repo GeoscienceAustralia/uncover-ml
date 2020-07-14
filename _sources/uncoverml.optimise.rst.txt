@@ -12,6 +12,14 @@ uncoverml.optimise.models module
    :undoc-members:
    :show-inheritance:
 
+uncoverml.optimise.scorers module
+---------------------------------
+
+.. automodule:: uncoverml.optimise.scorers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 Module contents
 ---------------

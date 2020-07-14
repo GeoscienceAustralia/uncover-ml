@@ -1,3 +1,5 @@
+.. _workflows:
+
 Workflows
 =========
 
@@ -441,6 +443,8 @@ distribute it amongst the CPUs. Each chunk will then be split into
 5 partitions (the ``-p 5`` parameter) and loaded, predicted on and 
 written out sequentially, reducing memory usage.
 
+.. _optimisation-section:
+
 Optimisation
 ------------
 
@@ -882,6 +886,8 @@ table:
 .. code:: bash
 
     uncoverml learn config.yaml
+
+.. _resampling-section:
 
 Resampling
 ----------

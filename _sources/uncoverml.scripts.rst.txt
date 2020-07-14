@@ -4,50 +4,98 @@ uncoverml.scripts package
 Submodules
 ----------
 
-uncoverml.scripts.covdiag module
---------------------------------
+uncoverml.scripts.cluster\_cli module
+-------------------------------------
 
-.. automodule:: uncoverml.scripts.covdiag
+.. automodule:: uncoverml.scripts.cluster_cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-uncoverml.scripts.gammasensor module
-------------------------------------
+uncoverml.scripts.covdiag\_cli module
+-------------------------------------
 
-.. automodule:: uncoverml.scripts.gammasensor
+.. automodule:: uncoverml.scripts.covdiag_cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-uncoverml.scripts.gridsearch module
------------------------------------
-
-.. automodule:: uncoverml.scripts.gridsearch
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-uncoverml.scripts.subsampletargets module
+uncoverml.scripts.gammasensor\_cli module
 -----------------------------------------
 
-.. automodule:: uncoverml.scripts.subsampletargets
+.. automodule:: uncoverml.scripts.gammasensor_cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-uncoverml.scripts.tiff2kmz module
----------------------------------
+uncoverml.scripts.gridsearch\_cli module
+----------------------------------------
 
-.. automodule:: uncoverml.scripts.tiff2kmz
+.. automodule:: uncoverml.scripts.gridsearch_cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-uncoverml.scripts.uncoverml module
-----------------------------------
+uncoverml.scripts.learn\_cli module
+-----------------------------------
 
-.. automodule:: uncoverml.scripts.uncoverml
+.. automodule:: uncoverml.scripts.learn_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.modelfix\_cli module
+--------------------------------------
+
+.. automodule:: uncoverml.scripts.modelfix_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.predict\_cli module
+-------------------------------------
+
+.. automodule:: uncoverml.scripts.predict_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.resample\_cli module
+--------------------------------------
+
+.. automodule:: uncoverml.scripts.resample_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.shiftmap\_cli module
+--------------------------------------
+
+.. automodule:: uncoverml.scripts.shiftmap_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.subsample\_cli module
+---------------------------------------
+
+.. automodule:: uncoverml.scripts.subsample_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.targetsearch\_cli module
+------------------------------------------
+
+.. automodule:: uncoverml.scripts.targetsearch_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+uncoverml.scripts.tiff2kmz\_cli module
+--------------------------------------
+
+.. automodule:: uncoverml.scripts.tiff2kmz_cli
    :members:
    :undoc-members:
    :show-inheritance:

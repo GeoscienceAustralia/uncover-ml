@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Developer Docs &mdash; UncoverML 0.3.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UncoverML Project Report (NICTA)" href="projectreport.html" />
+    <link rel="prev" title="Models" href="models.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> UncoverML
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer Docs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-flows">Data Flows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#training-data-preparation">Training Data Preparation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-training">Model Training</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prediction">Prediction</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#gotchas">“Gotchas”</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transform-statistics">Transform Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#target-covariate-ordering">Target/Covariate Ordering</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">UncoverML API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">UncoverML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Developer Docs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/dev.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="developer-docs">
+<h1>Developer Docs<a class="headerlink" href="#developer-docs" title="Permalink to this headline">¶</a></h1>
+<p>Author: Bren Moushall &lt;<a class="reference external" href="mailto:brenainn&#46;moushal&#37;&#52;&#48;ga&#46;gov&#46;au">brenainn<span>&#46;</span>moushal<span>&#64;</span>ga<span>&#46;</span>gov<span>&#46;</span>au</a>&gt;</p>
+<p>This section aims to provide some guidance and highlight “gotchas” of
+UncoverML for future developers. It’s also recommended to run through
+the <a class="reference internal" href="workflows.html#workflows"><span class="std std-ref">Workflows</span></a> section.</p>
+<p>UncoverML has been developed by a number of different people over the
+years, so styles vary, and technical debt has accumulated. I’ve done
+my best to explain the parts of UncoverML I’ve worked with and
+understand, but some functionality remains undocumented.</p>
+<div class="section" id="data-flows">
+<h2>Data Flows<a class="headerlink" href="#data-flows" title="Permalink to this headline">¶</a></h2>
+<p>These diagrams don’t drill all the way down the call stack, but aim to
+give an idea what modules and functions touch the data and in what
+order. The focus is on the learn and predict steps - most other features
+in UncoverML follow the same patterns for loading data.</p>
+<div class="section" id="training-data-preparation">
+<h3>Training Data Preparation<a class="headerlink" href="#training-data-preparation" title="Permalink to this headline">¶</a></h3>
+<p>The top-level scope containing this data flow is <code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.scripts.learn_cli._load_data</span></code>.
+Note pickling isn’t covered - if pickled targets/covariates are enabled
+then this data flow doesn’t occur. Once the config is loaded the pickled
+files are deserialised and returned.</p>
+<img alt="_images/learn_data_prep.png" src="_images/learn_data_prep.png" />
+</div>
+<div class="section" id="model-training">
+<h3>Model Training<a class="headerlink" href="#model-training" title="Permalink to this headline">¶</a></h3>
+<p>The top-level scope containing this data flow is <a class="reference internal" href="uncoverml.scripts.html#uncoverml.scripts.learn_cli.main" title="uncoverml.scripts.learn_cli.main"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.scripts.learn_cli.main</span></code></a>.</p>
+<img alt="_images/train_model_flow.png" src="_images/train_model_flow.png" />
+</div>
+<div class="section" id="prediction">
+<h3>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h3>
+<p>The top-level scope containing this data flow is <a class="reference internal" href="uncoverml.scripts.html#uncoverml.scripts.predict_cli.main" title="uncoverml.scripts.predict_cli.main"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uncoverml.scripts.predict_cli.main</span></code></a>.</p>
+<img alt="_images/predict_flow.png" src="_images/predict_flow.png" />
+</div>
+</div>
+<div class="section" id="gotchas">
+<h2>“Gotchas”<a class="headerlink" href="#gotchas" title="Permalink to this headline">¶</a></h2>
+<p>If not considered, these can lead to bugs.</p>
+<div class="section" id="transform-statistics">
+<h3>Transform Statistics<a class="headerlink" href="#transform-statistics" title="Permalink to this headline">¶</a></h3>
+<p>It’s important to apply the same transforms made to training data to
+your test/prediction data.
+See <a class="reference external" href="https://stats.stackexchange.com/questions/361797/standardization-on-training-only-or-also-including-testing-data">this stack exchange post</a>.</p>
+<p>Transforms are in the <a class="reference internal" href="uncoverml.transforms.html#module-uncoverml.transforms" title="uncoverml.transforms"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transforms</span></code></a> package. Transform
+classes caluclate statistics on the feature data, e.g. for
+standardisation we calculate the mean and standard deviation of the data
+so that can standardisation can be formed.</p>
+<p>The first time these Transform objects are called, they calculate these
+stats and cache them. It’s important that these preloaded Transform
+objects are passed to the prediction step so it can transform test
+data based on the stats calculated from the train data.</p>
+<p>This is why the <code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_sets</span></code> and <code class="xref py py-obj docutils literal notranslate"><span class="pre">final_transform</span></code> objects
+are serialised along with the model at the end of training. They are
+loaded by the prediction step and set as the transforms for prediction.</p>
+<p>Because of this, we can’t modify feature set or transforms in the YAML
+config between learning and predictions steps. Changes to Transforms
+won’t apply, and if we modify the features then the cached transforms
+won’t match up with the provided features.</p>
+<p>If cached Transforms aren’t supplied, new transform objects will be
+created which will generate stats based on the test/predict data, which
+throws off the model results by creating a positive bias (we have
+more information about the unseen data than we should, in the form of
+statistics about the data).</p>
+</div>
+<div class="section" id="target-covariate-ordering">
+<h3>Target/Covariate Ordering<a class="headerlink" href="#target-covariate-ordering" title="Permalink to this headline">¶</a></h3>
+<p><cite>x_all</cite> and <cite>targets_all</cite> arrays are passed around Uncoverml, containing
+covariate data at each target position.</p>
+<p>These arrays are synchronised by positioning. When targets get loaded
+in <a class="reference internal" href="uncoverml.html#uncoverml.geoio.load_targets" title="uncoverml.geoio.load_targets"><code class="xref py py-meth docutils literal notranslate"><span class="pre">load_targets()</span></code></a>, they are sorted lexically
+by Y, X. They are then intersected with the covariates, and both
+arrays maintain this order through the workflow.</p>
+<p>If you modify targets or covariates after they are loaded and
+intersected, make sure to maintain this ordering, or at the very least
+sort them so they map 1-to-1 positionally.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="projectreport.html" class="btn btn-neutral float-right" title="UncoverML Project Report (NICTA)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="models.html" class="btn btn-neutral float-left" title="Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Geoscience Australia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

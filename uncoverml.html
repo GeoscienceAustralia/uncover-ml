@@ -87,9 +87,9 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">Developer Docs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="projectreport.html">NICTA Project Report</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">UncoverML API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">uncoverml package</a><ul>
@@ -205,17 +205,24 @@
 <li class="toctree-l1"><a class="reference internal" href="uncoverml.optimise.html">uncoverml.optimise package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.optimise.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.optimise.html#module-uncoverml.optimise.models">uncoverml.optimise.models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.optimise.html#module-uncoverml.optimise.scorers">uncoverml.optimise.scorers module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.optimise.html#module-uncoverml.optimise">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="uncoverml.scripts.html">uncoverml.scripts package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag">uncoverml.scripts.covdiag module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor">uncoverml.scripts.gammasensor module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch">uncoverml.scripts.gridsearch module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#uncoverml-scripts-subsampletargets-module">uncoverml.scripts.subsampletargets module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz">uncoverml.scripts.tiff2kmz module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.uncoverml">uncoverml.scripts.uncoverml module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.cluster_cli">uncoverml.scripts.cluster_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.covdiag_cli">uncoverml.scripts.covdiag_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gammasensor_cli">uncoverml.scripts.gammasensor_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.gridsearch_cli">uncoverml.scripts.gridsearch_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.learn_cli">uncoverml.scripts.learn_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.modelfix_cli">uncoverml.scripts.modelfix_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.predict_cli">uncoverml.scripts.predict_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.resample_cli">uncoverml.scripts.resample_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.shiftmap_cli">uncoverml.scripts.shiftmap_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.subsample_cli">uncoverml.scripts.subsample_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.targetsearch_cli">uncoverml.scripts.targetsearch_cli module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts.tiff2kmz_cli">uncoverml.scripts.tiff2kmz_cli module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="uncoverml.scripts.html#module-uncoverml.scripts">Module contents</a></li>
 </ul>
 </li>
@@ -579,27 +586,27 @@ that increases with l.</p></li>
 <p>Class representing the global configuration of the uncoverml
 scripts.</p>
 <p>This class is <em>mostly</em> read-only, but it does also contain the
-Transform objects which have state.</p>
+Transform objects which have state. In some execution paths,
+config flags are switched off then back on (e.g. in cross
+validation).</p>
+<p>Along with the YAML file, the init also takes some flags. These
+are set by the top-level CLI scripts and are used to determine
+what parameters to load and what can be ignored.</p>
+<p>All attributes following <cite>output_dir</cite> (located at the bottom of
+init) are undocumented but should be self-explanatory. They are
+full paths to output for different features.</p>
 <div class="admonition-todo admonition" id="id2">
 <p class="admonition-title">Todo</p>
 <p>Factor out stateful Transform objects.</p>
-</div>
-<div class="admonition-todo admonition" id="id3">
-<p class="admonition-title">Todo</p>
-<p>The mechanism for selecting outbands could be a lot better
-and explanation of the outbands available (or where to find
-that infomration for each model) would be a good addition.</p>
-</div>
-<div class="admonition-todo admonition" id="id4">
-<p class="admonition-title">Todo</p>
-<p>rawcovariates and train_data_pk are initialised as bools
-but treated as strings (file paths) later in the code</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>yaml_file</strong> (<em>str</em>) – The path to the yaml config file.</p></li>
-<li><p><strong>cluster</strong> (<em>bool</em>) – True if clustering.</p></li>
+<li><p><strong>clustering</strong> (<em>bool</em>) – True if clustering.</p></li>
+<li><p><strong>learning</strong> (<em>bool</em>) – True if learning.</p></li>
+<li><p><strong>resampling</strong> (<em>bool</em>) – True if resampling.</p></li>
+<li><p><strong>predicting</strong> (<em>bool</em>) – True if predicting.</p></li>
 </ul>
 </dd>
 </dl>
@@ -615,25 +622,10 @@ but treated as strings (file paths) later in the code</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.patchsize">
-<code class="sig-name descname">patchsize</code><a class="headerlink" href="#uncoverml.config.Config.patchsize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Half-width of the patches that feature data will be chunked
-into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
-<div class="admonition-todo admonition" id="id5">
-<p class="admonition-title">Todo</p>
-<p>Not implemneted, defaults to 1.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="uncoverml.config.Config.algorithm">
 <code class="sig-name descname">algorithm</code><a class="headerlink" href="#uncoverml.config.Config.algorithm" title="Permalink to this definition">¶</a></dt>
-<dd><p>The ML algorithm to train.</p>
+<dd><p>Name of the model to train. See <a class="reference internal" href="models.html#models-page"><span class="std std-ref">Models</span></a> for available
+models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>str</p>
@@ -642,9 +634,23 @@ into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="uncoverml.config.Config.algorithm_args">
+<code class="sig-name descname">algorithm_args</code><a class="headerlink" href="#uncoverml.config.Config.algorithm_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of arguments to pass to selected model. See
+<a class="reference internal" href="models.html#models-page"><span class="std std-ref">Models</span></a> for available arguments to model. Key is
+the argument name exactly as it appears in model __init__ (this
+dict gets passed as kwargs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict(str, any)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="uncoverml.config.Config.cubist">
 <code class="sig-name descname">cubist</code><a class="headerlink" href="#uncoverml.config.Config.cubist" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if the selected model is ‘cubist’.</p>
+<dd><p>True if cubist algorithm is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -655,7 +661,7 @@ into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
 <dl class="attribute">
 <dt id="uncoverml.config.Config.multicubist">
 <code class="sig-name descname">multicubist</code><a class="headerlink" href="#uncoverml.config.Config.multicubist" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if the selected model is ‘multicubist’.</p>
+<dd><p>True if multicubist algorithm is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -666,7 +672,7 @@ into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
 <dl class="attribute">
 <dt id="uncoverml.config.Config.multirandomforest">
 <code class="sig-name descname">multirandomforest</code><a class="headerlink" href="#uncoverml.config.Config.multirandomforest" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if the selected model is ‘multirandomforest’.</p>
+<dd><p>True if multirandomforest algorithm is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -677,7 +683,7 @@ into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
 <dl class="attribute">
 <dt id="uncoverml.config.Config.krige">
 <code class="sig-name descname">krige</code><a class="headerlink" href="#uncoverml.config.Config.krige" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if the selected model is ‘krige’.</p>
+<dd><p>True if kriging is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -686,21 +692,45 @@ into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.algorithm_args">
-<code class="sig-name descname">algorithm_args</code><a class="headerlink" href="#uncoverml.config.Config.algorithm_args" title="Permalink to this definition">¶</a></dt>
-<dd><p>Arguments for the selected model. See the parameters for models
-in the <a class="reference internal" href="#module-uncoverml.models" title="uncoverml.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models</span></code></a> module.</p>
+<dt id="uncoverml.config.Config.bootstrap">
+<code class="sig-name descname">bootstrap</code><a class="headerlink" href="#uncoverml.config.Config.bootstrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if a bootstrapped algorithm is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict</p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.quantiles">
-<code class="sig-name descname">quantiles</code><a class="headerlink" href="#uncoverml.config.Config.quantiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prediction quantile/interval for predicted values.</p>
+<dt id="uncoverml.config.Config.clustering">
+<code class="sig-name descname">clustering</code><a class="headerlink" href="#uncoverml.config.Config.clustering" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if clustering is being performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.n_classes">
+<code class="sig-name descname">n_classes</code><a class="headerlink" href="#uncoverml.config.Config.n_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of classes to cluster into. Required if clustering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.oversample_factor">
+<code class="sig-name descname">oversample_factor</code><a class="headerlink" href="#uncoverml.config.Config.oversample_factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Controls how many candidates are found for cluster
+initialisation when running kmeans clustering. See
+<a class="reference internal" href="#uncoverml.cluster.weighted_starting_candidates" title="uncoverml.cluster.weighted_starting_candidates"><code class="xref py py-func docutils literal notranslate"><span class="pre">weighted_starting_candidates()</span></code></a>.
+Required when clustering.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>float</p>
@@ -709,105 +739,34 @@ in the <a class="reference internal" href="#module-uncoverml.models" title="unco
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.geotif_options">
-<code class="sig-name descname">geotif_options</code><a class="headerlink" href="#uncoverml.config.Config.geotif_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional creation options passed to the geotiff output driver.
-See <a class="reference external" href="https://gdal.org/drivers/raster/gtiff.html#creation-options">https://gdal.org/drivers/raster/gtiff.html#creation-options</a>
-for a list of creation options. Default value is empty dict.</p>
+<dt id="uncoverml.config.Config.cluster_analysis">
+<code class="sig-name descname">cluster_analysis</code><a class="headerlink" href="#uncoverml.config.Config.cluster_analysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if analysis should be performed post-clustering. Optional,
+default is False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict, optional</p>
+<dd class="field-odd"><p>bool, optional</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.outbands">
-<code class="sig-name descname">outbands</code><a class="headerlink" href="#uncoverml.config.Config.outbands" title="Permalink to this definition">¶</a></dt>
-<dd><p>The outbands to write in the prediction output file. Used as
-the ‘stop’ for a slice taken from list of prediction tags,
-i.e. [0: outbands]. If the resulting slice is greater than
-the number of tags available, then all tags will be selected.
-If no value is provied, then all tags will be selected.</p>
+<dt id="uncoverml.config.Config.class_file">
+<code class="sig-name descname">class_file</code><a class="headerlink" href="#uncoverml.config.Config.class_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define classes for clustering feature data. Path to shapefile
+that defines class at positions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p>str or bytes, optional</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.thumbnails">
-<code class="sig-name descname">thumbnails</code><a class="headerlink" href="#uncoverml.config.Config.thumbnails" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subsampling factor for thumbnails of output images. Default
-is 10.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.raw_covariates_dir">
-<code class="sig-name descname">raw_covariates_dir</code><a class="headerlink" href="#uncoverml.config.Config.raw_covariates_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to a directory for saving intersected features and targets
-as CSV before processing is performed (hence ‘raw’). Will save
-two files: the intersected values and a mask of intersection
-locations. If not provided will be None.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.pk_covariates">
-<code class="sig-name descname">pk_covariates</code><a class="headerlink" href="#uncoverml.config.Config.pk_covariates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to pickle file containing intersection of targets and
-covariates. If <a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is True, then this file
-will be loaded and used as covariates for learning. If
-<a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is False, and this file does not exist,
-then covariates will be dumped to this file after they have
-been created from the feature sets specified in the
-configuration.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.pk_targets">
-<code class="sig-name descname">pk_targets</code><a class="headerlink" href="#uncoverml.config.Config.pk_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to pickle file containing targets. If <a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is
-True, then this file will be loaded and used as targets for
-learning. If <a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is False, and this file does not
-exist, then targets will be dumped to this file after they have
-been created from the target data specified in the
-configuration.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.pk_load">
-<code class="sig-name descname">pk_load</code><a class="headerlink" href="#uncoverml.config.Config.pk_load" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if <code class="xref py py-attr docutils literal notranslate"><span class="pre">pickle</span></code> is True and existent files are provided
-for <code class="xref py py-attr docutils literal notranslate"><span class="pre">pickled_covariates</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">pickled_targets</span></code>.
-If True, then covariates and targets will be loaded from the
-pickle files. If False, the created targets and covariates
-will be dumped if respective file paths are provided. Will
-also be set to False if <a class="reference internal" href="#uncoverml.config.Config.rank_features" title="uncoverml.config.Config.rank_features"><code class="xref py py-attr docutils literal notranslate"><span class="pre">rank_features</span></code></a> is True as
-feature ranking is not compatible with pickled data. If using
-Cubist or Multicubist algorithms, it will also require
-<a class="reference internal" href="#uncoverml.config.Config.pk_featurevec" title="uncoverml.config.Config.pk_featurevec"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_featurevec</span></code></a> to be present and an existing file
-in order to be True.</p>
+<dt id="uncoverml.config.Config.semi_supervised">
+<code class="sig-name descname">semi_supervised</code><a class="headerlink" href="#uncoverml.config.Config.semi_supervised" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if semi_supervised clustering is being performed (i.e.
+class_file has been provided).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -816,14 +775,110 @@ in order to be True.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.pk_featurevec">
-<code class="sig-name descname">pk_featurevec</code><a class="headerlink" href="#uncoverml.config.Config.pk_featurevec" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to pickle file containing feature vector. Must be provided
-if algorithm is ‘cubist’ or ‘multicubist’ and loading from
-pickle files.</p>
+<dt id="uncoverml.config.Config.target_search">
+<code class="sig-name descname">target_search</code><a class="headerlink" href="#uncoverml.config.Config.target_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if <cite>target_search</cite> feature is being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.target_search_threshold">
+<code class="sig-name descname">target_search_threshold</code><a class="headerlink" href="#uncoverml.config.Config.target_search_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Target search threshold, float between 0 and 1. The likelihood
+a training point must surpass to be included in found points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.target_search_extents">
+<code class="sig-name descname">target_search_extents</code><a class="headerlink" href="#uncoverml.config.Config.target_search_extents" title="Permalink to this definition">¶</a></dt>
+<dd><p>A bounding box defining the image area to search for additional
+targets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple(float, float, float, float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.tse_are_pixel_coordinates">
+<code class="sig-name descname">tse_are_pixel_coordinates</code><a class="headerlink" href="#uncoverml.config.Config.tse_are_pixel_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, <cite>target_search_extents</cite> are treated as pixel
+coordinates instead of CRS coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.extents">
+<code class="sig-name descname">extents</code><a class="headerlink" href="#uncoverml.config.Config.extents" title="Permalink to this definition">¶</a></dt>
+<dd><p>A bounding box defining the area to learn and predict on. Data
+outside these extents gets cropped.
+Optional, if not provided whole image area is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tuple(float, float, float, float), optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.extents_are_pixel_coordinates">
+<code class="sig-name descname">extents_are_pixel_coordinates</code><a class="headerlink" href="#uncoverml.config.Config.extents_are_pixel_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, <cite>extents</cite> are treated as pixel coordinates instead of
+CRS coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.pk_covarates">
+<code class="sig-name descname">pk_covarates</code><a class="headerlink" href="#uncoverml.config.Config.pk_covarates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to where to save pickled covariates, or a pre-existing
+covariate pickle file if loading pickled covariates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str or bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.pk_targets">
+<code class="sig-name descname">pk_targets</code><a class="headerlink" href="#uncoverml.config.Config.pk_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to where to save pickled targets, or a pre-existing
+target pickle file if loading pickled targets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str or bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.pk_load">
+<code class="sig-name descname">pk_load</code><a class="headerlink" href="#uncoverml.config.Config.pk_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if both <cite>pk_covariates</cite> and <cite>pk_targets</cite> are provided
+and these paths exist (it’s assumed they contain the correct
+pickled data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -831,85 +886,27 @@ pickle files.</p>
 <dl class="attribute">
 <dt id="uncoverml.config.Config.feature_sets">
 <code class="sig-name descname">feature_sets</code><a class="headerlink" href="#uncoverml.config.Config.feature_sets" title="Permalink to this definition">¶</a></dt>
-<dd><p>A list of feature sets; one for each non-pickle type feature
-set specified in the config. These are loaded from ‘features’
-in the config file. Not required if <a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is True.</p>
+<dd><p>The provided features as <cite>FeatureSetConfig</cite> objects. These
+contain paths to the feature files and <em>importantly</em> the
+Transform objects which contain statistics used to transform
+the covariates. These Transform objects and contained statistics
+must be maintained across workflow steps (aka CLI commands).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of <a class="reference internal" href="#uncoverml.config.FeatureSetConfig" title="uncoverml.config.FeatureSetConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FeatureSetConfig</span></code></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#uncoverml.config.FeatureSetConfig" title="uncoverml.config.FeatureSetConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureSetConfig</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.final_transform">
-<code class="sig-name descname">final_transform</code><a class="headerlink" href="#uncoverml.config.Config.final_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>A TransformSet containing an imputer and transforms that is
-applied to all features following image transforms, imputation,
-global transforms and concatenation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="uncoverml.transforms.html#uncoverml.transforms.transformset.TransformSet" title="uncoverml.transforms.transformset.TransformSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformSet</span></code></a>, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.target_file">
-<code class="sig-name descname">target_file</code><a class="headerlink" href="#uncoverml.config.Config.target_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to a Shapefile containing target values and X, Y
-coordinates. Not required if <a class="reference internal" href="#uncoverml.config.Config.pk_load" title="uncoverml.config.Config.pk_load"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk_load</span></code></a> is True.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.target_propery">
-<code class="sig-name descname">target_propery</code><a class="headerlink" href="#uncoverml.config.Config.target_propery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Name of the property in the target file to use for training.
-Required if <a class="reference internal" href="#uncoverml.config.Config.target_file" title="uncoverml.config.Config.target_file"><code class="xref py py-attr docutils literal notranslate"><span class="pre">target_file</span></code></a> is specified.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.resample">
-<code class="sig-name descname">resample</code><a class="headerlink" href="#uncoverml.config.Config.resample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resampling arguments for target data.</p>
-<div class="admonition-todo admonition" id="id6">
+<dt id="uncoverml.config.Config.patchsize">
+<code class="sig-name descname">patchsize</code><a class="headerlink" href="#uncoverml.config.Config.patchsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Half-width of the patches that feature data will be chunked
+into. Height/width of each patch is equal to patchsize * 2 + 1.</p>
+<div class="admonition-todo admonition" id="id3">
 <p class="admonition-title">Todo</p>
-<p>Not yet implemented.</p>
+<p>Not implemented, defaults to 1.</p>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of dict, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.mask">
-<code class="sig-name descname">mask</code><a class="headerlink" href="#uncoverml.config.Config.mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to a geotiff file for masking the output prediction
-map. Only values that have been masked will be predicted.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.retain">
-<code class="sig-name descname">retain</code><a class="headerlink" href="#uncoverml.config.Config.retain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Value in the above mask that indicates cell should be retained
-and predicted. Must be provided if a mask is provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>int</p>
@@ -918,13 +915,144 @@ and predicted. Must be provided if a mask is provided.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.lon_lat">
-<code class="sig-name descname">lon_lat</code><a class="headerlink" href="#uncoverml.config.Config.lon_lat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dictionary containing paths to longitude and latitude grids
-used in kriging.</p>
+<dt id="uncoverml.config.Config.target_file">
+<code class="sig-name descname">target_file</code><a class="headerlink" href="#uncoverml.config.Config.target_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to a shapefile defining the targets to be trained on.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict, optional</p>
+<dd class="field-odd"><p>str or bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.target_property">
+<code class="sig-name descname">target_property</code><a class="headerlink" href="#uncoverml.config.Config.target_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the field in the <cite>target_file</cite> to be used as
+training property.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.target_weight_property">
+<code class="sig-name descname">target_weight_property</code><a class="headerlink" href="#uncoverml.config.Config.target_weight_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the field in the <cite>target_file</cite> to be used as target
+weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.fields_to_write_to_csv">
+<code class="sig-name descname">fields_to_write_to_csv</code><a class="headerlink" href="#uncoverml.config.Config.fields_to_write_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of field names in the <cite>target_file</cite> to be included in
+output table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list(str), optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.shiftmap_targets">
+<code class="sig-name descname">shiftmap_targets</code><a class="headerlink" href="#uncoverml.config.Config.shiftmap_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to a shapefile containing targets to generate shiftmap
+from. This is optional, by default shiftmap will generate
+dummy targets by randomly sampling the target shapefile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str or bytes, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.spatial_resampling_args">
+<code class="sig-name descname">spatial_resampling_args</code><a class="headerlink" href="#uncoverml.config.Config.spatial_resampling_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kwargs for spatial resampling. See <a class="reference internal" href="workflows.html#resampling-section"><span class="std std-ref">Resampling</span></a>
+for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.value_resampling_args">
+<code class="sig-name descname">value_resampling_args</code><a class="headerlink" href="#uncoverml.config.Config.value_resampling_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kwargs for value resampling. See <a class="reference internal" href="workflows.html#resampling-section"><span class="std std-ref">Resampling</span></a> for
+more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.final_transform">
+<code class="sig-name descname">final_transform</code><a class="headerlink" href="#uncoverml.config.Config.final_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms to apply to whole image set after other preprocessing
+has been performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformSet</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.oos_percentage">
+<code class="sig-name descname">oos_percentage</code><a class="headerlink" href="#uncoverml.config.Config.oos_percentage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Float between 0 and 1. The percentage of targets to withhold
+from training to be used in out-of-sample validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.oos_shapefile">
+<code class="sig-name descname">oos_shapefile</code><a class="headerlink" href="#uncoverml.config.Config.oos_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shapefile containing targets to be used in out-of-sample
+validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str or bytes, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.oos_property">
+<code class="sig-name descname">oos_property</code><a class="headerlink" href="#uncoverml.config.Config.oos_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the property in <cite>oos_shapefile</cite> to be used in
+validation. Only required if an OOS shapefile is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.out_of_sample_validation">
+<code class="sig-name descname">out_of_sample_validation</code><a class="headerlink" href="#uncoverml.config.Config.out_of_sample_validation" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if out of sample validation is to be performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1004,79 +1132,23 @@ if <a class="reference internal" href="#uncoverml.config.Config.cross_validate" 
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.output_dir">
-<code class="sig-name descname">output_dir</code><a class="headerlink" href="#uncoverml.config.Config.output_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to directory where prediciton map and other outputs
-will be written.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.plot_covariates">
-<code class="sig-name descname">plot_covariates</code><a class="headerlink" href="#uncoverml.config.Config.plot_covariates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to directory where covariate plots will be written.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.plot_feature_ranks_file">
-<code class="sig-name descname">plot_feature_ranks_file</code><a class="headerlink" href="#uncoverml.config.Config.plot_feature_ranks_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to directory where feature rank plot will be written.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.model_file">
-<code class="sig-name descname">model_file</code><a class="headerlink" href="#uncoverml.config.Config.model_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to the file where model will be saved after
-learning/clustering and loaded from when predicting. Default
-is to save in <a class="reference internal" href="#uncoverml.config.Config.output_dir" title="uncoverml.config.Config.output_dir"><code class="xref py py-attr docutils literal notranslate"><span class="pre">output_dir</span></code></a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.scores_file">
-<code class="sig-name descname">scores_file</code><a class="headerlink" href="#uncoverml.config.Config.scores_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to the JSON file where cross validation scores will be
-saved. Default is to save in <a class="reference internal" href="#uncoverml.config.Config.output_dir" title="uncoverml.config.Config.output_dir"><code class="xref py py-attr docutils literal notranslate"><span class="pre">output_dir</span></code></a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.plot_covaraites_dir">
-<code class="sig-name descname">plot_covaraites_dir</code><a class="headerlink" href="#uncoverml.config.Config.plot_covaraites_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to directory where plotted covariates will be stored.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="uncoverml.config.Config.optimisation">
 <code class="sig-name descname">optimisation</code><a class="headerlink" href="#uncoverml.config.Config.optimisation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dictionary of optimisation arguments.</p>
+<dd><p>Dictionary of optimisation arguments.
+See <a class="reference internal" href="workflows.html#optimisation-section"><span class="std std-ref">Optimisation</span></a> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.geotiff_options">
+<code class="sig-name descname">geotiff_options</code><a class="headerlink" href="#uncoverml.config.Config.geotiff_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional creation options passed to the geotiff output driver.
+See <a class="reference external" href="https://gdal.org/drivers/raster/gtiff.html#creation-options">https://gdal.org/drivers/raster/gtiff.html#creation-options</a>
+for a list of creation options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>dict, optional</p>
@@ -1085,76 +1157,9 @@ saved. Default is to save in <a class="reference internal" href="#uncoverml.conf
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.clustering">
-<code class="sig-name descname">clustering</code><a class="headerlink" href="#uncoverml.config.Config.clustering" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if clustering.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.cluster_analysis">
-<code class="sig-name descname">cluster_analysis</code><a class="headerlink" href="#uncoverml.config.Config.cluster_analysis" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if ‘cluster_analysis’ in the ‘clustering’ block of the
-config file. Turns on cluster analysis.</p>
-<div class="admonition-todo admonition" id="id7">
-<p class="admonition-title">Todo</p>
-<p>Need a better explanation of what clustering analysis does.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool, optional</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.clustering_algorithm">
-<code class="sig-name descname">clustering_algorithm</code><a class="headerlink" href="#uncoverml.config.Config.clustering_algorithm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Name of the clustering algorithm to use.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The only available algorith is kmeans. This is used to set
-<a class="reference internal" href="#uncoverml.config.Config.algorithm" title="uncoverml.config.Config.algorithm"><code class="xref py py-attr docutils literal notranslate"><span class="pre">algorithm</span></code></a> when performing clustering due to the
-polymorphism of model classes.</p>
-</div>
-<div class="admonition-todo admonition" id="id8">
-<p class="admonition-title">Todo</p>
-<p>If kmeans is the only option, why not just set
-<a class="reference internal" href="#uncoverml.config.Config.algorithm" title="uncoverml.config.Config.algorithm"><code class="xref py py-attr docutils literal notranslate"><span class="pre">algorithm</span></code></a> directly.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.n_classes">
-<code class="sig-name descname">n_classes</code><a class="headerlink" href="#uncoverml.config.Config.n_classes" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of cluster centres to be used in clustering. If
-running semisupervised learning and this is set to less than
-the number of labelled classes in the training data, then the
-the number of laballed classes in the training data will be
-used as the value instead. Required when clustering.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="uncoverml.config.Config.oversample_factor">
-<code class="sig-name descname">oversample_factor</code><a class="headerlink" href="#uncoverml.config.Config.oversample_factor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Controls how many candidates are found for cluster
-initialisation when running kmeans clustering. See
-<a class="reference internal" href="#uncoverml.cluster.weighted_starting_candidates" title="uncoverml.cluster.weighted_starting_candidates"><code class="xref py py-func docutils literal notranslate"><span class="pre">weighted_starting_candidates()</span></code></a>.
-Required when clustering.</p>
+<dt id="uncoverml.config.Config.quantiles">
+<code class="sig-name descname">quantiles</code><a class="headerlink" href="#uncoverml.config.Config.quantiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prediction quantile/interval for predicted values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>float</p>
@@ -1163,33 +1168,93 @@ Required when clustering.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.semisupervised">
-<code class="sig-name descname">semisupervised</code><a class="headerlink" href="#uncoverml.config.Config.semisupervised" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if a training data file is provided in clustering
-arguments. Turns on semisupervised clustering.</p>
+<dt id="uncoverml.config.Config.outbands">
+<code class="sig-name descname">outbands</code><a class="headerlink" href="#uncoverml.config.Config.outbands" title="Permalink to this definition">¶</a></dt>
+<dd><p>The outbands to write in the prediction output file. Used as
+the ‘stop’ for a slice taken from list of prediction tags,
+i.e. [0: outbands]. If the resulting slice is greater than
+the number of tags available, then all tags will be selected.
+If no value is provied, then all tags will be selected.</p>
+<div class="admonition-todo admonition" id="id4">
+<p class="admonition-title">Todo</p>
+<p>Having this as a slice is questionable. Should be
+simplified.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.class_file">
-<code class="sig-name descname">class_file</code><a class="headerlink" href="#uncoverml.config.Config.class_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to a Shapefile containing training data for clustering.</p>
+<dt id="uncoverml.config.Config.thumbnails">
+<code class="sig-name descname">thumbnails</code><a class="headerlink" href="#uncoverml.config.Config.thumbnails" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subsampling factor for thumbnails of output images. Default
+is 10.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
+<dd class="field-odd"><p>int, optional</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="uncoverml.config.Config.class_property">
-<code class="sig-name descname">class_property</code><a class="headerlink" href="#uncoverml.config.Config.class_property" title="Permalink to this definition">¶</a></dt>
-<dd><p>Name of the property to train clustering against. Required
-if <a class="reference internal" href="#uncoverml.config.Config.class_file" title="uncoverml.config.Config.class_file"><code class="xref py py-attr docutils literal notranslate"><span class="pre">class_file</span></code></a> is provided.</p>
+<dt id="uncoverml.config.Config.bootstrap_predictions">
+<code class="sig-name descname">bootstrap_predictions</code><a class="headerlink" href="#uncoverml.config.Config.bootstrap_predictions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only applies if a bootstrapped algorithm is being used. This is
+the number of predictions to perform, by default will predict
+on all sub-models. E.g. if you had a BS algorithm containing
+100 sub-models, you could limit a test prediction to 20 using
+this parameter to speed things up.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.mask">
+<code class="sig-name descname">mask</code><a class="headerlink" href="#uncoverml.config.Config.mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to a geotiff file for masking the output prediction
+map. Only values that have been masked will be predicted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.retain">
+<code class="sig-name descname">retain</code><a class="headerlink" href="#uncoverml.config.Config.retain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value in the above mask that indicates cell should be retained
+and predicted. Must be provided if a mask is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.lon_lat">
+<code class="sig-name descname">lon_lat</code><a class="headerlink" href="#uncoverml.config.Config.lon_lat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary containing paths to longitude and latitude grids
+used in kriging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="uncoverml.config.Config.output_dir">
+<code class="sig-name descname">output_dir</code><a class="headerlink" href="#uncoverml.config.Config.output_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to directory where prediciton map and other outputs
+will be written.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>str</p>
@@ -1726,6 +1791,8 @@ plot and covariate correlation matrix plot.</p>
 <span id="uncoverml-filtering-module"></span><h2>uncoverml.filtering module<a class="headerlink" href="#module-uncoverml.filtering" title="Permalink to this headline">¶</a></h2>
 <p>Code for computing the gamma sensor footprint, and for applying and
 unapplying spatial convolution filters to a given image.</p>
+<p>BM: this is used in scripts/gammasensor_cli.py - I haven’t used it in
+my time with uncoverml or seen it used.</p>
 <dl class="function">
 <dt id="uncoverml.filtering.fwd_filter">
 <code class="sig-prename descclassname">uncoverml.filtering.</code><code class="sig-name descname">fwd_filter</code><span class="sig-paren">(</span><em class="sig-param">img</em>, <em class="sig-param">S</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.filtering.fwd_filter" title="Permalink to this definition">¶</a></dt>
@@ -2047,10 +2114,36 @@ q3 = 12</p></li>
 </div>
 <div class="section" id="module-uncoverml.image">
 <span id="uncoverml-image-module"></span><h2>uncoverml.image module<a class="headerlink" href="#module-uncoverml.image" title="Permalink to this headline">¶</a></h2>
+<p>Contains class and routines for reading chunked portions of images.</p>
 <dl class="class">
 <dt id="uncoverml.image.Image">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.image.</code><code class="sig-name descname">Image</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">chunk_idx=0</em>, <em class="sig-param">nchunks=1</em>, <em class="sig-param">overlap=0</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.image.Image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a raster Image. Can use to get a georeferenced chunk
+of an Image and the data associated with it. This class is mainly
+used in the <a class="reference internal" href="#module-uncoverml.features" title="uncoverml.features"><code class="xref py py-mod docutils literal notranslate"><span class="pre">features</span></code></a> module for intersecting
+image chunks with target data and extracting the image data. It’s
+also used in <a class="reference internal" href="#module-uncoverml.geoio" title="uncoverml.geoio"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geoio</span></code></a> for getting covariate specs,
+such as CRS and bounds.</p>
+<p>If nchunks &gt; 1, then the Image is striped horizontally.
+Chunk_idx 0 is the first strip of the image. The X range covers
+the full width of the image and the Y ranges from 0 to image_height
+/ n_chunks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<a class="reference internal" href="#uncoverml.geoio.ImageSource" title="uncoverml.geoio.ImageSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImageSource</span></code></a>) – An instance of ImageSource (typically RasterioImageSource).
+Defines the image to be loaded.</p></li>
+<li><p><strong>chunk_idx</strong> (<em>int</em>) – Which chunk of the image is being loaded.</p></li>
+<li><p><strong>nchunks</strong> (<em>int</em>) – Total number of chunks being used. This is typically set
+by the <cite>partitions</cite> parameter of the top level command,
+also set as <cite>n_subchunks</cite> on the Config object.</p></li>
+<li><p><strong>overlap</strong> (<em>int</em>) – Doesn’t seem to be used, but appears to be used for accomodating
+overlap in chunks (number of rows to overlap with bounding
+strips).</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="method">
 <dt id="uncoverml.image.Image.channels">
 <em class="property">property </em><code class="sig-name descname">channels</code><a class="headerlink" href="#uncoverml.image.Image.channels" title="Permalink to this definition">¶</a></dt>
@@ -2151,7 +2244,9 @@ q3 = 12</p></li>
 <dl class="function">
 <dt id="uncoverml.image.construct_splits">
 <code class="sig-prename descclassname">uncoverml.image.</code><code class="sig-name descname">construct_splits</code><span class="sig-paren">(</span><em class="sig-param">npixels</em>, <em class="sig-param">nchunks</em>, <em class="sig-param">overlap=0</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.image.construct_splits" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Splits the image horizontally into approximately equal strips
+according to npixels / nchunks.</p>
+</dd></dl>
 
 </div>
 <div class="section" id="module-uncoverml.interpolate">
@@ -2192,9 +2287,9 @@ incommensurable units and differ by many orders of magnitude.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <p>The interpolant is constructed by triangulating the input data
-with Qhull <a href="#id16"><span class="problematic" id="id9">[1]_</span></a>, and constructing a piecewise cubic
+with Qhull <a href="#id12"><span class="problematic" id="id5">[1]_</span></a>, and constructing a piecewise cubic
 interpolating Bezier polynomial on each triangle, using a
-Clough-Tocher scheme <a class="reference internal" href="#ct" id="id10"><span>[CT]</span></a>.  The interpolant is guaranteed to be
+Clough-Tocher scheme <a class="reference internal" href="#ct" id="id6"><span>[CT]</span></a>.  The interpolant is guaranteed to be
 continuously differentiable.</p>
 <p>The gradients of the interpolant are chosen so that the curvature
 of the interpolating surface is approximatively minimized. The
@@ -2202,12 +2297,12 @@ gradients necessary for this are estimated using the global
 algorithm described in [Nielson83,Renka84]_.</p>
 <p class="rubric">References</p>
 <dl class="footnote brackets">
-<dt class="label" id="id11"><span class="brackets">1</span></dt>
+<dt class="label" id="id7"><span class="brackets">1</span></dt>
 <dd><p><a class="reference external" href="http://www.qhull.org/">http://www.qhull.org/</a></p>
 </dd>
 </dl>
 <dl class="citation">
-<dt class="label" id="ct"><span class="brackets"><a class="fn-backref" href="#id10">CT</a></span></dt>
+<dt class="label" id="ct"><span class="brackets"><a class="fn-backref" href="#id6">CT</a></span></dt>
 <dd><p>See, for example,
 P. Alfeld,
 ‘’A trivariate Clough-Tocher scheme for tetrahedral data’’.
@@ -2274,11 +2369,11 @@ incommensurable units and differ by many orders of magnitude.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <p>The interpolant is constructed by triangulating the input data
-with Qhull <a href="#id17"><span class="problematic" id="id12">[1]_</span></a>, and on each triangle performing linear
+with Qhull <a href="#id13"><span class="problematic" id="id8">[1]_</span></a>, and on each triangle performing linear
 barycentric interpolation.</p>
 <p class="rubric">References</p>
 <dl class="footnote brackets">
-<dt class="label" id="id13"><span class="brackets">1</span></dt>
+<dt class="label" id="id9"><span class="brackets">1</span></dt>
 <dd><p><a class="reference external" href="http://www.qhull.org/">http://www.qhull.org/</a></p>
 </dd>
 </dl>
@@ -2351,7 +2446,7 @@ incommensurable units and differ by many orders of magnitude.</p>
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.interpolate.</code><code class="sig-name descname">SKLearnRbf</code><span class="sig-paren">(</span><em class="sig-param">function='multiquadric'</em>, <em class="sig-param">smooth=0</em>, <em class="sig-param">norm='euclidean'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.interpolate.SKLearnRbf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.base.BaseEstimator</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.base.RegressorMixin</span></code></p>
 <p>Scikit-learn wrapper for scipy.interpolate.Rbf class.</p>
-<p>Rbf(<a href="#id14"><span class="problematic" id="id15">*</span></a>args)</p>
+<p>Rbf(<a href="#id10"><span class="problematic" id="id11">*</span></a>args)</p>
 <p>A class for radial basis function approximation/interpolation of
 n-dimensional scattered data.</p>
 <dl class="field-list simple">
@@ -2512,6 +2607,7 @@ is a matrix of the distances from each point in <code class="docutils literal no
 </div>
 <div class="section" id="module-uncoverml.krige">
 <span id="uncoverml-krige-module"></span><h2>uncoverml.krige module<a class="headerlink" href="#module-uncoverml.krige" title="Permalink to this headline">¶</a></h2>
+<p>Handles kriging.</p>
 <dl class="class">
 <dt id="uncoverml.krige.Krige">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.krige.</code><code class="sig-name descname">Krige</code><span class="sig-paren">(</span><em class="sig-param">method='ordinary'</em>, <em class="sig-param">variogram_model='linear'</em>, <em class="sig-param">nlags=6</em>, <em class="sig-param">weight=False</em>, <em class="sig-param">n_closest_points=10</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.krige.Krige" title="Permalink to this definition">¶</a></dt>
@@ -2722,10 +2818,29 @@ the query inputs, X of shape (Ns,).</p></li>
 </div>
 <div class="section" id="module-uncoverml.learn">
 <span id="uncoverml-learn-module"></span><h2>uncoverml.learn module<a class="headerlink" href="#module-uncoverml.learn" title="Permalink to this headline">¶</a></h2>
+<p>Handles calling learning methods on models.</p>
 <dl class="function">
 <dt id="uncoverml.learn.local_learn_model">
 <code class="sig-prename descclassname">uncoverml.learn.</code><code class="sig-name descname">local_learn_model</code><span class="sig-paren">(</span><em class="sig-param">x_all</em>, <em class="sig-param">targets_all</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.learn.local_learn_model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Trains a model. Handles special case of parallel models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_all</strong> (<em>np.ndarray</em>) – All covariate data, shape (n_samples, n_features), sorted using
+X, Y of target positions.</p></li>
+<li><p><strong>targets_all</strong> (<em>np.ndarray</em>) – All target data, shape (n_samples), sorted using X, Y of
+target positions.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#uncoverml.config.Config" title="uncoverml.config.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a>) – Config object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A trained Model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-uncoverml.likelihoods">
@@ -3009,6 +3124,7 @@ in order to make the ML results traceable and reproduceable (provenance)</p>
 </div>
 <div class="section" id="module-uncoverml.mllog">
 <span id="uncoverml-mllog-module"></span><h2>uncoverml.mllog module<a class="headerlink" href="#module-uncoverml.mllog" title="Permalink to this headline">¶</a></h2>
+<p>Logging config.</p>
 <dl class="class">
 <dt id="uncoverml.mllog.ElapsedFormatter">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.mllog.</code><code class="sig-name descname">ElapsedFormatter</code><a class="headerlink" href="#uncoverml.mllog.ElapsedFormatter" title="Permalink to this definition">¶</a></dt>
@@ -3940,6 +4056,7 @@ psize = pwidth * 2 + 1</p>
 </div>
 <div class="section" id="module-uncoverml.predict">
 <span id="uncoverml-predict-module"></span><h2>uncoverml.predict module<a class="headerlink" href="#module-uncoverml.predict" title="Permalink to this headline">¶</a></h2>
+<p>Routines for performing model predictions.</p>
 <dl class="function">
 <dt id="uncoverml.predict.cluster_analysis">
 <code class="sig-prename descclassname">uncoverml.predict.</code><code class="sig-name descname">cluster_analysis</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">partition_no</em>, <em class="sig-param">config</em>, <em class="sig-param">feature_names</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.predict.cluster_analysis" title="Permalink to this definition">¶</a></dt>
