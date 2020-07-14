@@ -1,3 +1,6 @@
+"""
+Contains class and routines for reading chunked portions of images.
+"""
 import numpy as np
 import logging
 
@@ -7,6 +10,10 @@ _logger = logging.getLogger(__name__)
 
 
 def construct_splits(npixels, nchunks, overlap=0):
+    """
+    Splits the image horizontally into approximately equal strips
+    according to npixels / nchunks.
+    """
     # Build the equivalent windowed image
     # y bounds are EXCLUSIVE
     y_arrays = np.array_split(np.arange(npixels), nchunks)
@@ -27,6 +34,35 @@ def construct_splits(npixels, nchunks, overlap=0):
 
 
 class Image:
+    """
+    Represents a raster Image. Can use to get a georeferenced chunk
+    of an Image and the data associated with it. This class is mainly
+    used in the :mod:`~uncoverml.features` module for intersecting 
+    image chunks with target data and extracting the image data. It's
+    also used in :mod:`~uncoverml.geoio` for getting covariate specs,
+    such as CRS and bounds.
+
+    If nchunks > 1, then the Image is striped horizontally.
+    Chunk_idx 0 is the first strip of the image. The X range covers 
+    the full width of the image and the Y ranges from 0 to image_height
+    / n_chunks.
+    
+    Parameters
+    ----------
+    source : :class:`~uncoverml.geoio.ImageSource`
+        An instance of ImageSource (typically RasterioImageSource).
+        Defines the image to be loaded.
+    chunk_idx : int
+        Which chunk of the image is being loaded.
+    nchunks : int
+        Total number of chunks being used. This is typically set
+        by the `partitions` parameter of the top level command, 
+        also set as `n_subchunks` on the Config object.
+    overlap : int
+        Doesn't seem to be used, but appears to be used for accomodating
+        overlap in chunks (number of rows to overlap with bounding 
+        strips).
+    """
     def __init__(self, source, chunk_idx=0, nchunks=1, overlap=0):
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
