@@ -1,5 +1,8 @@
 """Code for computing the gamma sensor footprint, and for applying and
 unapplying spatial convolution filters to a given image.
+
+BM: this is used in scripts/gammasensor_cli.py - I haven't used it in 
+my time with uncoverml or seen it used. 
 """
 
 import numpy as np

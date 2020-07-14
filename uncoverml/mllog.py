@@ -1,3 +1,6 @@
+"""
+Logging config.
+"""
 import logging
 import sys
 import traceback

@@ -152,135 +152,153 @@ class Config(object):
     scripts.
 
     This class is *mostly* read-only, but it does also contain the
-    Transform objects which have state.
+    Transform objects which have state. In some execution paths, 
+    config flags are switched off then back on (e.g. in cross
+    validation).
+
+    Along with the YAML file, the init also takes some flags. These
+    are set by the top-level CLI scripts and are used to determine
+    what parameters to load and what can be ignored.
+
+    All attributes following `output_dir` (located at the bottom of
+    init) are undocumented but should be self-explanatory. They are
+    full paths to output for different features.
 
     .. todo::
 
         Factor out stateful Transform objects.
 
-    .. todo::
-
-        The mechanism for selecting outbands could be a lot better
-        and explanation of the outbands available (or where to find
-        that infomration for each model) would be a good addition.
-
-    .. todo::
-        
-        rawcovariates and train_data_pk are initialised as bools
-        but treated as strings (file paths) later in the code
-
     Parameters
     ----------
     yaml_file : str
         The path to the yaml config file.
-    cluster : bool
+    clustering : bool
         True if clustering.
+    learning : bool
+        True if learning.
+    resampling : bool
+        True if resampling.
+    predicting : bool
+        True if predicting.
+
 
     Attributes
     ----------
     name : str
         Name oo the config file.
+    algorithm : str
+        Name of the model to train. See :ref:`models-page` for available
+        models.
+    algorithm_args : dict(str, any)
+        A dictionary of arguments to pass to selected model. See
+        :ref:`models-page` for available arguments to model. Key is 
+        the argument name exactly as it appears in model __init__ (this
+        dict gets passed as kwargs).
+    cubist : bool
+        True if cubist algorithm is being used.
+    multicubist : bool
+        True if multicubist algorithm is being used.
+    multirandomforest : bool
+        True if multirandomforest algorithm is being used.
+    krige : bool
+        True if kriging is being used.
+    bootstrap : bool
+        True if a bootstrapped algorithm is being used.
+    clustering : bool
+        True if clustering is being performed.
+    n_classes : int
+        Number of classes to cluster into. Required if clustering.
+    oversample_factor : float
+        Controls how many candidates are found for cluster 
+        initialisation when running kmeans clustering. See
+        :func:`~uncoverml.cluster.weighted_starting_candidates`.
+        Required when clustering.
+    cluster_analysis : bool, optional
+        True if analysis should be performed post-clustering. Optional,
+        default is False.
+    class_file : str or bytes, optional
+        Define classes for clustering feature data. Path to shapefile
+        that defines class at positions.
+    semi_supervised : bool
+        True if semi_supervised clustering is being performed (i.e.
+        class_file has been provided).
+    target_search : bool
+        True if `target_search` feature is being used.
+    target_search_threshold : float
+        Target search threshold, float between 0 and 1. The likelihood
+        a training point must surpass to be included in found points.
+    target_search_extents : tuple(float, float, float, float)
+        A bounding box defining the image area to search for additional
+        targets.
+    tse_are_pixel_coordinates : bool
+        If True, `target_search_extents` are treated as pixel 
+        coordinates instead of CRS coordinates.
+    extents : tuple(float, float, float, float), optional
+        A bounding box defining the area to learn and predict on. Data
+        outside these extents gets cropped.
+        Optional, if not provided whole image area is used.
+    extents_are_pixel_coordinates : bool
+        If True, `extents` are treated as pixel coordinates instead of
+        CRS coordinates.
+    pk_covarates : str or bytes
+        Path to where to save pickled covariates, or a pre-existing
+        covariate pickle file if loading pickled covariates.
+    pk_targets : str or bytes
+        Path to where to save pickled targets, or a pre-existing
+        target pickle file if loading pickled targets.
+    pk_load : bool
+        True if both `pk_covariates` and `pk_targets` are provided
+        and these paths exist (it's assumed they contain the correct
+        pickled data).
+    feature_sets : :class:`~uncoverml.config.FeatureSetConfig`
+        The provided features as `FeatureSetConfig` objects. These
+        contain paths to the feature files and *importantly* the 
+        Transform objects which contain statistics used to transform
+        the covariates. These Transform objects and contained statistics
+        must be maintained across workflow steps (aka CLI commands).
     patchsize : int
         Half-width of the patches that feature data will be chunked
         into. Height/width of each patch is equal to patchsize * 2 + 1.
 
         .. todo::
             
-            Not implemneted, defaults to 1.
+            Not implemented, defaults to 1.
 
-    algorithm : str
-        The ML algorithm to train.
-    cubist : bool
-        True if the selected model is 'cubist'.
-    multicubist : bool
-        True if the selected model is 'multicubist'.
-    multirandomforest : bool
-        True if the selected model is 'multirandomforest'.
-    krige : bool
-        True if the selected model is 'krige'.
-    algorithm_args : dict
-        Arguments for the selected model. See the parameters for models
-        in the :mod:`~uncoverml.models` module.
-    quantiles : float
-        Prediction quantile/interval for predicted values.
-    geotif_options : dict, optional
-        Optional creation options passed to the geotiff output driver.
-        See https://gdal.org/drivers/raster/gtiff.html#creation-options
-        for a list of creation options. Default value is empty dict.
-    outbands : int
-        The outbands to write in the prediction output file. Used as
-        the 'stop' for a slice taken from list of prediction tags,
-        i.e. [0: outbands]. If the resulting slice is greater than
-        the number of tags available, then all tags will be selected.
-        If no value is provied, then all tags will be selected.
-    thumbnails : int, optional
-        Subsampling factor for thumbnails of output images. Default
-        is 10.
-    raw_covariates_dir : str, optional
-        Path to a directory for saving intersected features and targets
-        as CSV before processing is performed (hence 'raw'). Will save
-        two files: the intersected values and a mask of intersection
-        locations. If not provided will be None.
-    pk_covariates : str, optional
-        Path to pickle file containing intersection of targets and
-        covariates. If :attr:`~pk_load` is True, then this file
-        will be loaded and used as covariates for learning. If
-        :attr:`~pk_load` is False, and this file does not exist,
-        then covariates will be dumped to this file after they have
-        been created from the feature sets specified in the 
-        configuration.
-    pk_targets : str, optional
-        Path to pickle file containing targets. If :attr:`~pk_load` is
-        True, then this file will be loaded and used as targets for
-        learning. If :attr:`~pk_load` is False, and this file does not
-        exist, then targets will be dumped to this file after they have
-        been created from the target data specified in the 
-        configuration.
-    pk_load : bool
-        True if :attr:`~pickle` is True and existent files are provided
-        for :attr:`~pickled_covariates` and :attr:`~pickled_targets`.
-        If True, then covariates and targets will be loaded from the
-        pickle files. If False, the created targets and covariates
-        will be dumped if respective file paths are provided. Will
-        also be set to False if :attr:`~rank_features` is True as
-        feature ranking is not compatible with pickled data. If using
-        Cubist or Multicubist algorithms, it will also require 
-        :attr:`~pk_featurevec` to be present and an existing file
-        in order to be True.
-    pk_featurevec : str, optional
-        Path to pickle file containing feature vector. Must be provided
-        if algorithm is 'cubist' or 'multicubist' and loading from
-        pickle files. 
-    feature_sets : list of :obj:`~uncoverml.config.FeatureSetConfig`
-        A list of feature sets; one for each non-pickle type feature
-        set specified in the config. These are loaded from 'features'
-        in the config file. Not required if :attr:`~pk_load` is True.
-    final_transform : :obj:`~uncoverml.transforms.transformset.TransformSet`, optional
-        A TransformSet containing an imputer and transforms that is
-        applied to all features following image transforms, imputation,
-        global transforms and concatenation.
-    target_file : str
-        Path to a Shapefile containing target values and X, Y 
-        coordinates. Not required if :attr:`~pk_load` is True.
-    target_propery : str
-        Name of the property in the target file to use for training.
-        Required if :attr:`~target_file` is specified.
-    resample : list of dict, optional
-        Resampling arguments for target data. 
-
-        .. todo::
-
-            Not yet implemented.
-    
-    mask : str, optional
-        Path to a geotiff file for masking the output prediction 
-        map. Only values that have been masked will be predicted.
-    retain : int
-        Value in the above mask that indicates cell should be retained
-        and predicted. Must be provided if a mask is provided.
-    lon_lat : dict, optional
-        Dictionary containing paths to longitude and latitude grids
-        used in kriging.
+    target_file : str or bytes
+        Path to a shapefile defining the targets to be trained on.
+    target_property : str
+        Name of the field in the `target_file` to be used as 
+        training property.
+    target_weight_property : str, optional
+        Name of the field in the `target_file` to be used as target
+        weights.
+    fields_to_write_to_csv : list(str), optional
+        List of field names in the `target_file` to be included in
+        output table.
+    shiftmap_targets : str or bytes, optional
+        Path to a shapefile containing targets to generate shiftmap 
+        from. This is optional, by default shiftmap will generate
+        dummy targets by randomly sampling the target shapefile.
+    spatial_resampling_args : dict
+        Kwargs for spatial resampling. See :ref:`resampling-section`
+        for more details.
+    value_resampling_args : dict
+        Kwargs for value resampling. See :ref:`resampling-section` for
+        more details.
+    final_transform : :class:`~uncoverml.transforms.TransformSet`
+        Transforms to apply to whole image set after other preprocessing
+        has been performed.
+    oos_percentage : float, optional
+        Float between 0 and 1. The percentage of targets to withhold
+        from training to be used in out-of-sample validation.
+    oos_shapefile : str or bytes, optional
+        Shapefile containing targets to be used in out-of-sample
+        validation.
+    oos_property : str
+        Name of the property in `oos_shapefile` to be used in 
+        validation. Only required if an OOS shapefile is provided.
+    out_of_sample_validation : bool
+        True if out of sample validation is to be performed.
     rank_features : bool, optional
         True if 'feature_ranking' is True in 'validation' block
         of the config. Turns on feature ranking. Default is False.
@@ -301,67 +319,48 @@ class Config(object):
     crossval_seed : int
         Seed for random sorting of folds for cross validation. Required
         if :attr:`~cross_validate` is True.
+    optimisation : dict
+        Dictionary of optimisation arguments. 
+        See :ref:`optimisation-section` for details.
+    geotiff_options : dict, optional
+        Optional creation options passed to the geotiff output driver.
+        See https://gdal.org/drivers/raster/gtiff.html#creation-options
+        for a list of creation options.
+    quantiles : float
+        Prediction quantile/interval for predicted values.
+    outbands : int
+        The outbands to write in the prediction output file. Used as
+        the 'stop' for a slice taken from list of prediction tags,
+        i.e. [0: outbands]. If the resulting slice is greater than
+        the number of tags available, then all tags will be selected.
+        If no value is provied, then all tags will be selected.
+
+        .. todo::
+
+            Having this as a slice is questionable. Should be 
+            simplified.
+
+    thumbnails : int, optional
+        Subsampling factor for thumbnails of output images. Default
+        is 10.
+    bootstrap_predictions : int, optional
+        Only applies if a bootstrapped algorithm is being used. This is
+        the number of predictions to perform, by default will predict 
+        on all sub-models. E.g. if you had a BS algorithm containing
+        100 sub-models, you could limit a test prediction to 20 using
+        this parameter to speed things up.
+    mask : str, optional
+        Path to a geotiff file for masking the output prediction 
+        map. Only values that have been masked will be predicted.
+    retain : int
+        Value in the above mask that indicates cell should be retained
+        and predicted. Must be provided if a mask is provided.
+    lon_lat : dict, optional
+        Dictionary containing paths to longitude and latitude grids
+        used in kriging.
     output_dir : str
         Path to directory where prediciton map and other outputs
         will be written.
-    plot_covariates : str, optional
-        Path to directory where covariate plots will be written.
-    plot_feature_ranks_file : str, optional
-        Path to directory where feature rank plot will be written.
-    model_file : str, optional
-        Path to the file where model will be saved after
-        learning/clustering and loaded from when predicting. Default
-        is to save in :attr:`~output_dir`.
-    scores_file : str, optional
-        Path to the JSON file where cross validation scores will be
-        saved. Default is to save in :attr:`~output_dir`.
-    plot_covaraites_dir : str, optional
-        Path to directory where plotted covariates will be stored.
-    optimisation : dict, optional
-        Dictionary of optimisation arguments.
-    clustering : bool
-        True if clustering.
-    cluster_analysis : bool, optional
-        True if 'cluster_analysis' in the 'clustering' block of the
-        config file. Turns on cluster analysis.
-
-        .. todo::
-        
-            Need a better explanation of what clustering analysis does.
-
-    clustering_algorithm : str
-        Name of the clustering algorithm to use.
-
-        .. note::
-            
-            The only available algorith is kmeans. This is used to set
-            :attr:`~algorithm` when performing clustering due to the
-            polymorphism of model classes.
-
-        .. todo:: 
-
-            If kmeans is the only option, why not just set 
-            :attr:`~algorithm` directly.
-
-    n_classes : int
-        The number of cluster centres to be used in clustering. If
-        running semisupervised learning and this is set to less than
-        the number of labelled classes in the training data, then the
-        the number of laballed classes in the training data will be
-        used as the value instead. Required when clustering.
-    oversample_factor : float
-        Controls how many candidates are found for cluster 
-        initialisation when running kmeans clustering. See
-        :func:`~uncoverml.cluster.weighted_starting_candidates`.
-        Required when clustering.
-    semisupervised : bool
-        True if a training data file is provided in clustering 
-        arguments. Turns on semisupervised clustering.
-    class_file : str
-        Path to a Shapefile containing training data for clustering.
-    class_property : str
-        Name of the property to train clustering against. Required
-        if :attr:`~class_file` is provided.
     """
     def __init__(self, yaml_file, clustering=False, learning=False, resampling=False,
                  predicting=False):
