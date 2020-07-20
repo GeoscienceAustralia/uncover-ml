@@ -375,7 +375,13 @@ def load_shapefile(filename, targetfield, covariate_crs, extents):
 def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     """
     Loads the shapefile onto node 0 then distributes it across all
-    available nodes
+    available nodes.
+
+    **Important**: here the concatenated targets get sorted on the 
+    root processor by position (Y,X). It's important that this order
+    is preserved. Once covariates are intersected with the target 
+    data, they are also in this order. This ordering is what keeps
+    the target and feature arrays synced.
     """
     if mpiops.chunk_index == 0:
         lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, extents)
