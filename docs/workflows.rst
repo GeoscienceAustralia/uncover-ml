@@ -207,11 +207,6 @@ versions of the maps will also be generated for use as thumbnails.
 Shapefile Predictions
 ---------------------
 
-.. note:: 
-
-    This is a prototype feature that is only available on branch
-    ``bren-tabular``.
-
 Besides images, feature data can also be extracted from shapefiles. If
 this method is used, then the prediction will be written out as a 
 shapefile.
@@ -266,6 +261,15 @@ There's also the addition of the ``drop`` parameter to the targets block:
   training on files with missing data that you want to predict. You can
   drop the rows containing the missing data for training, and then 
   predict on the full shapefile.
+
+.. note:: 
+
+    Currently point intersection between two shapefiles isn't 
+    implemented. You need to ensure that your target shapefile (after
+    any rows have been dropped) is a 1-to-1 positional match with your
+    covariate shapefile. Both files will be ordered by position and
+    it's assumed they will have the same number of rows and each row 
+    in one file corresponds to a row in the other.
 
 Running
 ~~~~~~~
