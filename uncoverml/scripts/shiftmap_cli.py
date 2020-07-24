@@ -37,7 +37,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 def main(config_file, partitions):
-    config = ls.config.Config(config_file, predicting=True)
+    config = ls.config.Config(config_file, predicting=True, shiftmap=True)
     if config.pk_load:
         raise ValueError("Can't create covariate shiftmap when loading from pickled data. Remove "
                          "'pickling' block from config and provide 'targets' and 'features' "

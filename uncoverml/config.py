@@ -374,7 +374,7 @@ class Config(object):
         will be written.
     """
     def __init__(self, yaml_file, clustering=False, learning=False, resampling=False,
-                 predicting=False):
+                 predicting=False, shiftmap=True):
 
         def _grp(d, k, msg=None):
             """
@@ -492,7 +492,7 @@ class Config(object):
         self.patchsize = 0
         
         # TARGET BLOCK
-        if not predicting and not clustering:
+        if (not predicting and not clustering) or shiftmap:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
                       "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
