@@ -8,7 +8,8 @@ learning:
 features:
   - type: ordinal
     # Use fields in the 'targets' shapefile as covariates
-    table:
+    shapefile:
+      file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp 
       fields:
        - Al_ppm_imp
        - As_ppm_imp
@@ -30,7 +31,7 @@ targets:
   property: Na_ppm_imp
   # Drop rows that have this value in the 'property' column. These rows
   # won't be used in training.
-  drop: 0.5
+  drop: [0.5]
 
 validation:
     k-fold:
