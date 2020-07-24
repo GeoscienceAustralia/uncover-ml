@@ -90,9 +90,6 @@ def features_from_shapefile(feature_sets, mask=None):
             chunkset[f] = np.ma.masked_array(vals, invalid)
         table_chunks.append(chunkset)
     _logger.debug("loaded table data {table_chunks}")
-    for tc in table_chunks:
-        for k, c in tc.items():
-            print(k, c.shape)
     return table_chunks, positions
 
 
