@@ -54,7 +54,7 @@ setup(
         'develop': develop
     },
     name='uncover-ml',
-    version='0.3.1',
+    version='0.4.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme,
