@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Developer Docs &mdash; UncoverML 0.3.1 documentation</title>
+  <title>Developer Docs &mdash; UncoverML 0.4.0 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.1
+                0.4.0
               </div>
             
           
@@ -99,6 +99,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#gotchas">“Gotchas”</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#transform-statistics">Transform Statistics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#target-covariate-ordering">Target/Covariate Ordering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hardware-testing">Hardware Testing</a></li>
 </ul>
 </li>
 </ul>
@@ -247,6 +248,13 @@ arrays maintain this order through the workflow.</p>
 <p>If you modify targets or covariates after they are loaded and
 intersected, make sure to maintain this ordering, or at the very least
 sort them so they map 1-to-1 positionally.</p>
+</div>
+<div class="section" id="hardware-testing">
+<h3>Hardware Testing<a class="headerlink" href="#hardware-testing" title="Permalink to this headline">¶</a></h3>
+<p>Test on multiple processors and with multiple partitions to make sure
+your changes produce determinstic results across different hardware
+configurations. The Makefile contains a shortcut to do this, which
+can be run using:</p>
 </div>
 </div>
 </div>

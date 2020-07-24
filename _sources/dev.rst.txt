@@ -89,3 +89,13 @@ If you modify targets or covariates after they are loaded and
 intersected, make sure to maintain this ordering, or at the very least
 sort them so they map 1-to-1 positionally.
 
+Hardware Testing
+~~~~~~~~~~~~~~~~
+Test on multiple processors and with multiple partitions to make sure
+your changes produce determinstic results across different hardware
+configurations. The Makefile contains a shortcut to do this, which
+can be run using:
+
+.. bash::
+
+    make hardware_test
