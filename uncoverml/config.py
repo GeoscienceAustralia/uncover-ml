@@ -148,6 +148,7 @@ class FeatureSetConfig(object):
             n_feat = len(self.fields)
             self.file = d['shapefile']['file']
             self.ndv = d['shapefile'].get('ndv', None)
+            self.max_distance = d['shapefile'].get('max_distance', None)
             _logger.debug(f"Loaded feature set with fields: {self.fields}")
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],

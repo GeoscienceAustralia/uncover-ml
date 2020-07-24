@@ -134,6 +134,8 @@ def _load_data(config, partitions):
             ts_t = ls.geoio.distribute_targets(pos, obs, fields)
             targets = ls.targets.merge_targets(targets, ts_t)
 
+        ls.targets.drop_target_values(targets, config.target_drop_values)
+
         # TODO: refactor out-of-sample out of script module
         # If using out-of-sample validation, split off a percentage of data before transformation
         if config.out_of_sample_validation:
@@ -164,14 +166,18 @@ def _load_data(config, partitions):
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
             if config.tabular_prediction:
-                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(
-                    oos_targets, config.feature_sets, config.target_drop_values)
+                intersect_indices = ls.features.intersect_shapefile_features(
+                    targets, config.feature_sets)
+                oos_feature_chunks = ls.features.features_from_shapefile(
+                    config.feature_sets, intersect_indices)
             else:
                 oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
         if config.tabular_prediction:
-            feature_chunks, _ = ls.features.intersect_shapefile_features(
-                    targets, config.feature_sets, config.target_drop_values)
+            intersect_indices = ls.features.intersect_shapefile_features(
+                targets, config.feature_sets)
+            feature_chunks = ls.features.intersect_shapefile_features(
+                config.feature_sets, intersect_indices)
         else:
             feature_chunks = ls.geoio.image_feature_sets(targets, config)
 

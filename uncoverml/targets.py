@@ -59,6 +59,38 @@ class Targets:
         return cls(positions, obs, fields)
 
 
+def drop_target_values(targets, drop_values):
+    """
+    Drop rows from the targets for observations that have 
+    particular values.
+
+    Parameters
+    ----------
+    targets: `uncoverml.targets.Targets`
+        An `uncoverml.targets.Targets` object that has been loaded from
+        a shapefile.
+    target_drop_values: list of any
+        A list of values where if target observation is equal to value
+        that row is dropped and also won't be intersected with the 
+        covariates.
+    """
+    if drop_values is not None:
+        for tdv in drop_values:
+            if np.dtype(type(tdv)).kind != targets.observations.dtype.kind:
+                raise TypeError(
+                    f"Value '{tdv}' to drop from target property field has dtype "
+                    f"'{np.dtype(type(tdv))} which is incompatible with target property "
+                    f"dtype {targets.observations.dtype}. Change this value to a compatible dtype.")
+        keep = ~np.isin(targets.observations, drop_values)
+        targets.observations = targets.observations[keep]
+        targets.positions = targets.positions[keep]
+        for k, v in targets.fields.items():
+            targets.fields[k] = v[keep]
+        _logger.info(f"Dropped {np.count_nonzero(~keep)} rows from targets that contained values "
+                     f"{drop_values}")
+    return targets
+
+
 def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     """
     Generate dummy points with randomly generated positions. Points

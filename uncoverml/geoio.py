@@ -343,7 +343,22 @@ def write_shapefile_prediction(pred, pred_tags, positions, config):
 
 def load_shapefile(filename, targetfield, covariate_crs, extents):
     """
-    TODO
+    Loads shapefile and extracts training targets. 
+
+    Parameters
+    ----------
+    filename : str or bytes
+        Path to the shapefile.
+    targetfield : str 
+        Name of the training property to extract. If None, the first
+        column of the shapefile is taken.
+    covariate_crs : rasterio.crs.CRS
+        A rasterio CRS object containing CRS of the feature data.
+        If provided, the shapefile points will be reprojected to the
+        CRS of the feature data.
+    extents : tuple(float, float, float, float)
+        Bounding box. If provided, shapefile points outside this
+        bounding box won't be loaded.
     """
     sf = shapefile.Reader(filename)
     if extents and any(c is None for c in extents):

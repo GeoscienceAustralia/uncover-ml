@@ -6,6 +6,9 @@ import os
 from os.path import basename
 import copy
 
+from shapely.geometry import Point
+from shapely.strtree import STRtree
+
 import uncoverml  # Get around `geoio` circular import in features_from_shapefile
 from uncoverml import mpiops, patch, transforms, diagnostics
 from uncoverml.image import Image
@@ -13,87 +16,95 @@ from uncoverml import patch
 
 _logger = logging.getLogger(__name__)
 
-def intersect_shapefile_features(targets, feature_sets, target_drop_values):
+def intersect_shapefile_features(targets, feature_sets):
     """Extract covariates from a shapefile. This is done by intersecting
-    targets with the shapefile. The shapefile must have the same number
-    of rows as there are targets.
+    targets positions with points in the shapefile.
 
-    Drop target values here for tabular predictions. This is mainly 
-    for convenience if there are classes or points in the target file
-    that we don't want to predict on for whatever reason (e.g. 
-    out-of-sample validation purposes). It's done here rather than
-    when targets are first loaded so we don't also have to handle a 
-    mask + targets being returned from target loading as the mask won't
-    be required in most situations.
 
     Parameters
     ----------
     targets: `uncoverml.targets.Targets`
         An `uncoverml.targets.Targets` object that has been loaded from
         a shapefile.
-    feature_sets: list of `uncoverml.config.FeatureSetConfig`
+    feature_sets: list(`uncoverml.config.FeatureSetConfig`)
         A list of feature sets of 'tabular' type (sourced from 
         shapefiles). Each set must have an attribute `file` that points
         to the shapefile to load and attribute `fields` which is the 
         list of fields to retrieve as covariates from the file.
-    target_drop_values: list of any
-        A list of values where if target observation is equal to value
-        that row is dropped and also won't be intersected with the 
-        covariates.
+
+    Returns
+    -------
+    dict(list)
+        A dict of index lists, keyed by feature_set index.
+        Each list has the same length as the number of targets - each
+        position in a list corresponds to a target position. 
+        The index value is the row position from the feature set that 
+        intersects with that target position. Index values of 'None' 
+        mean there were no applicable points to intersect with for that 
+        target position.
     """
     if not all(fs.tabular for fs in feature_sets):
         raise TypeError("Can not extract features from non-shapefile sources")
 
-    # Drop 'target_drop_values' from targets before intersection
-    if target_drop_values is not None:
-        for tdv in target_drop_values:
-            if np.dtype(type(tdv)).kind != targets.observations.dtype.kind:
-                raise TypeError(
-                    f"Value '{tdv}' to drop from target property field has dtype "
-                    f"'{np.dtype(type(tdv))} which is incompatible with target property "
-                    f"dtype {targets.observations.dtype}. Change this value to a compatible dtype.")
-        keep = ~np.isin(targets.observations, target_drop_values)
-        targets.observations = targets.observations[keep]
-        targets.positions = targets.positions[keep]
-        for k, v in targets.fields.items():
-            targets.fields[k] = v[keep]
-        _logger.info(f"Dropped {np.count_nonzero(~keep)} rows from targets that contained values "
-                     f"{target_drop_values}")
-    else:
-        keep = np.ones(targets.observations.shape)
-
-    return features_from_shapefile(feature_sets, keep)
-
-
-def features_from_shapefile(feature_sets, mask=None):
-    table_chunks = list()
-    for fs in feature_sets:
+    intersect_indices = {}
+    for i, fs in enumerate(feature_sets):
         # Hack: load the covariate shapefile as Targets object to reuse that loading code (handles
         # shapefile IO and ensures ordering is correct). 
         # Set the first field as `targetfield` because otherwise it will take the first coulmn as 
         # `targetfield` by default and we won't know if that's a value we want or not. So 
         # `observations` is always the first covariate field and any remaining are in `fields`
-        chunkset = OrderedDict()
-        features_as_targets = uncoverml.geoio.load_targets(fs.file, targetfield=fs.fields[0])
-        for i, f in enumerate(fs.fields):
-            # First field is loaded as observations
-            if i == 0:
-                vals = features_as_targets.observations[mask]
+        features = uncoverml.geoio.load_targets(fs.file, targetfield=fs.fields[0])
+        feature_points = [Point(p[0], p[1]) for p in features.positions]
+        f_lookup = {id(p): i for i, p in enumerate(feature_points)}
+        fp_tree = STRtree(feature_points)
+        inds = []
+        for i, pos in enumerate(targets.positions):
+            tp = Point(pos[0], pos[1])
+            nearest = fp_tree.nearest(tp)
+            print(i)
+            if nearest.distance(tp) <= (0.001 if fs.max_distance is None else fs.max_distance):
+                inds.append(f_lookup[id(nearest)])
             else:
-                vals = features_as_targets.fields[f][mask]
-            positions = features_as_targets.positions[mask]
-            # Chunks should be of shape (n_samples,) - squeeze out empty dimensions
-            # These dims occur if mask is None
-            vals = np.squeeze(vals)
-            positions = np.squeeze(positions)
+                inds.append(None)
+        intersect_indices[i] = inds
+  
+    return intersect_indices
+
+
+def features_from_shapefile(feature_sets, intersect_indices=None):
+    """
+    Loads a shapefile and extracts feature information from it.
+    """
+    table_chunks = list()
+    for fs in feature_sets:
+        # See `intersect_shapefile_features` about loading features as targets
+        features = uncoverml.geoio.load_targets(fs.file, targetfield=fs.fields)
+        chunkset = OrderedDict()
+        for i, f in enumerate(fs.fields):
+            if intersect_indices is not None:
+                inds = intersect_indices[i]
+                vals = np.full(len(inds), fs.ndv)
+                if i == 0:
+                    feature_vals = features.observations
+                else:
+                    feature_vals = features.fields[f]
+                for ind in inds:
+                    if ind is not None:
+                        vals[ind] = feature_vals[ind]
+            else:
+                if i == 0:
+                    vals = features.observations
+                else:
+                    vals = features.fields[f]
             invalid = vals == fs.ndv
             chunkset[f] = np.ma.masked_array(vals, invalid)
         table_chunks.append(chunkset)
+
     _logger.debug("loaded table data {table_chunks}")
     for tc in table_chunks:
         for k, c in tc.items():
             print(k, c.shape)
-    return table_chunks, positions
+    return table_chunks
 
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
