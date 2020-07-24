@@ -144,23 +144,23 @@ def shapefile(random_filename, request):
     vals = np.hstack((vals, lonlats))
 
     # write shapefile
-    w = shp.Writer(shp.POINT)
-    w.autoBalance = 1
-
-    # points
-    for p in zip(dlon, dlat):
-        w.point(*p)
+    w = shp.Writer(filename)
+    w.shapeType = shp.POINT
 
     # fields
     for f in fields:
         w.field(f, 'N', 16, 6)
+
+    # points
+    for p in zip(dlon, dlat):
+        w.point(*p)
 
     # records
     for v in vals:
         vdict = dict(zip(fields, v))
         w.record(**vdict)
 
-    w.save(filename)
+    w.close()
 
     return lonlats, filename
 
