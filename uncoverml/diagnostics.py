@@ -5,6 +5,7 @@ and other diagnostic information.
 import os
 import json
 import math
+import logging
 from collections import defaultdict
 from typing import Dict
 
@@ -18,6 +19,7 @@ from numpy.polynomial.polynomial import polyfit
 import seaborn as sns
 
 _CACHE = dict()
+_logger = logging.getLogger(__name__)
 
 def _suptitle_buffer(axes, topmargin=1):
      """
@@ -406,7 +408,13 @@ def plot_covariates_x_targets(path, cols=2, subplot_width=8, subplot_height=4):
             y = i - cols * x
             ind = x, y
         axs[ind].set(xlabel='Target', ylabel='Covariate')
-        axs[ind].scatter(targets, data[:,i].astype(float))
+        try:
+            axs[ind].scatter(targets, data[:,i].astype(float))
+        except ValueError:
+            # TODO: encode non-float covariates
+            _logger.error("Covariate %s could not be converted to float, will not be included on "
+                          "intersection plot" % cov)
+            continue
         axs[ind].set_title(cov)
 
     fig.suptitle('Covariate-Target Intersection', x=0.52, y=1.01, fontsize=16)
