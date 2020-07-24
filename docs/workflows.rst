@@ -1,3 +1,5 @@
+.. _workflows:
+
 Workflows
 =========
 
@@ -524,6 +526,8 @@ distribute it amongst the CPUs. Each chunk will then be split into
 5 partitions (the ``-p 5`` parameter) and loaded, predicted on and 
 written out sequentially, reducing memory usage.
 
+.. _optimisation-section:
+
 Optimisation
 ------------
 
@@ -830,7 +834,7 @@ predicting the k-means model.
     n_classes: 5
     oversample_factor: 5
 
-- ``file``: path to shapefile containg labels. This is optional. If provided
+- ``file``: path to shapefile containing labels. This is optional. If provided
   then semi-supervised clustering is performed, other clutering is
   unsupervised.
 - ``property``: the name of the class label property in the shapefile. Only
@@ -965,6 +969,8 @@ table:
 .. code:: bash
 
     uncoverml learn config.yaml
+
+.. _resampling-section:
 
 Resampling
 ----------

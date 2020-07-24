@@ -6,7 +6,6 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 from collections import namedtuple
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil
@@ -27,8 +26,8 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 import uncoverml.models
+import uncoverml.scripts
 from uncoverml.transforms import StandardiseTransform
-
 
 _logger = logging.getLogger(__name__)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
@@ -67,7 +66,7 @@ def main(config_file, partitions):
     if oos_data is not None:
         ls.geoio.deallocate_shared_training_data(oos_data)
 
-    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
 
 def _load_data(config, partitions):
     if config.pk_load:
@@ -222,10 +221,6 @@ def _load_data(config, partitions):
  
     return ls.geoio.create_shared_training_data(targets_all, x_all), oos_data
 
-def _total_gb():
-    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    total_usage = ls.mpiops.comm.allreduce(my_usage)
-    return total_usage
 
 def _clean_temp_cropfiles(config):
     shutil.rmtree(config.tmpdir)   

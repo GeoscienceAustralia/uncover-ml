@@ -1,6 +1,11 @@
 UncoverML Documentation
 =======================
 
+.. note::
+
+    This documentation is currently up-to-date with the ``develop`` 
+    branch and includes many features not in the stable release.
+
 UncoverML is a Geoscience Australia project applying machine learning
 to geoscience datasets. 
 
@@ -16,6 +21,7 @@ Contents:
    cli
    workflows
    models
+   dev
    NICTA Project Report <projectreport>
    UncoverML API Reference <modules>
    contributing

@@ -5,7 +5,6 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 import logging
 import pickle
-import resource
 from os.path import isfile, splitext, exists
 import os
 import shutil
@@ -28,6 +27,7 @@ import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
 import uncoverml.models
+import uncoverml.scripts
 from uncoverml.transforms import StandardiseTransform
 from uncoverml.learn import all_modelmaps
 
@@ -157,7 +157,7 @@ def main(config_file, partitions, mask, retain):
             write_prediction_metadata,
             model, config, config.metadata_file)
 
-    _logger.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    _logger.info("Finished! Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
 
 def write_prediction_metadata(model, config, out_filename="metadata.txt"):
     """
@@ -171,13 +171,6 @@ def write_prediction_metadata(model, config, out_filename="metadata.txt"):
     mobj.write_metadata(out_filename)
 
     return out_filename
-
-def _total_gb():
-    # given in KB so convert
-    my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-    # total_usage = mpiops.comm.reduce(my_usage, root=0)
-    total_usage = ls.mpiops.comm.allreduce(my_usage)
-    return total_usage
 
 def _load_model(config):
     with open(config.model_file, 'rb') as f:
