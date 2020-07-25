@@ -29,7 +29,7 @@ Changed
 - Cleaned up project structure - remove outdated 'pbs' directory and scripts that no longer apply.
 - Training data is now shared via MPI shared memory during the learn step.
 - Models are now exported with their TransformSet objects, so the transform statistics can be
-  reused for prediction. Previsouly the entire Config object was pickled.
+  reused for prediction. Previously the entire Config object was pickled.
 
 Fixed
 +++++
