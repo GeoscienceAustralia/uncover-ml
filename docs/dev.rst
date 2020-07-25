@@ -51,7 +51,7 @@ your test/prediction data.
 See `this stack exchange post <https://stats.stackexchange.com/questions/361797/standardization-on-training-only-or-also-including-testing-data>`_.
 
 Transforms are in the :mod:`~uncoverml.transforms` package. Transform
-classes caluclate statistics on the feature data, e.g. for 
+classes calculate statistics on the feature data, e.g. for 
 standardisation we calculate the mean and standard deviation of the data
 so that can standardisation can be formed.
 
