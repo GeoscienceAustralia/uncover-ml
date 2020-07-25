@@ -12,7 +12,7 @@ Added
   or user can provide their own shapefile via the 'shiftmap' property of the config 'target' block.
 - "covdiag" command for 'diagnosing' covariate files. Similar to gdalinfo but with room for 
   additions if required.
-- "targetsearch" comamnd which finds targets similar to prediction data outside of prediction area.
+- "targetsearch" command which finds targets similar to prediction data outside of prediction area.
 - More demonstration configs.
 - Reimplemented target sampling/binning code (originally by Sudipta).
 - Bootstrap SVR model.
