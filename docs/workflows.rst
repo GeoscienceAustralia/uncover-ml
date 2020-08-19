@@ -181,7 +181,7 @@ specified in the ``output`` block.
 
 For learning, these are:
 
-- ``rawcovariates.csv``: a table containg the value from each covariate
+- ``rawcovariates.csv``: a table containing the value from each covariate
   and the target value for a given point. This is before any scaling or
   transforms are applied.
 - ``rawcovariates_mask.csv``: a table representing the mask for each
@@ -190,7 +190,7 @@ For learning, these are:
   values in the first column and the transformed value in the other 
   column.
 - ``*.model``: a Python binary file containing the trained model. It 
-  is not accesed directly but is used as part of the preidciton step.
+  is not accessed directly but is used as part of the prediction step.
 
 Predictions can then be performed across the entire feature space:
 
