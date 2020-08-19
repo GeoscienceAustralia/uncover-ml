@@ -575,7 +575,7 @@ Random Forest Classifier
 - `Scitkit-Learn <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html>`_
 - :class:`uncoverml.models.RandomForestClassifier`
 
-Suport Vector Classifier
+Support Vector Classifier
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Config:**
