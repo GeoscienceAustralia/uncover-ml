@@ -754,7 +754,7 @@ Cropping is performed by providing the ``extents`` block in the config:
       xmax: 121
       ymax: -21
 
-- ``pixel_coordinates``: boolean indicating wheter to treat the given crop
+- ``pixel_coordinates``: boolean indicating whether to treat the given crop
   coordinates as pixels (True) or as coordinates in the CRS used by 
   the covariate geotiffs (False). If using pixel coordinates, these
   start at 0 and extend to the width and height of the image, inclusive.
