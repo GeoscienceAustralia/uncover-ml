@@ -668,7 +668,7 @@ want to predict the potassium content for a much smaller study area.
 Instead of supplying the entire geochem dataset, you can use target
 search to determine which points in the dataset are most similar to
 the study area (i.e. which points have a similar distribution of 
-feature date) and these are the points are used in addition to the 
+feature data) and these are the points are used in addition to the 
 provided training targets for training the model.
 
 Config
