@@ -327,7 +327,7 @@ in your config file. The usual parameters for learning must be provided
 
 .. note::
 
-    ``precentage`` has priority over ``shapefile`` - if both are 
+    ``percentage`` has priority over ``shapefile`` - if both are 
     provided then the shapefile argument will be ignored.
 
 - ``k-fold``: k-fold cross validation parameters
