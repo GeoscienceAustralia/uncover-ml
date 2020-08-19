@@ -615,7 +615,7 @@ UncoverML has a ``shiftmap`` feature that generates a map of the
 covariate shift in your feature space. 'Covariate shift' is the shifting
 of covariate distributions across different areas.
 
-The idea behind shitmap is to generate 'dummy' targets, equal in number
+The idea behind shiftmap is to generate 'dummy' targets, equal in number
 to the provided training targets. These dummy targets are distributed
 randomly across the feature space. 
 
