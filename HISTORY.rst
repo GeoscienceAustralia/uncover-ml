@@ -114,7 +114,7 @@ Fixed
 Changed
 +++++++
 - Updated depdency versions.
-- Package version is now dervied from 'git describe' command. This is also written to metadata
+- Package version is now derived from 'git describe' command. This is also written to metadata
   file when making predictions.
 - Config:
 
