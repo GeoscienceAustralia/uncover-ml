@@ -487,7 +487,7 @@ so to avoid wasting compute resources, train models with 1 processor:
     uncoverml learn config.yaml
     # equivalent to `mpirun -n 1 uncoverml learn config.yaml`
 
-An exception is when learning an enseble model. Examples are 
+An exception is when learning an ensemble model. Examples are 
 ``bootstrapsvr`` and ``multirandomforest``. These are ensembles of 
 several individual models. When training an ensemble model, it can be 
 beneficial to run with multiple processors as each processor can train
