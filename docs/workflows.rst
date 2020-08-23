@@ -435,7 +435,7 @@ and ``plot_intersection`` must be ``True`` in the configuration.
 Real vs. Prediction
 ~~~~~~~~~~~~~~~~~~~
 A scatter plot showing the intersection between real vs. predicted values
-can be generated. This comapres the values predicted by the model
+can be generated. This compares the values predicted by the model
 to the actual target values, and is important for validating model.
 It includes several pieces of information. The points show the intersecting
 values. The 2D histogram in the background shows grouping of the points
