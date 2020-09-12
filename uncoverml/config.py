@@ -196,7 +196,7 @@ class Config(object):
     Attributes
     ----------
     name : str
-        Name oo the config file.
+        Name of the config file.
     algorithm : str
         Name of the model to train. See :ref:`models-page` for available
         models.
