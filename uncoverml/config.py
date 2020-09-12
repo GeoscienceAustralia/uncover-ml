@@ -251,7 +251,7 @@ class Config(object):
     extents_are_pixel_coordinates : bool
         If True, `extents` are treated as pixel coordinates instead of
         CRS coordinates.
-    pk_covarates : str or bytes
+    pk_covariates : str or bytes
         Path to where to save pickled covariates, or a pre-existing
         covariate pickle file if loading pickled covariates.
     pk_targets : str or bytes
