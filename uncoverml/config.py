@@ -103,7 +103,7 @@ class FeatureSetConfig(object):
     files : list of str
         Absolute paths to .tif files of the feature set.
     transform_set : :class:`~uncoverml.transforms.transformset.ImageTransformSet`
-        Transforms specified for the feautre set.
+        Transforms specified for the feature set.
     """
     def __init__(self, config_dict: dict):
         d = config_dict
