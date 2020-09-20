@@ -501,6 +501,7 @@ class ImageWriter:
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
+        self.sub_starts = np.flip(self.sub_starts)  #flipping for new transform fix        
 
         # file tags don't have spaces
         if band_tags:
