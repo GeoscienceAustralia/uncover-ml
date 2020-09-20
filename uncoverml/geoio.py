@@ -490,7 +490,7 @@ class ImageWriter:
         """
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
-                                         bbox[0, 1], bbox[1, 1],
+                                         bbox[1, 1], bbox[0, 1],
                                          shape[0], shape[1])
         self.shape = shape
         self.outbands = outbands
