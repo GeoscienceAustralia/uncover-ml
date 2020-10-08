@@ -5,21 +5,19 @@ import inspect
 import numpy as np
 from mpi4py import MPI
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
-# We're having trouble with the MPI pickling and 64bit integers
-# MPI.pickle.dumps = pickle.dumps
-# MPI.pickle.loads = pickle.loads
 
-#comm = MPI.COMM_WORLD
-#"""module-level MPI 'world' object representing all connected nodes
-#"""
+comm_world = MPI.COMM_WORLD
+size_world = comm_world.Get_size()
+rank_world = comm_world.Get_rank()
+leader_world = rank_world == 0
 
 # Determine which node each rank is on and share this information
 node_name = MPI.Get_processor_name()
-node_names = MPI.COMM_WORLD.allgather(node_name)
+node_names = comm_world.allgather(node_name)
 root_node = None
-# Maps compute node names to the local leader of that node's sub-group
+# Map node names to the local leader of that node's sub-group
 node_map = {}
 prev_node = None
 for i, n in enumerate(node_names):
@@ -30,22 +28,36 @@ for i, n in enumerate(node_names):
         node_map[n] = i
 
     prev_node = n
-print(node_map.items())
 
-# Split communicator into subgroups on each node
-comm = MPI.Comm.Split_type(MPI.COMM_WORLD, MPI.COMM_TYPE_SHARED)
+# Split communicator into sub-groups on each node 
+# This is so each group is on a physical node capable of sharing a memory window 
+comm_local = MPI.Comm.Split_type(MPI.COMM_WORLD, MPI.COMM_TYPE_SHARED)
+size_local = comm_local.Get_size()
+rank_local = comm_local.Get_rank()
+leader_local = rank_local == 0
 
+# Test data transfer between subgroups
+if rank_world == 0:
+    x = 1
+else:
+    x = None
 
-chunks = comm.Get_size()
-"""int: the total number of nodes in the MPI world
-"""
+print("X before sharing")
 
-chunk_index = comm.Get_rank()
-"""int: the index (from zero) of this node in the MPI world. Also known as
-the rank of the node.
-"""
+if leader_local:
+    print(f"World rank: {rank_world}, x: {x}")
 
-# print(f"{chunk_index}: group size: {comm.Get_group().Get_size()}, group rank: {comm.Get_group().Get_rank()}")
+print("Sharing data with local leaders")
+
+for k, v in node_map.items():
+    if leader_world:
+        comm_world.send(x, dest=v, tag=99)
+    elif leader_local and not leader_world:
+        x = comm_world.recv(source=leader_world, tag=99)
+
+if leader_local:
+    print(f"World rank: {rank_world}, x: {x}")
+
 
 def create_shared_array(data, root=0, writeable=False):
     """
