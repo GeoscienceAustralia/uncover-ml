@@ -10,9 +10,12 @@ log = logging.getLogger(__name__)
 # MPI.pickle.dumps = pickle.dumps
 # MPI.pickle.loads = pickle.loads
 
-comm = MPI.COMM_WORLD
-"""module-level MPI 'world' object representing all connected nodes
-"""
+#comm = MPI.COMM_WORLD
+#"""module-level MPI 'world' object representing all connected nodes
+#"""
+
+comm = MPI.Comm.Split_type(MPI.COMM_WORLD, MPI.COMM_TYPE_SHARED, 0)
+
 
 chunks = comm.Get_size()
 """int: the total number of nodes in the MPI world
@@ -22,6 +25,8 @@ chunk_index = comm.Get_rank()
 """int: the index (from zero) of this node in the MPI world. Also known as
 the rank of the node.
 """
+
+# print(f"{chunk_index}: group size: {comm.Get_group().Get_size()}, group rank: {comm.Get_group().Get_rank()}")
 
 def create_shared_array(data, root=0, writeable=False):
     """
