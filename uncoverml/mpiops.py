@@ -1,5 +1,6 @@
 import logging
 import pickle
+import inspect
 
 import numpy as np
 from mpi4py import MPI
@@ -14,7 +15,25 @@ log = logging.getLogger(__name__)
 #"""module-level MPI 'world' object representing all connected nodes
 #"""
 
-comm = MPI.Comm.Split_type(MPI.COMM_WORLD, MPI.COMM_TYPE_SHARED, 0)
+# Determine which node each rank is on and share this information
+node_name = MPI.Get_processor_name()
+node_names = MPI.COMM_WORLD.allgather(node_name)
+root_node = None
+# Maps compute node names to the local leader of that node's sub-group
+node_map = {}
+prev_node = None
+for i, n in enumerate(node_names):
+    if i == 0:
+        node_map[n] = 0
+        prev_node = n
+    elif prev_node != n:
+        node_map[n] = i
+
+    prev_node = n
+print(node_map.items())
+
+# Split communicator into subgroups on each node
+comm = MPI.Comm.Split_type(MPI.COMM_WORLD, MPI.COMM_TYPE_SHARED)
 
 
 chunks = comm.Get_size()
