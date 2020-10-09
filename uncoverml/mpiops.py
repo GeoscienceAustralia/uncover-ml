@@ -7,6 +7,7 @@ from mpi4py import MPI
 
 _logger = logging.getLogger(__name__)
 
+     
 
 comm_world = MPI.COMM_WORLD
 size_world = comm_world.Get_size()
@@ -17,7 +18,7 @@ leader_world = rank_world == 0
 node_name = MPI.Get_processor_name()
 node_names = comm_world.allgather(node_name)
 root_node = None
-# Map node names to the local leader of that node's sub-group
+# Map node names to the world rank of the local leader of that node's sub-group
 node_map = {}
 prev_node = None
 for i, n in enumerate(node_names):
@@ -37,29 +38,40 @@ rank_local = comm_local.Get_rank()
 leader_local = rank_local == 0
 
 # Test data transfer between subgroups
-if rank_world == 0:
-    x = 1
-else:
-    x = None
+#if leader_world:
+#    x = np.ones(10)
+#else:
+#    x = None
+#
+#if leader_local and not leader_world:
+#    print(f"X before sharing - World rank: {rank_world}, x: {x}")
+#
+#for k, v in node_map.items():
+#    if leader_world:
+#        if v in node_map.values() and v != 0:
+#            print(f"Sharing data with local leader {v}")
+#            comm_world.send(x, dest=v, tag=99)
+#
+#if leader_local and not leader_world:
+#    print(f"Hi, I'm {rank_world}")
+#    x = comm_world.recv(source=leader_world, tag=99)
+#    print(f"X after sharing - World rank: {rank_world}, x: {x}")
+#
+#comm_world.barrier()
+#
+#if not leader_local:
+#    print(f"I am a lowly node of rank {rank_world} and my x is {x}")
+#
+#if leader_local:
+#    print(f"I'm local leader {rank_world} and I think X is great and I'm going to share it with my local community")
+#
+#shared_x = create_shared_array(comm_local, x, 0)
+#
+#if not leader_local:
+#    print(f"I'm rank {rank_world} and I have been given access to this beautiful array of 1s: {shared_x[0]}")
 
-print("X before sharing")
 
-if leader_local:
-    print(f"World rank: {rank_world}, x: {x}")
-
-print("Sharing data with local leaders")
-
-for k, v in node_map.items():
-    if leader_world:
-        comm_world.send(x, dest=v, tag=99)
-    elif leader_local and not leader_world:
-        x = comm_world.recv(source=leader_world, tag=99)
-
-if leader_local:
-    print(f"World rank: {rank_world}, x: {x}")
-
-
-def create_shared_array(data, root=0, writeable=False):
+def create_shared_array(comm, data, root, writeable=False):
     """
     Create a shared numpy array among MPI nodes. To access the data,
     refer to the return numpy array 'shared'. The second return value
@@ -75,10 +87,13 @@ def create_shared_array(data, root=0, writeable=False):
 
     Parameters
     ----------
+    comm 
+        The MPI intra-communicator capable of sharing a memory window.
     data : numpy.ndarray
         The numpy array to share.
     root : int
-        Rank of the root node that contains the original data.
+        Rank of the root node *on the provided communicator* 
+        that contains the original data.
     writeable : bool
         Whether or not the resulting shared array is writeable.
 
@@ -86,7 +101,7 @@ def create_shared_array(data, root=0, writeable=False):
     -------
     tuple of numpy.ndarray, MPI window
     """
-    if chunk_index == root:
+    if rank_local == root:
         shape = data.shape
         dtype = data.dtype
         item_size = dtype.itemsize
@@ -108,7 +123,7 @@ def create_shared_array(data, root=0, writeable=False):
 
     # Copy data into shared arrays - is there a better way than 
     #  iterating the whole thing?
-    if chunk_index == root:
+    if rank_local == root:
         for index, x in np.ndenumerate(data):
             shared[index] = x
         shared.flags.writeable = writeable
@@ -117,7 +132,8 @@ def create_shared_array(data, root=0, writeable=False):
 
     # Make sure to call `shared = None` and `win.free()` to deallocate 
     #  the shared memory when done with it.
-    return shared, win        
+    return shared, win
+   
 
 def run_once(f, *args, **kwargs):
     """Run a function on one node, broadcast result to all
