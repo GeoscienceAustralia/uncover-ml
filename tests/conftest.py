@@ -185,12 +185,12 @@ def linear_data():
 # Make sure all MPI tests use this fixure
 @pytest.fixture()
 def mpisync(request):
-    mpiops.comm.barrier()
+    mpiops.comm_world.barrier()
 
     def fin():
-        mpiops.comm.barrier()
+        mpiops.comm_world.barrier()
     request.addfinalizer(fin)
-    return mpiops.comm
+    return mpiops.comm_world
 
 # Test data
 @pytest.fixture(scope='session')

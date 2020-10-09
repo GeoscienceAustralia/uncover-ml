@@ -7,8 +7,6 @@ from mpi4py import MPI
 
 _logger = logging.getLogger(__name__)
 
-     
-
 comm_world = MPI.COMM_WORLD
 size_world = comm_world.Get_size()
 rank_world = comm_world.Get_rank()
@@ -17,7 +15,6 @@ leader_world = rank_world == 0
 # Determine which node each rank is on and share this information
 node_name = MPI.Get_processor_name()
 node_names = comm_world.allgather(node_name)
-root_node = None
 # Map node names to the world rank of the local leader of that node's sub-group
 node_map = {}
 prev_node = None
@@ -153,11 +150,11 @@ def run_once(f, *args, **kwargs):
     result
         The value returned by f
     """
-    if chunk_index == 0:
+    if rank_world == 0:
         f_result = f(*args, **kwargs)
     else:
         f_result = None
-    result = comm.bcast(f_result, root=0)
+    result = comm_world.bcast(f_result, root=0)
     return result
 
 
@@ -188,12 +185,12 @@ min0_op = MPI.Op.Create(min_axis_0, commute=True)
 
 
 def count_targets(targets):
-    return comm.allreduce(len(targets.positions))
+    return comm_world.allreduce(len(targets.positions))
 
 
 def count(x):
     x_n_local = np.ma.count(x, axis=0).ravel()
-    x_n = comm.allreduce(x_n_local, op=sum0_op)
+    x_n = comm_world.allreduce(x_n_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_n)
     if still_masked != 0:
         log.info('Reported subcounts: ' + ', '.join([str(s) for s in x_n]))
@@ -207,7 +204,7 @@ def outer_count(x):
 
     xnotmask = (~x.mask).astype(float)
     x_n_outer_local = np.dot(xnotmask.T, xnotmask)
-    x_n_outer = comm.allreduce(x_n_outer_local)
+    x_n_outer = comm_world.allreduce(x_n_outer_local)
 
     return x_n_outer
 
@@ -215,7 +212,7 @@ def outer_count(x):
 def mean(x):
     x_n = count(x)
     x_sum_local = np.ma.sum(x, axis=0)
-    x_sum = comm.allreduce(x_sum_local, op=sum0_op)
+    x_sum = comm_world.allreduce(x_sum_local, op=sum0_op)
     still_masked = np.ma.count_masked(x_sum)
     if still_masked != 0:
         log.info('Reported x_sum: ' + ', '.join([str(s) for s in x_sum]))
@@ -228,7 +225,7 @@ def mean(x):
 
 def minimum(x):
     x_min_local = np.ma.min(x, axis=0)
-    x_min = comm.allreduce(x_min_local, op=min0_op)
+    x_min = comm_world.allreduce(x_min_local, op=min0_op)
     still_masked = np.ma.count_masked(x_min)
     if still_masked != 0:
         log.info('Reported x_min: ' + ', '.join([str(s) for s in x_min]))
@@ -258,7 +255,7 @@ def power(x, exp):
 
 def outer(x):
     x_outer_local = np.ma.dot(x.T, x)
-    out = comm.allreduce(x_outer_local)
+    out = comm_world.allreduce(x_outer_local)
     still_masked = np.ma.count_masked(out)
     if still_masked != 0:
         log.info('Reported out: ' + ', '.join([str(s) for s in out]))
@@ -281,7 +278,7 @@ def eigen_decomposition(x):
 
 
 def random_full_points(x, Napprox):
-    npernode = int(np.round(Napprox / chunks))
+    npernode = int(np.round(Napprox / size_world))
     npernode = min(npernode, len(x))  # Make sure the dataset is upper bound
 
     rinds = np.random.permutation(len(x))  # random choice of indices
@@ -300,7 +297,7 @@ def random_full_points(x, Napprox):
     # one chunk can have all of one or more covariates masked
     x_p_node = np.vstack(x_p_node) if len(x_p_node) else None
 
-    all_x_p_node = comm.allgather(x_p_node)
+    all_x_p_node = comm_world.allgather(x_p_node)
     # filter out the None chunks
     filter_all_x_p_node = [x for x in all_x_p_node if x is not None]
 

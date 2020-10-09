@@ -74,7 +74,7 @@ def main(config_file, partitions):
                                         covariate_crs=ls.geoio.get_image_crs(config),
                                         extents=target_extents)
     
-    ls.mpiops.comm.barrier()
+    ls.mpiops.comm_world.barrier()
 
     # User can provide their own 'query' targets for training shapemap, or we can
     # generate points.
@@ -100,7 +100,7 @@ def main(config_file, partitions):
                                                     config)
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, node=0)
-    if ls.mpiops.chunk_index == 0:
+    if ls.mpiops.leader_world:
         ls.targets.save_targets(targets_all, config.shiftmap_points, 'query')
         model = ls.models.LogisticClassifier(random_state=1)
         ls.models.apply_multiple_masked(model.fit, (x_all, targets_all.observations),
@@ -109,7 +109,7 @@ def main(config_file, partitions):
     else:
         model = None
 
-    model = ls.mpiops.comm.bcast(model, root=0)
+    model = ls.mpiops.comm_world.bcast(model, root=0)
 
     # The below is essentially duplicating the 'predict' command
     # should refactor to reuse it

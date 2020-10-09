@@ -199,7 +199,7 @@ def shapefile_prediction(config, model):
     
 def render_partition(model, subchunk, image_out, config):
     x, feature_names = _get_data(subchunk, config)
-    total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+    total_gb = mpiops.comm_world.allreduce(x.nbytes / 1e9)
     _logger.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     _logger.info("Predicting targets for {}.".format(alg))
@@ -233,7 +233,7 @@ def cluster_analysis(x, y, partition_no, config, feature_names):
              'partition {}'.format(partition_no))
     mode = 'w' if partition_no == 0 else 'a'
 
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         with open('cluster_contributions.csv', mode) as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
             if partition_no == 0:
@@ -283,7 +283,7 @@ def write_mean_and_sd(x, y, writer, config):
         delta_c_sum = mpiops.comm.allreduce(delta_c, op=mpiops.sum0_op)
         sd = np.sqrt(delta_c_sum/class_count)
 
-        if mpiops.chunk_index == 0:
+        if mpiops.leader_world:
             writer.writerow(['count-{}'.format(c+1)] + list(class_count))
             writer.writerow(['mean-{}'.format(c+1)] + list(class_mean))
             writer.writerow(['sd-{}'.format(c+1)] + list(sd))

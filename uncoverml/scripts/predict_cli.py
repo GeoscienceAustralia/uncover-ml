@@ -142,7 +142,7 @@ def main(config_file, partitions, mask, retain):
         image_out.close()
 
         if config.clustering and config.cluster_analysis:
-            if ls.mpiops.chunk_index == 0:
+            if ls.mpiops.leader_world:
                 ls.predict.final_cluster_analysis(config.n_classes,
                                                   config.n_subchunks)
 

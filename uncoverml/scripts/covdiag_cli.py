@@ -29,22 +29,22 @@ def main(path, csvfile, recursive):
             paths = mpiops.run_once(glob.glob, os.path.join(path, '*.tif'))
     else:
         paths = [path]
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         if not paths:
             print(f"No geotiffs found.")
         else:
             print(f"Found {len(paths)} geotiffs, retrieving information...")
-    this_chunk_paths = np.array_split(paths, mpiops.chunks)[mpiops.chunk_index]
+    this_chunk_paths = np.array_split(paths, mpiops.size_world)[mpiops.rank_world]
     for f in this_chunk_paths:
         diag = diagnostic(f)
         if diag is not None:
             diags.append(diag)
             print(f"Processed '{f}'")
 
-    diags = mpiops.comm.gather(diags, root=0)
-    mpiops.comm.barrier()
+    diags = mpiops.comm_world.gather(diags, root=0)
+    mpiops.comm_world.barrier()
 
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         diags = list(itertools.chain.from_iterable(diags))
 
         fieldnames = ['name', 'driver', 'crs', 'dtype', 'width', 

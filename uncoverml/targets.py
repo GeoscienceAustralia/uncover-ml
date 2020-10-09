@@ -84,7 +84,7 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
     Targets
         A collection of randomly generated targets.
     """
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         rnd = np.random.RandomState(seed)
         def _generate_points(lower, upper, limit):
             new_points = []
@@ -102,16 +102,16 @@ def generate_dummy_targets(bounds, label, n_points, field_keys=[], seed=1):
             fields = {}
         _logger.info("Generated %s dummy targets", len(lonlats))
         # Split for distribution
-        lonlats = np.array_split(lonlats, mpiops.chunks)
-        labels = np.array_split(labels, mpiops.chunks)
-        split_fields = {k: np.array_split(v, mpiops.chunks) for k, v in fields.items()}
-        fields = [{k: v[i] for k, v in split_fields.items()} for i in range(mpiops.chunks)]
+        lonlats = np.array_split(lonlats, mpiops.size_world)
+        labels = np.array_split(labels, mpiops.size_world)
+        split_fields = {k: np.array_split(v, mpiops.size_world) for k, v in fields.items()}
+        fields = [{k: v[i] for k, v in split_fields.items()} for i in range(mpiops.size_world)]
     else:
         lonlats, labels, fields = None, None, None
 
-    lonlats = mpiops.comm.scatter(lonlats, root=0)
-    labels = mpiops.comm.scatter(labels, root=0)
-    fields = mpiops.comm.scatter(fields, root=0)
+    lonlats = mpiops.comm_world.scatter(lonlats, root=0)
+    labels = mpiops.comm_world.scatter(labels, root=0)
+    fields = mpiops.comm_world.scatter(fields, root=0)
     
     return Targets(lonlats, labels, fields)
 
@@ -186,14 +186,14 @@ def gather_targets_main(targets, keep, node):
     observations = targets.observations[keep]
     positions = targets.positions[keep]
     if node is not None:
-        y = mpiops.comm.gather(observations, root=node)
-        p = mpiops.comm.gather(positions, root=node)
+        y = mpiops.comm_world.gather(observations, root=node)
+        p = mpiops.comm_world.gather(positions, root=node)
         d = {}
         keys = sorted(list(targets.fields.keys()))
         for k in keys:
-            d[k] = mpiops.comm.gather(targets.fields[k][keep], root=node)
+            d[k] = mpiops.comm_world.gather(targets.fields[k][keep], root=node)
             
-        if mpiops.chunk_index == node:
+        if mpiops.rank_world == node:
             y = np.ma.concatenate(y, axis=0)
             p = np.ma.concatenate(p, axis=0)
             for k in keys:
@@ -210,7 +210,7 @@ def gather_targets_main(targets, keep, node):
         keys = sorted(list(targets.fields.keys()))
         for k in keys:
             d[k] = np.ma.concatenate(
-                mpiops.comm.allgather(targets.fields[k][keep]), axis=0)
+                mpiops.comm_world.allgather(targets.fields[k][keep]), axis=0)
         result = Targets(p, y, othervals=d)
     return result
 

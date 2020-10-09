@@ -39,7 +39,7 @@ def local_learn_model(x_all, targets_all, config):
     :class:`~uncoverml.model.Model`
         A trained Model.
     """
-    mpiops.comm.barrier()
+    mpiops.comm_world.barrier()
     model = None
     if config.target_weight_property:
         weights = targets_all.fields[config.target_weight_property]
@@ -56,14 +56,14 @@ def local_learn_model(x_all, targets_all, config):
         # process and cache them in the model
         if config.multirandomforest:
             rf_dicts = model._randomforests
-            rf_dicts = mpiops.comm.gather(rf_dicts, root=0)
-            mpiops.comm.barrier()
-            if mpiops.chunk_index == 0:
+            rf_dicts = mpiops.comm_world.gather(rf_dicts, root=0)
+            mpiops.comm_world.barrier()
+            if mpiops.leader_world:
                 for rf in rf_dicts:
                     model._randomforests.update(rf)
     # Single-threaded models
     else:
-        if mpiops.chunk_index == 0:
+        if mpiops.leader_world:
             y = targets_all.observations
             model = all_modelmaps[config.algorithm](**config.algorithm_args)
             apply_multiple_masked(model.fit, (x_all, y), 
@@ -71,7 +71,7 @@ def local_learn_model(x_all, targets_all, config):
                                   sample_weight=weights)
 
     # Save transformed targets for diagnostics
-    if mpiops.chunk_index == 0 and hasattr(model, 'target_transform'):
+    if mpiops.leader_world and hasattr(model, 'target_transform'):
         hdr = 'nontransformed,transformed'
         y = targets_all.observations
         y_t = model.target_transform.transform(y)

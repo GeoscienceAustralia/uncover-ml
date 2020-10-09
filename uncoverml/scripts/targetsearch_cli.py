@@ -106,7 +106,7 @@ def main(config_file, partitions):
     x_all = ls.features.gather_features(features[keep], node=0)
     targets_all = ls.targets.gather_targets(targets, keep, node=0)
 
-    if ls.mpiops.chunk_index == 0:
+    if ls.mpiops.leader_world:
         # Write out targets for debug purpses
         ls.targets.save_targets(targets_all, config.targetsearch_generated_points,
                                 obs_filter=GEN_TARGETS_LABEL)

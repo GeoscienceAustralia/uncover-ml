@@ -94,8 +94,8 @@ def features_from_shapefile(feature_sets, mask=None):
 
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
-    equiv_chunks = n_subchunks * mpiops.chunks
-    equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
+    equiv_chunks = n_subchunks * mpiops.size_world
+    equiv_chunk_index = mpiops.size_world * subchunk_index + mpiops.rank_world
     image = Image(image_source, equiv_chunk_index,
                   equiv_chunks, patchsize)
     x = patch.all_patches(image, patchsize)
@@ -127,7 +127,7 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
     each node gets its own share of the targets, so all nodes
     will always have targets
     """
-    equiv_chunks = n_subchunks * mpiops.chunks
+    equiv_chunks = n_subchunks * mpiops.size_world
     x_all = []
     for i in range(equiv_chunks):
         x = _extract_from_chunk(image_source, targets, i, equiv_chunks,
@@ -164,7 +164,7 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         for k, v in zip(names, np.concatenate(feature)):
             feature_vec[k] = v
         config.algorithm_args['feature_type'] = feature_vec
-        if mpiops.chunk_index == 0 \
+        if mpiops.leader_world \
                 and config.pk_featurevec and not os.path.exists(config.pk_featurevec):
             _logger.info('Saving featurevec for reuse')
             pickle.dump(feature_vec, open(config.pk_featurevec, 'wb'))
@@ -231,8 +231,8 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
 
     x = np.ma.concatenate(transformed_vectors, axis=1)
     x_all = gather_features(x, node=0)
-    all_xy = mpiops.comm.gather(targets.positions, root=0)
-    all_targets = mpiops.comm.gather(targets.observations, root=0)
+    all_xy = mpiops.comm_world.gather(targets.positions, root=0)
+    all_targets = mpiops.comm_world.gather(targets.observations, root=0)
 
     if config.fields_to_write_to_csv:
         if config.target_search:
@@ -240,9 +240,9 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
                 "Can't write 'write_to_csv' columns with target search feature at this time.")
         field_values = []
         for f in config.fields_to_write_to_csv:
-            field_values.append(mpiops.comm.gather(targets.fields[f]))
+            field_values.append(mpiops.comm_world.gather(targets.fields[f]))
 
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         data = [x_all.data]
         if config.fields_to_write_to_csv:
             for f, v  in zip(config.fields_to_write_to_csv, field_values):
@@ -287,8 +287,8 @@ def cull_all_null_rows(feature_sets):
 
 def gather_features(x, node=None):
     if node is not None:
-        x = mpiops.comm.gather(x, root=node)
-        if mpiops.chunk_index == node:
+        x = mpiops.comm_world.gather(x, root=node)
+        if mpiops.rank_world == node:
             x_all = np.ma.vstack(x)
         else:
             x_all = None

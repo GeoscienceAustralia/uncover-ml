@@ -9,9 +9,9 @@ from uncoverml import mpiops
 
 
 def test_helloworld(mpisync):
-    comm = mpiops.comm
-    ranks = comm.allgather(mpiops.chunk_index)
-    assert len(ranks) == mpiops.chunks
+    comm = mpiops.comm_world
+    ranks = comm.allgather(mpiops.rank_world)
+    assert len(ranks) == mpiops.size_world
 
 
 @pytest.fixture(params=['none', 'centre', 'standardise', 'whiten'])
@@ -37,11 +37,11 @@ def feature_opt(request):
 
 @pytest.fixture
 def masked_array():
-    np.random.seed(mpiops.chunk_index)
+    np.random.seed(mpiops.rank_world)
     x_data = np.random.rand(10, 2) * 5 + 10
     x_mask = np.random.choice([False, False, True], size=(10, 2))
     x = np.ma.array(data=x_data, mask=x_mask)
-    x_all = np.ma.concatenate(mpiops.comm.allgather(x), axis=0)
+    x_all = np.ma.concatenate(mpiops.comm_world.allgather(x), axis=0)
     return x, x_all
 
 

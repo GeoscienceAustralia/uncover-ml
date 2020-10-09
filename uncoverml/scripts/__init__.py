@@ -168,9 +168,8 @@ def total_gb():
         total_usage = 0.0
     else:
         # given in KB so convert
-        my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
-        # total_usage = mpiops.comm.reduce(my_usage, root=0)
-        total_usage = uncoverml.mpiops.comm.allreduce(my_usage)
+        s = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024 ** 2)
+        total_usage = uncoverml.mpiops.comm_world.allreduce(s)
     return total_usage
 
 

@@ -48,7 +48,7 @@ def main(verbosity, geotiff, height, absorption, forward, outputdir, noise,
         log.info("Globbing directory input for tif files")
         geotiff = os.path.join(geotiff, "*.tif")
     files = glob.glob(geotiff)
-    my_files = np.array_split(files, mpiops.chunks)[mpiops.chunk_index]
+    my_files = np.array_split(files, mpiops.size_world)[mpiops.rank_world]
     if len(my_files) == 0:
         log.critical("No files found. Exiting")
         sys.exit()

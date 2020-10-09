@@ -38,7 +38,6 @@ def main(config_file, partitions):
     training_data, oos_data = _load_data(config, partitions)
     targets_all = training_data.targets_all
     x_all = training_data.x_all
-
     if config.cross_validate:
         crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
         if crossval_results:
@@ -66,11 +65,11 @@ def main(config_file, partitions):
     if oos_data is not None:
         ls.geoio.deallocate_shared_training_data(oos_data)
 
-    _logger.info("Finished! Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
+    _logger.info("Finished! Peak memory usage = {:.4f} GB".format(ls.scripts.total_gb()))
 
 def _load_data(config, partitions):
     if config.pk_load:
-        if ls.mpiops.chunk_index == 0:
+        if ls.mpiops.leader_world:
             x_all = pickle.load(open(config.pk_covariates, 'rb'))
             targets_all = pickle.load(open(config.pk_targets, 'rb'))
             if config.cubist or config.multicubist:
@@ -122,7 +121,7 @@ def _load_data(config, partitions):
         _logger.info(f":mpi:Assigned {targets.observations.shape[0]} targets")
 
         if config.target_search:
-            if ls.mpiops.chunk_index == 0:
+            if ls.mpiops.leader_world:
                 # Include targets and covariates from target search
                 with open(config.targetsearch_result_data, 'rb') as f:
                     ts_t = pickle.load(f)
@@ -205,7 +204,7 @@ def _load_data(config, partitions):
             oos_targets = ls.targets.gather_targets(oos_targets, keep, node=0)
             oos_features = ls.features.gather_features(oos_features[keep], node=0)
             oos_data = ls.geoio.create_shared_training_data(oos_targets, oos_features)
-            if ls.mpiops.chunk_index == 0 and config.oos_percentage:
+            if ls.mpiops.leader_world and config.oos_percentage:
                 _logger.info(f"{oos_targets.observations.shape[0]} targets withheld for "
                              f"out-of-sample validation. Saved to {config.oos_targets_file}")
                 oos_targets.to_geodataframe().to_file(config.oos_targets_file)
@@ -213,12 +212,26 @@ def _load_data(config, partitions):
             oos_data = None
 
         # Pickle data if requested.
-        if ls.mpiops.chunk_index == 0:
+        if ls.mpiops.leader_world:
             if config.pk_covariates and not os.path.exists(config.pk_covariates):
                 pickle.dump(x_all, open(config.pk_covariates, 'wb'))
             if config.pk_targets and not os.path.exists(config.pk_targets):
                 pickle.dump(targets_all, open(config.pk_targets, 'wb'))
+
+        # Send targets/covariates to local leaders so they can share in their respective nodes
+        if ls.mpiops.leader_world:
+            for v in ls.mpiops.node_map.values():
+                if v != 0:
+                    ls.mpiops.comm_world.send(targets_all, dest=v, tag=v + 1)
+                    ls.mpiops.comm_world.send(x_all, dest=v, tag=v + 2)
+        elif ls.mpiops.leader_local:
+            targets_all = ls.mpiops.comm_world.recv(
+                    source=ls.mpiops.leader_world, tag=ls.mpiops.rank_world + 1)
+            x_all = ls.mpiops.comm_world.recv(
+                    source=ls.mpiops.leader_world, tag=ls.mpiops.rank_world + 2)
  
+        ls.mpiops.comm_world.barrier()
+
     return ls.geoio.create_shared_training_data(targets_all, x_all), oos_data
 
 

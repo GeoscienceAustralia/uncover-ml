@@ -198,7 +198,7 @@ def crop_covariates(config, outdir=None):
             return os.path.join(outdir, os.path.basename(fname))
 
     for s in config.feature_sets:
-        proc_files = np.array_split(s.files, mpiops.chunks)[mpiops.chunk_index]
+        proc_files = np.array_split(s.files, mpiops.size_world)[mpiops.rank_world]
         new_files = [crop_tif(f, config.extents, 
                               config.extents_are_pixel_coordinates, _new_fname(f)) 
                      for f in proc_files]
@@ -217,7 +217,7 @@ def crop_mask(config, outdir=None):
     else:
         def _new_fname(fname):
             return os.path.join(outdir, os.path.basename(fname))
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         new_mask = crop_tif(config.mask, config.extents, config.extents_are_pixel_coordinates, 
                             _new_fname(config.mask))
         config.mask = new_mask
@@ -308,7 +308,7 @@ def write_shapefile_prediction(pred, pred_tags, positions, config):
     _logger.info("Prediction complete, writing shapefile...")
     pred = mpiops.comm.gather(pred, root=0)
     positions = mpiops.comm.gather(positions, root=0)
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         # Concatenate predicitions and positions 
         pred = np.vstack(pred)
         positions = np.vstack(positions)
@@ -420,7 +420,7 @@ def load_targets(shapefile, targetfield=None, covariate_crs=None, extents=None):
     data, they are also in this order. This ordering is what keeps
     the target and feature arrays synced.
     """
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         lonlat, vals, othervals = load_shapefile(shapefile, targetfield, covariate_crs, extents)
         # Sort by Y,X 
         ordind = np.lexsort(lonlat.T)
@@ -438,17 +438,17 @@ def distribute_targets(positions, observations, fields):
     """
     Distributes a target object across all nodes
     """
-    if mpiops.chunk_index == 0:
-        positions = np.array_split(positions, mpiops.chunks)
-        observations = np.array_split(observations, mpiops.chunks)
-        split_fields = {k: np.array_split(v, mpiops.chunks)
+    if mpiops.leader_world:
+        positions = np.array_split(positions, mpiops.size_world)
+        observations = np.array_split(observations, mpiops.size_world)
+        split_fields = {k: np.array_split(v, mpiops.size_world)
                         for k, v in fields.items()}
         fields = [{k: v[i] for k, v in split_fields.items()}
-                     for i in range(mpiops.chunks)]
+                     for i in range(mpiops.size_world)]
 
-    positions = mpiops.comm.scatter(positions, root=0)
-    observations = mpiops.comm.scatter(observations, root=0)
-    fields = mpiops.comm.scatter(fields, root=0)
+    positions = mpiops.comm_world.scatter(positions, root=0)
+    observations = mpiops.comm_world.scatter(observations, root=0)
+    fields = mpiops.comm_world.scatter(fields, root=0)
     loaded_targets = targets.Targets(positions, observations, othervals=fields)
     return loaded_targets
 
@@ -500,7 +500,7 @@ class ImageWriter:
         self.independent = independent  # mpi control
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
-                           mpiops.chunks * self.n_subchunks)]
+                           mpiops.size_world * self.n_subchunks)]
 
         # file tags don't have spaces
         if band_tags:
@@ -517,7 +517,7 @@ class ImageWriter:
         files = []
         file_names = []
 
-        if mpiops.chunk_index == 0:
+        if mpiops.leader_world:
             for band in range(self.outbands):
                 output_filename = self.outpath.format(file_tags[band])
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
@@ -535,14 +535,14 @@ class ImageWriter:
         if independent:
             self.files = files
         else:
-            if mpiops.chunk_index == 0:
+            if mpiops.leader_world:
                 # create a file for each band
                 self.files = files
                 self.file_names = file_names
             else:
                 self.file_names = []
 
-            self.file_names = mpiops.comm.bcast(self.file_names, root=0)
+            self.file_names = mpiops.comm_world.bcast(self.file_names, root=0)
 
     def write(self, x, subchunk_index):
         """
@@ -561,7 +561,7 @@ class ImageWriter:
         if x.mask is not False:
             x.data[x.mask] = self.nodata_value
 
-        mpiops.comm.barrier()
+        mpiops.comm_world.barrier()
         _logger.info("Writing partition to output file")
 
         if self.independent:
@@ -570,14 +570,14 @@ class ImageWriter:
             for i, f in enumerate(self.files):
                 f.write(data[i:i+1])
         else:
-            if mpiops.chunk_index != 0:
-                mpiops.comm.send(image, dest=0)
+            if not mpiops.leader_world:
+                mpiops.comm_world.send(image, dest=0)
             else:
-                for node in range(mpiops.chunks):
-                    node = mpiops.chunks - node - 1
-                    subindex = mpiops.chunks*subchunk_index + node
+                for node in range(mpiops.size_world):
+                    node = mpiops.size_world - node - 1
+                    subindex = mpiops.size_world * subchunk_index + node
                     ystart = self.sub_starts[subindex]
-                    data = mpiops.comm.recv(source=node) \
+                    data = mpiops.comm_world.recv(source=node) \
                         if node != 0 else image
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     yend = ystart + data.shape[1]  # this is Y
@@ -586,17 +586,17 @@ class ImageWriter:
                     for i, f in enumerate(self.files):
                         f.write(data[i:i+1], window=window)
 
-        mpiops.comm.barrier()
+        mpiops.comm_world.barrier()
 
     def close(self):  # we can explicitly close rasters using this
-        if mpiops.chunk_index == 0:
+        if mpiops.leader_world:
             for f in self.files:
                 f.close()
-        mpiops.comm.barrier()
+        mpiops.comm_world.barrier()
 
     def output_thumbnails(self, ratio=10):
         this_chunk_files = np.array_split(self.file_names,
-                                          mpiops.chunks)[mpiops.chunk_index]
+                                          mpiops.size_world)[mpiops.rank_world]
         for f in this_chunk_files:
             thumbnails = os.path.splitext(f)
             thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
@@ -633,8 +633,8 @@ def _iterate_sources(f, config):
                 #          " Valid_pixel_count: {}".format(count))
                 #     raise ValueError(s)
                 missing_percent = missing_percentage(x)
-                t_missing = mpiops.comm.allreduce(
-                    missing_percent) / mpiops.chunks
+                t_missing = mpiops.comm_world.allreduce(
+                    missing_percent) / mpiops.size_world
                 _logger.info("{}: {}px {:3.2f}% missing".format(
                     name, count, t_missing))
             extracted_chunks[name] = x
@@ -805,20 +805,22 @@ SharedTrainingData = namedtuple(
         'TrainingData', ['targets_all', 'x_all', 'obs_win', 'pos_win', 'field_wins', 'x_win'])
 
 def create_shared_training_data(targets_all, x_all):
-    x_all, x_win = mpiops.create_shared_array(x_all)
+    x_all, x_win = mpiops.create_shared_array(mpiops.comm_local, x_all, 0)
 
     if targets_all is None:
         targets_all = targets.Targets(None, None, None)
-    targets_all.observations, obs_win = mpiops.create_shared_array(targets_all.observations)
-    targets_all.positions, pos_win = mpiops.create_shared_array(targets_all.positions)
+    targets_all.observations, obs_win = mpiops.create_shared_array(
+            mpiops.comm_local, targets_all.observations, 0)
+    targets_all.positions, pos_win = mpiops.create_shared_array(
+            mpiops.comm_local, targets_all.positions, 0)
 
-    field_keys = list(targets_all.fields.keys()) if mpiops.chunk_index == 0 else None
-    field_keys = mpiops.comm.bcast(field_keys, root=0)
+    field_keys = list(targets_all.fields.keys()) if mpiops.leader_world else None
+    field_keys = mpiops.comm_world.bcast(field_keys, root=0)
 
     field_wins = []
     for k in field_keys:
-        v = targets_all.fields[k] if mpiops.chunk_index == 0 else None
-        shared_v, field_win = mpiops.create_shared_array(v)
+        v = targets_all.fields[k] if mpiops.leader_local else None
+        shared_v, field_win = mpiops.create_shared_array(mpiops.comm_local, v, 0)
         targets_all.fields[k] = shared_v
         field_wins.append(field_win)
 

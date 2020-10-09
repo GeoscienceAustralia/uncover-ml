@@ -28,7 +28,7 @@ class MPIStreamHandler(logging.StreamHandler):
         if isinstance(record.msg, str) and record.msg.startswith(':mpi:'):
             record.msg = record.msg.replace(':mpi:', '')
             super().emit(record)
-        elif mpiops.chunk_index == 0:
+        elif mpiops.leader_world:
             super().emit(record)
 
 class ElapsedFormatter():
@@ -38,7 +38,7 @@ class ElapsedFormatter():
         name = record.name
         t = int(round(record.relativeCreated/1000.0))
         msg = record.getMessage()
-        logstr = "+{}s {} {} [P{}]: {}".format(t, lvl, name, mpiops.chunk_index, msg)
+        logstr = "+{}s {} {} [P{}]: {}".format(t, lvl, name, mpiops.rank_world, msg)
         return logstr
 
 
@@ -57,7 +57,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     Add MPI index to exception traceback.
     """
     exc_msg = traceback.format_exception(exc_type, exc_value, exc_traceback)
-    exc_msg.insert(0, 'Uncaught exception on processor {}\n'.format(mpiops.chunk_index))
+    exc_msg.insert(0, 'Uncaught exception on processor {}\n'.format(mpiops.rank_world))
     exc_msg = "".join(exc_msg)
     print(exc_msg, file=sys.stderr)
 

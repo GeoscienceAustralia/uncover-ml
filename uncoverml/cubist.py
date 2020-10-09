@@ -138,7 +138,7 @@ class Cubist:
         # Setting up the user details
         self._trained = False
         self.models = []
-        self._filename = name + '_' + str(mpiops.chunk_index) + '_' + \
+        self._filename = name + '_' + str(mpiops.rank_world) + '_' + \
             str(time.time()) + str(random.random())
         # Setting the user options
         self.print_output = print_output
@@ -469,20 +469,20 @@ class MultiCubist:
                     "training.")
 
         # set a different random seed for each thread
-        np.random.seed(mpiops.chunk_index + np.random.randint(0, 10000))
+        np.random.seed(mpiops.rank_world + np.random.randint(0, 10000))
 
         if self.parallel:  # during training
             process_trees = np.array_split(range(self.trees),
-                                           mpiops.chunks)[mpiops.chunk_index]
+                                           mpiops.size_world)[mpiops.rank_world]
             temp_ = 'temp'
             temp_calc_usage = self.calc_usage
         else:  # during x val
             process_trees = range(self.trees)
-            temp_ = 'temp_x_{}'.format(mpiops.chunk_index)
+            temp_ = 'temp_x_{}'.format(mpiops.rank_world)
             temp_calc_usage = False  # dont calc usage stats for x-val
 
         for t in process_trees:
-            _logger.info(':mpi:training tree {} using process {}'.format(t, mpiops.chunk_index))
+            _logger.info(':mpi:training tree {} using process {}'.format(t, mpiops.rank_world))
 
             cube = Cubist(name=join(self.temp_dir, temp_ + '_{}'.format(t)),
                           print_output=self.print_output,
@@ -505,14 +505,14 @@ class MultiCubist:
                             'cube_{}.pk'.format(t))
             else:  # used when parallel is false, i.e., during x-val
                 pk_f = join(self.temp_dir,
-                            'cube_x_{}_p_{}.pk'.format(t, mpiops.chunk_index))
+                            'cube_x_{}_p_{}.pk'.format(t, mpiops.rank_world))
             with open(pk_f, 'wb') as fp:
                 pickle.dump(cube, fp)
 
         if self.parallel:
-            mpiops.comm.barrier()
+            mpiops.comm_world.barrier()
             # calc final usage stats
-            if self.calc_usage and mpiops.chunk_index == 0:
+            if self.calc_usage and mpiops.rank_world == 0:
                 self.calculate_usage()
 
         # Mark that we are now trained
@@ -566,7 +566,7 @@ class MultiCubist:
                             'cube_{}.pk'.format(i))
             else:  # used when parallel is false, i.e., during x-val
                 pk_f = join(self.temp_dir,
-                            'cube_x_{}_p_{}.pk'.format(i, mpiops.chunk_index))
+                            'cube_x_{}_p_{}.pk'.format(i, mpiops.rank_world))
             with open(pk_f, 'rb') as fp:
                 c = pickle.load(fp)
                 for m, model in enumerate(c.models):

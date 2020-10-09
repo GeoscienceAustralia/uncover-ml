@@ -333,23 +333,23 @@ def permutation_importance(model, x_all, targets_all, config):
 def out_of_sample_validation(model, targets, features, config):
     _logger.info(
         f"Performing out-of-sample validation with {targets.observations.shape[0]} targets...")
-    mpiops.comm.barrier()
-    if mpiops.chunk_index != 0:
+    mpiops.comm_world.barrier()
+    if mpiops.leader_world:
         with open(config.model_file, 'rb') as f:
             model, _, _ = pickle.load(f)
-    model = mpiops.comm.bcast(model, root=0)
+    model = mpiops.comm_world.bcast(model, root=0)
     classification = hasattr(model, 'predict_proba')
-    pos = np.array_split(targets.positions, mpiops.chunks)[mpiops.chunk_index]
+    pos = np.array_split(targets.positions, mpiops.size_world)[mpiops.rank_world]
     fields = {}
     for k, v in targets.fields.items():
-        fields[k] = np.array_split(v, mpiops.chunks)[mpiops.chunk_index]
-    features = np.array_split(features, mpiops.chunks)[mpiops.chunk_index]
+        fields[k] = np.array_split(v, mpiops.size_world)[mpiops.rank_world]
+    features = np.array_split(features, mpiops.size_world)[mpiops.rank_world]
     pred = predict.predict(features, model,
                            fields=fields,
                            lon_lat=pos)
 
-    pred = mpiops.comm.gather(pred, root=0)
-    if mpiops.chunk_index == 0:
+    pred = mpiops.comm_world.gather(pred, root=0)
+    if mpiops.leader_world:
         pred = np.concatenate(pred)
         if classification:
             hard, p = pred[:, 0], pred[:, 1:]
@@ -431,6 +431,19 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
         # is created, so share the memory now so we can parallel 
         # validate.
         if config.parallel_validate:
+            # Send targets/covariates to local leaders so they can share in their respective nodes
+            if mpiops.leader_world:
+                for v in mpiops.node_map.values():
+                    if v != 0:
+                        mpiops.comm_world.send(targets_all, dest=v, tag=v + 1)
+                        mpiops.comm_world.send(x_all, dest=v, tag=v + 2)
+            elif mpiops.leader_local:
+                targets_all = ls.mpiops.comm_world.recv(
+                        source=mpiops.leader_world, tag=mpiops.rank_world + 1)
+                x_all = mpiops.comm_world.recv(
+                        source=ls.mpiops.leader_world, tag=mpiops.rank_world + 2)
+                mpiops.comm_world.barrier()
+
             training_data = geoio.create_shared_training_data(targets_all, x_all)
             targets_all = training_data.targets_all
             x_all = training_data.x_all
@@ -441,7 +454,7 @@ def local_rank_features(image_chunk_sets, transform_sets, targets, config):
         geoio.deallocate_shared_training_data(training_data)
     
     # Get the different types of score from one of the outputs
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         measures = list(next(feature_scores.values().__iter__()).scores.keys())
         features = sorted(feature_scores.keys())
         scores = np.empty((len(measures), len(features)))
@@ -486,7 +499,7 @@ def local_crossval(x_all, targets_all, config):
     parallel_model = config.multicubist or config.multirandomforest or config.bootstrap
     if config.bootstrap and config.parallel_validate:
         config.alrgorithm_args['parallel'] = False
-    elif not config.bootstrap and not config.parallel_validate and mpiops.chunk_index != 0:
+    elif not config.bootstrap and not config.parallel_validate and not mpiops.leader_world:
         return
 
     if config.multicubist or config.multirandomforest:
@@ -503,7 +516,7 @@ def local_crossval(x_all, targets_all, config):
     fold_list = np.arange(config.folds)
     if config.parallel_validate:
         fold_node = \
-            np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+            np.array_split(fold_list, mpiops.size_world)[mpiops.rank_world]
     else:
         fold_node = fold_list
 
@@ -515,7 +528,7 @@ def local_crossval(x_all, targets_all, config):
     # Train and score on each fold
     for fold in fold_node:
         _logger.info(":mpi:Training fold {} of {}".format(
-            fold + 1, config.folds, mpiops.chunk_index))
+            fold + 1, config.folds, mpiops.rank_world))
 
         train_mask = cv_indices != fold
         test_mask = ~ train_mask
@@ -540,7 +553,7 @@ def local_crossval(x_all, targets_all, config):
                               sample_weight=y_k_weight)
 
         # Testing
-        if not config.parallel_validate and mpiops.chunk_index != 0:
+        if not config.parallel_validate and not mpiops.leader_world:
             continue
         else:
             y_k_pred = predict.predict(x_all[test_mask], model,
@@ -567,15 +580,15 @@ def local_crossval(x_all, targets_all, config):
             pos[fold] = lon_lat_test
 
     if config.parallel_validate:
-        y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
-        y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
-        pos = _join_dicts(mpiops.comm.gather(pos, root=0))
-        scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
+        y_pred = _join_dicts(mpiops.comm_world.gather(y_pred, root=0))
+        y_true = _join_dicts(mpiops.comm_world.gather(y_true, root=0))
+        pos = _join_dicts(mpiops.comm_world.gather(pos, root=0))
+        scores = _join_dicts(mpiops.comm_world.gather(fold_scores, root=0))
     else:
         scores = fold_scores
 
     result = None
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         pos = np.concatenate([pos[i] for i in range(config.folds)])

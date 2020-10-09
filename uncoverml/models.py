@@ -538,12 +538,12 @@ class RandomForestRegressorMulti():
     def fit(self, x, y, *args, **kwargs):
         if self.parallel:
             process_rfs = np.array_split(range(self.forests),
-                                         mpiops.chunks)[mpiops.chunk_index]
+                                         mpiops.size_world)[mpiops.rank_world]
         else:
             process_rfs = range(self.forests)
 
         for t in process_rfs:
-            _logger.info(':mpi:training forest {} using process {}'.format(t, mpiops.chunk_index))
+            _logger.info(':mpi:training forest {} using process {}'.format(t, mpiops.rank_world))
 
             np.random.seed(self.random_state + t)
 
@@ -555,9 +555,9 @@ class RandomForestRegressorMulti():
             if self.parallel:  # used in training
                 self._randomforests['rf_model_{}'.format(t)] = rf
             else:  # used when parallel is false, i.e., during x-val
-                self._randomforests['rf_model_{}_{}'.format(t, mpiops.chunk_index)] = rf
+                self._randomforests['rf_model_{}_{}'.format(t, mpiops.rank_world)] = rf
         if self.parallel:
-            mpiops.comm.barrier()
+            mpiops.comm_world.barrier()
         # Mark that we are now trained
         self._trained = True
 
@@ -573,7 +573,7 @@ class RandomForestRegressorMulti():
             if self.parallel:  # used in training
                 f = self._randomforests['rf_model_{}'.format(t)]
             else:  # used when parallel is false, i.e., during x-val
-                f = self._randomforests['rf_model_{}_{}'.format(t, mpiops.chunk_index)]
+                f = self._randomforests['rf_model_{}_{}'.format(t, mpiops.rank_world)]
             for m, dt in enumerate(f.estimators_):
                 y_pred[:, t * self.n_estimators + m] = dt.predict(x)
 
@@ -646,20 +646,20 @@ def bootstrap_model(model):
             _logger.info('Training %s bootstrapped models', self.n_models)
 
             if self.parallel:
-                models = np.array_split(self.models, mpiops.chunks)[mpiops.chunk_index]
+                models = np.array_split(self.models, mpiops.size_world)[mpiops.rank_world]
             else:
                 models = self.models
 
             for i, m in enumerate(models):
-                inds = bootstrap_data_indicies(len(y), random_state=mpiops.chunk_index + 1 + i)
+                inds = bootstrap_data_indicies(len(y), random_state=mpiops.rank_world + 1 + i)
                 bsx = X[inds]
                 bsy = y[inds]
                 m.fit(bsx, bsy)
                 _logger.info(':mpi:Trained model %s of %s', i + 1, len(models))
 
             if self.parallel:
-                models = mpiops.comm.gather(models, root=0)
-                if mpiops.chunk_index == 0:
+                models = mpiops.comm_world.gather(models, root=0)
+                if mpiops.leader_world:
                     self.models = list(chain.from_iterable(models))
 
 

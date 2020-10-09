@@ -199,7 +199,7 @@ def weighted_starting_candidates(X, k, l):
     """
     # sample uniformly 1 point from X
     C = None
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         idx = np.random.choice(X.shape[0])
         C = [X[idx]]
     C = mpiops.comm.bcast(C, root=0)
@@ -301,7 +301,7 @@ def centroid(X, weights=None):
         local_sum = np.sum(X, axis=0)
     full_count = mpiops.comm.reduce(local_count, op=mpiops.MPI.SUM, root=0)
     full_sum = mpiops.comm.reduce(local_sum, op=sum0_op, root=0)
-    if mpiops.chunk_index == 0:
+    if mpiops.leader_world:
         centroid = full_sum / float(full_count)
     centroid = mpiops.comm.bcast(centroid, root=0)
     return centroid
@@ -465,7 +465,7 @@ def initialise_centres(X, k, l, training_data=None, max_iterations=1000):
     log.info("Initialising K-means centres from samples and training data")
     w, C = weighted_starting_candidates(X, k, l)
     Ck_init_indices = (np.random.choice(C.shape[0], size=k, replace=False)
-                       if mpiops.chunk_index == 0 else None)
+                       if mpiops.leader_world else None)
     Ck_init_indices = mpiops.comm.bcast(Ck_init_indices, root=0)
     Ck_init = C[Ck_init_indices]
     log.info("Running K-means on candidate samples")

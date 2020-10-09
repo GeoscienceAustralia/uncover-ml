@@ -8,10 +8,9 @@ import os.path
 import click as cl
 import simplekml
 from PIL import Image
-from mpi4py import MPI
 
 from uncoverml import geoio
-
+from uncoverml import mpiops
 
 def main(tiff, outfile, overlayname):
     """
@@ -19,12 +18,8 @@ def main(tiff, outfile, overlayname):
     Map. This also constructs a JPEG of the Geotiff, as it is required for the
     KMZ.
     """
-
-    # MPI globals
-    comm = MPI.COMM_WORLD
-    chunk_index = comm.Get_rank()
     # This runs on the root node only
-    if chunk_index != 0:
+    if not mpiops.leader_world:
         return
 
     # Get tiff info
