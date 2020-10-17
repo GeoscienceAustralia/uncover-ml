@@ -108,7 +108,7 @@ Fixed
 - Multirandomforest and multicubist 'temp' files. Training these models generates files which
   are required for making predictions using the model. These were previously dumped in working
   directory in a 'results' folder. These files aren't temporary and need to passed with the model.
-  To make models portable these are longer saved as files but are stored in the model object 
+  To make models portable these are no longer saved as files but are stored in the model object 
   itself.
 
 Changed
