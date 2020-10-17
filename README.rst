@@ -35,4 +35,4 @@ Bugs & Feedback
 ---------------
 
 For bugs, questions and discussions, please use 
-`Github Issues <https://github.com/GeoscienceAustralia/uncover/issues>`_.
+`Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_.
