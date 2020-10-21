@@ -530,7 +530,7 @@ Classifiers
 
 Label encoding is performed implictly on UncoverML classifiers.
 
-Logistic Classififer
+Logistic Classifier
 ~~~~~~~~~~~~~~~~~~~~
 
 **Config:**
