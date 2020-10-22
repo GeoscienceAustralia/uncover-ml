@@ -506,7 +506,7 @@ RBF Interpolator
 
     algorithm: rbf
 
-**Documentation and paramters:**
+**Documentation and parameters:**
 
 - `Scipy <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.Rbf.html>`_
 - :class:`uncoverml.interpolate.SKLearnRbf`
@@ -528,7 +528,7 @@ CT Interpolator
 Classifiers
 -----------
 
-Label encoding is performed implictly on UncoverML classifiers.
+Label encoding is performed implicitly on UncoverML classifiers.
 
 Logistic Classifier
 ~~~~~~~~~~~~~~~~~~~~
