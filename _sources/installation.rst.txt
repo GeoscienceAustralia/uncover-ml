@@ -218,8 +218,9 @@ Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/messa
 and install.
 
 You need to install the ``.msi`` and ``.exe`` files.  
-Also, add to your ``PATH`` environment variable the install location, 
-for example: ``C:\\Program Files (x86)\\Microsoft SDKs\\MPI``.
+Also, add to your ``Path`` environment variable the SDK install location
+(by default: ``C:\Program Files (x86)\Microsoft SDKs\MPI``).
+Search online for "add Windows 10 Path variable" if unsure how to do this.
 
 .. note:: 
     

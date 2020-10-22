@@ -20,7 +20,6 @@ uncoverml.optimise.scorers module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

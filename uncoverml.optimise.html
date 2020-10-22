@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="uncoverml.scripts package" href="uncoverml.scripts.html" />
@@ -51,7 +52,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> UncoverML
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> UncoverML
           
 
           
@@ -78,6 +79,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -135,6 +137,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -173,7 +176,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="modules.html">uncoverml</a> &raquo;</li>
         
@@ -220,61 +223,61 @@ defined by <a class="reference external" href="https://scikit-learn.org/stable/m
 </div>
 <p># TODO: refactor all models to have an interface compatible with GCV
 # and consolidate to a single module.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.Huber">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">Huber</code><span class="sig-paren">(</span><em class="sig-param">epsilon=1.35</em>, <em class="sig-param">max_iter=100</em>, <em class="sig-param">alpha=0.0001</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">fit_intercept=True</em>, <em class="sig-param">tol=1e-05</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.Huber" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">Huber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">epsilon</span><span class="o">=</span><span class="default_value">1.35</span></em>, <em class="sig-param"><span class="n">max_iter</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fit_intercept</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tol</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.Huber" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.linear_model._huber.HuberRegressor</span></code></p>
 <p>Robust HuberRegressor</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformMixin">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformMixin</code><a class="headerlink" href="#uncoverml.optimise.models.TransformMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
+<dl class="py method">
 <dt id="uncoverml.optimise.models.TransformMixin.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">y</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformMixin.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformMixin.fit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="uncoverml.optimise.models.TransformMixin.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformMixin.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformMixin.predict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformPredictDistMixin">
 <em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformPredictDistMixin</code><a class="headerlink" href="#uncoverml.optimise.models.TransformPredictDistMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a></p>
-<dl class="method">
+<dl class="py method">
 <dt id="uncoverml.optimise.models.TransformPredictDistMixin.predict_dist">
-<code class="sig-name descname">predict_dist</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">interval=0.95</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformPredictDistMixin.predict_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">0.95</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformPredictDistMixin.predict_dist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedElasticNet">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedElasticNet</code><span class="sig-paren">(</span><em class="sig-param">alpha=1.0</em>, <em class="sig-param">l1_ratio=0.5</em>, <em class="sig-param">fit_intercept=True</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">precompute=False</em>, <em class="sig-param">max_iter=1000</em>, <em class="sig-param">copy_X=True</em>, <em class="sig-param">tol=0.0001</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">positive=False</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">selection='cyclic'</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedElasticNet" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedElasticNet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">l1_ratio</span><span class="o">=</span><span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">fit_intercept</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">normalize</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">precompute</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">max_iter</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">copy_X</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tol</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">positive</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">selection</span><span class="o">=</span><span class="default_value">'cyclic'</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedElasticNet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.linear_model._coordinate_descent.ElasticNet</span></code></p>
 <p>Linear regression with combined L1 and L2 priors as regularizer.
 Suitable for small learning jobs.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedForestRegressor">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedForestRegressor</code><span class="sig-paren">(</span><em class="sig-param">target_transform='identity'</em>, <em class="sig-param">n_estimators=10</em>, <em class="sig-param">criterion='mse'</em>, <em class="sig-param">max_depth=None</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_features='auto'</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">min_impurity_split=1e-07</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">oob_score=False</em>, <em class="sig-param">n_jobs=1</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">warm_start=False</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedForestRegressor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedForestRegressor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em>, <em class="sig-param"><span class="n">n_estimators</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">criterion</span><span class="o">=</span><span class="default_value">'mse'</span></em>, <em class="sig-param"><span class="n">max_depth</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_samples_split</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_samples_leaf</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">min_weight_fraction_leaf</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">max_features</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">max_leaf_nodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_impurity_split</span><span class="o">=</span><span class="default_value">1e-07</span></em>, <em class="sig-param"><span class="n">bootstrap</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">oob_score</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">n_jobs</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedForestRegressor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformPredictDistMixin" title="uncoverml.optimise.models.TransformPredictDistMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformPredictDistMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.RandomForestRegressor" title="uncoverml.models.RandomForestRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.RandomForestRegressor</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedGPRegressor">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedGPRegressor</code><span class="sig-paren">(</span><em class="sig-param">target_transform='identity'</em>, <em class="sig-param">kernel=None</em>, <em class="sig-param">alpha=1e-10</em>, <em class="sig-param">optimizer='fmin_l_bfgs_b'</em>, <em class="sig-param">n_restarts_optimizer=0</em>, <em class="sig-param">normalize_y=False</em>, <em class="sig-param">copy_X_train=True</em>, <em class="sig-param">random_state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedGPRegressor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em>, <em class="sig-param"><span class="n">kernel</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">optimizer</span><span class="o">=</span><span class="default_value">'fmin_l_bfgs_b'</span></em>, <em class="sig-param"><span class="n">n_restarts_optimizer</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">normalize_y</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">copy_X_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformPredictDistMixin" title="uncoverml.optimise.models.TransformPredictDistMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformPredictDistMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.gaussian_process._gpr.GaussianProcessRegressor</span></code>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
-<dl class="method">
+<dl class="py method">
 <dt id="uncoverml.optimise.models.TransformedGPRegressor.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Predict using the Gaussian process regression model</p>
 <p>We can also predict based on an unfitted model by using the GP prior.
 In addition to the mean of the predictive distribution, also its
@@ -305,49 +308,49 @@ Only returned when return_cov is True.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="uncoverml.optimise.models.TransformedGPRegressor.predict_dist">
-<code class="sig-name descname">predict_dist</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">interval=0.95</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor.predict_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">0.95</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGPRegressor.predict_dist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedGradientBoost">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedGradientBoost</code><span class="sig-paren">(</span><em class="sig-param">target_transform='identity'</em>, <em class="sig-param">loss='ls'</em>, <em class="sig-param">learning_rate=0.1</em>, <em class="sig-param">n_estimators=100</em>, <em class="sig-param">subsample=1.0</em>, <em class="sig-param">criterion='friedman_mse'</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_depth=3</em>, <em class="sig-param">min_impurity_split=1e-07</em>, <em class="sig-param">init=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">max_features=None</em>, <em class="sig-param">alpha=0.9</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">presort='auto'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGradientBoost" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedGradientBoost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em>, <em class="sig-param"><span class="n">loss</span><span class="o">=</span><span class="default_value">'ls'</span></em>, <em class="sig-param"><span class="n">learning_rate</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">n_estimators</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">subsample</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">criterion</span><span class="o">=</span><span class="default_value">'friedman_mse'</span></em>, <em class="sig-param"><span class="n">min_samples_split</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_samples_leaf</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">min_weight_fraction_leaf</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">max_depth</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">min_impurity_split</span><span class="o">=</span><span class="default_value">1e-07</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_features</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.9</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_leaf_nodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">presort</span><span class="o">=</span><span class="default_value">'auto'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedGradientBoost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.ensemble._gb.GradientBoostingRegressor</span></code>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedOLS">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedOLS</code><span class="sig-paren">(</span><em class="sig-param">fit_intercept=True</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">copy_X=True</em>, <em class="sig-param">n_jobs=1</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedOLS" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedOLS</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fit_intercept</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">normalize</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">copy_X</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_jobs</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedOLS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.linear_model._base.LinearRegression</span></code></p>
 <p>OLS. Suitable for small learning jobs.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedSGDApproxGP">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSGDApproxGP</code><span class="sig-paren">(</span><em class="sig-param">kernel='rbf'</em>, <em class="sig-param">nbases=50</em>, <em class="sig-param">lenscale=1.0</em>, <em class="sig-param">var=1.0</em>, <em class="sig-param">regulariser=1.0</em>, <em class="sig-param">ard=True</em>, <em class="sig-param">maxiter=3000</em>, <em class="sig-param">batch_size=10</em>, <em class="sig-param">alpha=0.01</em>, <em class="sig-param">beta1=0.9</em>, <em class="sig-param">beta2=0.99</em>, <em class="sig-param">epsilon=1e-08</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSGDApproxGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSGDApproxGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kernel</span><span class="o">=</span><span class="default_value">'rbf'</span></em>, <em class="sig-param"><span class="n">nbases</span><span class="o">=</span><span class="default_value">50</span></em>, <em class="sig-param"><span class="n">lenscale</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">var</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">regulariser</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">ard</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxiter</span><span class="o">=</span><span class="default_value">3000</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">beta1</span><span class="o">=</span><span class="default_value">0.9</span></em>, <em class="sig-param"><span class="n">beta2</span><span class="o">=</span><span class="default_value">0.99</span></em>, <em class="sig-param"><span class="n">epsilon</span><span class="o">=</span><span class="default_value">1e-08</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSGDApproxGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.SGDApproxGP" title="uncoverml.models.SGDApproxGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.SGDApproxGP</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedSGDRegressor">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSGDRegressor</code><span class="sig-paren">(</span><em class="sig-param">loss='squared_loss'</em>, <em class="sig-param">penalty='l2'</em>, <em class="sig-param">alpha=0.0001</em>, <em class="sig-param">l1_ratio=0.15</em>, <em class="sig-param">fit_intercept=True</em>, <em class="sig-param">max_iter=5</em>, <em class="sig-param">shuffle=True</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">epsilon=0.1</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">learning_rate='invscaling'</em>, <em class="sig-param">eta0=0.01</em>, <em class="sig-param">power_t=0.25</em>, <em class="sig-param">warm_start=False</em>, <em class="sig-param">average=False</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSGDRegressor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSGDRegressor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">loss</span><span class="o">=</span><span class="default_value">'squared_loss'</span></em>, <em class="sig-param"><span class="n">penalty</span><span class="o">=</span><span class="default_value">'l2'</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">l1_ratio</span><span class="o">=</span><span class="default_value">0.15</span></em>, <em class="sig-param"><span class="n">fit_intercept</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">max_iter</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">shuffle</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">epsilon</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">learning_rate</span><span class="o">=</span><span class="default_value">'invscaling'</span></em>, <em class="sig-param"><span class="n">eta0</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">power_t</span><span class="o">=</span><span class="default_value">0.25</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">average</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSGDRegressor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformPredictDistMixin" title="uncoverml.optimise.models.TransformPredictDistMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformPredictDistMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.linear_model._stochastic_gradient.SGDRegressor</span></code>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 <p>Linear elastic net regression model using
 Stochastic Gradient Descent (SGD).</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.TransformedSVR">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSVR</code><span class="sig-paren">(</span><em class="sig-param">kernel='rbf'</em>, <em class="sig-param">degree=3</em>, <em class="sig-param">gamma='scale'</em>, <em class="sig-param">coef0=0.0</em>, <em class="sig-param">tol=0.001</em>, <em class="sig-param">C=1.0</em>, <em class="sig-param">epsilon=0.1</em>, <em class="sig-param">shrinking=True</em>, <em class="sig-param">cache_size=200</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">max_iter=-1</em>, <em class="sig-param">target_transform='identity'</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSVR" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">TransformedSVR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kernel</span><span class="o">=</span><span class="default_value">'rbf'</span></em>, <em class="sig-param"><span class="n">degree</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">'scale'</span></em>, <em class="sig-param"><span class="n">coef0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">tol</span><span class="o">=</span><span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">C</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">epsilon</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">shrinking</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">cache_size</span><span class="o">=</span><span class="default_value">200</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">max_iter</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.TransformedSVR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.svm._classes.SVR</span></code>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="uncoverml.optimise.models.XGBoost">
-<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">XGBoost</code><span class="sig-paren">(</span><em class="sig-param">target_transform='identity'</em>, <em class="sig-param">max_depth=3</em>, <em class="sig-param">learning_rate=0.1</em>, <em class="sig-param">n_estimators=100</em>, <em class="sig-param">silent=True</em>, <em class="sig-param">objective='reg:linear'</em>, <em class="sig-param">nthread=1</em>, <em class="sig-param">gamma=0</em>, <em class="sig-param">min_child_weight=1</em>, <em class="sig-param">max_delta_step=0</em>, <em class="sig-param">subsample=1</em>, <em class="sig-param">colsample_bytree=1</em>, <em class="sig-param">colsample_bylevel=1</em>, <em class="sig-param">reg_alpha=0</em>, <em class="sig-param">reg_lambda=1</em>, <em class="sig-param">scale_pos_weight=1</em>, <em class="sig-param">n_jobs=-1</em>, <em class="sig-param">base_score=0.5</em>, <em class="sig-param">random_state=1</em>, <em class="sig-param">missing=None</em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.XGBoost" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">uncoverml.optimise.models.</code><code class="sig-name descname">XGBoost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_transform</span><span class="o">=</span><span class="default_value">'identity'</span></em>, <em class="sig-param"><span class="n">max_depth</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">learning_rate</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">n_estimators</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">silent</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">'reg:linear'</span></em>, <em class="sig-param"><span class="n">nthread</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">min_child_weight</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_delta_step</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">subsample</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">colsample_bytree</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">colsample_bylevel</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">reg_alpha</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">reg_lambda</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">scale_pos_weight</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">n_jobs</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">base_score</span><span class="o">=</span><span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">random_state</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">missing</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#uncoverml.optimise.models.XGBoost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#uncoverml.optimise.models.TransformMixin" title="uncoverml.optimise.models.TransformMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.optimise.models.TransformMixin</span></code></a>, <a class="reference internal" href="uncoverml.html#uncoverml.models.TagsMixin" title="uncoverml.models.TagsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">uncoverml.models.TagsMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">xgboost.sklearn.XGBRegressor</span></code></p>
 </dd></dl>
 
@@ -382,11 +385,19 @@ GridSearchCV.</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2019, Geoscience Australia
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -397,7 +408,6 @@ GridSearchCV.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

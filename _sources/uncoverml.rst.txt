@@ -5,6 +5,7 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    uncoverml.optimise
    uncoverml.scripts
@@ -188,7 +189,6 @@ uncoverml.validate module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

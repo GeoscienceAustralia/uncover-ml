@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Credits" href="authors.html" /> 
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> UncoverML
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> UncoverML
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -131,6 +133,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -169,7 +172,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>History</li>
     
@@ -203,7 +206,7 @@
 or user can provide their own shapefile via the ‘shiftmap’ property of the config ‘target’ block.</p></li>
 <li><p>“covdiag” command for ‘diagnosing’ covariate files. Similar to gdalinfo but with room for
 additions if required.</p></li>
-<li><p>“targetsearch” comamnd which finds targets similar to prediction data outside of prediction area.</p></li>
+<li><p>“targetsearch” command which finds targets similar to prediction data outside of prediction area.</p></li>
 <li><p>More demonstration configs.</p></li>
 <li><p>Reimplemented target sampling/binning code (originally by Sudipta).</p></li>
 <li><p>Bootstrap SVR model.</p></li>
@@ -222,7 +225,7 @@ additions if required.</p></li>
 <li><p>Cleaned up project structure - remove outdated ‘pbs’ directory and scripts that no longer apply.</p></li>
 <li><p>Training data is now shared via MPI shared memory during the learn step.</p></li>
 <li><p>Models are now exported with their TransformSet objects, so the transform statistics can be
-reused for prediction. Previsouly the entire Config object was pickled.</p></li>
+reused for prediction. Previously the entire Config object was pickled.</p></li>
 </ul>
 </div>
 <div class="section" id="fixed">
@@ -325,7 +328,7 @@ the config</em>. This is where the model will be saved when running ‘learn’ 
 <li><p>Multirandomforest and multicubist ‘temp’ files. Training these models generates files which
 are required for making predictions using the model. These were previously dumped in working
 directory in a ‘results’ folder. These files aren’t temporary and need to passed with the model.
-To make models portable these are longer saved as files but are stored in the model object
+To make models portable these are no longer saved as files but are stored in the model object
 itself.</p></li>
 </ul>
 </div>
@@ -333,7 +336,7 @@ itself.</p></li>
 <h3>Changed<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Updated depdency versions.</p></li>
-<li><p>Package version is now dervied from ‘git describe’ command. This is also written to metadata
+<li><p>Package version is now derived from ‘git describe’ command. This is also written to metadata
 file when making predictions.</p></li>
 <li><p>Config:</p>
 <ul>
@@ -384,11 +387,19 @@ file when making predictions.</p></li>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2019, Geoscience Australia
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -399,7 +410,6 @@ file when making predictions.</p></li>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

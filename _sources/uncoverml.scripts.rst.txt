@@ -100,7 +100,6 @@ uncoverml.scripts.tiff2kmz\_cli module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 
