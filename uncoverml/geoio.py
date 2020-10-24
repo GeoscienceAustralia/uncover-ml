@@ -490,7 +490,7 @@ class ImageWriter:
         """
         # affine
         self.A, _, _ = image.bbox2affine(bbox[1, 0], bbox[0, 0],
-                                         bbox[0, 1], bbox[1, 1],
+                                         bbox[1, 1], bbox[0, 1],
                                          shape[0], shape[1])
         self.shape = shape
         self.outbands = outbands
@@ -501,6 +501,7 @@ class ImageWriter:
         self.sub_starts = [k[0] for k in np.array_split(
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
+        self.sub_starts = np.flip(self.sub_starts)  #flipping for new transform fix        
 
         # file tags don't have spaces
         if band_tags:
@@ -568,7 +569,7 @@ class ImageWriter:
             data = np.ma.transpose(image, [2, 1, 0])  # untranspose
             # write each band separately
             for i, f in enumerate(self.files):
-                f.write(data[i:i+1])
+                f.write(np.rot90(data[i:i+1],2), window=window)  #rotate for corrected Affine
         else:
             if mpiops.chunk_index != 0:
                 mpiops.comm.send(image, dest=0)
