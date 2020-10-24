@@ -1,6 +1,5 @@
 Developer Docs
 ==============
-Author: Bren Moushall <brenainn.moushal@ga.gov.au>
 
 This section aims to provide some guidance and highlight "gotchas" of 
 UncoverML for future developers. It's also recommended to run through
