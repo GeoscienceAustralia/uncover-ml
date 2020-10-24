@@ -17,7 +17,7 @@ Added
 - Reimplemented target sampling/binning code (originally by Sudipta).
 - Bootstrap SVR model.
 - User defined metrics for optimisation.
-- Addition of writing aribtrary fields to rawcovariates.csv.
+- Addition of writing arbitrary fields to rawcovariates.csv.
 - Sample weighting for certain models
 - Doc overhaul
 
