@@ -103,7 +103,7 @@ class FeatureSetConfig(object):
     files : list of str
         Absolute paths to .tif files of the feature set.
     transform_set : :class:`~uncoverml.transforms.transformset.ImageTransformSet`
-        Transforms specified for the feautre set.
+        Transforms specified for the feature set.
     """
     def __init__(self, config_dict: dict):
         d = config_dict
@@ -196,7 +196,7 @@ class Config(object):
     Attributes
     ----------
     name : str
-        Name oo the config file.
+        Name of the config file.
     algorithm : str
         Name of the model to train. See :ref:`models-page` for available
         models.
@@ -251,7 +251,7 @@ class Config(object):
     extents_are_pixel_coordinates : bool
         If True, `extents` are treated as pixel coordinates instead of
         CRS coordinates.
-    pk_covarates : str or bytes
+    pk_covariates : str or bytes
         Path to where to save pickled covariates, or a pre-existing
         covariate pickle file if loading pickled covariates.
     pk_targets : str or bytes
