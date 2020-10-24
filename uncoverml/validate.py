@@ -234,7 +234,11 @@ class CrossvalInfo:
         with open(config.crossval_scores_file, 'w') as f:
             json.dump(scores, f, sort_keys=True, indent=4)
 
-        to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
+        #branches to use different dictionary keys if classification, not regression
+        if self.classification:
+            to_text = [self.y_true, self.y_pred['most_likely'], self.positions[:,0], self.positions[:,1]]
+        else:
+            to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
 
         np.savetxt(config.crossval_results_file, X=np.vstack(to_text).T, 
                    delimiter=',', fmt='%.4f', header='y_true,y_pred,x,y')
@@ -245,7 +249,11 @@ class CrossvalInfo:
             # Get indicies sorted by location so we can insert the 
             # prediction in the correct row.
             inds = np.lexsort(self.positions.T)
-            sorted_predictions = self.y_pred['Prediction'][inds]
+            #sorted_predictions = self.y_pred['Prediction'][inds]
+            if self.classification:
+                sorted_predictions = self.y_pred['most_likely'][inds]
+            else:
+                sorted_predictions = self.y_pred['Prediction'][inds]
 
             # If null rows have been dropped, we need to add these to 
             # the prediction array - otherwise we'll get a length 
@@ -295,8 +303,11 @@ class OOSInfo(CrossvalInfo):
         with open(config.oos_scores_file, 'w') as f:
             json.dump(scores, f, sort_keys=True, indent=4)
 
-        to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
-
+        if self.classification:
+            to_text = [self.y_true, self.y_pred['most_likely'], self.positions[:,0], self.positions[:,1]]
+        else:
+            to_text = [self.y_true, self.y_pred['Prediction'], self.positions[:,0], self.positions[:,1]]
+			
         np.savetxt(config.oos_results_file, X=np.vstack(to_text).T, 
                    delimiter=',', fmt='%.4f', header='y_true,y_pred,x,y')
 
@@ -485,7 +496,7 @@ def local_crossval(x_all, targets_all, config):
     """
     parallel_model = config.multicubist or config.multirandomforest or config.bootstrap
     if config.bootstrap and config.parallel_validate:
-        config.alrgorithm_args['parallel'] = False
+        config.algorithm_args['parallel'] = False
     elif not config.bootstrap and not config.parallel_validate and mpiops.chunk_index != 0:
         return
 
