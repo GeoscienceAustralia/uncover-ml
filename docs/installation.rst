@@ -12,7 +12,7 @@ UncoverML supports Ubuntu 18.04 with Python 3.6 or Python 3.7.
 The following instructions may be used for other Linux distributions but the packages and package
 manager used may be different. If you require help using UncoverML with a different Linux 
 distribution, ask for help on our 
-`Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.
+`GitHub Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_ page.
 
 Before installing UncoverML, ensure your OS has the following packages:
 
@@ -218,8 +218,9 @@ Download MS-MPI from the `MS-MPI website <https://docs.microsoft.com/en-us/messa
 and install.
 
 You need to install the ``.msi`` and ``.exe`` files.  
-Also, add to your ``PATH`` environment variable the install location, 
-for example: ``C:\\Program Files (x86)\\Microsoft SDKs\\MPI``.
+Also, add to your ``Path`` environment variable the SDK install location
+(by default: ``C:\Program Files (x86)\Microsoft SDKs\MPI``).
+Search online for "add Windows 10 Path variable" if unsure how to do this.
 
 .. note:: 
     
@@ -250,7 +251,7 @@ We'll use Anaconda to install some required packages:
 - Type 'gdal' into the search bar and click 'Update index...'
 - Once the packages have been found, select the checkboxes for 'gdal'
   and 'libgdal' and click 'Apply'. A window will display showing required
-  depencies to install. Accept these and continue.
+  dependencies to install. Accept these and continue.
 
 .. image:: anaconda_step2_install_packages.png
 
@@ -348,7 +349,7 @@ a terminal from Anaconda Navigator using your UncoverML environment.
 .. note:: 
 
     You may get a Windows firewall warning asking for exceptions for mpiexec and
-    Hydra proxy. These can be safely cancelled. The networking requirement of 
+    Hydra proxy. These can be safely canceled. The networking requirement of 
     MPI will work on local machines without setting firewall rules.
 
 .. warning::

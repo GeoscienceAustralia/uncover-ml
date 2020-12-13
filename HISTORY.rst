@@ -12,7 +12,7 @@ Added
   or user can provide their own shapefile via the 'shiftmap' property of the config 'target' block.
 - "covdiag" command for 'diagnosing' covariate files. Similar to gdalinfo but with room for 
   additions if required.
-- "targetsearch" comamnd which finds targets similar to prediction data outside of prediction area.
+- "targetsearch" command which finds targets similar to prediction data outside of prediction area.
 - More demonstration configs.
 - Reimplemented target sampling/binning code (originally by Sudipta).
 - Bootstrap SVR model.
@@ -29,7 +29,7 @@ Changed
 - Cleaned up project structure - remove outdated 'pbs' directory and scripts that no longer apply.
 - Training data is now shared via MPI shared memory during the learn step.
 - Models are now exported with their TransformSet objects, so the transform statistics can be
-  reused for prediction. Previsouly the entire Config object was pickled.
+  reused for prediction. Previously the entire Config object was pickled.
 
 Fixed
 +++++
@@ -108,13 +108,13 @@ Fixed
 - Multirandomforest and multicubist 'temp' files. Training these models generates files which
   are required for making predictions using the model. These were previously dumped in working
   directory in a 'results' folder. These files aren't temporary and need to passed with the model.
-  To make models portable these are longer saved as files but are stored in the model object 
+  To make models portable these are no longer saved as files but are stored in the model object 
   itself.
 
 Changed
 +++++++
 - Updated depdency versions.
-- Package version is now dervied from 'git describe' command. This is also written to metadata
+- Package version is now derived from 'git describe' command. This is also written to metadata
   file when making predictions.
 - Config:
 

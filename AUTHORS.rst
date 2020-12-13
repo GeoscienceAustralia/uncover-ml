@@ -6,11 +6,8 @@ Development Lead
 - Geoscience Australia Mineral Systems Group
 - NICTA Spatial Inference Systems Team 
 
-Current Maintainer
+Primary Contacts
 ------------------
-- Bren Moushall (GA) <brenainn.moushall@ga.gov.au>
-
-If unavailable and you have queries, contact:
 - John Wilford (GA) <john.wilford@ga.gov.au>
 - Fei Zhang (GA) <fei.zhang@ga.gov.au>
 
@@ -23,4 +20,3 @@ Contributors
 - Daniel Steinberg (NICTA) <daniel.steinberg@nicta.com.au>
 - John Wilford (GA) <john.wilford@ga.gov.au>
 - Fei Zhang (GA) <fei.zhang@ga.gov.au>
-
