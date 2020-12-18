@@ -72,3 +72,5 @@ cubist/
 
 # pycharm
 .idea/
+venv/*
+xgboost_out/*
