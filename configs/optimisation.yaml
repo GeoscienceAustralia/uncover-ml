@@ -16,7 +16,7 @@ output:
 
 optimisation:
   algorithm: transformedrandomforest
-  # If multiple scorers are specified, then results are sorted by the 
+  # If multiple scorers are specified, then results are sorted by the
   # first scorer in the list.
   # If scorers aren't provided, then the default `score` method of the
   # model is used.
@@ -31,3 +31,8 @@ optimisation:
     min_samples_split: [2, 5, 10]
     min_samples_leaf: [1, 5, 10]
     max_depth: [10, 20, 100]
+validation:
+  feature_rank: False
+  out_of_sample:
+    shapefile: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+    property: Na_ppm_imp
