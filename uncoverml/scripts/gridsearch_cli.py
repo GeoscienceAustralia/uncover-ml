@@ -180,6 +180,13 @@ def main(pipeline_file, partitions, njobs):
             oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features, config=None, gridsearch=True)
             for key in oos_results.keys():
                 oos_results_update[key+"_oos"].append(oos_results[key])
+    drop_keys = []
+    for key in oos_results_update.keys():
+        if len(oos_results_update[key])<1:
+            drop_keys.append(key)
+    for key in drop_keys:
+        oos_results_update.pop(key, None)
+
 
     if scoring is None:
         sort_by = 'rank_test_score'
