@@ -163,8 +163,7 @@ class TransformedSGDRegressor(TransformPredictDistMixin, SGDRegressor, TagsMixin
         self.target_transform = target_transform
 
 
-class TransformedGPRegressor(TransformPredictDistMixin, GaussianProcessRegressor,
-                             TagsMixin):
+class TransformedGPRegressor(TransformPredictDistMixin, GaussianProcessRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform='identity',

@@ -426,8 +426,7 @@ class Config(object):
             self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
             tsexb = learn_block.get('target_search_extents')
             self.targetsearch_extents, self.tse_are_pixel_coordinates = Config.parse_extents(tsexb)
-            self.algorithm = _grp(learn_block, 'algorithm',
-                                  "'algorithm' must be provided as part of 'learning' block.")
+            self.algorithm = _grp(learn_block, 'algorithm',"'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = learn_block.get('arguments', {})
         else:
             self.bootstrap = False
@@ -566,20 +565,16 @@ class Config(object):
         if predicting:
             pb = _grp(s, 'prediction', "'prediction' block must be provided.")
             self.geotif_options = pb.get('geotif', {})
-            self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of "
-                                  "prediction block.")
-            self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction "
-                                 "block.")
+            self.quantiles = _grp(pb, 'quantiles', "'quantiles' must be provided as part of prediction block.")
+            self.outbands = _grp(pb, 'outbands', "'outbands' must be provided as part of prediction block.")
             self.thumbnails = pb.get('thumbnails', 10)
             self.bootstrap_predictions = pb.get('bootstrap')
             mb = s.get('mask')
             if mb:
                 self.mask = mb.get('file') 
                 if not os.path.exists(self.mask):
-                    raise FileNotFoundError("Mask file provided in config does not exist. Check that "
-                                            "the 'file' property of the 'mask' block is correct.")
-                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a "
-                                   "prediction mask.")
+                    raise FileNotFoundError("Mask file provided in config does not exist. Check that the 'file' property of the 'mask' block is correct.")
+                self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a prediction mask.")
             else:
                 self.mask = None
             
@@ -588,7 +583,6 @@ class Config(object):
                 self.lon_lat = s.get('lon_lat')
             else:
                 self.lon_lat = None
-
 
         # OUTPUT BLOCK
         def _outpath(filename):
