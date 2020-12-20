@@ -30,11 +30,9 @@ best parameters for refitting the model.
 .. program-output:: gridsearch --help
 """
 import logging
-import os
 from collections import OrderedDict
 from itertools import product
 
-import click
 import pandas as pd
 from sklearn import decomposition
 from sklearn.gaussian_process.kernels import WhiteKernel
@@ -43,33 +41,25 @@ from sklearn.pipeline import Pipeline
 
 import uncoverml as ls
 import uncoverml.config
-import uncoverml.mllog
 from uncoverml.config import ConfigException
-from uncoverml.optimise.models import (
-    TransformedGPRegressor,
-    kernels,
-    TransformedSVR
-    )
+from uncoverml.optimise.models import TransformedGPRegressor, kernels, TransformedSVR
 from uncoverml.scripts.learn_cli import _load_data
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import transformed_modelmaps as all_modelmaps
-from uncoverml.optimise.scorers import (regression_predict_scorers, classification_predict_scorers,
-                                        classification_proba_scorers)
+from uncoverml.optimise.scorers import regression_predict_scorers, classification_predict_scorers, classification_proba_scorers
 
 _logger = logging.getLogger(__name__)
 
 
 pca = decomposition.PCA()
 algos = {k: v() for k, v in all_modelmaps.items()}
-algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10,
-                                                normalize_y=True)
+algos['transformedgp'] = TransformedGPRegressor(n_restarts_optimizer=10, normalize_y=True)
 algos['transformedsvr'] = TransformedSVR(verbose=True, max_iter=1000000)
 
 
 def setup_pipeline(config):
     if config.optimisation['algorithm'] not in algos:
-        raise ConfigException('Optimisation algorithm must exist in avilable algorithms: {}'
-                              .format(list(algos.keys())))
+        raise ConfigException('Optimisation algorithm must exist in avilable algorithms: {}'.format(list(algos.keys())))
 
     steps = []
     param_dict = {}
@@ -83,8 +73,7 @@ def setup_pipeline(config):
 
     if 'scorers' in config.optimisation:
         scorers = config.optimisation['scorers']
-        scorer_maps = [regression_predict_scorers, classification_proba_scorers, 
-                       classification_predict_scorers]
+        scorer_maps = [regression_predict_scorers, classification_proba_scorers, classification_predict_scorers]
 
         scoring = {}
 
@@ -103,8 +92,7 @@ def setup_pipeline(config):
         scoring = None
 
     if 'hyperparameters' in config.optimisation:
-        steps.append((config.optimisation['algorithm'],
-                      algos[config.optimisation['algorithm']]))
+        steps.append((config.optimisation['algorithm'], algos[config.optimisation['algorithm']]))
         for k, v in config.optimisation['hyperparameters'].items():
             if k == 'target_transform':
                 v = [transforms.transforms[vv]() for vv in v]
@@ -128,19 +116,20 @@ def setup_pipeline(config):
                     v = V
                     
             param_dict[config.optimisation['algorithm'] + '__' + k] = v
-
     pipe = Pipeline(steps=steps)
 
-    estimator = GridSearchCV(pipe,
-                             param_dict,
-                             n_jobs=config.n_jobs,
-                             iid=False,
-                             scoring=scoring,
-                             refit=False,
-                             pre_dispatch='2*n_jobs',
-                             verbose=True,
-                             cv=5,
-                             )
+    estimator = GridSearchCV(
+        pipe,
+        param_dict,
+        n_jobs=config.n_jobs,
+        iid=False,
+        scoring=scoring,
+        refit=False,
+        pre_dispatch='2*n_jobs',
+        verbose=True,
+        cv=5,
+        return_train_score=True
+    )
 
     return estimator, scoring
 
@@ -151,20 +140,52 @@ def main(pipeline_file, partitions, njobs):
     estimator, scoring = setup_pipeline(config)
     _logger.info('Running optimisation for {}'.format(config.optimisation['algorithm']))
 
-    training_data, _ = _load_data(config, partitions)
+    training_data, oos_data = _load_data(config, partitions)
     targets_all = training_data.targets_all
     x_all = training_data.x_all
     
     _logger.info("Optimising {} model".format(config.optimisation['algorithm']))
-    # Runs 'fit' on selected model ('estimator' in scikit-learn) with 
+    # Runs 'fit' on selected model ('estimator' in scikit-learn) with
     # hyperparameter combinations.
     estimator.fit(X=x_all, y=targets_all.observations)
+
+    if config.out_of_sample_validation and oos_data is not None:
+        oos_targets = oos_data.targets_all
+        oos_features = oos_data.x_all
+        y = targets_all.observations
+        hyperparameters = config.optimisation['hyperparameters'].keys()
+        oos_results_update = {}
+
+        oos_results_update['adjusted_r2_score_oos'] = []
+        oos_results_update['adjusted_r2_score_transformed_oos'] = []
+        oos_results_update['expvar_oos'] = []
+        oos_results_update['expvar_transformed_oos'] = []
+        oos_results_update['lins_ccc_oos'] = []
+        oos_results_update['lins_ccc_transformed_oos'] = []
+        oos_results_update['r2_score_oos'] = []
+        oos_results_update['r2_score_transformed_oos'] = []
+        oos_results_update['smse_oos'] = []
+        oos_results_update['smse_transformed_oos'] = []
+        oos_results_update['mll_oos'] = []
+        oos_results_update['mll_transformed_oos'] = []
+
+
+        for current_model_params in estimator.cv_results_["params"]:
+            algorithm_name = config.optimisation['algorithm']
+            algorithm_args = {}
+            for hyperparameter in hyperparameters:
+                algorithm_args[hyperparameter] = current_model_params[algorithm_name + "__" + hyperparameter]
+            model = all_modelmaps[algorithm_name](**algorithm_args)
+            model.fit(x_all, y)
+            oos_results = ls.validate.out_of_sample_validation(model, oos_targets, oos_features, config=None, gridsearch=True)
+            for key in oos_results.keys():
+                oos_results_update[key+"_oos"].append(oos_results[key])
 
     if scoring is None:
         sort_by = 'rank_test_score'
     else:
         sort_by = 'rank_test_' + list(scoring.keys())[0]
 
-    pd.DataFrame.from_dict(estimator.cv_results_).sort_values(by=sort_by)\
-      .to_csv(config.optimisation_results_file)
 
+    estimator.cv_results_.update(oos_results_update)
+    pd.DataFrame.from_dict(estimator.cv_results_).sort_values(by=sort_by).to_csv(config.optimisation_results_file)
