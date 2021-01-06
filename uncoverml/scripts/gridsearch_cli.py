@@ -148,13 +148,14 @@ def main(pipeline_file, partitions, njobs):
     # Runs 'fit' on selected model ('estimator' in scikit-learn) with
     # hyperparameter combinations.
     estimator.fit(X=x_all, y=targets_all.observations)
-
+    
+    oos_results_update = {}
     if config.out_of_sample_validation and oos_data is not None:
         oos_targets = oos_data.targets_all
         oos_features = oos_data.x_all
         y = targets_all.observations
         hyperparameters = config.optimisation['hyperparameters'].keys()
-        oos_results_update = {}
+        
 
         oos_results_update['adjusted_r2_score_oos'] = []
         oos_results_update['adjusted_r2_score_transformed_oos'] = []
