@@ -15,7 +15,7 @@ module purge
 module load pbs
 module load python3/3.7.4
 module load gdal/3.0.2
-source /apps/pangeo/2020.05/bin/activate
+source $PBS_O_WORKDIR/venvs/jupyter/bin/activate
 cd $PBS_O_WORKDIR
 
 
