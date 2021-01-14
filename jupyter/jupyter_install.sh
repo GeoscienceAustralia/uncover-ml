@@ -18,7 +18,7 @@ fi
 
 mkdir -p $HOME/venvs/jupyter
 python3 -m venv $HOME/venvs/jupyter
-$HOME/venvs/jupyter/bin/python -m pip install -r requirements.txt
+$HOME/venvs/jupyter/bin/python -m pip install -r $HOME/uncover-ml/jupyter/requirements.txt
 
 
 chmod +x jupyter.node.sh 
