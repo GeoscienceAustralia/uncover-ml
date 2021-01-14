@@ -23,4 +23,3 @@ $HOME/venvs/jupyter/bin/python -m pip install -r $HOME/uncover-ml/jupyter/requir
 
 chmod +x jupyter.node.sh 
 chmod +x jupyter.host.sh 
-qsub jupyter.host.sh 
