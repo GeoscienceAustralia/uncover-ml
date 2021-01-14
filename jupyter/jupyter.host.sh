@@ -11,5 +11,5 @@ module purge
 module load pbs
 module load python3/3.7.4
 module load gdal/3.0.2
-jupyter.node.sh 
+$HOME/uncover-ml/jupyter/jupyter.node.sh 
 sleep infinity 
