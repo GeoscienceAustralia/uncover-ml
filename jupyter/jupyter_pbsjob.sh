@@ -18,9 +18,10 @@ ulimit -s unlimited
 GIT_HOME=$HOME/github  # where to check out the uncover-ml repoitory
 VENVS=$HOME/venvs
 
+# activate the virtual env you have created
 source $VENVS/uncoverml_gadi/bin/activate
 
-PBS_WORKDIR=$GIT_HOME/uncover-ml/jupyter
+PBS_WORKDIR=$GIT_HOME/uncover-ml
 cd $PBS_WORKDIR
 
 export jport=8388  # choose a port number
