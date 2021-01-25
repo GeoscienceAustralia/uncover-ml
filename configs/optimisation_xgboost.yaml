@@ -1,0 +1,40 @@
+features:
+  - type: ordinal
+    files:
+      - directory: $UNCOVERML_SRC/tests/test_data/sirsam/covariates/
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+  property: Na_ppm_imp
+
+output:
+  directory: $UNCOVERML_SRC/optimisation_out
+
+optimisation:
+  algorithm: xgboost
+  # If multiple scorers are specified, then results are sorted by the
+  # first scorer in the list.
+  # If scorers aren't provided, then the default `score` method of the
+  # model is used.
+  scorers: ['r2', 'expvar', 'smse', 'lins_ccc']
+  # Other available scorers:
+  # Classification: 'accuracy'
+  # Classification w/ probability: 'log_loss', 'auc'
+  hyperparameters:
+    target_transform: [standardise]
+    objective: ['binary:logitraw']
+    eval_metric: ['logloss', 'error']
+    n_estimators: [5, 10]
+    max_depth: [5, 10]
+    learning_rate: [1, 10]
+    objective: [reg:linear]
+    n_estimators: [2, 5]
+validation:
+  feature_rank: False
+  out_of_sample:
+    shapefile: $UNCOVERML_SRC/tests/test_data/sirsam/targets/geochem_sites_log.shp
+    property: Na_ppm_imp

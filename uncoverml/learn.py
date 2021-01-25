@@ -39,6 +39,7 @@ def local_learn_model(x_all, targets_all, config):
     :class:`~uncoverml.model.Model`
         A trained Model.
     """
+
     mpiops.comm.barrier()
     model = None
     if config.target_weight_property:
@@ -49,9 +50,7 @@ def local_learn_model(x_all, targets_all, config):
     if config.multicubist or config.multirandomforest or config.bootstrap:
         y = targets_all.observations
         model = all_modelmaps[config.algorithm](**config.algorithm_args)
-        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields,
-                              lon_lat=targets_all.positions,
-                              sample_weight=weights)
+        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions, sample_weight=weights)
         # Special case: for MRF we need to gather the forests from each
         # process and cache them in the model
         if config.multirandomforest:
@@ -66,22 +65,16 @@ def local_learn_model(x_all, targets_all, config):
         if mpiops.chunk_index == 0:
             y = targets_all.observations
             model = all_modelmaps[config.algorithm](**config.algorithm_args)
-            apply_multiple_masked(model.fit, (x_all, y), 
-                                  fields=targets_all.fields, lon_lat=targets_all.positions,
-                                  sample_weight=weights)
+            apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions, sample_weight=weights)
 
     # Save transformed targets for diagnostics
     if mpiops.chunk_index == 0 and hasattr(model, 'target_transform'):
         hdr = 'nontransformed,transformed'
         y = targets_all.observations
         y_t = model.target_transform.transform(y)
-        np.savetxt(config.transformed_targets_file, X=np.column_stack((y, y_t)),
-                   delimiter=',', header=hdr, fmt='%.4e')
+        np.savetxt(config.transformed_targets_file, X=np.column_stack((y, y_t)), delimiter=',', header=hdr, fmt='%.4e')
 
         if config.plot_target_scaling:
-            diagnostics.plot_target_scaling(
-                config.transformed_targets_file)\
-            .savefig(config.plot_target_scaling)
-        
+            diagnostics.plot_target_scaling(config.transformed_targets_file).savefig(config.plot_target_scaling)
 
     return model

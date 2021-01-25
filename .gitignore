@@ -2,7 +2,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-
+optimisation_out/*
+*.tif.aux.xml
 # C extensions
 *.so
 
@@ -72,3 +73,5 @@ cubist/
 
 # pycharm
 .idea/
+venv/*
+xgboost_out/*
