@@ -4,6 +4,9 @@ __pycache__/
 *.py[cod]
 data/*
 client_cmd
+optimisation_out/*
+*.tif.aux.xml
+
 # C extensions
 *.so
 
@@ -73,3 +76,5 @@ cubist/
 
 # pycharm
 .idea/
+venv/*
+xgboost_out/*
