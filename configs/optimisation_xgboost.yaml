@@ -12,7 +12,7 @@ targets:
   property: Na_ppm_imp
 
 output:
-  directory: ./optimisation_out
+  directory: $UNCOVERML_SRC/optimisation_out
 
 optimisation:
   algorithm: xgboost
