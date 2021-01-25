@@ -15,8 +15,10 @@ source $HOME/venvs/uncoverml_gadi/bin/activate
 pip install -r $HOME/github/uncover-ml/jupyter/requirements.txt
 
 # setup password to access jupyter notebook server
-jupyter notebook --generate-config -y
-jupyter notebook password
+# /home/547/sg4953/.jupyter/jupyter_lab_config.py
+# /home/547/sg4953/.jupyter/jupyter_server_config.json
+jupyter lab --generate-config -y
+jupyter lab password
 
 # ensure jupyter_pbsjob script is excuable
 chmod +x $HOME/github/uncover-ml/jupyter/jupyter_pbsjob.sh
