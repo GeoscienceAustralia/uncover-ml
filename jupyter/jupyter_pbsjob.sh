@@ -1,11 +1,12 @@
 #!/bin/bash 
-#PBS -N uncoverml-jupyter
+#PBS -N uncoverml
 #PBS -P ge3 
-#PBS -q express 
-#PBS -l walltime=12:00:00 
-#PBS -l ncpus=48 
-#PBS -l mem=192GB 
-#PBS -l jobfs=100GB 
+#PBS -q gpuvolta
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=12
+#PBS -l ngpus=1
+#PBS -l mem=96GB
+#PBS -l jobfs=100GB
 #PBS -l storage=gdata/ge3 
 module purge
 module load pbs
