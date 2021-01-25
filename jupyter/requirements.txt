@@ -14,6 +14,11 @@ dask[complete]
 dask-cuda
 dask-ml
 rasterio
-ray
 fiona
 memory_profiler
+modin[all]
+ray[tune]
+tune_sklearn
+scikit-optimize
+tqdm
+bayesian-optimization
