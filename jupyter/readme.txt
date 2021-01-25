@@ -7,12 +7,9 @@ module load python3/3.7.4
 module load gdal/3.0.2
 
 # clone the uncover-ml repository
-mkdir -p $HOME/github
-cd $HOME/github
-git clone --single-branch --branch sheece-jupyter https://github.com/GeoscienceAustralia/uncover-ml.git
+git clone --single-branch --branch sheece-jupyter https://github.com/GeoscienceAustralia/uncover-ml.git $HOME/github/uncover-ml
 
 # create virtual environment for uncover-ml
-mkdir -p $HOME/venvs
 python3 -m venv $HOME/venvs/uncoverml_gadi
 source $HOME/venvs/uncoverml_gadi/bin/activate
 pip install -r $HOME/github/uncover-ml/jupyter/requirements.txt
