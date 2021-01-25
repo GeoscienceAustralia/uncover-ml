@@ -21,15 +21,15 @@ ulimit -s unlimited
 source $PBS_O_WORKDIR/venvs/uncoverml_gadi/bin/activate
 
 
-cd $PBS_O_WORKDIR/github/uncover-ml
 
 export jport=8388  # choose a port number
 
 echo "Starting Jupyter lab ..."
 jupyter lab --no-browser --ip=`hostname` --port=${jport} &
 
-
-echo "ssh -N -L ${jport}:`hostname`:${jport} ${USER}@gadi.nci.org.au &" > client_cmd
 echo "client_cmd created ..."
+cd $PBS_O_WORKDIR
+echo "ssh -N -L ${jport}:`hostname`:${jport} ${USER}@gadi.nci.org.au &" > client_cmd
+
 
 sleep infinity 
