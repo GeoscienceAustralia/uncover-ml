@@ -29,7 +29,9 @@ jupyter lab --no-browser --ip=`hostname` --port=${jport} &
 
 echo "client_cmd created ..."
 cd $PBS_O_WORKDIR
-echo "ssh -N -L ${jport}:`hostname`:${jport} ${USER}@gadi.nci.org.au &" > client_cmd
 
+
+echo "ssh -N -L ${jport}:`hostname`:${jport} ${USER}@gadi.nci.org.au &" > client_cmd
+echo "jupyter lab list" >> client_cmd
 
 sleep infinity 
