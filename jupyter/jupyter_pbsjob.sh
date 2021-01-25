@@ -16,14 +16,12 @@ module load gdal/3.0.2
 set -e
 ulimit -s unlimited
 
-GIT_HOME=$HOME/github  # where to check out the uncover-ml repoitory
-VENVS=$HOME/venvs
 
 # activate the virtual env you have created
-source $VENVS/uncoverml_gadi/bin/activate
+source $PBS_O_WORKDIR/venvs/uncoverml_gadi/bin/activate
 
-PBS_WORKDIR=$GIT_HOME/uncover-ml
-cd $PBS_WORKDIR
+
+cd $PBS_O_WORKDIR/github/uncover-ml
 
 export jport=8388  # choose a port number
 
