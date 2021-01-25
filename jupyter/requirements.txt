@@ -15,3 +15,4 @@ memory_profiler
 tune_sklearn
 scikit-optimize
 bayesian-optimization
+ipyparallel
