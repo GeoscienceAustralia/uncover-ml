@@ -49,8 +49,7 @@ def main(config_file, partitions):
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     # use trained model
     if config.permutation_importance:
-        ls.mpiops.run_once(
-            ls.validate.permutation_importance, model, x_all, targets_all, config)
+        ls.mpiops.run_once(ls.validate.permutation_importance, model, x_all, targets_all, config)
 
     if config.out_of_sample_validation and oos_data is not None:
         oos_targets = oos_data.targets_all
@@ -162,15 +161,14 @@ def _load_data(config, partitions):
             else:
                 _logger.info("Out-of-sample validation being skipped as no 'percentage' or "
                              "'shapefile' parameter was provided.")
+
             if config.tabular_prediction:
-                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(
-                    oos_targets, config.feature_sets, config.target_drop_values)
+                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(oos_targets, config.feature_sets, config.target_drop_values)
             else:
                 oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
         if config.tabular_prediction:
-            feature_chunks, _ = ls.features.intersect_shapefile_features(
-                    targets, config.feature_sets, config.target_drop_values)
+            feature_chunks, _ = ls.features.intersect_shapefile_features(targets, config.feature_sets, config.target_drop_values)
         else:
             feature_chunks = ls.geoio.image_feature_sets(targets, config)
 
