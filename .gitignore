@@ -2,8 +2,11 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+data/*
+client_cmd
 optimisation_out/*
 *.tif.aux.xml
+
 # C extensions
 *.so
 
