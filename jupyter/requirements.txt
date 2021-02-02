@@ -16,3 +16,4 @@ tune_sklearn
 scikit-optimize
 bayesian-optimization
 ipyparallel
+ray
