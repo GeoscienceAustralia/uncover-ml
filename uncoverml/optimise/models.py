@@ -410,7 +410,7 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                  max_delta_step=0,
                  subsample=1, colsample_bytree=1, colsample_bylevel=1,
                  reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=-1,
-                 base_score=0.5, random_state=1, missing=None,eval_metric='rmse'):
+                 base_score=0.5, random_state=1, missing=None,eval_metric='rmse',tree_method='auto'):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
@@ -435,7 +435,8 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       random_state=random_state,
                                       missing=missing,
                                       n_jobs=n_jobs,
-                                      eval_metric=eval_metric)
+                                      eval_metric=eval_metric,
+                                      tree_method=tree_method)
 
 
 transformed_modelmaps = {
