@@ -1,5 +1,5 @@
 learning:
-  algorithm: xgboost
+  algorithm: xgbquantile
   arguments:
     target_transform: standardise
     max_depth: 3
@@ -20,6 +20,10 @@ learning:
     n_jobs: -1
     base_score: 0.5
     random_state: 1
+    quant_alpha: 0.95
+    quant_delta: 1.0
+    quant_thres: 1.0
+    quant_var: 1.0
 
 features:
   - type: ordinal
