@@ -2,22 +2,17 @@
 Handles calling learning methods on models.
 """
 import logging
-import os
-import pickle
-import itertools
 
 import numpy as np
-from mpi4py import MPI
 
-from uncoverml import mpiops, diagnostics, resampling
-from uncoverml.targets import Targets
+from uncoverml import mpiops, diagnostics
 from uncoverml.krige import krig_dict
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.optimise.models import transformed_modelmaps
 
-
 _logger = logging.getLogger(__name__)
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
+
 
 def local_learn_model(x_all, targets_all, config):
     """
@@ -50,7 +45,8 @@ def local_learn_model(x_all, targets_all, config):
     if config.multicubist or config.multirandomforest or config.bootstrap:
         y = targets_all.observations
         model = all_modelmaps[config.algorithm](**config.algorithm_args)
-        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions, sample_weight=weights)
+        apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions,
+                              sample_weight=weights)
         # Special case: for MRF we need to gather the forests from each
         # process and cache them in the model
         if config.multirandomforest:
@@ -65,7 +61,8 @@ def local_learn_model(x_all, targets_all, config):
         if mpiops.chunk_index == 0:
             y = targets_all.observations
             model = all_modelmaps[config.algorithm](**config.algorithm_args)
-            apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions, sample_weight=weights)
+            apply_multiple_masked(model.fit, (x_all, y), fields=targets_all.fields, lon_lat=targets_all.positions,
+                                  sample_weight=weights)
 
     # Save transformed targets for diagnostics
     if mpiops.chunk_index == 0 and hasattr(model, 'target_transform'):

@@ -33,6 +33,7 @@ _logger = logging.getLogger(__name__)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
+
 def main(config_file, partitions):
     config = ls.config.Config(config_file, learning=True)
     training_data, oos_data = _load_data(config, partitions)
@@ -66,6 +67,7 @@ def main(config_file, partitions):
         ls.geoio.deallocate_shared_training_data(oos_data)
 
     _logger.info("Finished! Total mem = {:.1f} GB".format(ls.scripts.total_gb()))
+
 
 def _load_data(config, partitions):
     if config.pk_load:
@@ -102,17 +104,17 @@ def _load_data(config, partitions):
                 ls.geoio.crop_covariates(config)
             else:
                 target_extents = bounds[0][0], bounds[1][0], bounds[0][1], bounds[1][1]
-            covariate_crs=ls.geoio.get_image_crs(config)
+            covariate_crs = ls.geoio.get_image_crs(config)
         else:
             target_extents = None
             covariate_crs = None
 
         config.n_subchunks = partitions
 
-         # Make the targets
+        # Make the targets
         _logger.info("Intersecting targets as pickled train data was not "
                      "available")
-        
+
         targets = ls.geoio.load_targets(shapefile=config.target_file,
                                         targetfield=config.target_property,
                                         covariate_crs=covariate_crs,
@@ -163,12 +165,14 @@ def _load_data(config, partitions):
                              "'shapefile' parameter was provided.")
 
             if config.tabular_prediction:
-                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(oos_targets, config.feature_sets, config.target_drop_values)
+                oos_feature_chunks, _ = ls.features.intersect_shapefile_features(oos_targets, config.feature_sets,
+                                                                                 config.target_drop_values)
             else:
                 oos_feature_chunks = ls.geoio.image_feature_sets(oos_targets, config)
 
         if config.tabular_prediction:
-            feature_chunks, _ = ls.features.intersect_shapefile_features(targets, config.feature_sets, config.target_drop_values)
+            feature_chunks, _ = ls.features.intersect_shapefile_features(targets, config.feature_sets,
+                                                                         config.target_drop_values)
         else:
             feature_chunks = ls.geoio.image_feature_sets(targets, config)
 
@@ -177,7 +181,7 @@ def _load_data(config, partitions):
         if config.raw_covariates:
             _logger.info("Saving raw data before any processing")
             ls.features.save_intersected_features_and_targets(feature_chunks,
-                                                              transform_sets, targets, config, 
+                                                              transform_sets, targets, config,
                                                               impute=False)
 
         if config.rank_features:
@@ -193,7 +197,6 @@ def _load_data(config, partitions):
 
         x_all = ls.features.gather_features(features[keep], node=0)
         targets_all = ls.targets.gather_targets(targets, keep, node=0)
-
 
         # Transform out-of-sample features after training data transform is performed so we use
         # the same statistics.
@@ -216,10 +219,9 @@ def _load_data(config, partitions):
                 pickle.dump(x_all, open(config.pk_covariates, 'wb'))
             if config.pk_targets and not os.path.exists(config.pk_targets):
                 pickle.dump(targets_all, open(config.pk_targets, 'wb'))
- 
+
     return ls.geoio.create_shared_training_data(targets_all, x_all), oos_data
 
 
 def _clean_temp_cropfiles(config):
-    shutil.rmtree(config.tmpdir)   
-
+    shutil.rmtree(config.tmpdir)

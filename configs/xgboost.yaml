@@ -1,5 +1,5 @@
 learning:
-  algorithm: xgboost
+  algorithm: xgbquantile
   arguments:
     target_transform: standardise
     max_depth: 3
