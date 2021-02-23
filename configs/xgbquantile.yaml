@@ -3,6 +3,7 @@ learning:
   arguments:
     target_transform: standardise
     max_depth: 3
+    booster: gbtree
     learning_rate: 0.1
     n_estimators: 100
     silent: True
@@ -23,7 +24,7 @@ learning:
     quant_alpha: 0.95
     quant_delta: 1.0
     quant_thres: 1.0
-    quant_var: 1.0
+    quant_var: 3.0
 
 features:
   - type: ordinal
@@ -61,6 +62,6 @@ prediction:
   outbands: 4
 
 output:
-  directory: ./xgboost_out
+  directory: ./xgbquantile_out
   plot_correlation: True
   plot_target_scaling: True
