@@ -22,9 +22,12 @@ learning:
     base_score: 0.5
     random_state: 1
     quant_alpha: 0.95
-    quant_delta: 1.0
-    quant_thres: 1.0
-    quant_var: 3.0
+    quant_delta_upper: 1.0
+    quant_thres_upper: 5.0
+    quant_var_upper: 3.0
+    quant_delta_lower: 1.0
+    quant_thres_lower: 6.0
+    quant_var_lower: 5.0
 
 features:
   - type: ordinal

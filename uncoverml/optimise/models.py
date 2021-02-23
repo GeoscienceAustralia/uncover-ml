@@ -519,16 +519,21 @@ class XGBQuantile(XGBoost):
 
 class XGBQuantileWrapper(TagsMixin):
     def __init__(
-            self, quant_alpha=0.95, quant_delta=1.0, quant_thres=1.0, quant_var=1.0,
+            self,
+            quant_alpha=0.95,
+            quant_delta_upper=1.0, quant_thres_upper=1.0, quant_var_upper=1.0,
+            quant_delta_lower=1.0, quant_thres_lower=1.0, quant_var_lower=1.0,
             **kwargs):
 
         self.xgboost = XGBoost(** kwargs)
         self.xgboost_quantile_upper = XGBQuantile(
-            quant_alpha=quant_alpha, quant_delta=quant_delta, quant_thres=5.0, quant_var=3.2,
+            quant_alpha=quant_alpha, quant_delta=quant_delta_upper,
+            quant_thres=quant_thres_upper, quant_var=quant_var_upper,
             ** kwargs
         )
         self.xgboost_quantile_lower = XGBQuantile(
-            quant_alpha=1-quant_alpha, quant_delta=quant_delta, quant_thres=8.0, quant_var=5.2,
+            quant_alpha=1-quant_alpha, quant_delta=quant_delta_lower,
+            quant_thres=quant_thres_lower, quant_var=quant_var_lower,
             ** kwargs
         )
 
