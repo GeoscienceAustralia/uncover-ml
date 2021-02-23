@@ -21,7 +21,7 @@ import inspect
 from functools import partial
 import numpy as np
 from scipy.integrate import fixed_quad
-from scipy.stats import norm, gamma
+from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
@@ -30,18 +30,11 @@ from sklearn.linear_model import (HuberRegressor,
                                   ElasticNet,
                                   SGDRegressor)
 from sklearn.svm import SVR
-from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
-# from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
-    MutualInfoMixin
-from revrand.slm import StandardLinearModel
-from revrand.basis_functions import LinearBasis
-from revrand.btypes import Parameter, Positive
+    _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
 
-# import copy as cp
 log = logging.getLogger(__name__)
 
 # from sklearn.linear_model._stochastic_gradient
@@ -524,7 +517,7 @@ class XGBQuantileWrapper(TagsMixin):
             quant_delta_upper=1.0, quant_thres_upper=1.0, quant_var_upper=1.0,
             quant_delta_lower=1.0, quant_thres_lower=1.0, quant_var_lower=1.0,
             **kwargs):
-
+        self.quant_alpha = quant_alpha
         self.xgboost = XGBoost(** kwargs)
         self.xgboost_quantile_upper = XGBQuantile(
             quant_alpha=quant_alpha, quant_delta=quant_delta_upper,
@@ -550,15 +543,14 @@ class XGBQuantileWrapper(TagsMixin):
     def predict(self, X):
         return self.predict_dist(X)[0]
 
-    def predict_dist(self, X, interval=0.95, **kwargs):
+    def predict_dist(self, X, *args, **kwargs):
         Ey = self.xgboost.predict(X)
 
         ql = self.collect_prediction(self.xgboost_quantile_lower, X)
         qu = self.collect_prediction(self.xgboost_quantile_upper, X)
+        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
+        Vy = ((qu - ql)/(norm.ppf(self.quant_alpha) - norm.ppf(1-self.quant_alpha))) ** 2
 
-        Vy = np.empty_like(Ey)
-        # FIXME can we find Vy from this?
-        # import IPython; IPython.embed(); import sys; sys.exit()
         return Ey, Vy, ql, qu
 
 
