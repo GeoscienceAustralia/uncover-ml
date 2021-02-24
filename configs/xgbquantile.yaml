@@ -54,7 +54,7 @@ final_transform:
       - log 
 
 validation:
-  feature_rank: True
+  feature_rank: False
   k-fold:
     parallel: True
     folds: 5
