@@ -40,9 +40,8 @@ _global_transforms = {'centre': transforms.CentreTransform,
                       'sqrt': transforms.SqrtTransform,
                       'whiten': transforms.WhitenTransform}
 
-    
 
-def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int=None) -> tuple:
+def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: int = None) -> tuple:
     """
     Parse a dictionary read from yaml into a TransformSet object.
 
@@ -78,8 +77,8 @@ def _parse_transform_set(transform_dict: dict, imputer_string: str, n_images: in
                 t = {t: {}}
             key, params = list(t.items())[0]
             if key in _image_transforms:
-                image_transforms.append([_image_transforms[key](**params) 
-                                        for k in range(n_images)])
+                image_transforms.append([_image_transforms[key](**params)
+                                         for k in range(n_images)])
             elif key in _global_transforms:
                 global_transforms.append(_global_transforms[key](**params))
     return image_transforms, imputer, global_transforms
@@ -105,6 +104,7 @@ class FeatureSetConfig(object):
     transform_set : :class:`~uncoverml.transforms.transformset.ImageTransformSet`
         Transforms specified for the feautre set.
     """
+
     def __init__(self, config_dict: dict):
         d = config_dict
         if d['type'] not in ('ordinal', 'categorical'):
@@ -153,9 +153,9 @@ class FeatureSetConfig(object):
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
                                                     d['imputation'],
                                                     n_feat)
-        
+
         self.transform_set = transforms.ImageTransformSet(trans_i, im, trans_g, is_categorical)
-                                                          
+
 
 class Config(object):
     """
@@ -373,6 +373,7 @@ class Config(object):
         Path to directory where prediciton map and other outputs
         will be written.
     """
+
     def __init__(self, yaml_file, clustering=False, learning=False, resampling=False,
                  predicting=False, shiftmap=True):
 
@@ -415,7 +416,7 @@ class Config(object):
             self.class_file = cb.get('file')
             if self.class_file:
                 self.class_property = _grp(cb, 'property', "'property' must be provided when "
-                                           "providing a file for semisupervised clustering.")
+                                                           "providing a file for semisupervised clustering.")
             self.semi_supervised = self.class_file is not None
         elif learning:
             # LEARNING BLOCK
@@ -426,7 +427,7 @@ class Config(object):
             self.targetsearch_threshold = learn_block.get('target_search_threshold', 0.8)
             tsexb = learn_block.get('target_search_extents')
             self.targetsearch_extents, self.tse_are_pixel_coordinates = Config.parse_extents(tsexb)
-            self.algorithm = _grp(learn_block, 'algorithm',"'algorithm' must be provided as part of 'learning' block.")
+            self.algorithm = _grp(learn_block, 'algorithm', "'algorithm' must be provided as part of 'learning' block.")
             self.algorithm_args = learn_block.get('arguments', {})
         else:
             self.bootstrap = False
@@ -437,7 +438,6 @@ class Config(object):
 
         self.set_algo_flags()
 
-        
         # EXTENTS
         exb = s.get('extents')
         self.extents, self.extents_are_pixel_coordinates = Config.parse_extents(exb)
@@ -453,7 +453,7 @@ class Config(object):
             # Load from pickle files if covariates and targets exist.
             self.pk_load = self.pk_covariates and os.path.exists(self.pk_covariates) \
                            and self.pk_targets and os.path.exists(self.pk_targets)
-            
+
             if self.cubist or self.multicubist:
                 self.pk_featurevec = pk_block.get('featurevec')
                 # If running multicubist, we also need featurevec to load from pickle files.
@@ -469,10 +469,10 @@ class Config(object):
         # Todo: fix get_image_spec so features are optional if using pickled data.
         # if not self.pk_load:
         if not resampling:
-            _logger.warning("'features' are required even when loading from pickled data - this " 
+            _logger.warning("'features' are required even when loading from pickled data - this "
                             "is a work around for getting image specifications. Needs to be fixed.")
             features = _grp(s, 'features', "'features' block must be provided when not loading "
-                            "from pickled data.")
+                                           "from pickled data.")
             print("loading features")
             self.feature_sets = [FeatureSetConfig(f) for f in features]
             # Mixing tabular and image features not currently supported
@@ -489,18 +489,18 @@ class Config(object):
         if 'patchsize' in s:
             _logger.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
-        
+
         # TARGET BLOCK
         if (not predicting and not clustering) or shiftmap:
             tb = _grp(s, 'targets', "'targets' block must be provided when not loading from "
-                      "pickled data.")
+                                    "pickled data.")
             self.target_file = _grp(tb, 'file', "'file' needs to be provided when specifying "
-                                    "targets.")
+                                                "targets.")
             if not path.exists(self.target_file):
                 raise FileNotFoundError("Target shapefile provided in config does not exist. Check "
                                         "that the 'file' property of the 'targets' block is correct.")
             self.target_property = _grp(tb, 'property', "'property needs to be provided when "
-                                        "specifying targets.")
+                                                        "specifying targets.")
             self.target_drop_values = tb.get('drop', None)
             self.target_weight_property = tb.get('weight_property')
             self.fields_to_write_to_csv = tb.get('write_to_csv')
@@ -520,7 +520,7 @@ class Config(object):
             self.final_transform = transforms.TransformSet(im, trans_g)
         else:
             self.final_transform = None
-                
+
         # VALIDATION BLOCK
         vb = s.get('validation')
         if vb:
@@ -539,10 +539,10 @@ class Config(object):
             kfb = vb.get('k-fold')
             if kfb:
                 self.folds = _grp(kfb, 'folds', "'folds' (number of folds) must be specified "
-                                  "if k-fold cross validation and/or feature ranking is being used.")
+                                                "if k-fold cross validation and/or feature ranking is being used.")
                 self.crossval_seed = _grp(kfb, 'random_seed', "'random_seed' must be specified "
-                                          "if k-fold cross validation and/or feature ranking is "
-                                          "being used.")
+                                                              "if k-fold cross validation and/or feature ranking is "
+                                                              "being used.")
                 self.parallel_validate = kfb.get('parallel', False)
             elif self.rank_features:
                 # Feature ranking requires crossval params. Provide defaults if not available.
@@ -571,13 +571,14 @@ class Config(object):
             self.bootstrap_predictions = pb.get('bootstrap')
             mb = s.get('mask')
             if mb:
-                self.mask = mb.get('file') 
+                self.mask = mb.get('file')
                 if not os.path.exists(self.mask):
-                    raise FileNotFoundError("Mask file provided in config does not exist. Check that the 'file' property of the 'mask' block is correct.")
+                    raise FileNotFoundError(
+                        "Mask file provided in config does not exist. Check that the 'file' property of the 'mask' block is correct.")
                 self.retain = _grp(mb, 'retain', "'retain' must be provided if providing a prediction mask.")
             else:
                 self.mask = None
-            
+
             if self.krige:
                 # Todo: don't know if lon/lat is compulsory or not for kriging
                 self.lon_lat = s.get('lon_lat')
@@ -620,7 +621,7 @@ class Config(object):
             self.plot_target_scaling = _outpath('_target_scaling.png')
         else:
             self.plot_target_scaling = None
-        
+
         self.raw_covariates = _outpath('_rawcovariates.csv')
         self.raw_covariates_mask = _outpath('_rawcovariates_mask.csv')
 
@@ -649,10 +650,10 @@ class Config(object):
 
         self.targetsearch_generated_points = _outpath('_targetsearch_generated_points.csv')
         self.targetsearch_likelihood = _outpath('_targetsearch_likelihood.csv')
-        self.targetsearch_result_data = _outpath('_targetsearch_result.pk') 
+        self.targetsearch_result_data = _outpath('_targetsearch_result.pk')
 
         self.resampled_shapefile_dir = os.path.join(self.output_dir, '{}_resampled')
-        
+
         paths = [self.output_dir, os.path.split(self.model_file)[0]]
         for p in paths:
             if p:
@@ -667,11 +668,11 @@ class Config(object):
         """
         if exb is not None:
             extents = exb.get('xmin'), exb.get('ymin'), exb.get('xmax'), exb.get('ymax')
-            if all(x is None for x in extents): 
+            if all(x is None for x in extents):
                 _logger.warning("'extents' block was specified but no coordinates or pixel values "
                                 "were given. Cropping will not be performed.")
 
-            if (extents[0] and extents[1])  is not None and extents[0] > extents[2]:
+            if (extents[0] and extents[1]) is not None and extents[0] > extents[2]:
                 raise ValueError(f"Error in provided crop coordinates: xmin ({extents[0]}) must be less "
                                  f"than xmax ({extents[2]}).")
             elif (extents[2] and extents[3]) is not None and extents[1] > extents[3]:
@@ -681,7 +682,6 @@ class Config(object):
             return extents, extents_are_pixel_coordinates
         else:
             return None, None
-
 
     @property
     def tmpdir(self):
@@ -726,7 +726,7 @@ class Config(object):
                 try:
                     ev_val = os.environ[ev]
                     if not ev_val:
-                        raise ValueError   
+                        raise ValueError
                 except (KeyError, ValueError):
                     _logger.exception("Couldn't parse environment var '%s' as it hasn't been set. "
                                       "Set the variable or remove it from the config file.", ev)
@@ -736,6 +736,6 @@ class Config(object):
 
         yaml.add_constructor('!envvar', _env_var_constructor, Loader=Config.yaml_loader)
 
-    
+
 class ConfigException(Exception):
     pass

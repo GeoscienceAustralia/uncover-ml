@@ -16,6 +16,7 @@ modelmaps = {**krig_dict, **transformed_modelmaps}
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
 mlkrige = modelmaps.pop('mlkrige')
+xgbquantile = modelmaps.pop('xgbquantile')
 
 # TODO: investigate why catboost does not work with target transforms
 # catboost = modelmaps.pop('catboost')
@@ -42,7 +43,6 @@ def get_svr_kernel(request):
 
 
 def test_pipeline(get_models, get_transform, get_kernel):
-
     alg, model = get_models
     trans = get_transform()
     kernel = get_kernel() + WhiteKernel()
