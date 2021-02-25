@@ -7,7 +7,7 @@ from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
 from uncoverml.models import (apply_masked,
                               apply_multiple_masked,
                               modelmaps)
-from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.optimise.models import transformed_modelmaps, XGBQuantileWrapper
 
 models = {**transformed_modelmaps, **modelmaps}
 
@@ -89,6 +89,8 @@ def test_trasnsformed_model_attr(get_transformed_model):
     """
     make sure all optimise.models classes have the required attributes
     """
+    if isinstance(get_transformed_model(), XGBQuantileWrapper):
+        pytest.skip(msg='xgbquantile is just a wrapper')
     assert np.all([hasattr(get_transformed_model(), a) for a in
                    ['score', 'fit', 'predict']])
 
@@ -101,6 +103,7 @@ def test_trasnsformed_model_attr(get_transformed_model):
                                       'multicubist',
                                       'decisiontree',
                                       'extratree',
+                                      'xgbquantile',
                                       # 'catboost'
                                      ]])
 def models_supported(request):

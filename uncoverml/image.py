@@ -67,7 +67,7 @@ class Image:
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
         if nchunks == 1 and overlap != 0:
-            _logger.warn("Ignoring overlap when 1 chunk present")
+            _logger.warning("Ignoring overlap when 1 chunk present")
             overlap = 0
 
         self.chunk_idx = chunk_idx
