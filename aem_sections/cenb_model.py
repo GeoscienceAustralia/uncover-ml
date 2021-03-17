@@ -58,7 +58,7 @@ aem_data = data[
 
 aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
 
-log.info(f"Covaraistes data size: {data.shape}, ineterp data size: {aem_data.shape}")
+log.info(f"Covaraiates data size: {data.shape}, ineterp data size: {line.shape}")
 
 # 1. what is tx_height - flight height?
 
@@ -92,65 +92,59 @@ def weighted_target(x: np.ndarray):
     dist += 1e-6  # add just in case of we have a zero distance
     if len(dist):
         df = line_required.iloc[ind]
-        weighted_depth = np.sum(df.Z_coor * (1/dist) ** 2 / np.sum((1/dist) ** 2))
+        weighted_depth = np.sum(df.Z_coor * (1/dist) ** 2) / np.sum((1/dist) ** 2)
         return weighted_depth
     else:
         return None
 
 
-target_depths = []
+def convert_to_xy():
+    target_depths = []
+    for xy, c, t in zip(aem_xy_and_other_covs.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
+        i, covariates_including_xy_ = xy
+        j, cc = c
+        k, tt = t
+        assert i == j == k
+        for ccc, ttt in zip(cc, tt):
+            index.append(i)
 
-for xy, c, t in zip(aem_xy_and_other_covs.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
-    i, covariates_including_xy_ = xy
-    j, cc = c
-    k, tt = t
-    assert i == j == k
-    for ccc, ttt in zip(cc, tt):
-        index.append(i)
+            covariates_including_xyz_ = covariates_including_xy_.append(
+                pd.Series([ttt, ccc], index=['Z_coor', 'conductivity'])
+            )
+            x_y_z = covariates_including_xyz_[threed_coords].values.reshape(1, -1)
 
-        covariates_including_xyz_ = covariates_including_xy_.append(
-            pd.Series([ttt, ccc], index=['Z_coor', 'conductivity'])
-        )
-        x_y_z = covariates_including_xyz_[threed_coords].values.reshape(1, -1)
+            y = weighted_target(x_y_z)
+            if y is not None:
+                covariates_including_xyz.append(covariates_including_xyz_)
+                target_depths.append(y)
+    X = pd.DataFrame(covariates_including_xyz)
+    y = pd.Series(target_depths, name='target')
+    return {'covariates': X, 'targets': y}
 
-        y = weighted_target(x_y_z)
-        if y is not None:
-            covariates_including_xyz.append(covariates_including_xyz_)
-            target_depths.append(y)
+import pickle
+if not Path('covariates_targets.data').exists():
+    data = convert_to_xy()
+    pickle.dump(data, open('covariates_targets.data', 'wb'))
+else:
+    data = pickle.load(open('covariates_targets.data', 'rb'))
 
-X = pd.DataFrame(covariates_including_xyz)
-y = pd.Series(target_depths, name='target')
+X = data['covariates']
+y = data['targets']
 
 log.info("assembled covariates and targets")
 
 log.info("tuning model params ....")
-from sklearn.model_selection import KFold
 
 rf = GradientBoostingRegressor()
 
-# param_distributions = [
-#     {
-#         'n_estimators': range(20, 100, 10),
-#         'learning_rate': np.linspace(0.01, .51, 10),
-#         'max_depth': range(5, 16, 2),
-#         'min_samples_split': range(2, 200, 20)
-#     }
-# ]
 
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from skopt.space import Real, Integer
-from skopt.utils import use_named_args
-from skopt import gp_minimize
 from skopt import BayesSearchCV
 
-n_features = X.shape[1]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
-# ...     {
-#     ...         'C': Real(1e-6, 1e+6, prior='log-uniform'),
-# ...         'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-# ...         'degree': Integer(1,8),
-# ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
-# ...     },
+n_features = X.shape[1]
 
 space = {'max_depth': Integer(1, 15),
          'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
@@ -180,14 +174,5 @@ def on_step(optim_result):
         print('Interrupting!')
         return True
 
-searchcv.fit(X, y, callback=on_step)
-
-
-
-# model = RandomizedSearchCV(rf, param_distributions=param_distributions, cv=n_folds, refit=True, n_iter=50, n_jobs=5)
-# model.fit(X, y)
-
-import IPython; IPython.embed(); import sys; sys.exit()
-# y_true_nn = KNeighborsRegressor()
-
-
+searchcv.fit(X_train, y_train, callback=on_step)
+searchcv.score(X_test, y_test)
