@@ -1,16 +1,20 @@
+import logging
 from pathlib import Path
 from typing import List
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import KDTree
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.model_selection import RandomizedSearchCV
 from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt
 
+log = logging.getLogger(__name__)
+
 aem_folder = '/home/sudipta/Downloads/aem_sections'
+log.info("reading interp data...")
 targets = pd.read_csv(Path(aem_folder).joinpath('Albers_cenozoic_interp.txt'))
-line = targets[(targets['line'] == 3) & (targets['Type'] != 'WITHIN_Cenozoic')]
+line = targets[targets['Type'] != 'WITHIN_Cenozoic']
 line = line.sort_values(by='Y_coor', ascending=False)
 line['X_coor_diff'] = line['X_coor'].diff()
 line['Y_coor_diff'] = line['Y_coor'].diff()
@@ -41,6 +45,7 @@ line = line.rename(columns={'DEPTH': 'Z_coor'})
 threed_coords = ['X_coor', 'Y_coor', 'Z_coor']
 line_required = line[threed_coords]
 
+log.info("reading covariates")
 data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.csv'))
 
 dis_tol = 100  # meters, distance tolerance used
@@ -52,7 +57,7 @@ aem_data = data[
 
 aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
 
-print(data.shape, aem_data.shape)
+log.info(f"Covaraistes data size: {data.shape}, ineterp data size: {aem_data.shape}")
 
 # 1. what is tx_height - flight height?
 
@@ -75,11 +80,9 @@ covariates_including_xyz = []
 
 final_cols = coords + aem_covariate_cols + ['Z_coor']
 
-
-
 # build a tree from the interpretation points
 tree = KDTree(line_required)
-radius = 5000
+radius = 500
 
 
 def weighted_target(x: np.ndarray):
@@ -108,52 +111,80 @@ for xy, c, t in zip(aem_xy_and_other_covs.iterrows(), aem_conductivities.iterrow
             pd.Series([ttt, ccc], index=['Z_coor', 'conductivity'])
         )
         x_y_z = covariates_including_xyz_[threed_coords].values.reshape(1, -1)
-        covariates_including_xyz.append(covariates_including_xyz_)
-        target_depths.append(weighted_target(x_y_z))
+
+        y = weighted_target(x_y_z)
+        if y is not None:
+            covariates_including_xyz.append(covariates_including_xyz_)
+            target_depths.append(y)
 
 X = pd.DataFrame(covariates_including_xyz)
 y = pd.Series(target_depths, name='target')
 
+log.info("assembled covariates and targets")
+
+log.info("tuning model params ....")
 from sklearn.model_selection import KFold
 
-rf = RandomForestRegressor()
+rf = GradientBoostingRegressor()
 
-# n_estimators=100,
-# criterion="mse",
-# max_depth=None,
-# min_samples_split=2,
-# min_samples_leaf=1,
-# min_weight_fraction_leaf=0.,
-# max_features="auto",
-# max_leaf_nodes=None,
-# min_impurity_decrease=0.,
-# min_impurity_split=None,
-# bootstrap=True,
-# oob_score=False,
-# n_jobs=None,
-# random_state=None,
-# verbose=0,
-# warm_start=False,
-# ccp_alpha=0.0,
-# max_samples=None
+# param_distributions = [
+#     {
+#         'n_estimators': range(20, 100, 10),
+#         'learning_rate': np.linspace(0.01, .51, 10),
+#         'max_depth': range(5, 16, 2),
+#         'min_samples_split': range(2, 200, 20)
+#     }
+# ]
+
+from sklearn.model_selection import cross_val_score
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
+from skopt import gp_minimize
+from skopt import BayesSearchCV
+
+n_features = X.shape[1]
+
+# ...     {
+#     ...         'C': Real(1e-6, 1e+6, prior='log-uniform'),
+# ...         'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+# ...         'degree': Integer(1,8),
+# ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
+# ...     },
+
+space = {'max_depth': Integer(1, 5),
+         'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
+         'max_features': Integer(1, n_features),
+         'min_samples_split': Integer(2, 100),
+         'min_samples_leaf': Integer(1, 100),
+         'n_estimators': Integer(20, 200),
+}
+
+reg = GradientBoostingRegressor(n_estimators=50, random_state=0)
+
+searchcv = BayesSearchCV(
+    reg,
+    search_spaces=space,
+    n_iter=40,
+    cv=3,
+    verbose=100
+)
+
+# callback handler
+def on_step(optim_result):
+    score = searchcv.best_score_
+    print("best score: %s" % score)
+    if score >= 0.98:
+        print('Interrupting!')
+        return True
+
+searchcv.fit(X, y, callback=on_step)
 
 
-param_distributions = [
-    {
-        'n_estimators': range(20, 100, 10),
-    }
-]
 
-n_folds = 5
-
-model = RandomizedSearchCV(rf, param_distributions=param_distributions, cv=n_folds, refit=True, n_iter=5, n_jobs=5)
-model.fit(X, y)
-
+# model = RandomizedSearchCV(rf, param_distributions=param_distributions, cv=n_folds, refit=True, n_iter=50, n_jobs=5)
+# model.fit(X, y)
 
 import IPython; IPython.embed(); import sys; sys.exit()
-
-
-
 # y_true_nn = KNeighborsRegressor()
 
 
