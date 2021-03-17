@@ -9,7 +9,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.model_selection import RandomizedSearchCV
 from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt
 
-log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 aem_folder = '/home/sudipta/Downloads/aem_sections'
 log.info("reading interp data...")
@@ -151,7 +152,7 @@ n_features = X.shape[1]
 # ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
 # ...     },
 
-space = {'max_depth': Integer(1, 5),
+space = {'max_depth': Integer(1, 15),
          'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
          'max_features': Integer(1, n_features),
          'min_samples_split': Integer(2, 100),
@@ -164,9 +165,11 @@ reg = GradientBoostingRegressor(n_estimators=50, random_state=0)
 searchcv = BayesSearchCV(
     reg,
     search_spaces=space,
-    n_iter=40,
+    n_iter=48,
     cv=3,
-    verbose=100
+    verbose=100,
+    n_points=12,
+    n_jobs=4,
 )
 
 # callback handler
