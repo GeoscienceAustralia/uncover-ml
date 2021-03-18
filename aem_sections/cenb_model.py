@@ -74,7 +74,8 @@ aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'rel
 
 aem_xy_and_other_covs = aem_data[coords + aem_covariate_cols]
 
-categorical = 'relief_mrv'
+# categorical = 'relief_mrv'
+covariate_cols_without_xyz = aem_covariate_cols + ['conductivity']
 
 index = []
 covariates_including_xyz = []
@@ -129,7 +130,12 @@ else:
     data = pickle.load(open('covariates_targets.data', 'rb'))
 
 X = data['covariates']
+print(X.columns)
+X = X[covariate_cols_without_xyz]  # don't use x, y, z values in model
+print(X.columns)
 y = data['targets']
+
+
 
 log.info("assembled covariates and targets")
 
@@ -159,9 +165,9 @@ reg = GradientBoostingRegressor(n_estimators=50, random_state=0)
 searchcv = BayesSearchCV(
     reg,
     search_spaces=space,
-    n_iter=48,
+    n_iter=60,
     cv=3,
-    verbose=100,
+    verbose=1000,
     n_points=12,
     n_jobs=4,
 )
@@ -176,3 +182,4 @@ def on_step(optim_result):
 
 searchcv.fit(X_train, y_train, callback=on_step)
 searchcv.score(X_test, y_test)
+import IPython; IPython.embed(); import sys; sys.exit()
