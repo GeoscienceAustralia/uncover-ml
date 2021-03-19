@@ -4,7 +4,7 @@ import pickle
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, make_scorer
 from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
 from skopt.space import Real, Integer
@@ -47,10 +47,6 @@ else:
     log.warning("Reusing data from disc!!!")
     data = pickle.load(open('covariates_targets.data', 'rb'))
 
-all_X = data['covariates']
-all_y = data['targets']
-
-
 exclude_interp_data = create_interp_data(all_interp_data, holdout_line_nos=[1, 2, 3, 5, 6])
 X_train, X_test, y_train, y_test = create_train_test_set(data, exclude_interp_data)
 log.info(f"Train data size: {X_train.shape}, Test data size: {X_test.shape}")
@@ -73,27 +69,20 @@ gbm_space = {'max_depth': Integer(1, 15),
 xgb_space = {
     'max_depth': Integer(1, 15),
     'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
+    'n_estimators': Integer(20, 200),
     'min_child_weight': Integer(1, 10),
+    'max_delta_step': Integer(0, 10),
     'gamma': Real(0, 0.5, prior="uniform"),
     'colsample_bytree': Real(0.3, 0.9, prior="uniform"),
-    'n_estimators': Integer(20, 200),
     'subsample': Real(0.01, 1.0, prior='uniform'),
     'colsample_bylevel': Real(0.01, 1.0, prior='uniform'),
     'colsample_bynode': Real(0.01, 1.0, prior='uniform'),
+    'reg_alpha': Real(1, 100, prior='uniform'),
+    'reg_lambda': Real(0.01, 10, prior='log-uniform'),
 }
 
 # sklearn gbm
-reg = GradientBoostingRegressor(random_state=0)
-
-searchcv = BayesSearchCV(
-    reg,
-    search_spaces=gbm_space if isinstance(reg, GradientBoostingRegressor) else xgb_space,
-    n_iter=60,
-    cv=3,
-    verbose=1000,
-    n_points=12,
-    n_jobs=4,
-)
+# reg = GradientBoostingRegressor(random_state=0)
 
 # xgboost
 reg = XGBRegressor(random_state=0)
@@ -106,6 +95,24 @@ reg = XGBRegressor(random_state=0)
 # missing=None
 
 
+def my_custom_scorer(reg, X, y):
+    """learn on train data and predict on test data to ensure total out of sample validation"""
+    y_test_pred = reg.predict(X_test)
+    r2 = r2_score(y_test, y_test_pred)
+    return r2
+
+
+searchcv = BayesSearchCV(
+    reg,
+    search_spaces=gbm_space if isinstance(reg, GradientBoostingRegressor) else xgb_space,
+    n_iter=60,
+    cv=3,
+    verbose=1000,
+    n_points=12,
+    n_jobs=4,
+    scoring=my_custom_scorer
+)
+
 # callback handler
 def on_step(optim_result):
     score = searchcv.best_score_
@@ -116,4 +123,6 @@ def on_step(optim_result):
 
 searchcv.fit(X_train, y_train, callback=on_step)
 searchcv.score(X_test, y_test)
+import time
+pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
 import IPython; IPython.embed(); import sys; sys.exit()
