@@ -10,8 +10,7 @@ from xgboost.sklearn import XGBRegressor
 from skopt.space import Real, Integer
 from skopt import BayesSearchCV
 
-from aem_sections.utils import extract_required_aem_data, convert_to_xy, create_interp_data, aem_covariate_cols, \
-    coords, threed_coords, covariate_cols_without_xyz, final_cols, extent_of_data, create_train_test_set
+from aem_sections.utils import extract_required_aem_data, convert_to_xy, create_interp_data, create_train_test_set
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -63,7 +62,7 @@ log.info("tuning model params ....")
 
 n_features = X_train.shape[1]
 
-space = {'max_depth': Integer(1, 15),
+gbm_space = {'max_depth': Integer(1, 15),
          'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
          'max_features': Integer(1, n_features),
          'min_samples_split': Integer(2, 100),
@@ -71,18 +70,40 @@ space = {'max_depth': Integer(1, 15),
          'n_estimators': Integer(20, 200),
 }
 
+xgb_space = {
+    'max_depth': Integer(1, 15),
+    'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
+    'min_child_weight': Integer(1, 10),
+    'gamma': Real(0, 0.5, prior="uniform"),
+    'colsample_bytree': Real(0.3, 0.9, prior="uniform"),
+    'n_estimators': Integer(20, 200),
+    'subsample': Real(0.01, 1.0, prior='uniform'),
+    'colsample_bylevel': Real(0.01, 1.0, prior='uniform'),
+    'colsample_bynode': Real(0.01, 1.0, prior='uniform'),
+}
+
 # sklearn gbm
 reg = GradientBoostingRegressor(random_state=0)
 
 searchcv = BayesSearchCV(
     reg,
-    search_spaces=space,
+    search_spaces=gbm_space if isinstance(reg, GradientBoostingRegressor) else xgb_space,
     n_iter=60,
     cv=3,
     verbose=1000,
     n_points=12,
     n_jobs=4,
 )
+
+# xgboost
+reg = XGBRegressor(random_state=0)
+# max_depth=3, learning_rate=1, n_estimators=100,
+# verbosity=1, silent=None,
+# objective="reg:linear", n_jobs=1, nthread=None, gamma=0,
+# min_child_weight=1, max_delta_step=0, subsample=0.8, colsample_bytree=1,
+# colsample_bylevel=1, colsample_bynode=0.8, reg_alpha=0, reg_lambda=1,
+# scale_pos_weight=1, base_score=0.5, random_state=0, seed=None,
+# missing=None
 
 
 # callback handler
