@@ -36,7 +36,7 @@ all_interp_data = pd.read_csv(Path(aem_folder).joinpath('Albers_cenozoic_interp.
 log.info("reading covariates")
 original_aem_data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.csv'))
 
-all_lines = create_interp_data(all_interp_data, [])
+all_lines = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4, 5, 6])
 aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(original_aem_data, all_lines)
 
 if not Path('covariates_targets.data').exists():
@@ -47,8 +47,14 @@ else:
     log.warning("Reusing data from disc!!!")
     data = pickle.load(open('covariates_targets.data', 'rb'))
 
-exclude_interp_data = create_interp_data(all_interp_data, holdout_line_nos=[1, 2, 3, 5, 6])
-X_train, X_test, y_train, y_test = create_train_test_set(data, exclude_interp_data)
+train_data = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4])
+test_data = create_interp_data(all_interp_data, included_lines=[5])
+validation_data = create_interp_data(all_interp_data, included_lines=[6])
+
+X_train, y_train = create_train_test_set(data, test_data, validation_data)
+X_test, y_test = create_train_test_set(data, train_data, validation_data)
+X_val, y_val = create_train_test_set(data, train_data, test_data)
+
 log.info(f"Train data size: {X_train.shape}, Test data size: {X_test.shape}")
 
 
@@ -59,12 +65,12 @@ log.info("tuning model params ....")
 n_features = X_train.shape[1]
 
 gbm_space = {'max_depth': Integer(1, 15),
-         'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
-         'max_features': Integer(1, n_features),
-         'min_samples_split': Integer(2, 100),
-         'min_samples_leaf': Integer(1, 100),
-         'n_estimators': Integer(20, 200),
-}
+             'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
+             'max_features': Integer(1, n_features),
+             'min_samples_split': Integer(2, 100),
+             'min_samples_leaf': Integer(1, 100),
+             'n_estimators': Integer(20, 200),
+             }
 
 xgb_space = {
     'max_depth': Integer(1, 15),
@@ -122,7 +128,7 @@ def on_step(optim_result):
         return True
 
 searchcv.fit(X_train, y_train, callback=on_step)
-searchcv.score(X_test, y_test)
+print(searchcv.score(X_val, y_val))
 import time
 pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
 import IPython; IPython.embed(); import sys; sys.exit()

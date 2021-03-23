@@ -16,7 +16,8 @@ conductivities = [c for c in original_aem_data.columns if c.startswith('conduct'
 thickness = [t for t in original_aem_data.columns if t.startswith('thick')]
 
 # distance within which an interpretation point is considered to contribute to target values
-radius = 500
+radius = 20
+cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
 coords = ['X_coor', 'Y_coor']
 threed_coords = coords + ['Z_coor']
@@ -43,18 +44,18 @@ def extract_required_aem_data(in_scope_aem_data, interp_data):
     return aem_xy_and_other_covs, aem_conductivities, aem_thickness
 
 
-def create_train_test_set(data, excluded_interp_data):
-    x_max, x_min, y_max, y_min = extent_of_data(excluded_interp_data)
+def create_train_test_set(data, * excluded_interp_data):
+    # import IPython; IPython.embed(); import sys; sys.exit()
     X = data['covariates']
     y = data['targets']
+    excluded_indices = np.zeros(X.shape[0], dtype=bool)    # nothing is excluded
+    for ex_data in excluded_interp_data:
+        x_max, x_min, y_max, y_min = extent_of_data(ex_data)
+        excluded_indices = excluded_indices | \
+                           ((X.X_coor < x_max + dis_tol) & (X.X_coor > x_min - dis_tol) &
+                            (X.Y_coor < y_max + dis_tol) & (X.Y_coor > y_min - dis_tol))
 
-    print(x_max, x_min, y_max, y_min)
-    print(extent_of_data(X))
-
-    test_indices = (X.X_coor < x_max + dis_tol) & (X.X_coor > x_min - dis_tol) & \
-        (X.Y_coor < y_max + dis_tol) & (X.Y_coor > y_min - dis_tol)
-
-    return X[~test_indices], X[test_indices], y[~test_indices], y[test_indices]
+    return X[~excluded_indices], y[~excluded_indices]
 
 
 def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:
@@ -100,9 +101,9 @@ def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, inte
     return {'covariates': X, 'targets': y}
 
 
-def create_interp_data(input_interp_data, holdout_line_nos):
+def create_interp_data(input_interp_data, included_lines):
     line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
-                             & ~(input_interp_data['line'].isin(holdout_line_nos))]
+                             & (input_interp_data['line'].isin(included_lines))]
     line = line.sort_values(by='Y_coor', ascending=False)
     line['X_coor_diff'] = line['X_coor'].diff()
     line['Y_coor_diff'] = line['Y_coor'].diff()
