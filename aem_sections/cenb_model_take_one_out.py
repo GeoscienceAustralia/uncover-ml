@@ -48,12 +48,19 @@ else:
     data = pickle.load(open('covariates_targets.data', 'rb'))
 
 train_data = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4])
-test_data = create_interp_data(all_interp_data, included_lines=[5])
-validation_data = create_interp_data(all_interp_data, included_lines=[6])
+test_data = create_interp_data(all_interp_data, included_lines=[6])
+validation_data = create_interp_data(all_interp_data, included_lines=[5])
 
 X_train, y_train = create_train_test_set(data, test_data, validation_data)
 X_test, y_test = create_train_test_set(data, train_data, validation_data)
 X_val, y_val = create_train_test_set(data, train_data, test_data)
+
+include_z = False
+if include_z:
+    X_train = X_train.drop('Z_coor')
+    X_test = X_test.drop('Z_coor')
+    X_val = X_val.drop('Z_coor')
+
 
 log.info(f"Train data size: {X_train.shape}, Test data size: {X_test.shape}")
 

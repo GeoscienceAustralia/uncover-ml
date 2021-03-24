@@ -16,7 +16,7 @@ conductivities = [c for c in original_aem_data.columns if c.startswith('conduct'
 thickness = [t for t in original_aem_data.columns if t.startswith('thick')]
 
 # distance within which an interpretation point is considered to contribute to target values
-radius = 20
+radius = 10
 cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
 coords = ['X_coor', 'Y_coor']
@@ -24,8 +24,8 @@ threed_coords = coords + ['Z_coor']
 aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'relief_ele', 'relief_mrv', 'SagaWET9ce'] \
                      + ['elevation', 'tx_height']
 # categorical = 'relief_mrv'
-covariate_cols_without_xyz = aem_covariate_cols + ['conductivity']
-final_cols = coords + aem_covariate_cols + ['Z_coor']
+# covariate_cols_without_xyz = aem_covariate_cols + ['conductivity']
+# final_cols = coords + aem_covariate_cols + ['Z_coor']
 
 
 def extract_required_aem_data(in_scope_aem_data, interp_data):
