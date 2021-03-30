@@ -16,7 +16,7 @@ conductivities = [c for c in original_aem_data.columns if c.startswith('conduct'
 thickness = [t for t in original_aem_data.columns if t.startswith('thick')]
 
 # distance within which an interpretation point is considered to contribute to target values
-radius = 10
+radius = 200
 cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
 coords = ['X_coor', 'Y_coor']
@@ -45,7 +45,6 @@ def extract_required_aem_data(in_scope_aem_data, interp_data):
 
 
 def create_train_test_set(data, * excluded_interp_data):
-    # import IPython; IPython.embed(); import sys; sys.exit()
     X = data['covariates']
     y = data['targets']
     excluded_indices = np.zeros(X.shape[0], dtype=bool)    # nothing is excluded
@@ -104,14 +103,18 @@ def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, inte
 def create_interp_data(input_interp_data, included_lines):
     line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
                              & (input_interp_data['line'].isin(included_lines))]
+    line = add_delta(line)
+    line = line.rename(columns={'DEPTH': 'Z_coor'})
+    line_required = line[threed_coords]
+    return line_required
+
+
+def add_delta(line):
     line = line.sort_values(by='Y_coor', ascending=False)
     line['X_coor_diff'] = line['X_coor'].diff()
     line['Y_coor_diff'] = line['Y_coor'].diff()
     line['delta'] = np.sqrt(line.X_coor_diff ** 2 + line.Y_coor_diff ** 2)
     line['delta'] = line['delta'].fillna(value=0.0)
-
     line['d'] = line['delta'].cumsum()
     line = line.sort_values(by=['d'], ascending=True)
-    line = line.rename(columns={'DEPTH': 'Z_coor'})
-    line_required = line[threed_coords]
-    return line_required
+    return line
