@@ -16,11 +16,11 @@ conductivities = [c for c in original_aem_data.columns if c.startswith('conduct'
 thickness = [t for t in original_aem_data.columns if t.startswith('thick')]
 
 # distance within which an interpretation point is considered to contribute to target values
-radius = 200
+radius = 500
 cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
-coords = ['X_coor', 'Y_coor']
-threed_coords = coords + ['Z_coor']
+twod_coords = ['X_coor', 'Y_coor']
+threed_coords = twod_coords + ['Z_coor']
 aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'relief_ele', 'relief_mrv', 'SagaWET9ce'] \
                      + ['elevation', 'tx_height']
 # categorical = 'relief_mrv'
@@ -28,16 +28,19 @@ aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'rel
 # final_cols = coords + aem_covariate_cols + ['Z_coor']
 
 
-def extract_required_aem_data(in_scope_aem_data, interp_data):
+def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False):
     # find bounding box
     x_max, x_min, y_max, y_min = extent_of_data(interp_data)
     # use bbox to select data only for one line
     aem_data = in_scope_aem_data[
-        (in_scope_aem_data.X_coor < x_max + dis_tol) & (in_scope_aem_data.X_coor > x_min - dis_tol) &
-        (in_scope_aem_data.Y_coor < y_max + dis_tol) & (in_scope_aem_data.Y_coor > y_min - dis_tol)
+        (in_scope_aem_data.X_coor < x_max + dis_tol) &
+        (in_scope_aem_data.X_coor > x_min - dis_tol) &
+        (in_scope_aem_data.Y_coor < y_max + dis_tol) &
+        (in_scope_aem_data.Y_coor > y_min - dis_tol)
         ]
     aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
-    aem_xy_and_other_covs = aem_data[coords + aem_covariate_cols]
+    conduct_cols = conductivities if twod else []
+    aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols]
     aem_conductivities = aem_data[conductivities]
     aem_thickness = aem_data[thickness].cumsum(axis=1)
 
@@ -48,6 +51,7 @@ def create_train_test_set(data, * excluded_interp_data):
     X = data['covariates']
     y = data['targets']
     excluded_indices = np.zeros(X.shape[0], dtype=bool)    # nothing is excluded
+
     for ex_data in excluded_interp_data:
         x_max, x_min, y_max, y_min = extent_of_data(ex_data)
         excluded_indices = excluded_indices | \
@@ -75,28 +79,35 @@ def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray):
         return None
 
 
-def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, interp_data):
+def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, interp_data, twod=False):
     log.info("convert to xy and target values...")
-    covariates_including_xyz = []
-    tree = KDTree(interp_data)
+    selected = []
+    tree = KDTree(interp_data[twod_coords if twod else threed_coords])
     target_depths = []
     for xy, c, t in zip(aem_xy_and_other_covs.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
         i, covariates_including_xy_ = xy
         j, cc = c
         k, tt = t
         assert i == j == k
-        for ccc, ttt in zip(cc, tt):
-            covariates_including_xyz_ = covariates_including_xy_.append(
-                pd.Series([ttt, ccc], index=['Z_coor', 'conductivity'])
-            )
-            x_y_z = covariates_including_xyz_[threed_coords].values.reshape(1, -1)
-
-            y = weighted_target(interp_data, tree, x_y_z)
+        if twod:
+            x_y = covariates_including_xy_[twod_coords].values.reshape(1, -1)
+            y = weighted_target(interp_data, tree, x_y)
             if y is not None:
-                covariates_including_xyz.append(covariates_including_xyz_)
+                selected.append(covariates_including_xy_)  # in 2d conductivities are already in xy
                 target_depths.append(y)
-    X = pd.DataFrame(covariates_including_xyz)
-    y = pd.Series(target_depths, name='target')
+        else:
+            for ccc, ttt in zip(cc, tt):
+                covariates_including_xyz_ = covariates_including_xy_.append(
+                    pd.Series([ttt, ccc], index=['Z_coor', 'conductivity'])
+                )
+                x_y_z = covariates_including_xyz_[threed_coords].values.reshape(1, -1)
+                y = weighted_target(interp_data, tree, x_y_z)
+                if y is not None:
+                    selected.append(covariates_including_xyz_)
+                    target_depths.append(y)
+
+    X = pd.DataFrame(selected)
+    y = pd.Series(target_depths, name='target', index=X.index)
     return {'covariates': X, 'targets': y}
 
 
