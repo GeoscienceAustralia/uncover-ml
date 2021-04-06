@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 import pickle
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, make_scorer
@@ -10,6 +11,7 @@ from xgboost.sklearn import XGBRegressor
 from skopt.space import Real, Integer
 from skopt import BayesSearchCV
 
+from aem_sections import utils
 from aem_sections.utils import extract_required_aem_data, convert_to_xy, create_interp_data, create_train_test_set
 
 logging.basicConfig(level=logging.INFO)
@@ -38,11 +40,14 @@ original_aem_data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.cs
 
 all_lines = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4, 5, 6])
 aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(original_aem_data, all_lines,
-                                                                                     twod=True)
+                                                                                     twod=True, thickness=True)
 
-train_data = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4])
-test_data = create_interp_data(all_interp_data, included_lines=[6])
-validation_data = create_interp_data(all_interp_data, included_lines=[5])
+data_line1 = create_interp_data(all_interp_data, included_lines=[1])
+data_line2 = create_interp_data(all_interp_data, included_lines=[2])
+data_line3 = create_interp_data(all_interp_data, included_lines=[3])
+data_line4 = create_interp_data(all_interp_data, included_lines=[4])
+data_line5 = create_interp_data(all_interp_data, included_lines=[5])
+data_line6 = create_interp_data(all_interp_data, included_lines=[6])
 
 if not Path('covariates_targets_2d.data').exists():
     data = convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, all_lines, twod=True)
@@ -52,12 +57,21 @@ else:
     log.warning("Reusing data from disc!!!")
     data = pickle.load(open('covariates_targets_2d.data', 'rb'))
 
-X_train, y_train = create_train_test_set(data, test_data, validation_data)
-X_test, y_test = create_train_test_set(data, train_data, validation_data)
-X_val, y_val = create_train_test_set(data, train_data, test_data)
+all_data_lines = [data_line1, data_line2, data_line3, data_line4, data_line5, data_line6]
+
+# take out lines 4 and 5 from train data
+X_train, y_train = create_train_test_set(data, data_line2, data_line3, data_line6)
+
+# test using line 5
+X_test, y_test = create_train_test_set(data, data_line4)
+
+# val using line 4
+X_val, y_val = create_train_test_set(data, data_line5)
 
 
-log.info(f"Train data size: {X_train.shape}, Test data size: {X_test.shape}")
+log.info(f"Train data size: {X_train.shape}, "
+         f"Test data size: {X_test.shape}, "
+         f"Validation data size: {X_val.shape}")
 
 
 log.info("assembled covariates and targets")
@@ -113,11 +127,11 @@ def my_custom_scorer(reg, X, y):
 searchcv = BayesSearchCV(
     reg,
     search_spaces=gbm_space if isinstance(reg, GradientBoostingRegressor) else xgb_space,
-    n_iter=60,
-    cv=3,
+    n_iter=180,
+    cv=2,  # use 2 when using custom scoring using X_test
     verbose=1000,
     n_points=12,
-    n_jobs=4,
+    n_jobs=12,
     scoring=my_custom_scorer
 )
 
@@ -130,7 +144,45 @@ def on_step(optim_result):
         return True
 
 searchcv.fit(X_train, y_train, callback=on_step)
-print(searchcv.score(X_val, y_val))
 import time
 pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
+
+# searchcv = pickle.load(open("XGBRegressor.1617675901.model", 'rb'))
+print(searchcv.score(X_val, y_val))
+
+from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt
+plt.scatter(y_val, searchcv.predict(X_val))
+plt.xlabel('y_true')
+plt.ylabel('y_pred')
+
+
+def plot_validation_line(X_val: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSearchCV):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from aem_sections.utils import add_delta
+    original_cols = X_train.columns[:]
+    plt.figure()
+    X_val = add_delta(X_val)
+    origin = (X_val.X_coor.iat[0], X_val.Y_coor.iat[0])
+    print(X_val[utils.twod_coords].head(2))
+    print(origin)
+    val_data_line = add_delta(val_data_line, origin=origin)
+    plt.plot(X_val.d.values, model.predict(X_val[original_cols]), label='prediction')
+    plt.plot(val_data_line.d.values, val_data_line.Z_coor, label='interpretation')
+    plt.xlabel('distance')
+    plt.ylabel('cen-b depth')
+    plt.legend()
+
+    plt.show()
+
+
+def plot_3d_validation_line(X_val):
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(X_val.X_coor, X_val.Y_coor, X_val.DEPTH, 'gray')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('depth')
+    plt.show()
+
 import IPython; IPython.embed(); import sys; sys.exit()

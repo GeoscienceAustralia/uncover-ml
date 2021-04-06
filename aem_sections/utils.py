@@ -28,7 +28,7 @@ aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'rel
 # final_cols = coords + aem_covariate_cols + ['Z_coor']
 
 
-def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False):
+def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, include_thickness=False):
     # find bounding box
     x_max, x_min, y_max, y_min = extent_of_data(interp_data)
     # use bbox to select data only for one line
@@ -40,7 +40,8 @@ def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False):
         ]
     aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
     conduct_cols = conductivities if twod else []
-    aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols]
+    thickness_cols = thickness if include_thickness else []
+    aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols + thickness_cols]
     aem_conductivities = aem_data[conductivities]
     aem_thickness = aem_data[thickness].cumsum(axis=1)
 
@@ -50,15 +51,15 @@ def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False):
 def create_train_test_set(data, * excluded_interp_data):
     X = data['covariates']
     y = data['targets']
-    excluded_indices = np.zeros(X.shape[0], dtype=bool)    # nothing is excluded
+    included_lines = np.zeros(X.shape[0], dtype=bool)    # nothing is excluded
 
     for ex_data in excluded_interp_data:
         x_max, x_min, y_max, y_min = extent_of_data(ex_data)
-        excluded_indices = excluded_indices | \
+        included_lines = included_lines | \
                            ((X.X_coor < x_max + dis_tol) & (X.X_coor > x_min - dis_tol) &
                             (X.Y_coor < y_max + dis_tol) & (X.Y_coor > y_min - dis_tol))
 
-    return X[~excluded_indices], y[~excluded_indices]
+    return X[included_lines], y[included_lines]
 
 
 def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:
@@ -114,18 +115,24 @@ def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, inte
 def create_interp_data(input_interp_data, included_lines):
     line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
                              & (input_interp_data['line'].isin(included_lines))]
-    line = add_delta(line)
+    # line = add_delta(line)
     line = line.rename(columns={'DEPTH': 'Z_coor'})
     line_required = line[threed_coords]
     return line_required
 
 
-def add_delta(line):
+def add_delta(line, origin=None):
     line = line.sort_values(by='Y_coor', ascending=False)
     line['X_coor_diff'] = line['X_coor'].diff()
     line['Y_coor_diff'] = line['Y_coor'].diff()
     line['delta'] = np.sqrt(line.X_coor_diff ** 2 + line.Y_coor_diff ** 2)
     line['delta'] = line['delta'].fillna(value=0.0)
+    if origin is not None:
+        line['delta'].iat[0] = np.sqrt(
+            (line.X_coor.iat[0]-origin[0]) ** 2 +
+            (line.Y_coor.iat[0]-origin[1]) ** 2
+        )
+
     line['d'] = line['delta'].cumsum()
     line = line.sort_values(by=['d'], ascending=True)
     return line
