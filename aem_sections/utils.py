@@ -39,12 +39,12 @@ def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, includ
         (in_scope_aem_data.Y_coor > y_min - dis_tol)
         ]
     aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
+    aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
     conduct_cols = conductivities if twod else []
     thickness_cols = thickness if include_thickness else []
     aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols + thickness_cols]
     aem_conductivities = aem_data[conductivities]
-    aem_thickness = aem_data[thickness].cumsum(axis=1)
-
+    aem_thickness = aem_data[thickness]
     return aem_xy_and_other_covs, aem_conductivities, aem_thickness
 
 

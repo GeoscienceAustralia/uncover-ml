@@ -40,7 +40,7 @@ original_aem_data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.cs
 
 all_lines = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4, 5, 6])
 aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(original_aem_data, all_lines,
-                                                                                     twod=True, thickness=True)
+                                                                                     twod=True, include_thickness=True)
 
 data_line1 = create_interp_data(all_interp_data, included_lines=[1])
 data_line2 = create_interp_data(all_interp_data, included_lines=[2])
@@ -167,8 +167,8 @@ def plot_validation_line(X_val: pd.DataFrame, val_data_line: pd.DataFrame, model
     print(X_val[utils.twod_coords].head(2))
     print(origin)
     val_data_line = add_delta(val_data_line, origin=origin)
-    plt.plot(X_val.d.values, model.predict(X_val[original_cols]), label='prediction')
-    plt.plot(val_data_line.d.values, val_data_line.Z_coor, label='interpretation')
+    plt.plot(X_val.d, model.predict(X_val[original_cols]), label='prediction')
+    plt.plot(val_data_line.d, val_data_line.Z_coor, label='interpretation')
     plt.xlabel('distance')
     plt.ylabel('cen-b depth')
     plt.legend()
