@@ -39,8 +39,8 @@ log.info("reading covariates")
 original_aem_data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.csv'))
 
 all_lines = create_interp_data(all_interp_data, included_lines=[1, 2, 3, 4, 5, 6])
-aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(original_aem_data, all_lines,
-                                                                                     twod=True, include_thickness=True)
+aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(
+    original_aem_data, all_lines, twod=True, include_thickness=True, add_conductivity_derivative=True)
 
 data_line1 = create_interp_data(all_interp_data, included_lines=[1])
 data_line2 = create_interp_data(all_interp_data, included_lines=[2])
@@ -63,10 +63,10 @@ all_data_lines = [data_line1, data_line2, data_line3, data_line4, data_line5, da
 X_train, y_train = create_train_test_set(data, data_line2, data_line3, data_line6)
 
 # test using line 5
-X_test, y_test = create_train_test_set(data, data_line4)
+X_test, y_test = create_train_test_set(data, data_line5)
 
 # val using line 4
-X_val, y_val = create_train_test_set(data, data_line5)
+X_val, y_val = create_train_test_set(data, data_line4)
 
 
 log.info(f"Train data size: {X_train.shape}, "
@@ -131,7 +131,7 @@ searchcv = BayesSearchCV(
     cv=2,  # use 2 when using custom scoring using X_test
     verbose=1000,
     n_points=12,
-    n_jobs=12,
+    n_jobs=3,
     scoring=my_custom_scorer
 )
 

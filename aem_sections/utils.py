@@ -28,7 +28,8 @@ aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'rel
 # final_cols = coords + aem_covariate_cols + ['Z_coor']
 
 
-def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, include_thickness=False):
+def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, include_thickness=False,
+                              add_conductivity_derivative=False):
     # find bounding box
     x_max, x_min, y_max, y_min = extent_of_data(interp_data)
     # use bbox to select data only for one line
@@ -42,6 +43,13 @@ def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, includ
     aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
     conduct_cols = conductivities if twod else []
     thickness_cols = thickness if include_thickness else []
+    if twod and add_conductivity_derivative:
+        conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
+        conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
+        d_conduct_cols = ['d_' + c for c in conduct_cols]
+        aem_data[d_conduct_cols] = conductivity_diff
+        conduct_cols += d_conduct_cols
+
     aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols + thickness_cols]
     aem_conductivities = aem_data[conductivities]
     aem_thickness = aem_data[thickness]
