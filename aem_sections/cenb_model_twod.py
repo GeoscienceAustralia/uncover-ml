@@ -148,7 +148,7 @@ def on_step(optim_result):
 # import time
 # pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
 
-searchcv = pickle.load(open("XGBRegressor.1617705795.model", 'rb'))
+searchcv = pickle.load(open("XGBRegressor.1617704729.model", 'rb'))
 print(searchcv.score(X_val, y_val))
 
 from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt

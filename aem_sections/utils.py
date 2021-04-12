@@ -21,7 +21,7 @@ cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
 twod_coords = ['X_coor', 'Y_coor']
 threed_coords = twod_coords + ['Z_coor']
-aem_covariate_cols = ['ceno_euc_a', 'dem_fill', 'Gravity_la', 'national_W', 'relief_ele', 'relief_mrv', 'SagaWET9ce'] \
+aem_covariate_cols = ['ceno_euc_a', 'Gravity_la', 'national_W', 'relief_ele', 'relief_mrv', 'SagaWET9ce'] \
                      + ['elevation', 'tx_height']
 # categorical = 'relief_mrv'
 # covariate_cols_without_xyz = aem_covariate_cols + ['conductivity']
