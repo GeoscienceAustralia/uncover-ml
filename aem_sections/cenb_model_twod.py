@@ -60,7 +60,7 @@ else:
 all_data_lines = [data_line1, data_line2, data_line3, data_line4, data_line5, data_line6]
 
 # take out lines 4 and 5 from train data
-X_train, y_train = create_train_test_set(data, data_line2, data_line3, data_line6)
+X_train, y_train = create_train_test_set(data, data_line1, data_line2, data_line3, data_line6)
 
 # test using line 5
 X_test, y_test = create_train_test_set(data, data_line5)
@@ -68,6 +68,7 @@ X_test, y_test = create_train_test_set(data, data_line5)
 # val using line 4
 X_val, y_val = create_train_test_set(data, data_line4)
 
+X_all, y_all = create_train_test_set(data, data_line1, data_line2, data_line3, data_line4, data_line5, data_line6)
 
 log.info(f"Train data size: {X_train.shape}, "
          f"Test data size: {X_test.shape}, "
@@ -143,29 +144,26 @@ def on_step(optim_result):
         print('Interrupting!')
         return True
 
-searchcv.fit(X_train, y_train, callback=on_step)
-import time
-pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
+# searchcv.fit(X_train, y_train, callback=on_step)
+# import time
+# pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
 
-# searchcv = pickle.load(open("XGBRegressor.1617675901.model", 'rb'))
+searchcv = pickle.load(open("XGBRegressor.1617705795.model", 'rb'))
 print(searchcv.score(X_val, y_val))
 
 from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt
-plt.scatter(y_val, searchcv.predict(X_val))
-plt.xlabel('y_true')
-plt.ylabel('y_pred')
+# plt.scatter(y_val, searchcv.predict(X_val))
+# plt.xlabel('y_true')
+# plt.ylabel('y_pred')
 
 
 def plot_validation_line(X_val: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSearchCV):
     import matplotlib.pyplot as plt
-    import numpy as np
     from aem_sections.utils import add_delta
     original_cols = X_train.columns[:]
     plt.figure()
     X_val = add_delta(X_val)
     origin = (X_val.X_coor.iat[0], X_val.Y_coor.iat[0])
-    print(X_val[utils.twod_coords].head(2))
-    print(origin)
     val_data_line = add_delta(val_data_line, origin=origin)
     plt.plot(X_val.d, model.predict(X_val[original_cols]), label='prediction')
     plt.plot(val_data_line.d, val_data_line.Z_coor, label='interpretation')
@@ -184,5 +182,16 @@ def plot_3d_validation_line(X_val):
     ax.set_ylabel('y')
     ax.set_zlabel('depth')
     plt.show()
+
+
+def plot_feature_importance(X, y, optimised_model: BayesSearchCV):
+    xgb_model = XGBRegressor(**optimised_model.best_params_)
+    xgb_model.fit(X, y)
+    non_zero_indices = xgb_model.feature_importances_ >= 0.001
+    non_zero_cols = X_all.columns[non_zero_indices]
+    non_zero_importances = xgb_model.feature_importances_[non_zero_indices]
+    sorted_non_zero_indices = non_zero_importances.argsort()
+    plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+    plt.xlabel("Xgboost Feature Importance")
 
 import IPython; IPython.embed(); import sys; sys.exit()
