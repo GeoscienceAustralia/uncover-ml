@@ -41,7 +41,7 @@ def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, includ
         ]
     aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
     aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
-    conduct_cols = conductivities if twod else []
+    conduct_cols = conductivities[:] if twod else []
     thickness_cols = thickness if include_thickness else []
     if twod and add_conductivity_derivative:
         conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
