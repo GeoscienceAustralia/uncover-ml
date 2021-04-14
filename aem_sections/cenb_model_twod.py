@@ -174,6 +174,54 @@ def plot_validation_line(X_val: pd.DataFrame, val_data_line: pd.DataFrame, model
     plt.show()
 
 
+def plot_2d_section(X: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSearchCV, col_name: str,
+                    flip_column=False):
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
+    from matplotlib.colors import Colormap
+    from aem_sections.utils import add_delta, conductivities, thickness
+    original_cols = X_train.columns[:]
+    X = add_delta(X)
+    origin = (X.X_coor.iat[0], X.Y_coor.iat[0])
+    val_data_line = add_delta(val_data_line, origin=origin)
+    d_conduct_cols = ['d_' + c for c in conductivities]
+    # Z = X[conductivities]
+    Z = X[d_conduct_cols]
+    Z = Z - np.min(np.min((Z))) + 1.0e-5
+    h = X[thickness]
+    dd = X.d
+    ddd = np.atleast_2d(dd).T
+    d = np.repeat(ddd, h.shape[1], axis=1)
+    fig, ax = plt.subplots(figsize=(40, 4))
+    cmap = plt.get_cmap('viridis')
+
+    # Normalize(vmin=0.3, vmax=0.6) d(cond) norm
+    im = ax.pcolormesh(d, -h, Z, norm=Normalize(vmin=0.4, vmax=0.6), cmap=cmap, linewidth=1, rasterized=True)
+    fig.colorbar(im, ax=ax)
+    axs = ax.twinx()
+    ax.plot(X.d, -model.predict(X[original_cols]), label='prediction', linewidth=2, color='r')
+    ax.plot(val_data_line.d, -val_data_line.Z_coor, label='interpretation', linewidth=2, color='k')
+
+    axs.plot(X.d, -X[col_name] if flip_column else X[col_name], label=col_name, linewidth=2, color='orange')
+
+    ax.set_xlabel('distance along aem line (m)')
+    ax.set_ylabel('depth (m)')
+    plt.title("d(Conductivity) vs depth")
+
+    ax.legend()
+    axs.legend()
+    plt.show()
+
+    # interpolation  for raster
+    # from scipy import interpolate
+    # f = interpolate.RectBivariateSpline(d, h, Z)
+    #
+    # import IPython; IPython.embed(); import sys; sys.exit()
+    # d_new = np.arange(np.min(d), np.max(d), 1000)
+    # h_new = np.arange(np.min(h), np.max(h), 100)
+
+
+
 def plot_3d_validation_line(X_val):
     plt.figure()
     ax = plt.axes(projection='3d')
