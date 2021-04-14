@@ -60,7 +60,7 @@ else:
 all_data_lines = [data_line1, data_line2, data_line3, data_line4, data_line5, data_line6]
 
 # take out lines 4 and 5 from train data
-X_train, y_train = create_train_test_set(data, data_line1, data_line2, data_line3, data_line6)
+X_train, y_train = create_train_test_set(data, data_line1, data_line2, data_line3, data_line4)
 
 # test using line 5
 X_test, y_test = create_train_test_set(data, data_line5)
@@ -145,10 +145,11 @@ def on_step(optim_result):
         return True
 
 # searchcv.fit(X_train, y_train, callback=on_step)
-# import time
+import time
 # pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
 
-searchcv = pickle.load(open("XGBRegressor.1617704729.model", 'rb'))
+searchcv = pickle.load(open("XGBRegressor.1617704729.model", 'rb'))  # validation  data sline 4
+# searchcv = pickle.load(open("XGBRegressor.1618369530.model", 'rb'))  # validation line 6
 print(searchcv.score(X_val, y_val))
 
 from mpl_toolkits import mplot3d; import matplotlib.pyplot as plt
@@ -175,19 +176,19 @@ def plot_validation_line(X_val: pd.DataFrame, val_data_line: pd.DataFrame, model
 
 
 def plot_2d_section(X: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSearchCV, col_name: str,
-                    flip_column=False):
+                    flip_column=False, v_min=0.3, v_max=0.8):
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
     from matplotlib.colors import Colormap
     from aem_sections.utils import add_delta, conductivities, thickness
-    original_cols = X_train.columns[:]
+    original_cols = X.columns[:]
     X = add_delta(X)
     origin = (X.X_coor.iat[0], X.Y_coor.iat[0])
     val_data_line = add_delta(val_data_line, origin=origin)
     d_conduct_cols = ['d_' + c for c in conductivities]
-    # Z = X[conductivities]
-    Z = X[d_conduct_cols]
-    Z = Z - np.min(np.min((Z))) + 1.0e-5
+    Z = X[conductivities]
+    # Z = X[d_conduct_cols]
+    # Z = Z - np.min(np.min((Z))) + 1.0e-5
     h = X[thickness]
     dd = X.d
     ddd = np.atleast_2d(dd).T
@@ -196,7 +197,7 @@ def plot_2d_section(X: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSe
     cmap = plt.get_cmap('viridis')
 
     # Normalize(vmin=0.3, vmax=0.6) d(cond) norm
-    im = ax.pcolormesh(d, -h, Z, norm=Normalize(vmin=0.4, vmax=0.6), cmap=cmap, linewidth=1, rasterized=True)
+    im = ax.pcolormesh(d, -h, Z, norm=LogNorm(), cmap=cmap, linewidth=1, rasterized=True)
     fig.colorbar(im, ax=ax)
     axs = ax.twinx()
     ax.plot(X.d, -model.predict(X[original_cols]), label='prediction', linewidth=2, color='r')
@@ -206,20 +207,38 @@ def plot_2d_section(X: pd.DataFrame, val_data_line: pd.DataFrame, model: BayesSe
 
     ax.set_xlabel('distance along aem line (m)')
     ax.set_ylabel('depth (m)')
-    plt.title("d(Conductivity) vs depth")
+    plt.title("Conductivity vs depth")
 
     ax.legend()
     axs.legend()
     plt.show()
 
-    # interpolation  for raster
-    # from scipy import interpolate
-    # f = interpolate.RectBivariateSpline(d, h, Z)
-    #
-    # import IPython; IPython.embed(); import sys; sys.exit()
-    # d_new = np.arange(np.min(d), np.max(d), 1000)
-    # h_new = np.arange(np.min(h), np.max(h), 100)
 
+def interpolate_and_write_to_raster(d, h, Z):
+    # interpolation  for raster
+    from scipy import interpolate
+    f = interpolate.CloughTocher2DInterpolator(np.array([d.flatten(), np.array(h).flatten()]).T, np.array(Z).flatten())
+    d_new = np.arange(np.min(d), np.max(d), 1000)
+    h_new = np.arange(np.min(np.array(h)), np.max(np.array(h)), 10)
+    mesh = np.meshgrid(d_new, h_new)
+    Z_int = f(*mesh)
+    plt.contourf(*mesh, Z_int)
+    import rasterio
+    from rasterio.transform import Affine
+    res_d = 1000
+    res_h = 10
+    transform = Affine.translation(h_new[0] - res_h / 2, d_new[0] - res_d / 2) * Affine.scale(res_d, res_h)
+    with rasterio.open(
+            f'new_{int(time.time())}.tif',
+            'w',
+            driver='GTiff',
+            height=Z_int.shape[0],
+            width=Z_int.shape[1],
+            count=1,
+            dtype=Z_int.dtype,
+            transform=transform
+    ) as dst:
+        dst.write(Z_int, 1)
 
 
 def plot_3d_validation_line(X_val):
