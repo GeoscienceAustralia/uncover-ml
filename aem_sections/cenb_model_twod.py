@@ -236,6 +236,7 @@ def interpolate_and_write_to_raster(d, h, Z):
             width=Z_int.shape[1],
             count=1,
             dtype=Z_int.dtype,
+            crs='+proj=aea +lon_0=90w +lat_1=20n +lat_2=60n',
             transform=transform
     ) as dst:
         dst.write(Z_int, 1)
