@@ -4,22 +4,16 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from sklearn.neighbors import KDTree
 
 log = logging.getLogger(__name__)
-
-aem_folder = '/home/sudipta/Downloads/aem_sections'
-original_aem_data = pd.read_csv(Path(aem_folder).joinpath('Albers_data_AEM_SB.csv'))
-
-# columns
-conductivities = [c for c in original_aem_data.columns if c.startswith('conduct')]
-thickness = [t for t in original_aem_data.columns if t.startswith('thick')]
 
 # distance within which an interpretation point is considered to contribute to target values
 radius = 500
 cell_size = 10
 dis_tol = 100  # meters, distance tolerance used
-twod_coords = ['X_coor', 'Y_coor']
+twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
 aem_covariate_cols = ['ceno_euc_a', 'Gravity_la', 'national_W', 'relief_ele', 'relief_mrv', 'SagaWET9ce'] \
                      + ['elevation', 'tx_height']
@@ -28,18 +22,18 @@ aem_covariate_cols = ['ceno_euc_a', 'Gravity_la', 'national_W', 'relief_ele', 'r
 # final_cols = coords + aem_covariate_cols + ['Z_coor']
 
 
-def extract_required_aem_data(in_scope_aem_data, interp_data, twod=False, include_thickness=False,
-                              add_conductivity_derivative=False):
+def extract_required_aem_data(in_scope_aem_data, interp_data, thickness, conductivities, twod=False,
+                              include_thickness=False, add_conductivity_derivative=False):
     # find bounding box
     x_max, x_min, y_max, y_min = extent_of_data(interp_data)
     # use bbox to select data only for one line
     aem_data = in_scope_aem_data[
-        (in_scope_aem_data.X_coor < x_max + dis_tol) &
-        (in_scope_aem_data.X_coor > x_min - dis_tol) &
-        (in_scope_aem_data.Y_coor < y_max + dis_tol) &
-        (in_scope_aem_data.Y_coor > y_min - dis_tol)
+        (in_scope_aem_data.POINT_X < x_max + dis_tol) &
+        (in_scope_aem_data.POINT_X > x_min - dis_tol) &
+        (in_scope_aem_data.POINT_Y < y_max + dis_tol) &
+        (in_scope_aem_data.POINT_Y > y_min - dis_tol)
         ]
-    aem_data = aem_data.sort_values(by='Y_coor', ascending=False)
+    aem_data = aem_data.sort_values(by='POINT_Y', ascending=False)
     aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
     conduct_cols = conductivities[:] if twod else []
     thickness_cols = thickness if include_thickness else []
@@ -64,15 +58,15 @@ def create_train_test_set(data, * excluded_interp_data):
     for ex_data in excluded_interp_data:
         x_max, x_min, y_max, y_min = extent_of_data(ex_data)
         included_lines = included_lines | \
-                           ((X.X_coor < x_max + dis_tol) & (X.X_coor > x_min - dis_tol) &
-                            (X.Y_coor < y_max + dis_tol) & (X.Y_coor > y_min - dis_tol))
+                           ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
+                            (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
     return X[included_lines], y[included_lines]
 
 
 def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:
-    x_min, x_max = min(data.X_coor.values), max(data.X_coor.values)
-    y_min, y_max = min(data.Y_coor.values), max(data.Y_coor.values)
+    x_min, x_max = min(data['POINT_X']), max(data['POINT_X'])
+    y_min, y_max = min(data['POINT_Y']), max(data['POINT_Y'])
     return x_max, x_min, y_max, y_min
 
 
@@ -120,9 +114,12 @@ def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, inte
     return {'covariates': X, 'targets': y}
 
 
-def create_interp_data(input_interp_data, included_lines):
+def create_interp_data(input_interp_data, included_lines, line_col='line'):
+    if not isinstance(included_lines, list):
+        included_lines = [included_lines]
     line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
-                             & (input_interp_data['line'].isin(included_lines))]
+                             & (input_interp_data['Type'] != 'BASE_Mesozoic_TOP_Paleozoic')
+                             & (input_interp_data[line_col].isin(included_lines))]
     # line = add_delta(line)
     line = line.rename(columns={'DEPTH': 'Z_coor'})
     line_required = line[threed_coords]
