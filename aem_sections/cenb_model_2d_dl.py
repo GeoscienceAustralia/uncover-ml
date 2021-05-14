@@ -5,12 +5,14 @@ import pickle
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection._search_successive_halving import HalvingRandomSearchCV
+
 from sklearn.metrics import r2_score as r2_score_sklearn, make_scorer
 from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
-from skopt.space import Real, Integer, Categorical
-from skopt import BayesSearchCV
+# from skopt.space import Real, Integer, Categorical
+# from skopt import BayesSearchCV
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,13 +25,14 @@ np.set_printoptions(precision=3, suppress=True)
 
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import backend as K
 from tensorflow.keras import layers, regularizers
 from tensorflow.keras.layers.experimental import preprocessing
-
-normalizer = preprocessing.Normalization()
-
+from tensorflow.keras.callbacks import LearningRateScheduler, History, EarlyStopping
 
 from aem_sections.utils import extract_required_aem_data, convert_to_xy, create_interp_data, create_train_test_set
+
+normalizer = preprocessing.Normalization()
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -53,8 +56,6 @@ print(thickness)
 
 line_col = 'SURVEY_LIN'
 lines_in_data = np.unique(all_interp_data[line_col])
-train_lines_in_data, test_lines_in_data = train_test_split(lines_in_data)
-
 all_lines = create_interp_data(all_interp_data, included_lines=list(lines_in_data), line_col=line_col)
 aem_xy_and_other_covs, aem_conductivities, aem_thickness = extract_required_aem_data(
     original_aem_data, all_lines, thickness, conductivities, twod=True, include_thickness=True,
@@ -70,49 +71,27 @@ else:
     data = pickle.load(open('covariates_targets_2d.data', 'rb'))
 
 # import IPython; IPython.embed(); import sys; sys.exit()
+train_and_val_in_data, test_lines_in_data = train_test_split(lines_in_data, test_size=0.2)  # 20% test lines
+train_lines_in_data, val_lines_in_data = train_test_split(train_and_val_in_data, test_size=0.25)  # 0.25 * .8 = 0.2# val lines
 
 train_data_lines = [create_interp_data(all_interp_data, included_lines=i, line_col=line_col) for i in train_lines_in_data]
+val_data_lines = [create_interp_data(all_interp_data, included_lines=i, line_col=line_col) for i in val_lines_in_data]
 test_data_lines = [create_interp_data(all_interp_data, included_lines=i, line_col=line_col) for i in test_lines_in_data]
 
 all_data_lines = train_data_lines + test_data_lines
 
-# take out lines 4 and 5 from train data
 X_train, y_train = create_train_test_set(data, * train_data_lines)
-
-# test using line 5
+X_val, y_val = create_train_test_set(data, * val_data_lines)
 X_test, y_test = create_train_test_set(data, * test_data_lines)
-
 
 X_all, y_all = create_train_test_set(data, * all_data_lines)
 
-
 train_features = X_train.copy()
 test_features = X_test.copy()
-# validation_features = X_val.copy()
+validation_features = X_val.copy()
 
 normalizer.adapt(np.array(train_features))
 
-linear_model = tf.keras.Sequential([
-    normalizer,
-    layers.Dense(units=1)
-])
-
-linear_model.predict(train_features[:10])
-
-linear_model.compile(
-    optimizer=tf.optimizers.Adam(learning_rate=0.1),
-    loss='mean_absolute_error',
-    metrics=[])
-
-# history = linear_model.fit(
-#     train_features, y_train,
-#     epochs=100,
-#     # suppress logging
-#     verbose=2,
-#     # Calculate validation results on 20% of the training data
-#     validation_split=0.2)
-
-from tensorflow.keras.callbacks import LearningRateScheduler, History, EarlyStopping
 np.random.seed(5)
 epochs = 100
 learning_rate = 0.1  # initial learning rate
@@ -127,16 +106,14 @@ def exp_decay(epoch):
 # learning schedule callback
 loss_history = History()
 lr_rate = LearningRateScheduler(exp_decay)
-early_stopping = EarlyStopping(min_delta=1.0e-6, verbose=1, patience=3)
+early_stopping = EarlyStopping(min_delta=1.0e-6, verbose=1, patience=10)
 callbacks_list = [loss_history, lr_rate, early_stopping]
-
-from tensorflow.keras import backend as K
 
 
 def r2_score(y_true, y_pred):
-    SS_res =  K.sum(K.square(y_true - y_pred))
+    SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return 1 - SS_res/(SS_tot + K.epsilon())
+    return 1 - SS_res / (SS_tot + K.epsilon())
 
 
 def build_and_compile_model(norm, activation, regularizer, input_dim, hidden_dim):
@@ -149,7 +126,7 @@ def build_and_compile_model(norm, activation, regularizer, input_dim, hidden_dim
         layers.Dense(1)
     ])
 
-    model.compile(loss='mean_squared_error',
+    model.compile(loss='mean_absolute_error',
                   optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                   metrics=['mean_absolute_error', 'mean_squared_error', r2_score]
                   )
@@ -192,18 +169,16 @@ test_results = {}
 
 # plot_loss(history)
 
-test_results['linear_model'] = linear_model.evaluate(test_features, y_test, verbose=1)
-
-
-# dnn_model = build_and_compile_model(normalizer)
+dnn_model = build_and_compile_model(normalizer, 'relu', regularizer=0.01, input_dim=102, hidden_dim=1000)
 batch_size_factor = 10
 
-# history = dnn_model.fit(
-#     train_features, y_train,
-#     validation_split=0.2,
-#     batch_size=train_features.shape[0]//batch_size_factor,
-#     callbacks=callbacks_list,
-#     verbose=2, epochs=epochs)
+history = dnn_model.fit(
+    train_features, y_train,
+    validation_split=0.2,
+    # validation_data=(validation_features, y_val),
+    # batch_size=train_features.shape[0]//batch_size_factor,
+    # callbacks=callbacks_list,
+    verbose=2, epochs=epochs)
 #
 # plot_loss(history)
 #
@@ -219,33 +194,35 @@ batch_size_factor = 10
 # Path('saved_model').mkdir(exist_ok=True)
 # model_file_name = Path('saved_model').joinpath(str_with_time)
 # dnn_model.save(model_file_name)
-# import IPython; IPython.embed(); import sys; sys.exit()
+import IPython; IPython.embed();import  sys; sys.exit()
 
 
 # optimisation
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 
-model_CV = KerasRegressor(build_fn=build_and_compile_model, verbose=1)
-
-dnn_space = {
-    'activation': Categorical(categories=[]),
-    'regularizer': Real(10 ** -5, 10 ** 0, prior="log-uniform"),
-    'n_estimators': Integer(20, 200),
-
-}
+model_CV = KerasRegressor(build_fn=build_and_compile_model, verbose=2,
+                          validation_split=0.2,
+                          # callbacks=callbacks_list,
+                          epochs=epochs
+                          )
 
 
-# activation, regularizer, n1, n2
+dnn_space = dict(
+    activation=['relu'],
+    batch_size=[1000, 2000, 10000, 20000],
+    regularizer=[0.001, 0.01, 0.1],
+    input_dim=[20, 40, 100, 200],
+    hidden_dim=[100, 200, 1000, 2000],
+)
 
-# model_init_batch_epoch_CV = KerasClassifier(build_fn=create_model_2, verbose=1)
 
-searchcv = BayesSearchCV(
-    reg,
-    search_spaces=gbm_space if isinstance(reg, GradientBoostingRegressor) else xgb_space,
-    n_iter=180,
+searchcv = RandomizedSearchCV(
+    model_CV,
+    param_distributions=dnn_space,
     cv=2,  # use 2 when using custom scoring using X_test
     verbose=1000,
-    n_points=12,
     n_jobs=3,
-    scoring=my_custom_scorer
 )
+
+searchcv.fit(train_features, y_train)
+import IPython; IPython.embed(); import sys; sys.exit()
