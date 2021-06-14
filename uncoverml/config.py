@@ -103,13 +103,13 @@ class FeatureSetConfig(object):
     files : list of str
         Absolute paths to .tif files of the feature set.
     transform_set : :class:`~uncoverml.transforms.transformset.ImageTransformSet`
-        Transforms specified for the feautre set.
+        Transforms specified for the feature set.
     """
     def __init__(self, config_dict: dict):
         d = config_dict
         if d['type'] not in ('ordinal', 'categorical'):
             _logger.warning("Feature set type must be ordinal or categorical. "
-                            "Unknwon option: '%s'. Type has been set to 'ordinal'.",
+                            "Unknown option: '%s'. Type has been set to 'ordinal'.",
                             d['type'])
             self.type = 'ordinal'
         else:
@@ -196,7 +196,7 @@ class Config(object):
     Attributes
     ----------
     name : str
-        Name oo the config file.
+        Name of the config file.
     algorithm : str
         Name of the model to train. See :ref:`models-page` for available
         models.
@@ -370,7 +370,7 @@ class Config(object):
         Dictionary containing paths to longitude and latitude grids
         used in kriging.
     output_dir : str
-        Path to directory where prediciton map and other outputs
+        Path to directory where prediction map and other outputs
         will be written.
     """
     def __init__(self, yaml_file, clustering=False, learning=False, resampling=False,
