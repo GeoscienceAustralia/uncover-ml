@@ -260,7 +260,7 @@ def _plot_real_vs_pred(crossval_path=None, rc_path=None, pred_path=None,
                           'Adjusted R^2      ': 'adjusted_r2_score', 
                           'LCCC              ': 'lins_ccc', 
                           'Mean Log Loss     ': 'mll',
-                          'Explained Vairance': 'expvar',
+                          'Explained Variance': 'expvar',
                           'Standarised MSE   ': 'smse'}
         
         with open(scores_path) as f:
