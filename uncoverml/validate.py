@@ -94,8 +94,8 @@ def split_cfold(nsamples, k=5, seed=None):
 
     """
     rnd = np.random.RandomState(seed)
-    pindeces = rnd.permutation(nsamples)
-    cvinds = np.array_split(pindeces, k)
+    pindices = rnd.permutation(nsamples)
+    cvinds = np.array_split(pindices, k)
 
     cvassigns = np.zeros(nsamples, dtype=int)
     for n, inds in enumerate(cvinds):
@@ -242,7 +242,7 @@ class CrossvalInfo:
         if os.path.exists(config.raw_covariates) and os.path.exists(config.raw_covariates_mask):
             # Also add prediction values to rawcovariates.csv - yes this file 
             # is very overloaded and we need to fix the output situation.
-            # Get indicies sorted by location so we can insert the 
+            # Get indices sorted by location so we can insert the 
             # prediction in the correct row.
             inds = np.lexsort(self.positions.T)
             sorted_predictions = self.y_pred['Prediction'][inds]
