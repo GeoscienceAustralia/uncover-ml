@@ -15,11 +15,7 @@ from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
 # from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
-    MutualInfoMixin
-from revrand.slm import StandardLinearModel
-from revrand.basis_functions import LinearBasis
-from revrand.btypes import Parameter, Positive
+    _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
 # import copy as cp
 log = logging.getLogger(__name__)
@@ -376,13 +372,13 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
             )
 
 
-class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
+class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
 
     def __init__(self, target_transform='identity',
                  max_depth=3, learning_rate=0.1, n_estimators=100,
                  silent=True, objective="reg:linear",
                  nthread=1, gamma=0, min_child_weight=1,
-                 max_delta_step=0,
+                 max_delta_step=0, booster='gbtree',
                  subsample=1, colsample_bytree=1, colsample_bylevel=1,
                  reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=-1,
                  base_score=0.5, random_state=1, missing=None):
@@ -397,6 +393,7 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       silent=silent,
                                       objective=objective,
                                       nthread=nthread,
+                                      booster=booster,
                                       gamma=gamma,
                                       min_child_weight=min_child_weight,
                                       max_delta_step=max_delta_step,

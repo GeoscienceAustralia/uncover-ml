@@ -58,12 +58,15 @@ def make_missing_data():
 @pytest.fixture()
 def make_random_data(n=10, m=3):
 
+    return make_random_data_util(n, m)
+
+
+def make_random_data_util(n, m):
     rnd = np.random.RandomState(SEED)
     data = rnd.randn(n, m) + 5.0 * np.ones((n, m))
     x = np.ma.masked_array(data)
     mean = np.mean(data, axis=0)
     standard_deviation = np.std(data, axis=0)
-
     return x, mean, standard_deviation
 
 
@@ -261,7 +264,7 @@ def test_WhitenTransform(make_random_data):
 def test_WhitenTransform_caching():
 
     # Prestandardise and center an initial dataset
-    x, mu, std = make_random_data(6, 3)
+    x, mu, std = make_random_data_util(6, 3)
     x = (x - mu) / std
 
     # Make a matrix with zero variance and zero mean
