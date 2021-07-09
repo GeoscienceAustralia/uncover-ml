@@ -48,8 +48,6 @@ learning:
     max_categories: 5000
     target_transform: standardise
 #    bootstrap: 200
-    sampling: 70
-    seed: 2
     extrapolation: 5
     sampling: 50
     seed: 2

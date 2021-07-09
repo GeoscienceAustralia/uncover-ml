@@ -9,7 +9,6 @@ import numpy as np
 import shapefile as shp
 from uncoverml import mpiops
 UNCOVER = os.path.dirname(os.path.dirname(__file__))
-
 timg = np.reshape(np.arange(1, 17), (4, 4, 1))
 SEED = 665
 RND = np.random.RandomState(SEED)

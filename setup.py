@@ -79,7 +79,7 @@ setup(
         'tables >= 3.2.2',
         'rasterio >= 1.0.8',
         'affine >= 2.2.1',
-        'pyshp == 1.2.3',
+        'pyshp == 2.1.0',
         'click >= 6.6',
         'revrand >= 0.9.10',
         'mpi4py == 3.0.3',
