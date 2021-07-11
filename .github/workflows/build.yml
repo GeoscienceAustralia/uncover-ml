@@ -68,7 +68,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} with MPI
         if: env.PYTHONVERSION != '3.9'
         run: |
-          python setup.py develop
+          pip install -e .[dev]
           rm -rf uncover_ml.egg-info  # remove the local egg
           rm -rf uncover_ml.egg-info  # remove the local egg
           echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
