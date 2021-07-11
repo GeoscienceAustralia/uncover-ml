@@ -101,11 +101,10 @@ setup(
             'pillow'
         ],
         'dev': [
-
                    'sphinx',
                    'ghp-import',
                    'sphinxcontrib-programoutput',
-                   'pytest == 3.7.0',
+                   'pytest>=5.2.1',
                    'pytest-cov',
                    'coverage',
                    'codecov',

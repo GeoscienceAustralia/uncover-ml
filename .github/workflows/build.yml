@@ -68,12 +68,11 @@ jobs:
       - name: Python ${{ matrix.python-version }} with MPI
         if: env.PYTHONVERSION != '3.9'
         run: |
-          python setup.py install
-          rm -rf Py_Rate.egg-info  # remove the local egg
+          python setup.py develop
+          rm -rf uncover_ml.egg-info  # remove the local egg
+          rm -rf uncover_ml.egg-info  # remove the local egg
           echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
       - name: Test uncoverml in Python ${{ matrix.python-version }} with MPI
         if: env.PYTHONVERSION != '3.9'
         run: |
-          pytest tests/ -m "slow"
-          mpirun -n 3 pytest tests/test_shared.py -k test_tiles_split -s
-          pytest --cov-config=.coveragerc --cov-report term-missing:skip-covered --cov=uncoverml tests/ -m "not slow"
+          make test
