@@ -68,8 +68,8 @@ jobs:
       - name: Python ${{ matrix.python-version }} with MPI
         if: env.PYTHONVERSION != '3.9'
         run: |
+          pip install numpy==1.17.2 cython==0.29.13
           pip install -e .[dev]
-          rm -rf uncover_ml.egg-info  # remove the local egg
           rm -rf uncover_ml.egg-info  # remove the local egg
           echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
       - name: Test uncoverml in Python ${{ matrix.python-version }} with MPI
