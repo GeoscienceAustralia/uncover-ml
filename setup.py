@@ -73,8 +73,11 @@ setup(
             'gridsearch = uncoverml.scripts.gridsearch:cli'
         ]
     },
+    setup_requires=[
+        'numpy==1.17.2',
+        'Cython==0.29.13',
+    ],
     install_requires=[
-        'numpy >= 1.9.2',
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio >= 1.0.8',
@@ -120,8 +123,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
