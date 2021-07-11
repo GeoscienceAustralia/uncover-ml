@@ -1,12 +1,11 @@
 import pytest
 from affine import Affine
 import numpy as np
-import rasterio
 
 from uncoverml import geoio
 from uncoverml.image import Image
 
-crs = rasterio.crs.CRS({'init': 'epsg:4326'})
+crs = "EPSG:4326"
 
 @pytest.fixture(params=[1., 0.5, 1.5])
 def pix_size_single(request):
