@@ -537,8 +537,13 @@ def export_crossval(crossval_output, config):
     with hdf.open_file(outfile_results, 'w') as f:
         for fld, v in crossval_output.y_pred.items():
             label = _make_valid_array_name(fld)
-            f.create_array("/", label, obj=v.data)
-            f.create_array("/", label + "_mask", obj=v.mask)
+            if isinstance(v.data, memoryview):
+                data = np.array(v.data)
+            else:
+                data = v.data
+            f.create_array("/", label, obj=data)
+            if hasattr(v, 'mask'):
+                f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
 
     if not crossval_output.classification:
