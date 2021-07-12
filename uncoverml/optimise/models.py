@@ -219,8 +219,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
         self.target_transform = target_transform
 
 
-class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
-                               TagsMixin):
+class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -407,6 +406,12 @@ class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
                                       random_state=random_state,
                                       missing=missing,
                                       n_jobs=n_jobs)
+
+    def fit(self, X, y, *args, **kwargs):
+        return super().fit(X, y)
+
+    def predict(self, X, *args, **kwargs):
+        return super().predict(X)
 
 
 transformed_modelmaps = {

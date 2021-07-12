@@ -1,0 +1,46 @@
+
+experiment: my_run
+patchsize: 0
+memory_fraction: 0.5
+
+features:
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: configs/data/LATITUDE_GRID1.tif
+      - path: configs/data/LONGITUDE_GRID1.tif
+    transforms:
+      - standardise
+      - whiten:
+          keep_fraction: 0.8
+    imputation: none
+
+preprocessing:
+  imputation: mean
+  transforms:
+    - whiten:
+        keep_fraction: 0.8
+
+targets:
+  file: configs/data/geochem_sites.shp
+  property: K_ppm_imp
+
+learning:
+  algorithm: xgboost
+  arguments:
+    target_transform: identity
+
+prediction:
+  quantiles: 0.95
+  outbands: 1
+
+
+validation:
+  #- feature_rank
+  - k-fold:
+      folds: 5
+      random_seed: 1
+
+output:
+  directory: out/
+

@@ -45,8 +45,7 @@ def cli(verbosity):
 
 
 def run_crossval(x_all, targets_all, config):
-    crossval_results = ls.validate.local_crossval(x_all,
-                                                  targets_all, config)
+    crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 
