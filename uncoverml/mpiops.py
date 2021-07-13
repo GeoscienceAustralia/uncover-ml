@@ -2,13 +2,14 @@ import logging
 import pickle
 
 import numpy as np
-from mpi4py import MPI
+from mpi4py import MPI, rc
 
 log = logging.getLogger(__name__)
 
 # We're having trouble with the MPI pickling and 64bit integers
 # MPI.pickle.dumps = pickle.dumps
 # MPI.pickle.loads = pickle.loads
+rc.recv_mprobe = False
 
 comm = MPI.COMM_WORLD
 """module-level MPI 'world' object representing all connected nodes

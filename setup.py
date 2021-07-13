@@ -86,7 +86,7 @@ setup(
         'click >= 6.6',
         'revrand >= 0.9.10',
         'mpi4py == 3.0.3',
-        'scipy==1.3.1',
+        'scipy==1.7.0',
         'scikit-learn == 0.22.2',
         'scikit-image == 0.15.0',
         'wheel >= 0.29.0',

@@ -257,9 +257,7 @@ class ImageWriter:
         self.outputdir = outputdir
         self.n_subchunks = n_subchunks
         self.independent = independent  # mpi control
-        self.sub_starts = [k[0] for k in np.array_split(
-                           np.arange(self.shape[1]),
-                           mpiops.chunks * self.n_subchunks)]
+        self.sub_starts = [k[0] for k in np.array_split(np.arange(self.shape[1]), mpiops.chunks * self.n_subchunks)]
 
         self.sub_ends = [k[-1] + 1 for k in np.array_split(np.arange(self.shape[1]), mpiops.chunks * self.n_subchunks)]
         # file tags don't have spaces
@@ -302,7 +300,7 @@ class ImageWriter:
     def write(self, x, subchunk_index):
         """
         :param x:
-        :param subchunk_index:
+        :param subchunk_index: partition number
         :param independent: bool
             independent image writing by different processes, i.e., images are not chunked
         :return:
@@ -326,19 +324,25 @@ class ImageWriter:
                 f.write(data[i:i+1])
         else:
             if mpiops.chunk_index != 0:
-                mpiops.comm.Send(image, dest=0)
+                mpiops.comm.Send(image.data, dest=0, tag=1)
+                mpiops.comm.Send(image.mask, dest=0, tag=2)
             else:
                 for node in range(mpiops.chunks):
                     node = mpiops.chunks - node - 1
                     subindex = mpiops.chunks*subchunk_index + node
                     ystart = self.sub_starts[subindex]
                     yend = self.sub_ends[subindex]  # this is Y
-                    data = np.zeros(shape=(self.shape[0], yend - ystart, self.shape[-1]),
-                                    dtype=np.float32) if node != 0 else image
                     if node != 0:
-                        mpiops.comm.Recv(data, source=node)
+                        data = np.zeros(shape=(self.shape[0], yend - ystart, self.shape[-1]), dtype=np.float32)
+                        mask = np.ones(shape=(self.shape[0], yend - ystart, self.shape[-1]), dtype=np.bool)
+                        mpiops.comm.Recv(data, source=node, tag=1)
+                        mpiops.comm.Recv(mask, source=node, tag=2)
+                        data = np.ma.masked_array(data=data, mask=mask, dtype=np.float32, fill_value=self.nodata_value)
+                    else:
+                        data = image
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     window = ((ystart, yend), (0, self.shape[0]))
+
                     # write each band separately
                     for i, f in enumerate(self.files):
                         f.write(data[i:i+1], window=window)
