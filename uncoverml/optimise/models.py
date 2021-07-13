@@ -7,9 +7,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
-                                  ElasticNet)
-from sklearn.linear_model.stochastic_gradient import (SGDRegressor,
-                                                      DEFAULT_EPSILON)
+                                  ElasticNet, SGDRegressor)
+from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor

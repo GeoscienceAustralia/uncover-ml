@@ -1,4 +1,3 @@
-
 experiment: my_run
 patchsize: 0
 memory_fraction: 0.5
@@ -7,8 +6,8 @@ features:
   - name: my continuous features
     type: continuous
     files:
-      - path: /path/to/data/GA-cover/Th_v1.tif
-      - directory: /path/to/data/GA-cover
+      - path: configs/data/LATITUDE_GRID1.tif
+      - path: configs/data/LONGITUDE_GRID1.tif
     transforms:
       - standardise
       - whiten:
@@ -31,18 +30,17 @@ preprocessing:
         keep_fraction: 0.8
 
 targets:
-  file: /path/to/data/GA-cover/geochem_sites.shp
-  property: Na_ppm_i_1
+  file: configs/data/geochem_sites.shp
+  property: K_ppm_imp
 
 learning:
-    algorithm: svr
-    arguments:
-      target_transform: rank
+  algorithm: svr
+  arguments:
+    target_transform: rank
 
 prediction:
   quantiles: 0.95
   outbands: 1
-
 
 validation:
   #- feature_rank
@@ -51,5 +49,4 @@ validation:
       random_seed: 1
   
 output:
-  directory: /some/output/dir
-
+  directory: out/

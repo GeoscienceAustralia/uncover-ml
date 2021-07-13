@@ -156,8 +156,7 @@ def _get_data(subchunk, config):
     transform_sets = [k.transform_set for k in config.feature_sets]
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     log.info("Applying feature transforms")
-    x = features.transform_features(extracted_chunk_sets, transform_sets,
-                                    config.final_transform, config)[0]
+    x = features.transform_features(extracted_chunk_sets, transform_sets, config.final_transform, config)[0]
 
     # only check/correct float32 conversion for Ensemble models
     if not config.clustering:
@@ -201,7 +200,7 @@ def _mask_rows(x, subchunk, config):
     return x
 
 
-def render_partition(model, subchunk, image_out, config):
+def render_partition(model, subchunk, image_out: geoio.ImageWriter, config):
 
     x, feature_names = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)

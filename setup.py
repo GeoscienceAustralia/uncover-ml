@@ -80,7 +80,7 @@ setup(
     install_requires=[
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
-        'rasterio >= 1.0.8',
+        'rasterio == 1.1.0',
         'affine >= 2.2.1',
         'pyshp == 2.1.0',
         'click >= 6.6',

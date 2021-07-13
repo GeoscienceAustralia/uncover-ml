@@ -31,7 +31,7 @@ class Image:
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
         if nchunks == 1 and overlap != 0:
-            log.warn("Ignoring overlap when 1 chunk present")
+            log.warning("Ignoring overlap when 1 chunk present")
             overlap = 0
 
         self.chunk_idx = chunk_idx
@@ -64,8 +64,7 @@ class Image:
         self._pix_y_to_coords = dict(zip(pix_y, coords_y))
 
         # exclusive y range of this chunk in full image
-        ymin, ymax = construct_splits(self._full_res[1],
-                                      nchunks, overlap)[chunk_idx]
+        ymin, ymax = construct_splits(self._full_res[1], nchunks, overlap)[chunk_idx]
         self._offset = np.array([0, ymin], dtype=int)
         # exclusive x range of this chunk (same for all chunks)
         xmin, xmax = 0, self._full_res[0]

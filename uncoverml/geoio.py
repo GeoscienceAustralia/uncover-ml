@@ -261,6 +261,7 @@ class ImageWriter:
                            np.arange(self.shape[1]),
                            mpiops.chunks * self.n_subchunks)]
 
+        self.sub_ends = [k[-1] + 1 for k in np.array_split(np.arange(self.shape[1]), mpiops.chunks * self.n_subchunks)]
         # file tags don't have spaces
         if band_tags:
             file_tags = ["_".join(k.lower().split()) for k in band_tags]
@@ -273,8 +274,7 @@ class ImageWriter:
 
         if mpiops.chunk_index == 0:
             for band in range(self.outbands):
-                output_filename = os.path.join(outputdir, name + "_" +
-                                               file_tags[band] + ".tif")
+                output_filename = os.path.join(outputdir, name + "_" + file_tags[band] + ".tif")
                 f = rasterio.open(output_filename, 'w', driver='GTiff',
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,
@@ -332,10 +332,10 @@ class ImageWriter:
                     node = mpiops.chunks - node - 1
                     subindex = mpiops.chunks*subchunk_index + node
                     ystart = self.sub_starts[subindex]
-                    data = mpiops.comm.recv(source=node) \
-                        if node != 0 else image
+                    data = mpiops.comm.recv(source=node) if node != 0 else image
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                    yend = ystart + data.shape[1]  # this is Y
+                    yend = self.sub_ends[subindex]  # this is Y
+                    # assert yend == ystart + data.shape[1]
                     window = ((ystart, yend), (0, self.shape[0]))
                     # write each band separately
                     for i, f in enumerate(self.files):
@@ -412,8 +412,7 @@ def image_resolutions(config):
 def image_subchunks(subchunk_index, config):
 
     def f(image_source):
-        r = features.extract_subchunks(image_source, subchunk_index,
-                                       config.n_subchunks, config.patchsize)
+        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize)
         return r
     result = _iterate_sources(f, config)
     return result
