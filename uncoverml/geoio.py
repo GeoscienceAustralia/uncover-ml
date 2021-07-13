@@ -9,6 +9,7 @@ import pickle
 import matplotlib.pyplot as plt
 import rasterio
 from rasterio.warp import reproject
+from rasterio.windows import Window
 from affine import Affine
 import numpy as np
 import shapefile
@@ -341,8 +342,7 @@ class ImageWriter:
                     else:
                         data = image
                     data = np.ma.transpose(data, [2, 1, 0])  # untranspose
-                    window = ((ystart, yend), (0, self.shape[0]))
-
+                    window = Window(col_off=0, row_off=ystart, width=self.shape[0], height=yend - ystart)
                     # write each band separately
                     for i, f in enumerate(self.files):
                         f.write(data[i:i+1], window=window)
