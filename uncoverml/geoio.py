@@ -326,16 +326,18 @@ class ImageWriter:
                 f.write(data[i:i+1])
         else:
             if mpiops.chunk_index != 0:
-                mpiops.comm.send(image, dest=0)
+                mpiops.comm.Send(image, dest=0)
             else:
                 for node in range(mpiops.chunks):
                     node = mpiops.chunks - node - 1
                     subindex = mpiops.chunks*subchunk_index + node
                     ystart = self.sub_starts[subindex]
-                    data = mpiops.comm.recv(source=node) if node != 0 else image
-                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     yend = self.sub_ends[subindex]  # this is Y
-                    # assert yend == ystart + data.shape[1]
+                    data = np.zeros(shape=(self.shape[0], yend - ystart, self.shape[-1]),
+                                    dtype=np.float32) if node != 0 else image
+                    if node != 0:
+                        mpiops.comm.Recv(data, source=node)
+                    data = np.ma.transpose(data, [2, 1, 0])  # untranspose
                     window = ((ystart, yend), (0, self.shape[0]))
                     # write each band separately
                     for i, f in enumerate(self.files):
