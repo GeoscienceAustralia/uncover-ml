@@ -7,8 +7,12 @@ features:
   - name: my continuous features
     type: continuous
     files:
-      - path: configs/data/LATITUDE_GRID1.tif
-      - path: configs/data/LONGITUDE_GRID1.tif
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
     transforms:
       - standardise
       - whiten:
@@ -16,7 +20,7 @@ features:
     imputation: none
 
 preprocessing:
-  imputation: mean
+  imputation: none
   transforms:
     - whiten:
         keep_fraction: 0.8
@@ -24,6 +28,7 @@ preprocessing:
 targets:
   file: configs/data/geochem_sites.shp
   property: K_ppm_imp
+  group_targets: true
 
 learning:
   algorithm: xgboost

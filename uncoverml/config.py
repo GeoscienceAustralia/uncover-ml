@@ -210,6 +210,10 @@ class Config:
 
         self.target_file = s['targets']['file']
         self.target_property = s['targets']['property']
+        if 'group_targets' in s['targets']:
+            self.group_targets = s['targets']['group_targets']
+        else:
+            self.group_targets = False
 
         self.resample = None
 
