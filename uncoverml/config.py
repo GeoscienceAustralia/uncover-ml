@@ -210,10 +210,6 @@ class Config:
 
         self.target_file = s['targets']['file']
         self.target_property = s['targets']['property']
-        if 'group_targets' in s['targets']:
-            self.group_targets = s['targets']['group_targets']
-        else:
-            self.group_targets = False
 
         self.resample = None
 
@@ -260,6 +256,13 @@ class Config:
 
         # create output dir if does not exist
         makedirs(self.output_dir, exist_ok=True)
+
+        if 'group_targets' in s['targets']:
+            self.group_targets = True
+            self.groups_eps = s['targets']['group_targets']['groups_eps']
+            self.target_groups_file = path.join(self.output_dir, 'target_groups.jpg')
+        else:
+            self.group_targets = False
 
         if 'optimisation' in s:
             self.optimisation = s['optimisation']

@@ -4,12 +4,14 @@ import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
+from itertools import cycle, islice
 import json
 import pickle
 import matplotlib.pyplot as plt
 import rasterio
 from rasterio.warp import reproject
 from rasterio.windows import Window
+from sklearn.cluster import DBSCAN
 from affine import Affine
 import numpy as np
 import shapefile
@@ -18,6 +20,7 @@ import tables as hdf
 from uncoverml import mpiops
 from uncoverml import image
 from uncoverml import features
+from uncoverml.config import Config
 from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
 
@@ -168,7 +171,7 @@ class ArrayImageSource(ImageSource):
         return data_window
 
 
-def load_shapefile(filename, targetfield):
+def load_shapefile(filename: str, targetfield: str):
     """
     TODO
     """
@@ -195,7 +198,29 @@ def load_shapefile(filename, targetfield):
     return label_coords, val, othervals
 
 
-def load_targets(shapefile, targetfield):
+def add_groups(lonlat, conf: Config):
+    log.info("Segmenting targets using DBSCAN clustering algorithm")
+    dbscan = DBSCAN(eps=conf.groups_eps, n_jobs=-1, min_samples=10)
+
+    dbscan.fit(lonlat)
+    log.info("Finished segmentation!")
+    groups = dbscan.labels_.astype(np.uint16)
+    log.info(f"Found {max(groups) + 1} groups")
+    rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
+    colors = np.array(list(islice(cycle(rc_colors), int(max(groups) + 1))))
+    # add black color for outliers (if any)
+    colors = np.append(colors, ["#000000"])
+    plt.figure(figsize=(16, 10))
+    plt.xlabel("longitude")
+    plt.ylabel("latitude")
+    plt.scatter(lonlat[:, 0], lonlat[:, 1], s=10, c=colors[groups], cmap=colors)
+    fig_file = conf.target_groups_file
+    plt.savefig(fig_file)
+    log.info(f"Saved groups in {fig_file}")
+    return groups
+
+
+def load_targets(shapefile, targetfield, conf: Config):
     """
     Loads the shapefile onto node 0 then distributes it across all
     available nodes
@@ -206,24 +231,30 @@ def load_targets(shapefile, targetfield):
         ordind = np.lexsort(lonlat.T)
         vals = vals[ordind]
         lonlat = lonlat[ordind]
+        if conf.group_targets:
+            groups = add_groups(lonlat, conf)
+        else:
+            groups = np.ones_like(lonlat)
         for k, v in othervals.items():
             othervals[k] = v[ordind]
 
         lonlat = np.array_split(lonlat, mpiops.chunks)
+        groups = np.array_split(groups, mpiops.chunks)
         vals = np.array_split(vals, mpiops.chunks)
         split_othervals = {k: np.array_split(v, mpiops.chunks)
                            for k, v in othervals.items()}
         othervals = [{k: v[i] for k, v in split_othervals.items()}
                      for i in range(mpiops.chunks)]
     else:
-        lonlat, vals, othervals = None, None, None
+        lonlat, vals, groups, othervals = None, None, None, None
 
     lonlat = mpiops.comm.scatter(lonlat, root=0)
+    groups = mpiops.comm.scatter(groups, root=0)
     vals = mpiops.comm.scatter(vals, root=0)
     othervals = mpiops.comm.scatter(othervals, root=0)
     log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
                                                            lonlat.shape[0]))
-    targets = Targets(lonlat, vals, othervals=othervals)
+    targets = Targets(lonlat, vals, groups, othervals=othervals)
     return targets
 
 
