@@ -198,14 +198,21 @@ def load_shapefile(filename: str, targetfield: str):
     return label_coords, val, othervals
 
 
-def add_groups(lonlat, conf: Config):
-    log.info("Segmenting targets using DBSCAN clustering algorithm")
-    dbscan = DBSCAN(eps=conf.groups_eps, n_jobs=-1, min_samples=10)
+def add_groups(lonlat, grouping_data, conf: Config):
+    if grouping_data is not None:
+        unique_groups = np.unique(grouping_data)  # np.unique returns sorted
+        groups = np.zeros_like(grouping_data, dtype=np.uint16)
+        for i, g in enumerate(unique_groups):
+            groups[grouping_data == g] = i
+        log.info(f"Found {max(groups) + 1} groups")
+    else:
+        log.info("Segmenting targets using DBSCAN clustering algorithm")
+        dbscan = DBSCAN(eps=conf.groups_eps, n_jobs=-1, min_samples=10)
 
-    dbscan.fit(lonlat)
-    log.info("Finished segmentation!")
-    groups = dbscan.labels_.astype(np.int16)
-    log.info(f"Found {max(groups) + 1} groups + potential outliers in group -1")
+        dbscan.fit(lonlat)
+        log.info("Finished segmentation!")
+        groups = dbscan.labels_.astype(np.int16)
+        log.info(f"Found {max(groups) + 1} groups + potential outliers in group -1")
     rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
     colors = np.array(list(islice(cycle(rc_colors), int(max(groups) + 1))))
     # add black color for outliers (if any)
@@ -231,12 +238,17 @@ def load_targets(shapefile, targetfield, conf: Config):
         ordind = np.lexsort(lonlat.T)
         vals = vals[ordind]
         lonlat = lonlat[ordind]
-        if conf.group_targets:
-            groups = add_groups(lonlat, conf)
-        else:
-            groups = np.ones_like(vals)
         for k, v in othervals.items():
             othervals[k] = v[ordind]
+
+        if conf.group_targets:
+            if conf.group_col:
+                grouping_data = othervals[conf.group_col]
+            else:
+                grouping_data = None
+            groups = add_groups(lonlat, grouping_data, conf)
+        else:
+            groups = np.ones_like(vals)
 
         lonlat = np.array_split(lonlat, mpiops.chunks)
         groups = np.array_split(groups, mpiops.chunks)
