@@ -1,0 +1,67 @@
+experiment: my_run
+patchsize: 0
+memory_fraction: 0.5
+
+features:
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
+    transforms:
+      - standardise
+      - whiten:
+          keep_fraction: 0.8
+    imputation: none
+
+preprocessing:
+  imputation: none
+  transforms:
+    - whiten:
+        keep_fraction: 0.8
+
+targets:
+  file: configs/data/geochem_sites.shp
+  property: K_ppm_imp
+#  group_targets:
+#    groups_eps: 0.09
+
+learning:
+  algorithm: quantilexgb
+  arguments:
+    target_transform: identity
+    mean_model_params:
+        n_jobs: -1
+    upper_quantile_params:
+        alpha: 0.95
+        delta: 1.0
+        thresh: 1.0
+        variance: 1.0
+        n_jobs: -1
+    lower_quantile_params:
+        alpha: 0.05
+        delta: 1.0
+        thresh: 1.0
+        variance: 1.0
+        n_jobs: -1
+
+prediction:
+  quantiles: 0.95
+  outbands: 4
+
+
+validation:
+  #- feature_rank
+  - parallel
+  - k-fold:
+      folds: 5
+      random_seed: 1
+
+output:
+  directory: qxgb/
+  model: xgboost.model
+
