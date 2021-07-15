@@ -101,7 +101,6 @@ def _load_data(config, partitions):
             targets = ls.geoio.load_targets(shapefile=config.target_file,
                                             targetfield=config.target_property,
                                             conf=config)
-            # import IPython; IPython.embed(); import sys; sys.exit()
             # Get the image chunks and their associated transforms
             image_chunk_sets = ls.geoio.image_feature_sets(targets, config)
             transform_sets = [k.transform_set for k in config.feature_sets]

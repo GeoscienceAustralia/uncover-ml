@@ -5,6 +5,7 @@ import logging
 import copy
 from pathlib import Path
 import numpy as np
+from sklearn.model_selection import GroupKFold, KFold
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
                              confusion_matrix)
@@ -17,6 +18,7 @@ from uncoverml import mpiops
 from uncoverml import predict, geoio
 from uncoverml import features as feat
 from uncoverml import targets as targ
+from uncoverml.config import Config
 from uncoverml.learn import all_modelmaps as modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 
@@ -98,6 +100,44 @@ def split_cfold(nsamples, k=5, seed=None):
     cvassigns = np.zeros(nsamples, dtype=int)
     for n, inds in enumerate(cvinds):
         cvassigns[inds] = n
+
+    return cvinds, cvassigns
+
+
+def split_gfold(groups, k=5, seed=None):
+    """
+    Function that returns indices for splitting data into random folds respecting groups.
+
+    Parameters
+    ----------
+    targets: int
+        the number of samples in the dataset
+    k: int, optional
+        the number of folds
+    seed: int, optional
+        random seed to provide to numpy
+
+    Returns
+    -------
+    cvinds: list
+        list of arrays of length k, each with approximate shape (nsamples /
+        k,) of indices. These indices are randomly permuted (without
+        replacement) of assignments to each fold.
+    cvassigns: ndarray
+        array of shape (nsamples,) with each element in [0, k), that can be
+        used to assign data to a fold. This corresponds to the indices of
+        cvinds.
+
+    """
+    fold = GroupKFold(n_splits=k) if len(np.unique(groups)) >= k else \
+        KFold(n_splits=k, shuffle=True, random_state=seed)
+    cvinds = []
+    cvassigns = np.zeros_like(groups, dtype=int)
+    fold_str = fold.__class__.__name__
+    for n, g in enumerate(fold.split(np.arange(groups.shape[0]), groups=groups)):
+        log.info(f"{fold_str} resulted in {g[1].shape[0]} targets in Group {n}")
+        cvinds.append(g[1])
+        cvassigns[g[1]] = n
 
     return cvinds, cvassigns
 
@@ -311,7 +351,7 @@ def _join_dicts(dicts):
     return d
 
 
-def local_crossval(x_all, targets_all, config):
+def local_crossval(x_all, targets_all, config: Config):
     """ Performs K-fold cross validation to test the applicability of a model.
     Given a set of inputs and outputs, this function will evaluate the
     effectiveness of a model at predicting the targets, by splitting all of
@@ -346,13 +386,18 @@ def local_crossval(x_all, targets_all, config):
     classification = hasattr(model, 'predict_proba')
     y = targets_all.observations
     lon_lat = targets_all.positions
-    _, cv_indices = split_cfold(y.shape[0], config.folds, config.crossval_seed)
+    groups = targets_all.groups
+
+    if (len(np.unique(groups)) + 1 < config.folds) and config.group_targets:
+        raise ValueError(f"Cannot continue cross-validation with chosen params as num of groups {max(groups) + 1} "
+                         f"in data is less than the number of folds {config.folds}")
+
+    _, cv_indices = split_gfold(groups, config.folds, config.crossval_seed)
 
     # Split folds over workers
     fold_list = np.arange(config.folds)
     if config.parallel_validate:
-        fold_node = \
-            np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+        fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
     else:
         fold_node = fold_list
 

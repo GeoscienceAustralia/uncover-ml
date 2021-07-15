@@ -204,8 +204,8 @@ def add_groups(lonlat, conf: Config):
 
     dbscan.fit(lonlat)
     log.info("Finished segmentation!")
-    groups = dbscan.labels_.astype(np.uint16)
-    log.info(f"Found {max(groups) + 1} groups")
+    groups = dbscan.labels_.astype(np.int16)
+    log.info(f"Found {max(groups) + 1} groups + potential outliers in group -1")
     rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
     colors = np.array(list(islice(cycle(rc_colors), int(max(groups) + 1))))
     # add black color for outliers (if any)
@@ -234,7 +234,7 @@ def load_targets(shapefile, targetfield, conf: Config):
         if conf.group_targets:
             groups = add_groups(lonlat, conf)
         else:
-            groups = np.ones_like(lonlat)
+            groups = np.ones_like(vals)
         for k, v in othervals.items():
             othervals[k] = v[ordind]
 
