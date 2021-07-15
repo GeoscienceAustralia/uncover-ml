@@ -121,7 +121,6 @@ def test_mlkrige(models_supported, get_krige_method):
     assert mlk.__dict__.keys() == mod_pic.__dict__.keys()
 
 
-
 def test_apply_masked(masked_data):
     yt, Xt, ys, Xs = masked_data
     yt_masked = np.ma.masked_array(yt, mask=Xt.mask.flatten())

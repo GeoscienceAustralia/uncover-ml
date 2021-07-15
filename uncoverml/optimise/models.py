@@ -2,7 +2,6 @@ import logging
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model import (HuberRegressor,
@@ -10,13 +9,12 @@ from sklearn.linear_model import (HuberRegressor,
                                   ElasticNet, SGDRegressor)
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.svm import SVR
-from sklearn.metrics import r2_score
+from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
-# from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
-# import copy as cp
+
 log = logging.getLogger(__name__)
 
 
@@ -401,7 +399,7 @@ transformed_modelmaps = {
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
-    'xgboost': XGBoost
+    'xgboost': XGBoost,
 }
 
 # scikit-learn kernels

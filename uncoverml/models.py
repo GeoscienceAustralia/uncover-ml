@@ -3,7 +3,9 @@
 import os
 import pickle
 import warnings
+import logging
 from itertools import chain
+from functools import partial
 from os.path import join, isdir, abspath
 import numpy as np
 from revrand import StandardLinearModel, GeneralisedLinearModel
@@ -16,6 +18,7 @@ from revrand.utils import atleast_list
 from scipy.integrate import fixed_quad
 from scipy.stats import norm
 
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.svm import SVR, SVC
 from sklearn.ensemble import (RandomForestRegressor as RFR,
                               RandomForestClassifier as RFC,
@@ -25,6 +28,7 @@ from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.kernel_approximation import RBFSampler
+from xgboost import XGBRegressor
 
 from uncoverml import mpiops
 from uncoverml.interpolate import SKLearnNearestNDInterpolator, \
@@ -36,6 +40,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 #
 # Module constants
 #
+
+log = logging.getLogger(__name__)
 
 QUADORDER = 5  # Order of quadrature used for transforming probabilistic vals
 
@@ -741,6 +747,113 @@ def encode_targets(Classifier):
 
     return EncodedClassifier
 
+
+class XGBQuantileRegressor(XGBRegressor):
+    def __init__(self,
+                 alpha=0.9, delta=1.0, thresh=1.0, variance=1.0,
+                 **kwargs
+                 ):
+        self.alpha = alpha
+        self.delta = delta
+        self.thresh = thresh
+        self.variance = variance
+
+        super(XGBQuantileRegressor, self).__init__(**kwargs)
+
+    def fit(self, X, y, **kwargs):
+        objective = partial(XGBQuantileRegressor.quantile_loss, alpha=self.alpha, delta=self.delta,
+                            threshold=self.thresh, var=self.variance)
+        super().set_params(objective=objective)
+        super().fit(X, y)
+        return self
+
+    def predict(self, X, **kwargs):
+        return super().predict(X)
+
+    def score(self, X, y, **kwargs):
+        y_pred = super().predict(X)
+        score = self.quantile_score(y, y_pred, self.alpha)
+        score = 1. / score
+        return score
+
+    @staticmethod
+    def quantile_loss(y_true, y_pred, alpha, delta, threshold, var):
+        x = y_true - y_pred
+        grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
+               ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
+               alpha * (x > alpha * delta)
+        hess = ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) / delta
+
+        grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
+                2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
+        hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
+        return grad, hess
+
+    @staticmethod
+    def quantile_score(y_true, y_pred, alpha):
+        score = XGBQuantileRegressor.quantile_cost(x=y_true - y_pred, alpha=alpha)
+        score = np.sum(score)
+        return score
+
+    @staticmethod
+    def quantile_cost(x, alpha):
+        return (alpha - 1.0) * x * (x < 0) + alpha * x * (x >= 0)
+
+    @staticmethod
+    def get_split_gain(gradient, hessian, l=1):
+        split_gain = list()
+        for i in range(gradient.shape[0]):
+            split_gain.append(np.sum(gradient[:i]) / (np.sum(hessian[:i]) + l) + np.sum(gradient[i:]) / (
+                    np.sum(hessian[i:]) + l) - np.sum(gradient) / (np.sum(hessian) + l))
+
+        return np.array(split_gain)
+
+
+class QuantileXGB(BaseEstimator, RegressorMixin):
+    def __init__(
+            self,
+            mean_model_params={},
+            upper_quantile_params={'alpha': 0.9},
+            lower_quantile_params={'alpha': 0.1}
+    ):
+        self.mean_model_params = mean_model_params
+        self.upper_quantile_params = upper_quantile_params
+        self.lower_quantile_params = lower_quantile_params
+        self.gb = XGBRegressor(**mean_model_params)
+        self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params)
+        self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params)
+        self.upper_alpha = upper_quantile_params['alpha']
+        self.lower_alpha = lower_quantile_params['alpha']
+
+    @staticmethod
+    def collect_prediction(regressor, X_test):
+        y_pred = regressor.predict(X_test)
+        return y_pred
+
+    def fit(self, X, y, **kwargs):
+        log.info('Fitting xgb base model')
+        self.gb.fit(X, y, **kwargs)
+        log.info('Fitting xgb upper quantile model')
+        self.gb_quantile_upper.fit(X, y, **kwargs)
+        log.info('Fitting xgb lower quantile model')
+        self.gb_quantile_lower.fit(X, y, **kwargs)
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
+    def predict_dist(self, X, interval=0.95):
+        Ey = self.gb.predict(X)
+
+        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
+        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
+        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
+        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
+
+        # to make gbm quantile model consistent with other quantile based models
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
 #
 # Construct compatible classes for the pipeline, these need to be module level
 # for pickling...
@@ -789,6 +902,10 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
             dist = 1. / (dist + self.min_distance)
 
         return dist
+
+
+class QuantileXGBTransformed(transform_targets(QuantileXGB), TagsMixin):
+    pass
 
 
 class KNearestNeighborTransformed(transform_targets(CustomKNeighborsRegressor),
@@ -897,7 +1014,7 @@ class SGDApproxGPTransformed(transform_targets(SGDApproxGP), TagsMixin):
 
 
 class CubistTransformed(transform_targets(Cubist), TagsMixin):
-    """
+    """log = logging.getLogger(__name__)
     Cubist regression (wrapper).
 
     https://www.rulequest.com/cubist-info.html
@@ -1069,6 +1186,7 @@ regressors = {
     'cubist': CubistTransformed,
     'multicubist': CubistMultiTransformed,
     'nnr': KNearestNeighborTransformed,
+    'quantilexgb': QuantileXGBTransformed,
 }
 
 
