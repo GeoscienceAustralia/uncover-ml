@@ -94,7 +94,7 @@ setup(
         'pandas == 1.0.5',
         'matplotlib>=1.5.1',
         'PyKrige==1.3.0',
-        'xgboost==0.72.1',
+        'xgboost==1.4.2',
         'setuptools>=30.0.0',
         'eli5>=0.8.2',
         'networkx==2.5.1'

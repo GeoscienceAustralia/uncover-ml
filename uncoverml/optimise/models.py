@@ -372,39 +372,18 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
 
 class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
 
-    def __init__(self, target_transform='identity',
-                 max_depth=3, learning_rate=0.1, n_estimators=100,
-                 silent=True, objective="reg:linear",
-                 nthread=1, gamma=0, min_child_weight=1,
-                 max_delta_step=0, booster='gbtree',
-                 subsample=1, colsample_bytree=1, colsample_bylevel=1,
-                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=-1,
-                 base_score=0.5, random_state=1, missing=None):
+    def __init__(self,
+                 target_transform='identity',
+                 ** kwargs
+                 ):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
 
-        super(XGBoost, self).__init__(max_depth=max_depth,
-                                      learning_rate=learning_rate,
-                                      n_estimators=n_estimators,
-                                      silent=silent,
-                                      objective=objective,
-                                      nthread=nthread,
-                                      booster=booster,
-                                      gamma=gamma,
-                                      min_child_weight=min_child_weight,
-                                      max_delta_step=max_delta_step,
-                                      subsample=subsample,
-                                      colsample_bytree=colsample_bytree,
-                                      colsample_bylevel=colsample_bylevel,
-                                      reg_alpha=reg_alpha,
-                                      reg_lambda=reg_lambda,
-                                      scale_pos_weight=scale_pos_weight,
-                                      base_score=base_score,
-                                      random_state=random_state,
-                                      missing=missing,
-                                      n_jobs=n_jobs)
+        super(XGBoost, self).__init__(
+            ** kwargs
+            )
 
     def fit(self, X, y, *args, **kwargs):
         return super().fit(X, y)

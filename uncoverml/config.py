@@ -291,6 +291,11 @@ class Config:
             if 'cluster_analysis' in s['clustering']:
                 self.cluster_analysis = s['clustering']['cluster_analysis']
 
+        output_model = s['output']['model'] if 'model' in s['output'] \
+            else self.name + ('.cluster' if self.clustering else '.model')
+
+        self.output_model = path.join(self.output_dir, output_model)
+
 
 class ConfigException(Exception):
     pass
