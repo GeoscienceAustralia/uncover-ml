@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+warnings.filterwarnings(action='ignore', category=Warning)
 
 
 @click.group()
