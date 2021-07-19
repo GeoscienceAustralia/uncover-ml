@@ -79,11 +79,17 @@ class SqrtTransform(PositiveTransform):
 
 
 class WhitenTransform:
-    def __init__(self, keep_fraction):
+    def __init__(self, keep_fraction=None, n_components=None):
         self.mean = None
         self.eigvals = None
         self.eigvecs = None
         self.keep_fraction = keep_fraction
+        self.n_components = n_components
+        if n_components is None:
+            assert keep_fraction is not None
+        if keep_fraction is None:
+            assert n_components is not None
+        assert (keep_fraction is None) or (n_components is None)
 
     def __call__(self, x):
         x = x.astype(float)
@@ -93,7 +99,12 @@ class WhitenTransform:
 
         ndims = x.shape[1]
         # make sure 1 <= keepdims <= ndims
-        keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
+        if self.n_components is None:
+            keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
+        else:
+            keepdims = self.n_components
+            assert self.n_components < ndims, "More components demanded than features. Not possible! \n " \
+                                              "Please reduce n_components or increase the number of features"
         mat = self.eigvecs[:, -keepdims:]
         vec = self.eigvals[np.newaxis, -keepdims:]
         x = np.ma.dot(x - self.mean, mat, strict=True) / np.sqrt(vec)

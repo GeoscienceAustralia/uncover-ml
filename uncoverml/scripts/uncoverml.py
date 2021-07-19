@@ -320,7 +320,7 @@ def pca(pipeline_file, partitions, mask, retain):
         log.info("Using memory aggressively: dividing all data between nodes")
 
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec_from_nchannels(config.n_components, config)
-    __validate_pca_config(config)
+    tr_whiten = __validate_pca_config(config)
     outfile_tif = config.name + "_pca"
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
@@ -346,6 +346,7 @@ def __validate_pca_config(config):
         assert len(t.global_transforms) == 0
     assert len(config.final_transform.global_transforms) == 1
     assert isinstance(config.final_transform.global_transforms[0], WhitenTransform)
+    return config.final_transform.global_transforms[0]
 
 
 def _total_gb():

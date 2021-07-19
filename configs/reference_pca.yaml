@@ -18,10 +18,13 @@ features:
 preprocessing:
   transforms:
     - whiten:
-        keep_fraction: 0.8
+        n_components: 4
 
 pca:
-  n_components: 4
+  geotif:
+    TILED: YES
+    BLOCKXSIZE: 256
+    BLOCKYSIZE: 256
 
 output:
   directory: out/
