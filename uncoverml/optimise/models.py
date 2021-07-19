@@ -457,6 +457,9 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         log.info('Fitting xgb lower quantile model')
         self.gb_quantile_lower.fit(X, y)
 
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
     def predict_dist(self, X, interval=0.95, *args, **kwargs):
         Ey = self.gb.predict(X)
 

@@ -16,6 +16,7 @@ modelmaps = {**krig_dict, **transformed_modelmaps}
 svr = modelmaps.pop('transformedsvr')
 krige = modelmaps.pop('krige')
 mlkrige = modelmaps.pop('mlkrige')
+xgbquantile = modelmaps.pop('xgbquantile')
 
 # TODO: investigate why catboost does not work with target transforms
 # catboost = modelmaps.pop('catboost')
