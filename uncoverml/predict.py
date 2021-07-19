@@ -11,6 +11,7 @@ from uncoverml.models import apply_masked, modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.krige import krig_dict
 from uncoverml import transforms
+from uncoverml.config import Config
 
 log = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
@@ -159,6 +160,10 @@ def _get_data(subchunk, config):
     x = features.transform_features(extracted_chunk_sets, transform_sets, config.final_transform, config)[0]
 
     # only check/correct float32 conversion for Ensemble models
+    if config.pca:
+        x = _fix_for_corrupt_data(x, features_names)
+        return _mask_rows(x, subchunk, config), features_names
+
     if not config.clustering:
         if (isinstance(modelmaps[config.algorithm](), BaseEnsemble) or
                 config.multirandomforest):
@@ -200,7 +205,7 @@ def _mask_rows(x, subchunk, config):
     return x
 
 
-def render_partition(model, subchunk, image_out: geoio.ImageWriter, config):
+def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Config):
 
     x, feature_names = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
@@ -213,6 +218,14 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config):
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     # cluster_analysis(x, y_star, subchunk, config, feature_names)
     image_out.write(y_star, subchunk)
+
+
+def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
+    x, feature_names = _get_data(subchunk, config)
+    total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+    log.info("Loaded {:2.4f}GB of image data".format(total_gb))
+    log.info("Extracting PCAs....")
+    image_out.write(x, subchunk)
 
 
 def cluster_analysis(x, y, partition_no, config, feature_names):

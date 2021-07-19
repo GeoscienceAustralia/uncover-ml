@@ -273,6 +273,10 @@ def load_targets(shapefile, targetfield, conf: Config):
 def get_image_spec(model, config):
     # temp workaround, we should have an image spec to check against
     nchannels = len(model.get_predict_tags())
+    return get_image_spec_from_nchannels(nchannels, config)
+
+
+def get_image_spec_from_nchannels(nchannels, config):
     imagelike = config.feature_sets[0].files[0]
     template_image = image.Image(RasterioImageSource(imagelike))
     eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)

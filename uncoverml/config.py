@@ -141,22 +141,26 @@ class Config:
             log.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
 
-        self.algorithm = s['learning']['algorithm']
+        if 'learning' in s:
+            self.algorithm = s['learning']['algorithm']
+            self.algorithm_args = s['learning']['arguments']
+        else:
+            self.algorithm = None
+
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
         self.krige = self.algorithm == 'krige'
-        self.algorithm_args = s['learning']['arguments']
-        self.quantiles = s['prediction']['quantiles']
 
-        self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-            s['prediction'] else {}
-
-        self.outbands = None
-        if 'outbands' in s['prediction']:
-            self.outbands = s['prediction']['outbands']
-        self.thumbnails = s['prediction']['thumbnails'] \
-            if 'thumbnails' in s['prediction'] else 10
+        if 'prediction' in s:
+            self.quantiles = s['prediction']['quantiles']
+            self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
+                s['prediction'] else {}
+            self.outbands = None
+            if 'outbands' in s['prediction']:
+                self.outbands = s['prediction']['outbands']
+            self.thumbnails = s['prediction']['thumbnails'] \
+                if 'thumbnails' in s['prediction'] else 10
 
         self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
 
@@ -208,18 +212,40 @@ class Config:
         else:
             self.final_transform = None
 
-        self.target_file = s['targets']['file']
-        self.target_property = s['targets']['property']
+        self.output_dir = s['output']['directory']
+        # create output dir if does not exist
+        makedirs(self.output_dir, exist_ok=True)
 
-        self.resample = None
+        if 'targets' in s:
+            self.target_file = s['targets']['file']
+            self.target_property = s['targets']['property']
+            self.resample = None
+            if 'resample' in s['targets']:
+                self.resample = s['targets']['resample']
 
-        if 'resample' in s['targets']:
-            self.resample = s['targets']['resample']
+            if 'group_targets' in s['targets']:
+                self.group_targets = True
+                self.groups_eps = s['targets']['group_targets']['groups_eps']
+                if 'group_col' in s['targets']['group_targets']:
+                    self.group_col = s['targets']['group_targets']['group_col']
+                else:
+                    self.group_col = None
+                self.target_groups_file = path.join(self.output_dir, 'target_groups.jpg')
+            else:
+                self.group_targets = False
+            self.target_groups_file = path.join(self.output_dir, 'target_groups.jpg')
 
         self.mask = None
         if 'mask' in s:
             self.mask = s['mask']['file']
             self.retain = s['mask']['retain']  # mask areas that are predicted
+
+        if 'pca' in s:
+            self.pca = True
+            self.n_components = s['pca']['n_components']
+            self.geotif_options = s['pca']['geotif'] if 'geotif' in s['pca'] else {}
+        else:
+            self.pca = False
 
         self.lon_lat = False
         if 'lon_lat' in s:
@@ -232,7 +258,7 @@ class Config:
         self.permutation_importance = False
         self.cross_validate = False
         self.parallel_validate = False
-        if s['validation']:
+        if 'validation' in s:
             for i in s['validation']:
                 if i == 'feature_rank':
                     self.rank_features = True
@@ -251,22 +277,6 @@ class Config:
             log.info('Feature ranking does not work with '
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
-
-        self.output_dir = s['output']['directory']
-
-        # create output dir if does not exist
-        makedirs(self.output_dir, exist_ok=True)
-
-        if 'group_targets' in s['targets']:
-            self.group_targets = True
-            self.groups_eps = s['targets']['group_targets']['groups_eps']
-            if 'group_col' in s['targets']['group_targets']:
-                self.group_col = s['targets']['group_targets']['group_col']
-            else:
-                self.group_col = None
-            self.target_groups_file = path.join(self.output_dir, 'target_groups.jpg')
-        else:
-            self.group_targets = False
 
         if 'optimisation' in s:
             self.optimisation = s['optimisation']

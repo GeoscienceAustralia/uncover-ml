@@ -1,0 +1,32 @@
+experiment: my_run
+patchsize: 0
+memory_fraction: 0.5
+
+features:
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
+      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
+    transforms:
+    imputation: none
+
+preprocessing:
+  imputation: none
+  transforms:
+    - whiten:
+        keep_fraction: 0.8
+
+pca:
+  n_components: 4
+
+output:
+  directory: out/
+  model: xgboost.model
+

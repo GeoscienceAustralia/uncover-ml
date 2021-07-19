@@ -291,6 +291,53 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
+@cli.command()
+@click.argument('pipeline_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+@click.option('-m', '--mask', type=str, default='',
+              help='mask file used to limit prediction area')
+@click.option('-r', '--retain', type=int, default=None,
+              help='mask values where to predict')
+def pca(pipeline_file, partitions, mask, retain):
+    config = ls.config.Config(pipeline_file)
+    assert config.pca, "Not a pca analysis. Please include the pca block in your yaml!!"
+    config.mask = mask if mask else config.mask
+    if config.mask:
+        config.retain = retain if retain else config.retain
+
+        if not isfile(config.mask):
+            config.mask = ''
+            log.info('A mask was provided, but the file does not exist on '
+                     'disc or is not a file.')
+
+    config.n_subchunks = partitions
+    if config.n_subchunks > 1:
+        log.info("Memory contstraint forcing {} iterations "
+                 "through data".format(config.n_subchunks))
+    else:
+        log.info("Using memory aggressively: dividing all data between nodes")
+
+    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec_from_nchannels(config.n_components, config)
+
+    outfile_tif = config.name + "_pca"
+
+    image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
+                                     outfile_tif,
+                                     config.n_subchunks, config.output_dir,
+                                     band_tags=[f'_pc_{n}' for n in range(1, config.n_components+1)],
+                                     **config.geotif_options)
+
+    for i in range(config.n_subchunks):
+        log.info("starting to render partition {}".format(i+1))
+        ls.predict.export_pca(i, image_out, config)
+
+    # explicitly close output rasters
+    image_out.close()
+
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
 def _total_gb():
     # given in KB so convert
     my_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024**2)
