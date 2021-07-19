@@ -31,9 +31,9 @@ targets:
 #    groups_eps: 0.09
 
 learning:
-  algorithm: xgbquantile
+  algorithm: quantilexgb
   arguments:
-#    target_transform: standardise
+    target_transform: standardise
     mean_model_params:
         n_jobs: -1
     upper_quantile_params:

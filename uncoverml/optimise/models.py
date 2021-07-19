@@ -13,7 +13,7 @@ from sklearn.svm import SVR
 from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP
+    _normpdf, TagsMixin, SGDApproxGP, QuantileXGB as QXGB, XGBQuantileRegressor
 from uncoverml.transforms import target as transforms
 
 log = logging.getLogger(__name__)
@@ -391,70 +391,44 @@ class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
         return super().predict(X)
 
 
-class XGBQuantileRegressor(XGBRegressor):
+class QuantileXGBTransformed(TransformPredictDistMixin, TagsMixin, QXGB):
+    """
+    Robust HuberRegressor
+    """
 
     def __init__(self,
-                 alpha,
-                 ** kwargs
-                 ):
-        self.alpha = alpha
-        if 'objective' in kwargs:
-            kwargs.pop('objective')
-
+                 mean_model_params={},
+                 upper_quantile_params={'alpha': 0.95},
+                 lower_quantile_params={'alpha': 0.05},
+                 target_transform='identity'):
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
         super().__init__(
-            objective=self.log_cosh_quantile,
-            ** kwargs
+            mean_model_params,
+            upper_quantile_params,
+            lower_quantile_params
         )
 
-    def log_cosh_quantile(self, y_true, y_pred):
-        err = y_pred - y_true
-        err = np.where(err < 0, self.alpha * err, (1 - self.alpha) * err)
-        grad = np.tanh(err)
-        hess = 1 / np.cosh(err)**2
-        return grad, hess
 
+class QuantileXGBOptimise(TransformMixin, TagsMixin, XGBQuantileRegressor):
+    """
+    Robust HuberRegressor
+    """
 
-class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
-    def __init__(
-            self,
-            mean_model_params={},
-            upper_quantile_params={'alpha': 0.95},
-            lower_quantile_params={'alpha': 0.05}
-    ):
-        self.mean_model_params = mean_model_params
-        self.upper_quantile_params = upper_quantile_params
-        self.lower_quantile_params = lower_quantile_params
-        self.gb = XGBoost(**mean_model_params)
-        self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params)
-        self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params)
-        self.upper_alpha = upper_quantile_params['alpha']
-        self.lower_alpha = lower_quantile_params['alpha']
-
-    @staticmethod
-    def collect_prediction(regressor, X_test):
-        y_pred = regressor.predict(X_test)
-        return y_pred
-
-    def fit(self, X, y, **kwargs):
-        log.info('Fitting xgb base model')
-        self.gb.fit(X, y)
-        log.info('Fitting xgb upper quantile model')
-        self.gb_quantile_upper.fit(X, y)
-        log.info('Fitting xgb lower quantile model')
-        self.gb_quantile_lower.fit(X, y)
-
-    def predict_dist(self, X, interval=0.95, *args, **kwargs):
-        Ey = self.gb.predict(X)
-
-        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
-        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
-        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
-        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
-
-        # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
+    def __init__(self,
+                 mean_model_params={},
+                 upper_quantile_params={'alpha': 0.95},
+                 lower_quantile_params={'alpha': 0.05},
+                 target_transform='identity'):
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        super().__init__(
+            mean_model_params,
+            upper_quantile_params,
+            lower_quantile_params
+        )
 
 
 transformed_modelmaps = {
@@ -467,7 +441,8 @@ transformed_modelmaps = {
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
     'xgboost': XGBoost,
-    'xgbquantile': QuantileXGB,
+    'quantilexgb': QuantileXGBTransformed,
+    'optxgb': QuantileXGBOptimise,
 }
 
 # scikit-learn kernels

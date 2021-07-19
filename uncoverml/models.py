@@ -758,17 +758,13 @@ class XGBQuantileRegressor(XGBRegressor):
         self.thresh = thresh
         self.variance = variance
 
-        super(XGBQuantileRegressor, self).__init__(**kwargs)
+        if 'objective' in kwargs:
+            kwargs.pop('objective')
 
-    def fit(self, X, y, **kwargs):
-        objective = partial(XGBQuantileRegressor.quantile_loss, alpha=self.alpha, delta=self.delta,
-                            threshold=self.thresh, var=self.variance)
-        super().set_params(objective=objective)
-        super().fit(X, y)
-        return self
-
-    def predict(self, X, **kwargs):
-        return super().predict(X)
+        super().__init__(
+            objective=self.quantile_loss,
+            **kwargs
+        )
 
     def score(self, X, y, **kwargs):
         y_pred = super().predict(X)
@@ -776,8 +772,8 @@ class XGBQuantileRegressor(XGBRegressor):
         score = 1. / score
         return score
 
-    @staticmethod
-    def quantile_loss(y_true, y_pred, alpha, delta, threshold, var):
+    def quantile_loss(self, y_true, y_pred):
+        alpha, delta, threshold, var = self.alpha, self.delta, self.thresh, self.variance
         x = y_true - y_pred
         grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
                ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
@@ -787,6 +783,13 @@ class XGBQuantileRegressor(XGBRegressor):
         grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
                 2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
         hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
+        return grad, hess
+
+    def log_cosh_quantile(self, y_true, y_pred):
+        err = y_pred - y_true
+        err = np.where(err < 0, self.alpha * err, (1 - self.alpha) * err)
+        grad = np.tanh(err)
+        hess = 1 / np.cosh(err)**2
         return grad, hess
 
     @staticmethod
@@ -841,7 +844,7 @@ class QuantileXGB(BaseEstimator, RegressorMixin):
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
 
-    def predict_dist(self, X, interval=0.95):
+    def predict_dist(self, X, interval=0.95, * args, ** kwargs):
         Ey = self.gb.predict(X)
 
         ql_ = self.collect_prediction(self.gb_quantile_lower, X)
@@ -904,8 +907,8 @@ class CustomKNeighborsRegressor(KNeighborsRegressor):
         return dist
 
 
-class QuantileXGBTransformed(transform_targets(QuantileXGB), TagsMixin):
-    pass
+# class QuantileXGBTransformed(transform_targets(QuantileXGB), TagsMixin):
+#     pass
 
 
 class KNearestNeighborTransformed(transform_targets(CustomKNeighborsRegressor),
@@ -1186,7 +1189,6 @@ regressors = {
     'cubist': CubistTransformed,
     'multicubist': CubistMultiTransformed,
     'nnr': KNearestNeighborTransformed,
-    'quantilexgb': QuantileXGBTransformed,
 }
 
 
