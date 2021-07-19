@@ -26,6 +26,7 @@ import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
+from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
 # from uncoverml.mllog import warn_with_traceback
 
@@ -319,7 +320,7 @@ def pca(pipeline_file, partitions, mask, retain):
         log.info("Using memory aggressively: dividing all data between nodes")
 
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec_from_nchannels(config.n_components, config)
-
+    __validate_pca_config(config)
     outfile_tif = config.name + "_pca"
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
@@ -336,6 +337,15 @@ def pca(pipeline_file, partitions, mask, retain):
     image_out.close()
 
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
+def __validate_pca_config(config):
+    transform_sets = [k.transform_set for k in config.feature_sets]
+    for t in transform_sets:
+        assert len(t.image_transforms) == 0  # validation that there are no image or global transforms
+        assert len(t.global_transforms) == 0
+    assert len(config.final_transform.global_transforms) == 1
+    assert isinstance(config.final_transform.global_transforms[0], WhitenTransform)
 
 
 def _total_gb():

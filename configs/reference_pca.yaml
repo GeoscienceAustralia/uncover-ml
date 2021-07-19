@@ -14,11 +14,8 @@ features:
       - path: configs/data/sirsam/relief_apsect.tif
       - path: configs/data/sirsam/LATITUDE_GRID1.tif
       - path: configs/data/sirsam/LONGITUDE_GRID1.tif
-    transforms:
-    imputation: none
 
 preprocessing:
-  imputation: none
   transforms:
     - whiten:
         keep_fraction: 0.8

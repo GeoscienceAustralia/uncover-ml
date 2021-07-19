@@ -111,6 +111,11 @@ class FeatureSetConfig:
 
         self.files = sorted(files, key=str.lower)
         n_files = len(self.files)
+        if 'transforms' not in d:
+            d['transforms'] = None
+
+        if 'imputation' not in d:
+            d['imputation'] = None
 
         trans_i, im, trans_g = _parse_transform_set(d['transforms'],
                                                     d['imputation'],
@@ -206,6 +211,10 @@ class Config:
 
         if 'preprocessing' in s:
             final_transform = s['preprocessing']
+            if 'transforms' not in final_transform:
+                final_transform['transforms'] = None
+            if 'imputation' not in final_transform:
+                final_transform['imputation'] = None
             _, im, trans_g = _parse_transform_set(
                 final_transform['transforms'], final_transform['imputation'])
             self.final_transform = transforms.TransformSet(im, trans_g)

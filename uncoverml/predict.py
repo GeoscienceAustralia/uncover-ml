@@ -221,7 +221,7 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
 
 
 def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
-    x, feature_names = _get_data(subchunk, config)
+    x, _ = _get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     log.info("Extracting PCAs....")
