@@ -13,6 +13,8 @@ features:
       - path: configs/data/sirsam/outcrop_dis2.tif
       - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
+      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
     transforms:
       - standardise
       - whiten:
@@ -44,7 +46,7 @@ prediction:
 validation:
   #- feature_rank
   - k-fold:
-      folds: 5
+      folds: 2
       random_seed: 1
 
 output:

@@ -369,7 +369,7 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
             )
 
 
-class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
+class XGBoost(XGBRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -380,15 +380,29 @@ class XGBoost(XGBRegressor, TransformMixin, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
 
-        super(XGBoost, self).__init__(
-            ** kwargs
-            )
+        super().__init__(** kwargs)
 
     def fit(self, X, y, *args, **kwargs):
-        return super().fit(X, y)
+        self.target_transform.fit(y=y)
+        y_t = self.target_transform.transform(y)
+        return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
-        return super().predict(X)
+
+        if 'return_std' in kwargs:
+            return_std = kwargs.pop('return_std')
+            if return_std:
+                Ey_t, std_t = super().predict(X, return_std=return_std)
+
+                return self.target_transform.itransform(Ey_t), \
+                       self.target_transform.itransform(std_t)
+
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
+        return self.target_transform.itransform(Ey_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X)
+        return Ey_t
 
 
 class XGBQuantileRegressor(XGBRegressor):
