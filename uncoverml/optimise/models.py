@@ -427,6 +427,48 @@ class XGBQuantileRegressor(XGBRegressor):
         hess = 1 / np.cosh(err)**2
         return grad, hess
 
+    def score(self, X, y, **kwargs):
+        y_pred = super().predict(X)
+        score = self.quantile_score(y, y_pred, self.alpha)
+        score = 1. / score
+        return score
+
+    def quantile_loss(self, y_true, y_pred):
+        alpha = self.alpha
+        delta = self.delta,
+        threshold = self.thresh
+        var = self.variance
+        x = y_true - y_pred
+        grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
+               ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
+               alpha * (x > alpha * delta)
+        hess = ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) / delta
+
+        grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
+                2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
+        hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
+        return grad, hess
+
+    @staticmethod
+    def quantile_score(y_true, y_pred, alpha):
+        score = XGBQuantileRegressor.quantile_cost(x=y_true - y_pred, alpha=alpha)
+        score = np.sum(score)
+        return score
+
+    @staticmethod
+    def quantile_cost(x, alpha):
+        return (alpha - 1.0) * x * (x < 0) + alpha * x * (x >= 0)
+
+    @staticmethod
+    def get_split_gain(gradient, hessian, l=1):
+        split_gain = list()
+        for i in range(gradient.shape[0]):
+            split_gain.append(np.sum(gradient[:i]) / (np.sum(hessian[:i]) + l) + np.sum(gradient[i:]) / (
+                    np.sum(hessian[i:]) + l) - np.sum(gradient) / (np.sum(hessian) + l))
+
+        return np.array(split_gain)
+
+
 
 class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
     def __init__(

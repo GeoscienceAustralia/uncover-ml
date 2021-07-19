@@ -63,10 +63,29 @@ def test_pipeline(get_models, get_transform, get_kernel):
                              pre_dispatch=2,
                              verbose=True,
                              return_train_score=True,
+                             cv=3,
                              )
     np.random.seed(10)
     estimator.fit(X=1 + np.random.rand(10, 3), y=1. + np.random.rand(10))
-    assert estimator.cv_results_['mean_train_score'][0] > -15.0
+    assert estimator.cv_results_['mean_train_score'][0] > -50
+
+
+def test_xgbquantile_pipeline():
+    pipe = Pipeline(steps=[('xgbquantile', xgbquantile())])
+    param_dict = {}
+
+    estimator = GridSearchCV(pipe,
+                             param_dict,
+                             n_jobs=1,
+                             iid=False,
+                             pre_dispatch=2,
+                             verbose=True,
+                             return_train_score=True,
+                             cv=3
+                             )
+    np.random.seed(1)
+    estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
+    assert estimator.cv_results_['mean_train_score'][0] > -10.0
 
 
 def test_svr_pipeline(get_transform, get_svr_kernel):
