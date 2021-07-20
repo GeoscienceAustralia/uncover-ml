@@ -148,6 +148,26 @@ def _load_data(config, partitions):
     return targets_all, x_all
 
 
+# @cli.command()
+# @click.argument(type=click.Path(exists=True), help="The model configuration file")
+# @click.option('-p', '--partitions', type=int, default=1,
+#               help='divide each node\'s data into this many partitions')
+# def optimise(config: str, partitions: int) -> None:
+#     """Optimise model parameters using Bayesian regression."""
+#     conf = ls.config.Config(config)
+#     targets_all, x_all = _load_data(conf, partitions)
+#
+#     groups = X[cluster_line_segment_id]
+#     model = training.bayesian_optimisation(X, y, w, groups, conf)
+#
+#     X = add_pred_to_data(X, conf, model)
+#     X['target'] = y
+#     X['weights'] = w
+#     X.to_csv(conf.optimisation_data, index=False)
+#
+#     log.info("Finished optimisation of model parameters!")
+
+
 @cli.command()
 @click.argument('pipeline_file')
 @click.option('-s', '--subsample_fraction', type=float, default=1.0,

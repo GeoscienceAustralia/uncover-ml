@@ -51,7 +51,7 @@ def test_pipeline(get_models, get_transform, get_kernel):
     pipe = Pipeline(steps=[(alg, model())])
     param_dict = {}
     if hasattr(model(), 'n_estimators'):
-        param_dict[alg + '__n_estimators'] = [5]
+        param_dict[alg + '__n_estimators'] = [2]
     if hasattr(model(), 'kernel'):
         param_dict[alg + '__kernel'] = [kernel]
     param_dict[alg + '__target_transform'] = [trans]

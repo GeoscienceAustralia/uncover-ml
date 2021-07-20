@@ -89,6 +89,7 @@ setup(
         'scipy==1.7.0',
         'scikit-learn == 0.22.2',
         'scikit-image == 0.15.0',
+        'scikit-optimize == 0.8.1',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
         'pandas == 1.0.5',

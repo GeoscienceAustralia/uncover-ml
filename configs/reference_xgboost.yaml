@@ -43,6 +43,19 @@ prediction:
   outbands: 1
 
 
+optimisation:
+  algorithm: gradientboost
+  hyperparameters:
+    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
+    # target_transform: [rank, identity, standardise, sqrt, log]
+    target_transform: [identity, standardise]
+    loss: [ls]
+    max_features: [auto, sqrt, log2]
+    min_samples_split: [2, 4, 10]
+    max_depth: [2, 3]
+    subsample: [0.75, 0.5]
+
+
 validation:
   #- feature_rank
   - k-fold:

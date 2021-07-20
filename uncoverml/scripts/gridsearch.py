@@ -5,6 +5,7 @@ scikit-learn GridSearchCv.
 .. program-output:: gridsearch --help
 """
 import logging
+import warnings
 from collections import OrderedDict
 from itertools import product
 import click
@@ -27,6 +28,8 @@ from uncoverml.scripts.uncoverml import _load_data
 from uncoverml.transforms import target as transforms
 from uncoverml.optimise.models import transformed_modelmaps as all_modelmaps
 log = logging.getLogger(__name__)
+
+warnings.filterwarnings('ignore')
 
 pca = decomposition.PCA()
 algos = {k: v() for k, v in all_modelmaps.items()}
