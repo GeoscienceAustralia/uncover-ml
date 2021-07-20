@@ -408,15 +408,18 @@ class XGBoost(XGBRegressor, TagsMixin):
 class XGBQuantileRegressor(XGBRegressor):
 
     def __init__(self,
-                 alpha,
-                 ** kwargs
+                 alpha, delta, thresh, variance,
+                 **kwargs
                  ):
         self.alpha = alpha
+        self.delta = delta
+        self.thresh = thresh
+        self.variance = variance
         if 'objective' in kwargs:
             kwargs.pop('objective')
 
         super().__init__(
-            objective=self.log_cosh_quantile,
+            objective=self.quantile_loss,
             ** kwargs
         )
 
@@ -435,7 +438,7 @@ class XGBQuantileRegressor(XGBRegressor):
 
     def quantile_loss(self, y_true, y_pred):
         alpha = self.alpha
-        delta = self.delta,
+        delta = self.delta
         threshold = self.thresh
         var = self.variance
         x = y_true - y_pred
@@ -469,13 +472,12 @@ class XGBQuantileRegressor(XGBRegressor):
         return np.array(split_gain)
 
 
-
 class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
     def __init__(
             self,
             mean_model_params={},
-            upper_quantile_params={'alpha': 0.95},
-            lower_quantile_params={'alpha': 0.05}
+            upper_quantile_params={'alpha': 0.95, 'delta': 1.0, 'thresh': 1.0, 'variance': 1.0},
+            lower_quantile_params={'alpha': 0.05, 'delta': 1.0, 'thresh': 1.0, 'variance': 1.0}
     ):
         self.mean_model_params = mean_model_params
         self.upper_quantile_params = upper_quantile_params
