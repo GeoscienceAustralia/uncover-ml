@@ -27,6 +27,6 @@ pca:
     BLOCKYSIZE: 256
 
 output:
-  directory: out/
-  model: xgboost.model
+  directory: pca/
+  pca_json: pca_contribs.json
 

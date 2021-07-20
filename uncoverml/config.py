@@ -252,12 +252,16 @@ class Config:
         if 'pca' in s:
             self.pca = True
             preprocessing_transforms = s['preprocessing']['transforms']
-            self.n_components = preprocessing_transforms[0]['whiten']['n_components']
+            if 'n_components' in preprocessing_transforms[0]['whiten']:
+                self.n_components = preprocessing_transforms[0]['whiten']['n_components']
+            else:
+                self.n_components = None
             if 'geotif' not in s['pca']:
                 tif_opts = {}
             else:
                 tif_opts = s['pca']['geotif'] if s['pca']['geotif'] is not None else {}
             self.geotif_options = tif_opts
+            self.pca_json = path.join(self.output_dir, s['output']['pca_json'])
         else:
             self.pca = False
 

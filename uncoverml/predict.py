@@ -1,3 +1,4 @@
+import json
 import logging
 from itertools import compress
 import numpy as np
@@ -222,10 +223,17 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
 
 def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
     x, _ = _get_data(subchunk, config)
+    mpiops.run_once(export_pca_fractions, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     log.info("Extracting PCAs....")
-    image_out.write(x, subchunk)
+    image_out.write(np.flip(x, axis=1), subchunk)
+
+
+def export_pca_fractions(config):
+    whiten_transform = config.final_transform.global_transforms[0]
+    with open(config.pca_json, 'w') as output_file:
+        json.dump(whiten_transform.explained_ratio, output_file, sort_keys=True, indent=4)
 
 
 def cluster_analysis(x, y, partition_no, config, feature_names):

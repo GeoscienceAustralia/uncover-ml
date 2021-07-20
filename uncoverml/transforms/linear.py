@@ -90,23 +90,28 @@ class WhitenTransform:
         if keep_fraction is None:
             assert n_components is not None
         assert (keep_fraction is None) or (n_components is None)
+        self.explained_ratio = None
 
     def __call__(self, x):
         x = x.astype(float)
         if self.mean is None or self.eigvals is None or self.eigvecs is None:
             self.mean = mpiops.mean(x)
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)
+            ndims = x.shape[1]
+            # make sure 1 <= keepdims <= ndims
+            if self.n_components is None:
+                self.keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
+            else:
+                self.keepdims = self.n_components
+                assert self.n_components < ndims, "More components demanded than features. Not possible! \n " \
+                                                  "Please reduce n_components or increase the number of features"
+            self.explained_ratio = {
+                self.keepdims - i: r * 100 for i, r in enumerate(np.abs(self.eigvals[-self.keepdims:])/np.sum(np.abs(
+                    self.eigvals)))
+            }
 
-        ndims = x.shape[1]
-        # make sure 1 <= keepdims <= ndims
-        if self.n_components is None:
-            keepdims = min(max(1, int(ndims * self.keep_fraction)), ndims)
-        else:
-            keepdims = self.n_components
-            assert self.n_components < ndims, "More components demanded than features. Not possible! \n " \
-                                              "Please reduce n_components or increase the number of features"
-        mat = self.eigvecs[:, -keepdims:]
-        vec = self.eigvals[np.newaxis, -keepdims:]
+        mat = self.eigvecs[:, - self.keepdims:]
+        vec = self.eigvals[np.newaxis, - self.keepdims:]
         x = np.ma.dot(x - self.mean, mat, strict=True) / np.sqrt(vec)
 
         return x

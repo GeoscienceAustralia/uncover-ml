@@ -50,6 +50,6 @@ validation:
       random_seed: 1
 
 output:
-  directory: out/
+  directory: xgb/
   model: xgboost.model
 
