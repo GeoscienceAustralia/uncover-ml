@@ -35,7 +35,7 @@ targets:
     groups_eps: 0.09
 
 learning:
-  algorithm: xgboostreg
+  algorithm: xgboost
   arguments:
     alpha: 0.95
     n_estimators: 10
@@ -47,9 +47,9 @@ learning:
       n_points: 3
       n_jobs: 6
     params_space:
-      delta: Real(0.01, 10, prior="uniform")
-      thresh: Real(0.01, 10, prior="uniform")
-      variance: Real(1, 50, prior="uniform")
+#      delta: Real(0.01, 10, prior="uniform")
+#      thresh: Real(0.01, 10, prior="uniform")
+#      variance: Real(1, 50, prior="uniform")
       max_depth: Integer(1, 15)
       learning_rate: Real(10 ** -5, 10 ** 0, prior="log-uniform")
       n_estimators: Integer(2, 20)
@@ -75,4 +75,4 @@ validation:
       random_seed: 1
 
 output:
-  directory: xgb_upper/
+  directory: xgb_base/

@@ -20,29 +20,23 @@ from uncoverml.transforms import target as transforms
 log = logging.getLogger(__name__)
 
 
-class TransformMixin:
+class TransformPredictMixin:
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
+        return self.target_transform.itransform(Ey_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X, *args, **kwargs)
+        return Ey_t
+
+
+class TransformMixin(TransformPredictMixin):
 
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
         return super().fit(X, y_t)
-
-    def predict(self, X, *args, **kwargs):
-
-        if 'return_std' in kwargs:
-            return_std = kwargs.pop('return_std')
-            if return_std:
-                Ey_t, std_t = super().predict(X, return_std=return_std)
-
-                return self.target_transform.itransform(Ey_t), \
-                    self.target_transform.itransform(std_t)
-
-        Ey_t = self._notransform_predict(X, *args, **kwargs)
-        return self.target_transform.itransform(Ey_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        return Ey_t
 
 
 class TransformPredictDistMixin(TransformMixin):
@@ -398,29 +392,24 @@ class XGBoost(XGBRegressor, TagsMixin):
         return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
-
-        if 'return_std' in kwargs:
-            return_std = kwargs.pop('return_std')
-            if return_std:
-                Ey_t, std_t = super().predict(X, return_std=return_std)
-
-                return self.target_transform.itransform(Ey_t), \
-                       self.target_transform.itransform(std_t)
-
         Ey_t = self._notransform_predict(X, *args, **kwargs)
         return self.target_transform.itransform(Ey_t)
 
     def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
+        Ey_t = super().predict(X, *args, **kwargs)
         return Ey_t
 
 
-class XGBQuantileRegressor(XGBRegressor):
+class XGBQuantileRegressor(XGBRegressor, TagsMixin):
 
     def __init__(self,
+                 target_transform='identity',
                  alpha=0.95, delta=1.0, thresh=1.0, variance=1.0,
                  **kwargs
                  ):
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
         self.alpha = alpha
         self.delta = delta
         self.thresh = thresh
@@ -437,8 +426,19 @@ class XGBQuantileRegressor(XGBRegressor):
                                     var=self.variance)
 
         super().set_params(objective=quantile_loss_obj)
-        super().fit(X, y, * args, **kwargs)
+        self.target_transform.fit(y=y)
+        y_t = self.target_transform.transform(y)
+        super().fit(X, y_t, * args, **kwargs)
         return self
+
+    def predict(self, X, *args, **kwargs):
+        print("Called TransformPredictMixin")
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
+        return self.target_transform.itransform(Ey_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X, *args, **kwargs)
+        return Ey_t
 
     @staticmethod
     def quantile_loss(y_true, y_pred, alpha, delta, threshold, var):
@@ -453,11 +453,8 @@ class XGBQuantileRegressor(XGBRegressor):
         hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
         return grad, hess
 
-    def predict(self, X, *args, **kwargs):
-        return super().predict(X, *args, **kwargs)
-
     def log_cosh_quantile(self, y_true, y_pred):
-        err = y_pred - y_true
+        err = y_true - y_pred
         err = np.where(err < 0, self.alpha * err, (1 - self.alpha) * err)
         grad = np.tanh(err)
         hess = 1 / np.cosh(err)**2
