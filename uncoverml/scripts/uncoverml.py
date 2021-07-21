@@ -5,7 +5,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 
 import logging
-import pickle
+import joblib
 import resource
 from os.path import isfile, splitext, exists
 import warnings
@@ -77,11 +77,11 @@ def learn(pipeline_file, partitions):
 
 def _load_data(config, partitions):
     if config.pickle_load:
-        x_all = pickle.load(open(config.pickled_covariates, 'rb'))
-        targets_all = pickle.load(open(config.pickled_targets, 'rb'))
+        x_all = joblib.load(open(config.pickled_covariates, 'rb'))
+        targets_all = joblib.load(open(config.pickled_targets, 'rb'))
         if config.cubist or config.multicubist:
             config.algorithm_args['feature_type'] = \
-                pickle.load(open(config.featurevec, 'rb'))
+                joblib.load(open(config.featurevec, 'rb'))
         log.warning('Using  pickled targets and covariates. Make sure you have'
                     ' not changed targets file and/or covariates.')
     else:
@@ -97,7 +97,7 @@ def _load_data(config, partitions):
         if config.train_data_pk and exists(config.train_data_pk):
             log.info('Reusing pickled training data')
             image_chunk_sets, transform_sets, targets = \
-                pickle.load(open(config.train_data_pk, 'rb'))
+                joblib.load(open(config.train_data_pk, 'rb'))
         else:
             log.info('Intersecting targets as pickled train data was not '
                      'available')
@@ -115,7 +115,7 @@ def _load_data(config, partitions):
                                                               targets, config)
 
         if config.train_data_pk:
-            pickle.dump([image_chunk_sets, transform_sets, targets],
+            joblib.dump([image_chunk_sets, transform_sets, targets],
                         open(config.train_data_pk, 'wb'))
 
         if config.rank_features:
@@ -142,9 +142,9 @@ def _load_data(config, partitions):
 
         if config.pickle and ls.mpiops.chunk_index == 0:
             if hasattr(config, 'pickled_covariates'):
-                pickle.dump(x_all, open(config.pickled_covariates, 'wb'))
+                joblib.dump(x_all, open(config.pickled_covariates, 'wb'))
             if hasattr(config, 'pickled_targets'):
-                pickle.dump(targets_all, open(config.pickled_targets, 'wb'))
+                joblib.dump(targets_all, open(config.pickled_targets, 'wb'))
 
     return targets_all, x_all
 
@@ -155,11 +155,15 @@ def _load_data(config, partitions):
               help='divide each node\'s data into this many partitions')
 def optimise(pipeline_file: str, partitions: int) -> None:
     """Optimise model parameters using Bayesian regression."""
+    if uncoverml.mpiops.chunks > 1:
+        raise NotImplementedError("Currently optimiser does not work with mpi. \n"
+                                  "However it can utilise a whole NCI node with many CPUs!")
     conf = ls.config.Config(pipeline_file)
     targets_all, x_all = _load_data(conf, partitions)
     y = targets_all.observations
     groups = targets_all.groups
     w = np.ones_like(y)  # same weights for now
+    uncoverml.mpiops.comm.barrier()
     model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, conf)
     conf.optimised_model = True
     ls.mpiops.run_once(ls.geoio.export_model, model, conf, False)
@@ -255,7 +259,7 @@ def unsupervised(config):
 def predict(model_or_cluster_file, partitions, mask, retain):
 
     with open(model_or_cluster_file, 'rb') as f:
-        state_dict = pickle.load(f)
+        state_dict = joblib.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
