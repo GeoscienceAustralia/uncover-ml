@@ -4,6 +4,7 @@ from os import makedirs
 import glob
 import csv
 import yaml
+from pathlib import Path
 
 from uncoverml import transforms
 
@@ -296,11 +297,15 @@ class Config:
                      'pickled files. Pickled files will not be used. '
                      'All covariates will be intersected.')
 
-        if 'optimisation' in s:
-            self.optimisation = s['optimisation']
-            if 'optimisation_output' in self.optimisation:
-                self.optimisation_output = \
-                    self.optimisation['optimisation_output']
+        self.optimised_model = False
+        if 'optimisation' in s['learning']:
+            self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+            self.opt_params_space = s['learning']['optimisation']['params_space']
+            self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
+            self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
+            self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
+            self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
+            self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
         self.cluster_analysis = False
         self.clustering = False

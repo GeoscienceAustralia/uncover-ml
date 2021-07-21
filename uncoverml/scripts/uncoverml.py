@@ -28,6 +28,7 @@ import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
+from uncoverml import optimisation
 # from uncoverml.mllog import warn_with_traceback
 
 
@@ -148,24 +149,23 @@ def _load_data(config, partitions):
     return targets_all, x_all
 
 
-# @cli.command()
-# @click.argument(type=click.Path(exists=True), help="The model configuration file")
-# @click.option('-p', '--partitions', type=int, default=1,
-#               help='divide each node\'s data into this many partitions')
-# def optimise(config: str, partitions: int) -> None:
-#     """Optimise model parameters using Bayesian regression."""
-#     conf = ls.config.Config(config)
-#     targets_all, x_all = _load_data(conf, partitions)
-#
-#     groups = X[cluster_line_segment_id]
-#     model = training.bayesian_optimisation(X, y, w, groups, conf)
-#
-#     X = add_pred_to_data(X, conf, model)
-#     X['target'] = y
-#     X['weights'] = w
-#     X.to_csv(conf.optimisation_data, index=False)
-#
-#     log.info("Finished optimisation of model parameters!")
+@cli.command()
+@click.argument('pipeline_file', type=click.Path(exists=True))
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def optimise(pipeline_file: str, partitions: int) -> None:
+    """Optimise model parameters using Bayesian regression."""
+    conf = ls.config.Config(pipeline_file)
+    targets_all, x_all = _load_data(conf, partitions)
+    y = targets_all.observations
+    groups = targets_all.groups
+    w = np.ones_like(y)  # same weights for now
+    model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, conf)
+    conf.optimised_model = True
+    ls.mpiops.run_once(ls.geoio.export_model, model, conf, False)
+    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+    log.info("Finished optimisation of model parameters!")
 
 
 @cli.command()
@@ -351,6 +351,7 @@ def pca(pipeline_file, partitions, mask, retain):
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
+        # TODO: ideally want to take a random sample of each covariate and compute whiten stats
         ls.predict.export_pca(i, image_out, config)
 
     # explicitly close output rasters

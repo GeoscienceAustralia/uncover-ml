@@ -1,5 +1,5 @@
 from __future__ import division
-
+import joblib
 import os.path
 import logging
 from abc import ABCMeta, abstractmethod
@@ -200,12 +200,14 @@ def load_shapefile(filename: str, targetfield: str):
 
 def add_groups(lonlat, grouping_data, conf: Config):
     if grouping_data is not None:
+        log.info(f"Grouping targets using {conf.group_col}")
         unique_groups = np.unique(grouping_data)  # np.unique returns sorted
         groups = np.zeros_like(grouping_data, dtype=np.uint16)
         for i, g in enumerate(unique_groups):
             groups[grouping_data == g] = i
         log.info(f"Found {max(groups) + 1} groups")
     else:
+        log.info(f"No grouping column was supplied in config file.")
         log.info("Segmenting targets using DBSCAN clustering algorithm")
         dbscan = DBSCAN(eps=conf.groups_eps, n_jobs=-1, min_samples=10)
 
@@ -551,10 +553,12 @@ def export_feature_ranks(measures, feats, scores, config):
         json.dump(score_listing, output_file, sort_keys=True, indent=4)
 
 
-def export_model(model, config: Config):
+def export_model(model, config: Config, learn=True):
     state_dict = {"model": model, "config": config}
-    with open(config.output_model, 'wb') as f:
-        pickle.dump(state_dict, f)
+    model_file = config.optimised_model_file if (config.optimised_model and not learn) else config.model_file
+    with open(model_file, 'wb') as f:
+        joblib.dump(state_dict, f)
+        log.info(f"Wrote model on disc {model_file}")
 
 
 def export_cluster_model(model, config: Config):

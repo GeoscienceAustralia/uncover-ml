@@ -217,41 +217,50 @@ class TransformedForestRegressor(TransformPredictDistMixin,
         self.target_transform = target_transform
 
 
-class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor, TagsMixin):
+class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
+    def __init__(
+            self,
+            mean_model_params,
+            upper_quantile_params,
+            lower_quantile_params
+    ):
+        self.mean_model_params = mean_model_params
+        self.upper_quantile_params = upper_quantile_params
+        self.lower_quantile_params = lower_quantile_params
+        self.gb = GradientBoostingRegressor(**mean_model_params)
+        self.gb_quantile_upper = GradientBoostingRegressor(**upper_quantile_params)
+        self.gb_quantile_lower = GradientBoostingRegressor(**lower_quantile_params)
+        self.upper_alpha = upper_quantile_params['alpha']
+        self.lower_alpha = lower_quantile_params['alpha']
 
-    def __init__(self,
-                 target_transform='identity',
-                 loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_split=1e-7, init=None,
-                 random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+    @staticmethod
+    def collect_prediction(regressor, X_test):
+        y_pred = regressor.predict(X_test)
+        return y_pred
 
-        super(TransformedGradientBoost, self).__init__(
-            loss=loss,
-            learning_rate=learning_rate,
-            n_estimators=n_estimators,
-            subsample=subsample,
-            criterion=criterion,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth,
-            min_impurity_split=min_impurity_split,
-            init=init,
-            random_state=random_state,
-            max_features=max_features,
-            alpha=alpha,
-            verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start,
-            presort=presort,
-        )
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-        self.target_transform = target_transform
+    def fit(self, X, y, **kwargs):
+        log.info('Fitting gb base model')
+        self.gb.fit(X, y, **kwargs)
+        log.info('Fitting gb upper quantile model')
+        self.gb_quantile_upper.fit(X, y, **kwargs)
+        log.info('Fitting gb lower quantile model')
+        self.gb_quantile_lower.fit(X, y, **kwargs)
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
+    def predict_dist(self, X, interval=0.95):
+        Ey = self.gb.predict(X)
+
+        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
+        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
+        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
+        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
+
+        # to make gbm quantile model consistent with other quantile based models
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
 
 
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
@@ -408,7 +417,7 @@ class XGBoost(XGBRegressor, TagsMixin):
 class XGBQuantileRegressor(XGBRegressor):
 
     def __init__(self,
-                 alpha, delta, thresh, variance,
+                 alpha=0.95, delta=1.0, thresh=1.0, variance=1.0,
                  **kwargs
                  ):
         self.alpha = alpha
@@ -482,7 +491,7 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         self.mean_model_params = mean_model_params
         self.upper_quantile_params = upper_quantile_params
         self.lower_quantile_params = lower_quantile_params
-        self.gb = XGBoost(**mean_model_params)
+        self.gb = XGBRegressor(**mean_model_params)
         self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params)
         self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params)
         self.upper_alpha = upper_quantile_params['alpha']
@@ -520,7 +529,8 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
 
 transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
-    'gradientboost': TransformedGradientBoost,
+    'quantilegb': QuantileGradientBoosting,
+    'gradientboost': GradientBoostingRegressor,
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
@@ -528,6 +538,7 @@ transformed_modelmaps = {
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
     'xgboost': XGBoost,
+    'xgboostreg': XGBQuantileRegressor,
     'xgbquantile': QuantileXGB,
 }
 
