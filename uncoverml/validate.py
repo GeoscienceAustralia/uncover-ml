@@ -19,6 +19,7 @@ from uncoverml import predict, geoio
 from uncoverml import features as feat
 from uncoverml import targets as targ
 from uncoverml.config import Config
+from uncoverml.transforms.target import Identity
 from uncoverml.learn import all_modelmaps as modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 
@@ -212,8 +213,8 @@ def regression_validation_scores(y, ey, model):
         regression_metrics.pop('mll', None)
         transformed_regression_metrics.pop('mll_transformed', None)
 
-    if hasattr(model, '_notransform_predict'):  # is a transformed model
-
+    if hasattr(model, '_notransform_predict') and not isinstance(model.target_transform, Identity):  #
+        # is a transformed model
         y_t = model.target_transform.transform(y)  # transformed targets
         py_t = model.target_transform.transform(py)  # transformed prediction
 

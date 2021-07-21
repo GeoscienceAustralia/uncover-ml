@@ -37,7 +37,8 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         ** conf.opt_searchcv_params,
         fit_params={'sample_weight': w},
         return_train_score=True,
-        refit=False
+        refit=False,
+        # scoring='r2',
     )
 
     log.info(f"Optimising params using BayesSearchCV .....")

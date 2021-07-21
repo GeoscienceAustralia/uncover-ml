@@ -16,16 +16,16 @@ features:
       - path: configs/data/sirsam/LATITUDE_GRID1.tif
       - path: configs/data/sirsam/LONGITUDE_GRID1.tif
     transforms:
-      - standardise
-      - whiten:
-          keep_fraction: 0.8
+      - identity
+#      - whiten:
+#          keep_fraction: 0.98
     imputation: none
 
 preprocessing:
   imputation: none
   transforms:
-    - whiten:
-        keep_fraction: 0.8
+#    - whiten:
+#        keep_fraction: 0.98
 
 targets:
   file: configs/data/geochem_sites.shp
@@ -34,35 +34,25 @@ targets:
 #    groups_eps: 0.09
 
 learning:
-  algorithm: xgboost
+  algorithm: xgbquantileregressor
   arguments:
-    target_transform: identity
+    target_transform: standardise
+    alpha: 0.95
+    delta: 1.0
+    thresh: 6.0
+    variance: 3.2
+    n_estimators: 5
 
 prediction:
   quantiles: 0.95
   outbands: 1
 
-
-optimisation:
-  algorithm: gradientboost
-  hyperparameters:
-    n_estimators: [10, 100, 300]  # use with randomforest and gradientboost
-    # target_transform: [rank, identity, standardise, sqrt, log]
-    target_transform: [identity, standardise]
-    loss: [ls]
-    max_features: [auto, sqrt, log2]
-    min_samples_split: [2, 4, 10]
-    max_depth: [2, 3]
-    subsample: [0.75, 0.5]
-
-
 validation:
   #- feature_rank
+  - parallel
   - k-fold:
       folds: 2
       random_seed: 1
 
 output:
-  directory: xgb/
-  model: xgboost.model
-
+  directory: xgb_upper/
