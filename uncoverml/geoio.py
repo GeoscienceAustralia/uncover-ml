@@ -563,7 +563,7 @@ def export_model(model, config: Config, learn=True):
 
 def export_cluster_model(model, config: Config):
     state_dict = {"model": model, "config": config}
-    with open(config.output_model, 'wb') as f:
+    with open(config.model_file, 'wb') as f:
         pickle.dump(state_dict, f)
 
 

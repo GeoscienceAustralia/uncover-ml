@@ -29,7 +29,6 @@ regression_metrics = {
 
 
 def bayesian_optimisation(X, y, w, groups, conf: Config):
-
     reg = modelmaps[conf.algorithm](** conf.algorithm_args)
     search_space = {k: eval(v) for k, v in conf.opt_params_space.items()}
     searchcv = BayesSearchCV(

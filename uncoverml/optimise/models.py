@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
@@ -426,11 +427,34 @@ class XGBQuantileRegressor(XGBRegressor):
         self.variance = variance
         if 'objective' in kwargs:
             kwargs.pop('objective')
+        super().__init__(**kwargs)
 
-        super().__init__(
-            objective=self.quantile_loss,
-            ** kwargs
-        )
+    def fit(self, X, y, * args, **kwargs):
+        quantile_loss_obj = partial(self.quantile_loss,
+                                    alpha=self.alpha,
+                                    delta=self.delta,
+                                    threshold=self.thresh,
+                                    var=self.variance)
+
+        super().set_params(objective=quantile_loss_obj)
+        super().fit(X, y, * args, **kwargs)
+        return self
+
+    @staticmethod
+    def quantile_loss(y_true, y_pred, alpha, delta, threshold, var):
+        x = y_true - y_pred
+        grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
+               ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
+               alpha * (x > alpha * delta)
+        hess = ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) / delta
+
+        grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
+                2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
+        hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
+        return grad, hess
+
+    def predict(self, X, *args, **kwargs):
+        return super().predict(X, *args, **kwargs)
 
     def log_cosh_quantile(self, y_true, y_pred):
         err = y_pred - y_true
@@ -444,22 +468,6 @@ class XGBQuantileRegressor(XGBRegressor):
         score = self.quantile_score(y, y_pred, self.alpha)
         score = 1. / score
         return score
-
-    def quantile_loss(self, y_true, y_pred):
-        alpha = self.alpha
-        delta = self.delta
-        threshold = self.thresh
-        var = self.variance
-        x = y_true - y_pred
-        grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
-               ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
-               alpha * (x > alpha * delta)
-        hess = ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) / delta
-
-        grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
-                2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
-        hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
-        return grad, hess
 
     @staticmethod
     def quantile_score(y_true, y_pred, alpha):

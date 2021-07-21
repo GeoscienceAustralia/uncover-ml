@@ -301,11 +301,6 @@ class Config:
         if 'optimisation' in s['learning']:
             self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
             self.opt_params_space = s['learning']['optimisation']['params_space']
-            self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
-            self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
-            self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
-            self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
-            self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
         self.cluster_analysis = False
         self.clustering = False
@@ -327,7 +322,12 @@ class Config:
         output_model = s['output']['model'] if 'model' in s['output'] \
             else self.name + ('.cluster' if self.clustering else '.model')
 
-        self.output_model = path.join(self.output_dir, output_model)
+        self.model_file = Path(self.output_dir).joinpath(output_model)
+        self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
+        self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
+        self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
+        self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
+        self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
 
 class ConfigException(Exception):
