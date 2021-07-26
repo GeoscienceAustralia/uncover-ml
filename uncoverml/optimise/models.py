@@ -178,7 +178,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=1e-7,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -196,7 +196,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            min_impurity_split=min_impurity_split,
+            min_impurity_decrease=min_impurity_decrease,
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -526,7 +526,7 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         return Ey, Vy, ql, qu
 
 
-class GBMReg(TransformMixin, TagsMixin, GradientBoostingRegressor):
+class GBMReg(GradientBoostingRegressor, TagsMixin):
     def __init__(self, target_transform='identity', loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -555,6 +555,19 @@ class GBMReg(TransformMixin, TagsMixin, GradientBoostingRegressor):
             presort=presort, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
         )
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
+        return self.target_transform.itransform(Ey_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey_t = super().predict(X)
+        return Ey_t
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y=y)
+        y_t = self.target_transform.transform(y)
+        return super().fit(X, y_t)
 
 
 transformed_modelmaps = {

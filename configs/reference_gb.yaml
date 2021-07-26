@@ -13,17 +13,19 @@ features:
       - path: configs/data/sirsam/outcrop_dis2.tif
       - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
+      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
     transforms:
-      - standardise
-      - whiten:
-          keep_fraction: 0.8
+      - identity
+#      - whiten:
+#          keep_fraction: 0.98
     imputation: none
 
 preprocessing:
   imputation: none
   transforms:
-    - whiten:
-        keep_fraction: 0.8
+#    - whiten:
+#        keep_fraction: 0.98
 
 targets:
   file: configs/data/geochem_sites.shp
@@ -32,11 +34,19 @@ targets:
 #    groups_eps: 0.09
 
 learning:
-  algorithm: transformedrandomforest
+  algorithm: gradientboost
   arguments:
-    n_estimators: 10
     target_transform: identity
-    random_state: 1
+    loss: 'ls'
+    max_depth: 20
+    learning_rate: 0.1
+    n_estimators: 100
+    subsample: 0.9
+    min_samples_split: 2
+    min_samples_leaf: 2
+    min_weight_fraction_leaf: 0.0
+    max_features: "auto"
+    alpha: 0.95
   optimisation:
     searchcv_params:
       n_iter: 6
@@ -46,26 +56,25 @@ learning:
       n_jobs: 6
     params_space:
       'max_depth': Integer(1, 15)
+      'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
       'n_estimators': Integer(10, 100)
+      'subsample': Real(0.01, 1.0, prior='uniform')
       'max_features': Categorical(['auto', 'sqrt', 'log2'])
       'min_samples_split': Integer(2, 50)
       'min_samples_leaf': Integer(1, 50)
       'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
-
+      'max_leaf_nodes': Integer(10, 50)
 
 prediction:
   quantiles: 0.95
-  outbands: 4
-
+  outbands: 1
 
 validation:
   #- feature_rank
   - parallel
   - k-fold:
-      folds: 5
+      folds: 2
       random_seed: 1
 
 output:
-  directory: qxgb/
-  model: xgboost.model
-
+  directory: xgb_upper/
