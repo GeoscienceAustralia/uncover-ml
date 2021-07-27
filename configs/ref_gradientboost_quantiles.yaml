@@ -56,5 +56,5 @@ validation:
 
 output:
   directory: qxgb/
-  model: xgboost.model
+
 

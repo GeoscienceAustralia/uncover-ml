@@ -215,9 +215,9 @@ class TransformedForestRegressor(TransformPredictDistMixin,
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
     def __init__(
             self,
-            mean_model_params,
-            upper_quantile_params,
-            lower_quantile_params
+            mean_model_params={},
+            upper_quantile_params={'alpha': 0.95},
+            lower_quantile_params={'alpha': 0.05}
     ):
         self.mean_model_params = mean_model_params
         upper_quantile_params['loss'] = 'quantile'
