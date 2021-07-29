@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import rasterio
 from rasterio.warp import reproject
 from rasterio.windows import Window
+from xgboost import XGBRegressor
 from sklearn.cluster import DBSCAN
 from affine import Affine
 import numpy as np
@@ -252,6 +253,11 @@ def load_targets(shapefile, targetfield, conf: Config):
         else:
             groups = np.ones_like(vals)
 
+        if conf.weighted_model:
+            weights = othervals[conf.weight_col_name]
+        else:
+            weights = np.ones_like(vals)
+
         lonlat = np.array_split(lonlat, mpiops.chunks)
         groups = np.array_split(groups, mpiops.chunks)
         vals = np.array_split(vals, mpiops.chunks)
@@ -260,15 +266,16 @@ def load_targets(shapefile, targetfield, conf: Config):
         othervals = [{k: v[i] for k, v in split_othervals.items()}
                      for i in range(mpiops.chunks)]
     else:
-        lonlat, vals, groups, othervals = None, None, None, None
+        lonlat, vals, groups, weights, othervals = None, None, None, None, None
 
     lonlat = mpiops.comm.scatter(lonlat, root=0)
     groups = mpiops.comm.scatter(groups, root=0)
     vals = mpiops.comm.scatter(vals, root=0)
+    weights = mpiops.comm.scatter(weights, root=0)
     othervals = mpiops.comm.scatter(othervals, root=0)
     log.info("Node {} has been assigned {} targets".format(mpiops.chunk_index,
                                                            lonlat.shape[0]))
-    targets = Targets(lonlat, vals, groups, othervals=othervals)
+    targets = Targets(lonlat, vals, groups, weights, othervals=othervals)
     return targets
 
 
@@ -559,6 +566,16 @@ def export_model(model, config: Config, learn=True):
     with open(model_file, 'wb') as f:
         joblib.dump(state_dict, f)
         log.info(f"Wrote model on disc {model_file}")
+
+
+# def plot_feature_importance(X, y, xgbmodel: XGBRegressor):
+#     all_cols = xgbmodel.feature_importances_
+#     non_zero_indices = xgbmodel.feature_importances_ >= 0.001
+#     non_zero_cols = X.columns[non_zero_indices]
+#     non_zero_importances = xgbmodel.feature_importances_[non_zero_indices]
+#     sorted_non_zero_indices = non_zero_importances.argsort()
+#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+#     plt.xlabel("Xgboost Feature Importance")
 
 
 def export_cluster_model(model, config: Config):

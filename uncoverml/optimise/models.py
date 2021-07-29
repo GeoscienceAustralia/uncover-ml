@@ -570,20 +570,25 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
         return super().fit(X, y_t)
 
 
-transformed_modelmaps = {
-    'transformedrandomforest': TransformedForestRegressor,
+no_test_support = {
+    'xgboost': XGBoost,
+    'xgbquantileregressor': XGBQuantileRegressor,
+    'xgbquantile': QuantileXGB,
     'quantilegb': QuantileGradientBoosting,
     'gradientboost': GBMReg,
+}
+
+test_support = {
+    'transformedrandomforest': TransformedForestRegressor,
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
-    'xgboost': XGBoost,
-    'xgbquantileregressor': XGBQuantileRegressor,
-    'xgbquantile': QuantileXGB,
 }
+
+transformed_modelmaps = {** test_support, ** no_test_support}
 
 # scikit-learn kernels
 kernels = {'rbf': RBF,

@@ -29,6 +29,14 @@ regression_metrics = {
 
 
 def bayesian_optimisation(X, y, w, groups, conf: Config):
+    """
+    :param X: covaraite matrix
+    :param y: targets
+    :param w: weights for each target
+    :param groups: group number for each target
+    :param conf:
+    :return:
+    """
     reg = modelmaps[conf.algorithm](** conf.algorithm_args)
     search_space = {k: eval(v) for k, v in conf.opt_params_space.items()}
     searchcv = BayesSearchCV(

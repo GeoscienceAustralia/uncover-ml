@@ -162,7 +162,7 @@ def optimise(pipeline_file: str, partitions: int) -> None:
     targets_all, x_all = _load_data(conf, partitions)
     y = targets_all.observations
     groups = targets_all.groups
-    w = np.ones_like(y)  # same weights for now
+    w = targets_all.groups
     uncoverml.mpiops.comm.barrier()
     model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, conf)
     conf.optimised_model = True

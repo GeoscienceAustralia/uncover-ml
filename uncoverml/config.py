@@ -244,6 +244,11 @@ class Config:
             else:
                 self.group_targets = False
             self.target_groups_file = path.join(self.output_dir, 'target_groups.jpg')
+            if 'weight_col_name' in s['targets']:
+                self.weighted_model = True
+                self.weight_col_name = s['targets']['weight_col_name']
+            else:
+                self.weighted_model = False
 
         self.mask = None
         if 'mask' in s:
