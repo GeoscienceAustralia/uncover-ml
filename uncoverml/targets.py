@@ -43,7 +43,7 @@ def gather_targets_main(targets, keep, node):
         y = np.ma.concatenate(mpiops.comm.allgather(observations), axis=0)
         p = np.ma.concatenate(mpiops.comm.allgather(positions), axis=0)
         g = np.ma.concatenate(mpiops.comm.allgather(groups), axis=0)
-        w = np.ma.concatenate(mpiops.comm.gather(weights, root=node), axis=0)
+        w = np.ma.concatenate(mpiops.comm.allgather(weights), axis=0)
         d = {}
         keys = sorted(list(targets.fields.keys()))
         for k in keys:

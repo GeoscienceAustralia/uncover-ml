@@ -261,6 +261,7 @@ def load_targets(shapefile, targetfield, conf: Config):
         lonlat = np.array_split(lonlat, mpiops.chunks)
         groups = np.array_split(groups, mpiops.chunks)
         vals = np.array_split(vals, mpiops.chunks)
+        weights = np.array_split(weights, mpiops.chunks)
         split_othervals = {k: np.array_split(v, mpiops.chunks)
                            for k, v in othervals.items()}
         othervals = [{k: v[i] for k, v in split_othervals.items()}
