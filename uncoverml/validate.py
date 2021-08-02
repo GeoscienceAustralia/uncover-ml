@@ -13,6 +13,7 @@ import eli5
 from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
 
+from uncoverml.geoio import CrossvalInfo
 from uncoverml.models import apply_multiple_masked
 from uncoverml import mpiops
 from uncoverml import predict, geoio
@@ -237,14 +238,6 @@ def regression_validation_scores(y, ey, model):
     return scores
 
 
-class CrossvalInfo:
-    def __init__(self, scores, y_true, y_pred, classification):
-        self.scores = scores
-        self.y_true = y_true
-        self.y_pred = y_pred
-        self.classification = classification
-
-
 def permutation_importance(model, x_all, targets_all, config):
     log.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
@@ -404,6 +397,7 @@ def local_crossval(x_all, targets_all, config: Config):
 
     y_pred = {}
     y_true = {}
+    lon_lat_ = {}
     fold_scores = {}
 
     # Train and score on each fold
@@ -415,8 +409,8 @@ def local_crossval(x_all, targets_all, config: Config):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
-        lon_lat_train = lon_lat[train_mask]
-        lon_lat_test = lon_lat[test_mask]
+        lon_lat_train = lon_lat[train_mask, :]
+        lon_lat_test = lon_lat[test_mask, :]
 
         # Extra fields
         fields_train = {f: v[train_mask]
@@ -440,6 +434,7 @@ def local_crossval(x_all, targets_all, config: Config):
         if not classification:
             y_k_test = y[test_mask]
             y_true[fold] = y_k_test
+            lon_lat_[fold] = lon_lat_test
             fold_scores[fold] = regression_validation_scores(
                 y_k_test, y_k_pred, model)
 
@@ -447,6 +442,7 @@ def local_crossval(x_all, targets_all, config: Config):
         else:
             y_k_test = model.le.transform(y[test_mask])
             y_true[fold] = y_k_test
+            lon_lat_[fold] = lon_lat_test
             y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
             fold_scores[fold] = classification_validation_scores(
                 y_k_test, y_k_hard, p_k
@@ -454,6 +450,7 @@ def local_crossval(x_all, targets_all, config: Config):
 
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
+        lon_lat_ = _join_dicts(mpiops.comm.gather(lon_lat_, root=0))
         y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
         scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
     else:
@@ -462,6 +459,7 @@ def local_crossval(x_all, targets_all, config: Config):
     result = None
     if mpiops.chunk_index == 0:
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        lon_lat = np.concatenate([lon_lat_[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
         scores = {m: np.mean([d[m] for d in scores.values()], axis=0)
@@ -476,7 +474,7 @@ def local_crossval(x_all, targets_all, config: Config):
         if hasattr(model, '_notransform_predict'):
             y_pred_dict['transformedpredict'] = \
                 model.target_transform.transform(y_pred[:, 0])
-        result = CrossvalInfo(scores, y_true, y_pred_dict, classification)
+        result = CrossvalInfo(scores, y_true, y_pred_dict, lon_lat, classification)
 
     # change back to parallel
     if config.multicubist or config.multirandomforest:

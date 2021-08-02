@@ -585,7 +585,16 @@ def export_cluster_model(model, config: Config):
         pickle.dump(state_dict, f)
 
 
-def export_crossval(crossval_output, config):
+class CrossvalInfo:
+    def __init__(self, scores, y_true, y_pred, lon_lat, classification):
+        self.scores = scores
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.lon_lat = lon_lat
+        self.classification = classification
+
+
+def export_crossval(crossval_output: CrossvalInfo, config):
     outfile_scores = os.path.join(config.output_dir, config.name + "_scores.json")
 
     # Make sure we convert numpy arrays to lists
@@ -608,6 +617,7 @@ def export_crossval(crossval_output, config):
             if hasattr(v, 'mask'):
                 f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
+        f.create_array("/", "lon_lat", obj=crossval_output.lon_lat)
 
     if not crossval_output.classification:
         create_scatter_plot(outfile_results, config, scores)
@@ -629,13 +639,18 @@ def create_scatter_plot(outfile_results, config, scores):
     with hdf.open_file(outfile_results, 'r') as f:
         prediction = f.get_node("/", "Prediction").read()
         y_true = f.get_node("/", "y_true").read()
-        to_text = [y_true, prediction]
+        lon_lat = f.get_node("/", "lon_lat").read()
+        to_text = [y_true[:, np.newaxis], prediction[:, np.newaxis]]
+        cols = ['y_true', 'y_pred']
         if 'transformedpredict' in f.root:
             transformed_predict = f.get_node("/", "transformedpredict").read()
-            to_text.append(transformed_predict)
-        np.savetxt(true_vs_pred, X=np.vstack(to_text).T, delimiter=',',
+            to_text.append(transformed_predict[:, np.newaxis])
+            cols.append('y_transformed')
+        to_text.append(lon_lat)
+        cols += ['lon', 'lat']
+        np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
                    fmt='%.4e',
-                   header=', '.join(['y_true', 'y_pred', 'y_transformed']),
+                   header=', '.join(cols),
                    comments='')
         plt.figure()
         plt.scatter(y_true, prediction, label='True vs Prediction')
