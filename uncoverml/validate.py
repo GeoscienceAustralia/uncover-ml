@@ -31,42 +31,42 @@ log = logging.getLogger(__name__)
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': lambda y, py, vy, y_t, py_t, vy_t:  r2_score(y, py),
-    'expvar': lambda y, py, vy, y_t, py_t, vy_t:
-    explained_variance_score(y, py),
-    'smse': lambda y, py, vy, y_t, py_t, vy_t: smse(y, py),
-    'lins_ccc': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y, py),
-    'mll': lambda y, py, vy, y_t, py_t, vy_t: mll(y, py, vy)
+    'r2_score': lambda y, py, vy, ws, y_t, py_t, vy_t:  r2_score(y, py, sample_weight=ws),
+    'expvar': lambda y, py, vy, ws, y_t, py_t, vy_t:
+    explained_variance_score(y, py, sample_weight=ws),
+    'smse': lambda y, py, vy, ws, y_t, py_t, vy_t: smse(y, py),
+    'lins_ccc': lambda y, py, vy, ws, y_t, py_t, vy_t: lins_ccc(y, py),
+    'mll': lambda y, py, vy, ws, y_t, py_t, vy_t: mll(y, py, vy)
 }
 
 
 transformed_regression_metrics = {
-    'r2_score_transformed': lambda y, py, vy, y_t, py_t, vy_t:
-    r2_score(y_t, py_t),
-    'expvar_transformed': lambda y, py, vy, y_t, py_t, vy_t:
-    explained_variance_score(y_t, py_t),
-    'smse_transformed': lambda y, py, vy, y_t, py_t, vy_t: smse(y_t, py_t),
-    'lins_ccc_transformed': lambda y, py, vy, y_t, py_t, vy_t: lins_ccc(y_t,
+    'r2_score_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t:
+    r2_score(y_t, py_t, sample_weight=ws),
+    'expvar_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t:
+    explained_variance_score(y_t, py_t, sample_weight=ws),
+    'smse_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t: smse(y_t, py_t),
+    'lins_ccc_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t: lins_ccc(y_t,
                                                                         py_t),
-    'mll_transformed': lambda y, py, vy, y_t, py_t, vy_t: mll(y_t, py_t, vy_t)
+    'mll_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t: mll(y_t, py_t, vy_t)
 }
 
 
-def _binarizer(y, p, func, **kwargs):
+def _binarizer(y, p, ws, func, **kwargs):
     yb = np.zeros_like(p)
     n = len(y)
     yb[range(n), y.astype(int)] = 1.
-    score = func(yb, p, **kwargs)
+    score = func(yb, p, sample_weight=ws, **kwargs)
     return score
 
 
 classification_metrics = {
-    'accuracy': lambda y, ey, p: accuracy_score(y, ey),
-    'log_loss': lambda y, ey, p: log_loss(y, p),
-    'auc': lambda y, ey, p: _binarizer(y, p, roc_auc_score, average='macro'),
-    'mean_confusion': lambda y, ey, p: (confusion_matrix(y, ey)).tolist(),
-    'mean_confusion_normalized': lambda y, ey, p:
-        (confusion_matrix(y, ey) / len(y)).tolist()
+    'accuracy': lambda y, ey, ws, p: accuracy_score(y, ey, sample_weight=ws),
+    'log_loss': lambda y, ey, ws, p: log_loss(y, p, sample_weight=ws),
+    'auc': lambda y, ey, ws, p: _binarizer(y, p, ws, roc_auc_score, average='macro'),
+    'mean_confusion': lambda y, ey, ws, p: (confusion_matrix(y, ey, sample_weight=ws)).tolist(),
+    'mean_confusion_normalized': lambda y, ey, ws, p:
+        (confusion_matrix(y, ey, sample_weight=ws) / len(y)).tolist()
 }
 
 
@@ -144,7 +144,7 @@ def split_gfold(groups, k=5, seed=None):
     return cvinds, cvassigns
 
 
-def classification_validation_scores(ys, eys, pys):
+def classification_validation_scores(ys, eys, ws, pys):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -160,6 +160,8 @@ def classification_validation_scores(ys, eys, pys):
     eys: numpy.array
         The (hard) predictions made by the trained model on test data, one-hot
         representation
+    ws: numpy.array
+        The weights of the test data
     pys: numpy.array
         The probabilistic predictions made by the trained model on test data
 
@@ -173,12 +175,12 @@ def classification_validation_scores(ys, eys, pys):
     pys = np.minimum(np.maximum(pys, MINPROB), 1. - MINPROB)
 
     for k, m in classification_metrics.items():
-        scores[k] = apply_multiple_masked(m, (ys, eys, pys))
+        scores[k] = apply_multiple_masked(m, (ys, eys, ws, pys))
 
     return scores
 
 
-def regression_validation_scores(y, ey, model):
+def regression_validation_scores(y, ey, ws, model):
     """ Calculates the validation scores for a regression prediction
     Given the test and training data, as well as the outputs from every model,
     this function calculates all of the applicable metrics in the following
@@ -196,6 +198,8 @@ def regression_validation_scores(y, ey, model):
         The test data outputs
     ey: numpy.array
         The predictions made by the trained model on test data
+    ws: numpy.array
+        The weights of the test data
 
     Returns
     -------
@@ -233,7 +237,7 @@ def regression_validation_scores(y, ey, model):
         vy_t = py
 
     for k, m in regression_metrics.items():
-        scores[k] = apply_multiple_masked(m, (y, py, vy, y_t, py_t, vy_t))
+        scores[k] = apply_multiple_masked(m, (y, py, vy, ws, y_t, py_t, vy_t))
 
     return scores
 
@@ -441,8 +445,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
             w_k_test = w[test_mask]
             weight[fold] = w_k_test
             lon_lat_[fold] = lon_lat_test
-            fold_scores[fold] = regression_validation_scores(
-                y_k_test, y_k_pred, model)
+            fold_scores[fold] = regression_validation_scores(y_k_test, y_k_pred, w_k_test, model)
 
         # Classification
         else:
@@ -452,9 +455,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
             weight[fold] = w_k_test
             lon_lat_[fold] = lon_lat_test
             y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
-            fold_scores[fold] = classification_validation_scores(
-                y_k_test, y_k_hard, p_k
-            )
+            fold_scores[fold] = classification_validation_scores(y_k_test, y_k_hard, w_k_test, p_k)
 
     if config.parallel_validate:
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
