@@ -379,19 +379,77 @@ class XGBoost(XGBRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
-                 ** kwargs
+                 max_depth=None,
+                 learning_rate=None,
+                 n_estimators=100,
+                 verbosity=None,
+                 objective=None,
+                 booster=None,
+                 tree_method=None,
+                 n_jobs=None,
+                 gamma=None,
+                 min_child_weight=None,
+                 max_delta_step=None,
+                 subsample=None,
+                 colsample_bytree=None,
+                 colsample_bylevel=None,
+                 colsample_bynode=None,
+                 reg_alpha=None,
+                 reg_lambda=None,
+                 scale_pos_weight=None,
+                 base_score=None,
+                 random_state=None,
+                 missing=np.nan,
+                 num_parallel_tree=None,
+                 monotone_constraints=None,
+                 interaction_constraints=None,
+                 importance_type="gain",
+                 gpu_id=None,
+                 validate_parameters=None,
+                 **kwargs
                  ):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
 
-        super().__init__(** kwargs)
+        super().__init__(
+            n_estimators=n_estimators,
+            objective=objective,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            verbosity=verbosity,
+            booster=booster,
+            tree_method=tree_method,
+            gamma=gamma,
+            min_child_weight=min_child_weight,
+            max_delta_step=max_delta_step,
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+            colsample_bylevel=colsample_bylevel,
+            colsample_bynode=colsample_bynode,
+            reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda,
+            scale_pos_weight=scale_pos_weight,
+            base_score=base_score,
+            missing=missing,
+            num_parallel_tree=num_parallel_tree,
+            kwargs=kwargs,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            monotone_constraints=monotone_constraints,
+            interaction_constraints=interaction_constraints,
+            importance_type=importance_type,
+            gpu_id=gpu_id,
+            validate_parameters=validate_parameters
+        )
 
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
+        sample_weight = kwargs['sample_weight']
+        return super().fit(X, y_t, sample_weight=sample_weight)
+
 
     def predict(self, X, *args, **kwargs):
         Ey_t = self._notransform_predict(X, *args, **kwargs)
@@ -567,7 +625,8 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
+        sample_weight = kwargs['sample_weight']
+        return super().fit(X, y_t, sample_weight=sample_weight)
 
 
 no_test_support = {

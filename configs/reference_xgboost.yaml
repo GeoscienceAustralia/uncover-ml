@@ -7,15 +7,15 @@ features:
   - name: my continuous features
     type: continuous
     files:
-#      - path: configs/data/sirsam/er_depg.tif
-#      - path: configs/data/sirsam/sagawet_b_sir.tif
-#      - path: configs/data/sirsam/dem_foc2.tif
-#      - path: configs/data/sirsam/outcrop_dis2.tif
-#      - path: configs/data/sirsam/k_15v5.tif
-#      - path: configs/data/sirsam/relief_apsect.tif
-#      - path: configs/data/sirsam/LATITUDE_GRID1.tif
-#      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
-      - directory: configs/data/weights/
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
+      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
+#      - directory: configs/data/weights/
     transforms:
       - identity
     #      - whiten:
@@ -29,14 +29,15 @@ preprocessing:
 #        keep_fraction: 0.98
 
 targets:
-#  file: configs/data/geochem_sites.shp
-#  property: K_ppm_imp
-  file: configs/data/weights/Gamma_K_50.shp
-  property: K2O
-  weight_col_name: weight
-  group_targets:
-    group_col: weight
-    groups_eps: 0.09
+  file: configs/data/geochem_sites.shp
+  property: K_ppm_imp
+  weight_col_name: K_ppm_imp_
+#  file: configs/data/weights/Gamma_K_50.shp
+#  property: K2O
+#  weight_col_name: weight
+#  group_targets:
+#    group_col: weight
+#    groups_eps: 0.09
 
 learning:
   algorithm: xgboost

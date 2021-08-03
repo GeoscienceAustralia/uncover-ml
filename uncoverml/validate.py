@@ -345,7 +345,7 @@ def _join_dicts(dicts):
     return d
 
 
-def local_crossval(x_all, targets_all, config: Config):
+def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     """ Performs K-fold cross validation to test the applicability of a model.
     Given a set of inputs and outputs, this function will evaluate the
     effectiveness of a model at predicting the targets, by splitting all of
@@ -379,6 +379,7 @@ def local_crossval(x_all, targets_all, config: Config):
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
     y = targets_all.observations
+    w = targets_all.weights
     lon_lat = targets_all.positions
     groups = targets_all.groups
 
@@ -397,6 +398,7 @@ def local_crossval(x_all, targets_all, config: Config):
 
     y_pred = {}
     y_true = {}
+    weight = {}
     lon_lat_ = {}
     fold_scores = {}
 
@@ -409,6 +411,7 @@ def local_crossval(x_all, targets_all, config: Config):
         test_mask = ~ train_mask
 
         y_k_train = y[train_mask]
+        w_k_train = w[train_mask]
         lon_lat_train = lon_lat[train_mask, :]
         lon_lat_test = lon_lat[test_mask, :]
 
@@ -420,8 +423,9 @@ def local_crossval(x_all, targets_all, config: Config):
         # Train on this fold
         x_train = x_all[train_mask]
         apply_multiple_masked(model.fit, data=(x_train, y_k_train),
-                              kwargs={'fields': fields_train,
-                                      'lon_lat': lon_lat_train})
+                              ** {'fields': fields_train,
+                                  'sample_weight': w_k_train,
+                                  'lon_lat': lon_lat_train})
 
         # Testing
         y_k_pred = predict.predict(x_all[test_mask], model,
@@ -434,6 +438,8 @@ def local_crossval(x_all, targets_all, config: Config):
         if not classification:
             y_k_test = y[test_mask]
             y_true[fold] = y_k_test
+            w_k_test = w[test_mask]
+            weight[fold] = w_k_test
             lon_lat_[fold] = lon_lat_test
             fold_scores[fold] = regression_validation_scores(
                 y_k_test, y_k_pred, model)
@@ -442,6 +448,8 @@ def local_crossval(x_all, targets_all, config: Config):
         else:
             y_k_test = model.le.transform(y[test_mask])
             y_true[fold] = y_k_test
+            w_k_test = w[test_mask]
+            weight[fold] = w_k_test
             lon_lat_[fold] = lon_lat_test
             y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
             fold_scores[fold] = classification_validation_scores(
@@ -452,6 +460,7 @@ def local_crossval(x_all, targets_all, config: Config):
         y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
         lon_lat_ = _join_dicts(mpiops.comm.gather(lon_lat_, root=0))
         y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
+        weight = _join_dicts(mpiops.comm.gather(weight, root=0))
         scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
     else:
         scores = fold_scores
@@ -459,6 +468,7 @@ def local_crossval(x_all, targets_all, config: Config):
     result = None
     if mpiops.chunk_index == 0:
         y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        weight = np.concatenate([weight[i] for i in range(config.folds)])
         lon_lat = np.concatenate([lon_lat_[i] for i in range(config.folds)])
         y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
         valid_metrics = scores[0].keys()
@@ -474,7 +484,7 @@ def local_crossval(x_all, targets_all, config: Config):
         if hasattr(model, '_notransform_predict'):
             y_pred_dict['transformedpredict'] = \
                 model.target_transform.transform(y_pred[:, 0])
-        result = CrossvalInfo(scores, y_true, y_pred_dict, lon_lat, classification)
+        result = CrossvalInfo(scores, y_true, y_pred_dict, weight, lon_lat, classification)
 
     # change back to parallel
     if config.multicubist or config.multirandomforest:

@@ -30,6 +30,7 @@ preprocessing:
 targets:
   file: configs/data/geochem_sites.shp
   property: K_ppm_imp
+  weight_col_name: K_ppm_imp_  # hack weight col
 #  group_targets:
 #    groups_eps: 0.09
 
@@ -73,7 +74,7 @@ validation:
   #- feature_rank
   - parallel
   - k-fold:
-      folds: 2
+      folds: 3
       random_seed: 1
 
 output:

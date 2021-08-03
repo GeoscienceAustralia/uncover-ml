@@ -1105,6 +1105,10 @@ class MaskRows:
 def apply_masked(func, data, *args, **kwargs):
     # Data is just a matrix (i.e. X for prediction)
     mr = MaskRows(data)
+    for k, v in kwargs.items():
+        if isinstance(v, np.ndarray):
+            kwargs[k] = v[mr.okrows]
+    # we also have to mask other fields
     res = func(mr.trim_mask(data), *args, **kwargs)
 
     # For training/fitting that returns nothing
@@ -1117,6 +1121,9 @@ def apply_masked(func, data, *args, **kwargs):
 def apply_multiple_masked(func, data, *args, **kwargs):
     # Data is a sequence of arrays (i.e. X, y pairs for training)
     mr = MaskRows(*data)
+    for k, v in kwargs.items():
+        if isinstance(v, np.ndarray):
+            kwargs[k] = v[mr.okrows]
     res = func(*chain(mr.trim_masks(*data), args), **kwargs)
 
     # For training/fitting that returns nothing

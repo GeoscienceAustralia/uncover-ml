@@ -586,9 +586,10 @@ def export_cluster_model(model, config: Config):
 
 
 class CrossvalInfo:
-    def __init__(self, scores, y_true, y_pred, lon_lat, classification):
+    def __init__(self, scores, y_true, y_pred, weight, lon_lat, classification):
         self.scores = scores
         self.y_true = y_true
+        self.weight = weight
         self.y_pred = y_pred
         self.lon_lat = lon_lat
         self.classification = classification
@@ -617,6 +618,8 @@ def export_crossval(crossval_output: CrossvalInfo, config):
             if hasattr(v, 'mask'):
                 f.create_array("/", label + "_mask", obj=v.mask)
         f.create_array("/", "y_true", obj=crossval_output.y_true)
+        if config.weighted_model:
+            f.create_array("/", "weight", obj=crossval_output.weight)
         f.create_array("/", "lon_lat", obj=crossval_output.lon_lat)
 
     if not crossval_output.classification:
@@ -631,7 +634,7 @@ def _make_valid_array_name(label):
     return label
 
 
-def create_scatter_plot(outfile_results, config, scores):
+def create_scatter_plot(outfile_results, config: Config, scores):
     true_vs_pred = os.path.join(config.output_dir,
                                 config.name + "_results.csv")
     true_vs_pred_plot = os.path.join(config.output_dir,
@@ -642,6 +645,11 @@ def create_scatter_plot(outfile_results, config, scores):
         lon_lat = f.get_node("/", "lon_lat").read()
         to_text = [y_true[:, np.newaxis], prediction[:, np.newaxis]]
         cols = ['y_true', 'y_pred']
+        if config.weighted_model:
+            weight = f.get_node("/", "weight").read()
+            to_text.append(weight[:, np.newaxis])
+            cols.append('weight')
+
         if 'transformedpredict' in f.root:
             transformed_predict = f.get_node("/", "transformedpredict").read()
             to_text.append(transformed_predict[:, np.newaxis])
