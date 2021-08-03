@@ -406,7 +406,6 @@ class XGBoost(XGBRegressor, TagsMixin):
                  importance_type="gain",
                  gpu_id=None,
                  validate_parameters=None,
-                 **kwargs
                  ):
 
         if isinstance(target_transform, str):
@@ -434,7 +433,6 @@ class XGBoost(XGBRegressor, TagsMixin):
             base_score=base_score,
             missing=missing,
             num_parallel_tree=num_parallel_tree,
-            kwargs=kwargs,
             random_state=random_state,
             n_jobs=n_jobs,
             monotone_constraints=monotone_constraints,
@@ -449,7 +447,6 @@ class XGBoost(XGBRegressor, TagsMixin):
         y_t = self.target_transform.transform(y)
         sample_weight = kwargs['sample_weight']
         return super().fit(X, y_t, sample_weight=sample_weight)
-
 
     def predict(self, X, *args, **kwargs):
         Ey_t = self._notransform_predict(X, *args, **kwargs)
