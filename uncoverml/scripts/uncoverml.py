@@ -7,6 +7,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 import logging
 import joblib
 import resource
+import json
 from os.path import isfile, splitext, exists
 import warnings
 
@@ -54,10 +55,16 @@ def run_crossval(x_all, targets_all, config):
 
 @cli.command()
 @click.argument('pipeline_file')
+@click.option('-j', '--param_json', type=click.Path(exists=True),
+              help='algorithm parameters json, possibly from a previous optimise job')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def learn(pipeline_file, partitions):
+def learn(pipeline_file, param_json, partitions):
     config = ls.config.Config(pipeline_file)
+    if param_json is not None:
+        with open(param_json, 'r') as f:
+            config.algorithm_args = json.load(f)
+
     targets_all, x_all = _load_data(config, partitions)
 
     if config.cross_validate:

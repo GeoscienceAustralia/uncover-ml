@@ -45,6 +45,7 @@ learning:
       verbose: 1000
       n_points: 3
       n_jobs: 6
+      scoring: r2
     params_space:
       'max_depth': Integer(1, 15)
       'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
