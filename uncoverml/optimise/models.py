@@ -36,7 +36,7 @@ class TransformMixin(TransformPredictMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t)
+        return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
 
 
 class TransformPredictDistMixin(TransformMixin):
@@ -210,54 +210,6 @@ class TransformedForestRegressor(TransformPredictDistMixin,
 
         # used during optimisation
         self.target_transform = target_transform
-
-
-class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
-    def __init__(
-            self,
-            mean_model_params={},
-            upper_quantile_params={'alpha': 0.95},
-            lower_quantile_params={'alpha': 0.05}
-    ):
-        self.mean_model_params = mean_model_params
-        upper_quantile_params['loss'] = 'quantile'
-        lower_quantile_params['loss'] = 'quantile'
-        self.upper_quantile_params = upper_quantile_params
-        self.lower_quantile_params = lower_quantile_params
-        self.gb = GradientBoostingRegressor(**mean_model_params)
-        self.gb_quantile_upper = GradientBoostingRegressor(**upper_quantile_params)
-        self.gb_quantile_lower = GradientBoostingRegressor(**lower_quantile_params)
-        self.upper_alpha = upper_quantile_params['alpha']
-        self.lower_alpha = lower_quantile_params['alpha']
-
-    @staticmethod
-    def collect_prediction(regressor, X_test):
-        y_pred = regressor.predict(X_test)
-        return y_pred
-
-    def fit(self, X, y, *args, **kwargs):
-        log.info('Fitting gb base model')
-        self.gb.fit(X, y)
-        log.info('Fitting gb upper quantile model')
-        self.gb_quantile_upper.fit(X, y)
-        log.info('Fitting gb lower quantile model')
-        self.gb_quantile_lower.fit(X, y)
-
-    def predict(self, X, *args, **kwargs):
-        return self.predict_dist(X, *args, **kwargs)[0]
-
-    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
-        Ey = self.gb.predict(X)
-
-        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
-        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
-        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
-        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
-
-        # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
 
 
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
@@ -485,7 +437,7 @@ class XGBQuantileRegressor(XGBRegressor, TagsMixin):
         super().set_params(objective=quantile_loss_obj)
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        super().fit(X, y_t, * args)
+        super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
         return self
 
     def predict(self, X, *args, **kwargs):
@@ -558,11 +510,11 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
 
     def fit(self, X, y, **kwargs):
         log.info('Fitting xgb base model')
-        self.gb.fit(X, y)
+        self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
         log.info('Fitting xgb upper quantile model')
-        self.gb_quantile_upper.fit(X, y)
+        self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
         log.info('Fitting xgb lower quantile model')
-        self.gb_quantile_lower.fit(X, y)
+        self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
@@ -622,8 +574,126 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        sample_weight = kwargs['sample_weight']
-        return super().fit(X, y_t, sample_weight=sample_weight)
+        return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+
+
+class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
+    def __init__(self, target_transform='identity', upper_alpha=0.95, lower_alpha=0.05,
+                 loss='ls', learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None, random_state=None,
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False, presort='deprecated',
+                 validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0
+                 ):
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        self.target_transform = target_transform
+        self.upper_quantile_params = {'loss': 'quantile', 'alpha': upper_alpha}
+        self.lower_quantile_params = {'loss': 'quantile', 'alpha': lower_alpha}
+        self.loss = loss
+        self.learning_rate = learning_rate
+        self.n_estimators = n_estimators
+        self.criterion = criterion
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_depth = max_depth
+        self.subsample = subsample
+        self.max_features = max_features
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
+        self.random_state = random_state
+        self.alpha = alpha
+        self.verbose = verbose
+        self.max_leaf_nodes = max_leaf_nodes
+        self.warm_start = warm_start
+        self.presort = presort
+        self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
+        self.tol = tol
+        self.ccp_alpha = ccp_alpha
+
+        self.gb = GradientBoostingRegressor(
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            criterion=criterion, min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, subsample=subsample,
+            max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
+            random_state=random_state, alpha=alpha, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            presort=presort, validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
+        )
+        self.gb_quantile_upper = GradientBoostingRegressor(
+            learning_rate=learning_rate, n_estimators=n_estimators,
+            criterion=criterion, min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, subsample=subsample,
+            max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
+            random_state=random_state, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            presort=presort, validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
+            ** self.upper_quantile_params
+        )
+        self.gb_quantile_lower = GradientBoostingRegressor(
+            learning_rate=learning_rate, n_estimators=n_estimators,
+            criterion=criterion, min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, subsample=subsample,
+            max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
+            random_state=random_state, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            presort=presort, validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
+            **self.lower_quantile_params
+        )
+        self.upper_alpha = upper_alpha
+        self.lower_alpha = lower_alpha
+
+    @staticmethod
+    def collect_prediction(regressor, X_test):
+        y_pred = regressor.predict(X_test)
+        return y_pred
+
+    def fit(self, X, y, *args, **kwargs):
+        log.info('Fitting gb base model')
+        self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
+        log.info('Fitting gb upper quantile model')
+        self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
+        log.info('Fitting gb lower quantile model')
+        self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
+    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
+        Ey = self.gb.predict(X)
+
+        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
+        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
+        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
+        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
+
+        # to make gbm quantile model consistent with other quantile based models
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
 
 
 no_test_support = {
