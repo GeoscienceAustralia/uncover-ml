@@ -63,6 +63,7 @@ def learn(pipeline_file, param_json, partitions):
     config = ls.config.Config(pipeline_file)
     if param_json is not None:
         with open(param_json, 'r') as f:
+            log.info(f"{config.algorithm} params were updated using {param_json}")
             config.algorithm_args = json.load(f)
 
     targets_all, x_all = _load_data(config, partitions)

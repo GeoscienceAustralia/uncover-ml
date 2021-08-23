@@ -57,7 +57,9 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
 
     with open(conf.optimised_model_params, 'w') as f:
         json.dump(searchcv.best_params_, f, sort_keys=True, indent=4)
-        log.info(f"Saved bayesian search optimised params in {conf.optimised_model_params}")
+        all_params = {** conf.algorithm_args}
+        all_params.update(searchcv.best_params_)
+        log.info(f"Saved bayesian search optimised params in {all_params}")
 
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
