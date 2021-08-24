@@ -16,7 +16,7 @@ features:
       - path: configs/data/sirsam/LATITUDE_GRID1.tif
       - path: configs/data/sirsam/LONGITUDE_GRID1.tif
     transforms:
-      - standardise
+#      - standardise
 #      - whiten:
 #          keep_fraction: 0.8
     imputation: none
@@ -45,7 +45,6 @@ learning:
       verbose: 1000
       n_points: 3
       n_jobs: 12
-      scoring: r2
     params_space:
       max_depth: Integer(1, 15)
       learning_rate: Real(10 ** -5, 10 ** 0, prior="log-uniform")
