@@ -70,7 +70,8 @@ setup(
             'gammasensor = uncoverml.scripts.gammasensor:cli',
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
-            'gridsearch = uncoverml.scripts.gridsearch:cli'
+            'gridsearch = uncoverml.scripts.gridsearch:cli',
+            'resample = uncoverml.scripts.resample_cli:cli'
         ]
     },
     setup_requires=[

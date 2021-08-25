@@ -168,7 +168,10 @@ class Config:
             self.thumbnails = s['prediction']['thumbnails'] \
                 if 'thumbnails' in s['prediction'] else 10
 
-        self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
+        if 'features' in s:
+            self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
+        else:
+            self.pickle = False
 
         self.rawcovariates = False
         self.train_data_pk = False
@@ -208,7 +211,8 @@ class Config:
             log.info('One or both pickled files were not '
                      'found. All targets will be intersected.')
 
-        self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+        if 'features' in s:
+            self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
 
         if 'preprocessing' in s:
             final_transform = s['preprocessing']
@@ -232,6 +236,14 @@ class Config:
             self.resample = None
             if 'resample' in s['targets']:
                 self.resample = s['targets']['resample']
+                self.value_resampling_args = None
+                self.spatial_resampling_args = None
+                if 'value' in s['targets']['resample']:
+                    self.value_resampling_args = s['targets']['resample']['value']
+                if 'spatial' in s['targets']['resample']:
+                    self.spatial_resampling_args = s['targets']['resample']['spatial']
+                if self.value_resampling_args is None and self.spatial_resampling_args is None:
+                    raise ValueError("provide at least one of value or spatial args for resampling")
 
             if 'group_targets' in s['targets']:
                 self.group_targets = True
@@ -306,9 +318,10 @@ class Config:
                      'All covariates will be intersected.')
 
         self.optimised_model = False
-        if 'optimisation' in s['learning']:
-            self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
-            self.opt_params_space = s['learning']['optimisation']['params_space']
+        if 'learning' in s:
+            if 'optimisation' in s['learning']:
+                self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+                self.opt_params_space = s['learning']['optimisation']['params_space']
 
         self.cluster_analysis = False
         self.clustering = False
@@ -331,6 +344,7 @@ class Config:
             else self.name + ('.cluster' if self.clustering else '.model')
 
         self.model_file = Path(self.output_dir).joinpath(output_model)
+        self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
         self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")

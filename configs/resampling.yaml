@@ -1,0 +1,18 @@
+targets:
+  file: configs/data/weights/Gamma_K_50.shp
+  property: K2O
+  resample:
+    spatial:
+      rows: 10
+      cols: 10
+      bootstrap: True
+      output_samples: 4000
+    value:
+      bins: 20
+      bootstrap: True
+      output_samples: 4000
+      interval: linear
+
+output:
+  directory: ./resampling_out
+
