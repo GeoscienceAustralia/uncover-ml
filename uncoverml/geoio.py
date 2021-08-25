@@ -657,7 +657,7 @@ def create_scatter_plot(outfile_results, config: Config, scores):
         to_text.append(lon_lat)
         cols += ['lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
-                   fmt='%.4e',
+                   fmt='%.8e',
                    header=', '.join(cols),
                    comments='')
         plt.figure()
