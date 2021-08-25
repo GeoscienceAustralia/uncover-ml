@@ -79,6 +79,12 @@ def learn(pipeline_file, param_json, partitions):
         ls.mpiops.run_once(ls.validate.permutation_importance, model, x_all,
                            targets_all, config)
 
+    # if config.feature_importance:
+    #     # model, x_all, targets_all, config: Config
+    #     ls.mpiops.run_once(ls.validate.plot_feature_importance, model, x_all,
+    #                        targets_all, config)
+
+
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 

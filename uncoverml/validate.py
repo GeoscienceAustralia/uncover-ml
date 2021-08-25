@@ -242,7 +242,7 @@ def regression_validation_scores(y, ey, ws, model):
     return scores
 
 
-def permutation_importance(model, x_all, targets_all, config):
+def permutation_importance(model, x_all, targets_all, config: Config):
     log.info("Computing permutation importance!!")
     if config.algorithm not in transformed_modelmaps.keys():
         raise AttributeError("Only the following can be used for permutation "
@@ -261,7 +261,8 @@ def permutation_importance(model, x_all, targets_all, config):
             pi_cv = apply_multiple_masked(
                 PermutationImportance(model, scoring=score,
                                       cv='prefit', n_iter=10,
-                                      refit=False).fit, data=(x_all, y)
+                                      refit=False).fit,
+                data=(x_all, y)
             )
             feature_names = geoio.feature_names(config)
             df_picv = eli5.explain_weights_df(
@@ -492,3 +493,52 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         config.algorithm_args['parallel'] = True
 
     return result
+
+
+def plot_feature_importance(model, x_all, targets_all, conf: Config):
+    log.info("Computing permutation importance!!")
+    if conf.algorithm not in transformed_modelmaps.keys():
+        raise AttributeError("Only the following can be used for permutation "
+                             "importance {}".format(
+            list(transformed_modelmaps.keys())))
+
+    y = targets_all.observations
+
+    classification = hasattr(model, 'predict_proba')
+
+    if not classification:
+        pi_cv = apply_multiple_masked(
+            PermutationImportance(model, scoring=score,
+                                  cv='prefit', n_iter=10,
+                                  refit=False).fit,
+            data=(x_all, y),
+            model=model
+        )
+        feature_names = geoio.feature_names(conf)
+        df_picv = eli5.explain_weights_df(
+            pi_cv, feature_names=feature_names, top=100)
+        csv = Path(config.output_dir).joinpath(
+            config.name + "_permutation_importance_{}.csv".format(
+                score)).as_posix()
+        df_picv.to_csv(csv, index=False)
+
+
+# def plot_():
+#
+#     non_zero_indices = model.feature_importances_ >= 0.001
+#     non_zero_cols = X_all.columns[non_zero_indices]
+#     non_zero_importances = xgb_model.feature_importances_[non_zero_indices]
+#     sorted_non_zero_indices = non_zero_importances.argsort()
+#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+#     plt.xlabel("Xgboost Feature Importance")
+#
+#
+# def plot_feature_importance_(X, y, model):
+#     import matplotlib.pyplot as plt
+#     all_cols = model.feature_importances_
+#     non_zero_indices = model.feature_importances_ >= 0.001
+#     non_zero_cols = X.columns[non_zero_indices]
+#     non_zero_importances = model.feature_importances_[non_zero_indices]
+#     sorted_non_zero_indices = non_zero_importances.argsort()
+#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+#     plt.xlabel("Xgboost Feature Importance")

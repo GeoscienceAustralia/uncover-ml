@@ -73,10 +73,11 @@ prediction:
 validation:
   #- feature_rank
   - parallel
+  - permutation_importance
+  - feature_importance
   - k-fold:
       folds: 3
       random_seed: 1
 
 output:
   directory: ref_xgb/
-  feature_ranking: true
