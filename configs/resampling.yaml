@@ -11,7 +11,7 @@ targets:
       bins: 20
       bootstrap: True
       output_samples: 4000
-      interval: linear
+      interval: percentile
 
 output:
   directory: ./resampling_out

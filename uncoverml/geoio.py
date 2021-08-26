@@ -623,7 +623,7 @@ def export_crossval(crossval_output: CrossvalInfo, config):
         f.create_array("/", "lon_lat", obj=crossval_output.lon_lat)
 
     if not crossval_output.classification:
-        create_scatter_plot(outfile_results, config, scores)
+        export_validation_scatter_plot_and_validation_csv(outfile_results, config, scores)
 
 
 def _make_valid_array_name(label):
@@ -634,7 +634,7 @@ def _make_valid_array_name(label):
     return label
 
 
-def create_scatter_plot(outfile_results, config: Config, scores):
+def export_validation_scatter_plot_and_validation_csv(outfile_results, config: Config, scores):
     true_vs_pred = os.path.join(config.output_dir,
                                 config.name + "_results.csv")
     true_vs_pred_plot = os.path.join(config.output_dir,

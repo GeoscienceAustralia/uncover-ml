@@ -9,6 +9,7 @@ import joblib
 import resource
 import json
 from os.path import isfile, splitext, exists
+from pathlib import Path
 import warnings
 
 import click
@@ -260,6 +261,43 @@ def unsupervised(config):
     log.info("Clustering image")
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
+
+
+@cli.command()
+@click.argument('pipeline_file')
+@click.argument('model_or_cluster_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def validate(pipeline_file, model_or_cluster_file, partitions):
+    """Validate a model with out of sample shapefile."""
+    with open(model_or_cluster_file, 'rb') as f:
+        state_dict = joblib.load(f)
+
+    model = state_dict["model"]
+
+    config = ls.config.Config(pipeline_file)
+    config.pickle_load = False
+
+    config.target_file = config.oos_validation_file
+    config.target_property = config.oos_validation_property
+
+    targets_all, x_all = _load_data(config, partitions)
+    lon_lat = targets_all.positions
+    predictions = uncoverml.predict.predict(x_all, model, interval=config.quantiles,
+                                            lon_lat=lon_lat)
+    if ls.mpiops.chunk_index == 0:
+        tags = model.get_predict_tags()
+        y_true = targets_all.observations
+        to_text = [predictions, y_true[:, np.newaxis], lon_lat]
+
+        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_oss_validation.csv")
+        cols = tags + ['y_true', 'lon', 'lat']
+        np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
+                   fmt='%.8e',
+                   header=', '.join(cols),
+                   comments='')
+
+    log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 @cli.command()

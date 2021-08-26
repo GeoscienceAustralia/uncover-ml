@@ -230,6 +230,10 @@ class Config:
         # create output dir if does not exist
         makedirs(self.output_dir, exist_ok=True)
 
+        if 'oos_validation' in s:
+            self.oos_validation_file = s['oos_validation']['file']
+            self.oos_validation_property = s['oos_validation']['property']
+
         if 'targets' in s:
             self.target_file = s['targets']['file']
             self.target_property = s['targets']['property']
