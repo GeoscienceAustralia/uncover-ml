@@ -56,7 +56,7 @@ def filter_fields(fields_to_keep, gdf):
     return gdf_out
 
 
-def resample_by_magnitude(input_data, target_field, bins=10, interval='linear',
+def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', undersample=False,
                           fields_to_keep: Optional[List[str]] = None, bootstrap=True, output_samples=None,
                           validation=False, validation_points=100):
     """
@@ -81,9 +81,8 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear',
         validation file name
     validation_points : int, optional
         approximate number of points in the validation shapefile
-
-    Returns
-    -------
+    :param undersample:
+    :param interval:
 
     """
     log.info("Resampling shapefile by magnitude of target values")
@@ -127,11 +126,15 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear',
     gb = gdf_out.groupby(BIN)
     for i, (b, gr) in enumerate(gb):
         if bootstrap:
-            dfs_to_concat.append(gr.sample(n=samples_per_bin,
-                                           replace=bootstrap))
+            if undersample:
+                dfs_to_concat.append(gr.sample(n=samples_per_bin, replace=bootstrap))
+            else:
+                if gr.shape[0] < samples_per_bin:
+                    dfs_to_concat.append(gr.sample(n=samples_per_bin, replace=bootstrap))
+                else:
+                    dfs_to_concat.append(gr)
         else:
-            _df, v_df = _sample_without_replacement(gr, samples_per_bin,
-                                                    validate_array[i])
+            _df, v_df = _sample_without_replacement(gr, samples_per_bin, validate_array[i])
             dfs_to_concat.append(_df)
             validation_dfs_to_concat.append(v_df)
 
@@ -146,6 +149,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear',
 
 
 def resample_spatially(input_data, target_field, rows=10, cols=10,
+                       undersample=False,
                        fields_to_keep: Optional[List[str]] = None, bootstrap=True, output_samples=Optional[int],
                        validation_points=100):
     """
@@ -205,11 +209,15 @@ def resample_spatially(input_data, target_field, rows=10, cols=10,
             if bootstrap:
                 # should probably discard if df.shape[0] < 10% of
                 # samples_per_group
-                df_to_concat.append(df.sample(n=samples_per_group,
-                                              replace=bootstrap))
+                if undersample:
+                    df_to_concat.append(df.sample(n=samples_per_group, replace=bootstrap))
+                else:
+                    if df.shape[0] < samples_per_group:
+                        df_to_concat.append(df.sample(n=samples_per_group, replace=bootstrap))
+                    else:
+                        df_to_concat.append(df)
             else:
-                _df, v_df = _sample_without_replacement(df, samples_per_group,
-                                                        validate_array[i])
+                _df, v_df = _sample_without_replacement(df, samples_per_group, validate_array[i])
                 df_to_concat.append(_df)
                 validation_dfs_to_concat.append(v_df)
         else:

@@ -223,7 +223,8 @@ def semisupervised(config):
     config.cubist = False
     # Get the taregts
     targets = ls.geoio.load_targets(shapefile=config.class_file,
-                                    targetfield=config.class_property)
+                                    targetfield=config.class_property,
+                                    conf=config)
 
     # Get the image chunks and their associated transforms
     image_chunk_sets = ls.geoio.semisupervised_feature_sets(targets, config)
@@ -283,8 +284,7 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
 
     targets_all, x_all = _load_data(config, partitions)
     lon_lat = targets_all.positions
-    predictions = uncoverml.predict.predict(x_all, model, interval=config.quantiles,
-                                            lon_lat=lon_lat)
+    predictions = uncoverml.predict.predict(x_all, model, interval=config.quantiles, lon_lat=lon_lat)
     if ls.mpiops.chunk_index == 0:
         tags = model.get_predict_tags()
         y_true = targets_all.observations

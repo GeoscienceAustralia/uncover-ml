@@ -1,13 +1,18 @@
+#  when undersample == false, we choose all points without replacement, i.e., downsampling is not allowed
+#  when undersample == true, we choose points with or without bootstrap
+
 targets:
   file: configs/data/weights/Gamma_K_50.shp
   property: K2O
   resample:
     spatial:
+      undersample: false
       rows: 10
       cols: 10
       bootstrap: True
       output_samples: 4000
     value:
+      undersample: false
       bins: 20
       bootstrap: True
       output_samples: 4000
