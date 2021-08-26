@@ -56,7 +56,7 @@ def filter_fields(fields_to_keep, gdf):
     return gdf_out
 
 
-def resample_by_magnitude(input_data, target_field, bins=10, interval='percentile',
+def resample_by_magnitude(input_data, target_field, bins=10, interval='linear',
                           fields_to_keep: Optional[List[str]] = None, bootstrap=True, output_samples=None,
                           validation=False, validation_points=100):
     """
@@ -94,7 +94,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='percentil
     if interval not in ['percentile', 'linear']:
         log.warning("Interval method '{}' not recognised, defaulting to 'percentile'"
                     .format(interval))
-        interval = 'percentile'
+        interval = 'linear'
     gdf_out = prepapre_dataframe(input_data, target_field, fields_to_keep)
     # the idea is stolen from pandas.qcut
     # pd.qcut does not work for cases when it result in non-unique bin edges
@@ -104,6 +104,9 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='percentil
             np.unique(target), np.linspace(0, 1, bins + 1))
     elif interval == 'linear':
         bin_edges = np.linspace(np.min(target), np.max(target), bins + 1)
+
+    log.info(f"resampling using {interval} of target values")
+
     result = pd.core.reshape.tile._bins_to_cuts(target, bin_edges,
                                                 labels=False,
                                                 include_lowest=True)
