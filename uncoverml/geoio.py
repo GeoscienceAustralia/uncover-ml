@@ -658,7 +658,7 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
         cols += ['lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
                    fmt='%.8e',
-                   header=', '.join(cols),
+                   header=','.join(cols),
                    comments='')
         plt.figure()
         plt.scatter(y_true, prediction, label='True vs Prediction')
