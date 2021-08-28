@@ -148,7 +148,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
         return output_gdf
 
 
-def resample_spatially(input_data, target_field, rows=10, cols=10,
+def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
                        undersample=False,
                        fields_to_keep: Optional[List[str]] = None, bootstrap=True, output_samples=Optional[int],
                        validation_points=100):
@@ -181,16 +181,9 @@ def resample_spatially(input_data, target_field, rows=10, cols=10,
     """
     log.info("Resampling shapefile by using spatial binning")
 
-    gdf_out = prepapre_dataframe(input_data, target_field, fields_to_keep)
+    gdf_out = prepapre_dataframe(input_shapefile, target_field, fields_to_keep)
 
-    minx, miny, maxx, maxy = gdf_out[GEOMETRY].total_bounds
-    x_grid = np.linspace(minx, maxx, num=cols + 1)
-    y_grid = np.linspace(miny, maxy, num=rows + 1)
-
-    polygons = []
-    for xs, xe in zip(x_grid[:-1], x_grid[1:]):
-        for ys, ye in zip(y_grid[:-1], y_grid[1:]):
-            polygons.append(Polygon([(xs, ys), (xs, ye), (xe, ye), (xe, ys)]))
+    polygons = create_grouping_polygons_from_geo_df(rows, cols, gdf_out)
 
     df_to_concat = []
     validation_dfs_to_concat = []
@@ -224,6 +217,17 @@ def resample_spatially(input_data, target_field, rows=10, cols=10,
             log.debug('{}th {} does not contain any sample'.format(i, p))
     output_gdf = pd.concat(df_to_concat)
     return output_gdf
+
+
+def create_grouping_polygons_from_geo_df(rows, cols, gdf_out):
+    minx, miny, maxx, maxy = gdf_out[GEOMETRY].total_bounds
+    x_grid = np.linspace(minx, maxx, num=cols + 1)
+    y_grid = np.linspace(miny, maxy, num=rows + 1)
+    polygons = []
+    for xs, xe in zip(x_grid[:-1], x_grid[1:]):
+        for ys, ye in zip(y_grid[:-1], y_grid[1:]):
+            polygons.append(Polygon([(xs, ys), (xs, ye), (xe, ye), (xe, ys)]))
+    return polygons
 
 
 def _sample_without_replacement(df, samples_per_group, validate):

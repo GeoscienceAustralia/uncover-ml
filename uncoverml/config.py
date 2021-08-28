@@ -236,7 +236,8 @@ class Config:
 
         if 'targets' in s:
             self.target_file = s['targets']['file']
-            self.target_property = s['targets']['property']
+            if 'property' in s['targets']:
+                self.target_property = s['targets']['property']
             self.resample = None
             if 'resample' in s['targets']:
                 self.resample = s['targets']['resample']
@@ -265,6 +266,17 @@ class Config:
                 self.weight_col_name = s['targets']['weight_col_name']
             else:
                 self.weighted_model = False
+
+            if 'group' in s['targets']:
+                self.output_group_col_name = s['targets']['group']['output_group_col_name']
+                if 'spatial' in s['targets']['group']:
+                    self.spatial_grouping_args = s['targets']['group']['spatial']
+                else:
+                    self.spatial_grouping_args = {}
+                if 'fields_to_keep' in s['targets']['group']:
+                    self.grouping_fields_to_keep = s['targets']['group']['fields_to_keep']
+                else:
+                    self.grouping_fields_to_keep = []
 
         self.mask = None
         if 'mask' in s:
@@ -349,6 +361,7 @@ class Config:
 
         self.model_file = Path(self.output_dir).joinpath(output_model)
         self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
+        self.grouped_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_grouped.shp')
         self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")

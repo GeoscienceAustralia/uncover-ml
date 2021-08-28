@@ -71,7 +71,8 @@ setup(
             'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
             'gridsearch = uncoverml.scripts.gridsearch:cli',
-            'resample = uncoverml.scripts.resample_cli:cli'
+            'resample = uncoverml.scripts.resample_cli:cli',
+            'shapefile = uncoverml.scripts.shapes_cli:cli',
         ]
     },
     setup_requires=[

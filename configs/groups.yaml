@@ -1,0 +1,23 @@
+# add a group column based on spatial binning
+# value based binning is not supprted yet
+
+targets:
+  file: configs/data/weights/Gamma_K_50.shp
+  group:
+    output_group_col_name: group_col
+#    fields_to_keep:
+#      - shapefile_col1_name
+#      - shapefile_col2_name
+    spatial:
+      rows: 4
+      cols: 4
+#    value:
+#      bins: 20
+#      interval: percentile
+  split_on_group:
+    group_col_name: group_col
+    oss_fraction: 0.2
+
+output:
+  directory: ./split
+

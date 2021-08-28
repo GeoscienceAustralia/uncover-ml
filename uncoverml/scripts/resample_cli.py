@@ -28,7 +28,6 @@ def cli(pipeline_file, verbosity):
         transforms.append((ls.resampling.resample_spatially, config.spatial_resampling_args))
     input_shapefile = config.target_file
     output_shapefile = config.resampled_output
-    print(output_shapefile)
     target_field = config.target_property
 
     gdf = None
