@@ -1,11 +1,13 @@
 from __future__ import division
 import joblib
 import os.path
+from pathlib import Path
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from itertools import cycle, islice
 import json
+from typing import Union
 import pickle
 import matplotlib.pyplot as plt
 import rasterio
@@ -598,12 +600,7 @@ class CrossvalInfo:
 def export_crossval(crossval_output: CrossvalInfo, config):
     outfile_scores = os.path.join(config.output_dir, config.name + "_scores.json")
 
-    # Make sure we convert numpy arrays to lists
-    scores = {s: v if np.isscalar(v) else v.tolist()
-              for s, v in crossval_output.scores.items()}
-
-    with open(outfile_scores, 'w') as f:
-        json.dump(scores, f, sort_keys=True, indent=4)
+    scores = output_json(crossval_output.scores, outfile_scores)
 
     outfile_results = os.path.join(config.output_dir,
                                    config.name + "_results.hdf5")
@@ -624,6 +621,15 @@ def export_crossval(crossval_output: CrossvalInfo, config):
 
     if not crossval_output.classification:
         export_validation_scatter_plot_and_validation_csv(outfile_results, config, scores)
+
+
+def output_json(scores: dict, output_json: Union[str, Path]):
+    # Make sure we convert numpy arrays to lists
+    scores = {s: v if np.isscalar(v) else v.tolist()
+              for s, v in scores.items()}
+    with open(output_json, 'w') as f:
+        json.dump(scores, f, sort_keys=True, indent=4)
+    return scores
 
 
 def _make_valid_array_name(label):

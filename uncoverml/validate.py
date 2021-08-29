@@ -542,3 +542,30 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
 #     sorted_non_zero_indices = non_zero_importances.argsort()
 #     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
 #     plt.xlabel("Xgboost Feature Importance")
+
+
+def oos_validate(targets_all, x_all, model, config):
+    config.target_file = config.oos_validation_file
+    config.target_property = config.oos_validation_property
+    lon_lat = targets_all.positions
+    weights = targets_all.weights
+    observations = targets_all.observations
+    predictions = predict.predict(x_all, model, interval=config.quantiles, lon_lat=lon_lat)
+    if mpiops.chunk_index == 0:
+        tags = model.get_predict_tags()
+        y_true = targets_all.observations
+        to_text = [predictions, y_true[:, np.newaxis], lon_lat]
+
+        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_oos_validation.csv")
+        cols = tags + ['y_true', 'lon', 'lat']
+        np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
+                   fmt='%.8e',
+                   header=', '.join(cols),
+                   comments='')
+        scores = regression_validation_scores(observations, predictions, weights, model)
+        score_string = "OOS Validation Scores:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+
+        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
+        log.info(score_string)

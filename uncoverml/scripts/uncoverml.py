@@ -279,23 +279,9 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
     config = ls.config.Config(pipeline_file)
     config.pickle_load = False
 
-    config.target_file = config.oos_validation_file
-    config.target_property = config.oos_validation_property
-
     targets_all, x_all = _load_data(config, partitions)
-    lon_lat = targets_all.positions
-    predictions = uncoverml.predict.predict(x_all, model, interval=config.quantiles, lon_lat=lon_lat)
-    if ls.mpiops.chunk_index == 0:
-        tags = model.get_predict_tags()
-        y_true = targets_all.observations
-        to_text = [predictions, y_true[:, np.newaxis], lon_lat]
 
-        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_oss_validation.csv")
-        cols = tags + ['y_true', 'lon', 'lat']
-        np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
-                   fmt='%.8e',
-                   header=', '.join(cols),
-                   comments='')
+    ls.validate.oos_validate(targets_all, x_all, model, config)
 
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
