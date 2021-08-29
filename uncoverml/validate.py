@@ -545,8 +545,6 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
 
 
 def oos_validate(targets_all, x_all, model, config):
-    config.target_file = config.oos_validation_file
-    config.target_property = config.oos_validation_property
     lon_lat = targets_all.positions
     weights = targets_all.weights
     observations = targets_all.observations

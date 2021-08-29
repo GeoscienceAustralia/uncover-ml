@@ -75,6 +75,8 @@ def learn(pipeline_file, param_json, partitions):
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
 
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
+
     # use trained model
     if config.permutation_importance:
         ls.mpiops.run_once(ls.validate.permutation_importance, model, x_all,
@@ -86,7 +88,6 @@ def learn(pipeline_file, param_json, partitions):
     #                        targets_all, config)
 
 
-    ls.mpiops.run_once(ls.geoio.export_model, model, config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
@@ -278,6 +279,8 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
 
     config = ls.config.Config(pipeline_file)
     config.pickle_load = False
+    config.target_file = config.oos_validation_file
+    config.target_property = config.oos_validation_property
 
     targets_all, x_all = _load_data(config, partitions)
 
