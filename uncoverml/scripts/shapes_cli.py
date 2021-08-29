@@ -1,6 +1,7 @@
-import os
 import logging
 import click
+import numpy as np
+from sklearn.model_selection import train_test_split
 import geopandas as gpd
 import uncoverml as ls
 import uncoverml.mllog
@@ -31,22 +32,18 @@ def group(pipeline_file, verbosity):
 
     input_shapefile = config.target_file
     output_shapefile = config.grouped_output
-    fields_to_keep = config.grouping_fields_to_keep
     gdf = gpd.read_file(input_shapefile)
-    if not len(fields_to_keep):  # if empty list or no list supplied
-        fields_to_keep = gdf.columns
-    gdf_out = ls.resampling.filter_fields(fields_to_keep, gdf)
 
     rows = config.spatial_grouping_args['rows']
     cols = config.spatial_grouping_args['cols']
 
-    polygons = ls.resampling.create_grouping_polygons_from_geo_df(rows, cols, gdf_out)
+    polygons = ls.resampling.create_grouping_polygons_from_geo_df(rows, cols, gdf)
 
     df_to_concat = []
 
-    # aem_data = aem_data.groupby(cluster_line_no).apply(utils.add_delta, conf=conf)
     for i, p in enumerate(polygons):
-        df = gdf_out[gdf_out[ls.resampling.GEOMETRY].within(p)]
+        df = gdf[gdf[ls.resampling.GEOMETRY].within(p)]
+        df = df.copy()
         if df.shape[0]:
             df['group_col'] = i
             df_to_concat.append(df)
@@ -54,14 +51,23 @@ def group(pipeline_file, verbosity):
             log.debug('{}th {} does not contain any sample'.format(i, p))
     output_gdf = gpd.pd.concat(df_to_concat)
     output_gdf.to_file(output_shapefile)
-    import IPython; IPython.embed(); import sys; sys.exit()
 
 
-@click.command()
+@cli.command()
 @click.argument('pipeline_file')
 @click.option('-v', '--verbosity',
               type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR']),
               default='INFO', help='Level of logging')
 def split(pipeline_file, verbosity):
     """split a shapefile into two - possibly to use for training and complete oss verification"""
-    pass
+    ls.mllog.configure(verbosity)
+    config = ls.config.Config(pipeline_file)
+    input_shapefile = config.grouped_output
+    gdf = gpd.read_file(input_shapefile)
+    all_groups = np.unique(gdf[config.split_group_col_name])
+    train_groups, oos_groups = train_test_split(all_groups, test_size=config.split_oos_fraction)
+    train_gdf = gdf[gdf[config.split_group_col_name].isin(train_groups)]
+    oos_gdf = gdf[gdf[config.split_group_col_name].isin(oos_groups)]
+    train_gdf.to_file(config.train_shapefile)
+    oos_gdf.to_file(config.oos_shapefile)
+    oos_gdf.to_file(config.oos_shapefile)

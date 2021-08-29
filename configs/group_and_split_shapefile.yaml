@@ -1,0 +1,28 @@
+# add a group column based on spatial binning
+# value based binning is not supprted yet
+# use the 'group' block to create a new group coulumn in the output shapefile
+# use the 'split' block to split shapefile into training and oss shapefiles based on column name provided
+# the column name should be categorical/integer representing group membership
+
+targets:
+  file: configs/data/weights/Gamma_K_50.shp
+  group:
+    output_group_col_name: group_col
+    #    fields_to_keep:
+    #      - shapefile_col1_name
+    #      - shapefile_col2_name
+    spatial:
+      rows: 4
+      cols: 4
+  #    value:
+  #      bins: 20
+  #      interval: percentile
+  split:
+    group_col_name: group_col
+    oos_fraction: 0.1
+
+output:
+  grouped_shapefile: Gamma_K_50_grouped.shp
+  train_shapefile: Gamma_K_50_train.shp
+  oos_shapefile: Gamma_K_50_oos.shp
+  directory: ./split

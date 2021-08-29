@@ -72,7 +72,7 @@ setup(
             'subsampletargets = uncoverml.scripts.subsampletargets:cli',
             'gridsearch = uncoverml.scripts.gridsearch:cli',
             'resample = uncoverml.scripts.resample_cli:cli',
-            'shapefile = uncoverml.scripts.shapes_cli:cli',
+            'shape = uncoverml.scripts.shapes_cli:cli',
         ]
     },
     setup_requires=[
@@ -100,7 +100,8 @@ setup(
         'xgboost==1.4.2',
         'setuptools>=30.0.0',
         'eli5>=0.8.2',
-        'networkx==2.5.1'
+        'networkx==2.5.1',
+        'geopandas==0.9.0'
     ],
     extras_require={
         'kmz': [

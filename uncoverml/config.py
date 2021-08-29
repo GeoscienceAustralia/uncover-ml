@@ -277,6 +277,13 @@ class Config:
                     self.grouping_fields_to_keep = s['targets']['group']['fields_to_keep']
                 else:
                     self.grouping_fields_to_keep = []
+                self.grouped_output = Path(self.output_dir).joinpath(s['output']['grouped_shapefile'])
+
+            if 'split' in s['targets']:
+                self.split_group_col_name = s['targets']['split']['group_col_name']
+                self.split_oos_fraction = s['targets']['split']['oos_fraction']
+                self.train_shapefile = Path(self.output_dir).joinpath(s['output']['train_shapefile'])
+                self.oos_shapefile = Path(self.output_dir).joinpath(s['output']['oos_shapefile'])
 
         self.mask = None
         if 'mask' in s:
@@ -361,7 +368,6 @@ class Config:
 
         self.model_file = Path(self.output_dir).joinpath(output_model)
         self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
-        self.grouped_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_grouped.shp')
         self.optimisation_output = Path(self.output_dir).joinpath('optimisation.csv')
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")
