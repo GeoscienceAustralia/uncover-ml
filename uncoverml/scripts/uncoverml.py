@@ -176,14 +176,29 @@ def _load_data(config, partitions):
 
 @cli.command()
 @click.argument('pipeline_file', type=click.Path(exists=True))
+@click.option('-j', '--param_json', type=click.Path(exists=True), multiple=True,
+              help='algorithm parameters json, possibly from a previous optimise job')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def optimise(pipeline_file: str, partitions: int) -> None:
+def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     """Optimise model parameters using Bayesian regression."""
     if uncoverml.mpiops.chunks > 1:
         raise NotImplementedError("Currently optimiser does not work with mpi. \n"
                                   "However it can utilise a whole NCI node with many CPUs!")
     conf = ls.config.Config(pipeline_file)
+    if param_json is not None:
+        # log.info('the following jsons are used as params \n', click.echo('\n'.join(param_json)))
+        param_dicts = []  # list of dicts
+        for pj in param_json:
+            with open(pj, 'r') as f:
+                log.info(f"{config.algorithm} params were updated using {param_json}")
+                param_dicts.append(json.load(f))
+        conf.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
+
+    param_str = f'Optimising earning {config.algorithm} model with the following base params:\n'
+    for param, value in config.algorithm_args.items():
+        param_str += "{}\t= {}\n".format(param, value)
+
     targets_all, x_all = _load_data(conf, partitions)
     y = targets_all.observations
     groups = targets_all.groups
