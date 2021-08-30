@@ -185,7 +185,7 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     if uncoverml.mpiops.chunks > 1:
         raise NotImplementedError("Currently optimiser does not work with mpi. \n"
                                   "However it can utilise a whole NCI node with many CPUs!")
-    conf = ls.config.Config(pipeline_file)
+    config = ls.config.Config(pipeline_file)
     if param_json is not None:
         # log.info('the following jsons are used as params \n', click.echo('\n'.join(param_json)))
         param_dicts = []  # list of dicts
@@ -193,20 +193,20 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
             with open(pj, 'r') as f:
                 log.info(f"{config.algorithm} params were updated using {param_json}")
                 param_dicts.append(json.load(f))
-        conf.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
+        config.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
 
     param_str = f'Optimising earning {config.algorithm} model with the following base params:\n'
     for param, value in config.algorithm_args.items():
         param_str += "{}\t= {}\n".format(param, value)
 
-    targets_all, x_all = _load_data(conf, partitions)
+    targets_all, x_all = _load_data(config, partitions)
     y = targets_all.observations
     groups = targets_all.groups
     w = targets_all.groups
     uncoverml.mpiops.comm.barrier()
-    model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, conf)
-    conf.optimised_model = True
-    ls.mpiops.run_once(ls.geoio.export_model, model, conf, False)
+    model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, config)
+    config.optimised_model = True
+    ls.mpiops.run_once(ls.geoio.export_model, model, config, False)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
     log.info("Finished optimisation of model parameters!")
