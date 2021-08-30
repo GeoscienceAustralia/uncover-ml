@@ -56,16 +56,25 @@ def run_crossval(x_all, targets_all, config):
 
 @cli.command()
 @click.argument('pipeline_file')
-@click.option('-j', '--param_json', type=click.Path(exists=True),
+@click.option('-j', '--param_json', type=click.Path(exists=True), multiple=True,
               help='algorithm parameters json, possibly from a previous optimise job')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
 def learn(pipeline_file, param_json, partitions):
     config = ls.config.Config(pipeline_file)
     if param_json is not None:
-        with open(param_json, 'r') as f:
-            log.info(f"{config.algorithm} params were updated using {param_json}")
-            config.algorithm_args = json.load(f)
+        # log.info('the following jsons are used as params \n', click.echo('\n'.join(param_json)))
+        param_dicts = []  # list of dicts
+        for pj in param_json:
+            with open(pj, 'r') as f:
+                log.info(f"{config.algorithm} params were updated using {param_json}")
+                param_dicts.append(json.load(f))
+        config.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
+    param_str = f'Learning {config.algorithm} model with the following params:\n'
+    for param, value in config.algorithm_args.items():
+        param_str += "{}\t= {}\n".format(param, value)
+
+    log.info(f"{param_str}")
 
     targets_all, x_all = _load_data(config, partitions)
 
@@ -421,3 +430,4 @@ def _total_gb():
     # total_usage = mpiops.comm.reduce(my_usage, root=0)
     total_usage = ls.mpiops.comm.allreduce(my_usage)
     return total_usage
+
