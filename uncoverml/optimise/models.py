@@ -498,8 +498,9 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         self.upper_quantile_params = upper_quantile_params
         self.lower_quantile_params = lower_quantile_params
         self.gb = XGBRegressor(**mean_model_params)
-        self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params)
-        self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params)
+        mean_model_params.pop('alpha', None)
+        self.gb_quantile_upper = XGBQuantileRegressor(** mean_model_params, **upper_quantile_params, )
+        self.gb_quantile_lower = XGBQuantileRegressor(** mean_model_params, **lower_quantile_params, )
         self.upper_alpha = upper_quantile_params['alpha']
         self.lower_alpha = lower_quantile_params['alpha']
 

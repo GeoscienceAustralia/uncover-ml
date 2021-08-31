@@ -207,9 +207,6 @@ class Config:
         else:
             self.pickle_load = False
 
-        if not self.pickle_load:
-            log.info('One or both pickled files were not '
-                     'found. All targets will be intersected.')
 
         if 'features' in s:
             self.feature_sets = [FeatureSetConfig(k) for k in s['features']]

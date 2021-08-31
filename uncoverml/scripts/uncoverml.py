@@ -110,6 +110,8 @@ def _load_data(config, partitions):
         log.warning('Using  pickled targets and covariates. Make sure you have'
                     ' not changed targets file and/or covariates.')
     else:
+        log.info('One or both pickled files were not '
+                 'found. All targets will be intersected.')
         config.n_subchunks = partitions
         if config.n_subchunks > 1:
             log.info("Memory constraint forcing {} iterations "
