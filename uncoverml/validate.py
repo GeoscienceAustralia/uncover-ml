@@ -558,7 +558,7 @@ def oos_validate(targets_all, x_all, model, config):
         cols = tags + ['y_true', 'lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
                    fmt='%.8e',
-                   header=', '.join(cols),
+                   header=','.join(cols),
                    comments='')
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
