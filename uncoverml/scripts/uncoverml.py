@@ -30,7 +30,7 @@ import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
-from uncoverml import optimisation
+from uncoverml import optimisation, hyopt
 # from uncoverml.mllog import warn_with_traceback
 
 
@@ -188,7 +188,7 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
         raise NotImplementedError("Currently optimiser does not work with mpi. \n"
                                   "However it can utilise a whole NCI node with many CPUs!")
     config = ls.config.Config(pipeline_file)
-    if param_json is not None:
+    if len(param_json) > 0:
         # log.info('the following jsons are used as params \n', click.echo('\n'.join(param_json)))
         param_dicts = []  # list of dicts
         for pj in param_json:
@@ -206,7 +206,7 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     groups = targets_all.groups
     w = targets_all.groups
     uncoverml.mpiops.comm.barrier()
-    model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, y, w, groups, config)
+    model = uncoverml.mpiops.run_once(hyopt.bayesian_optimisation, x_all, y, w, groups, config)
     config.optimised_model = True
     ls.mpiops.run_once(ls.geoio.export_model, model, config, False)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))

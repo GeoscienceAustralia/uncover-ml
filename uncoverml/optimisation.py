@@ -64,7 +64,7 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** all_params)
     opt_model.fit(X, y, sample_weight=w)
-
+    # import IPython; IPython.embed(); import sys; sys.exit()
     pd.DataFrame.from_dict(searchcv.cv_results_).sort_values(by='rank_test_score').to_csv(
         conf.optimisation_output
     )

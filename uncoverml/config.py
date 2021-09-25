@@ -340,8 +340,14 @@ class Config:
         self.optimised_model = False
         if 'learning' in s:
             if 'optimisation' in s['learning']:
-                self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
-                self.opt_params_space = s['learning']['optimisation']['params_space']
+                if 'searchcv_params' in s['learning']['optimisation']:
+                    self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+                    self.opt_params_space = s['learning']['optimisation']['params_space']
+                if 'hyperopt_params' in s['learning']['optimisation']:
+                    self.hyperopt_params = s['learning']['optimisation']['hyperopt_params']
+                    self.hp_params_space = s['learning']['optimisation']['hp_params_space']
+
+
 
         self.cluster_analysis = False
         self.clustering = False
