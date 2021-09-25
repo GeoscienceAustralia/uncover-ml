@@ -67,7 +67,8 @@ learning:
       reg_alpha: Real(1, 100, prior='uniform')
       reg_lambda: Real(0.01, 10, prior='log-uniform')
     hyperopt_params:
-      max_evals: 5
+      max_evals: 50
+      step: 20
       cv: 2
       verbose: true
       rstate: 3

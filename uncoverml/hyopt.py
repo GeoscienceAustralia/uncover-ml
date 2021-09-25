@@ -1,5 +1,7 @@
 import json
 import logging
+import pickle
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -58,31 +60,29 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
         score = 1 - cross_val_score(model, X, y,
-                                 fit_params={'sample_weight': w},
-                                 groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
+                                    fit_params={'sample_weight': w},
+                                    groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
 
         return score
 
-    best = fmin(fn=objective,  # function to optimize
-                space=search_space,
-                ** conf.hyperopt_params,
-                algo=algo,  # optimization algorithm, hyperotp will select its parameters automatically
-                trials=trials,  # logging
-                rstate=rstate,
-                )
+    step = conf.hyperopt_params.pop('step') if 'step' in conf.hyperopt_params else 10
+    max_evals = conf.hyperopt_params.pop('max_evals') if 'max_evals' in conf.hyperopt_params else 50
 
-    params_space = []
-    for t in trials.trials:
-        l = {k:v[0] for k, v in t['misc']['vals'].items()}
-        params_space.append(l)
-
-    results = pd.DataFrame.from_dict(params_space, orient='columns')
-    loss = [x['result']['loss'] for x in trials.trials]
-    results.insert(0, 'loss', loss)
-
-    log.info("Best Loss {:.3f} params {}".format(objective(best), best))
-    results.to_csv(conf.optimisation_output)
-    # import IPython; IPython.embed(); import sys; sys.exit()
+    for i in range(1, max_evals + 1, step):
+        # fmin runs until the trials object has max_evals elements in it, so it can do evaluations in chunks like this
+        best = fmin(
+            objective, search_space,
+            ** conf.hyperopt_params,
+            algo=algo,
+            trials=trials,
+            max_evals=i + step
+            )
+        # each step 'best' will be the best trial so far
+        log.info(f"After {i + step} trials best config: \n {best}")
+        # each step 'trials' will be updated to contain every result
+        # you can save it to reload later in case of a crash, or you decide to kill the script
+        pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
+        save_optimal(best, trials, objective, conf)
 
     log.info(f"Finished param optimisation using Hyperopt {algo}")
     log.info(f"Best score found using param optimisation {objective(best)}")
@@ -99,6 +99,18 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
     opt_model.fit(X, y, sample_weight=w)
 
     return opt_model
+
+
+def save_optimal(best, trials, objective, conf):
+    params_space = []
+    for t in trials.trials:
+        l = {k: v[0] for k, v in t['misc']['vals'].items()}
+        params_space.append(l)
+    results = pd.DataFrame.from_dict(params_space, orient='columns')
+    loss = [x['result']['loss'] for x in trials.trials]
+    results.insert(0, 'loss', loss)
+    log.info("Best Loss {:.3f} params {}".format(objective(best), best))
+    results.to_csv(conf.optimisation_output)
 
 
 class NpEncoder(json.JSONEncoder):

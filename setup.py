@@ -101,7 +101,8 @@ setup(
         'setuptools>=30.0.0',
         'eli5>=0.8.2',
         'networkx==2.5.1',
-        'geopandas==0.9.0'
+        'geopandas==0.9.0',
+        'hyperopt==0.2.5',
     ],
     extras_require={
         'kmz': [
