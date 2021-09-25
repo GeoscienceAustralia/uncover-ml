@@ -67,26 +67,24 @@ learning:
       reg_alpha: Real(1, 100, prior='uniform')
       reg_lambda: Real(0.01, 10, prior='log-uniform')
     hyperopt_params:
-      max_evals: 36
+      max_evals: 5
       cv: 2
       verbose: true
-      rstate: 39
-      algo: bayes
+      rstate: 3
+      algo: bayes   # bayes, or anneal
     hp_params_space:
       max_depth: randint('max_depth', 1, 15)
-      n_estimators: randint('n_estimators', 10, 50)
+      n_estimators: randint('n_estimators', 5, 25)
       learning_rate: loguniform('learning_rate', -5, 0)
-#      learning_rate: loguniform(10 ** -5, 10 ** 0)
-#      n_estimators: randint(50, 200)
-#      min_child_weight: randint(1, 10)
-#      max_delta_step: randint(0, 10)
-#      gamma: uniform(0, 0.5)
-#      colsample_bytree: uniform(0.3, 0.9)
-#      subsample: uniform(0.01, 1.0)
-#      colsample_bylevel: uniform(0.01, 1.0)
-#      colsample_bynode: uniform(0.01, 1.0)
-#      reg_alpha: uniform(1, 100)
-#      reg_lambda: loguniform(0.01, 10)
+#      min_child_weight: randint('min_child_weight', 0.0, 10)
+#      max_delta_step: randint('max_delta_step', 0, 20)
+#      gamma: uniform('gamma', 0, 10)
+#      subsample: uniform('subsample', 0.01, 1.0)
+#      colsample_bytree: uniform('colsample_bytree', 0.01, 1.0)
+#      colsample_bylevel: uniform('colsample_bylevel', 0.01, 1.0)
+#      colsample_bynode: uniform('colsample_bynode', 0.01, 1.0)
+#      reg_alpha: uniform('reg_alpha', 0, 100)
+#      reg_lambda: loguniform('reg_lambda', 0.01, 10)
 
 
 prediction:

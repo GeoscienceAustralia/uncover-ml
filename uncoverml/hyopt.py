@@ -1,8 +1,9 @@
+import json
 import logging
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import cross_val_score, GroupKFold, KFold
-from xgboost.sklearn import XGBRegressor
 from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
@@ -10,16 +11,11 @@ from uncoverml.optimise.models import transformed_modelmaps as modelmaps
 
 log = logging.getLogger(__name__)
 
-# space={'n_estimators': hp.quniform('n_estimators', 100, 2000, 1),
-#        'max_depth' : hp.quniform('max_depth', 2, 20, 1),
-#        'learning_rate': hp.loguniform('learning_rate', -5, 0)
-#        }
 
 hp_algo = {
     'bayes': tpe.suggest,
     'anneal': anneal.suggest
 }
-
 
 
 def bayesian_optimisation(X, y, w, groups, conf: Config):
@@ -33,16 +29,10 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
     """
     trials = Trials()
     search_space = {k: eval(v) for k, v in conf.hp_params_space.items()}
-    # search_space={'n_estimators': quniform('n_estimators', 10, 50, 1),
-    #        'max_depth' : quniform('max_depth', 2, 20, 1),
-    #        'learning_rate': loguniform('learning_rate', -5, 0)
-    #        }
 
     reg = modelmaps[conf.algorithm]
 
     algo = hp_algo[conf.hyperopt_params.pop('algo')] if 'algo' in conf.hyperopt_params else tpe.suggest
-    print(algo)
-    print(search_space)
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
     random_state = conf.hyperopt_params.pop('rstate')
     rstate = np.random.RandomState(random_state)
@@ -54,28 +44,7 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         log.info(f'Using KFold with {cv_folds} folds')
         cv = KFold(n_splits=cv_folds)
 
-    # def gb_mse_cv(params, X=X, y=y, groups=groups):
-    #     # the function gets a set of variable parameters in "param"
-    #     # params = {'n_estimators': int(params['n_estimators']),
-    #     #           'max_depth': int(params['max_depth']),
-    #     #           'learning_rate': params['learning_rate']}
-    #
-    #     # we use this params to create a new LGBM Regressor
-    #     all_params = {**conf.algorithm_args}
-    #     print(params)
-    #     if hasattr(reg, 'random_state'):
-    #         all_params.update(**params, random_state=random_state)
-    #         model = reg(** all_params)
-    #     else:
-    #         all_params.update(** params)
-    #         model = reg(** all_params)
-    #
-    #     # and then conduct the cross validation with the same folds as before
-    #     score = -cross_val_score(model, X, y, groups=groups,
-    #                              cv=cv, scoring="neg_mean_squared_error", n_jobs=-1).mean()
-    #
-    #     return score
-    def gb_mse_cv(params, random_state=random_state, cv=cv, X=X, y=y):
+    def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
         all_params = {**conf.algorithm_args}
 
@@ -85,24 +54,16 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         else:
             all_params.update(** params)
             model = reg(** params)
-
-        print(conf.algorithm_args)
-        print(params)
-        print(all_params)
-        print("=" * 50)
-
-        # we use this params to create a new LGBM Regressor
-        # model = reg(random_state=random_state, **params)
-
+        print("="*50)
+        log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
-        score = -cross_val_score(model, X, y,
+        score = 1 - cross_val_score(model, X, y,
                                  fit_params={'sample_weight': w},
-                                 groups=groups, cv=cv, scoring="neg_mean_squared_error", n_jobs=-1).mean()
+                                 groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
 
         return score
 
-    import IPython; IPython.embed(); import sys; sys.exit()
-    best = fmin(fn=gb_mse_cv,  # function to optimize
+    best = fmin(fn=objective,  # function to optimize
                 space=search_space,
                 ** conf.hyperopt_params,
                 algo=algo,  # optimization algorithm, hyperotp will select its parameters automatically
@@ -110,29 +71,45 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
                 rstate=rstate,
                 )
 
+    params_space = []
+    for t in trials.trials:
+        l = {k:v[0] for k, v in t['misc']['vals'].items()}
+        params_space.append(l)
 
-    model = modelmaps[conf.algorithm]()
-    model.fit(train_data, train_targets)
-    tpe_test_score = mean_squared_error(test_targets, model.predict(test_data))
+    results = pd.DataFrame.from_dict(params_space, orient='columns')
+    loss = [x['result']['loss'] for x in trials.trials]
+    results.insert(0, 'loss', loss)
 
-    print("Best MSE {:.3f} params {}".format(gb_mse_cv(best), best))
+    log.info("Best Loss {:.3f} params {}".format(objective(best), best))
+    results.to_csv(conf.optimisation_output)
+    # import IPython; IPython.embed(); import sys; sys.exit()
 
-    # reg = modelmaps[conf.algorithm](** conf.algorithm_args)
-    #
-    # estim = HyperoptEstimator(
-    #     preprocessing=[IdentityTransformer],
-    #     # space=,
-    #     regressor=xgboost_regression('xgb', objective="reg:squarederror"),
-    #     max_evals=20,
-    #     trial_timeout=60,
-    #     seed=1,
-    #     verbose=True,
-    # )
-    # estim.fit(X, y, groups=groups, n_folds=2)
-    # estim.retrain_best_model_on_full_data(X, y)
-    # print('Best preprocessing pipeline:')
-    # for pp in estim._best_preprocs:
-    #     print(pp)
-    # print('\n')
-    # print('Best regressor:\n', estim._best_learner)
+    log.info(f"Finished param optimisation using Hyperopt {algo}")
+    log.info(f"Best score found using param optimisation {objective(best)}")
 
+    with open(conf.optimised_model_params, 'w') as f:
+        all_params = {** conf.algorithm_args}
+        all_params.update(best)
+        # json.dump(all_params, cls=NpEncoder)
+        json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
+        log.info(f"Saved {algo} optimised params in {all_params}")
+
+    log.info("Now training final model using the optimised model params")
+    opt_model = modelmaps[conf.algorithm](** all_params)
+    opt_model.fit(X, y, sample_weight=w)
+
+    return opt_model
+
+
+class NpEncoder(json.JSONEncoder):
+    """
+    see https://stackoverflow.com/a/57915246/3321542
+    """
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
