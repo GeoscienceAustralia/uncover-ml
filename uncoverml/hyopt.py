@@ -63,6 +63,7 @@ def bayesian_optimisation(X, targets_all, conf: Config):
         print("="*50)
         log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
+        conf.algorithm_args = all_params
         local_crossval(X, targets_all, conf)
         cv_score = cross_val_score(model, X, y,
                                    fit_params={'sample_weight': w},
