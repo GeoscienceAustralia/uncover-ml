@@ -10,6 +10,7 @@ from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
+from uncoverml.validate import local_crossval
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ hp_algo = {
 }
 
 
-def bayesian_optimisation(X, y, w, groups, conf: Config):
+def bayesian_optimisation(X, targets_all, conf: Config):
     """
     :param X: covaraite matrix
     :param y: targets
@@ -29,6 +30,9 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
     :param conf:
     :return:
     """
+    y = targets_all.observations
+    groups = targets_all.groups
+    w = targets_all.groups
     trials = Trials()
     search_space = {k: eval(v) for k, v in conf.hp_params_space.items()}
 
@@ -59,10 +63,12 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         print("="*50)
         log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
-        score = 1 - cross_val_score(model, X, y,
-                                    fit_params={'sample_weight': w},
-                                    groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
-
+        local_crossval(X, targets_all, conf)
+        cv_score = cross_val_score(model, X, y,
+                                   fit_params={'sample_weight': w},
+                                   groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
+        score = 1 - cv_score
+        log.info(f"Loss: {score}")
         return score
 
     step = conf.hyperopt_params.pop('step') if 'step' in conf.hyperopt_params else 10
