@@ -141,7 +141,7 @@ def split_gfold(groups, k=5, seed=None):
         cvinds.append(g[1])
         cvassigns[g[1]] = n
 
-    return cvinds, cvassigns
+    return cvinds, cvassigns, fold
 
 
 def classification_validation_scores(ys, eys, ws, pys):
@@ -392,7 +392,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         raise ValueError(f"Cannot continue cross-validation with chosen params as num of groups {max(groups) + 1} "
                          f"in data is less than the number of folds {config.folds}")
 
-    _, cv_indices = split_gfold(groups, config.folds, config.crossval_seed)
+    _, cv_indices, fold = split_gfold(groups, config.folds, config.crossval_seed)
 
     # Split folds over workers
     fold_list = np.arange(config.folds)
@@ -406,11 +406,24 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     weight = {}
     lon_lat_ = {}
     fold_scores = {}
+    from sklearn.base import clone
+    from sklearn.model_selection import cross_val_score
+
+    if mpiops.chunk_index == 0:
+        x_val_score = cross_val_score(model, x_all, y,
+                        fit_params={'sample_weight': w},
+                        groups=groups, cv=fold, scoring="r2", n_jobs=-1).mean()
+        print("xxx==x=x=x=x=x=xx=>>>>>>>", x_val_score)
+
+    mpiops.comm.barrier()
+
+
 
     # Train and score on each fold
-    for fold in fold_node:
-        model = modelmaps[config.algorithm](**config.algorithm_args)
 
+
+    for fold in fold_node:
+        model = clone(model)
         print("Training fold {} of {} using process {}".format(
             fold + 1, config.folds, mpiops.chunk_index))
         train_mask = cv_indices != fold

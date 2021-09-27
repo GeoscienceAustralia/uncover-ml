@@ -11,10 +11,10 @@ features:
       - path: configs/data/sirsam/sagawet_b_sir.tif
       - path: configs/data/sirsam/dem_foc2.tif
       - path: configs/data/sirsam/outcrop_dis2.tif
-      - path: configs/data/sirsam/k_15v5.tif
+#      - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
-      - path: configs/data/sirsam/LATITUDE_GRID1.tif
-      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
+#      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+#      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
 #      - directory: configs/data/weights/
     transforms:
       - identity
