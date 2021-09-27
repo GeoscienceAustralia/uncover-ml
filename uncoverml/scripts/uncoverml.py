@@ -203,7 +203,12 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     log.info(param_str)
     targets_all, x_all = _load_data(config, partitions)
     uncoverml.mpiops.comm.barrier()
-    model = uncoverml.mpiops.run_once(hyopt.bayesian_optimisation, x_all, targets_all, config)
+    if config.hpopt:
+        log.info("Using hyperopt package to optimise model params")
+        model = uncoverml.mpiops.run_once(hyopt.optimise_model, x_all, targets_all, config)
+    else:
+        log.info("Using scikit-optimise package to optimise model params")
+        model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, targets_all, config)
     config.optimised_model = True
     ls.mpiops.run_once(ls.geoio.export_model, model, config, False)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))

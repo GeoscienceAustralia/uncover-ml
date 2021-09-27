@@ -21,7 +21,7 @@ hp_algo = {
 }
 
 
-def bayesian_optimisation(X, targets_all, conf: Config):
+def optimise_model(X, targets_all, conf: Config):
     """
     :param X: covaraite matrix
     :param y: targets

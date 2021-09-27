@@ -8,6 +8,7 @@ from sklearn.metrics import (
     mean_squared_error,
     mean_absolute_error
 )
+from sklearn.model_selection import GroupKFold, KFold
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
 
@@ -28,7 +29,7 @@ regression_metrics = {
 }
 
 
-def bayesian_optimisation(X, y, w, groups, conf: Config):
+def bayesian_optimisation(X, targets_all, conf: Config):
     """
     :param X: covaraite matrix
     :param y: targets
@@ -37,8 +38,20 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
     :param conf:
     :return:
     """
+    y = targets_all.observations
+    groups = targets_all.groups
+    w = targets_all.groups
     reg = modelmaps[conf.algorithm](** conf.algorithm_args)
     search_space = {k: eval(v) for k, v in conf.opt_params_space.items()}
+    cv_folds = conf.opt_searchcv_params.pop('cv') if 'cv' in conf.opt_searchcv_params else 5
+
+    if len(np.unique(groups)) >= cv_folds:
+        log.info(f'Using GroupKFold with {cv_folds} folds')
+        cv = GroupKFold(n_splits=cv_folds)
+    else:
+        log.info(f'Using KFold with {cv_folds} folds')
+        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=conf.opt_searchcv_params['random_state'])
+
     searchcv = BayesSearchCV(
         reg,
         search_spaces=search_space,
@@ -46,7 +59,7 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
         fit_params={'sample_weight': w},
         return_train_score=True,
         refit=False,
-        # scoring='r2',
+        cv=cv
     )
 
     log.info(f"Optimising params using BayesSearchCV .....")

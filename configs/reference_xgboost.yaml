@@ -52,7 +52,8 @@ learning:
       verbose: 1000
       n_points: 3
       n_jobs: 12
-    #      scoring: r2
+      random_state: 4
+      scoring: r2
     params_space:
       max_depth: Integer(1, 15)
       learning_rate: Real(10 ** -5, 10 ** 0, prior="log-uniform")
@@ -66,17 +67,17 @@ learning:
       colsample_bynode: Real(0.01, 1.0, prior='uniform')
       reg_alpha: Real(1, 100, prior='uniform')
       reg_lambda: Real(0.01, 10, prior='log-uniform')
-    hyperopt_params:
-      max_evals: 50
-      step: 20
-      cv: 2
-      verbose: true
-      rstate: 3
-      algo: bayes   # bayes, or anneal
-    hp_params_space:
-      max_depth: randint('max_depth', 1, 15)
-      n_estimators: randint('n_estimators', 5, 25)
-      learning_rate: loguniform('learning_rate', -5, 0)
+#    hyperopt_params:
+#      max_evals: 50
+#      step: 20
+#      cv: 2
+#      verbose: true
+#      rstate: 3
+#      algo: bayes   # bayes, or anneal
+#    hp_params_space:
+#      max_depth: randint('max_depth', 1, 15)
+#      n_estimators: randint('n_estimators', 5, 25)
+#      learning_rate: loguniform('learning_rate', -5, 0)
 #      min_child_weight: randint('min_child_weight', 0.0, 10)
 #      max_delta_step: randint('max_delta_step', 0, 20)
 #      gamma: uniform('gamma', 0, 10)

@@ -339,15 +339,20 @@ class Config:
 
         self.optimised_model = False
         if 'learning' in s:
+            self.hpopt = False
+            self.skopt = False
             if 'optimisation' in s['learning']:
                 if 'searchcv_params' in s['learning']['optimisation']:
                     self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
                     self.opt_params_space = s['learning']['optimisation']['params_space']
+                    self.skopt = True
                 if 'hyperopt_params' in s['learning']['optimisation']:
                     self.hyperopt_params = s['learning']['optimisation']['hyperopt_params']
                     self.hp_params_space = s['learning']['optimisation']['hp_params_space']
+                    self.hpopt = True
 
-
+                if self.skopt and self.hpopt:
+                    raise ConfigException("Only one of searchcv_params or hyperopt_params can be specified")
 
         self.cluster_analysis = False
         self.clustering = False
