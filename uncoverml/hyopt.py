@@ -43,12 +43,12 @@ def bayesian_optimisation(X, targets_all, conf: Config):
     random_state = conf.hyperopt_params.pop('rstate')
     rstate = np.random.RandomState(random_state)
 
-    if len(np.unique(groups)) > 1:
+    if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
         cv = GroupKFold(n_splits=cv_folds)
     else:
         log.info(f'Using KFold with {cv_folds} folds')
-        cv = KFold(n_splits=cv_folds)
+        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
@@ -63,20 +63,11 @@ def bayesian_optimisation(X, targets_all, conf: Config):
         print("="*50)
         log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
-        conf.algorithm_args = all_params
-        local_crossval(X, targets_all, conf)
-        cv_results = cross_validate(estimator=model, X=X, y=y, groups=groups,
-                                    scoring='r2', cv=cv,
-                                    n_jobs=-1, verbose=True,
-                                    fit_params={'sample_weight': w},
-                                    )
-        log.info(f"===============>>>>>>test score: {cv_results['test_score'].mean()}")
-
         cv_score = cross_val_score(model, X, y,
                                    fit_params={'sample_weight': w},
                                    groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
         score = 1 - cv_score
-        log.info(f"===============>>>>>>>Loss: {score}")
+        log.info(f"Loss: {score}")
         return score
 
     step = conf.hyperopt_params.pop('step') if 'step' in conf.hyperopt_params else 10
