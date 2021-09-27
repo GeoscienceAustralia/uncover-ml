@@ -52,10 +52,10 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
 
         if hasattr(reg, 'random_state'):
             all_params.update(**params, random_state=random_state)
-            model = reg(** params)
+            model = reg(** all_params)
         else:
             all_params.update(** params)
-            model = reg(** params)
+            model = reg(** all_params)
         print("="*50)
         log.info(f"Cross-validating param combination:\n {all_params}")
         # and then conduct the cross validation with the same folds as before
