@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, GroupKFold, KFold
+from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate
 from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
@@ -65,11 +65,18 @@ def bayesian_optimisation(X, targets_all, conf: Config):
         # and then conduct the cross validation with the same folds as before
         conf.algorithm_args = all_params
         local_crossval(X, targets_all, conf)
+        cv_results = cross_validate(estimator=model, X=X, y=y, groups=groups,
+                                    scoring='r2', cv=cv,
+                                    n_jobs=-1, verbose=True,
+                                    fit_params={'sample_weight': w},
+                                    )
+        print("===============>>>>>>test score: ", cv_results['test_score'].mean())
+
         cv_score = cross_val_score(model, X, y,
                                    fit_params={'sample_weight': w},
                                    groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
         score = 1 - cv_score
-        log.info(f"Loss: {score}")
+        log.info(f"===============>>>>>>>Loss: {score}")
         return score
 
     step = conf.hyperopt_params.pop('step') if 'step' in conf.hyperopt_params else 10
