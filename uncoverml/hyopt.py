@@ -75,7 +75,8 @@ def bayesian_optimisation(X, y, w, groups, conf: Config):
             ** conf.hyperopt_params,
             algo=algo,
             trials=trials,
-            max_evals=i + step
+            max_evals=i + step,
+            rstate=rstate
             )
         # each step 'best' will be the best trial so far
         log.info(f"After {i + step} trials best config: \n {best}")
