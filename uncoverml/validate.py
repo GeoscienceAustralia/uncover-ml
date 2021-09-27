@@ -409,6 +409,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
 
     # Train and score on each fold
     for fold in fold_node:
+        model = modelmaps[config.algorithm](**config.algorithm_args)
 
         print("Training fold {} of {} using process {}".format(
             fold + 1, config.folds, mpiops.chunk_index))

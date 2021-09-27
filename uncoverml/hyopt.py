@@ -70,7 +70,7 @@ def bayesian_optimisation(X, targets_all, conf: Config):
                                     n_jobs=-1, verbose=True,
                                     fit_params={'sample_weight': w},
                                     )
-        print("===============>>>>>>test score: ", cv_results['test_score'].mean())
+        log.info(f"===============>>>>>>test score: {cv_results['test_score'].mean()}")
 
         cv_score = cross_val_score(model, X, y,
                                    fit_params={'sample_weight': w},
