@@ -10,7 +10,6 @@ from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
-from uncoverml.validate import local_crossval
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +41,7 @@ def optimise_model(X, targets_all, conf: Config):
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
     random_state = conf.hyperopt_params.pop('rstate')
     rstate = np.random.RandomState(random_state)
+    scoring = conf.hyperopt_params.pop('scoring')
 
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
@@ -65,7 +65,7 @@ def optimise_model(X, targets_all, conf: Config):
         # and then conduct the cross validation with the same folds as before
         cv_score = cross_val_score(model, X, y,
                                    fit_params={'sample_weight': w},
-                                   groups=groups, cv=cv, scoring="r2", n_jobs=-1).mean()
+                                   groups=groups, cv=cv, scoring=scoring, n_jobs=-1).mean()
         score = 1 - cv_score
         log.info(f"Loss: {score}")
         return score
