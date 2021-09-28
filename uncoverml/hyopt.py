@@ -39,7 +39,7 @@ def optimise_model(X, targets_all, conf: Config):
 
     algo = hp_algo[conf.hyperopt_params.pop('algo')] if 'algo' in conf.hyperopt_params else tpe.suggest
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
-    random_state = conf.hyperopt_params.pop('rstate')
+    random_state = conf.hyperopt_params.pop('random_state')
     rstate = np.random.RandomState(random_state)
     scoring = conf.hyperopt_params.pop('scoring')
 

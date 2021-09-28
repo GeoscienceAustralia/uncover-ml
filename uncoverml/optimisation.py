@@ -44,13 +44,14 @@ def bayesian_optimisation(X, targets_all, conf: Config):
     reg = modelmaps[conf.algorithm](** conf.algorithm_args)
     search_space = {k: eval(v) for k, v in conf.opt_params_space.items()}
     cv_folds = conf.opt_searchcv_params.pop('cv') if 'cv' in conf.opt_searchcv_params else 5
+    random_state = conf.opt_searchcv_params['random_state'] if 'random_state' in conf.opt_searchcv_params else None
 
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
         cv = GroupKFold(n_splits=cv_folds)
     else:
         log.info(f'Using KFold with {cv_folds} folds')
-        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=conf.opt_searchcv_params['random_state'])
+        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
 
     searchcv = BayesSearchCV(
         reg,

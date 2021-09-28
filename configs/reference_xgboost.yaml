@@ -88,7 +88,7 @@ learning:
 #      step: 20
 #      cv: 2
 #      verbose: true
-#      rstate: 3
+#      random_state: 3
 #      scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
 #      algo: bayes   # bayes, or anneal
 #    hp_params_space:
