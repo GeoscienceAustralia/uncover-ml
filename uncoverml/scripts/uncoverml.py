@@ -197,7 +197,7 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
                 param_dicts.append(json.load(f))
         config.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
 
-    param_str = f'Optimising earning {config.algorithm} model with the following base params:\n'
+    param_str = f'Optimising {config.algorithm} model with the following base params:\n'
     for param, value in config.algorithm_args.items():
         param_str += "{}\t= {}\n".format(param, value)
     log.info(param_str)

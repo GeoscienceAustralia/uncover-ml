@@ -73,6 +73,8 @@ def optimise_model(X, targets_all, conf: Config):
     step = conf.hyperopt_params.pop('step') if 'step' in conf.hyperopt_params else 10
     max_evals = conf.hyperopt_params.pop('max_evals') if 'max_evals' in conf.hyperopt_params else 50
 
+    log.info(f"Optimising params using Hyperopt {algo}")
+
     for i in range(1, max_evals + 1, step):
         # fmin runs until the trials object has max_evals elements in it, so it can do evaluations in chunks like this
         best = fmin(
@@ -107,7 +109,7 @@ def optimise_model(X, targets_all, conf: Config):
     return opt_model
 
 
-def save_optimal(best, trials, objective, conf):
+def save_optimal(best, trials, objective, conf: Config):
     params_space = []
     for t in trials.trials:
         l = {k: v[0] for k, v in t['misc']['vals'].items()}
@@ -116,7 +118,7 @@ def save_optimal(best, trials, objective, conf):
     loss = [x['result']['loss'] for x in trials.trials]
     results.insert(0, 'loss', loss)
     log.info("Best Loss {:.3f} params {}".format(objective(best), best))
-    results.to_csv(conf.optimisation_output)
+    results.sort_values(by='loss').to_csv(conf.optimisation_output_hpopt)
 
 
 class NpEncoder(json.JSONEncoder):

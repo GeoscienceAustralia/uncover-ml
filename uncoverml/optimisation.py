@@ -79,12 +79,20 @@ def bayesian_optimisation(X, targets_all, conf: Config):
     opt_model = modelmaps[conf.algorithm](** all_params)
     opt_model.fit(X, y, sample_weight=w)
     params = pd.DataFrame.from_dict(searchcv.cv_results_['params'], orient='columns')
-    results = pd.DataFrame.from_dict(searchcv.cv_results_).sort_values(by='rank_test_score')
+    results = pd.DataFrame.from_dict(searchcv.cv_results_)
 
-    pd.concat([results, params], axis=1).drop('params', axis=1).to_csv(
-        conf.optimisation_output
+    df = pd.concat(
+        [results, params], axis=1
+    ).drop('params', axis=1).sort_values(
+        by='rank_test_score', ascending=False
     )
 
+    test_score_col = df.pop('rank_test_score')
+    df.insert(
+        0, test_score_col.name, test_score_col  # Is in-place
+    ).to_csv(
+        conf.optimisation_output_skopt
+    )
     return opt_model
 
 
