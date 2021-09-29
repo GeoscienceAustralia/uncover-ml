@@ -90,7 +90,8 @@ def bayesian_optimisation(X, targets_all, conf: Config):
     test_score_col = df.pop('rank_test_score')
     df.insert(
         0, test_score_col.name, test_score_col  # Is in-place
-    ).to_csv(
+    )
+    df.to_csv(
         conf.optimisation_output_skopt
     )
     return opt_model
