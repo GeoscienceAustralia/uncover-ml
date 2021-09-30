@@ -186,7 +186,7 @@ def _load_data(config, partitions):
               help='divide each node\'s data into this many partitions')
 def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     """Optimise model parameters using Bayesian regression."""
-    if uncoverml.mpiops.chunks > 1 and ('PBS_NNODES' in os.environ and os.environ['PBS_NNODES'] > 1):
+    if uncoverml.mpiops.chunks > 1 and ('PBS_NNODES' in os.environ and int(os.environ['PBS_NNODES']) > 1):
         raise NotImplementedError("Currently optimiser does not work with mpi. \n"
                                   "However it can utilise a whole NCI node with many CPUs!")
     config = ls.config.Config(pipeline_file)
