@@ -10,6 +10,7 @@ from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
+from uncoverml import geoio
 
 log = logging.getLogger(__name__)
 
@@ -106,7 +107,8 @@ def optimise_model(X, targets_all, conf: Config):
     opt_model = modelmaps[conf.algorithm](** all_params)
     opt_model.fit(X, y, sample_weight=w)
 
-    return opt_model
+    conf.optimised_model = True
+    geoio.export_model(opt_model, conf, False)
 
 
 def save_optimal(best, trials, objective, conf: Config):

@@ -14,6 +14,7 @@ from skopt.space import Real, Integer, Categorical
 
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
+from uncoverml import geoio
 log = logging.getLogger(__name__)
 
 
@@ -94,7 +95,8 @@ def bayesian_optimisation(X, targets_all, conf: Config):
     df.to_csv(
         conf.optimisation_output_skopt
     )
-    return opt_model
+    conf.optimised_model = True
+    geoio.export_model(opt_model, conf, False)
 
 
 def score_model(trained_model, X, y, w=None):

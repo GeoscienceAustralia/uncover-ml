@@ -5,6 +5,8 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 """
 
 import logging
+import os
+
 import joblib
 import resource
 import json
@@ -184,7 +186,7 @@ def _load_data(config, partitions):
               help='divide each node\'s data into this many partitions')
 def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     """Optimise model parameters using Bayesian regression."""
-    if uncoverml.mpiops.chunks > 1:
+    if uncoverml.mpiops.chunks > 1 and ('PBS_NNODES' in os.environ and os.environ['PBS_NNODES'] > 1):
         raise NotImplementedError("Currently optimiser does not work with mpi. \n"
                                   "However it can utilise a whole NCI node with many CPUs!")
     config = ls.config.Config(pipeline_file)
@@ -202,15 +204,15 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
         param_str += "{}\t= {}\n".format(param, value)
     log.info(param_str)
     targets_all, x_all = _load_data(config, partitions)
-    uncoverml.mpiops.comm.barrier()
-    if config.hpopt:
-        log.info("Using hyperopt package to optimise model params")
-        model = uncoverml.mpiops.run_once(hyopt.optimise_model, x_all, targets_all, config)
-    else:
-        log.info("Using scikit-optimise package to optimise model params")
-        model = uncoverml.mpiops.run_once(optimisation.bayesian_optimisation, x_all, targets_all, config)
-    config.optimised_model = True
-    ls.mpiops.run_once(ls.geoio.export_model, model, config, False)
+    if ls.mpiops.chunk_index == 0:
+        if config.hpopt:
+            log.info("Using hyperopt package to optimise model params")
+            hyopt.optimise_model(x_all, targets_all, config)
+        else:
+            log.info("Using scikit-optimise package to optimise model params")
+            optimisation.bayesian_optimisation(x_all, targets_all, config)
+
+    ls.mpiops.comm.barrier()
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
     log.info("Finished optimisation of model parameters!")
