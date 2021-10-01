@@ -5,7 +5,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate
+from sklearn.utils import shuffle
+from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate, GroupShuffleSplit
 from hyperopt import fmin, tpe, anneal, Trials
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
@@ -37,10 +38,15 @@ def optimise_model(X, targets_all, conf: Config):
     search_space = {k: eval(v) for k, v in conf.hp_params_space.items()}
 
     reg = modelmaps[conf.algorithm]
+    has_random_state_arg = hasattr(reg(), 'random_state')
 
     algo = hp_algo[conf.hyperopt_params.pop('algo')] if 'algo' in conf.hyperopt_params else tpe.suggest
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
     random_state = conf.hyperopt_params.pop('random_state')
+
+    # shuffle data
+    X, y, groups = shuffle(X, y, groups, random_state=random_state)
+
     rstate = np.random.RandomState(random_state)
     scoring = conf.hyperopt_params.pop('scoring')
 
@@ -54,8 +60,7 @@ def optimise_model(X, targets_all, conf: Config):
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
         all_params = {**conf.algorithm_args}
-
-        if hasattr(reg, 'random_state'):
+        if has_random_state_arg:
             all_params.update(**params, random_state=random_state)
             model = reg(** all_params)
         else:

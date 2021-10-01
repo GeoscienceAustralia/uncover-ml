@@ -545,7 +545,7 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
+                 warm_start=False,
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
@@ -564,7 +564,7 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
             min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
         )
 
@@ -590,7 +590,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
+                 warm_start=False,
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0
                  ):
@@ -618,7 +618,6 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
-        self.presort = presort
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
@@ -635,7 +634,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
         )
         self.gb_quantile_upper = GradientBoostingRegressor(
@@ -649,7 +648,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             min_impurity_split=min_impurity_split,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
             ** self.upper_quantile_params
         )
@@ -664,7 +663,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             min_impurity_split=min_impurity_split,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
             **self.lower_quantile_params
         )

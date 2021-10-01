@@ -5,6 +5,7 @@ import logging
 import copy
 from pathlib import Path
 import numpy as np
+from sklearn.utils import shuffle
 from sklearn.model_selection import GroupKFold, KFold
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score,
@@ -387,6 +388,8 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     w = targets_all.weights
     lon_lat = targets_all.positions
     groups = targets_all.groups
+    random_state = config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else None
+    x_all, y, groups = shuffle(x_all, y, groups, random_state=random_state)
 
     if (len(np.unique(groups)) + 1 < config.folds) and config.group_targets:
         raise ValueError(f"Cannot continue cross-validation with chosen params as num of groups {max(groups) + 1} "
