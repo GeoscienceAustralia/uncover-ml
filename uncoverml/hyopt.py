@@ -7,10 +7,13 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate, GroupShuffleSplit
+from sklearn.metrics import check_scoring
 from hyperopt import fmin, tpe, anneal, Trials
+
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
+from uncoverml.validate import setup_validation_data
 from uncoverml import geoio
 
 log = logging.getLogger(__name__)
@@ -45,17 +48,11 @@ def optimise_model(X, targets_all, conf: Config):
     random_state = conf.hyperopt_params.pop('random_state')
 
     # shuffle data
-    X, y, groups = shuffle(X, y, groups, random_state=random_state)
-
     rstate = np.random.RandomState(random_state)
     scoring = conf.hyperopt_params.pop('scoring')
+    scorer = check_scoring(reg(** conf.algorithm_args), scoring=scoring)
 
-    if len(np.unique(groups)) >= cv_folds:
-        log.info(f'Using GroupKFold with {cv_folds} folds')
-        cv = GroupKFold(n_splits=cv_folds)
-    else:
-        log.info(f'Using KFold with {cv_folds} folds')
-        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
+    X, y, cv = setup_validation_data(X, y, groups, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
@@ -68,11 +65,10 @@ def optimise_model(X, targets_all, conf: Config):
             model = reg(** all_params)
         print("="*50)
         log.info(f"Cross-validating param combination:\n {all_params}")
-        # and then conduct the cross validation with the same folds as before
-        cv_score = cross_val_score(model, X, y,
-                                   fit_params={'sample_weight': w},
-                                   groups=groups, cv=cv, scoring=scoring, n_jobs=-1).mean()
-        score = 1 - cv_score
+        cv_results = cross_validate(model, X, y,
+                                    fit_params={'sample_weight': w},
+                                    groups=groups, cv=cv, scoring={'score': scorer}, n_jobs=-1)
+        score = 1 - cv_results['test_score'].mean()
         log.info(f"Loss: {score}")
         return score
 
