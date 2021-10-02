@@ -107,7 +107,7 @@ def split_cfold(nsamples, k=5, seed=None):
     return cvinds, cvassigns
 
 
-def split_gfold(groups, k=5, seed=None):
+def split_gfold(groups, cv):
     """
     Function that returns indices for splitting data into random folds respecting groups.
 
@@ -132,12 +132,10 @@ def split_gfold(groups, k=5, seed=None):
         cvinds.
 
     """
-    fold = GroupKFold(n_splits=k) if len(np.unique(groups)) >= k else \
-        KFold(n_splits=k, shuffle=True, random_state=seed)
     cvinds = []
     cvassigns = np.zeros_like(groups, dtype=int)
-    fold_str = fold.__class__.__name__
-    for n, g in enumerate(fold.split(np.arange(groups.shape[0]), groups=groups)):
+    fold_str = cv.__class__.__name__
+    for n, g in enumerate(cv.split(np.arange(groups.shape[0]), groups=groups)):
         log.info(f"{fold_str} resulted in {g[1].shape[0]} targets in Group {n}")
         cvinds.append(g[1])
         cvassigns[g[1]] = n
@@ -370,7 +368,7 @@ def setup_validation_data(X, y, groups, cv_folds, random_state=None):
     else:
         log.info(f'Using KFold with {cv_folds} folds')
         cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
-    return X, y, cv
+    return X, y, groups, cv
 
 
 def local_crossval(x_all, targets_all: targ.Targets, config: Config):
@@ -414,8 +412,110 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     if (len(np.unique(groups)) + 1 < config.folds) and config.group_targets:
         raise ValueError(f"Cannot continue cross-validation with chosen params as num of groups {max(groups) + 1} "
                          f"in data is less than the number of folds {config.folds}")
+    random_state = \
+        config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else np.random.randint(1000)
+    x_all, y, groups, cv = setup_validation_data(x_all, y, groups, config.folds, random_state)
+    _, cv_indices = split_gfold(groups, cv)
 
-    # _, cv_indices = split_gfold(groups, config.folds, config.crossval_seed)
+    # Split folds over workers
+    fold_list = np.arange(config.folds)
+    if config.parallel_validate:
+        fold_node = np.array_split(fold_list, mpiops.chunks)[mpiops.chunk_index]
+    else:
+        fold_node = fold_list
+
+    y_pred = {}
+    y_true = {}
+    weight = {}
+    lon_lat_ = {}
+    fold_scores = {}
+    # Train and score on each fold
+    for fold in fold_node:
+        model = modelmaps[config.algorithm](**config.algorithm_args)
+
+        print("Training fold {} of {} using process {}".format(
+            fold + 1, config.folds, mpiops.chunk_index))
+        train_mask = cv_indices != fold
+        test_mask = ~ train_mask
+
+        y_k_train = y[train_mask]
+        w_k_train = w[train_mask]
+        lon_lat_train = lon_lat[train_mask, :]
+        lon_lat_test = lon_lat[test_mask, :]
+
+        # Extra fields
+        fields_train = {f: v[train_mask]
+                        for f, v in targets_all.fields.items()}
+        fields_pred = {f: v[test_mask] for f, v in targets_all.fields.items()}
+
+        # Train on this fold
+        x_train = x_all[train_mask]
+        apply_multiple_masked(model.fit, data=(x_train, y_k_train),
+                              ** {'fields': fields_train,
+                                  'sample_weight': w_k_train,
+                                  'lon_lat': lon_lat_train})
+
+        # Testing
+        y_k_pred = predict.predict(x_all[test_mask], model,
+                                   fields=fields_pred,
+                                   lon_lat=lon_lat_test)
+
+        y_pred[fold] = y_k_pred
+
+        # Regression
+        if not classification:
+            y_k_test = y[test_mask]
+            y_true[fold] = y_k_test
+            w_k_test = w[test_mask]
+            weight[fold] = w_k_test
+            lon_lat_[fold] = lon_lat_test
+            fold_scores[fold] = regression_validation_scores(y_k_test, y_k_pred, w_k_test, model)
+
+        # Classification
+        else:
+            y_k_test = model.le.transform(y[test_mask])
+            y_true[fold] = y_k_test
+            w_k_test = w[test_mask]
+            weight[fold] = w_k_test
+            lon_lat_[fold] = lon_lat_test
+            y_k_hard, p_k = y_k_pred[:, 0], y_k_pred[:, 1:]
+            fold_scores[fold] = classification_validation_scores(y_k_test, y_k_hard, w_k_test, p_k)
+
+    if config.parallel_validate:
+        y_pred = _join_dicts(mpiops.comm.gather(y_pred, root=0))
+        lon_lat_ = _join_dicts(mpiops.comm.gather(lon_lat_, root=0))
+        y_true = _join_dicts(mpiops.comm.gather(y_true, root=0))
+        weight = _join_dicts(mpiops.comm.gather(weight, root=0))
+        scores = _join_dicts(mpiops.comm.gather(fold_scores, root=0))
+    else:
+        scores = fold_scores
+
+    result = None
+    if mpiops.chunk_index == 0:
+        y_true = np.concatenate([y_true[i] for i in range(config.folds)])
+        weight = np.concatenate([weight[i] for i in range(config.folds)])
+        lon_lat = np.concatenate([lon_lat_[i] for i in range(config.folds)])
+        y_pred = np.concatenate([y_pred[i] for i in range(config.folds)])
+        valid_metrics = scores[0].keys()
+        scores = {m: np.mean([d[m] for d in scores.values()], axis=0)
+                  for m in valid_metrics}
+        score_string = "Validation complete:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+        log.info(score_string)
+
+        result_tags = model.get_predict_tags()
+        y_pred_dict = dict(zip(result_tags, y_pred.T))
+        if hasattr(model, '_notransform_predict'):
+            y_pred_dict['transformedpredict'] = \
+                model.target_transform.transform(y_pred[:, 0])
+        result = CrossvalInfo(scores, y_true, y_pred_dict, weight, lon_lat, classification)
+
+    # change back to parallel
+    if config.multicubist or config.multirandomforest:
+        config.algorithm_args['parallel'] = True
+
+    return result
 
     random_state = \
         config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else np.random.randint(1000)
@@ -432,7 +532,8 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
 
     score_string = "Validation complete:\n"
     for metric, score in cv_score.items():
-        score_string += "{}\t= {}\n".format(metric, score.mean())
+        if metric.startswith('test_'):
+            score_string += "{}\t= {}\n".format(metric, score.mean())
     log.info(score_string)
 
     # result = CrossvalInfo(scores, y_true, y_pred_dict, weight, lon_lat, classification)

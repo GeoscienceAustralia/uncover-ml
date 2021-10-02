@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate, GroupShuffleSplit
 from sklearn.metrics import check_scoring
-from hyperopt import fmin, tpe, anneal, Trials
+from hyperopt import fmin, tpe, anneal, Trials, space_eval
 
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
@@ -42,8 +42,8 @@ def optimise_model(X, targets_all, conf: Config):
 
     reg = modelmaps[conf.algorithm]
     has_random_state_arg = hasattr(reg(), 'random_state')
-
-    algo = hp_algo[conf.hyperopt_params.pop('algo')] if 'algo' in conf.hyperopt_params else tpe.suggest
+    bayes_or_anneal = conf.hyperopt_params.pop('algo') if 'algo' in conf.hyperopt_params else 'bayes'
+    algo = hp_algo[bayes_or_anneal]
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
     random_state = conf.hyperopt_params.pop('random_state')
 
@@ -52,7 +52,7 @@ def optimise_model(X, targets_all, conf: Config):
     scoring = conf.hyperopt_params.pop('scoring')
     scorer = check_scoring(reg(** conf.algorithm_args), scoring=scoring)
 
-    X, y, cv = setup_validation_data(X, y, groups, cv_folds, random_state)
+    X, y, groups, cv = setup_validation_data(X, y, groups, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
@@ -64,7 +64,10 @@ def optimise_model(X, targets_all, conf: Config):
             all_params.update(** params)
             model = reg(** all_params)
         print("="*50)
-        log.info(f"Cross-validating param combination:\n {all_params}")
+        params_str = ''
+        for k, v in all_params.items():
+            params_str += f"{k}: {v}\n"
+        log.info(f"Cross-validating param combination:\n{params_str}")
         cv_results = cross_validate(model, X, y,
                                     fit_params={'sample_weight': w},
                                     groups=groups, cv=cv, scoring={'score': scorer}, n_jobs=-1)
@@ -88,7 +91,11 @@ def optimise_model(X, targets_all, conf: Config):
             rstate=rstate
             )
         # each step 'best' will be the best trial so far
-        log.info(f"After {i + step} trials best config: \n {best}")
+        params_str = ''
+        best = space_eval(search_space, best)
+        for k, v in best.items():
+            params_str += f"{k}: {v}\n"
+        log.info(f"After {i + step} trials best config: \n {params_str}")
         # each step 'trials' will be updated to contain every result
         # you can save it to reload later in case of a crash, or you decide to kill the script
         pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
@@ -102,7 +109,12 @@ def optimise_model(X, targets_all, conf: Config):
         all_params.update(best)
         # json.dump(all_params, cls=NpEncoder)
         json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
-        log.info(f"Saved {algo} optimised params in {all_params}")
+        params_str = ''
+        for k, v in best.items():
+            params_str += f"{k}: {v}\n"
+        log.info(f"Best params found:\n{params_str}")
+        log.info(f"Saved hyperopt.{bayes_or_anneal}.{algo.__name__} "
+                 f"optimised params in {conf.optimised_model_params}")
 
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** all_params)

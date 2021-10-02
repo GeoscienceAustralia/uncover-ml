@@ -64,7 +64,7 @@ def run_crossval(x_all, targets_all, config):
               help='divide each node\'s data into this many partitions')
 def learn(pipeline_file, param_json, partitions):
     config = ls.config.Config(pipeline_file)
-    if param_json is not None:
+    if len(param_json) > 0:
         # log.info('the following jsons are used as params \n', click.echo('\n'.join(param_json)))
         param_dicts = []  # list of dicts
         for pj in param_json:
