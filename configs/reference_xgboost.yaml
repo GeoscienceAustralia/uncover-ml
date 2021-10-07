@@ -60,7 +60,20 @@ learning:
   algorithm: xgboost
   arguments:
     target_transform: identity
-    n_estimators: 50
+    booster: dart
+    colsample_bylevel: 0.576015640010833
+    colsample_bynode: 0.7753052852726197
+    colsample_bytree: 0.7551261614451765
+    gamma: 1.608938052610619
+    learning_rate: 0.7157991177877647
+    max_delta_step: 4
+    max_depth: 10
+    min_child_weight: 0
+    n_estimators: 24
+    reg_alpha: 14.166999106742683
+    reg_lambda: 261.0013846007669
+    subsample: 0.51376699456898
+    random_state: 3
   optimisation:
 #    searchcv_params:
 #      n_iter: 5
@@ -85,7 +98,7 @@ learning:
 #      reg_lambda: Real(0.01, 10, prior='log-uniform')
     hyperopt_params:
       max_evals: 5
-      step: 20
+      step: 2
       cv: 2
       verbose: true
       random_state: 3
@@ -95,6 +108,7 @@ learning:
       max_depth: randint('max_depth', 1, 15)
       n_estimators: randint('n_estimators', 5, 25)
       learning_rate: loguniform('learning_rate', -5, 0)
+      booster:  choice('booster', ['gbtree', 'dart'])
       min_child_weight: randint('min_child_weight', 0, 10)
       max_delta_step: randint('max_delta_step', 0, 20)
       gamma: uniform('gamma', 0, 10)

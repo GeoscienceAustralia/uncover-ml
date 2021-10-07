@@ -46,6 +46,8 @@ def optimise_model(X, targets_all, conf: Config):
     algo = hp_algo[bayes_or_anneal]
     cv_folds = conf.hyperopt_params.pop('cv') if 'cv' in conf.hyperopt_params else 5
     random_state = conf.hyperopt_params.pop('random_state')
+    conf.bayes_or_anneal = bayes_or_anneal
+    conf.algo = algo
 
     # shuffle data
     rstate = np.random.RandomState(random_state)
@@ -101,21 +103,9 @@ def optimise_model(X, targets_all, conf: Config):
         pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
         save_optimal(best, trials, objective, conf)
 
-    log.info(f"Finished param optimisation using Hyperopt {algo}")
-    log.info(f"Best score found using param optimisation {objective(best)}")
-
-    with open(conf.optimised_model_params, 'w') as f:
-        all_params = {** conf.algorithm_args}
-        all_params.update(best)
-        # json.dump(all_params, cls=NpEncoder)
-        json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
-        params_str = ''
-        for k, v in best.items():
-            params_str += f"{k}: {v}\n"
-        log.info(f"Best params found:\n{params_str}")
-        log.info(f"Saved hyperopt.{bayes_or_anneal}.{algo.__name__} "
-                 f"optimised params in {conf.optimised_model_params}")
-
+    log.info(f"Finished param optimisation using Hyperopt")
+    all_params = {** conf.algorithm_args}
+    all_params.update(best)
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** all_params)
     opt_model.fit(X, y, sample_weight=w)
@@ -125,6 +115,19 @@ def optimise_model(X, targets_all, conf: Config):
 
 
 def save_optimal(best, trials, objective, conf: Config):
+
+    with open(conf.optimised_model_params, 'w') as f:
+        all_params = {** conf.algorithm_args}
+        all_params.update(best)
+        # json.dump(all_params, cls=NpEncoder)
+        json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
+        params_str = ''
+        for k, v in all_params.items():
+            params_str += f"{k}: {v}\n"
+        log.info(f"Best params found:\n{params_str}")
+        log.info(f"Saved hyperopt.{conf.bayes_or_anneal}.{conf.algo.__name__} "
+                 f"optimised params in {conf.optimised_model_params}")
+
     params_space = []
     for t in trials.trials:
         l = {k: v[0] for k, v in t['misc']['vals'].items()}
