@@ -101,7 +101,7 @@ def optimise_model(X, targets_all, conf: Config):
         # each step 'trials' will be updated to contain every result
         # you can save it to reload later in case of a crash, or you decide to kill the script
         pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
-        save_optimal(best, trials, objective, conf)
+        save_optimal(best, random_state, trials, objective, conf)
 
     log.info(f"Finished param optimisation using Hyperopt")
     all_params = {** conf.algorithm_args}
@@ -114,10 +114,10 @@ def optimise_model(X, targets_all, conf: Config):
     geoio.export_model(opt_model, conf, False)
 
 
-def save_optimal(best, trials, objective, conf: Config):
+def save_optimal(best, random_state, trials, objective, conf: Config):
 
     with open(conf.optimised_model_params, 'w') as f:
-        all_params = {** conf.algorithm_args}
+        all_params = {**conf.algorithm_args, 'random_state': random_state}
         all_params.update(best)
         # json.dump(all_params, cls=NpEncoder)
         json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
