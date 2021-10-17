@@ -27,7 +27,7 @@ class TransformPredictMixin:
         return self.target_transform.itransform(Ey_t)
 
     def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X, *args, **kwargs)
+        Ey_t = super().predict(X)
         return Ey_t
 
 
