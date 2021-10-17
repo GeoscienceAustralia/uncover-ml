@@ -1,3 +1,4 @@
+from typing import Dict, Optional
 import numpy as np
 # import warnings
 import logging
@@ -24,7 +25,7 @@ backend = {'ordinary': 'C',
 all_ml_models.update(transformed_modelmaps)
 
 
-class KrigePredictDistMixin():
+class KrigePredictDistMixin:
     """
     Mixin class for providing a ``predict_dist`` method to the
     Krige class.
@@ -159,13 +160,15 @@ class MLKrigeBase(TagsMixin):
 
     def __init__(self,
                  ml_method,
-                 ml_params={},
+                 ml_params=Optional[Dict],
                  method='ordinary',
                  variogram_model='linear',
                  n_closest_points=10,
                  nlags=6,
                  weight=False,
                  verbose=False):
+        if ml_params is None:
+            ml_params = {}
         self.n_closest_points = n_closest_points
         self.krige = Krige(method=method,
                            variogram_model=variogram_model,
@@ -255,7 +258,7 @@ class MLKrigeBase(TagsMixin):
                         sample_weight=sample_weight)
 
 
-class MLKrigePredictDistMixin():
+class MLKrigePredictDistMixin:
 
     def predict_dist(self, x, interval=0.95, lon_lat=None, *args, **kwargs):
         """
@@ -304,8 +307,10 @@ class MLKrigePreidctDist(MLKrigeBase, MLKrigePredictDistMixin):
         super(MLKrigePreidctDist, self).__init__(*args, **kwargs)
 
 
-class MLKrige():
-    def __new__(cls, ml_method, ml_params={}, *args, **kwargs):
+class MLKrige:
+    def __new__(cls, ml_method, ml_params: Optional[Dict], *args, **kwargs):
+        if ml_params is None:
+            ml_params = {}
         ml_model = all_ml_models[ml_method](**ml_params)
         if not hasattr(ml_model, 'predict_dist'):
             return MLKrigeBase(ml_method, ml_params, *args, **kwargs)
