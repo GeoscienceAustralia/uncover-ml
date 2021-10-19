@@ -196,7 +196,7 @@ class MLKrigeBase(TagsMixin):
             ndarray of (x, y) points. Needs to be a (Nt, 2) array
             corresponding to the lon/lat, for example.
         """
-        self.ml_model.fit(x, y)
+        self.ml_model.fit(x, y, *args, **kwargs)
         ml_pred = self.ml_model.predict(x)
         # residual=y-ml_pred
         self.krige.fit(x=lon_lat, y=y - ml_pred)
