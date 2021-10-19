@@ -308,7 +308,7 @@ class MLKrigePreidctDist(MLKrigeBase, MLKrigePredictDistMixin):
 
 
 class MLKrige:
-    def __new__(cls, ml_method, ml_params: Optional[Dict], *args, **kwargs):
+    def __new__(cls, ml_method="randomforest", ml_params: Optional[Dict] = None, *args, **kwargs):
         if ml_params is None:
             ml_params = {}
         ml_model = all_ml_models[ml_method](**ml_params)
