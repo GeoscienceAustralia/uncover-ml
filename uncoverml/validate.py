@@ -517,33 +517,6 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
 
     return result
 
-    random_state = \
-        config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else np.random.randint(1000)
-
-    # shuffle data
-    x_all, y, cv = setup_validation_data(x_all, y, groups, config.folds, random_state)
-
-    if classification:
-        pass
-    else:
-        cv_score = cross_validate(model, x_all, y,
-                                  fit_params={'sample_weight': w},
-                                  groups=groups, cv=cv, scoring=list_of_regression_scores, n_jobs=-1)
-
-    score_string = "Validation complete:\n"
-    for metric, score in cv_score.items():
-        if metric.startswith('test_'):
-            score_string += "{}\t= {}\n".format(metric, score.mean())
-    log.info(score_string)
-
-    # result = CrossvalInfo(scores, y_true, y_pred_dict, weight, lon_lat, classification)
-    #
-    # # change back to parallel
-    # if config.multicubist or config.multirandomforest:
-    #     config.algorithm_args['parallel'] = True
-    #
-    # return result
-
 
 def plot_feature_importance(model, x_all, targets_all, conf: Config):
     log.info("Computing permutation importance!!")
