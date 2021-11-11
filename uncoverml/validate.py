@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.utils import shuffle
 from sklearn.model_selection import GroupKFold, KFold, cross_validate
 from sklearn.metrics import (explained_variance_score, r2_score,
-                             accuracy_score, log_loss, roc_auc_score,
+                             accuracy_score, log_loss, roc_auc_score, mean_squared_error,
                              confusion_matrix)
 import eli5
 from eli5.sklearn import PermutationImportance
@@ -37,7 +37,8 @@ regression_metrics = {
     explained_variance_score(y, py, sample_weight=ws),
     'smse': lambda y, py, vy, ws, y_t, py_t, vy_t: smse(y, py),
     'lins_ccc': lambda y, py, vy, ws, y_t, py_t, vy_t: lins_ccc(y, py),
-    'mll': lambda y, py, vy, ws, y_t, py_t, vy_t: mll(y, py, vy)
+    'mll': lambda y, py, vy, ws, y_t, py_t, vy_t: mll(y, py, vy),
+    "mse": lambda y, py, vy, ws, y_t, py_t, vy_t: mean_squared_error(y, py, sample_weight=ws)
 }
 
 
