@@ -539,12 +539,12 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
 
 
 class GBMReg(GradientBoostingRegressor, TagsMixin):
-    def __init__(self, target_transform='identity', loss='ls', learning_rate=0.1, n_estimators=100,
+    def __init__(self, target_transform='identity', loss='quantile', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 max_features=None, alpha=0.5, verbose=0, max_leaf_nodes=None,
                  warm_start=False,
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
@@ -583,7 +583,8 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
 
 
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
-    def __init__(self, target_transform='identity', upper_alpha=0.95, lower_alpha=0.05,
+    def __init__(self, target_transform='identity', loss='quantile',
+                 alpha=0.5, upper_alpha=0.95, lower_alpha=0.05,
                  learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -594,7 +595,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0
                  ):
-
+        log.warn(f"Supplied loss: {loss} and alpha {alpha} are not going to be used")
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
 
