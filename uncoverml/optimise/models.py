@@ -584,12 +584,12 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
 
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
     def __init__(self, target_transform='identity', upper_alpha=0.95, lower_alpha=0.05,
-                 loss='ls', learning_rate=0.1, n_estimators=100,
+                 learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 max_features=None, verbose=0, max_leaf_nodes=None,
                  warm_start=False,
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0
@@ -599,6 +599,9 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             target_transform = transforms.transforms[target_transform]()
 
         self.target_transform = target_transform
+        # loss = 'quantile'  # use quantile loss for median
+        # alpha = 0.5  # median
+        self.median_quantile_params ={'loss': 'quantile', 'alpha': 0.5}
         self.upper_quantile_params = {'loss': 'quantile', 'alpha': upper_alpha}
         self.lower_quantile_params = {'loss': 'quantile', 'alpha': lower_alpha}
         self.loss = loss
@@ -624,7 +627,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         self.ccp_alpha = ccp_alpha
 
         self.gb = GradientBoostingRegressor(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
@@ -632,10 +635,11 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             max_features=max_features,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state, alpha=alpha, verbose=verbose,
+            random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
+            **self.median_quantile_params
         )
         self.gb_quantile_upper = GradientBoostingRegressor(
             learning_rate=learning_rate, n_estimators=n_estimators,
@@ -650,7 +654,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            ** self.upper_quantile_params
+            **self.upper_quantile_params
         )
         self.gb_quantile_lower = GradientBoostingRegressor(
             learning_rate=learning_rate, n_estimators=n_estimators,
