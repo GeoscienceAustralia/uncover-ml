@@ -1,6 +1,6 @@
 from pathlib import Path
-
 import numpy as np
+import pandas as pd
 import rasterio
 import geopandas as gpd
 from joblib import Parallel, delayed
@@ -10,11 +10,6 @@ data_location = \
 # Read points from shapefile
 
 shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
-
-# local
-# k = data_location.joinpath('data', 'LATITUDE_GRID1.tif')
-# shapefile_location = Path("configs/data")
-# shp = shapefile_location.joinpath('geochem_sites.shp')
 
 geotifs = {
     "relief_radius4.tif": "relief4",
@@ -31,6 +26,12 @@ geotifs = {
 }
 
 
+# local
+# data_location = Path("configs/data")
+# tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
+# shapefile_location = Path("configs/data")
+# shp = shapefile_location.joinpath('geochem_sites.shp')
+
 downscale_factor = 2  # keep 1 point in a 2x2 cell
 
 
@@ -38,6 +39,8 @@ def intersect_and_sample_shp(shp: Path):
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
+    geom = pd.DataFrame(coords, columns=['POINT_X', 'POINT_Y'], index=pts.index)
+    pts = pts.merge(geom, left_index=True, right_index=True)
     tif_name = list(geotifs.keys())[0]
     tif = data_location.joinpath(tif_name)
     orig_cols = pts.columns
@@ -58,17 +61,22 @@ def intersect_and_sample_shp(shp: Path):
         )
         pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
-    pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
+    pts_deduped = pts.sort_values(
+        by=['POINT_X', 'POINT_Y'], ascending=[True, True]
+        ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+    # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
     coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
 
     for k, v in geotifs.items():
         print(f"adding {k} to output dataframe")
         with rasterio.open(data_location.joinpath(k)) as src:
             pts_deduped[v] = [x[0] for x in src.sample(coords_deduped)]
-    pts_deduped.to_file(Path('out').joinpath(shp.name))
+
+    pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
+    pts_deduped.to_file(Path('out_resampled').joinpath(shp.name))
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
 
-
+intersect_and_sample_shp(shp)
 rets = Parallel(
     n_jobs=-1,
     verbose=100,
