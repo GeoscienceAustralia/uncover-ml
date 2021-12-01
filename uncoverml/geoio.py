@@ -78,9 +78,9 @@ class RasterioImageSource(ImageSource):
 
     def __init__(self, filename):
 
-        self._filename = filename
+        self.filename = filename
         assert os.path.isfile(filename), '{} does not exist'.format(filename)
-        with rasterio.open(self._filename, 'r') as geotiff:
+        with rasterio.open(self.filename, 'r') as geotiff:
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
@@ -116,7 +116,7 @@ class RasterioImageSource(ImageSource):
 
         # NOTE these are exclusive
         window = ((min_y, max_y), (min_x, max_x))
-        with rasterio.open(self._filename, 'r') as geotiff:
+        with rasterio.open(self.filename, 'r') as geotiff:
             d = geotiff.read(window=window, masked=True)
         d = d[np.newaxis, :, :] if d.ndim == 2 else d
         d = np.ma.transpose(d, [2, 1, 0])  # Transpose and channels at back
@@ -483,17 +483,19 @@ def image_subchunks(subchunk_index, config):
     return result
 
 
-def image_feature_sets(targets, config):
-
+def image_feature_sets(targets, config: Config):
     def f(image_source):
-        r = features.extract_features(image_source, targets,
-                                      config.n_subchunks, config.patchsize)
+        if config.intersected_features:
+            r = features.extract_intersected_features(image_source, targets, config)
+        else:
+            r = features.extract_features(image_source, targets,
+                                          config.n_subchunks, config.patchsize)
         return r
     result = _iterate_sources(f, config)
     return result
 
 
-def semisupervised_feature_sets(targets, config):
+def semisupervised_feature_sets(targets, config: Config):
 
     frac = config.subsample_fraction
 

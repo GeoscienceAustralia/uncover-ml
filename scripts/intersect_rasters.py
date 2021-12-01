@@ -5,32 +5,41 @@ import rasterio
 import geopandas as gpd
 from joblib import Parallel, delayed
 
-data_location = \
-    Path("/g/data/ge3/covariates/national_albers_filled_new/albers_cropped/")
+# data_location = \
+#     Path("/g/data/ge3/covariates/national_albers_filled_new/albers_cropped/")
 # Read points from shapefile
 
-shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
+# shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
 
+# geotifs = {
+#     "relief_radius4.tif": "relief4",
+#     "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
+#     "MvrtpLL_smooth.tif": "mrvtpLL_s",
+#     "MvrtpLL_fin.tif": "mvrtpLL_f",
+#     "LOC_distance_to_coast.tif": "LOC_dis",
+#     "Gravity_land.tif": "gravity",
+#     "dem_fill.tif": "dem",
+#     "Clim_Prescott_LindaGregory.tif": "clim_linda",
+#     "clim_PTA_albers.tif": "clim_alber",
+#     "SagaWET9cell_M.tif": "sagawet",
+#     "ceno_euc_aust1.tif": "ceno_euc"
+# }
 geotifs = {
-    "relief_radius4.tif": "relief4",
-    "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
-    "MvrtpLL_smooth.tif": "mrvtpLL_s",
-    "MvrtpLL_fin.tif": "mvrtpLL_f",
-    "LOC_distance_to_coast.tif": "LOC_dis",
-    "Gravity_land.tif": "gravity",
-    "dem_fill.tif": "dem",
-    "Clim_Prescott_LindaGregory.tif": "clim_linda",
-    "clim_PTA_albers.tif": "clim_alber",
-    "SagaWET9cell_M.tif": "sagawet",
-    "ceno_euc_aust1.tif": "ceno_euc"
+    "relief_apsect.tif": "relief4",
+    "LATITUDE_GRID1.tif": "latitude",
+    "LONGITUDE_GRID1.tif": "longitude",
+    "er_depg.tif": "er_depg",
+    "sagawet_b_sir.tif": "sagawet",
+    "dem_foc2.tif": "dem_foc2",
+    "outcrop_dis2.tif": "outcrop",
+    "k_15v5.tif": "k_15v5",
 }
 
-
 # local
-# data_location = Path("configs/data")
+data_location = Path("configs/data/sirsam")
 # tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
-# shapefile_location = Path("configs/data")
-# shp = shapefile_location.joinpath('geochem_sites.shp')
+shapefile_location = Path("configs/data")
+shp = shapefile_location.joinpath('geochem_sites.shp')
 
 downscale_factor = 2  # keep 1 point in a 2x2 cell
 
@@ -73,12 +82,16 @@ def intersect_and_sample_shp(shp: Path):
             pts_deduped[v] = [x[0] for x in src.sample(coords_deduped)]
 
     pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
-    pts_deduped.to_file(Path('out_resampled').joinpath(shp.name))
+    output_dir = Path('out_resampled')
+    output_dir.mkdir(exist_ok=True, parents=True)
+    out_shp = output_dir.joinpath(shp.name)
+    pts_deduped.to_file(out_shp)
+    print(f"saved intersected shapefile at {out_shp.as_posix()}")
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
 
 intersect_and_sample_shp(shp)
-rets = Parallel(
-    n_jobs=-1,
-    verbose=100,
-)(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
+# rets = Parallel(
+#     n_jobs=-1,
+#     verbose=100,
+# )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
 

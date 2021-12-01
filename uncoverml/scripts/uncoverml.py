@@ -101,7 +101,7 @@ def learn(pipeline_file, param_json, partitions):
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
-def _load_data(config, partitions):
+def _load_data(config: uncoverml.config.Config, partitions):
     if config.pickle_load:
         x_all = joblib.load(open(config.pickled_covariates, 'rb'))
         targets_all = joblib.load(open(config.pickled_targets, 'rb'))

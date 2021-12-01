@@ -147,6 +147,11 @@ class Config:
             log.info("Patchsize currently fixed at 0 -- ignoring")
         self.patchsize = 0
 
+        if 'intersected_features' in s:
+            self.intersected_features = s['intersected_features']
+        else:
+            self.intersected_features = None
+
         if 'learning' in s:
             self.algorithm = s['learning']['algorithm']
             self.algorithm_args = s['learning']['arguments']

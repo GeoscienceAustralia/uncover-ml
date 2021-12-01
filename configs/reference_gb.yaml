@@ -3,15 +3,21 @@ experiment: my_run
 patchsize: 0
 memory_fraction: 0.5
 
+intersected_features:
+  "relief_apsect.tif": "relief4"
+  "LATITUDE_GRID1.tif": "latitude"
+  "LONGITUDE_GRID1.tif": "longitude"
+  "er_depg.tif": "er_depg"
+  "sagawet_b_sir.tif": "sagawet"
+  "dem_foc2.tif": "dem_foc2"
+  "outcrop_dis2.tif": "outcrop"
+  "k_15v5.tif": "k_15v5"
+
+
 features:
   - name: my continuous features
     type: continuous
     files:
-      - path: configs/data/sirsam/er_depg.tif
-      - path: configs/data/sirsam/sagawet_b_sir.tif
-      - path: configs/data/sirsam/dem_foc2.tif
-      - path: configs/data/sirsam/outcrop_dis2.tif
-      - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
       - path: configs/data/sirsam/LATITUDE_GRID1.tif
       - path: configs/data/sirsam/LONGITUDE_GRID1.tif
@@ -19,6 +25,19 @@ features:
       - identity
 #      - whiten:
 #          keep_fraction: 0.98
+    imputation: none
+  - name: my 2nd continuous features
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+    transforms:
+      - identity
+    #      - whiten:
+    #          keep_fraction: 0.98
     imputation: none
 
 preprocessing:
@@ -28,7 +47,8 @@ preprocessing:
 #        keep_fraction: 0.98
 
 targets:
-  file: configs/data/geochem_sites.shp
+#  file: configs/data/geochem_sites.shp
+  file: out_resampled/geochem_sites.shp
   property: K_ppm_imp
   weight_col_name: K_ppm_imp_  # hack weight col
 #  group_targets:
@@ -48,6 +68,7 @@ learning:
     min_weight_fraction_leaf: 0.0
     max_features: "auto"
     alpha: 0.95
+    random_state: 3
   optimisation:
     searchcv_params:
       n_iter: 6

@@ -191,7 +191,7 @@ class Image:
         if (not all(np.logical_and(x >= 0, x < self._full_res[0]))) or \
                 (not all(np.logical_and(y >= 0, y < self._full_res[1]))):
             raise ValueError("Queried location is not "
-                             "in the image {}!".format(self.source._filename))
+                             "in the image {}!".format(self.source.filename))
 
         result = np.concatenate((x[:, np.newaxis], y[:, np.newaxis]), axis=1)
         return result
