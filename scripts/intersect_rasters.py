@@ -11,29 +11,50 @@ from joblib import Parallel, delayed
 
 # shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
 
-# geotifs = {
-#     "relief_radius4.tif": "relief4",
-#     "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
-#     "MvrtpLL_smooth.tif": "mrvtpLL_s",
-#     "MvrtpLL_fin.tif": "mvrtpLL_f",
-#     "LOC_distance_to_coast.tif": "LOC_dis",
-#     "Gravity_land.tif": "gravity",
-#     "dem_fill.tif": "dem",
-#     "Clim_Prescott_LindaGregory.tif": "clim_linda",
-#     "clim_PTA_albers.tif": "clim_alber",
-#     "SagaWET9cell_M.tif": "sagawet",
-#     "ceno_euc_aust1.tif": "ceno_euc"
-# }
 geotifs = {
-    "relief_apsect.tif": "relief4",
-    "LATITUDE_GRID1.tif": "latitude",
-    "LONGITUDE_GRID1.tif": "longitude",
-    "er_depg.tif": "er_depg",
-    "sagawet_b_sir.tif": "sagawet",
-    "dem_foc2.tif": "dem_foc2",
-    "outcrop_dis2.tif": "outcrop",
-    "k_15v5.tif": "k_15v5",
+    "relief_radius4.tif": "relief4",
+    "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
+    "MvrtpLL_smooth.tif": "mrvtpll_s",
+    "MvrtpLL_fin.tif": "mvrtpll_f",
+    "mrvbf_9.tif": "mrvbf_9",
+    "Rad2016K_Th.tif": "rad2016kth",
+    "Thorium_2016.tif": "th_2016",
+    "Mesozoic_older_raster_MEAN.tif": "meso_mean",
+    "LOC_distance_to_coast.tif": "loc_dis",
+    "be-30y-85m-avg-ND-RED-BLUE.filled.lzw.nodata.tif": "be_av_rb",
+    "water-85m_1.tif": "water_85m",
+    "clim_RSM_albers.tif": "clim_rsm",
+    "tpi_300.tif": "tpi_300",
+    "be-30y-85m-avg-ND-SWIR1-NIR.filled.lzw.nodata.tif": "be_av_swir",
+    "si_geol1.tif": "si_geol1",
+    "be-30y-85m-avg-CLAY-PC2.filled.lzw.nodata.tif": "be_av_clay",
+    "be-30y-85m-avg-GREEN.filled.lzw.nodata.tif": "be_av_gr",
+    "be-30y-85m-avg_BLUE+SWIR2.tif": "be_av_bl",
+    "Gravity_land.tif": "gravity",
+    "dem_fill.tif": "dem",
+    "Clim_Prescott_LindaGregory.tif": "clim_linda",
+    "slope_fill2.tif": "slopefill2",
+    "clim_PTA_albers.tif": "clim_alber",
+    "SagaWET9cell_M.tif": "sagawet",
+    "ceno_euc_aust1.tif": "ceno_euc",
+    "s2-dpca-85m_band1.tif": "s2_band1",
+    "s2-dpca-85m_band2.tif": "s2_band2",
+    "s2-dpca-85m_band3.tif": "s2_band3",
+    "3dem_mag0_finn.tif": "3dem_mag",
+    "3dem_mag2.tif": "3dem_mag2",
 }
+
+
+# geotifs = {
+#     "relief_apsect.tif": "relief4",
+#     "LATITUDE_GRID1.tif": "latitude",
+#     "LONGITUDE_GRID1.tif": "longitude",
+#     "er_depg.tif": "er_depg",
+#     "sagawet_b_sir.tif": "sagawet",
+#     "dem_foc2.tif": "dem_foc2",
+#     "outcrop_dis2.tif": "outcrop",
+#     "k_15v5.tif": "k_15v5",
+# }
 
 # local
 data_location = Path("configs/data/sirsam")
