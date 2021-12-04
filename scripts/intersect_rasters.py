@@ -40,10 +40,10 @@ geotifs = {
     "s2-dpca-85m_band1.tif": "s2_band1",
     "s2-dpca-85m_band2.tif": "s2_band2",
     "s2-dpca-85m_band3.tif": "s2_band3",
-    "3dem_mag0_finn.tif": "3dem_mag",
+    "3dem_mag0_finn.tif": "3dem_mag0",
+    "3dem_mag1_fin.tif": "3dem_mag1",
     "3dem_mag2.tif": "3dem_mag2",
 }
-
 
 # geotifs = {
 #     "relief_apsect.tif": "relief4",

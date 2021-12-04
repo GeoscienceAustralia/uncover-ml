@@ -715,14 +715,14 @@ class CatBoostWrapper(CatBoostRegressor):
                      "Supplied loss function was not used!!!")
         super(CatBoostWrapper, self).__init__(**kwargs, loss_function='RMSEWithUncertainty')
 
-    def fit(self, X, *args, **kwargs):
-        super().fit(X, *args, **kwargs)
+    def fit(self, X, y, **kwargs):
+        super().fit(X, y, sample_weight=kwargs['sample_weight'])
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
 
     def predict_dist(self, X, interval=0.95, **kwargs):
-        pred = super().predict(X, **kwargs)
+        pred = super().predict(X)
         Ey = pred[:, 0]
         Vy = pred[:, 1]
         ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
