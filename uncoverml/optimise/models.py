@@ -706,7 +706,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         return Ey, Vy, ql, qu
 
 
-class CatBoostWrapper(CatBoostRegressor):
+class CatBoostWrapper(CatBoostRegressor, TagsMixin):
 
     def __init__(self,  **kwargs):
         if 'loss_function' in kwargs:
