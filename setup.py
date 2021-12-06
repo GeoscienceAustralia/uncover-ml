@@ -94,7 +94,7 @@ setup(
         'scikit-optimize == 0.8.1',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
-        'pandas == 1.0.5',
+        'pandas == 1.2.5',
         'matplotlib>=1.5.1',
         'PyKrige==1.3.0',
         'xgboost==1.4.2',
