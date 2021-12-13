@@ -19,6 +19,8 @@ from affine import Affine
 import numpy as np
 import shapefile
 import tables as hdf
+import pandas as pd
+import geopandas as gpd
 
 from uncoverml import mpiops
 from uncoverml import image
@@ -645,6 +647,7 @@ def _make_valid_array_name(label):
 def export_validation_scatter_plot_and_validation_csv(outfile_results, config: Config, scores):
     true_vs_pred = os.path.join(config.output_dir,
                                 config.name + "_results.csv")
+    true_vs_pred_shp = os.path.join(config.output_dir, config.name + "_results.shp")
     true_vs_pred_plot = os.path.join(config.output_dir,
                                      config.name + "_results.png")
     with hdf.open_file(outfile_results, 'r') as f:
@@ -664,10 +667,16 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
             cols.append('y_transformed')
         to_text.append(lon_lat)
         cols += ['lon', 'lat']
-        np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
+        X = np.hstack(to_text)
+        np.savetxt(true_vs_pred, X=X, delimiter=',',
                    fmt='%.8e',
                    header=','.join(cols),
                    comments='')
+        df = pd.DataFrame(X, columns=cols)
+        df['diff'] = df['y_true'] - df['y_pred']
+        gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(x=df['lon'], y=df['lat'])).to_file(true_vs_pred_shp)
+        log.info(f"saved output in shapefile {true_vs_pred_shp}")
+
         plt.figure()
         plt.scatter(y_true, prediction, label='True vs Prediction')
         plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
