@@ -9,7 +9,7 @@ from joblib import Parallel, delayed
 #     Path("/g/data/ge3/covariates/national_albers_filled_new/albers_cropped/")
 # Read points from shapefile
 
-# shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
+    # shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
 
 geotifs = {
     "relief_radius4.tif": "relief4",

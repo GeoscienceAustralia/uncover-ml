@@ -361,15 +361,15 @@ list_of_regression_scores = [
 ]
 
 
-def setup_validation_data(X, y, groups, cv_folds, random_state=None):
-    X, y, groups = shuffle(X, y, groups, random_state=random_state)
+def setup_validation_data(X, y, lon_lat, groups, cv_folds, random_state=None):
+    X, y, lon_lat, groups = shuffle(X, y, lon_lat, groups, random_state=random_state)
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
         cv = GroupKFold(n_splits=cv_folds)
     else:
         log.info(f'Using KFold with {cv_folds} folds')
         cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
-    return X, y, groups, cv
+    return X, y, lon_lat, groups, cv
 
 
 def local_crossval(x_all, targets_all: targ.Targets, config: Config):
@@ -415,7 +415,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
                          f"in data is less than the number of folds {config.folds}")
     random_state = \
         config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else np.random.randint(1000)
-    x_all, y, groups, cv = setup_validation_data(x_all, y, groups, config.folds, random_state)
+    x_all, y, lon_lat, groups, cv = setup_validation_data(x_all, y, lon_lat, groups, config.folds, random_state)
     _, cv_indices = split_gfold(groups, cv)
 
     # Split folds over workers

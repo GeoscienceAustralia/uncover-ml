@@ -14,6 +14,7 @@ from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 from uncoverml.config import Config
 from uncoverml.optimise.models import transformed_modelmaps as modelmaps
 from uncoverml.validate import setup_validation_data
+from uncoverml.targets import Targets
 from uncoverml import geoio
 
 log = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ hp_algo = {
 }
 
 
-def optimise_model(X, targets_all, conf: Config):
+def optimise_model(X, targets_all: Targets, conf: Config):
     """
     :param X: covaraite matrix
     :param y: targets
@@ -35,6 +36,7 @@ def optimise_model(X, targets_all, conf: Config):
     :return:
     """
     y = targets_all.observations
+    lon_lat = targets_all.positions
     groups = targets_all.groups
     w = targets_all.groups
     trials = Trials()
@@ -54,7 +56,7 @@ def optimise_model(X, targets_all, conf: Config):
     scoring = conf.hyperopt_params.pop('scoring')
     scorer = check_scoring(reg(** conf.algorithm_args), scoring=scoring)
 
-    X, y, groups, cv = setup_validation_data(X, y, groups, cv_folds, random_state)
+    X, y, lon_lat, groups, cv = setup_validation_data(X, y, lon_lat, groups, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
