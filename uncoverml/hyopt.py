@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import cross_val_score, GroupKFold, KFold, cross_validate, GroupShuffleSplit
 from sklearn.metrics import check_scoring
+from sklearn.svm import SVR
 from hyperopt import fmin, tpe, anneal, Trials, space_eval
 
 from hyperopt.hp import uniform, randint, choice, loguniform, quniform
@@ -61,7 +62,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"
         all_params = {**conf.algorithm_args}
-        if has_random_state_arg:
+        if has_random_state_arg and (not isinstance(reg(), SVR)):
             all_params.update(**params, random_state=random_state)
             model = reg(** all_params)
         else:

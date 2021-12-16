@@ -103,33 +103,3 @@ validation:
 
 output:
   directory: xgb_upper/
-
-
-"dem_fill.tif": "dem_fill",
-"mrvbf_9.tif": "mrvbf_9",
-"Rad2016K_Th.tif": "Rad2016K",
-"s2-dpca-85m_band1.tif": "s2_band1",
-"s2-dpca-85m_band2.tif": "s2_band2",
-"s2-dpca-85m_band3.tif": "s2_band3",
-"Thorium_2016.tif": "Thorium",
-"relief_radius4.tif": "relief",
-"be-30y-85m-avg-ND-RED-BLUE.filled.lzw.nodata.tif": "be_1",
-"SagaWET9cell_M.tif": "SagaWET",
-"3dem_mag0_finn.tif": "3dem_mag",
-"be-30y-85m-avg-SWIR1.filled.lzw.nodata.tif": "be_2",
-"water-85m_1.tif": "water",
-"3dem_mag2.tif": "3dem_mag2",
-"be-30y-85m-avg-ND-SWIR1-NIR.filled.lzw.nodata.tif": "be_3",
-"si_geol1.tif": "si_geol1",
-"Clim_Prescott_LindaGregory.tif": "Clim",
-"be-30y-85m-avg-CLAY-PC2.filled.lzw.nodata.tif": "be_4",
-"be-30y-85m-avg-GREEN.filled.lzw.nodata.tif": "be_5",
-"be-30y-85m-avg_BLUE+SWIR2.tif": "be_6",
-"national_Wii_RF_multirandomforest_prediction.tif": "rf_pred",
-"ceno_euc_aust1.tif": "ceno_eu",
-"3dem_mag1_fin.tif": "3dem_mag",
-"Potassium_2016.tif": "Potassi",
-"Dose_2016.tif": "Dose_2016",
-"Gravity_land.tif": "Gravity",
-"Uranium_2016.tif": "Uranium",
-"Geol_major.tif": "Geol_major"

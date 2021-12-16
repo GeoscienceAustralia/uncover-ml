@@ -15,7 +15,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
 from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP, SVRTransformed
+    _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
 
 log = logging.getLogger(__name__)
@@ -736,7 +736,7 @@ no_test_support = {
     'quantilegb': QuantileGradientBoosting,
     'gradientboost': GBMReg,
     'catboost': CatBoostWrapper,
-    'svr': SVRTransformed,
+    'svr': SVR,
 }
 
 test_support = {
