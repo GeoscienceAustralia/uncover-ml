@@ -57,7 +57,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     scoring = conf.hyperopt_params.pop('scoring')
     scorer = check_scoring(reg(** conf.algorithm_args), scoring=scoring)
 
-    X, y, lon_lat, groups, cv = setup_validation_data(X, y, lon_lat, groups, cv_folds, random_state)
+    X, y, lon_lat, groups, w, cv = setup_validation_data(X, targets_all, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
         # the function gets a set of variable parameters in "param"

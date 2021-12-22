@@ -361,15 +361,34 @@ list_of_regression_scores = [
 ]
 
 
-def setup_validation_data(X, y, lon_lat, groups, cv_folds, random_state=None):
-    X, y, lon_lat, groups = shuffle(X, y, lon_lat, groups, random_state=random_state)
+def setup_validation_data(X, targets_all, cv_folds, random_state=None):
+    y = targets_all.observations
+    w = targets_all.weights
+    lon_lat = targets_all.positions
+    groups = targets_all.groups
+
+    X, y, lon_lat, groups, w, * arrays = shuffle(X, y, lon_lat, groups, w,
+                                       * [v for v in targets_all.fields.values()],
+                                       random_state=random_state)
+
+    print("Hi" * 100)
+    rows_with_at_least_one_masked = ~ np.any(X.mask, axis=1)
+    X = X[rows_with_at_least_one_masked, :]
+    w = w[rows_with_at_least_one_masked]
+    y = y[rows_with_at_least_one_masked]
+    lon_lat = lon_lat[rows_with_at_least_one_masked, :]
+    groups = groups[rows_with_at_least_one_masked]
+
+    for (f, v), a in zip(targets_all.fields.items(), arrays):
+        targets_all.fields[f] = a[rows_with_at_least_one_masked]
+
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
         cv = GroupKFold(n_splits=cv_folds)
     else:
         log.info(f'Using KFold with {cv_folds} folds')
         cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
-    return X, y, lon_lat, groups, cv
+    return X, y, lon_lat, groups, w, cv
 
 
 def local_crossval(x_all, targets_all: targ.Targets, config: Config):
@@ -405,9 +424,6 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     log.info("Validating with {} folds".format(config.folds))
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
-    y = targets_all.observations
-    w = targets_all.weights
-    lon_lat = targets_all.positions
     groups = targets_all.groups
 
     if (len(np.unique(groups)) + 1 < config.folds) and config.group_targets:
@@ -415,7 +431,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
                          f"in data is less than the number of folds {config.folds}")
     random_state = \
         config.algorithm_args['random_state'] if 'random_state' in config.algorithm_args else np.random.randint(1000)
-    x_all, y, lon_lat, groups, cv = setup_validation_data(x_all, y, lon_lat, groups, config.folds, random_state)
+    x_all, y, lon_lat, groups, w, cv = setup_validation_data(x_all, targets_all, config.folds, random_state)
     _, cv_indices = split_gfold(groups, cv)
 
     # Split folds over workers
