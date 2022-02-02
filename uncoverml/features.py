@@ -7,7 +7,6 @@ from pathlib import Path
 
 from uncoverml import mpiops
 from uncoverml.image import Image
-from uncoverml.geoio import RasterioImageSource
 from uncoverml.targets import Targets
 from uncoverml import patch
 from uncoverml import transforms
@@ -43,14 +42,6 @@ def _extract_from_chunk(image_source, targets, chunk_index, total_chunks,
     else:
         x = None
     return x
-
-
-def extract_intersected_features(image_source: RasterioImageSource, targets: Targets, config: Config):
-    othervals = targets.fields
-    assert config.intersected_features[Path(image_source.filename).name] in othervals.keys()
-    x = othervals[config.intersected_features[Path(image_source.filename).name]]
-    x = np.ma.MaskedArray(x, mask=False)
-    return x[:, np.newaxis, np.newaxis, np.newaxis]
 
 
 def extract_features(image_source, targets, n_subchunks, patchsize):
