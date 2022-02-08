@@ -118,7 +118,7 @@ setup(
                    'pytest-cov',
                    'coverage',
                    'codecov',
-                   'tox==3.2.1',
+                   'tox==3.24.5',
                ] + extra_test_deps
     },
     license="Apache Software License 2.0",

@@ -371,7 +371,6 @@ def setup_validation_data(X, targets_all, cv_folds, random_state=None):
                                        * [v for v in targets_all.fields.values()],
                                        random_state=random_state)
 
-    print("Hi" * 100)
     rows_with_at_least_one_masked = ~ np.any(X.mask, axis=1)
     X = X[rows_with_at_least_one_masked, :]
     w = w[rows_with_at_least_one_masked]
