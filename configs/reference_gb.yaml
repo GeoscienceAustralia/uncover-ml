@@ -48,7 +48,7 @@ preprocessing:
 
 targets:
 #  file: configs/data/geochem_sites.shp
-  file: out_resampled/geochem_sites.shp
+  file: configs/data/sirsam/out_resampled/geochem_sites.shp
   property: K_ppm_imp
   weight_col_name: K_ppm_imp_  # hack weight col
 #  group_targets:
@@ -102,4 +102,4 @@ validation:
       random_seed: 1
 
 output:
-  directory: xgb_upper/
+  directory: gb/

@@ -66,6 +66,6 @@ validation:
       random_seed: 1
 
 output:
-  directory: qxgb/
-  model: xgboost.model
+  directory: rf/
+  model: rf.model
 

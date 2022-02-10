@@ -487,6 +487,9 @@ def image_subchunks(subchunk_index, config):
 
 def extract_intersected_features(image_source: RasterioImageSource, targets: Targets, config: Config):
     othervals = targets.fields
+    print(Path(image_source.filename).name)
+    print(list(othervals.keys()))
+
     assert config.intersected_features[Path(image_source.filename).name] in othervals.keys()
     x = othervals[config.intersected_features[Path(image_source.filename).name]]
     x = np.ma.MaskedArray(x, mask=False)
