@@ -67,23 +67,17 @@ setup(
     entry_points={
         'console_scripts': [
             'uncoverml = uncoverml.scripts.uncoverml:cli',
-            'gammasensor = uncoverml.scripts.gammasensor:cli',
-            'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
-            'subsampletargets = uncoverml.scripts.subsampletargets:cli',
-            'gridsearch = uncoverml.scripts.gridsearch:cli',
-            'resample = uncoverml.scripts.resample_cli:cli',
-            'shape = uncoverml.scripts.shapes_cli:cli',
         ]
     },
     setup_requires=[
         'numpy==1.17.2',
-        'Cython==0.29.13',
+        'Cython==0.29.14',
     ],
     install_requires=[
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio == 1.2.10',
-        'catboost ~= 1.0.3',
+        'catboost == 1.0.3',
         'affine >= 2.2.1',
         'pyshp == 2.1.0',
         'click >= 6.6',
@@ -104,11 +98,11 @@ setup(
         'networkx==2.5.1',
         'geopandas==0.9.0',
         'hyperopt==0.2.5',
+        'pillow==8.3.2'
     ],
     extras_require={
         'kmz': [
             'simplekml',
-            'pillow'
         ],
         'dev': [
                    'sphinx',
@@ -121,7 +115,7 @@ setup(
                    'tox==3.24.5',
                ] + extra_test_deps
     },
-    license="Apache Software License 2.0",
+    license="Apache Softwa  re License 2.0",
     zip_safe=False,
     keywords='uncover-ml',
     classifiers=[
