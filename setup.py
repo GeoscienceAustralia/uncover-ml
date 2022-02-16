@@ -67,13 +67,21 @@ setup(
     entry_points={
         'console_scripts': [
             'uncoverml = uncoverml.scripts.uncoverml:cli',
+            'gammasensor = uncoverml.scripts.gammasensor:cli',
+            'tiff2kmz = uncoverml.scripts.tiff2kmz:main',
+            'subsampletargets = uncoverml.scripts.subsampletargets:cli',
+            'gridsearch = uncoverml.scripts.gridsearch:cli',
+            'resample = uncoverml.scripts.resample_cli:cli',
+            'shape = uncoverml.scripts.shapes_cli:cli',
         ]
     },
     setup_requires=[
-        'numpy==1.17.2',
-        'Cython==0.29.14',
+        'numpy==1.20.0',
+        'cython==0.29.22',
     ],
     install_requires=[
+        'numpy==1.20.0',
+        'cython==0.29.22',
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio == 1.2.10',
@@ -82,15 +90,15 @@ setup(
         'pyshp == 2.1.0',
         'click >= 6.6',
         'revrand >= 0.9.10',
-        'mpi4py == 3.0.3',
-        'scipy==1.7.0',
-        'scikit-learn ~= 0.22.2',
-        'scikit-image == 0.19.1',
+        'mpi4py==3.1.3',
+        'scipy==1.6.2',
+        'scikit-learn~=0.22.2',
+        'scikit-image==0.19.1',
         'scikit-optimize == 0.8.1',
         'wheel >= 0.29.0',
         'PyYAML >= 3.11',
         'pandas == 1.2.5',
-        'matplotlib>=1.5.1',
+        'matplotlib==3.4.0',
         'PyKrige==1.3.0',
         'xgboost==1.4.2',
         'setuptools>=30.0.0',
@@ -98,7 +106,9 @@ setup(
         'networkx==2.5.1',
         'geopandas==0.9.0',
         'hyperopt==0.2.5',
-        'pillow==8.3.2'
+        'Pillow==8.1.2',
+        "PyWavelets==1.2.0",
+        "imageio==2.9.0",
     ],
     extras_require={
         'kmz': [
