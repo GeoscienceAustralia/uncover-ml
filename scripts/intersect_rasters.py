@@ -1,3 +1,6 @@
+import csv
+from collections import defaultdict
+from os import path
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -5,45 +8,85 @@ import rasterio
 import geopandas as gpd
 from joblib import Parallel, delayed
 
+from uncoverml.config import FeatureSetConfig
+
+covariastes_list = "configs/data/sirsam/covariates_list.txt"
+
+
+def read_list_file(list_path: str):
+    files = []
+    csvfile = path.abspath(list_path)
+    with open(csvfile, 'r') as f:
+        reader = csv.reader(f)
+        tifs = list(reader)
+        tifs = [f[0].strip() for f in tifs
+                if (len(f) > 0 and f[0].strip() and
+                    f[0].strip()[0] != '#')]
+    for f in tifs:
+        files.append(path.abspath(f))
+    return files
+
+
+geotifs_list = read_list_file(list_path=covariastes_list)
+shorts = defaultdict(int)
+
+
+def generate_key_val(gl, shorts):
+    eight_char_name = Path(gl).name[:8]
+    if eight_char_name not in shorts:
+        eight_char_name = Path(gl).name[:8]
+        shorts[eight_char_name] += 1
+    return Path(gl).name, eight_char_name + str(shorts[eight_char_name])
+
+
+geotifs = {}
+
+for gl in geotifs_list:
+    k, v = generate_key_val(gl, shorts)
+    geotifs[k] = v
+
+# import IPython; IPython.embed(); import sys; sys.exit()
+
+
 # data_location = \
 #     Path("/g/data/ge3/covariates/national_albers_filled_new/albers_cropped/")
 # Read points from shapefile
 
-    # shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
+# shapefile_location = Path("/g/data/ge3/aem_sections/AEM_covariates/")
 
-geotifs = {
-    "relief_radius4.tif": "relief4",
-    "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
-    "MvrtpLL_smooth.tif": "mrvtpll_s",
-    "MvrtpLL_fin.tif": "mvrtpll_f",
-    "mrvbf_9.tif": "mrvbf_9",
-    "Rad2016K_Th.tif": "rad2016kth",
-    "Thorium_2016.tif": "th_2016",
-    "Mesozoic_older_raster_MEAN.tif": "meso_mean",
-    "LOC_distance_to_coast.tif": "loc_dis",
-    "be-30y-85m-avg-ND-RED-BLUE.filled.lzw.nodata.tif": "be_av_rb",
-    "water-85m_1.tif": "water_85m",
-    "clim_RSM_albers.tif": "clim_rsm",
-    "tpi_300.tif": "tpi_300",
-    "be-30y-85m-avg-ND-SWIR1-NIR.filled.lzw.nodata.tif": "be_av_swir",
-    "si_geol1.tif": "si_geol1",
-    "be-30y-85m-avg-CLAY-PC2.filled.lzw.nodata.tif": "be_av_clay",
-    "be-30y-85m-avg-GREEN.filled.lzw.nodata.tif": "be_av_gr",
-    "be-30y-85m-avg_BLUE+SWIR2.tif": "be_av_bl",
-    "Gravity_land.tif": "gravity",
-    "dem_fill.tif": "dem",
-    "Clim_Prescott_LindaGregory.tif": "clim_linda",
-    "slope_fill2.tif": "slopefill2",
-    "clim_PTA_albers.tif": "clim_alber",
-    "SagaWET9cell_M.tif": "sagawet",
-    "ceno_euc_aust1.tif": "ceno_euc",
-    "s2-dpca-85m_band1.tif": "s2_band1",
-    "s2-dpca-85m_band2.tif": "s2_band2",
-    "s2-dpca-85m_band3.tif": "s2_band3",
-    "3dem_mag0_finn.tif": "3dem_mag0",
-    "3dem_mag1_fin.tif": "3dem_mag1",
-    "3dem_mag2.tif": "3dem_mag2",
-}
+# geotifs = {
+#     "relief_radius4.tif": "relief4",
+#     "national_Wii_RF_multirandomforest_prediction.tif": "mrf_pred",
+#     "MvrtpLL_smooth.tif": "mrvtpll_s",
+#     "MvrtpLL_fin.tif": "mvrtpll_f",
+#     "mrvbf_9.tif": "mrvbf_9",
+#     "Rad2016K_Th.tif": "rad2016kth",
+#     "Thorium_2016.tif": "th_2016",
+#     "Mesozoic_older_raster_MEAN.tif": "meso_mean",
+#     "LOC_distance_to_coast.tif": "loc_dis",
+#     "be-30y-85m-avg-ND-RED-BLUE.filled.lzw.nodata.tif": "be_av_rb",
+#     "water-85m_1.tif": "water_85m",
+#     "clim_RSM_albers.tif": "clim_rsm",
+#     "tpi_300.tif": "tpi_300",
+#     "be-30y-85m-avg-ND-SWIR1-NIR.filled.lzw.nodata.tif": "be_av_swir",
+#     "si_geol1.tif": "si_geol1",
+#     "be-30y-85m-avg-CLAY-PC2.filled.lzw.nodata.tif": "be_av_clay",
+#     "be-30y-85m-avg-GREEN.filled.lzw.nodata.tif": "be_av_gr",
+#     "be-30y-85m-avg_BLUE+SWIR2.tif": "be_av_bl",
+#     "Gravity_land.tif": "gravity",
+#     "dem_fill.tif": "dem",
+#     "Clim_Prescott_LindaGregory.tif": "clim_linda",
+#     "slope_fill2.tif": "slopefill2",
+#     "clim_PTA_albers.tif": "clim_alber",
+#     "SagaWET9cell_M.tif": "sagawet",
+#     "ceno_euc_aust1.tif": "ceno_euc",
+#     "s2-dpca-85m_band1.tif": "s2_band1",
+#     "s2-dpca-85m_band2.tif": "s2_band2",
+#     "s2-dpca-85m_band3.tif": "s2_band3",
+#     "3dem_mag0_finn.tif": "3dem_mag0",
+#     "3dem_mag1_fin.tif": "3dem_mag1",
+#     "3dem_mag2.tif": "3dem_mag2",
+# }
 
 # geotifs = {
 #     "relief_apsect.tif": "relief4",
@@ -64,12 +107,14 @@ shp = shapefile_location.joinpath('geochem_sites.shp')
 
 downscale_factor = 2  # keep 1 point in a 2x2 cell
 
+geom_cols = ['POINT_X', 'POINT_Y']
+
 
 def intersect_and_sample_shp(shp: Path):
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
-    geom = pd.DataFrame(coords, columns=['POINT_X', 'POINT_Y'], index=pts.index)
+    geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
     pts = pts.merge(geom, left_index=True, right_index=True)
     tif_name = list(geotifs.keys())[0]
     tif = data_location.joinpath(tif_name)
@@ -92,8 +137,8 @@ def intersect_and_sample_shp(shp: Path):
         pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
     pts_deduped = pts.sort_values(
-        by=['POINT_X', 'POINT_Y'], ascending=[True, True]
-        ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+        by=geom_cols, ascending=[True, True]
+    ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
     # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
     coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
 
@@ -110,9 +155,9 @@ def intersect_and_sample_shp(shp: Path):
     print(f"saved intersected shapefile at {out_shp.as_posix()}")
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
 
+
 intersect_and_sample_shp(shp)
 # rets = Parallel(
 #     n_jobs=-1,
 #     verbose=100,
 # )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
-
