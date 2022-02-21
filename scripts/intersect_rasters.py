@@ -110,37 +110,41 @@ downscale_factor = 2  # keep 1 point in a 2x2 cell
 geom_cols = ['POINT_X', 'POINT_Y']
 
 
-def intersect_and_sample_shp(shp: Path):
+def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
-    geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
-    pts = pts.merge(geom, left_index=True, right_index=True)
-    tif_name = list(geotifs.keys())[0]
-    tif = data_location.joinpath(tif_name)
-    orig_cols = pts.columns
-    with rasterio.open(tif) as src:
-        # resample data to target shape
-        data = src.read(
-            out_shape=(
-                src.count,
-                int(src.height / downscale_factor),
-                int(src.width / downscale_factor)
-            ),
-            resampling=rasterio.enums.Resampling.bilinear
-        )
-        # scale image transform
-        transform = src.transform * src.transform.scale(
-            (src.width / data.shape[-1]),
-            (src.height / data.shape[-2])
-        )
-        pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
+    if dedupe:
+        geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
+        pts = pts.merge(geom, left_index=True, right_index=True)
+        tif_name = list(geotifs.keys())[0]
+        tif = data_location.joinpath(tif_name)
+        orig_cols = pts.columns
+        with rasterio.open(tif) as src:
+            # resample data to target shape
+            data = src.read(
+                out_shape=(
+                    src.count,
+                    int(src.height / downscale_factor),
+                    int(src.width / downscale_factor)
+                ),
+                resampling=rasterio.enums.Resampling.bilinear
+            )
+            # scale image transform
+            transform = src.transform * src.transform.scale(
+                (src.width / data.shape[-1]),
+                (src.height / data.shape[-2])
+            )
+            pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
-    pts_deduped = pts.sort_values(
-        by=geom_cols, ascending=[True, True]
-    ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
-    # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
-    coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
+        pts_deduped = pts.sort_values(
+            by=geom_cols, ascending=[True, True]
+        ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+        # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
+        coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
+    else:
+        pts_deduped = pts
+        coords_deduped = coords
 
     for k, v in geotifs.items():
         print(f"adding {k} to output dataframe")
@@ -156,8 +160,14 @@ def intersect_and_sample_shp(shp: Path):
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
 
 
-intersect_and_sample_shp(shp)
-# rets = Parallel(
-#     n_jobs=-1,
-#     verbose=100,
-# )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
+if __name__ == '__main__':
+    # check all required files are available on disc
+    for k, v in geotifs.items():
+        print(f"checking if {k} exists")
+        assert data_location.joinpath(k).exists()
+
+    intersect_and_sample_shp(shp, dedupe=False)
+    # rets = Parallel(
+    #     n_jobs=-1,
+    #     verbose=100,
+    # )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
