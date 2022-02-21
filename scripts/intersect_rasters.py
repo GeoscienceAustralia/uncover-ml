@@ -8,10 +8,6 @@ import rasterio
 import geopandas as gpd
 from joblib import Parallel, delayed
 
-from uncoverml.config import FeatureSetConfig
-
-covariastes_list = "configs/data/sirsam/covariates_list.txt"
-
 
 def read_list_file(list_path: str):
     files = []
@@ -27,23 +23,15 @@ def read_list_file(list_path: str):
     return files
 
 
-geotifs_list = read_list_file(list_path=covariastes_list)
-shorts = defaultdict(int)
-
-
 def generate_key_val(gl, shorts):
     eight_char_name = Path(gl).name[:8]
     if eight_char_name not in shorts:
         eight_char_name = Path(gl).name[:8]
         shorts[eight_char_name] += 1
+    else:
+        shorts[eight_char_name] += 1
     return Path(gl).name, eight_char_name + str(shorts[eight_char_name])
 
-
-geotifs = {}
-
-for gl in geotifs_list:
-    k, v = generate_key_val(gl, shorts)
-    geotifs[k] = v
 
 # import IPython; IPython.embed(); import sys; sys.exit()
 
@@ -99,16 +87,6 @@ for gl in geotifs_list:
 #     "k_15v5.tif": "k_15v5",
 # }
 
-# local
-data_location = Path("configs/data/sirsam")
-# tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
-shapefile_location = Path("configs/data")
-shp = shapefile_location.joinpath('geochem_sites.shp')
-
-downscale_factor = 2  # keep 1 point in a 2x2 cell
-
-geom_cols = ['POINT_X', 'POINT_Y']
-
 
 def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
     print("====================================\n", f"intersecting {shp.as_posix()}")
@@ -161,6 +139,26 @@ def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
 
 
 if __name__ == '__main__':
+    # local
+    data_location = Path("configs/data/sirsam")
+    # tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
+    shapefile_location = Path("configs/data")
+    shp = shapefile_location.joinpath('geochem_sites.shp')
+
+    downscale_factor = 2  # keep 1 point in a 2x2 cell
+
+    geom_cols = ['POINT_X', 'POINT_Y']
+
+    covariastes_list = "configs/data/sirsam/covariates_list.txt"
+    geotifs_list = read_list_file(list_path=covariastes_list)
+    shorts = defaultdict(int)
+
+    geotifs = {}
+
+    for gl in geotifs_list:
+        k, v = generate_key_val(gl, shorts)
+        geotifs[k] = v
+
     # check all required files are available on disc
     for k, v in geotifs.items():
         print(f"checking if {k} exists")
@@ -171,3 +169,24 @@ if __name__ == '__main__':
     #     n_jobs=-1,
     #     verbose=100,
     # )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
+
+x = {'3dem_mag0_finn.tif': '3dem_mag1', '3dem_mag1_fin.tif': '3dem_mag1', '3dem_mag2.tif': '3dem_mag1',
+     'Clim_Prescott_LindaGregory.tif': 'Clim_Pre1', 'Dose_2016.tif': 'Dose_2011', 'Potassium_2016.tif': 'Potassiu1',
+     'Rad2016K_Th.tif': 'Rad2016K1', 'Rad2016K_UTH.tif': 'Rad2016K1', 'Rad2016Th_K.tif': 'Rad2016T1',
+     'Rad2016Th_UK.tif': 'Rad2016T1', 'Rad2016U_THK.tif': 'Rad2016U1', 'Rad2016U_Th.tif': 'Rad2016U1',
+     'SagaWET9cell_M.tif': 'SagaWET91', 'SenEhanced.tif': 'SenEhanc1', 'Thorium_2016.tif': 'Thorium_1',
+     'Uranium_2016.tif': 'Uranium_1', 'be-30y-85m-avg-CLAY-BLUE+SWIR1.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-CLAY-PC2.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-FERRIC-PC2.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-FERRIC-PC4.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-GREEN.filled.lzw.nodata.tif': 'be-30y-81', 'be-30y-85m-avg-RED.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-SWIR1.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg-SWIR2.filled.lzw.nodata.tif': 'be-30y-81',
+     'be-30y-85m-avg_BLUE+SWIR2.tif': 'be-30y-81', 'ceno_euc_aust1.tif': 'ceno_euc1', 'dem_fill.tif': 'dem_fill1',
+     'national_Wii_RF_multirandomforest_prediction.tif': 'national1', 'relief_elev_focalrange1000m_3s.tif': 'relief_e1',
+     'relief_elev_focalrange300m_3s.tif': 'relief_e1', 'si_geol1.tif': 'si_geol11', 'slope_fill2.tif': 'slope_fi1',
+     'relief_mrvbf_3s_mosaic.tif': 'relief_m1', 'relief_roughness.tif': 'relief_r1', 'MvrtpLL_fin.tif': 'MvrtpLL_1',
+     'PM_Aster_regolithRatios_b_1.tif': 'PM_Aster1', 'PM_Aster_regolithRatios_b_2.tif': 'PM_Aster1',
+     'PM_Aster_regolithRatios_b_3.tif': 'PM_Aster1', 'modis1_te.tif': 'modis1_t1', 'modis2_te_fin.tif': 'modis2_t1',
+     'modis3_te.tif': 'modis3_t1', 'modis4_te.tif': 'modis4_t1', 'modis5_te_fin.tif': 'modis5_t1',
+     'modis6_te.tif': 'modis6_t1'}
