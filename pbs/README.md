@@ -15,29 +15,23 @@ The instructions assume you are using bash shell.
 These instructions currently only work with gcc and not the Intel compiler.
 Note that on NCI it appears python is compiled against gcc anyway.
 
-1. Unload the icc compiler from the terminal:
+1. Load the modules requried for installation and running:
 ```bash
-$ module unload intel-cc
-$ module unload intel-fc
-```
-2. Load the modules requried for installation and running:
-```bash
-$ module load python3/3.4.3 python3/3.4.3-matplotlib 
-$ module load hdf5/1.8.10 gdal/2.0.0 geos/3.5.0
+$ module load python3/3.9.2 gdal/3.0.2 openmpi/4.0.2
 ```
 (Alternatively, you may wish to add the above lines to your ~/.profile)
 
 2. Now add the following lines to the end of your ~/.profile:
 ```bash
 export PATH=$HOME/.local/bin:$PATH
-export PYTHONPATH=$HOME/.local/lib/python3.4/site-packages:$PYTHONPATH
-export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.4.3/bin/python3                 
+export PYTHONPATH=$HOME/.local/lib/python3.9/site-packages:$PYTHONPATH
+export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.9.2/bin/python3
 export LC_ALL=en_AU.UTF-8
 export LANG=en_AU.UTF-8
 source $HOME/.local/bin/virtualenvwrapper.sh 
 ``` 
 
-4. Install virtualenv and virtualenvwrapper by running the following command
+3. Install virtualenv and virtualenvwrapper by running the following command
 on the terminal:
 ```bash
 $ pip3 install  --user virtualenv virtualenvwrapper
@@ -45,7 +39,7 @@ $ pip3 install  --user virtualenv virtualenvwrapper
 
 5. Refresh your environment by reloading your profile:
 ```bash
-$ source ~/.profile
+$ source ~/.bashrc
 ```
 
 ## Installation
@@ -66,7 +60,12 @@ $ cd ~
 $ git clone git@github.com:GeoscienceAustralia/uncover-ml.git
 ```
 
-4. Install uncoverml:
+4. Install mpi4py
+```bash 
+$ pip install --no-cache-dir mpi4py==3.1.3 --no-binary=mpi4py
+```
+
+5. Install uncoverml:
 ```bash
 $ cd uncover-ml
 $ python setup.py install
