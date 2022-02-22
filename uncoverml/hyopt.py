@@ -118,9 +118,13 @@ def optimise_model(X, targets_all: Targets, conf: Config):
 
 
 def save_optimal(best, random_state, trials, objective, conf: Config):
+    reg = modelmaps[conf.algorithm]
 
     with open(conf.optimised_model_params, 'w') as f:
-        all_params = {**conf.algorithm_args, 'random_state': random_state}
+        if not isinstance(reg(), SVR):
+            all_params = {**conf.algorithm_args, 'random_state': random_state}
+        else:
+            all_params = {**conf.algorithm_args}
         all_params.update(best)
         # json.dump(all_params, cls=NpEncoder)
         json.dump(all_params, f, sort_keys=True, indent=4, cls=NpEncoder)
