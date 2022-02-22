@@ -37,6 +37,7 @@ learning:
     n_estimators: 10
     target_transform: identity
     random_state: 1
+    max_depth: 20
   optimisation:
     searchcv_params:
       n_iter: 6
