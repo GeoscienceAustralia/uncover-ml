@@ -736,7 +736,6 @@ no_test_support = {
     'quantilegb': QuantileGradientBoosting,
     'gradientboost': GBMReg,
     'catboost': CatBoostWrapper,
-    'svr': SVR,
 }
 
 test_support = {

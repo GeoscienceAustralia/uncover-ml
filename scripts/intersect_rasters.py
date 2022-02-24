@@ -26,7 +26,6 @@ def read_list_file(list_path: str):
 def generate_key_val(gl, shorts):
     eight_char_name = Path(gl).name[:8]
     if eight_char_name not in shorts:
-        eight_char_name = Path(gl).name[:8]
         shorts[eight_char_name] += 1
     else:
         shorts[eight_char_name] += 1
@@ -160,7 +159,7 @@ if __name__ == '__main__':
         geotifs[k] = v
 
     for k, v in geotifs.items():
-        print(f"\"{k}\": {v}")
+        print(f"\"{k}\": \"{v}\"")
 
     # check all required files are available on disc
     for k, v in geotifs.items():
