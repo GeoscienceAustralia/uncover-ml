@@ -132,9 +132,10 @@ def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
     output_dir = Path('out_resampled')
     output_dir.mkdir(exist_ok=True, parents=True)
     out_shp = output_dir.joinpath(shp.name)
-    pts_deduped.to_file(out_shp)
+    pts_deduped.to_file(out_shp.as_posix())
     print(f"saved intersected shapefile at {out_shp.as_posix()}")
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
+    return out_shp
 
 
 if __name__ == '__main__':
@@ -166,8 +167,20 @@ if __name__ == '__main__':
         print(f"checking if {k} exists")
         assert data_location.joinpath(k).exists()
 
-    intersect_and_sample_shp(shp, dedupe=False)
-    # rets = Parallel(
+    out_shp = intersect_and_sample_shp(shp, dedupe=False)
+    df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
+    df3 = df2[list(geotifs.values())]
+    df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
+    df5 = df2.loc[~((df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs))), :]
+
+    df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
+    print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
+    if df5.shape[0]:
+        df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
+    else:
+        print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
+
+# rets = Parallel(
     #     n_jobs=-1,
     #     verbose=100,
     # )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
