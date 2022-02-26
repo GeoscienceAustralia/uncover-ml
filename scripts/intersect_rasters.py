@@ -1,3 +1,4 @@
+from typing import Dict
 import csv
 from collections import defaultdict
 from os import path
@@ -87,7 +88,7 @@ def generate_key_val(gl, shorts):
 # }
 
 
-def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
+def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = False):
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
@@ -114,9 +115,20 @@ def intersect_and_sample_shp(shp: Path, dedupe: bool = False):
             )
             pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
-        pts_deduped = pts.sort_values(
-            by=geom_cols, ascending=[True, True]
-        ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+        # keep one only
+        # pts_deduped = pts.sort_values(
+        #     by=geom_cols, ascending=[True, True]
+        # ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+
+        # keep mean of repeated observations in a pixel
+        #
+        pts_count = pts.groupby(by=['rows', 'cols'], as_index=False).agg(pixel_count=('rows', 'count'))
+        pts_mean = pts.groupby(by=['rows', 'cols'], as_index=False).mean()
+        # import IPython; IPython.embed(); import sys; sys.exit()
+        pts_deduped = pts_mean.merge(
+            pts_count, how='inner', on=['rows', 'cols']).merge(
+            pts[['rows', 'cols', 'geometry']], how='inner', on=['rows', 'cols']
+        )
         # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
         coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
     else:
@@ -167,7 +179,7 @@ if __name__ == '__main__':
         print(f"checking if {k} exists")
         assert data_location.joinpath(k).exists()
 
-    out_shp = intersect_and_sample_shp(shp, dedupe=False)
+    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=True)
     df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
     df3 = df2[list(geotifs.values())]
     df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
