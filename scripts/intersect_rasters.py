@@ -185,11 +185,12 @@ if __name__ == '__main__':
     df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
     df5 = df2.loc[~((df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs))), :]
 
-    df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
-    print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
     if df5.shape[0]:
+        df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
+        print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
         df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
     else:
+        print(f"No points dropped and there for _cleaned.shp file is not createed'")
         print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
 
 # rets = Parallel(
