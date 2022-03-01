@@ -125,10 +125,10 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
         pts_count = pts.groupby(by=['rows', 'cols'], as_index=False).agg(pixel_count=('rows', 'count'))
         pts_mean = pts.groupby(by=['rows', 'cols'], as_index=False).mean()
         # import IPython; IPython.embed(); import sys; sys.exit()
-        pts_deduped = pts_mean.merge(
-            pts_count, how='inner', on=['rows', 'cols']).merge(
-            pts[['rows', 'cols', 'geometry']], how='inner', on=['rows', 'cols']
-        )
+        pts_deduped = pts_mean.merge(pts_count, how='inner', on=['rows', 'cols'])
+
+        pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=gpd.points_from_xy(pts_deduped['POINT_X'],
+                                                                                pts_deduped['POINT_Y']))
         # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
         coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
     else:
