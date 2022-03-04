@@ -34,6 +34,7 @@ from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
 from uncoverml import optimisation, hyopt
 # from uncoverml.mllog import warn_with_traceback
+from uncoverml.scripts import superlearn_cli
 
 
 log = logging.getLogger(__name__)
@@ -175,6 +176,14 @@ def _load_data(config: uncoverml.config.Config, partitions):
                 joblib.dump(targets_all, open(config.pickled_targets, 'wb'))
 
     return targets_all, x_all
+
+
+@cli.command()
+@click.argument('pipeline_file')
+@click.option('-p', '--partitions', type=int, default=1,
+              help='divide each node\'s data into this many partitions')
+def superlearn(pipeline_file: str, partitions: int):
+    superlearn_cli.main(pipeline_file, partitions)
 
 
 @cli.command()
@@ -353,7 +362,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     image_shape, image_bbox, image_crs = ls.geoio.get_image_spec(model, config)
 
-    outfile_tif = config.name + "_" + config.algorithm
+    outfile_tif = config.algorithm
     predict_tags = model.get_predict_tags()
     if not config.outbands:
         config.outbands = len(predict_tags)

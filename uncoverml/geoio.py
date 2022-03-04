@@ -568,7 +568,7 @@ def export_feature_ranks(measures, feats, scores, config):
         plt.xticks(range(len(sorted_features)), sorted_features,
                    rotation='vertical')
         plt.ylabel(measure)
-        plt.savefig('{}.png'.format(measure))
+        plt.savefig('{}.png'.format(config.output_dir + "/" + measure))
 
     # Write the results out to a file
     with open(outfile_ranks, 'w') as output_file:
