@@ -37,7 +37,12 @@ class TransformMixin(TransformPredictMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        try:
+            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        except TypeError as _e:
+            # if sample_weight not one of the learner's arguments
+            return super().fit(X, y_t)
+
 
 
 class TransformPredictDistMixin(TransformMixin):

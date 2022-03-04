@@ -22,6 +22,7 @@ from revrand.metrics import smse
 
 import uncoverml.config
 import uncoverml.scripts
+from uncoverml.validate import regression_validation_scores
 from uncoverml.geoio import RasterioImageSource, ImageWriter, get_image_spec
 from uncoverml.features import extract_subchunks
 
@@ -127,15 +128,21 @@ def super_cv(X, y, n_splits=5):
     kfold = KFold(n_splits=n_splits)
     meta_X = []
     meta_y = []
+    fold_scores = []
 
     for train_ix, test_ix in kfold.split(X):
-        y_fold = []
         train_X, test_X = X[train_ix], X[test_ix]
         train_y, test_y = y[train_ix], y[test_ix]
-        sm_fold = fit_super_model(train_X, train_y)
-        meta_y.extend(sm_fold.predict(test_X))
+        sm_fold = SuperLearn()
+        sm_fold.fit(train_X, train_y)
+        y_pred = sm_fold.predict(test_X)
+        meta_y.extend(y_pred)
+        fold_scores.append(regression_validation_scores(test_y, y_pred.reshape(-1, 1), np.ones_like(test_y), sm_fold))
     _logger.info(f"SUPER CV smse: {smse(y, meta_y)}")
     _logger.info(f"SUPER CV r2: {r2_score(y, meta_y)}")
+    scores_df = pd.DataFrame(fold_scores)
+    _logger.info(f"SUPER CV scores:\n{scores_df}")
+    _logger.info(f"SUPER CV score averages:\n{ {c: scores_df[c].mean() for c in scores_df.columns} }")
     plt.figure()
     plt.scatter(y, meta_y)
     plt.xlabel("True target")
@@ -149,9 +156,10 @@ def super_train(X, y):
     ...
     """
 
-    s_model = fit_super_model(X, y)
-    _logger.info(f"SUPER coeffs: {s_model.coef_}")
-    _logger.info(f"SUPER intercept: {s_model.intercept_}")
+    s_model = SuperLearn()
+    s_model.fit(X, y)
+    _logger.info(f"SUPER coeffs: {s_model.model.coef_}")
+    _logger.info(f"SUPER intercept: {s_model.model.intercept_}")
     y_super = s_model.predict(X[:, :])
     print("SUPER smse:", smse(y, y_super))
     print("SUPER r2:", r2_score(y, y_super))
@@ -177,7 +185,7 @@ def super_predict(s_model, learn_lst, alg_model, alg_yaml):
         arr_lst.append(extract_subchunks(img, 0, 1, 0)[:, 0, 0, 0])
 
     X_all = np.column_stack(arr_lst)
-    y_all = s_model.intercept_ + X_all.dot(s_model.coef_)
+    y_all = s_model.model.intercept_ + X_all.dot(s_model.model.coef_)
     _logger.debug("Feature-target shapes: ", X_all.shape, y_all.shape)
 
     alg_config = uncoverml.config.Config(alg_yaml)
@@ -191,7 +199,12 @@ def _load_model(model_file):
         return joblib.load(f)
 
 
-def fit_super_model(X, y):
-    s_model = LinearRegression()
-    s_model.fit(X, y)
-    return s_model
+class SuperLearn:
+    def __init__(self):
+        self.model = LinearRegression()
+    def fit(self, X, y):
+        self.model.fit(X, y)
+    def predict(self, X):
+        return self.model.predict(X)
+    def get_predict_tags(self):
+        return ['Prediction']
