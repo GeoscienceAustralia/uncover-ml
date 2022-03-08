@@ -30,7 +30,7 @@ def generate_key_val(gl, shorts):
         shorts[eight_char_name] += 1
     else:
         shorts[eight_char_name] += 1
-    return Path(gl).name, eight_char_name + str(shorts[eight_char_name])
+    return gl, eight_char_name + str(shorts[eight_char_name])
 
 
 # import IPython; IPython.embed(); import sys; sys.exit()
@@ -92,11 +92,11 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
+    geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
+    pts = pts.merge(geom, left_index=True, right_index=True)
     if dedupe:
-        geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
-        pts = pts.merge(geom, left_index=True, right_index=True)
         tif_name = list(geotifs.keys())[0]
-        tif = data_location.joinpath(tif_name)
+        tif = Path(tif_name)
         orig_cols = pts.columns
         with rasterio.open(tif) as src:
             # resample data to target shape
@@ -135,12 +135,12 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
         pts_deduped = pts
         coords_deduped = coords
 
-    for k, v in geotifs.items():
-        print(f"adding {k} to output dataframe")
-        with rasterio.open(data_location.joinpath(k)) as src:
+    for i, (k, v) in enumerate(geotifs.items()):
+        print(f"adding {i}/{len(geotifs)}: {k} to output dataframe")
+        with rasterio.open(Path(k)) as src:
             pts_deduped[v] = [x[0] for x in src.sample(coords_deduped)]
 
-    pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
+    # pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
     output_dir = Path('out_resampled')
     output_dir.mkdir(exist_ok=True, parents=True)
     out_shp = output_dir.joinpath(shp.name)
@@ -152,7 +152,6 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
 
 if __name__ == '__main__':
     # local
-    data_location = Path("configs/data/sirsam")
     # tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
     shapefile_location = Path("configs/data")
     shp = shapefile_location.joinpath('geochem_sites.shp')
@@ -171,15 +170,19 @@ if __name__ == '__main__':
         k, v = generate_key_val(gl, shorts)
         geotifs[k] = v
 
-    for k, v in geotifs.items():
-        print(f"\"{k}\": \"{v}\"")
-
     # check all required files are available on disc
     for k, v in geotifs.items():
         print(f"checking if {k} exists")
-        assert data_location.joinpath(k).exists()
+        assert Path(k).exists()
 
-    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=True)
+    print("Add under the 'intersected_features:' section in yaml")
+    print('='*100)
+    for k, v in geotifs.items():
+        print(f"\"{Path(k).name}\": \"{v}\"")
+
+    print('='*100)
+
+    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=False)
     df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
     df3 = df2[list(geotifs.values())]
     df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
