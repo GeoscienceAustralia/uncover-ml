@@ -642,31 +642,36 @@ def transform_targets(Regressor):
         # revrand and scikit learn algorithms don't need them. Custom models
         # probably shouldn't be using this factory
 
-        def __init__(self, target_transform='identity', *args, **kwargs):
+        def __init__(self, target_transform='identity', **kwargs):
 
-            super().__init__(*args, **kwargs)
-            self.target_transform = transforms.transforms[target_transform]()
+            super().__init__(**kwargs)
+            # self.target_transform = transforms.transforms[target_transform]()
+            if isinstance(target_transform, str):
+                target_transform = transforms.transforms[target_transform]()
 
-        def fit(self, X, y, *args, **kwargs):
+            self.target_transform = target_transform
+
+
+        def fit(self, X, y, **kwargs):
 
             self.target_transform.fit(y)
             y_t = self.target_transform.transform(y)
 
             return super().fit(X, y_t)
 
-        def _notransform_predict(self, X, *args, **kwargs):
+        def _notransform_predict(self, X, **kwargs):
             Ey = super().predict(X)
             return Ey
 
-        def predict(self, X, *args, **kwargs):
+        def predict(self, X, **kwargs):
 
-            Ey_t = self._notransform_predict(X, *args, **kwargs)
+            Ey_t = self._notransform_predict(X, **kwargs)
             Ey = self.target_transform.itransform(Ey_t)
 
             return Ey
 
         if hasattr(Regressor, 'predict_dist'):
-            def predict_dist(self, X, interval=0.95, *args, **kwargs):
+            def predict_dist(self, X, interval=0.95, **kwargs):
 
                 # Expectation and variance in latent space
                 Ey_t, Vy_t, ql, qu = super().predict_dist(X, interval)
