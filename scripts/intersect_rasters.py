@@ -150,11 +150,29 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
     return out_shp
 
 
+def intersect_sample_and_clean(shp, dedupe: bool = False):
+    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=dedupe)
+    df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
+    df3 = df2[list(geotifs.values())]
+    df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
+    df5 = df2.loc[~((df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs))), :]
+    try:
+        if df5.shape[0]:
+            df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
+            print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
+            df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
+        else:
+            print(f"No points dropped and there for _cleaned.shp file is not createed'")
+            print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
+    except:
+        print(f"Check this shapefile {shp}")
+
+
 if __name__ == '__main__':
     # local
     # tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
     shapefile_location = Path("configs/data")
-    shp = shapefile_location.joinpath('geochem_sites.shp')
+    # shp = shapefile_location.joinpath('geochem_sites.shp')
 
     downscale_factor = 2  # keep 1 point in a 2x2 cell
 
@@ -181,22 +199,9 @@ if __name__ == '__main__':
         print(f"\"{Path(k).name}\": \"{v}\"")
 
     print('='*100)
-
-    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=False)
-    df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
-    df3 = df2[list(geotifs.values())]
-    df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
-    df5 = df2.loc[~((df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs))), :]
-
-    if df5.shape[0]:
-        df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
-        print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
-        df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
-    else:
-        print(f"No points dropped and there for _cleaned.shp file is not createed'")
-        print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
-
-# rets = Parallel(
-    #     n_jobs=-1,
-    #     verbose=100,
-    # )(delayed(intersect_and_sample_shp)(s) for s in shapefile_location.glob("*.shp"))
+    for s in shapefile_location.glob("*.shp"):
+        intersect_sample_and_clean(s, True)
+    # rets = Parallel(
+    #         n_jobs=-1,
+    #         verbose=100,
+    #     )(delayed(intersect_sample_and_clean)(s, True) for s in shapefile_location.glob("geochem_sites.shp"))
