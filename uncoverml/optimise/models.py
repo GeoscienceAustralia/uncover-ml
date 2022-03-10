@@ -39,7 +39,7 @@ class TransformMixin(TransformPredictMixin):
         y_t = self.target_transform.transform(y)
         try:
             return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except TypeError as _e:
+        except (TypeError, KeyError) as _e:
             # if sample_weight not one of the learner's arguments
             return super().fit(X, y_t)
 
@@ -403,8 +403,11 @@ class XGBoost(XGBRegressor, TagsMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        sample_weight = kwargs['sample_weight']
-        return super().fit(X, y_t, sample_weight=sample_weight)
+        try:
+            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
         Ey_t = self._notransform_predict(X, *args, **kwargs)
@@ -443,7 +446,11 @@ class XGBQuantileRegressor(XGBRegressor, TagsMixin):
         super().set_params(objective=quantile_loss_obj)
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        try:
+            super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            super().fit(X, y_t)
         return self
 
     def predict(self, X, *args, **kwargs):
@@ -521,11 +528,19 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
 
     def fit(self, X, y, **kwargs):
         log.info('Fitting xgb base model')
-        self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
-        log.info('Fitting xgb upper quantile model')
-        self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
-        log.info('Fitting xgb lower quantile model')
-        self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+        try:
+            self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
+            log.info('Fitting xgb upper quantile model')
+            self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
+            log.info('Fitting xgb lower quantile model')
+            self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            self.gb.fit(X, y) 
+            log.info('Fitting xgb upper quantile model')
+            self.gb_quantile_upper.fit(X, y)
+            log.info('Fitting xgb lower quantile model')
+            self.gb_quantile_lower.fit(X, y)
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
@@ -585,7 +600,11 @@ class GBMReg(GradientBoostingRegressor, TagsMixin):
     def fit(self, X, y, *args, **kwargs):
         self.target_transform.fit(y=y)
         y_t = self.target_transform.transform(y)
-        return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        try:
+            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            return super().fit(X, y_t)
 
 
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
@@ -688,11 +707,19 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
 
     def fit(self, X, y, *args, **kwargs):
         log.info('Fitting gb base model')
-        self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
-        log.info('Fitting gb upper quantile model')
-        self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
-        log.info('Fitting gb lower quantile model')
-        self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+        try:
+            self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
+            log.info('Fitting gb upper quantile model')
+            self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
+            log.info('Fitting gb lower quantile model')
+            self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            self.gb.fit(X, y)
+            log.info('Fitting gb upper quantile model')
+            self.gb_quantile_upper.fit(X, y)
+            log.info('Fitting gb lower quantile model')
+            self.gb_quantile_lower.fit(X, y)
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
@@ -721,7 +748,11 @@ class CatBoostWrapper(CatBoostRegressor, TagsMixin):
         super(CatBoostWrapper, self).__init__(**kwargs, loss_function='RMSEWithUncertainty')
 
     def fit(self, X, y, **kwargs):
-        super().fit(X, y, sample_weight=kwargs['sample_weight'])
+        try:
+            super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        except (TypeError, KeyError) as _e:
+            # if sample_weight not one of the learner's arguments
+            super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
