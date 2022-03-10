@@ -135,10 +135,16 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
         pts_deduped = pts
         coords_deduped = coords
 
-    for i, (k, v) in enumerate(geotifs.items()):
-        print(f"adding {i}/{len(geotifs)}: {k} to output dataframe")
-        with rasterio.open(Path(k)) as src:
-            pts_deduped[v] = [x[0] for x in src.sample(coords_deduped)]
+    # for k, v in geotifs.items():
+        # print(f"adding {i}/{len(geotifs)}: {k} to output dataframe")
+        # pts_deduped[v] = __extract_raster_points(coords_deduped, k)
+    pts_deduped__ = Parallel(
+            n_jobs=-1,
+            verbose=100,
+        )(delayed(__extract_raster_points)(r, coords_deduped) for r in geotifs.keys())
+
+    for i, col_name in enumerate(geotifs.values()):
+        pts_deduped[col_name] = pts_deduped__[i]
 
     # pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
     output_dir = Path('out_resampled')
@@ -148,6 +154,12 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
     print(f"saved intersected shapefile at {out_shp.as_posix()}")
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
     return out_shp
+
+
+def __extract_raster_points(raster, coords_deduped):
+    with rasterio.open(Path(raster)) as src:
+        print(f"---- intersecting {raster}--------")
+        return [x[0] for x in src.sample(coords_deduped)]
 
 
 def intersect_sample_and_clean(shp, dedupe: bool = False):
