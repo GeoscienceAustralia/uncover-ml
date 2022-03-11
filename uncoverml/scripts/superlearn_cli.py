@@ -9,7 +9,7 @@
 #################################################
 
 """
-Run the uncoverml pipeline for super-learning and prediction.
+Runs uncoverml for super-learning and prediction.
 .. program-output:: uncoverml --help
 """
 
@@ -18,6 +18,7 @@ import joblib
 from pathlib import Path
 import os
 import warnings
+from typing import List, Dict, Optional, Union, Any
 
 import click
 import yaml
@@ -30,17 +31,18 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from xgboost.sklearn import XGBRegressor
+from sklearn.base import RegressorMixin
 from vecstack import stacking
 from mlens.ensemble import SuperLearner
 
-import uncoverml.config
+from uncoverml.config import Config
 import uncoverml.scripts
 from uncoverml.validate import regression_validation_scores
 from uncoverml.geoio import RasterioImageSource, ImageWriter, get_image_spec
 from uncoverml.features import extract_subchunks
 
 from uncoverml.krige import krig_dict
-from uncoverml.models import modelmaps, apply_multiple_masked
+from uncoverml.models import modelmaps, apply_multiple_masked, TagsMixin
 from uncoverml.targets import Targets
 from uncoverml.optimise.models import transformed_modelmaps
 
@@ -58,32 +60,86 @@ meta_map = {
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
 
 
-def define_model(alg_yaml):
-    alg_config = uncoverml.config.Config(alg_yaml)
+def define_model(alg_yaml: str) -> TagsMixin:
+    """
+    Returns the base-learner model from the yaml file and mapping above
+
+    Parameters
+    ----------
+    dalg_yaml: str
+        The YAML file in the current foder named after the learner algorithm
+        with the associated keyword arguments.
+
+    Returns
+    ----------
+    model: TagsMixin
+        The base-learner model defined with the kewyord arguments
+    """
+
+    alg_config = Config(alg_yaml)
     model = all_modelmaps[alg_config.algorithm](**alg_config.algorithm_args)
     return model
 
 
-def main(pipeline_file, partitions):
+def load_model(model_file: str) -> Dict[str, Any]:
     """
+    Returns a trained base-learner and its config paramaters as a dict
+    {"model", base-learner model, "config": Config) from the *.model file
+
+    Parameters
+    ----------
+    model_file: str
+        The *.model file
+
+    Returns
+    ----------
+        : Dict[model, config]
+        Tre trained base-learner and its config parameters
     """
 
-    def _grp(d, k, msg=None):
+    with open(model_file, 'rb') as f:
+        return joblib.load(f)
+
+
+def main(pipeline_file: str, partitions: int) -> None:
+    """
+    The super-learning driver routine.
+
+    Parameters
+    ----------
+    pipeline_file: str
+        The YAML config file input script with the definitions of meta-learner,
+        base-learners with the associated keyword arguments, covariates, targets,
+        validation, prediction etc...
+    """
+
+    def _grp(dic: Dict[str, str], _k: str, msg=None) -> str:
         """
-        Get required parameter.
+        A ridiculous helper routine to read the keys k from a config dictionary.
+        (taken from the develop branch config reader)
+
+        Parameters
+        ----------
+        dic: Dict
+            The dictionary obtained from the confing YAML file in the current folder.
+
+        Returns
+        ----------
+        model: TagsMixin
+            The base-learner model defined with the kewyord arguments
         """
+
         try:
-            return d[k]
+            return dic[_k]
         except KeyError:
             if msg is None:
-                msg = f"Required parameter {k} not present in config."
+                msg = f"Required parameter {_k} not present in config."
             _logger.exception(msg)
             raise
 
-    # uncoverml.config.Config._configure_pyyaml()
     with open(pipeline_file, 'r') as f:
         try:
-            s = yaml.safe_load(f)
+            conf_params = yaml.safe_load(f)
         except UnicodeDecodeError:
             if pipeline_file.endswith('.model'):
                 _logger.error("You're attempting to run uncoverml but have provided the "
@@ -94,15 +150,15 @@ def main(pipeline_file, partitions):
                 _logger.error("Couldn't parse the yaml file. Ensure you've provided the correct "
                               "file as config file and that the YAML is valid.")
 
-    if 'metalearning' in s:
-        meta_alg = s['metalearning']['algorithm']
+    if 'metalearning' in conf_params:
+        meta_alg = conf_params['metalearning']['algorithm']
         meta_learner = meta_map.get(meta_alg)
         try:
-            meta_args = s['metalearning']['arguments']
+            meta_args = conf_params['metalearning']['arguments']
         except KeyError as _e:
             meta_args = {}
         if meta_args is None:
-            # empty "arguments:"
+            # empty "arguments:" block
             meta_args = {}
         _logger.info(f"Using meta-learner {meta_map.get(meta_alg)} with \n{meta_args}")
     else:
@@ -110,32 +166,42 @@ def main(pipeline_file, partitions):
         meta_args = {}
         _logger.info("Using the default meta-learner LinearRegression")
 
-    learn_lst = _grp(s, 'learning', "'learning' block must be provided when metalearning.")
-    s.pop("learning")
-    ddd = {}
+    learn_alg_lst = _grp(conf_params, 'learning', "'learning' block must be provided when metalearning.")
+    conf_params.pop("learning")
+    # the list of base-learner models (each as an object initialised with class(parameters)):
+    base_learner_lst = []
+    # the list of trained base-learner models (each as a dict {"model": ... , "config": ...} binary values):
     model_lst = []
-    bmodel_lst = []
     df = pd.DataFrame()
-    for alg in learn_lst:
-        _logger.info(f"Base model {alg['algorithm']} learning about to begin...")
-        ddd.update({"learning": alg})
-        ddd.update(s)
+    for alg in learn_alg_lst:
+        _logger.info(f"\nBase model {alg['algorithm']} learning about to begin...")
+        learner_dic = {"learning": alg}
+        learner_dic.update(conf_params)
+        try:
+            learner_dic.pop("metalearning")
+        except KeyError:
+            # if no "metalearning", LinearRegression() used as the super-learner
+            pass
         alg_outdir = f"./{alg['algorithm']}_out"
-        ddd["output"]["directory"] = alg_outdir
-        ddd["output"]["model"] = f"{alg['algorithm']}.model"
-        ddd["pickling"]["covariates"] = alg_outdir + "/features.pk"
-        ddd["pickling"]["targets"] = alg_outdir + "/targets.pk"
+        learner_dic["output"]["directory"] = alg_outdir
+        learner_dic["output"]["model"] = f"{alg['algorithm']}.model"
+        learner_dic["pickling"]["covariates"] = alg_outdir + "/features.pk"
+        learner_dic["pickling"]["targets"] = alg_outdir + "/targets.pk"
         alg_yaml = f"./{alg['algorithm']}.yml"
         with open(alg_yaml, 'w') as yout:
-            yaml.dump(ddd, yout, default_flow_style=False, sort_keys=False)
+            yaml.dump(learner_dic, yout, default_flow_style=False, sort_keys=False)
         uncoverml.scripts.uncoverml.learn.callback(alg_yaml, [], partitions)
 
-        model_conf = _load_model(ddd["output"]["directory"] + "/" + ddd["output"]["model"])
-        model_lst.append(model_conf["model"])
-        bmodel_lst.append(define_model(alg_yaml))
+        # define the base model with the YAML file parameters & append it to the list
+        base_learner_lst.append(define_model(alg_yaml))
+        # load the trained base model with the *.model file & append it to the model list
+        model_conf = load_model(learner_dic["output"]["directory"] + "/" + learner_dic["output"]["model"])
+        input(f"AAA {type(model_conf['model'])}")
+        input(f"AAA {type(model_conf['config'])}")
+        model_lst.append(model_conf)
 
         retain = None
-        mb = s.get('mask')
+        mb = conf_params.get('mask')
         if mb:
             mask = mb.get('file')
             if not os.path.exists(mask):
@@ -146,7 +212,7 @@ def main(pipeline_file, partitions):
 
         _logger.info(f"Base model {alg['algorithm']} predictions about to begin...")
         try:
-            uncoverml.scripts.uncoverml.predict.callback(ddd["output"]["directory"] + "/" + ddd["output"]["model"], partitions, mask, retain)
+            uncoverml.scripts.uncoverml.predict.callback(learner_dic["output"]["directory"] + "/" + learner_dic["output"]["model"], partitions, mask, retain)
         except TypeError:
             _logger.error(f"Learner {alg['algorithm']} cannot predict")
 
@@ -162,7 +228,8 @@ def main(pipeline_file, partitions):
     _logger.info(f"\nBase model training set predictions:\n{df.head()}")
     _logger.info(f"...\n{df.tail()}")
 
-    X_meta = get_Xs(learn_lst)
+    base_alg_lst = [alg["algorithm"] for alg in learn_alg_lst]
+    X_meta = get_metafeats(base_alg_lst)
 
     column_nan = np.logical_or(np.isnan(X_meta).any(axis=0), np.isinf(X_meta).any(axis=0))
     if column_nan.any():
@@ -171,16 +238,16 @@ def main(pipeline_file, partitions):
         _logger.info(f"Problem column(s) with NaNs: {*colnan_ix,}")
         X_meta = np.delete(X_meta, colnan_ix[0], axis=1)
         for _i in np.argwhere(column_nan)[0][::-1]:
-            learn_lst.pop(_i)
+            learn_alg_lst.pop(_i)
             model_lst.pop(_i)
-            bmodel_lst.pop(_i)
+            base_learner_lst.pop(_i)
         df.drop(df.columns[colnan_ix[0]], axis=1, inplace=True)
 
     y = df['y_true'].values
     X = df.drop(columns='y_true').values
-    if 'validation' in s:
+    if 'validation' in conf_params:
         try:
-            cv_folds = int(s['validation'][1]['k-fold']['folds'])
+            cv_folds = int(conf_params['validation'][1]['k-fold']['folds'])
         except (KeyError, TypeError) as _e:
             _logger.exception(f"CV fold unreadable {_e}")
             cv_folds = 5
@@ -189,25 +256,44 @@ def main(pipeline_file, partitions):
     meta_cv(X, y, meta_learner, n_splits=cv_folds, **meta_args)
     meta_model = meta_train(X, y, meta_learner, **meta_args)
     for bm in model_lst:
-        model_full_train(bm, X, y)
+        model_full_train(bm["model"], X, y)
 
     y_lr = meta_predict(meta_model, X_meta)
-    meta_tif(model_lst[-1], alg_yaml, y_lr)
+    meta_tif(model_lst[-1], y_lr)
     # vecstack
     weights = np.ones_like(y)
-    meta_stack = v_stack(X, y, bmodel_lst, meta_learner, sample_weight=weights, **meta_args)
+    meta_stack = v_stack(X, y, base_learner_lst, meta_learner, sample_weight=weights, **meta_args)
     y_meta = meta_stack.predict(X_meta)
-    meta_tif(model_lst[-1], alg_yaml, y_meta, tif_name = "VSuper")
+    meta_tif(model_lst[-1], y_meta, tif_name = "VSuper")
     # MLEns
-    mle_stack = m_stack(X, y, bmodel_lst, meta_learner, **meta_args)
+    mle_stack = m_stack(X, y, base_learner_lst, meta_learner, **meta_args)
     y_mle = mle_stack.predict(X_meta)
-    meta_tif(model_lst[-1], alg_yaml, y_mle, tif_name = "MSuper")
+    meta_tif(model_lst[-1], y_mle, tif_name = "MSuper")
     return
 
 
-def meta_cv(X, y, meta_learner, n_splits=5, **kwargs):
+def meta_cv(X: np.ndarray,
+            y: np.ndarray,
+            meta_learner: RegressorMixin,
+            n_splits: int=5,
+            **kwargs: Union[Any, None]) -> None:
     """
-    ...
+    Runs the cross validation for the super-learner.
+
+    Parameters
+    ----------
+    X: 2D array
+        The training set feature
+        values of covariates (columns) for the training samples (rows)
+        obtained from the intersection of shapefile with covariate TIFs.
+    y: 1D array
+        The training set target values from the shapefile.
+    meta_learner: one of the 4 Regressors (LinReg, XGBReg, GBM, RF)
+        The super-learner class`
+    n_splits: int
+        The number of folds for the cross-validation
+    **kwargs: any
+        The optional keyword parameters for meta-learner initialisation
     """
 
     kfold = KFold(n_splits=n_splits)
@@ -235,9 +321,28 @@ def meta_cv(X, y, meta_learner, n_splits=5, **kwargs):
     plt.close()
 
 
-def meta_train(X, y, meta_learner, **kwargs):
+def meta_train(X, y, meta_learner, **kwargs) -> RegressorMixin:
     """
-    ...
+    Trains the the super-learner on the full training data set.
+
+    Parameters
+    ----------
+    X: 2D array
+        The training set feature
+        values of covariates (columns) for the training samples (rows)
+        obtained from the intersection of shapefile with covariate TIFs.
+    y: 1D array
+        The training set target values from the shapefile.
+    meta_learner: RegerssorMixin
+         The super-learner class, one of the 4 Regressors (LinReg, XGBReg, GBM, RF)
+       
+    **kwargs: any
+        The optional keyword parameters for meta-learner initialisation
+
+    Returns
+    ----------
+    model: RegressorMixin
+        The trained super-learner model.
     """
 
     meta_model = MetaLearn(meta_learner, **kwargs)
@@ -257,15 +362,26 @@ def meta_train(X, y, meta_learner, **kwargs):
     return meta_model
 
 
-def get_Xs(learn_lst):
+def get_metafeats(base_alg_lst: List[str]) -> np.ma.MaskedArray:
     """
-    ...
+    Reads the predictions (geotifs) from the base-learners and combines those into a 2D array
+    as the super-learner predictor features (a 2D masked darray).
+
+    Parameters
+    ----------
+    base_alg_lst: List[str]
+        The names of the base-learner algorithms
+
+    Returns
+    ----------
+    X_meta: 2D MaskedArray
+        The predictor features for the super-learner
     """
 
     arr_lst = []
-    for _i, alg in enumerate(learn_lst):
-        alg_outdir = f"./{alg['algorithm']}_out"
-        tif = alg_outdir + f"/{alg['algorithm']}_prediction.tif"
+    for alg in base_alg_lst:
+        alg_outdir = f"./{alg}_out"
+        tif = alg_outdir + f"/{alg}_prediction.tif"
         img = RasterioImageSource(tif)
         marr = extract_subchunks(img, 0, 1, 0)
         arr_lst.append(marr[:, 0, 0, 0])
@@ -274,9 +390,22 @@ def get_Xs(learn_lst):
     return X_meta
 
 
-def meta_predict(meta_model, X_meta):
+def meta_predict(meta_model: RegressorMixin, X_meta: np.ma.MaskedArray) -> np.ndarray:
     """
-    ...
+    Reads the predictions (geotifs) from the base-learners and combines those into a 2D array
+    as the super-learner predictor features (a 2D masked darray).
+
+    Parameters
+    ----------
+    model: RegressorMixin
+        The trained super-learner model.
+    X_meta: 2D MaskedArray
+        The predictor features for the super-learner
+
+    Returns
+    ----------
+    y_meta: 1D array
+        The trained super-learner model final predictions.
     """
 
     y_meta = meta_model.predict(X_meta)
@@ -284,19 +413,23 @@ def meta_predict(meta_model, X_meta):
     return y_meta
 
 
-def meta_tif(alg_model, alg_yaml, y_meta, tif_name="Meta"):
+def meta_tif(model_config: Dict[str, Union[TagsMixin, Config]], y_meta: np.ndarray, tif_name: str="Meta") -> None:
     """
-    ...
+    Converts the super-learner predictions into a geo-tif file.
+
+    Parameters
+    ----------
+    model_config: Dict
+        any trained base-learner and its config
+    y_meta: 1D array
+        The trained super-learner model final predictions.
+    tif_name: str
+        The geotif prefix name
     """
-    alg_config = uncoverml.config.Config(alg_yaml)
-    img_shape, img_bbox, img_crs = get_image_spec(alg_model, alg_config)
+
+    img_shape, img_bbox, img_crs = get_image_spec(model_config["model"], model_config["config"])
     img_out = ImageWriter(img_shape, img_bbox, img_crs, tif_name, 1, "./", band_tags=["Prediction"])
     img_out.write(y_meta.view(np.ma.masked_array).reshape(-1, 1), 0)
-
-
-def _load_model(model_file):
-    with open(model_file, 'rb') as f:
-        return joblib.load(f)
 
 
 def getMetaLearner(meta_learner):
