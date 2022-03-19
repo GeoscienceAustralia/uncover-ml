@@ -88,7 +88,7 @@ def generate_key_val(gl, shorts):
 # }
 
 
-def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = False):
+def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = False, intersect_parallel: bool = False):
     print("====================================\n", f"intersecting {shp.as_posix()}")
     pts = gpd.read_file(shp)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
@@ -138,22 +138,22 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str], dedupe: bool = 
     # for k, v in geotifs.items():
         # print(f"adding {i}/{len(geotifs)}: {k} to output dataframe")
         # pts_deduped[v] = __extract_raster_points(coords_deduped, k)
-    pts_deduped__ = Parallel(
-            n_jobs=-1,
-            verbose=100,
-        )(delayed(__extract_raster_points)(r, coords_deduped) for r in geotifs.keys())
+    if intersect_parallel:
+        pts_deduped__ = Parallel(
+                n_jobs=-1,
+                verbose=100,
+            )(delayed(__extract_raster_points)(r, coords_deduped) for r in geotifs.keys())
 
-    for i, col_name in enumerate(geotifs.values()):
-        pts_deduped[col_name] = pts_deduped__[i]
+        for i, col_name in enumerate(geotifs.values()):
+            pts_deduped[col_name] = pts_deduped__[i]
+    else:
+        for i, (k, v) in enumerate(geotifs.items()):
+            print(f"adding {i}/{len(geotifs)}: {k} to output dataframe")
+            pts_deduped[v] = __extract_raster_points(coords_deduped, k)
 
     # pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=pts_deduped.geometry)
-    output_dir = Path('out_resampled')
-    output_dir.mkdir(exist_ok=True, parents=True)
-    out_shp = output_dir.joinpath(shp.name)
-    pts_deduped.to_file(out_shp.as_posix())
-    print(f"saved intersected shapefile at {out_shp.as_posix()}")
     # pts.to_csv(Path("out").joinpath(shp.stem + ".csv"), index=False)
-    return out_shp
+    return pts_deduped
 
 
 def __extract_raster_points(raster, coords_deduped):
@@ -162,9 +162,12 @@ def __extract_raster_points(raster, coords_deduped):
         return [x[0] for x in src.sample(coords_deduped)]
 
 
-def intersect_sample_and_clean(shp, dedupe: bool = False):
-    out_shp = intersect_and_sample_shp(shp, geotifs, dedupe=dedupe)
-    df2 = gpd.GeoDataFrame.from_file(out_shp.as_posix())
+def intersect_sample_and_clean(shp, dedupe: bool = False, write_dropped: bool = False,
+                               intersect_parallel: bool = False):
+    df2 = intersect_and_sample_shp(shp, geotifs, dedupe=dedupe, intersect_parallel=intersect_parallel)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    output_dir.joinpath('clean')
+    out_shp = output_dir.joinpath(shp.name)
     df3 = df2[list(geotifs.values())]
     df4 = df2.loc[(df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs)), :]
     df5 = df2.loc[~((df3.isna().sum(axis=1) == 0) & ((np.abs(df3) < 1e10).sum(axis=1) == len(geotifs))), :]
@@ -172,8 +175,11 @@ def intersect_sample_and_clean(shp, dedupe: bool = False):
         if df5.shape[0]:
             df4.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp'))
             print(f"Wrote clean shapefile {out_shp.parent.joinpath(out_shp.stem + '_cleaned.shp')}")
-            df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
+            if write_dropped:
+                df5.to_file(out_shp.parent.joinpath(out_shp.stem + '_cleaned_dropped.shp'))
         else:
+            df2.to_file(out_shp.as_posix())
+            print(f"saved intersected shapefile at {out_shp.as_posix()}")
             print(f"No points dropped and there for _cleaned.shp file is not createed'")
             print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
     except:
@@ -182,10 +188,8 @@ def intersect_sample_and_clean(shp, dedupe: bool = False):
 
 if __name__ == '__main__':
     # local
-    # tif_local = data_location.joinpath('LATITUDE_GRID1.tif')
+    output_dir = Path('out_resampled')
     shapefile_location = Path("configs/data")
-    # shp = shapefile_location.joinpath('geochem_sites.shp')
-
     downscale_factor = 2  # keep 1 point in a 2x2 cell
 
     geom_cols = ['POINT_X', 'POINT_Y']
@@ -212,7 +216,7 @@ if __name__ == '__main__':
 
     print('='*100)
     for s in shapefile_location.glob("*.shp"):
-        intersect_sample_and_clean(s, True)
+        intersect_sample_and_clean(s, True, True)
     # rets = Parallel(
     #         n_jobs=-1,
     #         verbose=100,
