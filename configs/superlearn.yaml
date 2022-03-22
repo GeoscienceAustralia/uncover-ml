@@ -59,38 +59,39 @@ learning:
     target_transform: identity
 
 
+
 features:
-  - type: ordinal
+  - name: whatever
+    type: ordinal
     files:
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/er_depg.tif
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/sagawet_b_sir.tif
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/dem_foc2.tif
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/outcrop_dis2.tif
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/k_15v5.tif
-      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/relief_apsect.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/er_depg.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/sagawet_b_sir.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/dem_foc2.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/outcrop_dis2.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/k_15v5.tif
+      - path: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/sirsam/relief_apsect.tif
     transforms:
       - centre
       - standardise
     imputation: mean
 
 targets:
-  file: /g/data/ge3/axb562/github/uncover-ml/configs/data/geochem_sites.shp
+  file: /g/data/ge3/axb562/github/GA_uncover_ml/configs/data/geochem_sites.shp
   property: K_ppm_imp
 
 validation:
-  feature_rank: True
-  k-fold:
-    parallel: True
-    folds: 5
-    random_seed: 1
+  # - feature_rank
+  - k-fold:
+      folds: 5
+      random_seed: 1
 
 prediction:
   quantiles: 0.95
   outbands: 4
 
 output:
-  directory: ./xgb_out
-  model: ./xgb_out/xgb.model
+  directory: xgb_out/
+  model: xgb.model
   # plot_feature_ranks: True
   plot_intersection: True
   plot_real_vs_pred: True
