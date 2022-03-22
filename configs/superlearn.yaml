@@ -1,0 +1,103 @@
+metalearning:
+  algorithm: XGBoost
+  arguments:
+
+learning:
+- algorithm: gradientboost
+  arguments:
+    target_transform: identity
+    loss: 'ls'
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 20
+    min_samples_split: 2
+    min_samples_leaf: 1
+    min_weight_fraction_leaf: 0.0
+    max_features: "auto"
+    random_state: 3
+
+- algorithm: randomforest
+  arguments:
+    n_estimators: 10
+    target_transform: identity
+    random_state: 1
+
+- algorithm: ardregression
+  arguments:
+    target_transform: identity
+
+- algorithm: decisiontree
+  arguments:
+    target_transform: identity
+
+- algorithm: extratree
+  arguments:
+    target_transform: identity
+
+- algorithm: nnr
+  arguments:
+    target_transform: identity
+
+- algorithm: ols
+  arguments:
+    target_transform: identity
+
+- algorithm: svr
+  arguments:
+    kernel: rbf
+    target_transform: identity
+
+- algorithm: xgboost
+  arguments:
+    target_transform: identity
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 20
+
+- algorithm: elasticnet
+  arguments:
+    target_transform: identity
+
+
+features:
+  - type: ordinal
+    files:
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/er_depg.tif
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/sagawet_b_sir.tif
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/dem_foc2.tif
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/outcrop_dis2.tif
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/k_15v5.tif
+      - path: /g/data/ge3/axb562/github/uncover-ml/configs/data/sirsam/relief_apsect.tif
+    transforms:
+      - centre
+      - standardise
+    imputation: mean
+
+targets:
+  file: /g/data/ge3/axb562/github/uncover-ml/configs/data/geochem_sites.shp
+  property: K_ppm_imp
+
+validation:
+  feature_rank: True
+  k-fold:
+    parallel: True
+    folds: 5
+    random_seed: 1
+
+prediction:
+  quantiles: 0.95
+  outbands: 4
+
+output:
+  directory: ./xgb_out
+  model: ./xgb_out/xgb.model
+  # plot_feature_ranks: True
+  plot_intersection: True
+  plot_real_vs_pred: True
+  plot_correlation: True
+  plot_target_scaling: True
+
+pickling:
+  covariates: ./xgb_out/features.pk
+  targets: ./xgb_out/targets.pk
+
