@@ -215,6 +215,8 @@ class Config:
 
         if 'features' in s:
             self.feature_sets = [FeatureSetConfig(k) for k in s['features']]
+        elif 'features' in s['learning']:
+            self.feature_sets = [FeatureSetConfig(k) for k in s['learning']['features']]
 
         if 'preprocessing' in s:
             final_transform = s['preprocessing']

@@ -96,7 +96,7 @@ def load_model(model_file: str) -> Dict[str, Union[TagsMixin, Config]]:
     Returns
     ----------
     ... : Dict[model, config]
-        Tre trained base-learner and its config parameters
+        The trained base-learner and its config parameters
     """
 
     with open(model_file, 'rb') as fin:
@@ -121,11 +121,11 @@ def _grp(dic: Dict[str, str], _k: str, msg=None) -> str:
 
     try:
         return dic[_k]
-    except KeyError:
+    except KeyError as _e:
         if msg is None:
-            msg = f"Required parameter {_k} not present in config."
+            msg = f"Required parameter {_k} not present in the config.\n{_e}"
         _logger.exception(msg)
-        raise
+        raise KeyError from _e
 
 
 def main(pipeline_file: str, partitions: int) -> None:
@@ -186,20 +186,23 @@ def main(pipeline_file: str, partitions: int) -> None:
     learn_alg_lst = _grp(config_dic, 'learning', "'learning' block required when metalearning.")
     config_dic.pop("learning")
     # prepare inputs for the base-learners
-    if uncoverml.mpiops.chunk_index == 0:
-        # Use only the master Node 0
-        base_yaml(learn_alg_lst, config_dic)
+    yaml_dic = uncoverml.mpiops.run_once(base_yaml, learn_alg_lst, config_dic)
     # synchronise the multi-processing
-    uncoverml.mpiops.comm.barrier()
+    # uncoverml.mpiops.comm.barrier()
     # the list of base-learner models (each as an object initialised with class(parameters)):
     base_learner_lst = []
     # the list of trained base-learner models (each as a dict {"model": ... , "config": ...}):
     model_lst = []
-    # get the training data set
-    a_conf = Config(f"./{learn_alg_lst[0]['algorithm']}.yml")
-    targets_shp, x_shp = uncoverml.scripts.uncoverml._load_data(a_conf, partitions)
+    dataset_dic = {}
+    # get the training data sets
+    for alg, yml in yaml_dic.items():
+        a_conf = Config(yml)
+        targets_shp, x_shp = uncoverml.scripts.uncoverml._load_data(a_conf, partitions)
+        if uncoverml.mpiops.chunk_index == 0:
+            dataset_dic.update({alg: (targets_shp, x_shp)})
+    dataset_dic = uncoverml.mpiops.comm.bcast(dataset_dic, root=0)
     # train the base-learners
-    base_fit(learn_alg_lst, base_learner_lst, model_lst, config_dic, targets_shp, x_shp, partitions)
+    base_fit(learn_alg_lst, base_learner_lst, model_lst, config_dic, dataset_dic, partitions)
     # proceed to make base model predictions
     df_pred = base_predict(learn_alg_lst, model_lst, config_dic, partitions)
     _logger.info(f"\nBase learner training set predictions:\n{df_pred.head()}")
@@ -214,7 +217,7 @@ def main(pipeline_file: str, partitions: int) -> None:
     #     x_tif = None
     # x_tif = uncoverml.mpiops.comm.bcast(x_tif, root=0)
     ## To continue with separate chunks for each process:
-    x_tif=tif_chunk
+    x_tif = tif_chunk
     # use these to train the first meta-learner and save its predictions
     go_meta(df_pred, x_tif, model_lst[-1], config_dic, meta_learner, **meta_args)
     # train the meta-learner using vecstack and MLEns and make the predictions
@@ -228,7 +231,7 @@ def main(pipeline_file: str, partitions: int) -> None:
             **meta_args)
 
 
-def base_yaml(learn_alg_lst: List[Dict[str, Any]], config_dic: Dict[str, Any]) -> None:
+def base_yaml(learn_alg_lst: List[Dict[str, Any]], config_dic: Dict[str, Any]) -> Dict[str, str]:
     """
     Writes the base-learner yaml files.
 
@@ -240,8 +243,14 @@ def base_yaml(learn_alg_lst: List[Dict[str, Any]], config_dic: Dict[str, Any]) -
         The settings from YAML input file with the definitions of meta-learner,
         base-learners with the associated keyword arguments, covariates, targets,
         validation, prediction etc...
+
+    Return
+    ----------
+    yaml_dic: Dict[str, str]
+        For each base-learner algorithm (key) the associated YAML file (value).
     """
 
+    yaml_dic = {}
     for alg in learn_alg_lst:
         alg_yaml = f"./{alg['algorithm']}.yml"
         alg_outdir = f"./{alg['algorithm']}_out"
@@ -261,6 +270,7 @@ def base_yaml(learn_alg_lst: List[Dict[str, Any]], config_dic: Dict[str, Any]) -
         with open(alg_yaml, 'w', encoding="utf8") as yout:
             yaml.dump(learner_dic, yout, default_flow_style=False, sort_keys=False)
         _logger.info(f"\nBase model {alg['algorithm']} yaml written")
+        yaml_dic.update({alg['algorithm']: alg_yaml})
     # else:
         # yml_lst = [Path(f"./{_al['algorithm']}.yml") for _al in learn_alg_lst]
         # while True:
@@ -268,6 +278,7 @@ def base_yaml(learn_alg_lst: List[Dict[str, Any]], config_dic: Dict[str, Any]) -
                 # return
             # else:
                 # continue
+    return yaml_dic
 
 
 def learn(alg_conf: Config, targets_shp: Targets, x_shp: np.ma.MaskedArray) -> None:
@@ -311,8 +322,7 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
             base_learner_lst: List[TagsMixin],
             model_lst: List[Dict[str, Union[TagsMixin, Config, str]]],
             config_dic: Dict[str, Any],
-            targets_shp: Targets,
-            x_shp: np.ma.MaskedArray,
+            dataset_dic: Dict[str, Tuple[Targets, np.ma.MaskedArray]],
             partitions: int) -> None:
     """
     Trains the base models.
@@ -331,12 +341,8 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
         The settings from YAML input file with the definitions of meta-learner,
         base-learners with the associated keyword arguments, covariates, targets,
         validation, prediction etc...
-    targets_shp: Targets
-        the attributes (values, weights, lat_lon, etc) of the dependent/target variable
-        from the shapefile
-    x_shp: maskedarray
-        the values of the covariates/features obtained from the intersection of the
-        geotifs with the shapefile
+    dataset_dic: Dict[str, Tuple [Targets, maskedarray]]
+        for each base-learner algorithm it's target and feature data set
     partitions: int
         The number of data partitions
     """
@@ -352,11 +358,12 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
             alg_conf = Config(alg_yaml)
             alg_conf.n_subchunks = partitions
             try:
+                targets_shp, x_shp = dataset_dic.get(alg['algorithm'])
                 learn(alg_conf, targets_shp, x_shp)
             except Exception as _e:
-                _logger.error(f"Problem with traing {alg['algorithm']}: {_e}")
+                _logger.error(f"Problem with training {alg['algorithm']}: {_e}")
                 print(f"Rank: {uncoverml.mpiops.chunk_index}\nSIZE: {Path(alg_yaml).stat().st_size}")
-                raise _e
+                raise LearnerError(alg_conf, "Either bad config params or shapefile") from _e
 
         # load the trained base-model from the *.model file using the Node 0
         alg_model = f"{alg['algorithm']}.model"
@@ -366,6 +373,22 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
         # append it to the model list
         model_lst.append(model_conf)
 
+
+class LearnerError(Exception):
+    """Exception raised for errors in the input in a base-learner YAML file.
+
+    Attributes:
+        alg_conf -- model input YAML config
+        message  -- explanation of the error
+    """
+
+    def __init__(self, alg_conf: str, message: str="Config paramater(s) invalid"):
+        self.alg_conf = alg_conf
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.alg_conf}: {self.message}'
 
 
 def base_predict(learn_alg_lst: List[Dict[str, Any]],
