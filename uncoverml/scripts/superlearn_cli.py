@@ -132,7 +132,7 @@ def main(pipeline_file: str, partitions: int) -> None:
     """
     The super-learning driver routine.
     It trains all the base learners on the training data set (interesction of the shapefile
-    and covariates from geotifs) and then invokes base_prediction() to
+    and covariates from geotifs) and then invokes base_predict() to
     make predictions.
 
     Parameters
@@ -318,6 +318,29 @@ def learn(alg_conf: Config, targets_shp: Targets, x_shp: np.ma.MaskedArray) -> N
     #                        targets_shp, alg_conf)
 
 
+def validate(alg_conf: Config, model: TagsMixin, partitions) -> None:
+    """
+    Adapted from uncoverml.scripts.uncoverml.py.
+    Validates a base model with out of sample shapefile.
+
+    Parameters
+    ----------
+    alg_conf: Config
+        The configurations settings for the present base-learner
+    model: TagsMixin
+        A trained base-learner model
+    partitions: int
+        The number of data partitions
+    """
+
+    alg_conf.pickle_load = False
+    alg_conf.target_file = alg_conf.oos_validation_file
+    alg_conf.target_property = alg_conf.oos_validation_property
+    targets_oos, x_oos = uncoverml.scripts.uncoverml._load_data(alg_conf, partitions)
+    uncoverml.validate.oos_validate(targets_oos, x_oos, model, alg_conf)
+    _logger.info("Completed OOS validation.")
+
+
 def base_fit(learn_alg_lst: List[Dict[str, Any]],
             base_learner_lst: List[TagsMixin],
             model_lst: List[Dict[str, Union[TagsMixin, Config, str]]],
@@ -362,7 +385,6 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
                 learn(alg_conf, targets_shp, x_shp)
             except Exception as _e:
                 _logger.error(f"Problem with training {alg['algorithm']}: {_e}")
-                print(f"Rank: {uncoverml.mpiops.chunk_index}\nSIZE: {Path(alg_yaml).stat().st_size}")
                 raise LearnerError(alg_conf, "Either bad config params or shapefile") from _e
 
         # load the trained base-model from the *.model file using the Node 0
@@ -372,6 +394,9 @@ def base_fit(learn_alg_lst: List[Dict[str, Any]],
         model_conf.update({"outdir": alg_outdir, "mfile": alg_model})
         # append it to the model list
         model_lst.append(model_conf)
+
+        if hasattr(alg_conf,'oos_validation_file') and hasattr(alg_conf, 'oos_validation_property'):
+            validate(alg_conf, model_conf["model"], partitions)
 
 
 class LearnerError(Exception):
@@ -406,7 +431,7 @@ def base_predict(learn_alg_lst: List[Dict[str, Any]],
         the list of trained base-learner models
         each as a dict {"model": ... , "config": ..., "outdir": ..., "mfile": ...)}
     config_dic: dict
-        The settinsg from YAML input file with the definitions of meta-learner,
+        The settings from YAML input file with the definitions of meta-learner,
         base-learners with the associated keyword arguments, covariates, targets,
         validation, prediction etc...
     partitions: int
@@ -438,9 +463,14 @@ def base_predict(learn_alg_lst: List[Dict[str, Any]],
         except TypeError:
             _logger.error(f"Learner {alg['algorithm']} cannot predict")
 
-        pred = pd.read_csv(model["outdir"] + "/" + f"{alg['algorithm']}_results.csv")
-        pred.rename(columns={'y_pred': alg['algorithm']}, inplace=True)
-        pred.drop(columns=['y_transformed'], inplace=True)
+        if "validation" in config_dic:
+            pred = pd.read_csv(model["outdir"] + "/" + f"{alg['algorithm']}_results.csv")
+            pred.rename(columns={'y_pred': alg['algorithm']}, inplace=True)
+            pred.drop(columns=['y_transformed'], inplace=True)
+        elif "oos_validation" in config_dic:
+            pred = pd.read_csv(model["outdir"] + "/" + f"{alg['algorithm']}_oos_validation.csv",
+                    usecols=['Prediction', 'y_true', 'lon', 'lat'])
+            pred.rename(columns={'Prediction': alg['algorithm']}, inplace=True)
         duplicates = pred[['y_true', 'lon', 'lat']].duplicated().sum()
         if duplicates:
             _logger.info(f"Base learner {alg['algorithm']} produces {duplicates} duplicated rows.")
@@ -460,7 +490,7 @@ def combine_pred(learn_alg_lst: List[Dict[str, Any]],
                 df_pred: pd.DataFrame) -> np.ma.MaskedArray:
     """
     Combines the base-model learner predictions into a set of features for the meta-learner.
-    It drops the base-learners/models with invalid (NaN, Inf...) target preictions.
+    It drops the base-learners/models with invalid (NaN, Inf...) target predictions.
 
     Parameters
     ----------
@@ -533,17 +563,17 @@ def go_meta(df_pred: pd.DataFrame,
     x_mtrain = df_pred.drop(columns='y_true').values
     if 'validation' in config_dic:
         try:
-            cv_folds = [int(_lst[0]['k-fold']['folds']) for _lst in config_dic['validation']
+            cvfs = [int(_lst[0]['k-fold']['folds']) for _lst in config_dic['validation']
                         if "k_fold" in _lst[0]][0]
         except (KeyError, TypeError, IndexError) as _e:
             _logger.exception(f"CV fold unreadable {_e}")
-            cv_folds = 5
+            cvfs = 5
     else:
-        cv_folds = 5
-    _logger.info(f"meta-learner CV with {cv_folds} folds")
+        cvfs = 5
+    _logger.info(f"meta-learner CV with {cvfs} folds")
 
     # meta-learner CV
-    uncoverml.mpiops.run_once(meta_cv, x_mtrain, y_mtrain, meta_learner, n_splits=cv_folds, **meta_args)
+    uncoverml.mpiops.run_once(meta_cv, x_mtrain, y_mtrain, meta_learner, n_splits=cvfs, **meta_args)
     # meta-learner training
     meta_model = uncoverml.mpiops.run_once(meta_fit, x_mtrain, y_mtrain, meta_learner, **meta_args)
     # meta-learner predict
