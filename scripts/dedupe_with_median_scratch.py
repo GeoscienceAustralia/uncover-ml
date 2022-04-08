@@ -109,10 +109,10 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str],
                              dedupe_with_median: bool = True
                              ):
     print("====================================\n", f"intersecting {shp.as_posix()}")
-    pts = gpd.read_file(shp)
-    coords = np.array([(p.x, p.y) for p in pts.geometry])
-    geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
-    pts = pts.merge(geom, left_index=True, right_index=True)
+pts = gpd.read_file(shp)
+coords = np.array([(p.x, p.y) for p in pts.geometry])
+geom = pd.DataFrame(coords, columns=geom_cols, index=pts.index)
+pts = pts.merge(geom, left_index=True, right_index=True)
     if dedupe:
         tif_name = list(geotifs.keys())[0]
         tif = Path(tif_name)
@@ -137,24 +137,26 @@ def intersect_and_sample_shp(shp: Path, geotifs: Dict[str, str],
         # keep one only
         # pts_deduped = pts.sort_values(
         #     by=geom_cols, ascending=[True, True]
-        # ).groupby(by=['rows', 'cols'], as_index=False).first()[orig_cols]
+        # ).groupby(by=rows_and_cols, as_index=False).first()[orig_cols]
 
         # keep mean of repeated observations in a pixel
         #
-        pts_count = pts.groupby(by=['rows', 'cols'], as_index=False).agg(px_count=('rows', 'count'))
+        pts_count = pts.groupby(by=rows_and_cols, as_index=False).agg(px_count=('rows', 'count'))
         # if dedupe_with_median:
             # import IPython; IPython.embed(); import sys; sys.exit()
 
+rows_and_cols = ['rows', 'cols']
 
-pts_majors = pts[majors + ['rows', 'cols'] + geom_cols + ['geometry']]
+pts_majors = pts[majors + rows_and_cols + geom_cols + ['geometry']]
 for m in majors:
-    pts_majors[m] = pts_majors[m].apply(lambda x: np.nan if x == 'NA' else float(x))
-pts_median = pts_majors[majors + ['rows', 'cols']].groupby(by=['rows', 'cols'], as_index=False).median()
-pts_deduped = pts_median.merge(pts_count, how='inner', on=['rows', 'cols'])
+    pts[m] = pts[m].apply(lambda x: np.nan if x == 'NA' else float(x))
+pts_median = pts_majors[majors + rows_and_cols].groupby(by=rows_and_cols, as_index=False).median()
+pts_deduped = pts_median.merge(pts_count, how='inner', on=rows_and_cols)
 rename_dict = {k: k + '_m' for k in majors}
 pts_deduped = pts_deduped.rename(mapper=rename_dict, axis=1)
-all_pts_with_count_and_median = pts.merge(pts_deduped, how='left', on=['rows', 'cols'])
+all_pts_with_count_and_median = pts.merge(pts_deduped, how='left', on=rows_and_cols)
 for m in majors:
+    print(m)
     all_pts_with_count_and_median[m + '_distance_from_median'] = \
         abs(all_pts_with_count_and_median[m]- all_pts_with_count_and_median[m + '_m'])/ \
         abs(all_pts_with_count_and_median[m + '_m'])
@@ -167,7 +169,7 @@ all_pts_with_count_and_median['median_sum'] = all_pts_with_count_and_median.appl
     x), axis=1)
 
 all_pts_with_count_and_median_min_median_sum = \
-    all_pts_with_count_and_median.groupby(by=['rows', 'cols'], as_index=False).agg(
+    all_pts_with_count_and_median.groupby(by=rows_and_cols, as_index=False).agg(
         median_sum_min=('median_sum', 'min'),
         median_sum_std=('median_sum', 'std')
     )
@@ -178,7 +180,7 @@ all_pts = all_pts_with_count_and_median.merge(all_pts_with_count_and_median_min_
 
 # all_pts['median_sum_to_median_min_diff'] = all_pts['median_sum'] - all_pts['median_sum_min']
 
-# min_pts = all_pts.groupby(by=['rows', 'cols'], as_index=False).median_sum_to_median_min_diff.agg(
+# min_pts = all_pts.groupby(by=rows_and_cols, as_index=False).median_sum_to_median_min_diff.agg(
 #     ['min', 'std']
 # )
 
@@ -189,15 +191,15 @@ all_pts_sorted = all_pts.sort_values(['px_count', 'rows', 'cols'], ascending=[Fa
 # all_pts.merge(min_pts, how="inner", on=['rows', 'cols', "median_sum_to_median_min_diff"])
 
 # all_pts_majors_median_filtered = pts_count.merge(all_pts[all_pts.median_sum == all_pts.median_sum_min],
-#                                                  how='left',on=['rows', 'cols'])
+#                                                  how='left',on=rows_and_cols)
 
         else:  # dedupe with mean
-            pts_mean = pts[majors + ['rows', 'cols']].groupby(by=['rows', 'cols'], as_index=False).mean()
-            pts_deduped = pts_mean.merge(pts_count, how='inner', on=['rows', 'cols'])
+            pts_mean = pts[majors + rows_and_cols].groupby(by=rows_and_cols, as_index=False).mean()
+            pts_deduped = pts_mean.merge(pts_count, how='inner', on=rows_and_cols)
         # import IPython; IPython.embed(); import sys; sys.exit()
         pts_deduped = gpd.GeoDataFrame(pts_deduped, geometry=gpd.points_from_xy(pts_deduped['POINT_X'],
                                                                                 pts_deduped['POINT_Y']))
-        # pts_deduped = pts.drop_duplicates(subset=['rows', 'cols'])[orig_cols]
+        # pts_deduped = pts.drop_duplicates(subset=rows_and_cols)[orig_cols]
         coords_deduped = np.array([(p.x, p.y) for p in pts_deduped.geometry])
     else:
         pts_deduped = pts
