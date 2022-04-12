@@ -226,7 +226,6 @@ def main(pipeline_file: str, partitions: int) -> None:
             model_lst[-1],
             targets_shp,
             x_shp,
-            partitions,
             meta_learner,
             **meta_args)
 
@@ -588,7 +587,6 @@ def go_vecml(learn_alg_lst: List[Dict[str, Any]],
             model_conf: List[Dict[str, Union[TagsMixin, Config, str]]],
             targets_shp: Targets,
             x_shp: np.ma.MaskedArray,
-            partitions: int,
             meta_learner: RegressorMixin,
             **meta_args: Union[Any, None],
             ) -> None:
@@ -611,8 +609,6 @@ def go_vecml(learn_alg_lst: List[Dict[str, Any]],
     x_shp: maskedarray
         the values of the covariates/features obtained from the intersection of the
         geotifs with the shapefile
-    partitions: int
-        The number of data partitions
     meta_learner: RegressorMixin
         The super-learner type
     **meta_args: any
@@ -622,8 +618,12 @@ def go_vecml(learn_alg_lst: List[Dict[str, Any]],
     y_shp = targets_shp.observations
     weights = targets_shp.weights
     # initialize ImageWriter objects
-    starget_tif = meta_tif(model_conf, "VSuper", partitions)
-    mtarget_tif = meta_tif(model_conf, "MSuper", partitions)
+    if hasattr(model_conf["config"], "n_subchunks") and (model_conf["config"].n_subchunks != 1):
+        _logger.info(f"Super-learning with vecstack & MLEns: {model_conf['config'].n_subchunks}!=1")
+    # change it to a single partition
+    model_conf["config"].n_subchunks = 1
+    starget_tif = meta_tif(model_conf, "VSuper", 1)
+    mtarget_tif = meta_tif(model_conf, "MSuper", 1)
     tup = [(alg['algorithm'], _bl) for alg, _bl in zip(learn_alg_lst, base_learner_lst)]
     # vecstack & MLEns learn, on Node 0 and broadcast
     stack, meta_model = uncoverml.mpiops.run_once(skstack,
@@ -639,19 +639,18 @@ def go_vecml(learn_alg_lst: List[Dict[str, Any]],
                                         base_learner_lst,
                                         meta_learner,
                                         **meta_args)
-    for _i in range(partitions):
-        # NOTE: each node will produce different x_ip feature set
-        x_ip, _ = _get_data(_i, model_conf["config"])
-        # vecstack transform raw features
-        s_ip = stack.transform(x_ip)
-        # vecstack predict across the partition _i
-        y_vstack_tif = meta_model.predict(s_ip)
-        # write predictions for the partition _i
-        starget_tif.write(y_vstack_tif.view(np.ma.masked_array).reshape(-1, 1), _i)
-        # MLEns predict across the partition _i
-        y_mstack_tif = mle_stack.predict(x_ip)
-        # write predictions for the partition _i
-        mtarget_tif.write(y_mstack_tif.view(np.ma.masked_array).reshape(-1, 1), _i)
+    # NOTE: each process/core will receive a different subset x_ip of features
+    x_ip, _ = _get_data(0, model_conf["config"])
+    # vecstack transform raw features
+    s_ip = stack.transform(x_ip)
+    # vecstack predict across the partition 0
+    y_vstack_tif = meta_model.predict(s_ip)
+    # write predictions for the partition 0
+    starget_tif.write(y_vstack_tif.view(np.ma.masked_array).reshape(-1, 1), 0)
+    # MLEns predict across the partition 0
+    y_mstack_tif = mle_stack.predict(x_ip)
+    # write predictions for the partition 0
+    mtarget_tif.write(y_mstack_tif.view(np.ma.masked_array).reshape(-1, 1), 0)
     starget_tif.close()
     mtarget_tif.close()
 
@@ -792,9 +791,11 @@ def meta_fit(x_mtrain: np.ma.MaskedArray,
 
     meta_model = MetaLearn(meta_learner, **kwargs)
     meta_model.fit(x_mtrain, y_mtrain)
-    if isinstance(meta_model, LinearRegression):
+    if isinstance(meta_model.model, LinearRegression):
         _logger.info(f"SUPER coeffs:\n{meta_model.model.coef_}")
         _logger.info(f"SUPER intercept:\n{meta_model.model.intercept_}")
+    if hasattr(meta_model.model, "feature_importances_"):
+        _logger.info(f"SUPER feature importances:\n{meta_model.model.feature_importances_}")
     y_pred = meta_model.model.predict(x_mtrain[:, :])
     _logger.info(f"\nSUPER smse: {smse(y_mtrain, y_pred)}")
     _logger.info(f"\nSUPER r2: {r2_score(y_mtrain, y_pred)}")
