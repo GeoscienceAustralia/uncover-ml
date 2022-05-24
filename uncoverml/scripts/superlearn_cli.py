@@ -30,6 +30,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.base import RegressorMixin
 from xgboost.sklearn import XGBRegressor
+from sklearn.svm import SVR
 from vecstack import stacking, StackingTransformer
 from mlens.ensemble import SuperLearner
 
@@ -56,7 +57,8 @@ meta_map = {
     'XGBoost': XGBRegressor,
     'GradientBoost': GradientBoostingRegressor,
     'RandomForest': RandomForestRegressor,
-    'Linear': LinearRegression
+    'Linear': LinearRegression,
+    'SVR': SVR
     }
 
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
@@ -794,6 +796,8 @@ def meta_fit(x_mtrain: np.ma.MaskedArray,
     if isinstance(meta_model.model, LinearRegression):
         _logger.info(f"SUPER coeffs:\n{meta_model.model.coef_}")
         _logger.info(f"SUPER intercept:\n{meta_model.model.intercept_}")
+    if isinstance(meta_model.model, SVR):
+        _logger.info(f"SUPER coeffs:\n{meta_model.model.coef_}")
     if hasattr(meta_model.model, "feature_importances_"):
         _logger.info(f"SUPER feature importances:\n{meta_model.model.feature_importances_}")
     y_pred = meta_model.model.predict(x_mtrain[:, :])
