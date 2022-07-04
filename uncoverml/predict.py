@@ -128,8 +128,7 @@ def _fix_for_corrupt_data(x, feature_names):
         x.data[min_mask] = float32finfo.min
         x.data[max_mask] = float32finfo.max
         x.mask += min_mask + max_mask
-        problem_feature_names = \
-            list(compress(feature_names, ~isfinite.all(axis=0)))
+        problem_feature_names = list(compress(feature_names, ~isfinite.all(axis=0)))
 
         print("Warning: Float64 data was truncated to float32 max/min values."
               "Check your covariates for possible nodatavalue, datatype, "
@@ -160,15 +159,6 @@ def _get_data(subchunk, config):
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets, config.final_transform, config)[0]
 
-    # only check/correct float32 conversion for Ensemble models
-    if config.pca:
-        x = _fix_for_corrupt_data(x, features_names)
-        return _mask_rows(x, subchunk, config), features_names
-
-    if not config.clustering:
-        if (isinstance(modelmaps[config.algorithm](), BaseEnsemble) or
-                config.multirandomforest):
-            x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -213,8 +203,12 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x, model, interval=config.quantiles,
-                     lon_lat=_get_lon_lat(subchunk, config))
+    try:
+        y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
+    except ValueError as v:
+        log.warning(v)
+        x = _fix_for_corrupt_data(x, features_names)
+        y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     # cluster_analysis(x, y_star, subchunk, config, feature_names)
