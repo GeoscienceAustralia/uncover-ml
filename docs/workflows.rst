@@ -128,7 +128,7 @@ for applying different transforms:
         - onehot
     - type: ordinal
       files:
-        - list path/to/feature/list.txt
+        - list: path/to/feature/list.txt
       transforms:
         - standardise
       imputation: nn
