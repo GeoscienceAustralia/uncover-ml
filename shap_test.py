@@ -1,7 +1,7 @@
 import joblib
 import shap
 import matplotlib
-import matplotlob.pyplot as plt
+import matplotlib.pyplot as plt
 
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
