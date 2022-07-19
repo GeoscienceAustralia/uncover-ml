@@ -1,6 +1,7 @@
 import joblib
 import shap
-import matplotlib as plt
+import matplotlib
+import matplotlob.pyplot as plt
 
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
@@ -27,6 +28,6 @@ if __name__ == '__main__':
     print('calculating shap values')
     shap_vals = explainer(x_all[:10])
     print('plotting shap values')
-    shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
+    shap.plots.waterfall(shap_vals[0], show=False)
     plt.savefig('test.svg')
     print('test shap done')
