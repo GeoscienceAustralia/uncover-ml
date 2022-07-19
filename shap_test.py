@@ -28,12 +28,12 @@ if __name__ == '__main__':
     print('creating explainer')
     # explainer = shap.Explainer(predict_for_shap, x_all)
     masker = shap.maskers.Independent(x_all)
-    explainer = shap.Explainer(predict_for_shap, masker)
+    explainer = shap.Explainer(predict_for_shap, masker, algorithm='Partition')
     print('calculating shap values')
     shap_vals = explainer(x_all)
     print('plotting shap values')
-    shap.plots.beeswarm(shap_vals, show=False)
-    plt.savefig('test.svg')
+    # shap.plots.beeswarm(shap_vals, show=False)
+    # plt.savefig('test.svg')
     print('test shap done')
 
 
