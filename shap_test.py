@@ -27,10 +27,8 @@ if __name__ == '__main__':
     print('creating explainer')
     explainer = shap.Explainer(predict_for_shap, x_all)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:1])
+    shap_vals = explainer(x_all[:10])
     print('plotting shap values')
-    for exp in shap_vals:
-        shap.plots.waterfall(exp, show=False)
-        plt.savefig('test.svg')
-
+    shap.plots.force(shap_vals, matplotlib=False, show=False)
+    plt.savefig('test.svg')
     print('test shap done')
