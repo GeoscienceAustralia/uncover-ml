@@ -28,6 +28,6 @@ if __name__ == '__main__':
     shap_vals = explainer(x_all[:10])
     print('plotting shap values')
     exp = shap.Explanation(shap_vals.values, shap_vals.base_values[0][0], shap_vals.data)
-    shap.plots.waterfall(shap_vals[0], show=False)
+    shap.plots.waterfall(exp[0], show=False)
     plt.savefig('test.svg')
     print('test shap done')
