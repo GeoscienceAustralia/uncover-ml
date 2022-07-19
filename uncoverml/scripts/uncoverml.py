@@ -100,6 +100,7 @@ def learn(pipeline_file, param_json, partitions):
     #                        targets_all, config)
 
     if config.shapley:
+        log.info("Calculating shap values")
         ls.validate.calc_shap(targets_all, x_all, model, config)
 
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
