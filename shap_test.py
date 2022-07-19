@@ -30,5 +30,6 @@ if __name__ == '__main__':
     shap_vals = explainer(x_all[:10])
     print('plotting shap values')
     shap.plots.force(shap_vals, matplotlib=False, show=False)
+    shap.plots.force(explainer.expected_value, shap_vals)
     plt.savefig('test.svg')
     print('test shap done')
