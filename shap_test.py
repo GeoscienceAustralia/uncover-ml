@@ -22,9 +22,8 @@ def predict_for_shap(x_vals):
 
 
 if __name__ == '__main__':
-    test_masker = shap.maskers.Independent(data=x_all)
     print('creating explainer')
-    explainer = shap.Explainer(predict_for_shap, masker=test_masker)
+    explainer = shap.Explainer(predict_for_shap, x_all)
     print('calculating shap values')
     shap_vals = explainer(x_all[:10])
     print('plotting shap values')
