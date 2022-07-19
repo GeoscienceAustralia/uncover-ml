@@ -332,6 +332,8 @@ class Config:
                     self.feature_importance = True
                 if i == 'parallel':
                     self.parallel_validate = True
+                if i == 'shapley':
+                    self.shapley = True
                 if type(i) is dict and 'k-fold' in i:
                     self.cross_validate = True
                     self.folds = i['k-fold']['folds']

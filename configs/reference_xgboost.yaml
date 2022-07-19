@@ -127,6 +127,7 @@ prediction:
 validation:
   #- feature_rank
   - parallel
+  - shapley
 #  - permutation_importance
 #  - feature_importance
   - k-fold:

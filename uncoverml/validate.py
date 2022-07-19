@@ -13,6 +13,8 @@ from sklearn.metrics import (explained_variance_score, r2_score,
 import eli5
 from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
+import shap
+import matplotlib as plt
 
 from uncoverml.geoio import CrossvalInfo
 from uncoverml.models import apply_multiple_masked
@@ -606,3 +608,12 @@ def oos_validate(targets_all, x_all, model, config):
 
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
+
+
+def calc_shap(target_vals, x_vals, model, config):
+    model_explainer = shap.Explainer(model)
+    shap_vals = model_explainer(x_vals)
+    plot_to_save = shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
+    save_name = Path(config.output_dir).joinpath(config.name + "_shap_waterfall.svg")
+    plt.savefig('tmp.svg')
+    log.info('shapley calculation complete')
