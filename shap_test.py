@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print('creating explainer')
     # explainer = shap.Explainer(predict_for_shap, x_all)
     masker = shap.maskers.Independent(x_all)
-    explainer = shap.Explainer(predict_for_shap, masker, algorithm='Partition')
+    explainer = shap.Explainer(predict_for_shap, masker, algorithm='partition')
     print('calculating shap values')
     shap_vals = explainer(x_all)
     print('plotting shap values')
