@@ -18,16 +18,21 @@ targets_all, x_all = uncli._load_data(config, partitions=4)
 
 def predict_for_shap(x_vals):
     predictions = predict.predict(x_vals, model, interval=config.quantiles, lon_lat=targets_all.positions)
+    pred_check = (predictions == predictions[0]).all()
+    print(pred_check)
     return predictions
 
 
 if __name__ == '__main__':
-    print('creating explainer')
-    explainer = shap.Explainer(predict_for_shap, x_all)
-    print('calculating shap values')
-    shap_vals = explainer(x_all[:10])
-    print('plotting shap values')
-    exp = shap.Explanation(shap_vals.values, shap_vals.base_values[0][0], shap_vals.data)
-    shap.plots.waterfall(exp[0], show=False)
-    plt.savefig('test.svg')
-    print('test shap done')
+    # print('creating explainer')
+    # explainer = shap.Explainer(predict_for_shap, x_all)
+    # print('calculating shap values')
+    # shap_vals = explainer(x_all[:10])
+    # print('plotting shap values')
+    # exp = shap.Explanation(shap_vals.values, shap_vals.base_values[0][0], shap_vals.data)
+    # shap.plots.waterfall(exp[0], show=False)
+    # plt.savefig('test.svg')
+    # print('test shap done')
+
+    check_pred = predict_for_shap(x_all)
+    print(check_pred.shape)
