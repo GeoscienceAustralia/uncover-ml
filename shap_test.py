@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
 
+import pandas as pd
+
 with open('ref_xgb/reference_xgboost.model', 'rb') as f:
     state_dict = joblib.load(f)
 
