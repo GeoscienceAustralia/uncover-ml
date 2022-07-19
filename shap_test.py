@@ -5,7 +5,7 @@ import matplotlib as plt
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
 
-with open('ref_xgb/reference_xgboost.model') as f:
+with open('ref_xgb/reference_xgboost.model', rb) as f:
     state_dict = joblib.load(f)
 
 model = state_dict['model']
