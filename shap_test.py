@@ -29,8 +29,8 @@ if __name__ == '__main__':
     print('calculating shap values')
     shap_vals = explainer(x_all[:1])
     print('plotting shap values')
-    for current_exp in shap_vals:
-        shap.plots.waterfall(exp[0], show=False)
+    for exp in shap_vals:
+        shap.plots.waterfall(exp, show=False)
         plt.savefig('test.svg')
 
     print('test shap done')
