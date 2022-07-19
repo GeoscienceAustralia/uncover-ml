@@ -26,7 +26,8 @@ def predict_for_shap(x_vals):
 
 if __name__ == '__main__':
     print('creating explainer')
-    explainer = shap.Explainer(predict_for_shap, x_all)
+    # explainer = shap.Explainer(predict_for_shap, x_all)
+    explainer = shap.explainers.Partition(predict_for_shap, x_all)
     print('calculating shap values')
     shap_vals = explainer(x_all[:10])
     print('plotting shap values')
