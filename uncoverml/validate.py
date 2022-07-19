@@ -14,7 +14,8 @@ import eli5
 from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
 import shap
-import matplotlib as plt
+import matplotlib
+import matplotlib.pyplot as plt
 
 from uncoverml.geoio import CrossvalInfo
 from uncoverml.models import apply_multiple_masked

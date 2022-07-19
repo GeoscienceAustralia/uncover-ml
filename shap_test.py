@@ -19,7 +19,8 @@ targets_all, x_all = uncli._load_data(config, partitions=4)
 
 
 def predict_for_shap(x_vals):
-    predictions = predict.predict(x_vals, model, interval=config.quantiles, lon_lat=targets_all.positions)
+    # predictions = predict.predict(x_vals, model, interval=config.quantiles, lon_lat=targets_all.positions)
+    predictions = predict.predict(x_vals, model)
     return predictions
 
 
@@ -32,3 +33,5 @@ if __name__ == '__main__':
     shap.plots.beeswarm(shap_vals, show=False)
     plt.savefig('test.svg')
     print('test shap done')
+
+
