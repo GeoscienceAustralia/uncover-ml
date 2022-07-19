@@ -21,9 +21,12 @@ def predict_for_shap(x_vals):
 
 
 if __name__ == '__main__':
-    test_masker = shap.maskers.Independent(data = x_all)
-    explainer = shap.Explainer(predict_for_shap, masker = test_masker)
+    test_masker = shap.maskers.Independent(data=x_all)
+    print('creating explainer')
+    explainer = shap.Explainer(predict_for_shap, masker=test_masker)
+    print('calculating shap values')
     shap_vals = explainer(x_all)
+    print('plotting shap values')
     shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
     plt.savefig('test.svg')
     print('test shap done')
