@@ -25,7 +25,7 @@ if __name__ == '__main__':
     print('creating explainer')
     explainer = shap.Explainer(predict_for_shap, masker=test_masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all)
+    shap_vals = explainer(x_all[:10])
     print('plotting shap values')
     shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
     plt.savefig('test.svg')
