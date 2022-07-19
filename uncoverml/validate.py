@@ -615,5 +615,5 @@ def calc_shap(target_vals, x_vals, model, config):
     shap_vals = model_explainer(x_vals)
     plot_to_save = shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
     save_name = Path(config.output_dir).joinpath(config.name + "_shap_waterfall.svg")
-    plt.savefig('tmp.svg')
-    log.info('shapley calculation complete')
+    plot_to_save.savefig(save_name)
+    log.info('shapley complete')
