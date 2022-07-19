@@ -57,6 +57,7 @@ def run_crossval(x_all, targets_all, config):
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
 
+
 @cli.command()
 @click.argument('pipeline_file')
 @click.option('-j', '--param_json', type=click.Path(exists=True), multiple=True,
@@ -98,10 +99,6 @@ def learn(pipeline_file, param_json, partitions):
     #     # model, x_all, targets_all, config: Config
     #     ls.mpiops.run_once(ls.validate.plot_feature_importance, model, x_all,
     #                        targets_all, config)
-
-    if config.shapley:
-        log.info("Calculating shap values")
-        ls.validate.calc_shap(targets_all, x_all, model, config)
 
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
