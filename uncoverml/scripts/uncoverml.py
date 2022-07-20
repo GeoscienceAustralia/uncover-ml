@@ -56,6 +56,10 @@ def run_crossval(x_all, targets_all, config):
     crossval_results = ls.validate.local_crossval(x_all, targets_all, config)
     ls.mpiops.run_once(ls.geoio.export_crossval, crossval_results, config)
 
+def run_shap_calc(x_vals, model, config):
+    ls.validate.calc_shap(x_all, model, config)
+
+
 
 @cli.command()
 @click.argument('pipeline_file')
@@ -88,7 +92,7 @@ def learn(pipeline_file, param_json, partitions):
     model = ls.learn.local_learn_model(x_all, targets_all, config)
 
     log.info('Calculating shap values')
-    ls.validate.calc_shap(x_all, model, config)
+    run_shap_calc(x_all, model, config)
 
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
 
