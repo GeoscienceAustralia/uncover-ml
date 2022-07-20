@@ -95,7 +95,7 @@ def learn(pipeline_file, param_json, partitions):
                            targets_all, config)
 
     log.info('Calculating shap values')
-    ls.validate.calc_shap(x_all, model, config)
+    ls.mpiops.run_once(ls.validate.calc_shap, x_all, model, config)
 
     # if config.feature_importance:
     #     # model, x_all, targets_all, config: Config
