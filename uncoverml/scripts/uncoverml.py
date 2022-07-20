@@ -87,9 +87,10 @@ def learn(pipeline_file, param_json, partitions):
     log.info("Learning full {} model".format(config.algorithm))
     model = ls.learn.local_learn_model(x_all, targets_all, config)
 
-    ls.mpiops.run_once(ls.geoio.export_model, model, config)
     log.info('Calculating shap values')
     ls.validate.calc_shap(x_all, model, config)
+
+    ls.mpiops.run_once(ls.geoio.export_model, model, config)
 
     # use trained model
     if config.permutation_importance:
