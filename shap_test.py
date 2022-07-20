@@ -46,5 +46,5 @@ if __name__ == '__main__':
     # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
     # print('force plot complete')
 
-    shap.plots.waterfall(shap_vals[0].base_values[0], shap_vals[0].values, show=False)
+    shap.plots.waterfall(shap_vals[0].base_values[0], shap_vals[0], show=False)
     print('waterfall plot complete')
