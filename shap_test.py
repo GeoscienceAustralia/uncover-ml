@@ -43,10 +43,8 @@ if __name__ == '__main__':
     # shap.plots.beeswarm(shap_vals, show=False)
     # print('beeswarm complete')
 
-    # shap.decision_plot(expected_vals, shap_vals)
-    # print('decision plot complete')
+    # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
+    # print('force plot complete')
 
-    shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
-    print('force plot complete')
-
-
+    shap.plots.waterfall(shap_vals[0], show=False)
+    print('waterfall plot complete')
