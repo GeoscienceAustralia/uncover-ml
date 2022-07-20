@@ -324,8 +324,6 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
 
     ls.validate.oos_validate(targets_all, x_all, model, config)
 
-    ls.validate.calc_shap(x_all, model, config)
-
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
 
@@ -391,6 +389,9 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     # ls.predict.final_cluster_analysis(config.n_classes,
     #                                   config.n_subchunks)
+
+    targets_all, x_all = _load_data(config, partitions)
+    ls.validate.calc_shap(x_all, model, config)
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
