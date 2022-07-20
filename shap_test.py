@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # shap.decision_plot(expected_vals, shap_vals)
     # print('decision plot complete')
 
-    shap.plots.force(shap_vals[0].base_value[0], shap_vals[0])
+    shap.plots.force(shap_vals[0].expected_value[0], shap_vals[0])
     print('force plot complete')
 
 
