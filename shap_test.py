@@ -34,6 +34,8 @@ if __name__ == '__main__':
     shap_vals = explainer(x_all[:10])
     expected_vals = [exp.base_values[0] for exp in shap_vals]
     expected_vals = np.array(expected_vals)
+    shap_vals_plot = [exp.values[0] for exp in shap_vals]
+    shap_vals_plot = np.array(shap_vals_plot)
 
     print('plotting shap values')
 
@@ -41,10 +43,10 @@ if __name__ == '__main__':
     # shap.plots.beeswarm(shap_vals, show=False)
     # print('beeswarm complete')
 
-    shap.decision_plot(expected_vals, shap_vals)
-    print('decision plot complete')
+    # shap.decision_plot(expected_vals, shap_vals)
+    # print('decision plot complete')
 
-    # shap.plots.force(explainer.expected_value, shap_vals, x_all)
-    # print('force plot complete')
+    shap.plots.force(shap_vals)
+    print('force plot complete')
 
 
