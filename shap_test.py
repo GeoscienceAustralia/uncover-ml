@@ -32,8 +32,8 @@ if __name__ == '__main__':
     print('calculating shap values')
     shap_vals = explainer(x_all)
     print('plotting shap values')
-    # shap.plots.beeswarm(shap_vals, show=False)
-    # plt.savefig('test.svg')
+    shap.plots.beeswarm(shap_vals, show=False)
+    plt.savefig('test.svg')
     print('test shap done')
 
 
