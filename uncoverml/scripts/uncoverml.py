@@ -94,8 +94,7 @@ def learn(pipeline_file, param_json, partitions):
         ls.mpiops.run_once(ls.validate.permutation_importance, model, x_all,
                            targets_all, config)
 
-    if config.shapley:
-        ls.validate.calc_shap(x_all, model, config)
+    ls.validate.calc_shap(x_all, model, config)
 
     # if config.feature_importance:
     #     # model, x_all, targets_all, config: Config
