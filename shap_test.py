@@ -2,6 +2,7 @@ import joblib
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
@@ -31,13 +32,16 @@ if __name__ == '__main__':
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
     shap_vals = explainer(x_all[:10])
+    expected_vals = [exp.base_values[0] for exp in shap_vals]
+    expected_vals = np.array(expected_vals)
 
     print('plotting shap values')
 
-    shap.plots.beeswarm(shap_vals, show=False)
-    print('beeswarm complete')
+    # Know this works, no need to run it
+    # shap.plots.beeswarm(shap_vals, show=False)
+    # print('beeswarm complete')
 
-    shap.plots.decision(shap_vals)
+    shap.decision_plot(expected_vals, shap_vals)
     print('decision plot complete')
 
     # shap.plots.force(explainer.expected_value, shap_vals, x_all)
