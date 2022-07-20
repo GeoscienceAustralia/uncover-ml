@@ -611,13 +611,13 @@ def oos_validate(targets_all, x_all, model, config):
         log.info(score_string)
 
 
-def calc_shap(x_vals, model, config):
+def calc_shap(x_vals, model, config, mask_vals=x_vals):
 
     # Define function to return predictions needed for Shapley calcuation
     def shap_predict(x): return predict.predict(x, model)
 
     # Create masker, explainer and calculate Shapley values
-    current_masker = shap.maskers.Independent(x_all)
+    current_masker = shap.maskers.Independent(mask_vals)
     explainer = shap.Explainer(shap_predict, current_masker)
     shap_vals = explainer(x_vals)
 
@@ -626,4 +626,3 @@ def calc_shap(x_vals, model, config):
     save_name = Path(config.output_dir).joinpath(config.name + "_shap_waterfall.svg")
     plt.savefig(save_name)
     log.info('SHAP calculation completed')
-
