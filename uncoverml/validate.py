@@ -611,10 +611,19 @@ def oos_validate(targets_all, x_all, model, config):
         log.info(score_string)
 
 
-def calc_shap(target_vals, x_vals, model, config):
-    model_explainer = shap.Explainer(model)
-    shap_vals = model_explainer(x_vals)
-    plot_to_save = shap.plots.waterfall(shap_vals[0], matplotlib=True, show=False)
+def calc_shap(x_vals, model, config):
+
+    # Define function to return predictions needed for Shapley calcuation
+    def shap_predict(x): return predict.predict(x, model)
+
+    # Create masker, explainer and calculate Shapley values
+    current_masker = shap.maskers.Independent(x_all)
+    explainer = shap.Explainer(shap_predict, current_masker)
+    shap_vals = explainer(x_vals)
+
+    # Create beeswarm plot and save to output
+    shap.plots.beeswarm(shap_vals, show=False)
     save_name = Path(config.output_dir).joinpath(config.name + "_shap_waterfall.svg")
-    plot_to_save.savefig(save_name)
-    log.info('shapley complete')
+    plt.savefig(save_name)
+    log.info('SHAP calculation completed')
+
