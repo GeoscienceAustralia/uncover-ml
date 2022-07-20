@@ -611,13 +611,14 @@ def oos_validate(targets_all, x_all, model, config):
         log.info(score_string)
 
 
-def calc_shap(x_vals, model, config, mask_vals=x_vals):
+def calc_shap(x_vals, model, config, mask_vals=None):
 
     # Define function to return predictions needed for Shapley calcuation
     def shap_predict(x): return predict.predict(x, model)
 
     # Create masker, explainer and calculate Shapley values
-    current_masker = shap.maskers.Independent(mask_vals)
+    val_for_mask = mask_vals if mask_vals is not None else x_vals
+    current_masker = shap.maskers.Independent(val_for_mask)
     explainer = shap.Explainer(shap_predict, current_masker)
     shap_vals = explainer(x_vals)
 
