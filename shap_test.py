@@ -37,10 +37,10 @@ if __name__ == '__main__':
     shap.plots.beeswarm(shap_vals, show=False)
     print('beeswarm complete')
 
-    shap.plots.decision(explainer.expected_value, shap_vals)
+    shap.plots.decision(shap_vals)
     print('decision plot complete')
 
-    shap.plots.force(explainer.expected_value, shap_vals, x_all)
-    print('force plot complete')
+    # shap.plots.force(explainer.expected_value, shap_vals, x_all)
+    # print('force plot complete')
 
 
