@@ -30,10 +30,17 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all)
+    shap_vals = explainer(x_all[:10])
+
     print('plotting shap values')
+
     shap.plots.beeswarm(shap_vals, show=False)
-    plt.savefig('test.svg')
-    print('test shap done')
+    print('beeswarm complete')
+
+    shap.plots.decision(explainer.expected_value, shap_vals)
+    print('decision plot complete')
+
+    shap.plots.force(explainer.expected_value, shap_vals, x_all)
+    print('force plot complete')
 
 
