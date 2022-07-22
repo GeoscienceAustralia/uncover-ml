@@ -45,6 +45,7 @@ if __name__ == '__main__':
     # print('beeswarm complete')
 
     shap.plots.bar(shap_vals, show=False)
+    plt.savefig('test_bar.svg')
     print('bar complete')
 
 # ----------------------------- Individual Plots -----------------------------------------------
