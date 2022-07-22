@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # shap.plots.bar(shap_vals, show=False)
     # print('bar complete')
 
-    shap.plots.decision(shap_vals[0].base_values[0], shap_vals, show=False)
+    shap.plots.decision(shap_vals[0].base_values[0], shap_vals[0], show=False)
     plt.savefig('decision_test.svg')
     print('Decision plot complete')
 
