@@ -39,13 +39,15 @@ if __name__ == '__main__':
 
     print('plotting shap values')
 
-    # Know this works, no need to run it
+# ----------------------------- Aggregate Plots -----------------------------------------------
+
     # shap.plots.beeswarm(shap_vals, show=False)
     # print('beeswarm complete')
 
+    shap.plots.bar(shap_vals, show=False)
+    print('bar complete')
+
+# ----------------------------- Individual Plots -----------------------------------------------
+
     # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
     # print('force plot complete')
-
-    shap.plots.scatter(shap_vals, show=False)
-    plt.savefig('scatter.png')
-    print('Scatter plot complete')
