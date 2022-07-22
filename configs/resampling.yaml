@@ -2,8 +2,8 @@
 #  when undersample == true, we choose points with or without bootstrap
 
 targets:
-  file: configs/data/weights/Gamma_K_50.shp
-  property: K2O
+  file: configs/data/sirsam/out_resampled/geochem_sites.shp
+  property: K_ppm_imp
   resample:
     spatial:
       undersample: false

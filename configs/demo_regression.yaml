@@ -33,7 +33,6 @@ mask:
 # imputation options are gaus, nn, mean
 preprocessing:
   imputation: mean
-
   transforms:
     # - whiten:
         # keep_fraction: 0.8

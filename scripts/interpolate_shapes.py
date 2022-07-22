@@ -34,21 +34,26 @@ def interpolate_shape(shp):
 
 if __name__ == '__main__':
 
-    ref_df = gpd.read_file("./NT_1_albers.shp", rows=1)
+    ref_df = gpd.read_file("/g/data/ge3/aem_sections/AEM_covariates/NT_1_albers.shp", rows=1)
 
     shapes_to_convert = [
-        './AEM_GAB_albers.shp',
-        './Albany_1_albers_cleaned.shp',
-        './Albany_2_albers_mod_cleaned.shp',
-        './Murchison_1_albers_cleaned.shp',
-        './Murchison_2_albers_cleaned.shp',
-        './Murchison_3_albers.shp',
-        './frome_1_albers.shp',
-        './frome_2_albers.shp',
-        './frome_3_albers.shp',
-        './frome_4_albers.shp',
-        './frome_5_albers.shp',
-        './frome_6_albers.shp'
+        # "/g/data/ge3/data/AEM_shapes/AEM_ERC_ALL_interp_data_Albers_Ceno.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_1_1_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_1_2_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_1_3_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_2_1_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_2_2_albers_mod.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_2_2_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_2_3_albers_mod.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_2_3_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/East_C_3_1_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_1_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_2_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_3_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_4_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_5_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/frome_6_albers.shp",
+        "/g/data/ge3/data/AEM_shapes/Mundi_Mundi_albers.shp",
     ]
     output_dir = Path('interpolated')
     output_dir.mkdir(exist_ok=True, parents=True)

@@ -1,26 +1,29 @@
-
 experiment: my_run
 patchsize: 0
 memory_fraction: 0.5
 
 features:
-  - name: my continuous features
+  - name: my continuous features 2
     type: continuous
     files:
-      - path: configs/data/sirsam/er_depg.tif
-      - path: configs/data/sirsam/sagawet_b_sir.tif
       - path: configs/data/sirsam/dem_foc2.tif
       - path: configs/data/sirsam/outcrop_dis2.tif
-#      - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
-#      - path: configs/data/sirsam/LATITUDE_GRID1.tif
-#      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
-#      - directory: configs/data/weights/
     transforms:
       - identity
     #      - whiten:
     #          keep_fraction: 0.98
-    imputation: none
+    imputation: mean
+  - name: my continuous features 1
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+    transforms:
+      - identity
+    #      - whiten:
+    #          keep_fraction: 0.98
+    imputation: gauss
 
 preprocessing:
   imputation: none
@@ -125,7 +128,7 @@ prediction:
   outbands: 1
 
 validation:
-  #- feature_rank
+#  - feature_rank
   - parallel
 #  - permutation_importance
 #  - feature_importance
@@ -134,9 +137,8 @@ validation:
       random_seed: 1
 
 oos_validation:
-  file: configs/data/weights/Gamma_K_50.shp
-  property: K2O
+  file: configs/data/geochem_sites.shp
+  property: K_ppm_imp
 
 output:
   directory: ref_xgb/
-

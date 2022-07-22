@@ -133,7 +133,8 @@ def intersect_sample_and_clean(shp, dedupe: bool = False, write_dropped: bool = 
             print(f"saved intersected shapefile at {out_shp.as_posix()}")
             print(f"No points dropped and there for _cleaned.shp file is not createed'")
             print(f"No points dropped and there for _cleaned_dropped.shp file is not created")
-    except:
+    except Exception as e:
+        print(e)
         print(f"Check this shapefile {shp}")
 
 
