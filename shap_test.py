@@ -39,6 +39,20 @@ if __name__ == '__main__':
 
     print('plotting shap values')
 
+    # PLOTS TO ADD
+
+    # Aggregate:
+    #   - Benchmark
+    #   - Decision
+    #   - Embedding
+    #   - Group Difference
+    #   - Monitoring
+    #   - Partial Dependence
+
+    # Individual:
+    #   - Scatter
+
+
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # shap.plots.beeswarm(shap_vals, show=False)
@@ -52,7 +66,7 @@ if __name__ == '__main__':
     # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
     # print('force plot complete')
 
-    shap.plots.waterfall(shap_vals[0])
+    shap.plots.waterfall(shap_vals[0].base_values[0], shap_vals[0].values)
     plt.savefig('test_waterfall.svg')
     print('waterfall plot complete')
 
