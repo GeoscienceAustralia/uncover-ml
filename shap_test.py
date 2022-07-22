@@ -44,11 +44,15 @@ if __name__ == '__main__':
     # shap.plots.beeswarm(shap_vals, show=False)
     # print('beeswarm complete')
 
-    shap.plots.bar(shap_vals, show=False)
-    plt.savefig('test_bar.svg')
-    print('bar complete')
+    # shap.plots.bar(shap_vals, show=False)
+    # print('bar complete')
 
 # ----------------------------- Individual Plots -----------------------------------------------
 
     # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
     # print('force plot complete')
+
+    shap.plots.waterfall(shap_vals[0])
+    plt.savefig('test_waterfall.svg')
+    print('waterfall plot complete')
+
