@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # PLOTS TO ADD
 
     # Aggregate:
-    #   - Benchmark
+    #   - Benchmark, used to benchmark different explainers
     #   - Decision
     #   - Embedding
     #   - Group Difference
@@ -51,6 +51,7 @@ if __name__ == '__main__':
 
     # Individual:
     #   - Scatter
+    #   - Waterfall
 
 
 # ----------------------------- Aggregate Plots -----------------------------------------------
@@ -61,12 +62,12 @@ if __name__ == '__main__':
     # shap.plots.bar(shap_vals, show=False)
     # print('bar complete')
 
+    shap.plots.decision(shap_vals[0].base_values[0], shap_vals, show=False)
+    plt.savefig('decision_test.svg')
+    print('Decision plot complete')
+
+
 # ----------------------------- Individual Plots -----------------------------------------------
 
     # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
     # print('force plot complete')
-
-    shap.plots.waterfall(shap_vals[0], shap_vals[0].values)
-    plt.savefig('test_waterfall.svg')
-    print('waterfall plot complete')
-
