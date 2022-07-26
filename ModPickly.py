@@ -3,15 +3,15 @@ import joblib
 from uncoverml import config
 
 
-def EditPickle(pickle_file, delete_list):
+def EditPickle(pickle_file, new_config):
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
-    model = state_dict["model"]
-    config = state_dict["config"]
+    model_to_use = state_dict["model"]
+    config_to_use = config.Config(new_config)
 
-    save_dict = {"model": model, "config": config}
-    model_file = pickle_file
+    save_dict = {"model": model_to_use, "config": config_to_use}
+    model_file = 'gbquantiles_new.model'
     with open(model_file, 'wb') as f:
         joblib.dump(save_dict, f)
         log.info(f"Wrote model on disc {model_file}")
@@ -19,4 +19,5 @@ def EditPickle(pickle_file, delete_list):
 
 if __name__ == '__main__':
     picklefile = 'gbquantiles.model'
-    delete_list = ['placeholder']
+    newconfig = 'gbquantiles.yaml'
+    EditPickle(picklefile, newconfig)
