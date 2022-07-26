@@ -20,10 +20,10 @@ def predict_for_shap(x_vals):
 
 if __name__ == '__main__':
     model = state_dict['model']
-    config = config.Config('configs/reference_xgboost.yaml')
+    config = state_dict['config']
 
     # noinspection PyProtectedMember
-    targets_all, x_all = uncli._load_data(config, partitions=4)
+    targets_all, x_all = uncli._load_data(config, partitions=10)
 
     print('creating explainer')
     # explainer = shap.Explainer(predict_for_shap, x_all)
