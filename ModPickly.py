@@ -14,7 +14,6 @@ def EditPickle(pickle_file, new_config):
     model_file = 'gbquantiles_new.model'
     with open(model_file, 'wb') as f:
         joblib.dump(save_dict, f)
-        log.info(f"Wrote model on disc {model_file}")
 
 
 if __name__ == '__main__':
