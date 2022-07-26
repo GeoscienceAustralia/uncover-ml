@@ -9,7 +9,7 @@ from uncoverml.scripts import uncoverml as uncli
 
 import pandas as pd
 
-with open('ref_xgb/reference_xgboost.model', 'rb') as f:
+with open('gbquantiles.model', 'rb') as f:
     state_dict = joblib.load(f)
 
 def predict_for_shap(x_vals):
