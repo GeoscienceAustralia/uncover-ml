@@ -30,7 +30,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all)
+    shap_vals = explainer(x_all[:1000])
     expected_vals = [exp.base_values[0] for exp in shap_vals]
     expected_vals = np.array(expected_vals)
     shap_vals_plot = [exp.values[0] for exp in shap_vals]
