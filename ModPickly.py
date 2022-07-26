@@ -4,7 +4,7 @@ from uncoverml import config
 
 
 def EditPickle(pickle_file, new_config):
-    with open(model_or_cluster_file, 'rb') as f:
+    with open(pickle_file, 'rb') as f:
         state_dict = joblib.load(f)
 
     model_to_use = state_dict["model"]
