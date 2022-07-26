@@ -18,6 +18,6 @@ def EditPickle(pickle_file, new_config):
 
 
 if __name__ == '__main__':
-    picklefile = 'gbquantiles.model'
+    picklefile = 'gbquantile/gbquantiles.model'
     newconfig = 'gbquantiles.yaml'
     EditPickle(picklefile, newconfig)
