@@ -9,7 +9,7 @@ from uncoverml.scripts import uncoverml as uncli
 
 import pandas as pd
 
-with open('gbquantiles.model', 'rb') as f:
+with open('gbquantile/gbquantiles.model', 'rb') as f:
     state_dict = joblib.load(f)
 
 def predict_for_shap(x_vals):
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     shap.plots.beeswarm(shap_vals, show=False)
-    plt.savefig('beeswarm_test.svg')
+    plt.savefig('gbquantile/beeswarm_test.svg')
     print('beeswarm complete')
 
     # shap.plots.bar(shap_vals, show=False)
