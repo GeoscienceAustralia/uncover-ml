@@ -52,9 +52,10 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     for idx in range(shap_vals.shape[2]):
-        shap.plots.beeswarm(shap_vals[:, :, 0], show=False)
+        shap.plots.beeswarm(shap_vals[:, :, idx], show=False)
         filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
         plt.savefig(filename)
+        plt.clf()
 
     print('beeswarm complete')
 
