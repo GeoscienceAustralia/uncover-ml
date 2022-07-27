@@ -31,10 +31,6 @@ if __name__ == '__main__':
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
     shap_vals = explainer(x_all[:1000])
-    expected_vals = [exp.base_values[0] for exp in shap_vals]
-    expected_vals = np.array(expected_vals)
-    shap_vals_plot = [exp.values[0] for exp in shap_vals]
-    shap_vals_plot = np.array(shap_vals_plot)
 
     print('plotting shap values')
 
