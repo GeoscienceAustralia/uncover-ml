@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
-    shap.plots.beeswarm(shap_vals[0].values[:, 0], show=False)
+    shap.plots.beeswarm(shap_vals[:, :, 0], show=False)
     plt.savefig('gbquantile/beeswarm_test.svg')
     print('beeswarm complete')
 
