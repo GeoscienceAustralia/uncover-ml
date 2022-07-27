@@ -30,7 +30,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:10])
+    shap_vals = explainer(x_all[:100])
 
     print('plotting shap values')
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     shap.plots.beeswarm(shap_vals[:, :, 0], show=False)
-    plt.savefig('gbquantile/beeswarm_test.svg')
+    plt.savefig('gbquantile/beeswarm_test.png')
     print('beeswarm complete')
 
     # shap.plots.bar(shap_vals, show=False)
