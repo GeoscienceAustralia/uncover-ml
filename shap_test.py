@@ -51,16 +51,16 @@ if __name__ == '__main__':
 
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
-    for idx in range(shap_vals.shape[2]):
-        shap.plots.beeswarm(shap_vals[:, :, idx], show=False)
-        filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.plots.beeswarm(shap_vals[:, :, idx], show=False)
+    #     filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('beeswarm complete')
 
-    print('beeswarm complete')
-
-    # shap.plots.bar(shap_vals, show=False)
-    # print('bar complete')
+    shap.plots.bar(shap_vals, show=False)
+    print('bar complete')
 
     # shap.plots.decision(shap_vals[0].base_values[0], shap_vals[0], show=False)
     # plt.savefig('decision_test.svg')
