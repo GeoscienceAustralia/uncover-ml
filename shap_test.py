@@ -61,14 +61,10 @@ if __name__ == '__main__':
 
     # BAR - WORKS
     # for idx in range(shap_vals.shape[2]):
-    #     shap.bar_plot(shap_vals[:, :, idx], show=False)
+    #     shap.plots.bar(shap_vals[:, :, idx], show=False)
     #     filename = 'gbquantile/bar_test_' + str(idx) + '.png'
     #     plt.savefig(filename)
     #     plt.clf()
-
-    shap.bar_plot(shap_vals, show=False)
-    plt.savefig('bar_test.png')
-    print('bar complete')
 
     # DECISION - WORKS
     for idx in range(shap_vals.shape[2]):
