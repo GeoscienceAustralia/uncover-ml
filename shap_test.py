@@ -59,7 +59,12 @@ if __name__ == '__main__':
     #
     # print('beeswarm complete')
 
-    shap.plots.bar(shap_vals, show=False)
+    for idx in range(shap_vals.shape[2]):
+        shap.plots.bar(shap_vals[:, :, idx], show=False)
+        filename = 'gbquantile/bar_test_' + str(idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
+
     print('bar complete')
 
     # shap.plots.decision(shap_vals[0].base_values[0], shap_vals[0], show=False)
