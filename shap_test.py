@@ -30,20 +30,16 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:20])
+    shap_vals = explainer(x_all[:1000])
 
     print('plotting shap values')
 
     # PLOTS TO ADD
 
     # Aggregate:
-    #   - Benchmark, used to benchmark different explainers
-    #   - Group Difference
-    #   - Monitoring
     #   - Partial Dependence
 
     # Individual:
-    #   - Scatter
     #   - Waterfall
 
 
@@ -74,24 +70,26 @@ if __name__ == '__main__':
     #
     # print('decision plot complete')
 
+    # GROUP FORCE - WORKS
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data)
+    #     filename = 'gbquantile/group_force_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('group force plot complete')
+
 # ----------------------------- Feature-based Plots -----------------------------------------------
 
 
     # EMBEDDING PLOT - WORKS - MIGHT NOT BE USEFUL
-    # shap.embedding_plot(0, shap_vals[:, :, 1].values, show=False)
-    # plt.savefig('embedding_test.png')
-    # plt.clf()
-    # print('embedding plot complete')
+    shap.embedding_plot(0, shap_vals[:, :, 0].values, show=False)
+    plt.savefig('embedding_test.png')
+    plt.clf()
+    print('embedding plot complete')
 
-    # MONITORING PLOT
-    shap.monitoring_plot(0, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data, show=False)
-    plt.save('monitoring_test.png')
-    print('monitoring plot complete')
+    # DEPENDENCE PLOT - WORKS
+    # shap.dependence_plot(0, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data, show=False)
+    # plt.savefig('dependence_test.png')
+    # print('dependence plot complete')
 
-    # DEPENDENCE PLOT
-
-
-# ----------------------------- Individual Plots -----------------------------------------------
-
-    # shap.plots.force(shap_vals[0].base_values[0], shap_vals[0].values)
-    # print('force plot complete')
