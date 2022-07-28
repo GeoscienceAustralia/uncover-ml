@@ -38,7 +38,6 @@ if __name__ == '__main__':
 
     # Aggregate:
     #   - Benchmark, used to benchmark different explainers
-    #   - Embedding
     #   - Group Difference
     #   - Monitoring
     #   - Partial Dependence
@@ -75,13 +74,19 @@ if __name__ == '__main__':
     #
     # print('decision plot complete')
 
-    # EMBEDDING PLOT
-    shap.embedding_plot(0, shap_vals[:, :, 1].values, show=False)
-    plt.savefig('embedding_test.png')
-    plt.clf()
+# ----------------------------- Feature-based Plots -----------------------------------------------
 
-    print('embedding plot complete')
 
+    # EMBEDDING PLOT - WORKS - MIGHT NOT BE USEFUL
+    # shap.embedding_plot(0, shap_vals[:, :, 1].values, show=False)
+    # plt.savefig('embedding_test.png')
+    # plt.clf()
+    # print('embedding plot complete')
+
+    # MONITORING PLOT
+    shap.monitoring_plot(0, shap_vals[:, :, 1].values, show=False)
+    plt.save('monitoring_test.png')
+    print('monitoring plot complete')
 
 # ----------------------------- Individual Plots -----------------------------------------------
 
