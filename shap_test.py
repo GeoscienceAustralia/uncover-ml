@@ -59,17 +59,21 @@ if __name__ == '__main__':
     #
     # print('beeswarm complete')
 
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.plots.bar(shap_vals[:, :, idx], show=False)
+    #     filename = 'gbquantile/bar_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('bar complete')
+
     for idx in range(shap_vals.shape[2]):
-        shap.plots.bar(shap_vals[:, :, idx], show=False)
-        filename = 'gbquantile/bar_test_' + str(idx) + '.png'
+        shap.plots.decision(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx], show=False)
+        filename = 'gbquantile/dec_test_' + str(idx) + '.png'
         plt.savefig(filename)
         plt.clf()
 
-    print('bar complete')
-
-    # shap.plots.decision(shap_vals[0].base_values[0], shap_vals[0], show=False)
-    # plt.savefig('decision_test.svg')
-    # print('Decision plot complete')
+    print('decision plot complete')
 
 
 # ----------------------------- Individual Plots -----------------------------------------------
