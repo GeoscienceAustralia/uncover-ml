@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # BEESWARM - WORKS
     # for idx in range(shap_vals.shape[2]):
     #     shap.summary_plot(shap_vals[:, :, idx], show=False)
-    #     filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
+    #     filename = 'gbquantile/summary_test_' + str(idx) + '.png'
     #     plt.savefig(filename)
     #     plt.clf()
     #
@@ -67,16 +67,20 @@ if __name__ == '__main__':
     #     plt.clf()
 
     # DECISION - WORKS
-    for idx in range(shap_vals.shape[2]):
-        shap.decision_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, show=False)
-        filename = 'gbquantile/dec_test_' + str(idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
-
-    print('decision plot complete')
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.decision_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, show=False)
+    #     filename = 'gbquantile/dec_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('decision plot complete')
 
     # EMBEDDING PLOT
+    shap.embedding_plot(0, shap_vals[:, :, 1], show=False)
+    plt.savefig('embedding_test.png')
+    plt.clf()
 
+    print('embedding plot complete')
 
 
 # ----------------------------- Individual Plots -----------------------------------------------
