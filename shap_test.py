@@ -30,7 +30,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:100])
+    shap_vals = explainer(x_all[:20])
 
     print('plotting shap values')
 
@@ -84,9 +84,12 @@ if __name__ == '__main__':
     # print('embedding plot complete')
 
     # MONITORING PLOT
-    shap.monitoring_plot(0, shap_vals[:, :, 1].values, show=False)
+    shap.monitoring_plot(0, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data, show=False)
     plt.save('monitoring_test.png')
     print('monitoring plot complete')
+
+    # DEPENDENCE PLOT
+
 
 # ----------------------------- Individual Plots -----------------------------------------------
 
