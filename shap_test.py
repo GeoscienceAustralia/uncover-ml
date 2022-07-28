@@ -51,31 +51,31 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # BEESWARM - WORKS
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.summary_plot(shap_vals[:, :, idx], show=False)
+    #     filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('beeswarm complete')
+
+    # BAR - WORKS
     for idx in range(shap_vals.shape[2]):
-        shap.summary_plot(shap_vals[:, :, idx], show=False)
-        filename = 'gbquantile/beeswarm_test_' + str(idx) + '.png'
+        shap.bar_plot(shap_vals[:, :, idx], show=False)
+        filename = 'gbquantile/bar_test_' + str(idx) + '.png'
         plt.savefig(filename)
         plt.clf()
 
-    print('beeswarm complete')
-
-    # BAR - WORKS
-    # for idx in range(shap_vals.shape[2]):
-    #     shap.plots.bar(shap_vals[:, :, idx], show=False)
-    #     filename = 'gbquantile/bar_test_' + str(idx) + '.png'
-    #     plt.savefig(filename)
-    #     plt.clf()
-    #
-    # print('bar complete')
+    print('bar complete')
 
     # DECISION - WORKS
-    # for idx in range(shap_vals.shape[2]):
-    #     shap.plots.decision(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, show=False)
-    #     filename = 'gbquantile/dec_test_' + str(idx) + '.png'
-    #     plt.savefig(filename)
-    #     plt.clf()
-    #
-    # print('decision plot complete')
+    for idx in range(shap_vals.shape[2]):
+        shap.decision_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, show=False)
+        filename = 'gbquantile/dec_test_' + str(idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
+
+    print('decision plot complete')
 
     # EMBEDDING PLOT
 
