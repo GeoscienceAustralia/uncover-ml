@@ -76,7 +76,7 @@ if __name__ == '__main__':
     # print('decision plot complete')
 
     # EMBEDDING PLOT
-    shap.embedding_plot(0, shap_vals[:, :, 1], show=False)
+    shap.embedding_plot(0, shap_vals[:, :, 1].values, show=False)
     plt.savefig('embedding_test.png')
     plt.clf()
 
