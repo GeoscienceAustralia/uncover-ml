@@ -31,7 +31,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:1000])
+    shap_vals = explainer(x_all[:1500])
 
     print('plotting shap values')
 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
             ax = plt.gca()
             ax.set_xlim(-0.5, 0.5)
 
-        filename = 'gbquantile/summary_test_' + str(idx) + '.png'
+        filename = 'test_plots/summary_test_' + str(idx) + '.png'
         plt.savefig(filename)
         plt.clf()
     #
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     for idx in range(shap_vals.shape[2]):
         shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
                         show=False)
-        filename = 'gbquantile/group_force_test_' + str(idx) + '.png'
+        filename = 'test_plots/group_force_test_' + str(idx) + '.png'
         plt.savefig(filename)
         plt.clf()
 
@@ -157,4 +157,12 @@ if __name__ == '__main__':
     # print('Group force plot complete')
 
     # A few scatter plots
+    for feature_idx in range(9):
+        shap.dependence_plot(feature_idx, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data,
+                             feature_names=feature_list, show=False)
+        plt.tight_layout()
+        filename = 'test_plots/dependence_plot_' + str(feature_idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
 
+    print('Scatters plots complete')
