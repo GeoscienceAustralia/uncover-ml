@@ -107,6 +107,8 @@ if __name__ == '__main__':
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
         plt.subplot(1, shap_vals.shape[2], idx+1)
+        current_frame = plt.gca()
+        current_frame.axes.get_yaxis().set_visible(False)
         shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
                          show=False, plot_size=None)
         if idx == 0:
@@ -121,6 +123,8 @@ if __name__ == '__main__':
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
         plt.subplot(1, shap_vals.shape[2], idx + 1)
+        current_frame = plt.gca()
+        current_frame.axes.get_yaxis().set_visible(False)
         shap.plots.bar(shap_vals[:, :, idx], show=False)
 
     plt.savefig('test_plots/bar_test.png')
@@ -138,6 +142,8 @@ if __name__ == '__main__':
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
         plt.subplot(1, shap_vals.shape[2], idx + 1)
+        current_frame = plt.gca()
+        current_frame.axes.get_yaxis().set_visible(False)
         shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
                         feature_names=feature_list, show=False)
 
