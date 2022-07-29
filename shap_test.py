@@ -47,15 +47,15 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # BEESWARM - WORKS
-    # for idx in range(shap_vals.shape[2]):
-    #     shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
-    #     if idx == 0:
-    #         ax = plt.gca()
-    #         ax.set_xlim(-0.5, 0.5)
-    #
-    #     filename = 'gbquantile/summary_test_' + str(idx) + '.png'
-    #     plt.savefig(filename)
-    #     plt.clf()
+    for idx in range(shap_vals.shape[2]):
+        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
+        if idx == 0:
+            ax = plt.gca()
+            ax.set_xlim(-0.5, 0.5)
+
+        filename = 'gbquantile/summary_test_' + str(idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
     #
     # print('beeswarm complete')
 
@@ -76,13 +76,13 @@ if __name__ == '__main__':
     # print('decision plot complete')
 
     # GROUP FORCE - WORKS
-    # for idx in range(shap_vals.shape[2]):
-    #     shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data)
-    #     filename = 'gbquantile/group_force_test_' + str(idx) + '.png'
-    #     plt.savefig(filename)
-    #     plt.clf()
-    #
-    # print('group force plot complete')
+    for idx in range(shap_vals.shape[2]):
+        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data)
+        filename = 'gbquantile/group_force_test_' + str(idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
+
+    print('group force plot complete')
 
 # ----------------------------- Feature-based Plots -----------------------------------------------
 
@@ -141,18 +141,18 @@ if __name__ == '__main__':
     print('Decision plot complete')
 
     # GROUP FORCE - SUBPLOTS
-    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
-    for idx in range(shap_vals.shape[2]):
-        plt.subplot(1, shap_vals.shape[2], idx + 1)
-        current_frame = plt.gca()
-        current_frame.axes.get_yaxis().set_visible(False)
-        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
-                        feature_names=feature_list, show=False)
-
-    plt.tight_layout()
-    plt.savefig('test_plots/group_force_test.png')
-    plt.clf()
-    print('Group force plot complete')
+    # fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    # for idx in range(shap_vals.shape[2]):
+    #     plt.subplot(1, shap_vals.shape[2], idx + 1)
+    #     current_frame = plt.gca()
+    #     current_frame.axes.get_yaxis().set_visible(False)
+    #     shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
+    #                     feature_names=feature_list, show=False)
+    #
+    # plt.tight_layout()
+    # plt.savefig('test_plots/group_force_test.png')
+    # plt.clf()
+    # print('Group force plot complete')
 
     # A few scatter plots
 
