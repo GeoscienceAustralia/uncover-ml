@@ -30,7 +30,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:1000])
+    shap_vals = explainer(x_all[:10])
 
     print('plotting shap values')
 
@@ -44,16 +44,6 @@ if __name__ == '__main__':
 
 
 # ----------------------------- Aggregate Plots -----------------------------------------------
-
-    # BEESWARM MULTI
-    shap_list = []
-    for idx in range(shap_vals.shape[2]):
-        shap_list.append(shap_vals[:, :, idx])
-
-    shap.summary_plot(shap_list, show=False)
-    plt.savefig('multi_summary_test.png')
-    plt.clf()
-
 
     # BEESWARM - WORKS
     # for idx in range(shap_vals.shape[2]):
@@ -93,9 +83,12 @@ if __name__ == '__main__':
 
 
     # EMBEDDING PLOT - WORKS - MIGHT NOT BE USEFUL
-    shap.embedding_plot(0, shap_vals[:, :, 0].values, show=False)
-    plt.savefig('embedding_test.png')
-    plt.clf()
+    for cov_idx in range(shap_vals.shape[1]):
+        shap.embedding_plot(cov_idx, shap_vals[:, :, 0].values, show=False)
+        filename = 'gbquantile/embedding_test_' + str(cov_idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
+
     print('embedding plot complete')
 
     # DEPENDENCE PLOT - WORKS
