@@ -31,7 +31,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:1500])
+    shap_vals = explainer(x_all[:10])
 
     print('plotting shap values')
 
