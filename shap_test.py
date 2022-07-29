@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # BEESWARM - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
-        plt.subplot(1, 3, idx+1)
+        plt.subplot(1, shap_vals.shape[2], idx+1)
         shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
                          show=False)
         if idx == 0:
