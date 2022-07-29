@@ -115,6 +115,7 @@ if __name__ == '__main__':
             ax = plt.gca()
             ax.set_xlim(-0.5, 0.5)
 
+    plt.tight_layout()
     plt.savefig('test_plots/beeswarm_test.png')
     plt.clf()
     print('Summary plot complete')
@@ -127,6 +128,7 @@ if __name__ == '__main__':
         current_frame.axes.get_yaxis().set_visible(False)
         shap.plots.bar(shap_vals[:, :, idx], show=False)
 
+    plt.tight_layout()
     plt.savefig('test_plots/bar_test.png')
     plt.clf()
     print('Bar plot complete')
@@ -147,6 +149,7 @@ if __name__ == '__main__':
         shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
                         feature_names=feature_list, show=False)
 
+    plt.tight_layout()
     plt.savefig('test_plots/group_force_test.png')
     plt.clf()
     print('Group force plot complete')
