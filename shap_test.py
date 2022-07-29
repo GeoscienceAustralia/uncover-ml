@@ -28,8 +28,8 @@ if __name__ == '__main__':
 
     print('creating explainer')
     # explainer = shap.Explainer(predict_for_shap, x_all)
-    masker = shap.maskers.Partition(x_all)
-    explainer = shap.PartitionExplainer(predict_for_shap, masker)
+    masker = shap.maskers.Independent(x_all)
+    explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
     shap_vals = explainer(x_all[:10])
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # BEESWARM - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
-        shap.summaryplot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
+        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
                          show=False, ax=axes[idx])
         if idx == 0:
             ax = plt.gca()
