@@ -108,7 +108,7 @@ if __name__ == '__main__':
     for idx in range(shap_vals.shape[2]):
         plt.subplot(1, shap_vals.shape[2], idx+1)
         shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
-                         show=False)
+                         show=False, plot_size=None)
         if idx == 0:
             ax = plt.gca()
             ax.set_xlim(-0.5, 0.5)
@@ -120,7 +120,8 @@ if __name__ == '__main__':
     # BAR - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
-        shap.plots.bar(shap_vals[:, :, idx], show=False)
+        plt.subplot(1, shap_vals.shape[2], idx + 1)
+        shap.plots.bar(shap_vals[:, :, idx], show=False, plot_size=None)
 
     plt.savefig('test_plots/bar_test.png')
     plt.clf()
@@ -131,12 +132,15 @@ if __name__ == '__main__':
                        show=False)
     plt.savefig('test_plots/decision_pred_test.png')
     plt.clf()
+    print('Decision plot complete')
 
     # GROUP FORCE - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
+        plt.subplot(1, shap_vals.shape[2], idx + 1)
         shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
-                        feature_names=feature_list, show=False)
+                        feature_names=feature_list, show=False, plot_size=None)
 
     plt.savefig('test_plots/group_force_test.png')
     plt.clf()
+    print('Group force plot complete')
