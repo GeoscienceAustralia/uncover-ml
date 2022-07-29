@@ -45,6 +45,16 @@ if __name__ == '__main__':
 
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
+    # BEESWARM MULTI
+    shap_list = []
+    for idx in range(shap_vals.shape[2]):
+        shap_list.append(shap_vals[:, :, idx])
+
+    shap.summary_plot(shap_list, show=False)
+    plt.savefig('multi_summary_test.png')
+    plt.clf()
+
+
     # BEESWARM - WORKS
     # for idx in range(shap_vals.shape[2]):
     #     shap.summary_plot(shap_vals[:, :, idx], show=False)
