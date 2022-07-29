@@ -24,6 +24,7 @@ if __name__ == '__main__':
 
     # noinspection PyProtectedMember
     targets_all, x_all = uncli._load_data(config, partitions=200)
+    feature_list = list(config.intersected_features.values())
 
     print('creating explainer')
     # explainer = shap.Explainer(predict_for_shap, x_all)
@@ -46,13 +47,17 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # BEESWARM - WORKS
-    # for idx in range(shap_vals.shape[2]):
-    #     shap.summary_plot(shap_vals[:, :, idx], show=False)
-    #     filename = 'gbquantile/summary_test_' + str(idx) + '.png'
-    #     plt.savefig(filename)
-    #     plt.clf()
-    #
-    # print('beeswarm complete')
+    for idx in range(shap_vals.shape[2]):
+        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
+        if idx == 0:
+            ax = plt.gca()
+            ax.set_xlim(-0.5, 0.5)
+
+        filename = 'gbquantile/summary_test_' + str(idx) + '.png'
+        plt.savefig(filename)
+        plt.clf()
+    
+    print('beeswarm complete')
 
     # BAR - WORKS
     # for idx in range(shap_vals.shape[2]):
@@ -83,13 +88,13 @@ if __name__ == '__main__':
 
 
     # EMBEDDING PLOT - WORKS - MIGHT NOT BE USEFUL
-    for cov_idx in range(shap_vals.shape[1]):
-        shap.embedding_plot(cov_idx, shap_vals[:, :, 0].values, show=False)
-        filename = 'gbquantile/embedding_test_' + str(cov_idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
-
-    print('embedding plot complete')
+    # for cov_idx in range(shap_vals.shape[1]):
+    #     shap.embedding_plot(cov_idx, shap_vals[:, :, 0].values, show=False)
+    #     filename = 'gbquantile/embedding_test_' + str(cov_idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('embedding plot complete')
 
     # DEPENDENCE PLOT - WORKS
     # shap.dependence_plot(0, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data, show=False)
