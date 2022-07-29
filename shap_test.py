@@ -31,7 +31,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:10])
+    shap_vals = explainer(x_all[:1000])
 
     print('plotting shap values')
 
@@ -77,7 +77,8 @@ if __name__ == '__main__':
 
     # GROUP FORCE - WORKS
     for idx in range(shap_vals.shape[2]):
-        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data)
+        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
+                        show=False)
         filename = 'gbquantile/group_force_test_' + str(idx) + '.png'
         plt.savefig(filename)
         plt.clf()
@@ -136,6 +137,7 @@ if __name__ == '__main__':
     # DECISION
     shap.decision_plot(shap_vals[:, :, 0].base_values[0], shap_vals[:, :, 0].values, feature_names=feature_list,
                        show=False)
+    plt.tight_layout()
     plt.savefig('test_plots/decision_pred_test.png')
     plt.clf()
     print('Decision plot complete')
