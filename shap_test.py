@@ -106,8 +106,9 @@ if __name__ == '__main__':
     # BEESWARM - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
+        plt.subplot(1, 3, idx+1)
         shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
-                         show=False, ax=axes[idx])
+                         show=False)
         if idx == 0:
             ax = plt.gca()
             ax.set_xlim(-0.5, 0.5)
@@ -119,7 +120,7 @@ if __name__ == '__main__':
     # BAR - SUBPLOTS
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
-        shap.plots.bar(shap_vals[:, :, idx], show=False, ax=axes[idx])
+        shap.plots.bar(shap_vals[:, :, idx], show=False)
 
     plt.savefig('test_plots/bar_test.png')
     plt.clf()
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
     for idx in range(shap_vals.shape[2]):
         shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
-                        feature_names=feature_list, show=False, ax=axes[idx])
+                        feature_names=feature_list, show=False)
 
     plt.savefig('test_plots/group_force_test.png')
     plt.clf()
