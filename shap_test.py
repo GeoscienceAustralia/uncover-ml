@@ -31,7 +31,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Partition(x_all)
     explainer = shap.PartitionExplainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:1000], max_evals=80)
+    shap_vals = explainer(x_all[:10])
 
     print('plotting shap values')
 
@@ -47,17 +47,17 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # BEESWARM - WORKS
-    for idx in range(shap_vals.shape[2]):
-        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
-        if idx == 0:
-            ax = plt.gca()
-            ax.set_xlim(-0.5, 0.5)
-
-        filename = 'gbquantile/summary_test_' + str(idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
-    
-    print('beeswarm complete')
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
+    #     if idx == 0:
+    #         ax = plt.gca()
+    #         ax.set_xlim(-0.5, 0.5)
+    #
+    #     filename = 'gbquantile/summary_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('beeswarm complete')
 
     # BAR - WORKS
     # for idx in range(shap_vals.shape[2]):
@@ -101,3 +101,40 @@ if __name__ == '__main__':
     # plt.savefig('dependence_test.png')
     # print('dependence plot complete')
 
+# ------------------------------- Main Plots ---------------------------------------------------
+
+    # BEESWARM - SUBPLOTS
+    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    for idx in range(shap_vals.shape[2]):
+        shap.summaryplot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list,
+                         show=False, ax=axes[idx])
+        if idx == 0:
+            ax = plt.gca()
+            ax.set_xlim(-0.5, 0.5)
+
+    plt.savefig('test_plots/beeswarm_test.png')
+    plt.clf()
+    print('Summary plot complete')
+
+    # BAR - SUBPLOTS
+    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    for idx in range(shap_vals.shape[2]):
+        shap.plots.bar(shap_vals[:, :, idx], show=False, ax=axes[idx])
+
+    plt.savefig('test_plots/bar_test.png')
+    plt.clf()
+    print('Bar plot complete')
+
+    # DECISION
+    shap.decision_plot(shap_vals[:, :, 0].base_values[0], shap_vals[:, :, 0].values, show=False)
+    plt.savefig('test_plots/decision_pred_test.png')
+    plt.clf()
+
+    # GROUP FORCE - SUBPLOTS
+    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    for idx in range(shap_vals.shape[2]):
+        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
+                        show=False, ax=axes[idx])
+
+    plt.savefig('test_plots/group_force_test.png')
+    plt.clf()
