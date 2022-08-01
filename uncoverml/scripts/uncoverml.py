@@ -391,10 +391,6 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     # ls.predict.final_cluster_analysis(config.n_classes,
     #                                   config.n_subchunks)
 
-    log.info('Calculating shap values')
-    targets_all, x_all = _load_data(config, partitions)
-    ls.validate.calc_shap(x_all, model, config)
-
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
