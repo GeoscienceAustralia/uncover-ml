@@ -71,13 +71,13 @@ def shap_image(model_or_cluster_file, partitions, mask, retain):
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
-def predict_for_shap(x_vals):
-    # noinspection PyProtectedMember
-    predictions = predict.predict(x_vals, model, interval=config.quantiles,lon_lat=predict._get_lon_lat(subchunk, config))
-    return predictions
-
-
 def render_partition_shap(model, subchunk, image_out: geoio.ImageWriter, config: Config):
+    def predict_for_shap(x_vals):
+        # noinspection PyProtectedMember
+        predictions = predict.predict(x_vals, model, interval=config.quantiles,
+                                      lon_lat=predict._get_lon_lat(subchunk, config))
+        return predictions
+
     # noinspection PyProtectedMember
     x, feature_names = predict._get_data(subchunk, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
