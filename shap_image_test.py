@@ -4,6 +4,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
+import logging
 
 import uncoverml as ls
 
@@ -20,6 +22,9 @@ from uncoverml.config import Config
 from uncoverml import predict
 
 
+log = logging.getLogger(__name__)
+
+
 def shap_image(model_or_cluster_file, partitions, mask, retain):
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -31,7 +36,7 @@ def shap_image(model_or_cluster_file, partitions, mask, retain):
     if config.mask:
         config.retain = retain if retain else config.retain
 
-        if not isfile(config.mask):
+        if not os.path.isfile(config.mask):
             config.mask = ''
             log.info('A mask was provided, but the file does not exist on '
                      'disc or is not a file.')
@@ -85,3 +90,11 @@ def render_partition_shap(model, subchunk, image_out: geoio.ImageWriter, config:
     shap_vals_to_write = shap_vals[:, 0, 0]
 
     image_out.write(shap_vals_to_write, subchunk)
+
+
+if __name__ == '__main__':
+    model_file = 'gbquantile/gbquantiles.model'
+    partitions = 200
+    shap_image(model_file, partitions, None, None)
+    print('shap image calc complete')
+
