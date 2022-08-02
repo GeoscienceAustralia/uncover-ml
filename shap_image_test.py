@@ -68,7 +68,15 @@ def predict_save(model_or_cluster_file, partitions, mask, retain):
 
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
-        ls.predict.render_partition(model, i, image_out, config)
+        # noinspection PyProtectedMember
+        x, feature_names = ls.predict._get_data(subchunk, config)
+        total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+        log.info("Loaded {:2.4f}GB of image data".format(total_gb))
+        alg = config.algorithm
+        log.info("Predicting targets for {}.".format(alg))
+        # noinspection PyProtectedMember
+        shap_vals = calc_shap(model, x, config, subchunk)
+        image_out.write(shap_vals, subchunk)
 
     # explicitly close output rasters
     image_out.close()
@@ -86,22 +94,20 @@ def predict_save(model_or_cluster_file, partitions, mask, retain):
     log.info("Finished!")
 
 
-def look_at_data(model_file):
-    with open(model_file, 'rb') as f:
-        state_dict = joblib.load(f)
+def calc_shap(model, x, config, subchunk):
+    def shap_predict(x_vals):
+        # noinspection PyProtectedMember
+        predictions = ls.predict.predict(x_vals, model, interval=config.quantiles,
+                                         lon_lat=ls.predict._get_lon_lat(subchunk, config))
+        return predictions
 
-    model = state_dict["model"]
-    config = state_dict["config"]
-
-    # noinspection PyProtectedMember
-    targets, x = uncli._load_data(config, partitions=200)
-    print(targets.shape)
-    print(x.shape)
+    masker = shap.maskers.Independent(x)
+    explainer = shap.Explainer(shap_predict, masker)
+    shap_vals = explainer(x)
+    return shap_vals
 
 
 if __name__ == '__main__':
     model_file = 'gbquantile/gbquantiles.model'
     partitions = 200
-    # predict_save(model_file, partitions, None, None)
-
-    look_at_data(model_file)
+    predict_save(model_file, partitions, None, None)
