@@ -41,12 +41,13 @@ def predict_for_shap(x_vals):
 
 
 def plot_shap(shap_values, lon_lat):
-    shap_vals_plot = shap_values[:, 0, 0].values
+    shap_vals_plot = shap_values[:, 0, 1].values
     cm = plt.cm.get_cmap('RdYlBu')
 
+    plt.clf()
     sc = plt.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=shap_vals_plot, cmap=cm)
     plt.colorbar(sc)
-    plt.savefig('spatial_test.png')
+    plt.savefig('test_plots/spatial_test.png')
 
 
 if __name__ == '__main__':
