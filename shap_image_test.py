@@ -29,13 +29,33 @@ with open('gbquantile/gbquantiles.model', 'rb') as f:
 model = state_dict['model']
 config = state_dict['config']
 
+# noinspection PyProtectedMember
+targets_all, x_all = uncli._load_data(config, partitions=200)
+feature_list = list(config.intersected_features.values())
 
-def look_shp(file, config):
-    targets = geoio.load_targets(shapefile=file,
-                                 targetfield=config.target_property,
-                                 conf=config)
-    print('got targets')
+
+def predict_for_shap(x_vals):
+    # predictions = predict.predict(x_vals, model, interval=config.quantiles, lon_lat=targets_all.positions)
+    predictions = predict.predict(x_vals, model)
+    return predictions
+
+
+def plot_shap(shap_values, lon_lat):
+    shap_vals_plot = shap_values[:, 0, 0].values
+    cm = plt.cm.get_cmap('RdYlBu')
+
+    plt.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=shap_vals_plot, cmap=cm)
+    plt.colorbar(sc)
+    plt.savefig('spatial_test.png')
 
 
 if __name__ == '__main__':
-    look_shp('sites_of_interest/Sites_of_interest.shp', config)
+    print('creating explainer')
+    # explainer = shap.Explainer(predict_for_shap, x_all)
+    masker = shap.maskers.Independent(x_all)
+    explainer = shap.Explainer(predict_for_shap, masker)
+    print('calculating shap values')
+    shap_vals = explainer(x_all[:1000])
+
+    plot_shap(shap_vals, targets_all.positions[:1000])
+
