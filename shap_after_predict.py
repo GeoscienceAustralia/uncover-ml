@@ -31,8 +31,7 @@ def single_predict(model_or_cluster_file, partitions, mask=None, retain=None):
 
     model = state_dict["model"]
     config = state_dict["config"]
-    config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
-        else False
+    config.cluster = False
     config.mask = mask if mask else config.mask
     if config.mask:
         config.retain = retain if retain else config.retain
@@ -79,12 +78,12 @@ def single_predict(model_or_cluster_file, partitions, mask=None, retain=None):
     # explicitly close output rasters
     image_out.close()
 
-    shap_calc(model, 'test_plots/gbquantile_prediction.tif', 0, config)
+    shap_calc(model, 'test_plots/gbquantile_prediction.tif', x, config)
 
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
-def shap_calc(model, prediction_file, subchunk, config):
+def shap_calc(model, prediction_file, x, config):
 
     def predict_for_shap(x_vals):
         # noinspection PyProtectedMember
@@ -92,8 +91,6 @@ def shap_calc(model, prediction_file, subchunk, config):
                                       lon_lat=predict._get_lon_lat(subchunk, config))
         return predictions
 
-    # noinspection PyProtectedMember
-    x, feature_names = ls.predict._get_data(subchunk, config)
     masker = shap.maskers.Independent(x)
     explainer = shap.Explainer(predict_for_shap, masker)
     shap_vals = explainer(x)
