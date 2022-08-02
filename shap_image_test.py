@@ -44,7 +44,7 @@ def plot_shap(shap_values, lon_lat):
     shap_vals_plot = shap_values[:, 0, 0].values
     cm = plt.cm.get_cmap('RdYlBu')
 
-    plt.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=shap_vals_plot, cmap=cm)
+    sc = plt.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=shap_vals_plot, cmap=cm)
     plt.colorbar(sc)
     plt.savefig('spatial_test.png')
 
