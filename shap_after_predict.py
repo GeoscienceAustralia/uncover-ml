@@ -37,7 +37,7 @@ def single_predict(model_or_cluster_file, partitions, mask=None, retain=None):
     if config.mask:
         config.retain = retain if retain else config.retain
 
-        if not isfile(config.mask):
+        if not os.path.isfile(config.mask):
             config.mask = ''
             log.info('A mask was provided, but the file does not exist on '
                      'disc or is not a file.')
@@ -64,8 +64,17 @@ def single_predict(model_or_cluster_file, partitions, mask=None, retain=None):
                                                       config.outbands)],
                                      **config.geotif_options)
 
-    log.info("starting to render partition {}".format(i+1))
-    ls.predict.render_partition(model, 0, image_out, config)
+    log.info("starting to render partition {}".format(0))
+    # noinspection PyProtectedMember
+    x, feature_names = ls.predict._get_data(0, config)
+    total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
+    log.info("Loaded {:2.4f}GB of image data".format(total_gb))
+    alg = config.algorithm
+    log.info("Predicting targets for {}.".format(alg))
+    y_star = ls.predict.predict(x, model, interval=config.quantiles,
+                                lon_lat=_get_lon_lat(0, config))
+    # cluster_analysis(x, y_star, subchunk, config, feature_names)
+    image_out.write(y_star, subchunk)
 
     # explicitly close output rasters
     image_out.close()
