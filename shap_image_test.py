@@ -42,7 +42,7 @@ def predict_for_shap(x_vals):
 
 def plot_shap(shap_values, lon_lat):
     shap_vals_plot = shap_values[:, 0, 0].values
-    cm = plt.cm.get_cmap('RdYlBu')
+    cm = plt.cm.get_cmap('cool')
 
     plt.clf()
     sc = plt.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=shap_vals_plot, cmap=cm)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     masker = shap.maskers.Independent(x_all)
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
-    shap_vals = explainer(x_all[:10])
+    shap_vals = explainer(x_all[:2000])
 
-    plot_shap(shap_vals, targets_all.positions[:10])
+    plot_shap(shap_vals, targets_all.positions[:2000])
 
