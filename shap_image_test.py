@@ -21,6 +21,8 @@ from uncoverml import transforms
 from uncoverml.config import Config
 from uncoverml import predict
 
+from uncoverml.scripts import uncoverml as uncli
+
 
 log = logging.getLogger(__name__)
 
@@ -84,7 +86,22 @@ def predict_save(model_or_cluster_file, partitions, mask, retain):
     log.info("Finished!")
 
 
+def look_at_data(model_file):
+    with open(model_file, 'rb') as f:
+        state_dict = joblib.load(f)
+
+    model = state_dict["model"]
+    config = state_dict["config"]
+
+    # noinspection PyProtectedMember
+    targets, x = uncli._load_data(config, partitions=200)
+    print(targets.shape)
+    print(x.shape)
+
+
 if __name__ == '__main__':
     model_file = 'gbquantile/gbquantiles.model'
     partitions = 200
-    predict_save(model_file, partitions, None, None)
+    # predict_save(model_file, partitions, None, None)
+
+    look_at_data(model_file)
