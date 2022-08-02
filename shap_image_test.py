@@ -69,14 +69,14 @@ def predict_save(model_or_cluster_file, partitions, mask, retain):
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
         # noinspection PyProtectedMember
-        x, feature_names = ls.predict._get_data(subchunk, config)
+        x, feature_names = ls.predict._get_data(i, config)
         total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
         log.info("Loaded {:2.4f}GB of image data".format(total_gb))
         alg = config.algorithm
         log.info("Predicting targets for {}.".format(alg))
         # noinspection PyProtectedMember
-        shap_vals = calc_shap(model, x, config, subchunk)
-        image_out.write(shap_vals, subchunk)
+        shap_vals = calc_shap(model, x, config, i)
+        image_out.write(shap_vals, i)
 
     # explicitly close output rasters
     image_out.close()
