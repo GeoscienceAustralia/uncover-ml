@@ -38,4 +38,4 @@ def look_shp(file, config):
 
 
 if __name__ == '__main__':
-    look_shp('site_of_interest/Sites_of_interest.shp', config)
+    look_shp('sites_of_interest/Sites_of_interest.shp', config)
