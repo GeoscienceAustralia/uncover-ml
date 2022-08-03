@@ -33,7 +33,7 @@ if __name__ == '__main__':
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
     shap_vals = explainer(x_all[:1000])
-    shap_interaction_vals = explainer.shap_interaction_values(x_all[:1000])
+    # shap_interaction_vals = explainer.shap_interaction_values(x_all[:1000])
 
     print('plotting shap values')
 
