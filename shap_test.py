@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     plt.figure(figsize=(10, 10), facecolor='w', edgecolor='k')
     sns.set(font_scale=1.2)
-    sns.heatmap(corr_matrix, cmap='coolwarm', annot=True, fmt='.1g', annot=False)
+    sns.heatmap(corr_matrix, cmap='coolwarm', fmt='.1g', annot=False)
 
     plt.savefig('test_plots/shap_correlation.png', dpi=200, bbox_inches='tight')
     print('correlation plot complete')
