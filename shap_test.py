@@ -170,7 +170,7 @@ if __name__ == '__main__':
     # print('Scatters plots complete')
 
     # Correlation matrix plot
-    corr_matrix = pd.DataFrame(shap_values[:, :, 0].values, columns=feature_list).corr()
+    corr_matrix = pd.DataFrame(shap_vals[:, :, 0].values, columns=feature_list).corr()
 
     plt.figure(figsize=(10, 10), facecolor='w', edgecolor='k')
     sns.set(font_scale=1.2)
