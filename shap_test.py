@@ -3,6 +3,7 @@ import shap
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 from uncoverml import config, predict
 from uncoverml.scripts import uncoverml as uncli
@@ -32,6 +33,7 @@ if __name__ == '__main__':
     explainer = shap.Explainer(predict_for_shap, masker)
     print('calculating shap values')
     shap_vals = explainer(x_all[:1000])
+    shap_interaction_vals = explainer.shap_interaction_values(x_all[:1000])
 
     print('plotting shap values')
 
@@ -47,15 +49,15 @@ if __name__ == '__main__':
 # ----------------------------- Aggregate Plots -----------------------------------------------
 
     # BEESWARM - WORKS
-    for idx in range(shap_vals.shape[2]):
-        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
-        if idx == 0:
-            ax = plt.gca()
-            ax.set_xlim(-0.5, 0.5)
-
-        filename = 'test_plots/summary_test_' + str(idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
+    #     if idx == 0:
+    #         ax = plt.gca()
+    #         ax.set_xlim(-0.5, 0.5)
+    #
+    #     filename = 'test_plots/summary_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
     #
     # print('beeswarm complete')
 
@@ -76,14 +78,14 @@ if __name__ == '__main__':
     # print('decision plot complete')
 
     # GROUP FORCE - WORKS
-    for idx in range(shap_vals.shape[2]):
-        shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values, shap_vals[:, :, idx].data,
-                        show=False)
-        filename = 'test_plots/group_force_test_' + str(idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
-
-    print('group force plot complete')
+    # for idx in range(shap_vals.shape[2]):
+    #     shap.force_plot(shap_vals[:, :, idx].base_values[0], shap_vals[:, :, idx].values,
+    #                     features=shap_vals[:, :, idx].data, feature_names = feature_list, show=False)
+    #     filename = 'test_plots/group_force_test_' + str(idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('group force plot complete')
 
 # ----------------------------- Feature-based Plots -----------------------------------------------
 
@@ -105,42 +107,42 @@ if __name__ == '__main__':
 # ------------------------------- Main Plots ---------------------------------------------------
 
     # BEESWARM - SUBPLOTS
-    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
-    for idx in range(shap_vals.shape[2]):
-        plt.subplot(1, shap_vals.shape[2], idx+1)
-        current_frame = plt.gca()
-        current_frame.axes.get_yaxis().set_visible(False)
-        shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
-                         show=False, plot_size=None)
-        if idx == 0:
-            ax = plt.gca()
-            ax.set_xlim(-0.5, 0.5)
-
-    plt.tight_layout()
-    plt.savefig('test_plots/beeswarm_test.png')
-    plt.clf()
-    print('Summary plot complete')
+    # fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    # for idx in range(shap_vals.shape[2]):
+    #     plt.subplot(1, shap_vals.shape[2], idx+1)
+    #     current_frame = plt.gca()
+    #     current_frame.axes.get_yaxis().set_visible(False)
+    #     shap.summary_plot(shap_vals[:, :, idx].values, features=shap_vals[:, :, idx].data, feature_names=feature_list,
+    #                      show=False, plot_size=None)
+    #     if idx == 0:
+    #         ax = plt.gca()
+    #         ax.set_xlim(-0.5, 0.5)
+    #
+    # plt.tight_layout()
+    # plt.savefig('test_plots/beeswarm_test.png')
+    # plt.clf()
+    # print('Summary plot complete')
 
     # BAR - SUBPLOTS
-    fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
-    for idx in range(shap_vals.shape[2]):
-        plt.subplot(1, shap_vals.shape[2], idx + 1)
-        current_frame = plt.gca()
-        current_frame.axes.get_yaxis().set_visible(False)
-        shap.plots.bar(shap_vals[:, :, idx], show=False)
-
-    plt.tight_layout()
-    plt.savefig('test_plots/bar_test.png')
-    plt.clf()
-    print('Bar plot complete')
+    # fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
+    # for idx in range(shap_vals.shape[2]):
+    #     plt.subplot(1, shap_vals.shape[2], idx + 1)
+    #     current_frame = plt.gca()
+    #     current_frame.axes.get_yaxis().set_visible(False)
+    #     shap.plots.bar(shap_vals[:, :, idx], show=False)
+    #
+    # plt.tight_layout()
+    # plt.savefig('test_plots/bar_test.png')
+    # plt.clf()
+    # print('Bar plot complete')
 
     # DECISION
-    shap.decision_plot(shap_vals[:, :, 0].base_values[0], shap_vals[:, :, 0].values, feature_names=feature_list,
-                       show=False)
-    plt.tight_layout()
-    plt.savefig('test_plots/decision_pred_test.png')
-    plt.clf()
-    print('Decision plot complete')
+    # shap.decision_plot(shap_vals[:, :, 0].base_values[0], shap_vals[:, :, 0].values, feature_names=feature_list,
+    #                    show=False)
+    # plt.tight_layout()
+    # plt.savefig('test_plots/decision_pred_test.png')
+    # plt.clf()
+    # print('Decision plot complete')
 
     # GROUP FORCE - SUBPLOTS
     # fig, axes = plt.subplots(nrows=1, ncols=shap_vals.shape[2])
@@ -157,12 +159,23 @@ if __name__ == '__main__':
     # print('Group force plot complete')
 
     # A few scatter plots
-    for feature_idx in range(9):
-        shap.dependence_plot(feature_idx, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data,
-                             feature_names=feature_list, show=False)
-        plt.tight_layout()
-        filename = 'test_plots/dependence_plot_' + str(feature_idx) + '.png'
-        plt.savefig(filename)
-        plt.clf()
+    # for feature_idx in range(9):
+    #     shap.dependence_plot(feature_idx, shap_vals[:, :, 1].values, shap_vals[:, :, 1].data,
+    #                          feature_names=feature_list, show=False)
+    #     plt.tight_layout()
+    #     filename = 'test_plots/dependence_plot_' + str(feature_idx) + '.png'
+    #     plt.savefig(filename)
+    #     plt.clf()
+    #
+    # print('Scatters plots complete')
 
-    print('Scatters plots complete')
+    # Correlation matrix plot
+    corr_matrix = pd.DataFrame(shap_values[:, :, 0].values, columns=feature_list).corr()
+
+    plt.figure(figsize=(10, 10), facecolor='w', edgecolor='k')
+    sns.set(font_scale=1.2)
+    sns.heatmap(corr_matrix, cmap='coolwarm', annot=True, fmt='.1g')
+
+    plt.savefig('test_plots/shap_correlation.png', dpi=200, bbox_inches='tight')
+    print('correlation plot complete')
+
