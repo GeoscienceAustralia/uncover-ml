@@ -1,0 +1,9 @@
+explainer: explainer
+calc_start_row: 0
+calc_end_row: 10
+masker: independent
+plots:
+  - plot_name: summary_test
+    type: summary
+    plot_title: summary test plot
+    output_idx: 0
