@@ -13,6 +13,7 @@ import glob
 import csv
 import yaml
 from pathlib import Path
+from collections.abc import Iterable
 
 from uncoverml import predict
 
@@ -77,17 +78,16 @@ explainer_map = {
 }
 
 masker_map = {
-    'independent': shap.maskers.independent,
-    'partition': shap.maskers.partition
+    'independent': shap.maskers.Independent,
+    'partition': shap.maskers.Partition
 }
 
 
-def select_masker(mask_info, mask_data):
+def select_masker(mask_type, mask_data, mask_info=None):
     # Might nest this into prepare_check_masker later
     masker = None
-    mask_type = mask_info['type']
     if mask_type in ['independent', 'partition']:
-        if 'kwargs' in mask_info:
+        if (mask_info is not None) and ('kwargs' in mask_info):
             masker = masker_map[mask_type](mask_data, **mask_info['kwargs'])
         else:
             masker = masker_map[mask_type](mask_data)
@@ -115,27 +115,32 @@ def prepare_check_masker(shap_config, x_data):
             log.error('Number of maskers in list must match number of features')
             return None
 
+        # Might be a good idea to pass mask_info here - future improvement
         mask_var = [select_masker(type, mask_data) for type in mask_info['mask_list']]
     else:
-        mask_var = select_masker(mask_info['type'], mask_data)
+        mask_var = select_masker(mask_info['type'], mask_data, mask_info)
 
     return mask_var
 
 
-def gather_explainer_req(shap_config):
+def gather_explainer_req(shap_config, x_data):
     model_req = explainer_map[shap_config.explainer]['requirements']
     requirements = []
-    reqs_fulfilled = 0
+    reqs_fulfilled = len(model_req)
     for req in model_req:
         # Can expand this loop for more requirements later
         if req == 'masker':
             if shap_config.masker is not None:
                 mask_var = prepare_check_masker(shap_config, x_data)
-                if (mask_var is None) or (None in mask_var):
+                if mask_var is None:
                     logging.error('Cannot proceed, there are undefined maskers')
                     return None
 
-                reqs_fulfilled += 1
+                if isinstance(mask_var, Iterable) and (None in mask_var):
+                    logging.error('Cannot proceed, there are undefined maskers')
+                    return None
+
+                reqs_fulfilled -= 1
                 requirements.append(mask_var)
             else:
                 log.error('Masker requirement not found in config')
@@ -154,20 +159,20 @@ def calc_shap_vals(model, shap_config, x_data):
         log.error('Invalid or no explainer specified')
         return None
 
-    explainer_reqs = gather_explainer_req(shap_config)
+    explainer_reqs = gather_explainer_req(shap_config, x_data)
     if explainer_reqs is None:
         log.error('Explainer requirements did not come out correctly')
         return None
 
     reqs, reqs_fulfilled = explainer_reqs
     reqs = tuple(reqs)
-    if reqs_fulfilled < len(x_data):
+    if reqs_fulfilled > 0:
         logging.warning('Some explainer requirements not fulfilled, calculation might not work')
 
     if shap_config.explainer_kwargs is not None:
-        explainer_obj = explainer_map[shap_config.explainer](shap_predict, *reqs, **shap_config.explainer_kwargs)
+        explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs, **shap_config.explainer_kwargs)
     else:
-        explainer_obj = explainer_map[shap_config.explainer](shap_predict, *reqs)
+        explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs)
 
     calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
     calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
@@ -273,7 +278,7 @@ def decision_plot(plot_data, plot_config, target_ax, **kwargs):
     shap.decision_plot(plot_data.base_value[0], plot_data.values, feature_names=feature_names)
 
 
-def spatial_plots(shap_vals, plot_config, shap_config, **kwargs):
+def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
     if 'lon_lat' not in kwargs:
         log.error('No lon-lat info, cannot plot')
         return None
