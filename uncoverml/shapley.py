@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import geopandas as gpd
 
 import logging
 from os import path
@@ -35,6 +36,8 @@ Properties for shap config
 - Plots each individually
 
 '''
+
+plt.rcParams['figure.figsize'] = (16.53, 11.69)
 
 
 class ShapConfig:
