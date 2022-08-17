@@ -259,6 +259,7 @@ def summary_plot(plot_data, plot_config, target_ax, **kwargs):
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=feature_names, show=False)
     target_ax.axes.xaxis.set_visible(False)
     target_ax.axes.yaxis.set_visible(False)
+    plt.gcf().axes[-1].remove()
 
 
 def bar_plot(plot_data, plot_config, target_ax, **kwargs):
