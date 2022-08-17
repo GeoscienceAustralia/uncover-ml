@@ -260,8 +260,10 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
                       max_display=plot_data.shape[1], sort=False, show=False)
 
     if plot_idx > 0:
-        target_ax.axes.xaxis.set_visible(False)
         target_ax.axes.yaxis.set_visible(False)
+        x_axis = target_ax.axes.get_xaxis()
+        x_label = x_axis.get_label()
+        x_label.set_visible(False)
 
     plt.gcf().axes[-1].remove()
 
