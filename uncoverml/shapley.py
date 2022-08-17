@@ -216,7 +216,7 @@ Types of plot:
 def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-    fig.savefig(plot_save_path)
+    fig.savefig(plot_save_path, dpi=500)
 
 
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
