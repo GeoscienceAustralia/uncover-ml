@@ -224,7 +224,7 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     fig, axs = plt.subplots(1, num_plots, figsize=(16.53, 11.69))
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], **kwargs)
+        plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
 
     if plot_config.plot_name is not None:
         plot_name = plot_config.plot_name
@@ -266,7 +266,7 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.gcf().axes[-1].remove()
 
 
-def bar_plot(plot_data, plot_config, target_ax, **kwargs):
+def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False)
