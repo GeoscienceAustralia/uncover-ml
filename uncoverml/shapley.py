@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import geopandas as gpd
 
 import logging
 from os import path
@@ -213,52 +214,64 @@ Types of plot:
 
 
 def save_plot(fig, plot_name, shap_config):
-    plot_save_path = path.join(shap_config.output_path, 'shap', plot_name + '.png')
-    fig.savefig(plot_save_path)
+    Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+    plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+    fig.savefig(plot_save_path, dpi=500)
 
 
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, axs = plt.subplots(1, num_plots)
+    fig, axs = plt.subplots(1, num_plots, figsize=(16.53, 11.69))
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], **kwargs)
+        plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
 
-    if plot_config.name is not None:
-        plot_name = plot_config.name
+    if plot_config.plot_name is not None:
+        plot_name = plot_config.plot_name
     else:
         plot_name = plot_config.type
 
+    plt.tight_layout()
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
 
-def aggregate_separate(plot_vals, plot_config, **kwargs):
+def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(32, 22), sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, **kwargs)
+        plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, idx, **kwargs)
 
-        if plot_config.name is not None:
-            plot_name = f'{plot_config.name}_{idx}'
+        if plot_config.plot_name is not None:
+            plot_name = f'{plot_config.plot_name}_{idx}'
         else:
             plot_name = f'{plot_config.type}_{idx}'
 
+        plt.tight_layout()
         save_plot(fig, plot_name, shap_config)
         plt.clf()
 
 
-def summary_plot(plot_data, plot_config, target_ax, **kwargs):
+def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
-    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=feature_names, show=False)
+    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=feature_names,
+                      max_display=plot_data.shape[1], sort=False, show=False)
+
+    if plot_idx > 0:
+        target_ax.axes.yaxis.set_visible(False)
+        x_axis = target_ax.axes.get_xaxis()
+        x_label = x_axis.get_label()
+        x_label.set_visible(False)
+
+    plt.gcf().axes[-1].remove()
 
 
-def bar_plot(plot_data, plot_config, target_ax, **kwargs):
+def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
-    shap.bar_plot(plot_data.values, features=plot_data.data, feature_names=feature_names, show=False)
+    shap.plots.bar(plot_data, show=False)
 
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
@@ -274,8 +287,8 @@ def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
 
 def decision_plot(plot_data, plot_config, target_ax, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
-    plt.sca(target_ax)
-    shap.decision_plot(plot_data.base_value[0], plot_data.values, feature_names=feature_names)
+    # plt.sca(target_ax)
+    shap.decision_plot(plot_data.base_values[0], plot_data.values, feature_names=feature_names)
 
 
 def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -289,7 +302,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
         feature_names = [str(x) for x in range(shap_vals.shape[1])]
 
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(16.53, 11.69))
     cm = plt.cm.get_cmap('cool')
     lon_lat = kwargs['lon_lat']
     for dim_idx in range(multi_output_dim):
@@ -298,11 +311,12 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot = ax.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=plot_vals, cmap=cm)
             fig.colorbar(current_plot)
 
-            if plot_config.name is not None:
-                plot_name = plot_config.name
+            if plot_config.plot_name is not None:
+                plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
+            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
 
@@ -317,7 +331,7 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
         log.error('No plot features provided, cannot plot')
         return None
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(16.53, 11.69))
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
     for dim_idx in range(multi_output_dim):
         for feat in plot_config.plot_features:
@@ -326,11 +340,12 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
             shap.dependence_plot(feat[0], plot_vals.values, plot_vals.data, feature_names=feature_names,
                                  interaction_index=inter_feat, show=False, ax=ax)
 
-            if plot_config.name is not None:
-                plot_name = plot_config.name
+            if plot_config.plot_name is not None:
+                plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
+            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
 
@@ -352,7 +367,7 @@ plotting_type_map = {
 }
 
 
-def generate_plots(plot_config_list, shap_vals, **kwargs):
+def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
     if 'feature_names' not in kwargs:
         log.warning('Feature names not provided, plots might be confusing')
 
@@ -361,6 +376,6 @@ def generate_plots(plot_config_list, shap_vals, **kwargs):
         if current_plot_config.output_idx is not None:
             plot_vals = shap_vals[:, :, current_plot_config.output_idx]
 
-        plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, **kwargs)
+        plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
 
 

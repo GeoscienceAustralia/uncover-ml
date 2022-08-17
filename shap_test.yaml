@@ -7,4 +7,3 @@ plots:
   - plot_name: summary_test
     type: summary
     plot_title: summary test plot
-    output_idx: 0
