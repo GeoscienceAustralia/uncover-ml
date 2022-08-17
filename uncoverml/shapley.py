@@ -37,8 +37,6 @@ Properties for shap config
 
 '''
 
-plt.rcParams['figure.figsize'] = (16.53, 11.69)
-
 
 class ShapConfig:
     # REMEMBER, DATA AND FEATURE NAMES CAN BE ACCESSED FROM THE MAIN CONFIG
@@ -222,7 +220,7 @@ def save_plot(fig, plot_name, shap_config):
 
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, axs = plt.subplots(1, num_plots)
+    fig, axs = plt.subplots(1, num_plots, figsize=(16.53, 11.69))
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], **kwargs)
@@ -238,7 +236,7 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
 
 def aggregate_separate(plot_vals, plot_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(16.53, 11.69), sharex=True, sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, **kwargs)
@@ -292,7 +290,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
         feature_names = [str(x) for x in range(shap_vals.shape[1])]
 
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(16.53, 11.69))
     cm = plt.cm.get_cmap('cool')
     lon_lat = kwargs['lon_lat']
     for dim_idx in range(multi_output_dim):
@@ -320,7 +318,7 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
         log.error('No plot features provided, cannot plot')
         return None
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(16.53, 11.69))
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
     for dim_idx in range(multi_output_dim):
         for feat in plot_config.plot_features:

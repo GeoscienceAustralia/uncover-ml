@@ -32,4 +32,3 @@ if __name__ == '__main__':
     model_file = 'gbquantile/gbquantiles.model'
     shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_test.yaml'
     shapley_cli(model_file, shap_yaml)
-
