@@ -238,10 +238,10 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
 
 def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, ax = plt.subplots(figsize=(16.53, 11.69), sharey=True)
+    fig, ax = plt.subplots(figsize=(32, 22), sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, **kwargs)
+        plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, idx, **kwargs)
 
         if plot_config.plot_name is not None:
             plot_name = f'{plot_config.plot_name}_{idx}'
@@ -253,12 +253,16 @@ def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
         plt.clf()
 
 
-def summary_plot(plot_data, plot_config, target_ax, **kwargs):
+def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
-    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=feature_names, show=False)
-    target_ax.axes.xaxis.set_visible(False)
-    target_ax.axes.yaxis.set_visible(False)
+    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=feature_names,
+                      max_display=plot_data.shape[1], sort=False, show=False)
+
+    if plot_idx > 0:
+        target_ax.axes.xaxis.set_visible(False)
+        target_ax.axes.yaxis.set_visible(False)
+
     plt.gcf().axes[-1].remove()
 
 
