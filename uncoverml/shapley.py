@@ -216,7 +216,8 @@ Types of plot:
 
 
 def save_plot(fig, plot_name, shap_config):
-    plot_save_path = path.join(shap_config.output_path, 'shap', plot_name + '.png')
+    Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+    plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
     fig.savefig(plot_save_path)
 
 
@@ -227,8 +228,8 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], **kwargs)
 
-    if plot_config.name is not None:
-        plot_name = plot_config.name
+    if plot_config.plot_name is not None:
+        plot_name = plot_config.plot_name
     else:
         plot_name = plot_config.type
 
@@ -236,15 +237,15 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     plt.clf()
 
 
-def aggregate_separate(plot_vals, plot_config, **kwargs):
+def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
     fig, ax = plt.subplots()
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, **kwargs)
 
-        if plot_config.name is not None:
-            plot_name = f'{plot_config.name}_{idx}'
+        if plot_config.plot_name is not None:
+            plot_name = f'{plot_config.plot_name}_{idx}'
         else:
             plot_name = f'{plot_config.type}_{idx}'
 
@@ -261,7 +262,7 @@ def summary_plot(plot_data, plot_config, target_ax, **kwargs):
 def bar_plot(plot_data, plot_config, target_ax, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
-    shap.bar_plot(plot_data.values, features=plot_data.data, feature_names=feature_names, show=False)
+    shap.plots.bar(plot_data, show=False)
 
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
@@ -277,8 +278,8 @@ def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
 
 def decision_plot(plot_data, plot_config, target_ax, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
-    plt.sca(target_ax)
-    shap.decision_plot(plot_data.base_value[0], plot_data.values, feature_names=feature_names)
+    # plt.sca(target_ax)
+    shap.decision_plot(plot_data.base_values[0], plot_data.values, feature_names=feature_names)
 
 
 def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -301,8 +302,8 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot = ax.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=plot_vals, cmap=cm)
             fig.colorbar(current_plot)
 
-            if plot_config.name is not None:
-                plot_name = plot_config.name
+            if plot_config.plot_name is not None:
+                plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
@@ -329,8 +330,8 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
             shap.dependence_plot(feat[0], plot_vals.values, plot_vals.data, feature_names=feature_names,
                                  interaction_index=inter_feat, show=False, ax=ax)
 
-            if plot_config.name is not None:
-                plot_name = plot_config.name
+            if plot_config.plot_name is not None:
+                plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
@@ -355,7 +356,7 @@ plotting_type_map = {
 }
 
 
-def generate_plots(plot_config_list, shap_vals, **kwargs):
+def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
     if 'feature_names' not in kwargs:
         log.warning('Feature names not provided, plots might be confusing')
 
@@ -364,6 +365,6 @@ def generate_plots(plot_config_list, shap_vals, **kwargs):
         if current_plot_config.output_idx is not None:
             plot_vals = shap_vals[:, :, current_plot_config.output_idx]
 
-        plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, **kwargs)
+        plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
 
 
