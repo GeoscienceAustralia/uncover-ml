@@ -62,7 +62,7 @@ def patch_at_coords(image, patchsize, coords):
     valid_indices = np.where(valid)[0]
 
     if len(valid_indices) > 0:
-        valid_lonlats = lonlats[valid]
+        valid_lonlats = coords[valid]
         pixels = image.lonlat2pix(valid_lonlats)
         patches = patch.point_patches(data, patchsize, pixels)
         patch_mask = patch.point_patches(mask, patchsize, pixels)
@@ -126,11 +126,12 @@ def load_data_shap(calc_shapefile, main_config):
         ordind = np.lexsort(lonlat.T)
         lonlat = lonlat[ordind]
         lonlat = np.array_split(lonlat, mpiops.chunks)
+        lonlat = lonlat[0]
     else:
         lonlat = None
 
     image_chunk_sets = image_feature_sets_shap(lonlat, main_config)
-    transform_sets = [k.transform_set for k in config.feature_sets]
+    transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = ls.features.transform_features(image_chunk_sets,
                                                     transform_sets,
                                                     main_config.final_transform,
