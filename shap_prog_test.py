@@ -6,7 +6,7 @@ import uncoverml.shapley
 from uncoverml.scripts import uncoverml as uncli
 
 
-def shapley_cli(model_file, shapley_yaml):
+def shapley_cli(model_file, shapley_yaml, calc_shapefile):
 
     with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -19,7 +19,8 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading data')
     # noinspection PyProtectedMember
-    targets_all, x_all = uncli._load_data(config, partitions=200)
+    x_all = uncoverml.shapley.load_data_shap(calc_shapefile, config)
+    print('data_loaded')
 
     print('calculating shap values')
     shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
