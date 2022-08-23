@@ -6,6 +6,9 @@ import pandas as pd
 import seaborn as sns
 import geopandas as gpd
 import shapefile
+import rasterio
+from rasterio.mask import mask
+from shapely.geometry import mapping
 
 import logging
 from os import path
@@ -42,6 +45,18 @@ Properties for shap config
 - Plots each individually
 
 '''
+
+
+def intersect_poly_shp(poly_shape, image_source_file):
+    shapefile = gpd.read_shapefile(poly_shape)
+    geoms = shapefile.geometry.values  # list of shapely geometries
+    geometry = geoms[0]  # shapely geometry
+    geoms = [mapping(geoms[0])]
+    # extract the raster values within the polygon
+    with rasterio.open("raster.tif") as src:
+        out_image, out_transform = mask(src, geoms, crop=True)
+
+    return out_image, out_transform
 
 
 def get_shapefile_lon_lat(file_to_load):
@@ -132,11 +147,11 @@ def load_data_shap(calc_shapefile, main_config):
 
     image_chunk_sets = image_feature_sets_shap(lonlat, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
-    transformed_features, keep = ls.features.transform_features(image_chunk_sets,
+    transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
                                                     main_config.final_transform,
                                                     main_config)
-    x_all = ls.features.gather_features(transformed_features[keep], node=0)
+    x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
 
 
