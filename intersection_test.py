@@ -2,7 +2,7 @@ from uncoverml import shapley
 
 
 tiff_loc = '/g/data/ge3/data/covariates/dem_fill.tif'
-shapefile_loc = '/g/data/ge3/as6887/projects/uncoverml_models/median_0_50/'
+shapefile_loc = 'Shapley_ROI/Points_Shapley.shp'
 
 
 if __name__ == '__main__':
