@@ -48,11 +48,11 @@ Properties for shap config
 
 
 def intersect_shp(loaded_shapefile, image_source_dir):
-    geoms = loaded_shapefile.geometry.values  # list of shapely geometries
+    geoms = loaded_shapefile.geometry.values[0]  # list of shapely geometries
     geometry = geoms[0]  # shapely geometry
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
-    with rasterio.open("raster.tif") as src:
+    with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
     return out_image, out_transform
@@ -84,6 +84,28 @@ def iterate_sources_shap(f, config):
 
         results.append(extracted_chunks)
     return results
+
+
+def image_feature_sets_shap_new(main_config, shap_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+
+    def get_data(image_source_dir):
+        r = None
+        if shap_config.shapefile['type'] == 'polygon':
+            r = intersect_shp(loaded_shapefile, image_source_dir)
+        elif shap_config.shapefile['type'] == 'points':
+            res_list = []
+            for idx, row in loaded_shapefile.iterrows():
+                single_row_df = loaded_shapefile[idx, :]
+                result = intersect_shp(single_row_df, image_source_dir)
+                res_list.append(result)
+
+            r = np.concatenate(res_list)
+
+        return r
+
+    intersected_result = iterate_sources_shap(get_data, main_config)
+    return intersected_result
 
 
 def get_shapefile_lon_lat(file_to_load):
@@ -162,7 +184,7 @@ def image_feature_sets_shap(lon_lat, main_config):
     return result
 
 
-def load_data_shap(calc_shapefile, main_config):
+def load_data_shap(shap_config, main_config):
     if mpiops.chunk_index == 0:
         lonlat = get_shapefile_lon_lat(calc_shapefile)
         ordind = np.lexsort(lonlat.T)
@@ -172,7 +194,7 @@ def load_data_shap(calc_shapefile, main_config):
     else:
         lonlat = None
 
-    image_chunk_sets = image_feature_sets_shap(lonlat, main_config)
+    image_chunk_sets = image_feature_sets_shap_new(shap_config, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
@@ -194,6 +216,12 @@ class ShapConfig:
         else:
             self.explainer = None
             log.error('No explainer provided, cannot calculate Shapley values')
+
+        if 'shapefile' in s:
+            self.shapefile = s['shapefile']
+        else:
+            self.shapefile = None
+            log.error('No shapefile provided, calculation will fail')
 
         self.explainer_kwargs = s['explainer_kwargs'] if 'explainer_kwargs' in s else None
         self.calc_start_row = s['calc_start_row'] if 'calc_start_row' in s else None

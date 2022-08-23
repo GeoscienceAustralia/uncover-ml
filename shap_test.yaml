@@ -1,4 +1,7 @@
 explainer: explainer
+shapefile:
+  dir: Shapley_ROI/Points_Shapley.shp
+  type: points
 calc_start_row: 0
 calc_end_row: 10
 masker:
