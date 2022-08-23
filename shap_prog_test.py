@@ -6,7 +6,7 @@ import uncoverml.shapley
 from uncoverml.scripts import uncoverml as uncli
 
 
-def shapley_cli(model_file, shapley_yaml, calc_shapefile):
+def shapley_cli(model_file, shapley_yaml):
 
     with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -19,7 +19,7 @@ def shapley_cli(model_file, shapley_yaml, calc_shapefile):
 
     print('loading data')
     # noinspection PyProtectedMember
-    x_all = uncoverml.shapley.load_data_shap(calc_shapefile, config)
+    x_all = uncoverml.shapley.load_data_shap(shap_config, config)
     print('data_loaded')
 
     print('calculating shap values')
@@ -32,5 +32,4 @@ def shapley_cli(model_file, shapley_yaml, calc_shapefile):
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
     shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_test.yaml'
-    calc_shapfile = 'Shapley_ROI/Points_Shapley.shp'
-    shapley_cli(model_config_file, shap_yaml, calc_shapfile)
+    shapley_cli(model_config_file, shap_yaml)

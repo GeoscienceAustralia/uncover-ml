@@ -1,6 +1,9 @@
 explainer: explainer
+shapefile:
+  dir: Shapley_ROI/Polygon_Shapley.shp
+  type: polygon
 calc_start_row: 0
-calc_end_row: 10
+calc_end_row: 100
 masker:
         type: independent
 plots:

@@ -2,10 +2,17 @@ import shap
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.ma as ma
 import pandas as pd
 import seaborn as sns
 import geopandas as gpd
 import shapefile
+import rasterio
+from rasterio.mask import mask
+from shapely.geometry import mapping
+from functools import partial
+
+from multiprocessing import Pool
 
 import logging
 from os import path
@@ -16,6 +23,7 @@ import csv
 import yaml
 from pathlib import Path
 from collections.abc import Iterable
+from collections import OrderedDict
 
 from uncoverml import predict
 from uncoverml import mpiops
@@ -23,6 +31,7 @@ from uncoverml import geoio
 from uncoverml import features
 from uncoverml import image
 from uncoverml import patch
+from uncoverml.transforms.transformset import missing_percentage
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +51,70 @@ Properties for shap config
 - Plots each individually
 
 '''
+
+
+def intersect_shp(loaded_shapefile, image_source_dir):
+    geoms = loaded_shapefile.geometry.values[0]  # list of shapely geometries
+    geoms = [mapping(geoms)]
+    # extract the raster values within the polygon
+    with rasterio.open(image_source_dir) as src:
+        out_image, out_transform = mask(src, geoms, crop=True)
+
+    return out_image, out_transform
+
+
+def iterate_sources_shap(f, config):
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            print(tif)
+            name = path.abspath(tif)
+            x = f(name)
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
+
+
+def image_feature_sets_shap_new(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+
+    def get_data(image_source_dir):
+        return_result = None
+        if shap_config.shapefile['type'] == 'polygon':
+            (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
+            return_result = result
+        elif shap_config.shapefile['type'] == 'points':
+            res_list = []
+            for idx, row in loaded_shapefile.iterrows():
+                single_row_df = loaded_shapefile.iloc[[idx]]
+                (result, tranform) = intersect_shp(single_row_df, image_source_dir)
+                res_list.append(result)
+
+            return_result = np.concatenate(res_list)
+
+        val_count = return_result.size
+        return_result = np.reshape(return_result, (val_count, 1, 1, 1))
+        return_result = ma.array(return_result, mask=np.zeros([val_count, 1, 1, 1]))
+        return return_result
+
+    intersected_result = iterate_sources_shap(get_data, main_config)
+    return intersected_result
 
 
 def get_shapefile_lon_lat(file_to_load):
@@ -120,23 +193,14 @@ def image_feature_sets_shap(lon_lat, main_config):
     return result
 
 
-def load_data_shap(calc_shapefile, main_config):
-    if mpiops.chunk_index == 0:
-        lonlat = get_shapefile_lon_lat(calc_shapefile)
-        ordind = np.lexsort(lonlat.T)
-        lonlat = lonlat[ordind]
-        lonlat = np.array_split(lonlat, mpiops.chunks)
-        lonlat = lonlat[0]
-    else:
-        lonlat = None
-
-    image_chunk_sets = image_feature_sets_shap(lonlat, main_config)
+def load_data_shap(shap_config, main_config):
+    image_chunk_sets = image_feature_sets_shap_new(shap_config, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
-    transformed_features, keep = ls.features.transform_features(image_chunk_sets,
+    transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
                                                     main_config.final_transform,
                                                     main_config)
-    x_all = ls.features.gather_features(transformed_features[keep], node=0)
+    x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
 
 
@@ -152,6 +216,12 @@ class ShapConfig:
         else:
             self.explainer = None
             log.error('No explainer provided, cannot calculate Shapley values')
+
+        if 'shapefile' in s:
+            self.shapefile = s['shapefile']
+        else:
+            self.shapefile = None
+            log.error('No shapefile provided, calculation will fail')
 
         self.explainer_kwargs = s['explainer_kwargs'] if 'explainer_kwargs' in s else None
         self.calc_start_row = s['calc_start_row'] if 'calc_start_row' in s else None
@@ -253,7 +323,7 @@ def gather_explainer_req(shap_config, x_data):
     return ret_val
 
 
-def calc_shap_vals(model, shap_config, x_data):
+def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     def shap_predict(x):
         pred_vals = predict.predict(x, model)
         return pred_vals
@@ -280,8 +350,22 @@ def calc_shap_vals(model, shap_config, x_data):
     calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
     calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
     calc_data = x_data[calc_start_row:calc_end_row]
-    shap_vals = explainer_obj(calc_data)
+
+    if num_proc > 1:
+        array_split = np.array_split(calc_data, num_proc)
+        shap_fn = partial(run_shap_explainer, explainer=explainer_obj)
+        with mp.Pool(processes=num_proc) as pool:
+            result = pool.map(shap_fn, array_split)
+        shap_vals = np.concatenate(result)
+    else:
+        shap_vals = explainer_obj(calc_data)
+
     return shap_vals
+
+
+def run_shap_explainer(data, explainer):
+    result = explainer(data)
+    return result
 
 
 class PlotConfig:
