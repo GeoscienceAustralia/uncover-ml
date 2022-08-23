@@ -11,6 +11,8 @@ import rasterio
 from rasterio.mask import mask
 from shapely.geometry import mapping
 
+from multiprocessing import Pool
+
 import logging
 from os import path
 from os import makedirs
@@ -320,7 +322,7 @@ def gather_explainer_req(shap_config, x_data):
     return ret_val
 
 
-def calc_shap_vals(model, shap_config, x_data):
+def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     def shap_predict(x):
         pred_vals = predict.predict(x, model)
         return pred_vals
@@ -348,6 +350,13 @@ def calc_shap_vals(model, shap_config, x_data):
     calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
     calc_data = x_data[calc_start_row:calc_end_row]
     shap_vals = explainer_obj(calc_data)
+
+    work_arrays = np.array_split(calc_data, num_proc)
+    explainer_list = [copy.deepcopy(explainer_obj) for i in range(num_proc)]
+    pool = Pool(processes=num_proc)
+    calc_res = [pool.apply_async(exp.explain_row(data)) for exp, data in zip(explainer_list, work_arrays)]
+    [calc_res.wait() for calc in calc_res]
+    shap_vals = calc_res
     return shap_vals
 
 
