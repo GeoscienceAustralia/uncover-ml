@@ -32,5 +32,4 @@ def shapley_cli(model_file, shapley_yaml):
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
     shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_test.yaml'
-    calc_shapfile = 'Shapley_ROI/Points_Shapley.shp'
-    shapley_cli(model_config_file, shap_yaml, calc_shapfile)
+    shapley_cli(model_config_file, shap_yaml)

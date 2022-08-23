@@ -2,6 +2,7 @@ import shap
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.ma as ma
 import pandas as pd
 import seaborn as sns
 import geopandas as gpd
@@ -19,6 +20,7 @@ import csv
 import yaml
 from pathlib import Path
 from collections.abc import Iterable
+from collections import OrderedDict
 
 from uncoverml import predict
 from uncoverml import mpiops
@@ -26,6 +28,7 @@ from uncoverml import geoio
 from uncoverml import features
 from uncoverml import image
 from uncoverml import patch
+from uncoverml.transforms.transformset import missing_percentage
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +52,6 @@ Properties for shap config
 
 def intersect_shp(loaded_shapefile, image_source_dir):
     geoms = loaded_shapefile.geometry.values[0]  # list of shapely geometries
-    geometry = geoms[0]  # shapely geometry
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
@@ -64,7 +66,7 @@ def iterate_sources_shap(f, config):
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
-            name = os.path.abspath(tif)
+            name = path.abspath(tif)
             x = f(name)
             # TODO this may hurt performance. Consider removal
             if type(x) is np.ma.MaskedArray:
@@ -86,23 +88,27 @@ def iterate_sources_shap(f, config):
     return results
 
 
-def image_feature_sets_shap_new(main_config, shap_config):
+def image_feature_sets_shap_new(shap_config, main_config):
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
 
     def get_data(image_source_dir):
-        r = None
+        return_result = None
         if shap_config.shapefile['type'] == 'polygon':
-            r = intersect_shp(loaded_shapefile, image_source_dir)
+            (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
+            return_result = result
         elif shap_config.shapefile['type'] == 'points':
             res_list = []
             for idx, row in loaded_shapefile.iterrows():
-                single_row_df = loaded_shapefile[idx, :]
-                result = intersect_shp(single_row_df, image_source_dir)
+                single_row_df = loaded_shapefile.iloc[[idx]]
+                (result, tranform) = intersect_shp(single_row_df, image_source_dir)
                 res_list.append(result)
 
-            r = np.concatenate(res_list)
+            return_result = np.concatenate(res_list)
 
-        return r
+        val_count = return_result.size
+        return_result = np.reshape(return_result, (val_count, 1, 1, 1))
+        return_result = ma.array(return_result, mask=np.zeros([val_count, 1, 1, 1]))
+        return return_result
 
     intersected_result = iterate_sources_shap(get_data, main_config)
     return intersected_result
@@ -185,15 +191,6 @@ def image_feature_sets_shap(lon_lat, main_config):
 
 
 def load_data_shap(shap_config, main_config):
-    if mpiops.chunk_index == 0:
-        lonlat = get_shapefile_lon_lat(calc_shapefile)
-        ordind = np.lexsort(lonlat.T)
-        lonlat = lonlat[ordind]
-        lonlat = np.array_split(lonlat, mpiops.chunks)
-        lonlat = lonlat[0]
-    else:
-        lonlat = None
-
     image_chunk_sets = image_feature_sets_shap_new(shap_config, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
