@@ -10,6 +10,7 @@ import shapefile
 import rasterio
 from rasterio.mask import mask
 from shapely.geometry import mapping
+from functools import partial
 
 from multiprocessing import Pool
 
@@ -349,15 +350,22 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
     calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
     calc_data = x_data[calc_start_row:calc_end_row]
-    shap_vals = explainer_obj(calc_data)
 
-    work_arrays = np.array_split(calc_data, num_proc)
-    explainer_list = [copy.deepcopy(explainer_obj) for i in range(num_proc)]
-    pool = Pool(processes=num_proc)
-    calc_res = [pool.apply_async(exp.explain_row(data)) for exp, data in zip(explainer_list, work_arrays)]
-    [calc_res.wait() for calc in calc_res]
-    shap_vals = calc_res
+    if num_proc > 1:
+        array_split = np.array_split(calc_data, num_proc)
+        shap_fn = partial(run_shap_explainer, explainer=explainer_obj)
+        with mp.Pool(processes=num_proc) as pool:
+            result = pool.map(shap_fn, array_split)
+        shap_vals = np.concatenate(result)
+    else:
+        shap_vals = explainer_obj(calc_data)
+
     return shap_vals
+
+
+def run_shap_explainer(data, explainer):
+    result = explainer(data)
+    return result
 
 
 class PlotConfig:
