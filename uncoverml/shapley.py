@@ -47,16 +47,43 @@ Properties for shap config
 '''
 
 
-def intersect_poly_shp(poly_shape, image_source_file):
-    shapefile = gpd.read_shapefile(poly_shape)
-    geoms = shapefile.geometry.values  # list of shapely geometries
+def intersect_shp(loaded_shapefile, image_source_dir):
+    geoms = loaded_shapefile.geometry.values  # list of shapely geometries
     geometry = geoms[0]  # shapely geometry
-    geoms = [mapping(geoms[0])]
+    geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open("raster.tif") as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
     return out_image, out_transform
+
+
+def iterate_sources_shap(f, config):
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            print(tif)
+            name = os.path.abspath(tif)
+            x = f(name)
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+    return results
 
 
 def get_shapefile_lon_lat(file_to_load):
