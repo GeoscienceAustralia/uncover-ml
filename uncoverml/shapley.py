@@ -409,6 +409,39 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     plt.clf()
 
 
+def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
+    num_plots = plot_vals.shape[0]
+    output_dims = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
+
+    # 4 plots per figure, 2x2 grid
+    groups_of_four = divmod(num_plots, 4)
+    num_iter = groups_of_four[0] if groups_of_four[1] == 0 else (groups_of_four[0] + 1)
+    start_idx_list = [i * 4 for i in range(num_iter)]
+    for output_idx in range(output_dims):
+        for start_idx in start_idx_list:
+            max_idx = plot_vals[:, :, output_idx].shape[2] - 1
+            end_idx = (start_idx + 3) if (start_idx_list + 3) < max_idx else max_idx
+            current_subplots_vals = plot_vals[start_idx:end_idx, :, output_idx]
+            num_plots_current_fig = current_subplots_vals.shape[0]
+            nrow = 2 if num_plots_current_fig in [2, 3, 4] else 1
+            ncol = 2 if num_plots_current_fig in [3, 4] else 1
+
+            fig, axs = plt.subplots(nrow, ncol, figsize=(16.53, 11.69))
+            for val_idx in range(num_plots_current_fig):
+                current_plot_data = current_subplots_vals[val_idx]
+                plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
+
+                val_num = start_idx + val_idx + 1
+                if plot_config.plot_name is not None:
+                    plot_name = f'{plot_config.plot_name}_output_{output_idx}_value_{val_num}'
+                else:
+                    plot_name = f'{plot_config.type}_output_{output_idx}_value_{val_num}'
+
+                plt.tight_layout()
+                save_plot(fig, plot_name, shap_config)
+                plt.clf()
+
+
 def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
     fig, ax = plt.subplots(figsize=(32, 22), sharey=True)
@@ -424,6 +457,19 @@ def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
         plt.tight_layout()
         save_plot(fig, plot_name, shap_config)
         plt.clf()
+
+
+def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
+    feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
+    plt.sca(target_ax)
+    shap.force_plot(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data,
+                    feature_names=feature_names, show=False)
+
+
+def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
+    feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
+    plt.sca(target_ax)
+    shap.waterfall_plot(plot_data)
 
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
@@ -527,7 +573,9 @@ plotting_func_map = {
     'summary': summary_plot,
     'bar': bar_plot,
     'decision': decision_plot,
-    'shap_corr': shap_corr_plot
+    'shap_corr': shap_corr_plot,
+    'waterfall': waterfall_plot,
+    'force': force_plot
 }
 
 plotting_type_map = {
@@ -536,7 +584,9 @@ plotting_type_map = {
     'decision': aggregate_separate,
     'shap_corr': aggregate_separate,
     'spatial': spatial_plot,
-    'scatter': scatter_plot
+    'scatter': scatter_plot,
+    'waterfall': individual_subplot,
+    'force': individual_subplot
 }
 
 

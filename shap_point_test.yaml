@@ -1,0 +1,10 @@
+explainer: explainer
+shapefile:
+  dir: Shapley_ROI/Points_Shapley.shp
+  type: points
+masker:
+        type: independent
+plots:
+  - plot_name: waterfall
+    type: waterfall
+    plot_title: summary test plot
