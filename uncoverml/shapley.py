@@ -422,6 +422,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             max_idx = plot_vals[:, :, output_idx].shape[0] - 1
             end_idx = (start_idx + 3) if (start_idx + 3) < max_idx else max_idx
             current_subplots_vals = plot_vals[start_idx:end_idx, :, output_idx]
+            current_subplots_vals.data = current_subplots_vals.data[start_idx:end_idx, :]
             num_plots_current_fig = current_subplots_vals.shape[0]
             nrow = 2 if num_plots_current_fig in [2, 3, 4] else 1
             ncol = 2 if num_plots_current_fig in [3, 4] else 1
@@ -429,6 +430,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             fig, axs = plt.subplots(nrow, ncol, figsize=(16.53, 11.69))
             for val_idx in range(num_plots_current_fig):
                 current_plot_data = current_subplots_vals[val_idx]
+                current_plot_data.data = current_plot_data.data[val_idx, :]
                 plotting_func_map[plot_config.type](current_plot_data, plot_config, np.ravel(axs)[val_idx], val_idx, **kwargs)
 
                 val_num = start_idx + val_idx + 1
