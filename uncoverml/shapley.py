@@ -419,8 +419,8 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
     start_idx_list = [i * 4 for i in range(num_iter)]
     for output_idx in range(output_dims):
         for start_idx in start_idx_list:
-            max_idx = plot_vals[:, :, output_idx].shape[2] - 1
-            end_idx = (start_idx + 3) if (start_idx_list + 3) < max_idx else max_idx
+            max_idx = plot_vals[:, :, output_idx].shape[0] - 1
+            end_idx = (start_idx + 3) if (start_idx + 3) < max_idx else max_idx
             current_subplots_vals = plot_vals[start_idx:end_idx, :, output_idx]
             num_plots_current_fig = current_subplots_vals.shape[0]
             nrow = 2 if num_plots_current_fig in [2, 3, 4] else 1
@@ -429,7 +429,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             fig, axs = plt.subplots(nrow, ncol, figsize=(16.53, 11.69))
             for val_idx in range(num_plots_current_fig):
                 current_plot_data = current_subplots_vals[val_idx]
-                plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
+                plotting_func_map[plot_config.type](current_plot_data, plot_config, np.ravel(axs)[val_idx], val_idx, **kwargs)
 
                 val_num = start_idx + val_idx + 1
                 if plot_config.plot_name is not None:
@@ -469,7 +469,7 @@ def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     feature_names = kwargs['feature_names'] if 'feature_names' in kwargs else None
     plt.sca(target_ax)
-    shap.waterfall_plot(plot_data)
+    shap.plots._waterfall.waterfall_legacy(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data, feature_names=feature_names, show=False) 
 
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
