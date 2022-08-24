@@ -8,3 +8,6 @@ plots:
   - plot_name: waterfall
     type: waterfall
     plot_title: summary test plot
+  - plot_name: waterfall
+    type: waterfall
+    plot_title: summary test plot
