@@ -23,7 +23,7 @@ def _parallel_read(r):
             m['top_left_x'] = t[2]
             m['pixsize_y'] = -t[4]
             m['top_left_y'] = t[5]
-            raster.mask = raster.mask | mask_raster.mask
+            raster.mask = raster.mask | mask_raster.mask  # we are not interested in masked areas
             m['all_finite'] = np.all(np.isfinite(raster))
             m['any_nan'] = np.any(np.isnan(raster))
             m['any_large'] = np.any(np.abs(raster) > 1e10)
@@ -40,7 +40,7 @@ rets = Parallel(
     verbose=100,
 )(delayed(_parallel_read)(r) for r in Path(dir).glob("*.tif"))
 
-raster_attrs = {r.stem: v  for r, v in zip(Path(dir).glob("*.tif"), rets)}
+raster_attrs = {r.stem: v for r, v in zip(Path(dir).glob("*.tif"), rets)}
 
 df = pd.DataFrame.from_dict(raster_attrs)
 df.to_csv("quality.csv")
