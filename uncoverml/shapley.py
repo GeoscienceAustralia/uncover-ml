@@ -9,7 +9,7 @@ import geopandas as gpd
 import shapefile
 import rasterio
 from rasterio.mask import mask
-from shapely.geometry import mapping
+from shapely.geometry import mapping, MultiPolygon
 from functools import partial
 
 from multiprocessing import Pool
@@ -126,6 +126,25 @@ def load_data_shap(shap_config, main_config):
                                                     main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
+
+
+def get_coords_info(shap_config):
+    # Only meant to be used for polygon shapefiles
+    current_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    geom = current_shapefile.geometry
+    points = []
+    for mpoly in geom:
+        if isinstance(mpoly, MultiPolygon):
+            polys = list(mpoly)
+        else:
+            polys = [mpoly]
+        for polygon in polys:
+            for point in polygon.exterior.coords:
+                points.append(point)
+            for interior in polygon.interiors:
+                for point in interior.coords:
+                    points.append(point)
+    return points
 
 
 class ShapConfig:
@@ -313,22 +332,34 @@ Types of plot:
 def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-    fig.savefig(plot_save_path, dpi=1000)
+    plt.tight_layout(pad=3)
+    fig.savefig(plot_save_path, dpi=100)
+
+
+common_x_text_map = {
+    'summary': 'SHAP value (impact on model output)',
+    'bar': 'mean(|SHAP value|) (average impact on model output magnitude)'
+}
 
 
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, axs = plt.subplots(1, num_plots, figsize=(1.920, 1.080), dpi=100)
+    row_height = 0.4
+    plot_height = (plot_vals.shape[1] * row_height) + 1.5
+    plot_width = 20 if plot_config.type == 'bar' else 16
+    fig, axs = plt.subplots(1, num_plots, dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
+        fig.set_size_inches(plot_width, plot_height, forward=True)
 
     if plot_config.plot_name is not None:
         plot_name = plot_config.plot_name
     else:
         plot_name = plot_config.type
 
-    plt.tight_layout()
+    common_x_text = common_x_text_map[plot_config.type]
+    fig.text(0.5, 0.01, common_x_text, ha='center')
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
@@ -364,7 +395,6 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             else:
                 plot_name = f'{plot_config.type}_output_{output_idx}_value_{fig_idx}'
 
-            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             plt.clf()
 
@@ -381,21 +411,21 @@ def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
         else:
             plot_name = f'{plot_config.type}_{idx}'
 
-        plt.tight_layout()
         save_plot(fig, plot_name, shap_config)
         plt.clf()
 
 
-def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
-    plt.sca(target_ax)
-    shap.force_plot(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data,
-                    feature_names=plot_data.feature_names, show=False, matplotlib=True)
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'subplot_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
-
-        target_ax.title.set_text(current_plot_title)
+# def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
+#     plt.sca(target_ax)
+#     shap.force_plot(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data,
+#                     feature_names=plot_data.feature_names, show=False, matplotlib=True)
+#     if plot_config.plot_title is not None:
+#         current_plot_title = plot_config.plot_title
+#         if 'subplot_idx' in kwargs:
+#             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
+#
+#         target_ax.title.set_text(current_plot_title)
+#         target_ax.tick_params(axis='both', labelsize=5)
 
 
 def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
@@ -407,37 +437,50 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
         target_ax.title.set_text(current_plot_title)
+        target_ax.tick_params(axis='both', labelsize=5)
 
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
-    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names,
-                      max_display=plot_data.shape[1], sort=False, show=False)
+    row_height = 0.4
+    plot_height = (plot_data.shape[1] * row_height) + 1.5
+    plot_width = 16
+    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names, show=False,
+                      max_display=plot_data.shape[1], sort=False, plot_size = (plot_width, plot_height))
 
+    x_axis = target_ax.axes.get_xaxis()
+    x_label = x_axis.get_label()
+    x_label.set_visible(False)
     if plot_idx > 0:
         target_ax.axes.yaxis.set_visible(False)
-        x_axis = target_ax.axes.get_xaxis()
-        x_label = x_axis.get_label()
-        x_label.set_visible(False)
 
     plt.gcf().axes[-1].remove()
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
+        else:
+            current_plot_title = f'{current_plot_title}_{plot_idx}'
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
-def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
+def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
-    shap.plots.bar(plot_data, show=False)
+    shap.plots.bar(plot_data, show=False, max_display=plot_data.shape[1])
+    # target_ax.tick_params(axis='both', labelsize=5)
+    x_axis = target_ax.axes.get_xaxis()
+    x_label = x_axis.get_label()
+    x_label.set_visible(False)
+
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
+        else:
+            current_plot_title = f'{current_plot_title}_{plot_idx}'
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
@@ -449,23 +492,25 @@ def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
     plot_dataframe = pd.DataFrame(plot_data.values, columns=feature_names)
     corr_matrix = plot_dataframe.corr()
     sns.heatmap(corr_matrix, cmap='coolwarm', fmt='.1g', annot=False, ax=target_ax)
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def decision_plot(plot_data, plot_config, target_ax, **kwargs):
     # plt.sca(target_ax)
     shap.decision_plot(plot_data.base_values[0], plot_data.values, feature_names=plot_data.feature_names)
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -491,16 +536,20 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
             add_on_string = f'_output_{dim_idx}_feature_{feature_names[feat_idx]}'
             current_plot_title = current_plot_title + add_on_string
-            ax.title.set_txt(current_plot_title)
+            ax.title.set_text(current_plot_title)
+            ax.tick_params(axis='both', labelsize=5)
 
             if plot_config.plot_name is not None:
                 plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
-            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
+
+
+def spatial_plot_geotiff(shap_vals, plot_config, shap_config, **kwargs):
+    return None
 
 
 def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -525,14 +574,14 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
             add_on_string = f'_feature_{feature_names[feat_idx]}_output_{dim_idx}'
             current_plot_title = current_plot_title + add_on_string
-            ax.title.set_txt(current_plot_title)
+            ax.title.set_text(current_plot_title)
+            ax.tick_params(axis='both', labelsize=5)
 
             if plot_config.plot_name is not None:
                 plot_name = plot_config.plot_name
             else:
                 plot_name = plot_config.type
 
-            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
 
@@ -542,8 +591,7 @@ plotting_func_map = {
     'bar': bar_plot,
     'decision': decision_plot,
     'shap_corr': shap_corr_plot,
-    'waterfall': waterfall_plot,
-    'force': force_plot
+    'waterfall': waterfall_plot
 }
 
 plotting_type_map = {
@@ -554,7 +602,6 @@ plotting_type_map = {
     'spatial': spatial_plot,
     'scatter': scatter_plot,
     'waterfall': individual_subplot,
-    'force': individual_subplot
 }
 
 
@@ -564,9 +611,13 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
     else:
         shap_vals.feature_names = kwargs['feature_names']
 
+    current_plot_idx = 1
     for current_plot_config in plot_config_list:
+        progress_message = f'Generating plot {current_plot_idx} of {len(plot_config_list)}'
+        print(progress_message)
         plot_vals = shap_vals
         if current_plot_config.output_idx is not None:
             plot_vals = shap_vals[:, :, current_plot_config.output_idx]
 
         plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
+        current_plot_idx += 1
