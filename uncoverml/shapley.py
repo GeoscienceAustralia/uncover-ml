@@ -317,6 +317,12 @@ def save_plot(fig, plot_name, shap_config):
     fig.savefig(plot_save_path, dpi=1000)
 
 
+common_x_text_map = {
+    'summary': 'SHAP value (impact on model output)',
+    'bar': 'mean(|SHAP value|) (average impact on model output magnitude)'
+}
+
+
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
     fig, axs = plt.subplots(1, num_plots, figsize=(1.920, 1.080), dpi=100)
@@ -329,6 +335,8 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     else:
         plot_name = plot_config.type
 
+    common_x_text = common_x_text_map[plot_config.type]
+    fig.text(0.5, 0.04, common_x_text, ha='center')
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
@@ -414,11 +422,11 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names,
                       max_display=plot_data.shape[1], sort=False, show=False)
 
-    if plot_idx != 1:
+    x_axis = target_ax.axes.get_xaxis()
+    x_label = x_axis.get_label()
+    x_label.set_visible(False)
+    if plot_idx > 0:
         target_ax.axes.yaxis.set_visible(False)
-        x_axis = target_ax.axes.get_xaxis()
-        x_label = x_axis.get_label()
-        x_label.set_visible(False)
 
     plt.gcf().axes[-1].remove()
     if plot_config.plot_title is not None:
