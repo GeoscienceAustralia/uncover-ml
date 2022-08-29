@@ -313,12 +313,12 @@ Types of plot:
 def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-    fig.savefig(plot_save_path, dpi=500)
+    fig.savefig(plot_save_path, dpi=1000)
 
 
 def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, axs = plt.subplots(1, num_plots, figsize=(16.53, 11.69))
+    fig, axs = plt.subplots(1, num_plots, figsize=(1.920, 1.080), dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
@@ -351,7 +351,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             nrow = 2 if num_plots_current_fig in [2, 3, 4] else 1
             ncol = 2 if num_plots_current_fig in [3, 4] else 1
 
-            fig, axs = plt.subplots(nrow, ncol, figsize=(16.53, 11.69))
+            fig, axs = plt.subplots(nrow, ncol, figsize=(1.920, 1.080), dpi=100)
             for val_idx in range(num_plots_current_fig):
                 current_plot_data = current_subplots_vals[val_idx]
                 current_plot_data.data = current_plot_data.data[val_idx, :]
@@ -371,7 +371,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
 
 def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    fig, ax = plt.subplots(figsize=(32, 22), sharey=True)
+    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100, sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, idx, **kwargs)
@@ -479,7 +479,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
         feature_names = [str(x) for x in range(shap_vals.shape[1])]
 
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
-    fig, ax = plt.subplots(figsize=(16.53, 11.69))
+    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
     cm = plt.cm.get_cmap('cool')
     lon_lat = kwargs['lon_lat']
     for dim_idx in range(multi_output_dim):
@@ -513,7 +513,7 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
         log.error('No plot features provided, cannot plot')
         return None
 
-    fig, ax = plt.subplots(figsize=(16.53, 11.69))
+    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
     multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
     for dim_idx in range(multi_output_dim):
         for feat in plot_config.plot_features:
