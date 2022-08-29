@@ -313,6 +313,7 @@ Types of plot:
 def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+    plt.tight_layout()
     fig.savefig(plot_save_path, dpi=1000)
 
 
@@ -328,7 +329,6 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     else:
         plot_name = plot_config.type
 
-    plt.tight_layout()
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
@@ -364,7 +364,6 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             else:
                 plot_name = f'{plot_config.type}_output_{output_idx}_value_{fig_idx}'
 
-            # plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             plt.clf()
 
@@ -381,7 +380,6 @@ def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
         else:
             plot_name = f'{plot_config.type}_{idx}'
 
-        plt.tight_layout()
         save_plot(fig, plot_name, shap_config)
         plt.clf()
 
@@ -499,7 +497,6 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             else:
                 plot_name = plot_config.type
 
-            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
 
@@ -533,7 +530,6 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
             else:
                 plot_name = plot_config.type
 
-            plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             fig.clf()
 

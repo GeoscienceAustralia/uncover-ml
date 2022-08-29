@@ -7,4 +7,7 @@ masker:
 plots:
   - plot_name: waterfall
     type: waterfall
+    plot_title: waterfall test plot
+  - plot_name: summary
+    type: summary
     plot_title: summary test plot
