@@ -389,7 +389,7 @@ def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
 def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
     shap.force_plot(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data,
-                    feature_names=plot_data.feature_names, show=False)
+                    feature_names=plot_data.feature_names, show=False, matplotlib=True)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'subplot_idx' in kwargs:
