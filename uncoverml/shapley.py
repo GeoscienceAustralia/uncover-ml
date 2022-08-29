@@ -434,12 +434,12 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
         else:
-            current_plot_title = f'{current_plot_title}_{idx}'
+            current_plot_title = f'{current_plot_title}_{plot_idx}'
 
         target_ax.title.set_text(current_plot_title)
 
 
-def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
+def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False)
     target_ax.tick_params(axis='both', labelsize=5)
@@ -452,7 +452,7 @@ def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
         else:
-            current_plot_title = f'{current_plot_title}_{idx}'
+            current_plot_title = f'{current_plot_title}_{plot_idx}'
 
         target_ax.title.set_text(current_plot_title)
 
@@ -585,7 +585,7 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
 
     current_plot_idx = 1
     for current_plot_config in plot_config_list:
-        progress_message = f'Generating plot {current_plot_idx} for {len(plot_config_list)}'
+        progress_message = f'Generating plot {current_plot_idx} of {len(plot_config_list)}'
         print(progress_message)
         plot_vals = shap_vals
         if current_plot_config.output_idx is not None:
