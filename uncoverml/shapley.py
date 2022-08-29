@@ -394,6 +394,7 @@ def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
         target_ax.title.set_text(current_plot_title)
+        target_ax.tick_params(axis='both', labelsize=5)
 
 
 def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
@@ -420,23 +421,25 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         x_label.set_visible(False)
 
     plt.gcf().axes[-1].remove()
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False)
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
@@ -448,23 +451,25 @@ def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
     plot_dataframe = pd.DataFrame(plot_data.values, columns=feature_names)
     corr_matrix = plot_dataframe.corr()
     sns.heatmap(corr_matrix, cmap='coolwarm', fmt='.1g', annot=False, ax=target_ax)
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def decision_plot(plot_data, plot_config, target_ax, **kwargs):
     # plt.sca(target_ax)
     shap.decision_plot(plot_data.base_values[0], plot_data.values, feature_names=plot_data.feature_names)
+    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -490,7 +495,8 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
             add_on_string = f'_output_{dim_idx}_feature_{feature_names[feat_idx]}'
             current_plot_title = current_plot_title + add_on_string
-            ax.title.set_txt(current_plot_title)
+            ax.title.set_text(current_plot_title)
+            ax.tick_params(axis='both', labelsize=5)
 
             if plot_config.plot_name is not None:
                 plot_name = plot_config.plot_name
@@ -523,7 +529,8 @@ def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
             current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
             add_on_string = f'_feature_{feature_names[feat_idx]}_output_{dim_idx}'
             current_plot_title = current_plot_title + add_on_string
-            ax.title.set_txt(current_plot_title)
+            ax.title.set_text(current_plot_title)
+            ax.tick_params(axis='both', labelsize=5)
 
             if plot_config.plot_name is not None:
                 plot_name = plot_config.plot_name
