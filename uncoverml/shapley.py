@@ -337,7 +337,7 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
 
     common_x_text = common_x_text_map[plot_config.type]
     fig.text(0.5, 0.04, common_x_text, ha='center')
-    fig.subplots_adjust(wspace=0.2, bottom=1)
+    fig.subplots_adjust(wspace=0.2)
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
