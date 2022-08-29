@@ -5,6 +5,6 @@ shapefile:
 masker:
         type: independent
 plots:
-  - plot_name: force
-    type: force
+  - plot_name: waterfall
+    type: waterfall
     plot_title: summary test plot
