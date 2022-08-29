@@ -364,7 +364,7 @@ def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
             else:
                 plot_name = f'{plot_config.type}_output_{output_idx}_value_{fig_idx}'
 
-            plt.tight_layout()
+            # plt.tight_layout()
             save_plot(fig, plot_name, shap_config)
             plt.clf()
 
