@@ -407,6 +407,7 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
         target_ax.title.set_text(current_plot_title)
+        target_ax.tick_params(axis='both', labelsize=5)
 
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
