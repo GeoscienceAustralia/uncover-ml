@@ -433,6 +433,8 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
+        else:
+            current_plot_title = f'{current_plot_title}_{idx}'
 
         target_ax.title.set_text(current_plot_title)
 
@@ -441,10 +443,13 @@ def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False)
     target_ax.tick_params(axis='both', labelsize=5)
+
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
+        else:
+            current_plot_title = f'{current_plot_title}_{idx}'
 
         target_ax.title.set_text(current_plot_title)
 
