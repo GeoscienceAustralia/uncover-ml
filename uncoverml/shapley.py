@@ -117,82 +117,6 @@ def image_feature_sets_shap_new(shap_config, main_config):
     return intersected_result
 
 
-def get_shapefile_lon_lat(file_to_load):
-    sf = shapefile.Reader(file_to_load)
-    # Get coordinates
-    coords = []
-    for shape in sf.iterShapes():
-        coords.append(list(shape.__geo_interface__['coordinates']))
-    label_coords = np.array(coords).squeeze()
-    return label_coords
-
-
-def patch_at_coords(image, patchsize, coords):
-    # noinspection PyProtectedMember
-    data, mask, data_dtype = patch._image_to_data(image)
-
-    valid = image.in_bounds(coords)
-    valid_indices = np.where(valid)[0]
-
-    if len(valid_indices) > 0:
-        valid_lonlats = coords[valid]
-        pixels = image.lonlat2pix(valid_lonlats)
-        patches = patch.point_patches(data, patchsize, pixels)
-        patch_mask = patch.point_patches(mask, patchsize, pixels)
-        patch_array = np.ma.masked_array(data=patches, mask=patch_mask)
-
-    else:
-        patchwidth = 2 * patchsize + 1
-        shp = (0, patchwidth, patchwidth, data.shape[2])
-        patch_data = np.zeros(shp, dtype=data_dtype)
-        patch_mask = np.zeros(shp, dtype=bool)
-        patch_array = np.ma.masked_array(data=patch_data, mask=patch_mask)
-
-    return patch_array
-
-
-def _extract_from_chunk(image_source, lon_lat, chunk_index, total_chunks,
-                        patchsize):
-    image_chunk = image.Image(image_source, chunk_index, total_chunks, patchsize)
-    # figure out which chunks I need to consider
-    y_min = lon_lat[0, 1]
-    y_max = lon_lat[-1, 1]
-    # noinspection PyProtectedMember
-    if features._image_has_targets(y_min, y_max, image_chunk):
-        x = patch_at_coords(image_chunk, patchsize, lon_lat)
-    else:
-        x = None
-    return x
-
-
-def extract_features_shap(image_source, lon_lat, n_subchunks, patchsize):
-    equiv_chunks = n_subchunks * mpiops.chunks
-    x_all = []
-    for i in range(equiv_chunks):
-        x = _extract_from_chunk(image_source, lon_lat, i, equiv_chunks,
-                                patchsize)
-        if x is not None:
-            x_all.append(x)
-    if len(x_all) > 0:
-        x_all_data = np.concatenate([a.data for a in x_all], axis=0)
-        x_all_mask = np.concatenate([a.mask for a in x_all], axis=0)
-        x_all = np.ma.masked_array(x_all_data, mask=x_all_mask)
-    else:
-        raise ValueError("All shapefile locations lie outside image boundaries")
-    assert x_all.shape[0] == lon_lat.shape[0]
-    return x_all
-
-
-def image_feature_sets_shap(lon_lat, main_config):
-    def get_data(image_source):
-        r = extract_features_shap(image_source, lon_lat, main_config.n_subchunks, main_config.patchsize)
-        return r
-
-    # noinspection PyProtectedMember
-    result = geoio._iterate_sources(get_data, main_config)
-    return result
-
-
 def load_data_shap(shap_config, main_config):
     image_chunk_sets = image_feature_sets_shap_new(shap_config, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
@@ -471,7 +395,7 @@ def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         if 'subplot_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
@@ -482,7 +406,7 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         if 'subplot_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
-        target_ax.title.set_txt(current_plot_title)
+        target_ax.title.set_text(current_plot_title)
 
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
