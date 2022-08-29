@@ -1,5 +1,7 @@
 import joblib
 
+from pathlib import Path
+
 import uncoverml.config
 import uncoverml.shapley
 

@@ -443,6 +443,9 @@ def bar_plot(plot_data, plot_config, target_ax, idx, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False)
     target_ax.tick_params(axis='both', labelsize=5)
+    x_axis = target_ax.axes.get_xaxis()
+    x_label = x_axis.get_label()
+    x_label.set_visible(False)
 
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
@@ -580,9 +583,13 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
     else:
         shap_vals.feature_names = kwargs['feature_names']
 
+    current_plot_idx = 1
     for current_plot_config in plot_config_list:
+        progress_message = f'Generating plot {current_plot_idx} for {len(plot_config_list)}'
+        print(progress_message)
         plot_vals = shap_vals
         if current_plot_config.output_idx is not None:
             plot_vals = shap_vals[:, :, current_plot_config.output_idx]
 
         plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
+        current_plot_idx += 1
