@@ -414,14 +414,13 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names,
                       max_display=plot_data.shape[1], sort=False, show=False)
 
-    if plot_idx > 0:
+    if plot_idx != 1:
         target_ax.axes.yaxis.set_visible(False)
         x_axis = target_ax.axes.get_xaxis()
         x_label = x_axis.get_label()
         x_label.set_visible(False)
 
     plt.gcf().axes[-1].remove()
-    target_ax.tick_params(axis='both', labelsize=5)
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
