@@ -327,7 +327,7 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
     row_height = 0.4
     plot_height = (plot_vals.shape[1] * row_height) + 1.5
-    plot_width = 16 * num_plots
+    plot_width = 20 if plot_config.type == 'bar' else 16
     fig, axs = plt.subplots(1, num_plots, figsize=(plot_width, plot_height), dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
@@ -447,7 +447,7 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 
 def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
-    shap.plots.bar(plot_data, show=False)
+    shap.plots.bar(plot_data, show=False, max_display=plot_data.shape[1])
     target_ax.tick_params(axis='both', labelsize=5)
     x_axis = target_ax.axes.get_xaxis()
     x_label = x_axis.get_label()
