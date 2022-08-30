@@ -420,7 +420,7 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names, show=False,
-                      plot_size=(16, 11))
+                      max_display=plot_data.shape[1], sort=False)
 
     # x_axis = target_ax.axes.get_xaxis()
     # x_label = x_axis.get_label()
