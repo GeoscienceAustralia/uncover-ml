@@ -328,10 +328,11 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     row_height = 0.4
     plot_height = (plot_vals.shape[1] * row_height) + 1.5
     plot_width = 20 if plot_config.type == 'bar' else 16
-    fig, axs = plt.subplots(1, num_plots, figsize=(plot_width, plot_height), dpi=100)
+    fig, axs = plt.subplots(1, num_plots, dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
+        fig.set_size_inches(plot_width, plot_height, forward=True)
 
     if plot_config.plot_name is not None:
         plot_name = plot_config.plot_name
