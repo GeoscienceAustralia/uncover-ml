@@ -313,7 +313,7 @@ Types of plot:
 def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-    plt.tight_layout()
+    plt.tight_layout(pad=1)
     fig.savefig(plot_save_path, dpi=100)
 
 
