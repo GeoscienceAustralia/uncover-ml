@@ -314,7 +314,7 @@ def save_plot(fig, plot_name, shap_config):
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
     # plt.tight_layout()
-    fig.savefig(plot_save_path, dpi=1000)
+    fig.savefig(plot_save_path, dpi=100)
 
 
 common_x_text_map = {
@@ -419,8 +419,11 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
+    row_height = 0.4
+    plot_height = (plot_data.shape[1] * row_height) + 1.5
+    plot_width = 16
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names, show=False,
-                      max_display=plot_data.shape[1], sort=False)
+                      max_display=plot_data.shape[1], sort=False, plot_size = (plot_width, plot_height))
 
     x_axis = target_ax.axes.get_xaxis()
     x_label = x_axis.get_label()
