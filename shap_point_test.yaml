@@ -8,3 +8,6 @@ plots:
   - plot_name: bar
     type: bar
     plot_title: bar test plot
+  - plot_name: summary
+    type: summary
+    plot_title: summary test plot
