@@ -564,8 +564,7 @@ plotting_func_map = {
     'bar': bar_plot,
     'decision': decision_plot,
     'shap_corr': shap_corr_plot,
-    'waterfall': waterfall_plot,
-    'force': force_plot
+    'waterfall': waterfall_plot
 }
 
 plotting_type_map = {
@@ -576,7 +575,6 @@ plotting_type_map = {
     'spatial': spatial_plot,
     'scatter': scatter_plot,
     'waterfall': individual_subplot,
-    'force': individual_subplot
 }
 
 
