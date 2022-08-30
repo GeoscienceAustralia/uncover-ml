@@ -9,7 +9,7 @@ import geopandas as gpd
 import shapefile
 import rasterio
 from rasterio.mask import mask
-from shapely.geometry import mapping
+from shapely.geometry import mapping, MultiPolygon
 from functools import partial
 
 from multiprocessing import Pool
