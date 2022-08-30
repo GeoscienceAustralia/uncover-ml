@@ -5,6 +5,6 @@ shapefile:
 masker:
         type: independent
 plots:
-  - plot_name: summary
-    type: summary
-    plot_title: summary test plot
+  - plot_name: bar
+    type: bar
+    plot_title: bar test plot
