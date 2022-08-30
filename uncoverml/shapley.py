@@ -449,7 +449,7 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False, max_display=plot_data.shape[1])
-    target_ax.tick_params(axis='both', labelsize=5)
+    # target_ax.tick_params(axis='both', labelsize=5)
     x_axis = target_ax.axes.get_xaxis()
     x_label = x_axis.get_label()
     x_label.set_visible(False)
