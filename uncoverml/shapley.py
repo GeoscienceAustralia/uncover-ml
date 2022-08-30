@@ -337,7 +337,6 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
 
     common_x_text = common_x_text_map[plot_config.type]
     fig.text(0.5, 0.04, common_x_text, ha='center')
-    fig.subplots_adjust(wspace=1)
     save_plot(fig, plot_name, shap_config)
     plt.clf()
 
@@ -420,16 +419,15 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 
 def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
-    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names,
-                      max_display=10, sort=False, show=False)
+    shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names, show=False)
 
-    x_axis = target_ax.axes.get_xaxis()
-    x_label = x_axis.get_label()
-    x_label.set_visible(False)
-    if plot_idx > 0:
-        target_ax.axes.yaxis.set_visible(False)
-
-    plt.gcf().axes[-1].remove()
+    # x_axis = target_ax.axes.get_xaxis()
+    # x_label = x_axis.get_label()
+    # x_label.set_visible(False)
+    # if plot_idx > 0:
+    #     target_ax.axes.yaxis.set_visible(False)
+    #
+    # plt.gcf().axes[-1].remove()
     if plot_config.plot_title is not None:
         current_plot_title = plot_config.plot_title
         if 'output_idx' in kwargs:
