@@ -128,6 +128,25 @@ def load_data_shap(shap_config, main_config):
     return x_all
 
 
+def get_coords_info(shap_config):
+    # Only meant to be used for polygon shapefiles
+    current_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    geom = current_shapefile.geometry
+    points = []
+    for mpoly in geom:
+        if isinstance(mpoly, MultiPolygon):
+            polys = list(mpoly)
+        else:
+            polys = [mpoly]
+        for polygon in polys:
+            for point in polygon.exterior.coords:
+                points.append(point)
+            for interior in polygon.interiors:
+                for point in interior.coords:
+                    points.append(point)
+    return points
+
+
 class ShapConfig:
     # REMEMBER, DATA AND FEATURE NAMES CAN BE ACCESSED FROM THE MAIN CONFIG
     def __init__(self, yaml_file, main_config):
@@ -527,6 +546,10 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
 
             save_plot(fig, plot_name, shap_config)
             fig.clf()
+
+
+def spatial_plot_geotiff(shap_vals, plot_config, shap_config, **kwargs):
+    return None
 
 
 def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
