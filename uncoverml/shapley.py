@@ -139,7 +139,6 @@ def image_feature_sets_shap(shap_config, main_config):
     array_shape = None
     for s in main_config.feature_sets:
         extracted_chunks = {}
-        extracted_coords = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
