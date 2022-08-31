@@ -64,72 +64,72 @@ def intersect_shp(loaded_shapefile, image_source_dir):
     return out_image, out_transform
 
 
-def iterate_sources_shap(f, config):
-    results = []
-    for s in config.feature_sets:
-        extracted_chunks = {}
-        for tif in s.files:
-            print(tif)
-            name = path.abspath(tif)
-            x = f(name)
-            # TODO this may hurt performance. Consider removal
-            if type(x) is np.ma.MaskedArray:
-                count = mpiops.count(x)
-                # if not np.all(count > 0):
-                #     s = ("{} has no data in at least one band.".format(name) +
-                #          " Valid_pixel_count: {}".format(count))
-                #     raise ValueError(s)
-                missing_percent = missing_percentage(x)
-                t_missing = mpiops.comm.allreduce(
-                    missing_percent) / mpiops.chunks
-                log.info("{}: {}px {:2.2f}% missing".format(
-                    name, count, t_missing))
-            extracted_chunks[name] = x
-        extracted_chunks = OrderedDict(sorted(
-            extracted_chunks.items(), key=lambda t: t[0]))
+# def iterate_sources_shap(f, config):
+#     results = []
+#     for s in config.feature_sets:
+#         extracted_chunks = {}
+#         for tif in s.files:
+#             print(tif)
+#             name = path.abspath(tif)
+#             x = f(name)
+#             # TODO this may hurt performance. Consider removal
+#             if type(x) is np.ma.MaskedArray:
+#                 count = mpiops.count(x)
+#                 # if not np.all(count > 0):
+#                 #     s = ("{} has no data in at least one band.".format(name) +
+#                 #          " Valid_pixel_count: {}".format(count))
+#                 #     raise ValueError(s)
+#                 missing_percent = missing_percentage(x)
+#                 t_missing = mpiops.comm.allreduce(
+#                     missing_percent) / mpiops.chunks
+#                 log.info("{}: {}px {:2.2f}% missing".format(
+#                     name, count, t_missing))
+#             extracted_chunks[name] = x
+#         extracted_chunks = OrderedDict(sorted(
+#             extracted_chunks.items(), key=lambda t: t[0]))
+#
+#         results.append(extracted_chunks)
+#     return results
 
-        results.append(extracted_chunks)
-    return results
 
-
-def image_feature_sets_shap_new(shap_config, main_config):
-    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
-
-    def get_data(image_source_dir):
-        return_result = None
-        if shap_config.shapefile['type'] == 'polygon':
-            (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
-            return_result = result
-        elif shap_config.shapefile['type'] == 'points':
-            res_list = []
-            for idx, row in loaded_shapefile.iterrows():
-                single_row_df = loaded_shapefile.iloc[[idx]]
-                (result, tranform) = intersect_shp(single_row_df, image_source_dir)
-                res_list.append(result)
-
-            return_result = np.concatenate(res_list)
-
-        val_count = return_result.size
-        return_result = np.reshape(return_result, (val_count, 1, 1, 1))
-        return_result = ma.array(return_result, mask=np.zeros([val_count, 1, 1, 1]))
-        return return_result
-
-    intersected_result = iterate_sources_shap(get_data, main_config)
-    return intersected_result
+# def image_feature_sets_shap_new(shap_config, main_config):
+#     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+#
+#     def get_data(image_source_dir):
+#         return_result = None
+#         if shap_config.shapefile['type'] == 'polygon':
+#             (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
+#             return_result = result
+#         elif shap_config.shapefile['type'] == 'points':
+#             res_list = []
+#             for idx, row in loaded_shapefile.iterrows():
+#                 single_row_df = loaded_shapefile.iloc[[idx]]
+#                 (result, tranform) = intersect_shp(single_row_df, image_source_dir)
+#                 res_list.append(result)
+#
+#             return_result = np.concatenate(res_list)
+#
+#         val_count = return_result.size
+#         return_result = np.reshape(return_result, (val_count, 1, 1, 1))
+#         return_result = ma.array(return_result, mask=np.zeros([val_count, 1, 1, 1]))
+#         return return_result
+#
+#     intersected_result = iterate_sources_shap(get_data, main_config)
+#     return intersected_result
 
 
 def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, tranform) = intersect_shp(single_row_df, image_source_dir)
+        (result, transform) = intersect_shp(single_row_df, image_source)
         res_list.append(result)
 
     return np.concatenate(res_list)
 
 
-def get_data_polygon(image_source):
-    (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
+def get_data_polygon(loaded_shapefile, image_source):
+    (result, transform) = intersect_shp(loaded_shapefile, image_source)
     return result
 
 
@@ -143,7 +143,11 @@ def image_feature_sets_shap(shap_config, main_config):
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            x = f(name)
+            if shap_config.shapefile['type'] == 'point':
+                x = get_data_points(loaded_shapefile, name)
+            else:
+                x = get_data_polygon(loaded_shapefile, name)
+
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
