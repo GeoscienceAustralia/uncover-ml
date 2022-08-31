@@ -22,9 +22,6 @@ def shapley_cli(model_file, shapley_yaml):
     print('loading data')
     # noinspection PyProtectedMember
     x_all = uncoverml.shapley.load_data_shap(shap_config, config)
-    if shap_config.shapefile['type'] == 'polygon':
-        lon_lats = uncoverml.shapley.get_coords_info(shap_config)
-        print('Got lons and lats')
 
     print('data_loaded')
 

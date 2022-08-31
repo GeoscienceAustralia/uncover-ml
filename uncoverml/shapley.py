@@ -11,6 +11,7 @@ import rasterio
 from rasterio.mask import mask
 from shapely.geometry import mapping, MultiPolygon
 from functools import partial
+from rasterio import Affine
 
 from multiprocessing import Pool
 
@@ -117,8 +118,58 @@ def image_feature_sets_shap_new(shap_config, main_config):
     return intersected_result
 
 
+def get_data_points(loaded_shapefile, image_source):
+    res_list = []
+    for idx, row in loaded_shapefile.iterrows():
+        single_row_df = loaded_shapefile.iloc[[idx]]
+        (result, tranform) = intersect_shp(single_row_df, image_source_dir)
+        res_list.append(result)
+
+    return np.concatenate(res_list)
+
+
+def get_data_polygon(image_source):
+    (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
+    return result
+
+
+def image_feature_sets_shap(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    results = []
+    array_shape = None
+    for s in main_config.feature_sets:
+        extracted_chunks = {}
+        extracted_coords = {}
+        for tif in s.files:
+            print(tif)
+            name = path.abspath(tif)
+            x = f(name)
+            val_count = x.size
+            x = np.reshape(x, (val_count, 1, 1, 1))
+            x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+
+    return results
+
+
 def load_data_shap(shap_config, main_config):
-    image_chunk_sets = image_feature_sets_shap_new(shap_config, main_config)
+    image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
@@ -126,25 +177,6 @@ def load_data_shap(shap_config, main_config):
                                                     main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
-
-
-def get_coords_info(shap_config):
-    # Only meant to be used for polygon shapefiles
-    current_shapefile = gpd.read_file(shap_config.shapefile['dir'])
-    geom = current_shapefile.geometry
-    points = []
-    for mpoly in geom:
-        if isinstance(mpoly, MultiPolygon):
-            polys = list(mpoly)
-        else:
-            polys = [mpoly]
-        for polygon in polys:
-            for point in polygon.exterior.coords:
-                points.append(point)
-            for interior in polygon.interiors:
-                for point in interior.coords:
-                    points.append(point)
-    return points
 
 
 class ShapConfig:
