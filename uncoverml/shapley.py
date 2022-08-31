@@ -135,8 +135,14 @@ def get_data_polygon(loaded_shapefile, image_source):
 
 def image_feature_sets_shap(shap_config, main_config):
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    name_list = None
+    if shap_config.shapefile['type'] == 'points':
+        if 'Name' in loaded_shapefile:
+            name_list = loaded_shapefile['Name'].to_list()
+        else:
+            log.warning('No names provided for points in shapefile')
+
     results = []
-    array_shape = None
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
@@ -167,6 +173,9 @@ def image_feature_sets_shap(shap_config, main_config):
             extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
+
+    if shap_config.shapefile['type'] == 'points':
+        results = (results, name_list)
 
     return results
 
