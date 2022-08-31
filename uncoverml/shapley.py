@@ -143,7 +143,7 @@ def image_feature_sets_shap(shap_config, main_config):
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            if shap_config.shapefile['type'] == 'point':
+            if shap_config.shapefile['type'] == 'points':
                 x = get_data_points(loaded_shapefile, name)
             else:
                 x = get_data_polygon(loaded_shapefile, name)
