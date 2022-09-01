@@ -68,15 +68,17 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
-    t_1 = out_transform * Affine.translation(0.5, 0.5)
-    rc2xy = lambda r, c: (c, r) * t_1
-    data = out_image.data[0]
-    row = np.arange(data.shape[0])
-    col = np.arange(data.shape[1])
-    (x_coords, y_coords) = rc2xy(row, col)
-    x_list = x_coords.to_list()
-    y_list = y_coords.to_list()
-    coords_list = zip(x_list, y_list)
+    coords_list = None
+    if 'radius' in kwargs:
+        t_1 = out_transform * Affine.translation(0.5, 0.5)
+        rc2xy = lambda r, c: (c, r) * t_1
+        data = np.reshape(out_image, (out_image.size, 1))
+        row = np.arange(data.shape[0])
+        col = np.arange(data.shape[1])
+        (x_coords, y_coords) = rc2xy(row, col)
+        x_list = x_coords.to_list()
+        y_list = y_coords.to_list()
+        coords_list = zip(x_list, y_list)
 
     return out_image, coords_list
 
