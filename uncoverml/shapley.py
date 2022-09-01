@@ -147,8 +147,7 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            if 'radius' in kwargs:
-                (x, transform) = intersect_shp(current_geometry, name, **kwargs)
+            (x, transform) = intersect_shp(current_geometry, name, **kwargs)
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
