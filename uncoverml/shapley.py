@@ -227,7 +227,7 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
 
 
 def filter_by_coords(image_sets, coords_list, master_list):
-    zipped = zip(image_sets[0].iteritems(), coords_list)
+    zipped = zip(image_sets[0].items(), coords_list)
     for key, data, coords in zipped:
         delete_list = [True if coord in master_list else False for coord in coords]
         val_count = data.size
