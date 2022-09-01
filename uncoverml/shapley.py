@@ -204,7 +204,7 @@ def load_data_shap(shap_config, main_config):
             current_point = row.geometry
             x_all_point = process_features(current_point, main_config)
 
-            if ('radius' in shap_config.shapefile) and (idx > 0):
+            if ('radius' in shap_config.shapefile) and (idx > 3):
                 x_all_poly = process_features(current_point, main_config, radius=shap_config.shapefile['radius'])
                 result_to_add = {
                     'point': x_all_point,
