@@ -6,5 +6,11 @@ shapefile:
 masker:
         type: independent
 plots:
-  - plot_name: point_poly_comparison
-    type: point_poly
+  - plot_name: summary_test
+    type: summary
+    plot_title: test_summary
+  - plot_name: bar_test
+    type: bar
+    plot_title: test_bar
+  - plot_name: test_waterfall
+    type: waterfall

@@ -575,6 +575,9 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         if 'subplot_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
+        if 'point_name' in kwargs:
+            current_plot_title = kwargs['point_name'] + '_' + str(kwargs['subplot_idx'])
+
         target_ax.title.set_text(current_plot_title)
         target_ax.tick_params(axis='both', labelsize=5)
 
@@ -640,10 +643,10 @@ def point_poly_comparison_subplot(plot_vals_point, plot_vals_poly, plot_config, 
         fig, axs = plt.subplots(1, 2, dpi=100)
         # Point plot
         current_point_vals = plot_vals_point[:, :, idx]
-        plotting_func_map['bar'](current_point_vals, plot_config, axs[0], 0, kwargs, point_name=kwargs['point_name'])
+        plotting_func_map['bar'](current_point_vals, plot_config, axs[0], 0, **kwargs, point_name=kwargs['point_name'])
         # Plot poly
         current_poly_vals = plot_vals_poly[:, :, idx]
-        plotting_func_map['bar'](current_poly_vals, plot_config, axs[1], 1, kwargs, point_name=kwargs['point_name'])
+        plotting_func_map['bar'](current_poly_vals, plot_config, axs[1], 1, **kwargs, point_name=kwargs['point_name'])
         fig.set_size_inches(plot_width, plot_height, forward=True)
         plot_name = plot_config.type + ' ' + kwargs['point_name']
         if num_plots > 1:
