@@ -233,7 +233,8 @@ def filter_by_coords(image_sets, coords_list, master_list):
         val_count = data.size
         filter_arr = np.reshape(data, (val_count, 1))
         filter_arr = filter_arr[delete_list]
-        filter_arr = np.reshape(filter_arr, (val_count, 1, 1, 1))
+        print(filter_arr.size)
+        filter_arr = np.reshape(filter_arr, (filter_arr.size, 1, 1, 1))
         image_sets[0][key] = filter_arr
 
     return image_sets
