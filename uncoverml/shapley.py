@@ -76,8 +76,8 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
         row = np.arange(data.shape[0])
         col = np.arange(data.shape[1])
         (x_coords, y_coords) = rc2xy(row, col)
-        x_list = x_coords.to_list()
-        y_list = y_coords.to_list()
+        x_list = list(x_coords)
+        y_list = list(y_coords)
         coords_list = zip(x_list, y_list)
 
     return out_image, coords_list
