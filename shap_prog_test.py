@@ -18,21 +18,44 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
+    feature_names = None
+    if shap_config.feature_path is not None:
+        feature_names = []
+        for s in config.feature_sets:
+            for tif in s.files:
+                new_string = tif.replace(shap_config.feature_path, '').replace('.tif', '')
+                feature_names.append(new_string)
 
-    print('loading data')
-    # noinspection PyProtectedMember
-    x_all = uncoverml.shapley.load_data_shap(shap_config, config)
-    print('data_loaded')
+    if shap_config.shapefile['type'] == 'points':
+        print('Loading point data')
+        x_data_point, name_list = uncoverml.shapley.load_data_shap(shap_config, config)
+        print('Calculating point shap values')
+        shap_vals_point = uncoverml.shapley.calc_shap_vals(model, shap_config, x_data_point)
+        # print('Generating point plots')
+        # uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals_point, shap_config,
+        #                                  name_list=name_list)
 
-    for key, value in x_all.items():
-        print(f'Calculating shap values for point {key}')
-        shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, value)
-        print('Calculation complete')
+        print('Loading point poly data')
+        x_data_poly_point = uncoverml.shapley.load_point_poly_data(shap_config, config)
+        print('Calculating point poly shap values')
+        shap_vals_dict = {}
+        for name in name_list:
+            current_data = x_data_poly_point[name]
+            current_shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, current_data)
+            shap_vals_dict[name] = current_shap_vals
 
-        print(f'Generating plots for point {key}')
-        current_point_name = key if shap_config.shapefile['type'] == 'points' else None
-        uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config,
-                                         point_name=current_point_name)
+        print('Generating point poly plots')
+        uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
+                                                    feature_names=feature_names, output_names=shap_config.output_names)
+    else:
+        print('Loading poly data')
+        x_all = uncoverml.shapley.load_data_shap(shap_config, config)
+        print('Calculating poly shap values')
+        shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
+        print('Generating poly plots')
+        uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config)
+
+    print('Shap process complete')
 
 
 if __name__ == '__main__':

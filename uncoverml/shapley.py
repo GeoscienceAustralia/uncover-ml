@@ -57,140 +57,48 @@ Properties for shap config
 '''
 
 
-def intersect_shp(current_geo, image_source_dir, **kwargs):
-    if 'radius' in kwargs:
-        geoms = make_circle(current_geo, kwargs['radius'])
-    else:
-        geoms = current_geo  # list of shapely geometries
-
+def intersect_shp(single_row_df, image_source_dir, **kwargs):
+    geoms = single_row_df.geometry.values[0]
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
-    coords_list = None
-    if 'radius' in kwargs:
-        t_1 = out_transform * Affine.translation(0.5, 0.5)
-        rc2xy = lambda r, c: (c, r) * t_1
-        data = np.reshape(out_image, (out_image.size, 1))
-        row = np.arange(data.shape[0])
-        col = np.arange(data.shape[1])
-        (x_coords, y_coords) = rc2xy(row, col)
-        x_list = list(x_coords)
-        y_list = list(y_coords)
-        coords_list = zip(x_list, y_list)
-
-    return out_image, coords_list
+    return out_image, out_transform
 
 
-def make_circle(point, radius):
-    in_proj = pyproj.CRS('epsg:3577')
-    out_proj = pyproj.CRS('epsg:4326')
-    transformer = pyproj.Transformer.from_crs(in_proj, out_proj, always_xy=True).transform
-    transformed_point = transform(transformer, point)
+def get_data_points(loaded_shapefile, image_source):
+    res_list = []
+    for idx, row in loaded_shapefile.iterrows():
+        single_row_df = loaded_shapefile.iloc[[idx]]
+        (result, transform) = intersect_shp(single_row_df, image_source)
+        res_list.append(result)
 
-    local_azimuthal_projection = "+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}".format(
-        transformed_point.y, transformed_point.x
-    )
-    wgs84_to_aeqd = partial(
-        pyproj.transform,
-        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
-        pyproj.Proj(local_azimuthal_projection),
-    )
-    aeqd_to_wgs84 = partial(
-        pyproj.transform,
-        pyproj.Proj(local_azimuthal_projection),
-        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
-    )
-
-    center = Point(float(transformed_point.x), float(transformed_point.y))
-    point_transformed = transform(wgs84_to_aeqd, center)
-    buffer = point_transformed.buffer(radius)
-    circle_poly = transform(aeqd_to_wgs84, buffer)
-    rev_transform = pyproj.Transformer.from_crs(out_proj, in_proj, always_xy=True).transform
-    output_circle = transform(rev_transform, circle_poly)
-    return output_circle
+    return np.concatenate(res_list)
 
 
-# def iterate_sources_shap(f, config):
-#     results = []
-#     for s in config.feature_sets:
-#         extracted_chunks = {}
-#         for tif in s.files:
-#             print(tif)
-#             name = path.abspath(tif)
-#             x = f(name)
-#             # TODO this may hurt performance. Consider removal
-#             if type(x) is np.ma.MaskedArray:
-#                 count = mpiops.count(x)
-#                 # if not np.all(count > 0):
-#                 #     s = ("{} has no data in at least one band.".format(name) +
-#                 #          " Valid_pixel_count: {}".format(count))
-#                 #     raise ValueError(s)
-#                 missing_percent = missing_percentage(x)
-#                 t_missing = mpiops.comm.allreduce(
-#                     missing_percent) / mpiops.chunks
-#                 log.info("{}: {}px {:2.2f}% missing".format(
-#                     name, count, t_missing))
-#             extracted_chunks[name] = x
-#         extracted_chunks = OrderedDict(sorted(
-#             extracted_chunks.items(), key=lambda t: t[0]))
-#
-#         results.append(extracted_chunks)
-#     return results
+def get_data_polygon(loaded_shapefile, image_source):
+    (result, transform) = intersect_shp(loaded_shapefile, image_source)
+    return result
 
 
-# def image_feature_sets_shap_new(shap_config, main_config):
-#     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
-#
-#     def get_data(image_source_dir):
-#         return_result = None
-#         if shap_config.shapefile['type'] == 'polygon':
-#             (result, transform) = intersect_shp(loaded_shapefile, image_source_dir)
-#             return_result = result
-#         elif shap_config.shapefile['type'] == 'points':
-#             res_list = []
-#             for idx, row in loaded_shapefile.iterrows():
-#                 single_row_df = loaded_shapefile.iloc[[idx]]
-#                 (result, tranform) = intersect_shp(single_row_df, image_source_dir)
-#                 res_list.append(result)
-#
-#             return_result = np.concatenate(res_list)
-#
-#         val_count = return_result.size
-#         return_result = np.reshape(return_result, (val_count, 1, 1, 1))
-#         return_result = ma.array(return_result, mask=np.zeros([val_count, 1, 1, 1]))
-#         return return_result
-#
-#     intersected_result = iterate_sources_shap(get_data, main_config)
-#     return intersected_result
+def image_feature_sets_shap(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    name_list = None
+    if shap_config.shapefile['type'] == 'points':
+        name_list = loaded_shapefile['Name'].to_list()
 
-
-# def get_data_points(loaded_shapefile, image_source):
-#     res_list = []
-#     for idx, row in loaded_shapefile.iterrows():
-#         single_row_df = loaded_shapefile.iloc[[idx]]
-#         (result, transform) = intersect_shp(single_row_df, image_source)
-#         res_list.append(result)
-#
-#     return np.concatenate(res_list)
-#
-#
-# def get_data_polygon(loaded_shapefile, image_source):
-#     (result, transform) = intersect_shp(loaded_shapefile, image_source)
-#     return result
-
-
-def image_feature_sets_shap(current_geometry, main_config, **kwargs):
     results = []
-    coords_list = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            (x, coords) = intersect_shp(current_geometry, name, **kwargs)
-            coords_list.append(coords)
+            if shap_config.shapefile['type'] == 'points':
+                x = get_data_points(loaded_shapefile, name)
+            else:
+                x = get_data_polygon(loaded_shapefile, name)
+
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -212,61 +120,96 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
 
         results.append(extracted_chunks)
 
-    return results, coords_list
+    if shap_config.shapefile['type'] == 'points':
+        return results, name_list
+    else:
+        return results
 
 
-# def load_data_shap(shap_config, main_config):
-#     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
-#     transform_sets = [k.transform_set for k in main_config.feature_sets]
-#     transformed_features, keep = features.transform_features(image_chunk_sets,
-#                                                     transform_sets,
-#                                                     main_config.final_transform,
-#                                                     main_config)
-#     x_all = features.gather_features(transformed_features[keep], node=0)
-#     return x_all
+def load_data_shap(shap_config, main_config):
+    image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
+    name_list = None
+    if shap_config.shapefile['type'] == 'points':
+        image_chunk_sets, name_list = image_chunk_sets
 
-
-def filter_by_coords(image_sets, coords_list, master_list):
-    zipped = zip(image_sets[0].items(), coords_list)
-    for key, data, coords in zipped:
-        delete_list = [True if coord in master_list else False for coord in coords]
-        val_count = data.size
-        filter_arr = np.reshape(data, (val_count, 1))
-        filter_arr = filter_arr[delete_list]
-        print(filter_arr.size)
-        filter_arr = np.reshape(filter_arr, (filter_arr.size, 1, 1, 1))
-        image_sets[0][key] = filter_arr
-
-    return image_sets
-
-
-def process_features(geometry, main_config, **kwargs):
-    (image_chunk_sets, coords) = image_feature_sets_shap(geometry, main_config, **kwargs)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
                                                     main_config.final_transform,
                                                     main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
+
+    if shap_config.shapefile['type'] == 'points':
+        return x_all, name_list
+    else:
+        return x_all
+
+
+def load_point_poly_data(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    name_list = loaded_shapefile['Name'].to_list()
+
+    out_result = {}
+    for name in name_list:
+        current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
+        current_poly_data = gen_poly_data(current_row, shap_config, main_config)
+        out_result[name] = current_poly_data
+
+    return out_result
+
+
+def gen_poly_data(single_row_df, shap_config, main_config):
+    size = shap_config.shapefile['size']
+    image_chunk_sets = gen_poly_from_point(single_row_df, main_config, size)
+    transform_sets = [k.transform_set for k in main_config.feature_sets]
+    transformed_features, keep = features.transform_features(image_chunk_sets,
+                                                             transform_sets,
+                                                             main_config.final_transform,
+                                                             main_config)
+    x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
 
 
-def load_data_shap(shap_config, main_config):
-    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+def gen_poly_from_point(single_row_df, main_config, size):
+    results = []
+    for s in main_config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = path.abspath(tif)
+            x = intersect_point_neighbourhood(single_row_df, size, name)
+            val_count = x.size
+            print(f'{tif}: {val_count}')
+            x = np.reshape(x, (val_count, 1, 1, 1))
+            x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
 
-    output_result = {}
-    if shap_config.shapefile['type'] == 'points':
-        for idx, row in loaded_shapefile.iterrows():
-            current_name = row['Name']
-            current_point = row.geometry
-            x_all_point = process_features(current_point, main_config)
-            output_result[current_name] = x_all_point
-    else:
-        current_poly = loaded_shapefile.geometry[0]
-        x_all_poly = process_features(current_poly, main_config)
-        output_result['data'] = x_all_poly
+        results.append(extracted_chunks)
 
-    return output_result
+    return results
+
+
+def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
+    single_point = single_row_df.geometry.values[0]
+    with rasterio.open(image_source_dir) as src:
+        py, px = src.index(single_point.x, single_point.y)
+        window = rasterio.windows.Window(px - size // 2, py - size // 2, size, size)
+        out_image = src.read(window=window)
+
+    return out_image
 
 
 class ShapConfig:
@@ -307,6 +250,9 @@ class ShapConfig:
             self.plot_config_list = [PlotConfig(p) for p in plot_configs]
         else:
             log.warning('No plots will be created')
+
+        self.output_names = s['output_names'] if 'output_names' in s else None
+        self.feature_path = s['feature_path'] if 'feature_path' in s else None
 
 
 explainer_map = {
@@ -610,37 +556,6 @@ def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 
         target_ax.title.set_text(current_plot_title)
 
-    if plot_config.type == 'point_poly':
-        target_ax.title.set_text('')
-        current_plot_title = 'Points' if plot_data.shape[0] == 1 else 'Polygon'
-        if ('point_name' in kwargs) and (kwargs['point_name'] is not None):
-            current_plot_title = current_plot_title + ' ' + kwargs['point_name']
-
-        target_ax.title.set_text(current_plot_title)
-
-
-def point_poly_comparison_subplot(plot_vals_point, plot_vals_poly, plot_config, shap_config, **kwargs):
-    num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    row_height = 0.4
-    plot_height = (plot_vals.shape[1] * row_height) + 1.5
-    plot_width = 16
-
-    for idx in num_plots:
-        fig, axs = plt.subplots(1, 2, dpi=100)
-        # Point plot
-        current_point_vals = plot_vals_point[:, :, idx]
-        plotting_func_map['bar'](current_point_vals, plot_config, axs[0], 0, **kwargs, point_name=kwargs['point_name'])
-        # Plot poly
-        current_poly_vals = plot_vals_poly[:, :, idx]
-        plotting_func_map['bar'](current_poly_vals, plot_config, axs[1], 1, **kwargs, point_name=kwargs['point_name'])
-        fig.set_size_inches(plot_width, plot_height, forward=True)
-        plot_name = plot_config.type + ' ' + kwargs['point_name']
-        if num_plots > 1:
-            plot_name = plot_name + ' Output ' + str(idx+1)
-
-        save_plot(fig, plot_name, shap_config)
-        plt.clf()
-
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
     if 'feature_names' in kwargs:
@@ -682,7 +597,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
     else:
         feature_names = [str(x) for x in range(shap_vals.shape[1])]
 
-    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
+    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) > 2 else 1
     fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
     cm = plt.cm.get_cmap('cool')
     lon_lat = kwargs['lon_lat']
@@ -760,13 +675,12 @@ plotting_type_map = {
     'shap_corr': aggregate_separate,
     'spatial': spatial_plot,
     'scatter': scatter_plot,
-    'waterfall': individual_subplot,
-    'point_poly': point_poly_comparison_subplot
+    'waterfall': individual_subplot
 }
 
 
 def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
-    if 'feature_names' not in kwargs:
+    if kwargs['feature_names'] is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
         shap_vals.feature_names = kwargs['feature_names']
@@ -781,3 +695,80 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
 
         plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
         current_plot_idx += 1
+
+
+def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, **kwargs):
+    if kwargs['feature_names'] is None:
+        log.warning('Feature names not provided, plots might be confusing')
+    else:
+        shap_vals_point.feature_names = kwargs['feature_names']
+        for key, val in shap_vals_dict.items():
+            val.feature_names = kwargs['feature_names']
+
+    for idx, name in enumerate(name_list):
+        print(f'Generating plot {idx+1} of {len(name_list)}')
+        current_point_poly_vals = shap_vals_dict[name]
+        current_point_vals = shap_vals_point[idx, :, :]
+        current_point_vals.data = current_point_vals.data[idx, :]
+        point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
+
+
+def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs):
+    num_plots = point_vals.shape[2] if len(point_vals.shape) > 2 else 1
+    output_names = kwargs['output_names'] if 'output_names' in kwargs else None
+
+    fig, axs = plt.subplots(2, 3, figsize=(1.920, 1.080), dpi=100)
+    for plot_idx in range(num_plots):
+        current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
+        current_points_vals = point_vals[:, plot_idx]
+        current_point_poly_vals = point_poly_vals[:, :, plot_idx]
+
+        # Single prediction waterfall
+        plt.sca(axs[0, 0])
+        shap.waterfall_plot(current_points_vals, show=False)
+        current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
+        axs[0, 0].title.set_text(current_plot_title)
+
+        # Multi prediction summary
+        plt.sca(axs[1, 0])
+        shap.summary_plot(current_point_poly_vals.values, features=current_point_poly_vals.data,
+                          feature_names=current_point_poly_vals.feature_names, show=False)
+        current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
+        axs[1, 0].title.set_text(current_plot_title)
+
+        # Single prediction bar
+        plt.sca(axs[0, 1])
+        shap.plots.bar(current_points_vals, show=False)
+        current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
+        axs[0, 1].title.set_text(current_plot_title)
+
+        # Multi prediction bar
+        plt.sca(axs[1, 1])
+        shap.plots.bar(current_point_poly_vals, show=False)
+        current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
+        axs[1, 1].title.set_text(current_plot_title)
+
+        # Single prediction decision
+        plt.sca(axs[0, 2])
+        shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
+                           feature_names=current_points_vals.feature_names)
+        current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
+        axs[0, 2].title.set_text(current_plot_title)
+
+        # Multi prediction decision
+        plt.sca(axs[1, 2])
+        shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
+                           feature_names=current_point_poly_vals.feature_names)
+        current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
+        axs[0, 2].title.set_text(current_plot_title)
+
+        fig.suptitle(f'Single vs Multiple Point {name} Output {current_output_name}')
+
+        plot_name = f'poly_point_{name}_{current_output_name}'
+        Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+        plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+        plot_width = 16.5
+        plot_height = 11.75
+        fig.set_size_inches(plot_width, plot_height, forward=True)
+        plt.tight_layout(pad=3)
+        fig.savefig(plot_save_path, dpi=100)
