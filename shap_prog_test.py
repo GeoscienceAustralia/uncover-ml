@@ -30,7 +30,7 @@ def shapley_cli(model_file, shapley_yaml):
 
 
     print('Calculating shap values')
-    shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, value)
+    shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
     print('Calculation complete')
 
     print('Generating plots')
