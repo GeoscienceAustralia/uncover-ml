@@ -242,13 +242,6 @@ def filter_by_coords(image_sets, coords_list, master_list):
 
 def process_features(geometry, main_config, **kwargs):
     (image_chunk_sets, coords) = image_feature_sets_shap(geometry, main_config, **kwargs)
-    if 'radius' in kwargs:
-        all_coords = coords[0]
-        for current_coord in coords:
-            all_coords = list(set(all_coords) & set(current_coord))
-
-        image_chunk_sets = filter_by_coords(image_chunk_sets, coords, all_coords)
-
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
@@ -267,17 +260,7 @@ def load_data_shap(shap_config, main_config):
             current_name = row['Name']
             current_point = row.geometry
             x_all_point = process_features(current_point, main_config)
-
-            if 'radius' in shap_config.shapefile:
-                x_all_poly = process_features(current_point, main_config, radius=shap_config.shapefile['radius'])
-                result_to_add = {
-                    'point': x_all_point,
-                    'poly': x_all_poly
-                }
-            else:
-                result_to_add = x_all_point
-
-            output_result[current_name] = result_to_add
+            output_result[current_name] = x_all_point
     else:
         current_poly = loaded_shapefile.geometry[0]
         x_all_poly = process_features(current_poly, main_config)
@@ -429,11 +412,14 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     else:
         explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs)
 
-    calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
-    calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
-    calc_data = x_data[calc_start_row:calc_end_row]
-    shap_vals = explainer_obj(calc_data)
+    if x_data.shape[0] > 1:
+        calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
+        calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
+        calc_data = x_data[calc_start_row:calc_end_row]
+    else:
+        calc_data = x_data
 
+    shap_vals = explainer_obj(calc_data)
     return shap_vals
 
 

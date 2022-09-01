@@ -26,7 +26,7 @@ def shapley_cli(model_file, shapley_yaml):
 
     for key, value in x_all.items():
         print(f'Calculating shap values for point {key}')
-        shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
+        shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, value)
         print('Calculation complete')
 
         print(f'Generating plots for point {key}')
