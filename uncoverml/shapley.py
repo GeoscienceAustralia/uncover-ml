@@ -57,12 +57,8 @@ Properties for shap config
 '''
 
 
-def intersect_shp(current_geo, image_source_dir, **kwargs):
-    if 'radius' in kwargs:
-        geoms = make_circle(current_geo, kwargs['radius'])
-    else:
-        geoms = current_geo  # list of shapely geometries
-
+def intersect_shp(single_row_df, image_source_dir, **kwargs):
+    geoms = single_row_df[0].geometry
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
