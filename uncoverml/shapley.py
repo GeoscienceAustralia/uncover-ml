@@ -59,16 +59,39 @@ Properties for shap config
 
 def intersect_shp(current_geo, image_source_dir, **kwargs):
     if 'radius' in kwargs:
-        geoms = current_geo.buffer(kwargs['radius'])
+        geoms = make_circle(current_geo, kwargs['radius'])
     else:
         geoms = current_geo  # list of shapely geometries
 
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
-        out_image, out_transform = mask(src, geoms, crop=True, all_touched=True)
+        out_image, out_transform = mask(src, geoms, crop=True)
 
     return out_image, out_transform
+
+
+def make_circle(point, radius):
+    local_azimuthal_projection = '+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}'.format(
+        point.y, point.x
+    )
+    epsg3577_to_aeqd = partial(
+        pyproj.transform,
+        pyproj.Proj("+proj=longlat +datum=epsg:3577 +no_defs"),
+        pyproj.Proj(local_azimuthal_projection),
+    )
+    aeqd_to_epsg3577 = partial(
+        pyproj.transform,
+        pyproj.Proj(local_azimuthal_projection),
+        pyproj.Proj("+proj=longlat +datum=epsg:3577 +no_defs"),
+    )
+
+    center = Point(float(lon), float(lat))
+    point_transformed = transform(epsg3577_to_aeqd, center)
+    buffer = point_transformed.buffer(radius)
+    # Get the polygon with lat lon coordinates
+    circle_poly = transform(aeqd_to_epsg3577, buffer)
+    return circle_poly
 
 
 # def iterate_sources_shap(f, config):
@@ -204,7 +227,7 @@ def load_data_shap(shap_config, main_config):
             current_point = row.geometry
             x_all_point = process_features(current_point, main_config)
 
-            if ('radius' in shap_config.shapefile) and (idx > 3):
+            if 'radius' in shap_config.shapefile:
                 x_all_poly = process_features(current_point, main_config, radius=shap_config.shapefile['radius'])
                 result_to_add = {
                     'point': x_all_point,
