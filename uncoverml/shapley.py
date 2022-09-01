@@ -58,7 +58,7 @@ Properties for shap config
 
 
 def intersect_shp(single_row_df, image_source_dir, **kwargs):
-    geoms = single_row_df.geometry.values.iloc[0]
+    geoms = single_row_df.geometry.values[0]
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
