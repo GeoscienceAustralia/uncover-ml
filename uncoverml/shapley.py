@@ -77,13 +77,13 @@ def make_circle(point, radius):
     )
     epsg3577_to_aeqd = partial(
         pyproj.transform,
-        pyproj.Proj("+proj=longlat +datum=GDA94 +no_defs"),
+        pyproj.Proj('+proj=aea +lat_0=0 +lon_0=132 +lat_1=-18 +lat_2=-36 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=61.55,-10.87,-40.19,-39.4924,-32.7221,-32.8979,-9.99400000001316 +units=m +no_defs +type=crs'),
         pyproj.Proj(local_azimuthal_projection),
     )
     aeqd_to_epsg3577 = partial(
         pyproj.transform,
         pyproj.Proj(local_azimuthal_projection),
-        pyproj.Proj("+proj=longlat +datum=GDA94 +no_defs"),
+        pyproj.Proj('+proj=aea +lat_0=0 +lon_0=132 +lat_1=-18 +lat_2=-36 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=61.55,-10.87,-40.19,-39.4924,-32.7221,-32.8979,-9.99400000001316 +units=m +no_defs +type=crs'),
     )
 
     center = Point(float(lon), float(lat))
