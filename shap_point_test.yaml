@@ -5,9 +5,11 @@ shapefile:
 masker:
         type: independent
 plots:
-  - plot_name: bar
-    type: bar
-    plot_title: bar test plot
-  - plot_name: summary
+  - plot_name: summary_test
     type: summary
-    plot_title: summary test plot
+    plot_title: test_summary
+  - plot_name: bar_test
+    type: bar
+    plot_title: test_bar
+  - plot_name: test_waterfall
+    type: waterfall

@@ -22,14 +22,17 @@ def shapley_cli(model_file, shapley_yaml):
     print('loading data')
     # noinspection PyProtectedMember
     x_all = uncoverml.shapley.load_data_shap(shap_config, config)
-
     print('data_loaded')
 
-    print('calculating shap values')
-    shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
+    for key, value in x_all.items():
+        print(f'Calculating shap values for point {key}')
+        shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, value)
+        print('Calculation complete')
 
-    print('generating plots')
-    uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config)
+        print(f'Generating plots for point {key}')
+        current_point_name = key if shap_config.shapefile['type'] == 'points' else None
+        uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config,
+                                         point_name=current_point_name)
 
 
 if __name__ == '__main__':

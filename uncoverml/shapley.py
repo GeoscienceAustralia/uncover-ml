@@ -9,9 +9,12 @@ import geopandas as gpd
 import shapefile
 import rasterio
 from rasterio.mask import mask
-from shapely.geometry import mapping, MultiPolygon
+from shapely import geometry
+from shapely.geometry import mapping, MultiPolygon, Point
+from shapely.ops import transform
 from functools import partial
 from rasterio import Affine
+import pyproj
 
 from multiprocessing import Pool
 
@@ -54,14 +57,59 @@ Properties for shap config
 '''
 
 
-def intersect_shp(loaded_shapefile, image_source_dir):
-    geoms = loaded_shapefile.geometry.values[0]  # list of shapely geometries
+def intersect_shp(current_geo, image_source_dir, **kwargs):
+    if 'radius' in kwargs:
+        geoms = make_circle(current_geo, kwargs['radius'])
+    else:
+        geoms = current_geo  # list of shapely geometries
+
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
-    return out_image, out_transform
+    coords_list = None
+    if 'radius' in kwargs:
+        t_1 = out_transform * Affine.translation(0.5, 0.5)
+        rc2xy = lambda r, c: (c, r) * t_1
+        data = np.reshape(out_image, (out_image.size, 1))
+        row = np.arange(data.shape[0])
+        col = np.arange(data.shape[1])
+        (x_coords, y_coords) = rc2xy(row, col)
+        x_list = list(x_coords)
+        y_list = list(y_coords)
+        coords_list = zip(x_list, y_list)
+
+    return out_image, coords_list
+
+
+def make_circle(point, radius):
+    in_proj = pyproj.CRS('epsg:3577')
+    out_proj = pyproj.CRS('epsg:4326')
+    transformer = pyproj.Transformer.from_crs(in_proj, out_proj, always_xy=True).transform
+    transformed_point = transform(transformer, point)
+
+    local_azimuthal_projection = "+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}".format(
+        transformed_point.y, transformed_point.x
+    )
+    wgs84_to_aeqd = partial(
+        pyproj.transform,
+        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
+        pyproj.Proj(local_azimuthal_projection),
+    )
+    aeqd_to_wgs84 = partial(
+        pyproj.transform,
+        pyproj.Proj(local_azimuthal_projection),
+        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
+    )
+
+    center = Point(float(transformed_point.x), float(transformed_point.y))
+    point_transformed = transform(wgs84_to_aeqd, center)
+    buffer = point_transformed.buffer(radius)
+    circle_poly = transform(aeqd_to_wgs84, buffer)
+    rev_transform = pyproj.Transformer.from_crs(out_proj, in_proj, always_xy=True).transform
+    output_circle = transform(rev_transform, circle_poly)
+    return output_circle
 
 
 # def iterate_sources_shap(f, config):
@@ -118,41 +166,31 @@ def intersect_shp(loaded_shapefile, image_source_dir):
 #     return intersected_result
 
 
-def get_data_points(loaded_shapefile, image_source):
-    res_list = []
-    for idx, row in loaded_shapefile.iterrows():
-        single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, transform) = intersect_shp(single_row_df, image_source)
-        res_list.append(result)
+# def get_data_points(loaded_shapefile, image_source):
+#     res_list = []
+#     for idx, row in loaded_shapefile.iterrows():
+#         single_row_df = loaded_shapefile.iloc[[idx]]
+#         (result, transform) = intersect_shp(single_row_df, image_source)
+#         res_list.append(result)
+#
+#     return np.concatenate(res_list)
+#
+#
+# def get_data_polygon(loaded_shapefile, image_source):
+#     (result, transform) = intersect_shp(loaded_shapefile, image_source)
+#     return result
 
-    return np.concatenate(res_list)
 
-
-def get_data_polygon(loaded_shapefile, image_source):
-    (result, transform) = intersect_shp(loaded_shapefile, image_source)
-    return result
-
-
-def image_feature_sets_shap(shap_config, main_config):
-    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
-    name_list = None
-    if shap_config.shapefile['type'] == 'points':
-        if 'Name' in loaded_shapefile:
-            name_list = loaded_shapefile['Name'].to_list()
-        else:
-            log.warning('No names provided for points in shapefile')
-
+def image_feature_sets_shap(current_geometry, main_config, **kwargs):
     results = []
+    coords_list = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            if shap_config.shapefile['type'] == 'points':
-                x = get_data_points(loaded_shapefile, name)
-            else:
-                x = get_data_polygon(loaded_shapefile, name)
-
+            (x, coords) = intersect_shp(current_geometry, name, **kwargs)
+            coords_list.append(coords)
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -174,14 +212,36 @@ def image_feature_sets_shap(shap_config, main_config):
 
         results.append(extracted_chunks)
 
-    if shap_config.shapefile['type'] == 'points':
-        results = (results, name_list)
-
-    return results
+    return results, coords_list
 
 
-def load_data_shap(shap_config, main_config):
-    image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
+# def load_data_shap(shap_config, main_config):
+#     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
+#     transform_sets = [k.transform_set for k in main_config.feature_sets]
+#     transformed_features, keep = features.transform_features(image_chunk_sets,
+#                                                     transform_sets,
+#                                                     main_config.final_transform,
+#                                                     main_config)
+#     x_all = features.gather_features(transformed_features[keep], node=0)
+#     return x_all
+
+
+def filter_by_coords(image_sets, coords_list, master_list):
+    zipped = zip(image_sets[0].items(), coords_list)
+    for key, data, coords in zipped:
+        delete_list = [True if coord in master_list else False for coord in coords]
+        val_count = data.size
+        filter_arr = np.reshape(data, (val_count, 1))
+        filter_arr = filter_arr[delete_list]
+        print(filter_arr.size)
+        filter_arr = np.reshape(filter_arr, (filter_arr.size, 1, 1, 1))
+        image_sets[0][key] = filter_arr
+
+    return image_sets
+
+
+def process_features(geometry, main_config, **kwargs):
+    (image_chunk_sets, coords) = image_feature_sets_shap(geometry, main_config, **kwargs)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
@@ -189,6 +249,24 @@ def load_data_shap(shap_config, main_config):
                                                     main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
     return x_all
+
+
+def load_data_shap(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+
+    output_result = {}
+    if shap_config.shapefile['type'] == 'points':
+        for idx, row in loaded_shapefile.iterrows():
+            current_name = row['Name']
+            current_point = row.geometry
+            x_all_point = process_features(current_point, main_config)
+            output_result[current_name] = x_all_point
+    else:
+        current_poly = loaded_shapefile.geometry[0]
+        x_all_poly = process_features(current_poly, main_config)
+        output_result['data'] = x_all_poly
+
+    return output_result
 
 
 class ShapConfig:
@@ -334,11 +412,14 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     else:
         explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs)
 
-    calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
-    calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
-    calc_data = x_data[calc_start_row:calc_end_row]
-    shap_vals = explainer_obj(calc_data)
+    if x_data.shape[0] > 1:
+        calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
+        calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
+        calc_data = x_data[calc_start_row:calc_end_row]
+    else:
+        calc_data = np.reshape(x_data, (x_data.size, 1))
 
+    shap_vals = explainer_obj(calc_data)
     return shap_vals
 
 
@@ -395,8 +476,8 @@ def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
         plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
-        fig.set_size_inches(plot_width, plot_height, forward=True)
 
+    fig.set_size_inches(plot_width, plot_height, forward=True)
     if plot_config.plot_name is not None:
         plot_name = plot_config.plot_name
     else:
@@ -480,6 +561,9 @@ def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         if 'subplot_idx' in kwargs:
             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
 
+        if 'point_name' in kwargs:
+            current_plot_title = kwargs['point_name'] + '_' + str(kwargs['subplot_idx'])
+
         target_ax.title.set_text(current_plot_title)
         target_ax.tick_params(axis='both', labelsize=5)
 
@@ -525,6 +609,37 @@ def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
             current_plot_title = f'{current_plot_title}_{plot_idx}'
 
         target_ax.title.set_text(current_plot_title)
+
+    if plot_config.type == 'point_poly':
+        target_ax.title.set_text('')
+        current_plot_title = 'Points' if plot_data.shape[0] == 1 else 'Polygon'
+        if ('point_name' in kwargs) and (kwargs['point_name'] is not None):
+            current_plot_title = current_plot_title + ' ' + kwargs['point_name']
+
+        target_ax.title.set_text(current_plot_title)
+
+
+def point_poly_comparison_subplot(plot_vals_point, plot_vals_poly, plot_config, shap_config, **kwargs):
+    num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
+    row_height = 0.4
+    plot_height = (plot_vals.shape[1] * row_height) + 1.5
+    plot_width = 16
+
+    for idx in num_plots:
+        fig, axs = plt.subplots(1, 2, dpi=100)
+        # Point plot
+        current_point_vals = plot_vals_point[:, :, idx]
+        plotting_func_map['bar'](current_point_vals, plot_config, axs[0], 0, **kwargs, point_name=kwargs['point_name'])
+        # Plot poly
+        current_poly_vals = plot_vals_poly[:, :, idx]
+        plotting_func_map['bar'](current_poly_vals, plot_config, axs[1], 1, **kwargs, point_name=kwargs['point_name'])
+        fig.set_size_inches(plot_width, plot_height, forward=True)
+        plot_name = plot_config.type + ' ' + kwargs['point_name']
+        if num_plots > 1:
+            plot_name = plot_name + ' Output ' + str(idx+1)
+
+        save_plot(fig, plot_name, shap_config)
+        plt.clf()
 
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
@@ -646,6 +761,7 @@ plotting_type_map = {
     'spatial': spatial_plot,
     'scatter': scatter_plot,
     'waterfall': individual_subplot,
+    'point_poly': point_poly_comparison_subplot
 }
 
 
