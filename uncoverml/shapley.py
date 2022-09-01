@@ -417,7 +417,7 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
         calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
         calc_data = x_data[calc_start_row:calc_end_row]
     else:
-        calc_data = np.array([x_data])
+        calc_data = np.reshape(x_data, (x_data.size, 1))
 
     shap_vals = explainer_obj(calc_data)
     return shap_vals
