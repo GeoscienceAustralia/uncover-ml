@@ -72,26 +72,32 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
 
 
 def make_circle(point, radius):
-    local_azimuthal_projection = '+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}'.format(
-        point.y, point.x
+    in_proj = pyproj.CRS('epsg:3577')
+    out_proj = pyproj.CRS('epsg:4326')
+    transformer = pyproj.Transformer.from_crs(in_proj, out_proj, always_xy=True).transform
+    transformed_point = transform(transformer, point)
+
+    local_azimuthal_projection = "+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}".format(
+        transformed_point.y, transformed_point.x
     )
-    epsg3577_to_aeqd = partial(
+    wgs84_to_aeqd = partial(
         pyproj.transform,
-        pyproj.Proj('+proj=aea +lat_0=0 +lon_0=132 +lat_1=-18 +lat_2=-36 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=61.55,-10.87,-40.19,-39.4924,-32.7221,-32.8979,-9.99400000001316 +units=m +no_defs +type=crs'),
+        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
         pyproj.Proj(local_azimuthal_projection),
     )
-    aeqd_to_epsg3577 = partial(
+    aeqd_to_wgs84 = partial(
         pyproj.transform,
         pyproj.Proj(local_azimuthal_projection),
-        pyproj.Proj('+proj=aea +lat_0=0 +lon_0=132 +lat_1=-18 +lat_2=-36 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=61.55,-10.87,-40.19,-39.4924,-32.7221,-32.8979,-9.99400000001316 +units=m +no_defs +type=crs'),
+        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
     )
 
-    center = Point(float(lon), float(lat))
-    point_transformed = transform(epsg3577_to_aeqd, center)
+    center = Point(float(transformed_point.x), float(transformed_point.y))
+    point_transformed = transform(wgs84_to_aeqd, center)
     buffer = point_transformed.buffer(radius)
-    # Get the polygon with lat lon coordinates
-    circle_poly = transform(aeqd_to_epsg3577, buffer)
-    return circle_poly
+    circle_poly = transform(aeqd_to_wgs84, buffer)
+    rev_transform = pyproj.Transformer.from_crs(out_proj, in_proj, always_xy=True).transform
+    output_circle = transform(rev_transform, circle_poly)
+    return output_circle
 
 
 # def iterate_sources_shap(f, config):
