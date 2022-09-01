@@ -68,7 +68,7 @@ def intersect_shp(current_geo, image_source_dir):
 
 
 def generate_circle_poly(shapefile_point, radius_m):
-    point = shapefile_point.geometry.values[0]
+    point = shapefile_point
 
     local_azimuthal_projection = f'+proj=aeqd +R=6371000 +units=m +lat_0={point.y} +lon_0={point.x}'
     wgs84_to_aeqd = partial(
