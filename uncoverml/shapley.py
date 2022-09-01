@@ -222,7 +222,7 @@ def load_data_shap(shap_config, main_config):
             x_all_point = process_features(current_point, main_config)
 
             if 'radius' in shap_config.shapefile:
-                current_poly = generate_circle_poly(current_point, shap_config.shapefile['radius'])
+                current_poly = generate_circle_poly(current_point, float(shap_config.shapefile['radius']))
                 x_all_poly = process_features(current_poly, main_config)
                 result_to_add = {
                     'point': x_all_point,

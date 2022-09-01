@@ -2,6 +2,7 @@ explainer: explainer
 shapefile:
   dir: Shapley_ROI/Points_Shapley.shp
   type: points
+  radius: 1000
 masker:
         type: independent
 plots:
