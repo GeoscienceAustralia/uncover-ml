@@ -68,7 +68,17 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
-    return out_image, out_transform
+    t_1 = out_transform * Affine.translation(0.5, 0.5)
+    rc2xy = lambda r, c: (c, r) * t_1
+    data = out_image.data[0]
+    row = np.arange(data.shape[0])
+    col = np.arange(data.shape[1])
+    (x_coords, y_coords) = rc2xy(row, col)
+    x_list = x_coords.to_list()
+    y_list = y_coords.to_list()
+    coords_list = zip(x_list, y_list)
+
+    return out_image, coords_list
 
 
 def make_circle(point, radius):
@@ -171,12 +181,14 @@ def make_circle(point, radius):
 
 def image_feature_sets_shap(current_geometry, main_config, **kwargs):
     results = []
+    coords_list = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            (x, transform) = intersect_shp(current_geometry, name, **kwargs)
+            (x, coords) = intersect_shp(current_geometry, name, **kwargs)
+            coords_list.append(coords)
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -198,7 +210,7 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
 
         results.append(extracted_chunks)
 
-    return results
+    return results, coords_list
 
 
 # def load_data_shap(shap_config, main_config):
@@ -212,8 +224,28 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
 #     return x_all
 
 
+def filter_by_coords(image_sets, coords_list, master_list):
+    zipped = zip(image_sets[0].iteritems(), coords_list)
+    for key, data, coords in zipped:
+        delete_list = [True if coord in master_list else False for coord in coords]
+        val_count = data.size
+        filter_arr = np.reshape(data, (val_count, 1))
+        filter_arr = filter_arr[delete_list]
+        filter_arr = np.reshape(filter_arr, (val_count, 1, 1, 1))
+        image_sets[0][key] = filter_arr
+
+    return image_sets
+
+
 def process_features(geometry, main_config, **kwargs):
-    image_chunk_sets = image_feature_sets_shap(geometry, main_config, **kwargs)
+    (image_chunk_sets, coords) = image_feature_sets_shap(geometry, main_config, **kwargs)
+    if 'radius' in kwargs:
+        all_coords = coords[0]
+        for current_coord in coords:
+            all_coords = list(set(all_coords) & set(current_coord))
+
+        image_chunk_sets = filter_by_coords(image_chunk_sets, coords, all_coords)
+
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
