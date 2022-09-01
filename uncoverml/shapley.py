@@ -68,48 +68,7 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
-    coords_list = None
-    if 'radius' in kwargs:
-        t_1 = out_transform * Affine.translation(0.5, 0.5)
-        rc2xy = lambda r, c: (c, r) * t_1
-        data = np.reshape(out_image, (out_image.size, 1))
-        row = np.arange(data.shape[0])
-        col = np.arange(data.shape[1])
-        (x_coords, y_coords) = rc2xy(row, col)
-        x_list = list(x_coords)
-        y_list = list(y_coords)
-        coords_list = zip(x_list, y_list)
-
-    return out_image, coords_list
-
-
-def make_circle(point, radius):
-    in_proj = pyproj.CRS('epsg:3577')
-    out_proj = pyproj.CRS('epsg:4326')
-    transformer = pyproj.Transformer.from_crs(in_proj, out_proj, always_xy=True).transform
-    transformed_point = transform(transformer, point)
-
-    local_azimuthal_projection = "+proj=aeqd +R=6371000 +units=m +lat_0={} +lon_0={}".format(
-        transformed_point.y, transformed_point.x
-    )
-    wgs84_to_aeqd = partial(
-        pyproj.transform,
-        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
-        pyproj.Proj(local_azimuthal_projection),
-    )
-    aeqd_to_wgs84 = partial(
-        pyproj.transform,
-        pyproj.Proj(local_azimuthal_projection),
-        pyproj.Proj("+proj=longlat +datum=WGS84 +no_defs"),
-    )
-
-    center = Point(float(transformed_point.x), float(transformed_point.y))
-    point_transformed = transform(wgs84_to_aeqd, center)
-    buffer = point_transformed.buffer(radius)
-    circle_poly = transform(aeqd_to_wgs84, buffer)
-    rev_transform = pyproj.Transformer.from_crs(out_proj, in_proj, always_xy=True).transform
-    output_circle = transform(rev_transform, circle_poly)
-    return output_circle
+    return out_image, out_transform
 
 
 # def iterate_sources_shap(f, config):
@@ -166,31 +125,38 @@ def make_circle(point, radius):
 #     return intersected_result
 
 
-# def get_data_points(loaded_shapefile, image_source):
-#     res_list = []
-#     for idx, row in loaded_shapefile.iterrows():
-#         single_row_df = loaded_shapefile.iloc[[idx]]
-#         (result, transform) = intersect_shp(single_row_df, image_source)
-#         res_list.append(result)
-#
-#     return np.concatenate(res_list)
-#
-#
-# def get_data_polygon(loaded_shapefile, image_source):
-#     (result, transform) = intersect_shp(loaded_shapefile, image_source)
-#     return result
+def get_data_points(loaded_shapefile, image_source):
+    res_list = []
+    for idx, row in loaded_shapefile.iterrows():
+        single_row_df = loaded_shapefile.iloc[[idx]]
+        (result, transform) = intersect_shp(single_row_df, image_source)
+        res_list.append(result)
+
+    return np.concatenate(res_list)
 
 
-def image_feature_sets_shap(current_geometry, main_config, **kwargs):
+def get_data_polygon(loaded_shapefile, image_source):
+    (result, transform) = intersect_shp(loaded_shapefile, image_source)
+    return result
+
+
+def image_feature_sets_shap(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    name_list = None
+    if shap_config.shapefile['type'] == 'points':
+        name_list = loaded_shapefile['Name'].to_list()
+
     results = []
-    coords_list = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            (x, coords) = intersect_shp(current_geometry, name, **kwargs)
-            coords_list.append(coords)
+            if shap_config.shapefile['type'] == 'points':
+                x = get_data_points(loaded_shapefile, name)
+            else:
+                x = get_data_polygon(loaded_shapefile, name)
+
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -212,61 +178,29 @@ def image_feature_sets_shap(current_geometry, main_config, **kwargs):
 
         results.append(extracted_chunks)
 
-    return results, coords_list
+    if shap_config.shapefile['type'] == 'points':
+        return results, name_list
+    else:
+        return results
 
 
-# def load_data_shap(shap_config, main_config):
-#     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
-#     transform_sets = [k.transform_set for k in main_config.feature_sets]
-#     transformed_features, keep = features.transform_features(image_chunk_sets,
-#                                                     transform_sets,
-#                                                     main_config.final_transform,
-#                                                     main_config)
-#     x_all = features.gather_features(transformed_features[keep], node=0)
-#     return x_all
+def load_data_shap(shap_config, main_config):
+    image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
+    name_list = None
+    if shap_config.shapefile['type'] == 'points':
+        image_chunk_sets, name_list = image_chunk_sets
 
-
-def filter_by_coords(image_sets, coords_list, master_list):
-    zipped = zip(image_sets[0].items(), coords_list)
-    for key, data, coords in zipped:
-        delete_list = [True if coord in master_list else False for coord in coords]
-        val_count = data.size
-        filter_arr = np.reshape(data, (val_count, 1))
-        filter_arr = filter_arr[delete_list]
-        print(filter_arr.size)
-        filter_arr = np.reshape(filter_arr, (filter_arr.size, 1, 1, 1))
-        image_sets[0][key] = filter_arr
-
-    return image_sets
-
-
-def process_features(geometry, main_config, **kwargs):
-    (image_chunk_sets, coords) = image_feature_sets_shap(geometry, main_config, **kwargs)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
                                                     main_config.final_transform,
                                                     main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
-    return x_all
 
-
-def load_data_shap(shap_config, main_config):
-    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
-
-    output_result = {}
     if shap_config.shapefile['type'] == 'points':
-        for idx, row in loaded_shapefile.iterrows():
-            current_name = row['Name']
-            current_point = row.geometry
-            x_all_point = process_features(current_point, main_config)
-            output_result[current_name] = x_all_point
+        return x_all, name_list
     else:
-        current_poly = loaded_shapefile.geometry[0]
-        x_all_poly = process_features(current_poly, main_config)
-        output_result['data'] = x_all_poly
-
-    return output_result
+        return x_all
 
 
 class ShapConfig:
