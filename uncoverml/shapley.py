@@ -57,35 +57,18 @@ Properties for shap config
 '''
 
 
-def intersect_shp(current_geo, image_source_dir):
-    geoms = current_geo  # list of shapely geometries
+def intersect_shp(current_geo, image_source_dir, **kwargs):
+    if 'radius' in kwargs:
+        geoms = current_geo.buffer(kwargs['radius'])
+    else:
+        geoms = current_geo  # list of shapely geometries
+
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
 
     return out_image, out_transform
-
-
-def generate_circle_poly(shapefile_point, radius_m):
-    point = shapefile_point
-
-    local_azimuthal_projection = f'+proj=aeqd +R=6371000 +units=m +lat_0={point.y} +lon_0={point.x}'
-    wgs84_to_aeqd = partial(
-        pyproj.transform,
-        pyproj.Proj('+proj=longlat +datum=WGS84 +no_defs'),
-        pyproj.Proj(local_azimuthal_projection),
-    )
-    aeqd_to_wgs84 = partial(
-        pyproj.transform,
-        pyproj.Proj(local_azimuthal_projection),
-        pyproj.Proj('+proj=longlat +datum=WGS84 +no_defs'),
-    )
-
-    point_transformed = transform(wgs84_to_aeqd, point)
-    buffer = point_transformed.buffer(radius_m)
-    circle_poly = transform(aeqd_to_wgs84, buffer)
-    return circle_poly
 
 
 # def iterate_sources_shap(f, config):
@@ -157,14 +140,15 @@ def generate_circle_poly(shapefile_point, radius_m):
 #     return result
 
 
-def image_feature_sets_shap(current_geometry, main_config):
+def image_feature_sets_shap(current_geometry, main_config, **kwargs):
     results = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             print(tif)
             name = path.abspath(tif)
-            (x, transform) = intersect_shp(current_geometry, name)
+            if 'radius' in kwargs:
+                (x, transform) = intersect_shp(current_geometry, name, **kwargs)
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -200,8 +184,8 @@ def image_feature_sets_shap(current_geometry, main_config):
 #     return x_all
 
 
-def process_features(geometry, main_config):
-    image_chunk_sets = image_feature_sets_shap(geometry, main_config)
+def process_features(geometry, main_config, **kwargs):
+    image_chunk_sets = image_feature_sets_shap(geometry, main_config, **kwargs)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                     transform_sets,
@@ -222,8 +206,7 @@ def load_data_shap(shap_config, main_config):
             x_all_point = process_features(current_point, main_config)
 
             if 'radius' in shap_config.shapefile:
-                current_poly = generate_circle_poly(current_point, float(shap_config.shapefile['radius']))
-                x_all_poly = process_features(current_poly, main_config)
+                x_all_poly = process_features(current_point, main_config, radius=shap_config.shapefile['radius'])
                 result_to_add = {
                     'point': x_all_point,
                     'poly': x_all_poly
