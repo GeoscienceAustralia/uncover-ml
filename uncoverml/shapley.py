@@ -66,7 +66,7 @@ def intersect_shp(current_geo, image_source_dir, **kwargs):
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
-        out_image, out_transform = mask(src, geoms, crop=True)
+        out_image, out_transform = mask(src, geoms, crop=True, all_touched=True)
 
     return out_image, out_transform
 
