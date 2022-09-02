@@ -71,7 +71,7 @@ def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
     single_point = single_row_df.geometry.values[0]
     current_buffer = single_point.buffer(size, cap_style=3)
     with rasterio.open(image_source_dir) as src:
-        out_image, out_transform = mask(src, current_buffer, crop=True)
+        out_image, out_transform = mask(src, [current_buffer], crop=True)
 
     return out_image, out_transform
 
