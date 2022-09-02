@@ -30,10 +30,6 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading data')
     x_all = uncoverml.shapley.load_point_poly_data(shap_config, config)
-    name_list = None
-    if shap_config.shapefile['type'] == 'points':
-        x_all, name_list = x_all
-
     print('data_loaded')
 
 
