@@ -176,7 +176,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
         extracted_chunks = {}
         for tif in s.files:
             name = path.abspath(tif)
-            x, transform = intersect_point_neighbourhood(single_row_df, size, name)
+            x = intersect_point_neighbourhood(single_row_df, size, name)
             val_count = x.size
             print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
