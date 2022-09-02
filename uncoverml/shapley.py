@@ -161,7 +161,7 @@ def load_point_poly_data(shap_config, main_config):
     out_result = {}
     for name in name_list:
         current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
-        current_poly_data = gen_poly_data(current_row, main_config, shap_config)
+        current_poly_data = gen_poly_data(current_row, shap_config, main_config)
         out_result[name] = current_poly_data
 
     return out_result
