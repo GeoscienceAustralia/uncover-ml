@@ -67,15 +67,6 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
     return out_image, out_transform
 
 
-def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
-    single_point = single_row_df.geometry.values[0]
-    current_buffer = single_point.buffer(size, cap_style=3)
-    with rasterio.open(image_source_dir) as src:
-        out_image, out_transform = mask(src, [current_buffer], crop=True)
-
-    return out_image, out_transform
-
-
 def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
@@ -185,7 +176,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
         extracted_chunks = {}
         for tif in s.files:
             name = path.abspath(tif)
-            x = intersect_point_neighbourhood(single_row_df, size, name)
+            x, transform = intersect_point_neighbourhood(single_row_df, size, name)
             val_count = x.size
             print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
@@ -209,6 +200,15 @@ def gen_poly_from_point(single_row_df, main_config, size):
         results.append(extracted_chunks)
 
     return results
+
+
+def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
+    single_point = single_row_df.geometry.values[0]
+    current_buffer = single_point.buffer(size, cap_style=3)
+    with rasterio.open(image_source_dir) as src:
+        out_image, out_transform = mask(src, [current_buffer], crop=True)
+
+    return out_image, out_transform
 
 
 class ShapConfig:
