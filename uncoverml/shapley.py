@@ -702,6 +702,8 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
         log.warning('Feature names not provided, plots might be confusing')
     else:
         shap_vals_point.feature_names = kwargs['feature_names']
+        for key, val in shap_vals_dict.items():
+            val.feature_names = kwargs['feature_names']
 
     for idx, name in enumerate(name_list):
         print(f'Generating plot {idx} of {len(name_list)}')
