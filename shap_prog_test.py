@@ -19,9 +19,17 @@ def shapley_cli(model_file, shapley_yaml):
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
 
+    # print('loading data')
+    # # noinspection PyProtectedMember
+    # x_all = uncoverml.shapley.load_data_shap(shap_config, config)
+    # name_list = None
+    # if shap_config.shapefile['type'] == 'points':
+    #     x_all, name_list = x_all
+    #
+    # print('data_loaded')
+
     print('loading data')
-    # noinspection PyProtectedMember
-    x_all = uncoverml.shapley.load_data_shap(shap_config, config)
+    x_all = uncoverml.shapley.load_point_poly_data(shap_config, config)
     name_list = None
     if shap_config.shapefile['type'] == 'points':
         x_all, name_list = x_all

@@ -67,6 +67,15 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
     return out_image, out_transform
 
 
+def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
+    single_point = single_row_df.geometry.values[0]
+    current_buffer = single_point.buffer(size, cap_style=3)
+    with rasterio.open(image_source_dir) as src:
+        out_image, out_transform = mask(src, current_buffer, crop=True)
+
+    return out_image, out_transform
+
+
 def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
@@ -82,7 +91,7 @@ def get_data_polygon(loaded_shapefile, image_source):
     return result
 
 
-def image_feature_sets_shap(shap_config, main_config):
+def image_feature_sets_shap(shap_config, main_config, intersect_func):
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = None
     if shap_config.shapefile['type'] == 'points':
@@ -143,6 +152,63 @@ def load_data_shap(shap_config, main_config):
         return x_all, name_list
     else:
         return x_all
+
+
+def load_point_poly_data(shap_config, main_config):
+    loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
+    name_list = loaded_shapefile['Name'].to_list()
+
+    out_result = {}
+    for name in name_list:
+        current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
+        current_poly_data = gen_poly_data(current_row, main_config, shap_config)
+        out_result[name] = current_poly_data
+
+    return out_result
+
+
+def gen_poly_data(single_row_df, shap_config, main_config):
+    size = shap_config.shapefile['size']
+    image_chunk_sets = gen_poly_from_point(single_row_df, main_config, size)
+    transform_sets = [k.transform_set for k in main_config.feature_sets]
+    transformed_features, keep = features.transform_features(image_chunk_sets,
+                                                             transform_sets,
+                                                             main_config.final_transform,
+                                                             main_config)
+    x_all = features.gather_features(transformed_features[keep], node=0)
+    return x_all
+
+
+def gen_poly_from_point(single_row_df, main_config, size):
+    results = []
+    for s in main_config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = path.abspath(tif)
+            x = intersect_point_neighbourhood(single_row_df, size, name)
+            val_count = x.size
+            print(f'{tif}: {val_count}')
+            x = np.reshape(x, (val_count, 1, 1, 1))
+            x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+
+    return results
 
 
 class ShapConfig:
