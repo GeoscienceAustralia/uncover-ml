@@ -251,6 +251,9 @@ class ShapConfig:
         else:
             log.warning('No plots will be created')
 
+        self.output_names = s['outputs_names'] if 'output_names' in s else None
+        self.feature_path = s['feature_path'] if 'feature_path' in s else None
+
 
 explainer_map = {
     'explainer': {'function': shap.Explainer,
@@ -553,37 +556,6 @@ def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
 
         target_ax.title.set_text(current_plot_title)
 
-    if plot_config.type == 'point_poly':
-        target_ax.title.set_text('')
-        current_plot_title = 'Points' if plot_data.shape[0] == 1 else 'Polygon'
-        if ('point_name' in kwargs) and (kwargs['point_name'] is not None):
-            current_plot_title = current_plot_title + ' ' + kwargs['point_name']
-
-        target_ax.title.set_text(current_plot_title)
-
-
-def point_poly_comparison_subplot(plot_vals_point, plot_vals_poly, plot_config, shap_config, **kwargs):
-    num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-    row_height = 0.4
-    plot_height = (plot_vals.shape[1] * row_height) + 1.5
-    plot_width = 16
-
-    for idx in num_plots:
-        fig, axs = plt.subplots(1, 2, dpi=100)
-        # Point plot
-        current_point_vals = plot_vals_point[:, :, idx]
-        plotting_func_map['bar'](current_point_vals, plot_config, axs[0], 0, **kwargs, point_name=kwargs['point_name'])
-        # Plot poly
-        current_poly_vals = plot_vals_poly[:, :, idx]
-        plotting_func_map['bar'](current_poly_vals, plot_config, axs[1], 1, **kwargs, point_name=kwargs['point_name'])
-        fig.set_size_inches(plot_width, plot_height, forward=True)
-        plot_name = plot_config.type + ' ' + kwargs['point_name']
-        if num_plots > 1:
-            plot_name = plot_name + ' Output ' + str(idx+1)
-
-        save_plot(fig, plot_name, shap_config)
-        plt.clf()
-
 
 def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
     if 'feature_names' in kwargs:
@@ -625,7 +597,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
     else:
         feature_names = [str(x) for x in range(shap_vals.shape[1])]
 
-    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
+    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) > 2 else 1
     fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
     cm = plt.cm.get_cmap('cool')
     lon_lat = kwargs['lon_lat']
@@ -703,13 +675,12 @@ plotting_type_map = {
     'shap_corr': aggregate_separate,
     'spatial': spatial_plot,
     'scatter': scatter_plot,
-    'waterfall': individual_subplot,
-    'point_poly': point_poly_comparison_subplot
+    'waterfall': individual_subplot
 }
 
 
 def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
-    if 'feature_names' not in kwargs:
+    if kwargs['feature_names'] is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
         shap_vals.feature_names = kwargs['feature_names']
@@ -724,3 +695,74 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
 
         plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
         current_plot_idx += 1
+
+
+def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, **kwargs):
+    if kwargs['feature_names'] is None:
+        log.warning('Feature names not provided, plots might be confusing')
+    else:
+        shap_vals.feature_names = kwargs['feature_names']
+
+    for idx, name in enumerate(name_list):
+        current_point_poly_vals = shap_vals_dict[name]
+        current_point_vals = shap_vals_point[idx, :, :]
+        current_point_vals.data = current_point_vals.data[idx, :]
+        point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
+
+
+def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs):
+    num_plots = point_vals.shape[2] if len(point_vals.shape) > 2 else 1
+    output_names = kwargs['output_names'] if 'output_names' in kwargs else None
+
+    fig, axs = plt.subplots(2, 3, figsize=(1.920, 1.080), dpi=100)
+    for plot_idx in range(num_plots):
+        current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
+
+        # Single prediction waterfall
+        plt.sca(axs[0, 0])
+        shap.waterfall_plot(point_vals, show=False)
+        current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
+        axs[0, 0].title.set_text(current_plot_title)
+
+        # Multi prediction summary
+        plt.sca(axs[1, 0])
+        shap.summary_plot(point_poly_vals.values, features=point_poly_vals.data,
+                          feature_names=point_poly_vals.feature_names, show=False)
+        current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
+        axs[1, 0].title.set_text(current_plot_title)
+
+        # Single prediction bar
+        plt.sca(axs[0, 1])
+        shap.plots.bar(point_vals, show=False, max_display=plot_data.shape[1])
+        current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
+        axs[0, 1].title.set_text(current_plot_title)
+
+        # Multi prediction bar
+        plt.sca(axs[1, 1])
+        shap.plots.bar(point_poly_vals, show=False, max_display=plot_data.shape[1])
+        current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
+        axs[1, 1].title.set_text(current_plot_title)
+
+        # Single prediction decision
+        plt.sca(axs[0, 2])
+        shap.decision_plot(point_vals.base_values[0], point_vals.values, feature_names=point_vals.feature_names)
+        current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
+        axs[0, 2].title.set_text(current_plot_title)
+
+        # Multi prediction decision
+        plt.sca(axs[1, 2])
+        shap.decision_plot(point_poly_vals.base_values[0], point_poly_vals.values,
+                           feature_names=point_poly_vals.feature_names)
+        current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
+        axs[0, 2].title.set_text(current_plot_title)
+
+        fig.suptitle(f'Single vs Multiple Point {name} Output {current_output_name}')
+
+        plot_name = f'poly_point_{name}_{current_output_name}'
+        Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+        plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+        plot_width = 16.5
+        plot_height = 11.75
+        fig.set_size_inches(plot_width, plot_height, forward=True)
+        plt.tight_layout(pad=3)
+        fig.savefig(plot_save_path, dpi=100)
