@@ -720,42 +720,46 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     fig, axs = plt.subplots(2, 3, figsize=(1.920, 1.080), dpi=100)
     for plot_idx in range(num_plots):
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
+        current_points_vals = point_vals[:, :, plot_idx]
+        current_point_poly_vals = point_poly_vals[:, :, plot_idx]
+
 
         # Single prediction waterfall
         plt.sca(axs[0, 0])
-        shap.waterfall_plot(point_vals, show=False)
+        shap.waterfall_plot(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
         axs[0, 0].title.set_text(current_plot_title)
 
         # Multi prediction summary
         plt.sca(axs[1, 0])
-        shap.summary_plot(point_poly_vals.values, features=point_poly_vals.data,
-                          feature_names=point_poly_vals.feature_names, show=False)
+        shap.summary_plot(current_point_poly_vals.values, features=current_point_poly_vals.data,
+                          feature_names=current_point_poly_vals.feature_names, show=False)
         current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
         axs[1, 0].title.set_text(current_plot_title)
 
         # Single prediction bar
         plt.sca(axs[0, 1])
-        shap.plots.bar(point_vals, show=False, max_display=plot_data.shape[1])
+        shap.plots.bar(current_points_vals, show=False, max_display=plot_data.shape[1])
         current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
         axs[0, 1].title.set_text(current_plot_title)
 
         # Multi prediction bar
         plt.sca(axs[1, 1])
-        shap.plots.bar(point_poly_vals, show=False, max_display=plot_data.shape[1])
+        shap.plots.bar(current_point_poly_vals, show=False, max_display=plot_data.shape[1])
         current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
         axs[1, 1].title.set_text(current_plot_title)
 
         # Single prediction decision
         plt.sca(axs[0, 2])
-        shap.decision_plot(point_vals.base_values[0], point_vals.values, feature_names=point_vals.feature_names)
+        shap.decision_plot(current_points_vals.base_values[0], current_points_vals.values,
+                           feature_names=current_points_vals.feature_names)
         current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
         axs[0, 2].title.set_text(current_plot_title)
 
         # Multi prediction decision
         plt.sca(axs[1, 2])
-        shap.decision_plot(point_poly_vals.base_values[0], point_poly_vals.values,
-                           feature_names=point_poly_vals.feature_names)
+        shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
+                           feature_names=current_point_poly_vals.feature_names)
         current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
         axs[0, 2].title.set_text(current_plot_title)
 
