@@ -204,11 +204,12 @@ def gen_poly_from_point(single_row_df, main_config, size):
 
 def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
     single_point = single_row_df.geometry.values[0]
-    current_buffer = single_point.buffer(size, cap_style=3)
     with rasterio.open(image_source_dir) as src:
-        out_image, out_transform = mask(src, [current_buffer], crop=True)
+        py, px = src.index(single_point.x, single_point.y)
+        window = rasterio.windows.Window(px - size // 2, py - size // 2, size, size)
+        out_image = src.read(window=window)
 
-    return out_image, out_transform
+    return out_image
 
 
 class ShapConfig:
