@@ -21,7 +21,7 @@ def shapley_cli(model_file, shapley_yaml):
     feature_names = None
     if shap_config.feature_path is not None:
         feature_names = []
-        for s in main_config.feature_sets:
+        for s in config.feature_sets:
             for tif in s.files:
                 new_string = tif.removeprefix(shap_config.feature_path).removesuffix('.tif')
                 feature_names.append(new_string)
