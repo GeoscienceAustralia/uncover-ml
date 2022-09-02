@@ -23,7 +23,7 @@ def shapley_cli(model_file, shapley_yaml):
         feature_names = []
         for s in config.feature_sets:
             for tif in s.files:
-                new_string = tif.removeprefix(shap_config.feature_path).removesuffix('.tif')
+                new_string = tif.replace(shap_config.feature_path, '').replace('.tif', '')
                 feature_names.append(new_string)
 
     if shap_config.shapefile['type'] == 'points':
