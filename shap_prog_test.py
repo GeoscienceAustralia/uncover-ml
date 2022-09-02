@@ -36,7 +36,7 @@ def shapley_cli(model_file, shapley_yaml):
         #                                  name_list=name_list)
 
         print('Loading point poly data')
-        x_data_poly_point = uncoverml.shapley.load_point_poly_data(shap_config, main_config)
+        x_data_poly_point = uncoverml.shapley.load_point_poly_data(shap_config, config)
         print('Calculating point poly shap values')
         shap_vals_dict = {}
         for name in name_list:
