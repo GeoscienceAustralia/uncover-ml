@@ -251,7 +251,7 @@ class ShapConfig:
         else:
             log.warning('No plots will be created')
 
-        self.output_names = s['outputs_names'] if 'output_names' in s else None
+        self.output_names = s['output_names'] if 'output_names' in s else None
         self.feature_path = s['feature_path'] if 'feature_path' in s else None
 
 
