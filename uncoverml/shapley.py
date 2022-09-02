@@ -706,7 +706,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
             val.feature_names = kwargs['feature_names']
 
     for idx, name in enumerate(name_list):
-        print(f'Generating plot {idx} of {len(name_list)}')
+        print(f'Generating plot {idx+1} of {len(name_list)}')
         current_point_poly_vals = shap_vals_dict[name]
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
@@ -750,7 +750,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
 
         # Single prediction decision
         plt.sca(axs[0, 2])
-        shap.decision_plot(current_points_vals.base_values[0], current_points_vals.values,
+        shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
                            feature_names=current_points_vals.feature_names)
         current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
         axs[0, 2].title.set_text(current_plot_title)
