@@ -82,7 +82,7 @@ def get_data_polygon(loaded_shapefile, image_source):
     return result
 
 
-def image_feature_sets_shap(shap_config, main_config, intersect_func):
+def image_feature_sets_shap(shap_config, main_config):
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = None
     if shap_config.shapefile['type'] == 'points':
