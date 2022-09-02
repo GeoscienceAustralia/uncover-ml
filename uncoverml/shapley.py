@@ -738,13 +738,13 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
 
         # Single prediction bar
         plt.sca(axs[0, 1])
-        shap.plots.bar(current_points_vals, show=False, max_display=plot_data.shape[1])
+        shap.plots.bar(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
         axs[0, 1].title.set_text(current_plot_title)
 
         # Multi prediction bar
         plt.sca(axs[1, 1])
-        shap.plots.bar(current_point_poly_vals, show=False, max_display=plot_data.shape[1])
+        shap.plots.bar(current_point_poly_vals, show=False)
         current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
         axs[1, 1].title.set_text(current_plot_title)
 
