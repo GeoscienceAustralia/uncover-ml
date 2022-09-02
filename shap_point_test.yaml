@@ -2,7 +2,7 @@ explainer: explainer
 shapefile:
   dir: Shapley_ROI/Points_Shapley.shp
   type: points
-  size: 10
+  size: 5
 masker:
         type: independent
 plots:
