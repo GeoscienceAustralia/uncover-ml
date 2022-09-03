@@ -1,6 +1,8 @@
+import subprocess
 from joblib import delayed, Parallel
 from pathlib import Path
 import rasterio as rio
+from rasterio.io import DatasetReader
 import numpy as np
 import pandas as pd
 
@@ -12,10 +14,11 @@ with rio.open(mask) as geotif:
     mask_raster = geotif.read(1, masked=True)
 
 
-def _parallel_read(r):
+
+def _parallel_read(r: Path):
     try:
         with rio.open(r) as geotif:
-            raster = geotif.read(1, masked=True)
+            raster: DatasetReader = geotif.read(1, masked=True)
             m = geotif.meta
             m['crs'] = m['crs'].to_string()
             t = m.pop('transform')
@@ -27,6 +30,13 @@ def _parallel_read(r):
             m['all_finite'] = np.all(np.isfinite(raster))
             m['any_nan'] = np.any(np.isnan(raster))
             m['any_large'] = np.any(np.abs(raster) > 1e10)
+            m['min'] = np.ma.min(raster)
+            m['max'] = np.ma.max(raster)
+            m['std'] = np.ma.std(raster)
+            m['valid_percent'] = 100 - np.sum(raster.mask) / raster.size * 100
+            print("=" * 50)
+            print(r, m['valid_percent'])
+            subprocess.run(f"gdalinfo {r.as_posix()} -stats | grep -i valid_", shell=True)
             # raster_attrs[r.stem] = m
         return m
     except Exception as e:
