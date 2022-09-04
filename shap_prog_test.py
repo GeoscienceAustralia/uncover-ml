@@ -40,6 +40,7 @@ def shapley_cli(model_file, shapley_yaml):
         print('Calculating point poly shap values')
         shap_vals_dict = {}
         for name in name_list:
+            print(f'Calculating shap values for {name}')
             current_data = x_data_poly_point[name]
             current_shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, current_data)
             shap_vals_dict[name] = current_shap_vals
