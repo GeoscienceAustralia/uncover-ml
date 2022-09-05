@@ -726,7 +726,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     plot_width = 66
     plot_height = 66
     for plot_idx in range(num_plots):
-        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=500)
+        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=200)
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
         current_points_vals = point_vals[:, plot_idx]
         current_point_poly_vals = point_poly_vals[:, :, plot_idx]
@@ -738,7 +738,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[0, 0].set_title(current_plot_title, fontsize=7)
         axs[0, 0].tick_params(axis='both', labelsize=3)
-        axs[0, 0].tick_params(axis='y', pad=10)
+        axs[0, 0].tick_params(axis='y', pad=15)
         axs[0, 0].set_yticklabels(axs[0, 0].get_yticklabels(), rotation=45)
         axs[0, 0].xaxis.get_label().set_fontsize(7)
 
@@ -746,12 +746,11 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[1, 0])
         shap.summary_plot(current_point_poly_vals.values, features=current_point_poly_vals.data,
                           feature_names=current_point_poly_vals.feature_names, show=False,
-                          plot_size=(plot_width, plot_height))
+                          plot_size=(plot_width, plot_height), color_bar=False)
         current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[1, 0].set_title(current_plot_title, fontsize=7)
         axs[1, 0].tick_params(axis='both', labelsize=3)
-        axs[1, 0].tick_params(axis='y', pad=10)
         axs[1, 0].set_yticklabels(axs[1, 0].get_yticklabels(), rotation=45)
         axs[1, 0].xaxis.get_label().set_fontsize(7)
 
@@ -762,7 +761,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[0, 1].set_title(current_plot_title, fontsize=7)
         axs[0, 1].tick_params(axis='both', labelsize=3)
-        axs[0, 1].tick_params(axis='y', pad=10)
+        axs[0, 1].tick_params(axis='y', pad=15)
         axs[0, 1].set_yticklabels(axs[0, 1].get_yticklabels(), rotation=45)
         axs[0, 1].xaxis.get_label().set_fontsize(7)
 
@@ -773,7 +772,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[1, 1].set_title(current_plot_title, fontsize=7)
         axs[1, 1].tick_params(axis='both', labelsize=3)
-        axs[1, 1].tick_params(axis='y', pad=10)
+        axs[1, 1].tick_params(axis='y', pad=15)
         axs[1, 1].set_yticklabels(axs[1, 1].get_yticklabels(), rotation=45)
         axs[1, 1].xaxis.get_label().set_fontsize(7)
 
@@ -785,7 +784,6 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[0, 2].set_title(current_plot_title, fontsize=7)
         axs[0, 2].tick_params(axis='both', labelsize=3)
-        axs[0, 2].tick_params(axis='y', pad=10)
         axs[0, 2].set_yticklabels(axs[0, 2].get_yticklabels(), rotation=45)
         axs[0, 2].xaxis.get_label().set_fontsize(7)
 
@@ -797,7 +795,6 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = '\n'.join(wrap(current_plot_title, 20))
         axs[1, 2].set_title(current_plot_title, fontsize=7)
         axs[1, 2].tick_params(axis='both', labelsize=3)
-        axs[1, 2].tick_params(axis='y', pad=10)
         axs[1, 2].set_yticklabels(axs[1, 2].get_yticklabels(), rotation=45)
         axs[1, 2].xaxis.get_label().set_fontsize(7)
 
@@ -807,5 +804,5 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
         plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
         fig.tight_layout()
-        fig.savefig(plot_save_path, dpi=500)
+        fig.savefig(plot_save_path, dpi=200)
         plt.clf()
