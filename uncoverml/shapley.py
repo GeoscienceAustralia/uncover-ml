@@ -15,6 +15,7 @@ from shapely.ops import transform
 from functools import partial
 from rasterio import Affine
 import pyproj
+from textwrap import wrap
 
 from multiprocessing import Pool
 
@@ -705,9 +706,10 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
     if kwargs['feature_names'] is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
-        shap_vals_point.feature_names = kwargs['feature_names']
+        feature_names = ['\n'.join(wrap(feat, 20)) for feat in kwargs['feature_names']]
+        shap_vals_point.feature_names = feature_names
         for key, val in shap_vals_dict.items():
-            val.feature_names = kwargs['feature_names']
+            val.feature_names = feature_names
 
     for idx, name in enumerate(name_list):
         print(f'Generating plot {idx+1} of {len(name_list)}')
