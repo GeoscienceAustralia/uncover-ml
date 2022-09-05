@@ -720,6 +720,16 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
 
 
+def ax_tidy_point_poly(target_ax, plot_title, padding=None):
+    current_plot_title = '\n'.join(wrap(plot_title, 30))
+    target_ax.set_title(current_plot_title, fontsize=7)
+    target_ax.tick_params(axis='both', labelsize=3)
+    target_ax.set_yticklabels(axs[0, 0].get_yticklabels(), rotation=45)
+    target_ax.xaxis.get_label().set_fontsize(7)
+    if padding is not None:
+        target_ax.tick_params(axis='y', pad=padding)
+
+
 def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs):
     num_plots = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
     output_names = kwargs['output_names'] if 'output_names' in kwargs else None
@@ -736,12 +746,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[0, 0])
         shap.waterfall_plot(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Waterfall'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[0, 0].set_title(current_plot_title, fontsize=7)
-        axs[0, 0].tick_params(axis='both', labelsize=3)
-        axs[0, 0].tick_params(axis='y', pad=10)
-        axs[0, 0].set_yticklabels(axs[0, 0].get_yticklabels(), rotation=45)
-        axs[0, 0].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[0, 0], current_plot_title, 10)
 
         # Multi prediction summary
         plt.sca(axs[1, 0])
@@ -749,55 +754,34 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
                           feature_names=current_point_poly_vals.feature_names, show=False,
                           plot_size=(plot_width, plot_height), color_bar=False)
         current_plot_title = f'Multi-Prediction Summary'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[1, 0].set_title(current_plot_title, fontsize=7)
-        axs[1, 0].tick_params(axis='both', labelsize=3)
-        axs[1, 0].set_yticklabels(axs[1, 0].get_yticklabels(), rotation=45)
-        axs[1, 0].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[1, 0], current_plot_title)
 
         # Single prediction bar
         plt.sca(axs[0, 1])
         shap.plots.bar(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Bar'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[0, 1].set_title(current_plot_title, fontsize=7)
-        axs[0, 1].tick_params(axis='both', labelsize=3)
-        axs[0, 1].tick_params(axis='y', pad=10)
-        axs[0, 1].set_yticklabels(axs[0, 1].get_yticklabels(), rotation=45)
-        axs[0, 1].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[0, 1], current_plot_title, 10)
 
         # Multi prediction bar
         plt.sca(axs[1, 1])
         shap.plots.bar(current_point_poly_vals, show=False)
         current_plot_title = f'Multi-Prediction Bar'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[1, 1].set_title(current_plot_title, fontsize=7)
-        axs[1, 1].tick_params(axis='both', labelsize=3)
-        axs[1, 1].tick_params(axis='y', pad=10)
-        axs[1, 1].set_yticklabels(axs[1, 1].get_yticklabels(), rotation=45)
         axs[1, 1].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[1, 1], current_plot_title, 10)
 
         # Single prediction decision
         plt.sca(axs[0, 2])
         shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
                            feature_names=current_points_vals.feature_names, auto_size_plot=False)
         current_plot_title = f'Single Prediction Decision'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[0, 2].set_title(current_plot_title, fontsize=7)
-        axs[0, 2].tick_params(axis='both', labelsize=3)
-        axs[0, 2].set_yticklabels(axs[0, 2].get_yticklabels(), rotation=45)
-        axs[0, 2].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[0, 2], current_plot_title)
 
         # Multi prediction decision
         plt.sca(axs[1, 2])
         shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
                            feature_names=current_point_poly_vals.feature_names, auto_size_plot=False)
         current_plot_title = f'Multi-Prediction Decision'
-        current_plot_title = '\n'.join(wrap(current_plot_title, 30))
-        axs[1, 2].set_title(current_plot_title, fontsize=7)
-        axs[1, 2].tick_params(axis='both', labelsize=3)
-        axs[1, 2].set_yticklabels(axs[1, 2].get_yticklabels(), rotation=45)
-        axs[1, 2].xaxis.get_label().set_fontsize(7)
+        ax_tidy_point_poly(axs[1, 2], current_plot_title)
 
         fig.suptitle(f'Single vs Multiple Point {name} Output {current_output_name}')
 
