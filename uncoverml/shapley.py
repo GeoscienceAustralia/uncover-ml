@@ -735,7 +735,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         # Single prediction waterfall
         plt.sca(axs[0, 0])
         shap.waterfall_plot(current_points_vals, show=False)
-        current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
+        current_plot_title = f'Single Prediction Waterfall'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[0, 0].set_title(current_plot_title, fontsize=7)
         axs[0, 0].tick_params(axis='both', labelsize=3)
@@ -748,7 +748,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         shap.summary_plot(current_point_poly_vals.values, features=current_point_poly_vals.data,
                           feature_names=current_point_poly_vals.feature_names, show=False,
                           plot_size=(plot_width, plot_height), color_bar=False)
-        current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
+        current_plot_title = f'Multi-Prediction Summary'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[1, 0].set_title(current_plot_title, fontsize=7)
         axs[1, 0].tick_params(axis='both', labelsize=3)
@@ -758,7 +758,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         # Single prediction bar
         plt.sca(axs[0, 1])
         shap.plots.bar(current_points_vals, show=False)
-        current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
+        current_plot_title = f'Single Prediction Bar'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[0, 1].set_title(current_plot_title, fontsize=7)
         axs[0, 1].tick_params(axis='both', labelsize=3)
@@ -769,7 +769,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         # Multi prediction bar
         plt.sca(axs[1, 1])
         shap.plots.bar(current_point_poly_vals, show=False)
-        current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
+        current_plot_title = f'Multi-Prediction Bar'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[1, 1].set_title(current_plot_title, fontsize=7)
         axs[1, 1].tick_params(axis='both', labelsize=3)
@@ -781,7 +781,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[0, 2])
         shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
                            feature_names=current_points_vals.feature_names, auto_size_plot=False)
-        current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
+        current_plot_title = f'Single Prediction Decision'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[0, 2].set_title(current_plot_title, fontsize=7)
         axs[0, 2].tick_params(axis='both', labelsize=3)
@@ -792,7 +792,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[1, 2])
         shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
                            feature_names=current_point_poly_vals.feature_names, auto_size_plot=False)
-        current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
+        current_plot_title = f'Multi-Prediction Decision'
         current_plot_title = '\n'.join(wrap(current_plot_title, 30))
         axs[1, 2].set_title(current_plot_title, fontsize=7)
         axs[1, 2].tick_params(axis='both', labelsize=3)
