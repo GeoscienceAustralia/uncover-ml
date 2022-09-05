@@ -735,7 +735,8 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         # Multi prediction summary
         plt.sca(axs[1, 0])
         shap.summary_plot(current_point_poly_vals.values, features=current_point_poly_vals.data,
-                          feature_names=current_point_poly_vals.feature_names, show=False)
+                          feature_names=current_point_poly_vals.feature_names, show=False,
+                          plot_size=(plot_width, plot_height))
         current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
         axs[1, 0].title.set_text(current_plot_title)
 
