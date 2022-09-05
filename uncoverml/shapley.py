@@ -721,10 +721,9 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     num_plots = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
     output_names = kwargs['output_names'] if 'output_names' in kwargs else None
 
-    fig, axs = plt.subplots(2, 3, figsize=(1.920, 1.080), dpi=100)
     plot_width = 16.5
     plot_height = 11.75
-    fig.set_size_inches(plot_width, plot_height, forward=True)
+    fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=100)
     for plot_idx in range(num_plots):
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
         current_points_vals = point_vals[:, plot_idx]
