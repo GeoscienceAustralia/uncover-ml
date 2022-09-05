@@ -152,6 +152,7 @@ def load_point_poly_data(shap_config, main_config):
 
     out_result = {}
     for name in name_list:
+        print(f'Getting data for {name}')
         current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
         current_poly_data = gen_poly_data(current_row, shap_config, main_config)
         out_result[name] = current_poly_data
@@ -179,7 +180,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
             name = path.abspath(tif)
             x = intersect_point_neighbourhood(single_row_df, size, name)
             val_count = x.size
-            print(f'{tif}: {val_count}')
+            # print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
