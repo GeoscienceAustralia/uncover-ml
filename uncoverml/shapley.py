@@ -718,7 +718,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
 
 
 def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs):
-    num_plots = point_vals.shape[2] if len(point_vals.shape) > 2 else 1
+    num_plots = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
     output_names = kwargs['output_names'] if 'output_names' in kwargs else None
 
     fig, axs = plt.subplots(2, 3, figsize=(1.920, 1.080), dpi=100)
