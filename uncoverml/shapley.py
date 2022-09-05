@@ -358,13 +358,17 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
     else:
         explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs)
 
-    if x_data.shape[0] > 1:
-        calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
-        calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
-        calc_data = x_data[calc_start_row:calc_end_row]
-    else:
-        calc_data = np.reshape(x_data, (x_data.size, 1))
+    calc_start_row = shap_config.calc_start_row if shap_config.calc_start_row is not None else 0
+    calc_end_row = shap_config.calc_end_row if shap_config.calc_end_row is not None else -1
+    calc_data = x_data[calc_start_row:calc_end_row]
 
+    if shap_config.calc_start_row is not None:
+        x_data = x_data[shap_config.calc_start_row:]
+
+    if shap_config.calc_end_row is not None:
+        x_data = x_data[:shap_config.calc_end_row]
+
+    calc_data = x_data
     shap_vals = explainer_obj(calc_data)
     return shap_vals
 
