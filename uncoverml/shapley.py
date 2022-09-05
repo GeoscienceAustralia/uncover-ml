@@ -726,7 +726,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     plot_width = 66
     plot_height = 47
     for plot_idx in range(num_plots):
-        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=100)
+        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=1000)
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
         current_points_vals = point_vals[:, plot_idx]
         current_point_poly_vals = point_poly_vals[:, :, plot_idx]
@@ -735,6 +735,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[0, 0])
         shap.waterfall_plot(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[0, 0].set_title(current_plot_title, fontsize=7)
         axs[0, 0].tick_params(axis='both', labelsize=5)
         axs[0, 0].set_yticklabels(axs[0, 0].get_yticklabels(), rotation=45)
@@ -746,6 +747,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
                           feature_names=current_point_poly_vals.feature_names, show=False,
                           plot_size=(plot_width, plot_height))
         current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[1, 0].set_title(current_plot_title, fontsize=7)
         axs[1, 0].tick_params(axis='both', labelsize=5)
         axs[1, 0].set_yticklabels(axs[1, 0].get_yticklabels(), rotation=45)
@@ -755,6 +757,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[0, 1])
         shap.plots.bar(current_points_vals, show=False)
         current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[0, 1].set_title(current_plot_title, fontsize=7)
         axs[0, 1].tick_params(axis='both', labelsize=5)
         axs[0, 1].set_yticklabels(axs[0, 1].get_yticklabels(), rotation=45)
@@ -764,6 +767,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plt.sca(axs[1, 1])
         shap.plots.bar(current_point_poly_vals, show=False)
         current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[1, 1].set_title(current_plot_title, fontsize=7)
         axs[1, 1].tick_params(axis='both', labelsize=5)
         axs[1, 1].set_yticklabels(axs[1, 1].get_yticklabels(), rotation=45)
@@ -774,6 +778,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
                            feature_names=current_points_vals.feature_names, auto_size_plot=False)
         current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[0, 2].set_title(current_plot_title, fontsize=7)
         axs[0, 2].tick_params(axis='both', labelsize=5)
         axs[0, 2].set_yticklabels(axs[0, 2].get_yticklabels(), rotation=45)
@@ -784,6 +789,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
                            feature_names=current_point_poly_vals.feature_names, auto_size_plot=False)
         current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
+        current_plot_title = wrap(current_plot_title, 20)
         axs[1, 2].set_title(current_plot_title, fontsize=7)
         axs[1, 2].tick_params(axis='both', labelsize=5)
         axs[1, 2].set_yticklabels(axs[1, 2].get_yticklabels(), rotation=45)
@@ -795,5 +801,5 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
         plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
         fig.tight_layout()
-        fig.savefig(plot_save_path, dpi=100)
+        fig.savefig(plot_save_path, dpi=1000)
         plt.clf()
