@@ -780,6 +780,6 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plot_name = f'poly_point_{name}_{current_output_name}'
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
         plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-        plt.tight_layout(pad=3)
+        fig.tight_layout()
         fig.savefig(plot_save_path, dpi=100)
         plt.clf()
