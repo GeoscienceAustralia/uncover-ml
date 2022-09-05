@@ -737,7 +737,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Single Prediction Waterfall {name} Output {current_output_name}'
         axs[0, 0].title.set_text(current_plot_title)
         axs[0, 0].tick_params(axis='both', labelsize=5)
-        axs[0, 0].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[0, 0].set_yticklabels(axs[0, 0].get_yticks(), rotation=45)
 
         # Multi prediction summary
         plt.sca(axs[1, 0])
@@ -747,7 +747,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Multi-Prediction Summary {name} Output {current_output_name}'
         axs[1, 0].title.set_text(current_plot_title)
         axs[1, 0].tick_params(axis='both', labelsize=5)
-        axs[1, 0].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[1, 0].set_yticklabels(axs[1, 0].get_yticks(), rotation=45)
 
         # Single prediction bar
         plt.sca(axs[0, 1])
@@ -755,7 +755,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Single Prediction Bar {name} Output {current_output_name}'
         axs[0, 1].title.set_text(current_plot_title)
         axs[0, 1].tick_params(axis='both', labelsize=5)
-        axs[0, 1].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[0, 1].set_yticklabels(axs[0, 1].get_yticks(), rotation=45)
 
         # Multi prediction bar
         plt.sca(axs[1, 1])
@@ -763,7 +763,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Multi-Prediction Bar {name} Output {current_output_name}'
         axs[1, 1].title.set_text(current_plot_title)
         axs[1, 1].tick_params(axis='both', labelsize=5)
-        axs[1, 1].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[1, 1].set_yticklabels(axs[1, 1].get_yticks(), rotation=45)
 
         # Single prediction decision
         plt.sca(axs[0, 2])
@@ -772,7 +772,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Single Prediction Decision {name} Output {current_output_name}'
         axs[0, 2].title.set_text(current_plot_title)
         axs[0, 2].tick_params(axis='both', labelsize=5)
-        axs[0, 2].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[0, 2].set_yticklabels(axs[0, 2].get_yticks(), rotation=45)
 
         # Multi prediction decision
         plt.sca(axs[1, 2])
@@ -781,7 +781,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         current_plot_title = f'Multi-Prediction Decision {name} Output {current_output_name}'
         axs[1, 2].title.set_text(current_plot_title)
         axs[1, 2].tick_params(axis='both', labelsize=5)
-        axs[1, 2].set_yticklabels(ax.get_yticks(), rotation=45)
+        axs[1, 2].set_yticklabels(axs[1, 2].get_yticks(), rotation=45)
 
         fig.suptitle(f'Single vs Multiple Point {name} Output {current_output_name}')
 
