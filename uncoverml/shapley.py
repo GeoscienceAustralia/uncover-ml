@@ -707,7 +707,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
     if kwargs['feature_names'] is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
-        feature_names = ['\n'.join(wrap(feat, 20)) for feat in kwargs['feature_names']]
+        feature_names = ['\n'.join(wrap(feat, 30)) for feat in kwargs['feature_names']]
         shap_vals_point.feature_names = feature_names
         for key, val in shap_vals_dict.items():
             val.feature_names = feature_names
