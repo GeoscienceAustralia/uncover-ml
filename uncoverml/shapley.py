@@ -726,7 +726,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     plot_width = 66
     plot_height = 47
     for plot_idx in range(num_plots):
-        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=1000)
+        fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=500)
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
         current_points_vals = point_vals[:, plot_idx]
         current_point_poly_vals = point_poly_vals[:, :, plot_idx]
@@ -801,5 +801,5 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
         plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
         fig.tight_layout()
-        fig.savefig(plot_save_path, dpi=1000)
+        fig.savefig(plot_save_path, dpi=500)
         plt.clf()
