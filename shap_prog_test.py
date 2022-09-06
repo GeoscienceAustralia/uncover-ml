@@ -1,6 +1,7 @@
 import joblib
 
 from pathlib import Path
+import os
 
 import uncoverml.config
 import uncoverml.shapley
@@ -57,7 +58,7 @@ def shapley_cli(model_file, shapley_yaml):
         shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
         if shap_config.do_save:
             Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
-            data_save_path = path.join(shap_config.output_path, shap_config.save_name + '.data')
+            data_save_path = os.path.join(shap_config.output_path, shap_config.save_name + '.data')
             joblib.dump(shap_vals, data_save_path)
 
         if shap_config.plot_config_list is not None:
