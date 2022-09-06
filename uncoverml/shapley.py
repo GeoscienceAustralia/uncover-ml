@@ -64,8 +64,16 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
+        no_data = src.nodata
 
-    return out_image, out_transform
+    data = out_image.data[0]
+    row, col = np.where(data != no_data)
+    T1 = out_transform * Affine.translation(0.5, 0.5)
+    rc2xy = lambda r, c: (c, r) * T1
+    v_func = np.vectorize(rc2xy)
+    lon_lat = v_func(row, col)
+
+    return out_image, lon_lat
 
 
 def get_data_points(loaded_shapefile, image_source):
