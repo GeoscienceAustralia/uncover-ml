@@ -1,6 +1,7 @@
 import joblib
 
 from pathlib import Path
+import os
 
 import uncoverml.config
 import uncoverml.shapley
@@ -52,13 +53,17 @@ def shapley_cli(model_file, shapley_yaml):
                                                         output_names=shap_config.output_names)
     else:
         print('Loading poly data')
-        x_all = uncoverml.shapley.load_data_shap(shap_config, config)
+        x_all, x_coords = uncoverml.shapley.load_data_shap(shap_config, config)
         print('Calculating poly shap values')
         shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
         if shap_config.do_save:
+            save_dict = {
+                'shap_vals': shap_vals,
+                'x_coords': x_coords
+            }
             Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
-            data_save_path = path.join(shap_config.output_path, shap_config.save_name + '.data')
-            joblib.dump(shap_vals, data_save_path)
+            data_save_path = os.path.join(shap_config.output_path, shap_config.save_name + '.data')
+            joblib.dump(save_dict, data_save_path)
 
         if shap_config.plot_config_list is not None:
             print('Generating poly plots')

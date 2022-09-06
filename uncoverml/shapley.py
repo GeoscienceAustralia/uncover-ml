@@ -64,8 +64,16 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
     # extract the raster values within the polygon
     with rasterio.open(image_source_dir) as src:
         out_image, out_transform = mask(src, geoms, crop=True)
+        no_data = src.nodata
 
-    return out_image, out_transform
+    data = out_image[0]
+    row, col = np.where(~np.isnan(data))
+    T1 = out_transform * Affine.translation(0.5, 0.5)
+    rc2xy = lambda r, c: (c, r) * T1
+    v_func = np.vectorize(rc2xy)
+    lon_lat = v_func(row, col)
+
+    return out_image, lon_lat
 
 
 def get_data_points(loaded_shapefile, image_source):
@@ -79,8 +87,8 @@ def get_data_points(loaded_shapefile, image_source):
 
 
 def get_data_polygon(loaded_shapefile, image_source):
-    (result, transform) = intersect_shp(loaded_shapefile, image_source)
-    return result
+    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source)
+    return result, lon_lat
 
 
 def image_feature_sets_shap(shap_config, main_config):
@@ -90,17 +98,19 @@ def image_feature_sets_shap(shap_config, main_config):
         name_list = loaded_shapefile['Name'].to_list()
 
     results = []
+    coords = {}
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
-            print(tif)
             name = path.abspath(tif)
             if shap_config.shapefile['type'] == 'points':
                 x = get_data_points(loaded_shapefile, name)
             else:
-                x = get_data_polygon(loaded_shapefile, name)
+                x, lon_lat = get_data_polygon(loaded_shapefile, name)
+                coords[name] = lon_lat
 
             val_count = x.size
+            print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
@@ -124,14 +134,17 @@ def image_feature_sets_shap(shap_config, main_config):
     if shap_config.shapefile['type'] == 'points':
         return results, name_list
     else:
-        return results
+        return results, coords
 
 
 def load_data_shap(shap_config, main_config):
     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
     name_list = None
+    coords = None
     if shap_config.shapefile['type'] == 'points':
         image_chunk_sets, name_list = image_chunk_sets
+    else:
+        image_chunk_sets, coords = image_chunk_sets
 
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
@@ -143,7 +156,7 @@ def load_data_shap(shap_config, main_config):
     if shap_config.shapefile['type'] == 'points':
         return x_all, name_list
     else:
-        return x_all
+        return x_all, coords
 
 
 def load_point_poly_data(shap_config, main_config):
@@ -180,7 +193,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
             name = path.abspath(tif)
             x = intersect_point_neighbourhood(single_row_df, size, name)
             val_count = x.size
-            # print(f'{tif}: {val_count}')
+            print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
