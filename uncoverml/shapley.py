@@ -252,9 +252,16 @@ class ShapConfig:
             self.plot_config_list = [PlotConfig(p) for p in plot_configs]
         else:
             log.warning('No plots will be created')
+            self.plot_config_list = None
 
         self.output_names = s['output_names'] if 'output_names' in s else None
         self.feature_path = s['feature_path'] if 'feature_path' in s else None
+
+        if 'save' in s:
+            self.do_save = True
+            self.save_name = s['save']['name']
+        else:
+            self.do_save = False
 
 
 explainer_map = {
@@ -628,8 +635,20 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
             fig.clf()
 
 
-def spatial_plot_geotiff(shap_vals, plot_config, shap_config, **kwargs):
-    return None
+def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
+    target_ax.imshow(plot_vals, interpolation='nearest', cmap=matplotlib.get_cmap('jet'))
+
+    max_lat = lon_lats[1][-1, -1]
+    min_lat = lon_lats[1][0, 0]
+    lat_range = np.linspace(min_lat, max_lat, plot_vals.shape[1])
+    plt.xticks(lat_range)
+
+    min_lon = lon_lats[0][-1, -1]
+    max_lon = lon_lats[0][0, 0]
+    lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[0])
+    plt.yticks(lon_range)
+
+    target_ax.set_title(feature_name)
 
 
 def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
@@ -791,3 +810,40 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         fig.tight_layout()
         fig.savefig(plot_save_path, dpi=250)
         plt.clf()
+
+
+def gen_factors(num):
+    factors = []
+    for i in range(1, int(num ** 0.5) + 1):
+        if num % i == 0:
+            factors.append((i, num / i))
+    return factors
+
+
+def spatial_point_poly(name, point_poly_vals, current_lon_lats, shap_config, **kwargs):
+    num_fig = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
+    output_names = kwargs['output_names'] if 'output_names' in kwargs else None
+
+    num_subplots = point_poly_vals.shape[1]
+    grid_sizes = [n for n in range(num_subplots, num_subplots+6)]
+    n_rows = 1
+    n_cols = num_subplots
+    for size in grid_sizes:
+        size_fac = gen_factors(size)
+        diff = [abs(i[0] - i[1]) for i in size_fac]
+        min_diff_loc = np.argmin(diff)
+        if diff[min_diff_loc] < abs(n_rows[0] - n_cols[1]):
+            n_rows = min(size_fac[min_diff_loc])
+            n_cols = max(size_fac[min_diff_loc])
+
+    plot_width = 5*subplot_dim[1]
+    plot_height = 5*subplot_dim[0]
+    for fig_idx in range(num_fig):
+        fig, axs = plt.subplots(subplot_dim[0], subplot_dim[1], figsize=(plot_width, plot_height), dpi=250)
+        for feat_idx in range(point_poly_vals.shape[1]):
+            feature_names = point_poly_vals.feature_names[feat_idx]
+            plot_vals = point_poly_vals[:, feat_idx, fig_idx]
+
+
+
+
