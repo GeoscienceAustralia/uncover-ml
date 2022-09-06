@@ -180,7 +180,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
             name = path.abspath(tif)
             x = intersect_point_neighbourhood(single_row_df, size, name)
             val_count = x.size
-            # print(f'{tif}: {val_count}')
+            print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
