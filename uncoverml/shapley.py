@@ -101,6 +101,7 @@ def image_feature_sets_shap(shap_config, main_config):
                 x = get_data_polygon(loaded_shapefile, name)
 
             val_count = x.size
+            print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
