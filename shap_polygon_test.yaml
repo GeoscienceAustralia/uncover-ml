@@ -6,5 +6,3 @@ save:
   name: shap_vals_poly_small
 masker:
         type: independent
-calc_start_row: 1
-calc_end_row: 10
