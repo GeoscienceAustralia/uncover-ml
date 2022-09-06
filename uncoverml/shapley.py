@@ -67,7 +67,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         no_data = src.nodata
 
     data = out_image[0]
-    row, col = np.where(data != no_data)
+    row, col = np.where(~np.isnan(data))
     T1 = out_transform * Affine.translation(0.5, 0.5)
     rc2xy = lambda r, c: (c, r) * T1
     v_func = np.vectorize(rc2xy)
