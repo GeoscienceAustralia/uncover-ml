@@ -2,11 +2,9 @@ explainer: explainer
 shapefile:
   dir: Shapley_ROI/Polygon_Shapley.shp
   type: polygon
-calc_start_row: 0
-calc_end_row: 10000
+save:
+  name: shap_vals_poly_small
 masker:
         type: independent
-plots:
-  - plot_name: summary_test
-    type: summary
-    plot_title: summary test plot
+calc_start_row: 1
+calc_end_row: 10

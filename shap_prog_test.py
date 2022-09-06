@@ -45,21 +45,29 @@ def shapley_cli(model_file, shapley_yaml):
             current_shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, current_data)
             shap_vals_dict[name] = current_shap_vals
 
-        print('Generating point poly plots')
-        uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
-                                                    feature_names=feature_names, output_names=shap_config.output_names)
+        if shap_config.plot_config_list is not None:
+            print('Generating point poly plots')
+            uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
+                                                        feature_names=feature_names,
+                                                        output_names=shap_config.output_names)
     else:
         print('Loading poly data')
         x_all = uncoverml.shapley.load_data_shap(shap_config, config)
         print('Calculating poly shap values')
         shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, x_all)
-        print('Generating poly plots')
-        uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config)
+        if shap_config.do_save:
+            Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+            data_save_path = path.join(shap_config.output_path, shap_config.save_name + '.data')
+            joblib.dump(shap_vals, data_save_path)
+
+        if shap_config.plot_config_list is not None:
+            print('Generating poly plots')
+            uncoverml.shapley.generate_plots(shap_config.plot_config_list, shap_vals, shap_config)
 
     print('Shap process complete')
 
 
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
-    shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_point_test.yaml'
+    shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_polygon_test.yaml'
     shapley_cli(model_config_file, shap_yaml)
