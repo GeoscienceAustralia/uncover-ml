@@ -87,8 +87,8 @@ def get_data_points(loaded_shapefile, image_source):
 
 
 def get_data_polygon(loaded_shapefile, image_source):
-    (result, transform) = intersect_shp(loaded_shapefile, image_source)
-    return result
+    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source)
+    return result, lon_lat
 
 
 def image_feature_sets_shap(shap_config, main_config):
@@ -100,12 +100,14 @@ def image_feature_sets_shap(shap_config, main_config):
     results = []
     for s in main_config.feature_sets:
         extracted_chunks = {}
+        coords = {}
         for tif in s.files:
             name = path.abspath(tif)
             if shap_config.shapefile['type'] == 'points':
                 x = get_data_points(loaded_shapefile, name)
             else:
-                x = get_data_polygon(loaded_shapefile, name)
+                x, lon_lat = get_data_polygon(loaded_shapefile, name)
+                coords[name] = lon_lat
 
             val_count = x.size
             print(f'{tif}: {val_count}')
@@ -127,7 +129,10 @@ def image_feature_sets_shap(shap_config, main_config):
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
-        results.append(extracted_chunks)
+        if shap_config.shapefile['type'] == 'points':
+            results.append(extracted_chunks)
+        else:
+            results.append((extracted_chunks, coords))
 
     if shap_config.shapefile['type'] == 'points':
         return results, name_list
@@ -138,8 +143,11 @@ def image_feature_sets_shap(shap_config, main_config):
 def load_data_shap(shap_config, main_config):
     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
     name_list = None
+    coords = None
     if shap_config.shapefile['type'] == 'points':
         image_chunk_sets, name_list = image_chunk_sets
+    else:
+        image_chunk_sets, coords = image_chunk_sets
 
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
@@ -151,7 +159,7 @@ def load_data_shap(shap_config, main_config):
     if shap_config.shapefile['type'] == 'points':
         return x_all, name_list
     else:
-        return x_all
+        return x_all, coords
 
 
 def load_point_poly_data(shap_config, main_config):
