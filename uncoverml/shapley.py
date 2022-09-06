@@ -66,7 +66,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         out_image, out_transform = mask(src, geoms, crop=True)
         no_data = src.nodata
 
-    data = out_image.data[0]
+    data = out_image[0]
     row, col = np.where(data != no_data)
     T1 = out_transform * Affine.translation(0.5, 0.5)
     rc2xy = lambda r, c: (c, r) * T1
