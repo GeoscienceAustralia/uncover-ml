@@ -98,9 +98,9 @@ def image_feature_sets_shap(shap_config, main_config):
         name_list = loaded_shapefile['Name'].to_list()
 
     results = []
+    coords = {}
     for s in main_config.feature_sets:
         extracted_chunks = {}
-        coords = {}
         for tif in s.files:
             name = path.abspath(tif)
             if shap_config.shapefile['type'] == 'points':
@@ -129,15 +129,12 @@ def image_feature_sets_shap(shap_config, main_config):
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
-        if shap_config.shapefile['type'] == 'points':
-            results.append(extracted_chunks)
-        else:
-            results.append((extracted_chunks, coords))
+        results.append(extracted_chunks)
 
     if shap_config.shapefile['type'] == 'points':
         return results, name_list
     else:
-        return results
+        return results, coords
 
 
 def load_data_shap(shap_config, main_config):
