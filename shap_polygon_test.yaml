@@ -1,6 +1,6 @@
 explainer: explainer
 shapefile:
-  dir: Shapley_ROI/Polygon_Shapley.shp
+  dir: Shapley_ROI_small/Polygon_Shapley.shp
   type: polygon
 save:
   name: shap_vals_poly_small
