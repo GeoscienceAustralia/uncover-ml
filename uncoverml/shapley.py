@@ -179,7 +179,7 @@ def load_point_poly_data(shap_config, main_config):
 
 def gen_poly_data(single_row_df, shap_config, main_config):
     size = shap_config.shapefile['size']
-    image_chunk_sets, coords = gen_poly_from_point(single_row_df, main_config, size)
+    image_chunk_sets, coords = gen_poly_from_point(single_row_df, main_config, size, shap_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                              transform_sets,
@@ -189,7 +189,7 @@ def gen_poly_data(single_row_df, shap_config, main_config):
     return x_all, coords
 
 
-def gen_poly_from_point(single_row_df, main_config, size):
+def gen_poly_from_point(single_row_df, main_config, size, shap_config):
     results = []
     coords = {}
     for s in main_config.feature_sets:
