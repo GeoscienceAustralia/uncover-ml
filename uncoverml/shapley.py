@@ -683,7 +683,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
 
 
 def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
-    target_ax.imshow(plot_vals, interpolation='nearest', cmap=matplotlib.get_cmap('jet'))
+    target_ax.imshow(plot_vals, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
     max_lat = lon_lats[1][-1, -1]
     min_lat = lon_lats[1][0, 0]
