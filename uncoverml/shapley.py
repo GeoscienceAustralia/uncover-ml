@@ -686,7 +686,7 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
 def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     plot_arr = plot_vals.values
     if 'size' in kwargs:
-        plot_arr = np.reshape(plot_arr, (size, size))
+        plot_arr = np.reshape(plot_arr, (kwargs['size'], kwargs['size']))
     target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
     max_lat = lon_lats[1][-1, -1]
