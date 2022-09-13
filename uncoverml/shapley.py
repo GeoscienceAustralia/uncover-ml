@@ -1,3 +1,4 @@
+import math
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
@@ -683,7 +684,10 @@ def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
 
 
 def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
-    target_ax.imshow(plot_vals, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
+    plot_arr = plot_vals.values
+    if 'size' in kwargs:
+        plot_arr = np.reshape(plot_arr, (size, size))
+    target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
     max_lat = lon_lats[1][-1, -1]
     min_lat = lon_lats[1][0, 0]
@@ -903,7 +907,9 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
             current_feature_name = point_poly_vals.feature_names[feat_idx]
             current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
             current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
-            spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats)
+            size = int(math.sqrt(current_plot_vals.shape[0]))
+            spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
+                             size=size)
 
         fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')
         plot_name = f'spatial_poly_point_{name}_{current_output_name}'
