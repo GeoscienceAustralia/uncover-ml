@@ -165,34 +165,38 @@ def load_point_poly_data(shap_config, main_config):
     name_list = loaded_shapefile['Name'].to_list()
 
     out_result = {}
+    out_coords = {}
     for name in name_list:
         print(f'Getting data for {name}')
         current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
-        current_poly_data = gen_poly_data(current_row, shap_config, main_config)
+        current_poly_data, current_coords = gen_poly_data(current_row, shap_config, main_config)
         out_result[name] = current_poly_data
+        out_coords[name] = current_coords
 
-    return out_result
+    return out_result, out_coords
 
 
 def gen_poly_data(single_row_df, shap_config, main_config):
     size = shap_config.shapefile['size']
-    image_chunk_sets = gen_poly_from_point(single_row_df, main_config, size)
+    image_chunk_sets, coords = gen_poly_from_point(single_row_df, main_config, size)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
                                                              transform_sets,
                                                              main_config.final_transform,
                                                              main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
-    return x_all
+    return x_all, coords
 
 
 def gen_poly_from_point(single_row_df, main_config, size):
     results = []
+    coords = {}
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             name = path.abspath(tif)
-            x = intersect_point_neighbourhood(single_row_df, size, name)
+            x, lon_lats = intersect_point_neighbourhood(single_row_df, size, name)
+            coords[tif] = lon_lats
             val_count = x.size
             print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
@@ -215,7 +219,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
 
         results.append(extracted_chunks)
 
-    return results
+    return results, coords
 
 
 def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
@@ -282,20 +286,26 @@ class ShapConfig:
         else:
             self.do_save = False
 
+        self.file_names = None
+        self.set_file_names(main_config)
+
         self.feature_names = None
         self.set_feature_names(s, main_config)
+
+    def set_file_names(self, config):
+        file_names = []
+        for s in config.feature_sets:
+            for tif in s.files:
+                new_string = tif.replace(self.feature_path, '').replace('.tif', '')
+                file_names.append(new_string)
+
+        self.file_names = file_names
 
     def set_feature_names(self, yaml_file, config):
         if 'feature_names' in yaml_file:
             self.feature_names = yaml_file['feature_names']
         elif self.feature_path is not None:
-            feature_names = []
-            for s in config.feature_sets:
-                for tif in s.files:
-                    new_string = tif.replace(self.feature_path, '').replace('.tif', '')
-                    feature_names.append(new_string)
-
-            self.feature_names = feature_names
+            self.feature_names = self.file_names
 
 
 explainer_map = {
@@ -758,10 +768,10 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
 
 
 def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, **kwargs):
-    if kwargs['feature_names'] is None:
+    if shap_config.feature_names is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
-        feature_names = ['\n'.join(wrap(feat, 30)) for feat in kwargs['feature_names']]
+        feature_names = ['\n'.join(wrap(feat, 30)) for feat in shap_config.feature_names]
         shap_vals_point.feature_names = feature_names
         for key, val in shap_vals_dict.items():
             val.feature_names = feature_names
@@ -772,6 +782,9 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
+        if 'lon_lats' in kwargs:
+            current_lon_lats = kwargs['lon_lats'][name]
+            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config)
 
 
 def ax_tidy_point_poly(target_ax, plot_title, padding=None):
@@ -887,7 +900,7 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
         for feat_idx in range(point_poly_vals.shape[1]):
             current_feature_name = point_poly_vals.feature_names[feat_idx]
             current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
-            current_lon_lats = lon_lats[current_feature_name]
+            current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
             spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats)
 
         fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')

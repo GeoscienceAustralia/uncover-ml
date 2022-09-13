@@ -19,7 +19,6 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
-    feature_names = shap_config.feature_names
 
     if shap_config.shapefile['type'] == 'points':
         print('Loading point data')
@@ -31,7 +30,7 @@ def shapley_cli(model_file, shapley_yaml):
         #                                  name_list=name_list)
 
         print('Loading point poly data')
-        x_data_poly_point = uncoverml.shapley.load_point_poly_data(shap_config, config)
+        x_data_poly_point, x_poly_coords = uncoverml.shapley.load_point_poly_data(shap_config, config)
         print('Calculating point poly shap values')
         shap_vals_dict = {}
         for name in name_list:
@@ -43,7 +42,6 @@ def shapley_cli(model_file, shapley_yaml):
         if shap_config.plot_config_list is not None:
             print('Generating point poly plots')
             uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
-                                                        feature_names=feature_names,
                                                         output_names=shap_config.output_names)
     else:
         print('Loading poly data')
