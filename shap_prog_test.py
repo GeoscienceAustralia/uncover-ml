@@ -42,7 +42,7 @@ def shapley_cli(model_file, shapley_yaml):
         if shap_config.plot_config_list is not None:
             print('Generating point poly plots')
             uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
-                                                        output_names=shap_config.output_names)
+                                                        output_names=shap_config.output_names, lon_lats=x_poly_coords)
     else:
         print('Loading poly data')
         x_all, x_coords = uncoverml.shapley.load_data_shap(shap_config, config)
