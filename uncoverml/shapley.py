@@ -80,7 +80,7 @@ def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, transform) = intersect_shp(single_row_df, image_source)
+        (result, lon_lat) = intersect_shp(single_row_df, image_source)
         res_list.append(result)
 
     return np.concatenate(res_list)
@@ -833,12 +833,8 @@ def gen_factors(num):
     return factors
 
 
-def spatial_point_poly(name, point_poly_vals, current_lon_lats, shap_config, **kwargs):
-    num_fig = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
-    output_names = kwargs['output_names'] if 'output_names' in kwargs else None
-
-    num_subplots = point_poly_vals.shape[1]
-    grid_sizes = [n for n in range(num_subplots, num_subplots+6)]
+def select_subplot_grid_dims(num_subplots):
+    grid_sizes = [n for n in range(num_subplots, num_subplots + 6)]
     n_rows = 1
     n_cols = num_subplots
     for size in grid_sizes:
@@ -849,14 +845,33 @@ def spatial_point_poly(name, point_poly_vals, current_lon_lats, shap_config, **k
             n_rows = min(size_fac[min_diff_loc])
             n_cols = max(size_fac[min_diff_loc])
 
-    plot_width = 5*subplot_dim[1]
-    plot_height = 5*subplot_dim[0]
+    return n_rows, n_cols
+
+
+def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
+    num_fig = point_poly_vals.shape[2] if len(point_poly_vals.shape) > 2 else 1
+    output_names = kwargs['output_names'] if 'output_names' in kwargs else None
+
+    n_rows, n_cols = select_subplot_grid_dims(point_poly_vals.shape[1])
+    plot_width = 5*n_cols
+    plot_height = 5*n_rows
     for fig_idx in range(num_fig):
         fig, axs = plt.subplots(subplot_dim[0], subplot_dim[1], figsize=(plot_width, plot_height), dpi=250)
+        if output_names is not None:
+            current_output_name = output_names[fig_idx]
+        else:
+            current_output_name = fig_idx
+
         for feat_idx in range(point_poly_vals.shape[1]):
-            feature_names = point_poly_vals.feature_names[feat_idx]
-            plot_vals = point_poly_vals[:, feat_idx, fig_idx]
+            current_feature_name = point_poly_vals.feature_names[feat_idx]
+            current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
+            current_lon_lats = lon_lats[current_feature_name]
+            spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats)
 
-
-
-
+        fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')
+        plot_name = f'spatial_poly_point_{name}_{current_output_name}'
+        Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+        plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+        fig.tight_layout()
+        fig.savefig(plot_save_path, dpi=250)
+        plt.clf()
