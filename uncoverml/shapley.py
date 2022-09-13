@@ -108,7 +108,7 @@ def image_feature_sets_shap(shap_config, main_config):
                 x = get_data_points(loaded_shapefile, name)
             else:
                 x, lon_lats = get_data_polygon(loaded_shapefile, name)
-                coord_name = tif.replace(self.feature_path, '').replace('.tif', '')
+                coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
                 coords[coord_name] = lon_lats
 
             val_count = x.size
@@ -197,7 +197,7 @@ def gen_poly_from_point(single_row_df, main_config, size):
         for tif in s.files:
             name = path.abspath(tif)
             x, lon_lats = intersect_point_neighbourhood(single_row_df, size, name)
-            coord_name = tif.replace(self.feature_path, '').replace('.tif', '')
+            coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
             coords[coord_name] = lon_lats
             val_count = x.size
             # print(f'{tif}: {val_count}')
