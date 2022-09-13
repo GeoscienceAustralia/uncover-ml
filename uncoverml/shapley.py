@@ -68,8 +68,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
 
     data = out_image[0]
     row, col = np.where(~np.isnan(data))
-    T1 = out_transform * Affine.translation(0.5, 0.5)
-    rc2xy = lambda r, c: (c, r) * T1
+    def rc2xy(r, c): return rasterio.transform.xy(out_transform, r, c, offset='center')
     v_func = np.vectorize(rc2xy)
     lon_lat = v_func(row, col)
 
@@ -148,9 +147,9 @@ def load_data_shap(shap_config, main_config):
 
     transform_sets = [k.transform_set for k in main_config.feature_sets]
     transformed_features, keep = features.transform_features(image_chunk_sets,
-                                                    transform_sets,
-                                                    main_config.final_transform,
-                                                    main_config)
+                                                             transform_sets,
+                                                             main_config.final_transform,
+                                                             main_config)
     x_all = features.gather_features(transformed_features[keep], node=0)
 
     if shap_config.shapefile['type'] == 'points':
@@ -223,8 +222,13 @@ def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
         py, px = src.index(single_point.x, single_point.y)
         window = rasterio.windows.Window(px - size // 2, py - size // 2, size, size)
         out_image = src.read(window=window)
+        win_transform = rasterio.windows.transform(window, src.transform)
+        row, col = np.where(~np.isnan(out_image))
+        def rc2xy(r, c): return rasterio.transform.xy(win_transform, r, c, offset='center')
+        v_func = np.vectorize(rc2xy)
+        lon_lat = v_func(row, col)
 
-    return out_image
+    return out_image, lon_lat
 
 
 class ShapConfig:
@@ -376,7 +380,8 @@ def calc_shap_vals(model, shap_config, x_data, num_proc=1):
         logging.warning('Some explainer requirements not fulfilled, calculation might not work')
 
     if shap_config.explainer_kwargs is not None:
-        explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs, **shap_config.explainer_kwargs)
+        explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs,
+                                                                         **shap_config.explainer_kwargs)
     else:
         explainer_obj = explainer_map[shap_config.explainer]['function'](shap_predict, *reqs)
 
@@ -546,7 +551,7 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     plot_height = (plot_data.shape[1] * row_height) + 1.5
     plot_width = 16
     shap.summary_plot(plot_data.values, features=plot_data.data, feature_names=plot_data.feature_names, show=False,
-                      max_display=plot_data.shape[1], sort=False, plot_size = (plot_width, plot_height))
+                      max_display=plot_data.shape[1], sort=False, plot_size=(plot_width, plot_height))
 
     x_axis = target_ax.axes.get_xaxis()
     x_label = x_axis.get_label()
@@ -745,7 +750,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
             val.feature_names = feature_names
 
     for idx, name in enumerate(name_list):
-        print(f'Generating plot {idx+1} of {len(name_list)}')
+        print(f'Generating plot {idx + 1} of {len(name_list)}')
         current_point_poly_vals = shap_vals_dict[name]
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
@@ -853,8 +858,8 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
     output_names = kwargs['output_names'] if 'output_names' in kwargs else None
 
     n_rows, n_cols = select_subplot_grid_dims(point_poly_vals.shape[1])
-    plot_width = 5*n_cols
-    plot_height = 5*n_rows
+    plot_width = 5 * n_cols
+    plot_height = 5 * n_rows
     for fig_idx in range(num_fig):
         fig, axs = plt.subplots(subplot_dim[0], subplot_dim[1], figsize=(plot_width, plot_height), dpi=250)
         if output_names is not None:
