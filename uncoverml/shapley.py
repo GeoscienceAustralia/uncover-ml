@@ -67,10 +67,12 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         no_data = src.nodata
 
     data = out_image[0]
-    row, col = np.where(~np.isnan(data[0]))
-    def rc2xy(r, c): return rasterio.transform.xy(out_transform, r, c, offset='center')
-    v_func = np.vectorize(rc2xy)
-    lon_lat = v_func(row, col)
+    lon_lat = None
+    if kwargs['type'] == 'poly':
+        row, col = np.where(~np.isnan(data[0]))
+        def rc2xy(r, c): return rasterio.transform.xy(out_transform, r, c, offset='center')
+        v_func = np.vectorize(rc2xy)
+        lon_lat = v_func(row, col)
 
     return out_image, lon_lat
 
@@ -79,14 +81,14 @@ def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, lon_lat) = intersect_shp(single_row_df, image_source)
+        (result, lon_lat) = intersect_shp(single_row_df, image_source, type='points')
         res_list.append(result)
 
     return np.concatenate(res_list)
 
 
 def get_data_polygon(loaded_shapefile, image_source):
-    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source)
+    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source, type='poly')
     return result, lon_lat
 
 
