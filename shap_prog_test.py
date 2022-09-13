@@ -19,13 +19,6 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
-    feature_names = None
-    if shap_config.feature_path is not None:
-        feature_names = []
-        for s in config.feature_sets:
-            for tif in s.files:
-                new_string = tif.replace(shap_config.feature_path, '').replace('.tif', '')
-                feature_names.append(new_string)
 
     if shap_config.shapefile['type'] == 'points':
         print('Loading point data')
@@ -37,7 +30,7 @@ def shapley_cli(model_file, shapley_yaml):
         #                                  name_list=name_list)
 
         print('Loading point poly data')
-        x_data_poly_point = uncoverml.shapley.load_point_poly_data(shap_config, config)
+        x_data_poly_point, x_poly_coords = uncoverml.shapley.load_point_poly_data(shap_config, config)
         print('Calculating point poly shap values')
         shap_vals_dict = {}
         for name in name_list:
@@ -49,8 +42,7 @@ def shapley_cli(model_file, shapley_yaml):
         if shap_config.plot_config_list is not None:
             print('Generating point poly plots')
             uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
-                                                        feature_names=feature_names,
-                                                        output_names=shap_config.output_names)
+                                                        output_names=shap_config.output_names, lon_lats=x_poly_coords)
     else:
         print('Loading poly data')
         x_all, x_coords = uncoverml.shapley.load_data_shap(shap_config, config)
@@ -74,5 +66,5 @@ def shapley_cli(model_file, shapley_yaml):
 
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
-    shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_polygon_test.yaml'
+    shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_point_test.yaml'
     shapley_cli(model_config_file, shap_yaml)
