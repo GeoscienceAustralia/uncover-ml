@@ -696,7 +696,7 @@ def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
 
     min_lon = lon_lats[0].min()
     max_lon = lon_lats[0].max()
-    lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[0])
+    lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[1])
     plt.yticks(lon_range)
 
     target_ax.set_title(feature_name)
