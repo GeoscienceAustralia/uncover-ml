@@ -882,7 +882,7 @@ def select_subplot_grid_dims(num_subplots):
             n_rows = min(size_fac[min_diff_loc])
             n_cols = max(size_fac[min_diff_loc])
 
-    return n_rows, n_cols
+    return int(n_rows), int(n_cols)
 
 
 def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
