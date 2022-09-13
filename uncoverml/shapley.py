@@ -691,12 +691,12 @@ def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
 
     max_lat = lon_lats[1].max()
     min_lat = lon_lats[1].min()
-    lat_range = np.linspace(min_lat, max_lat, plot_vals.shape[1])
+    lat_range = np.linspace(min_lat, max_lat, plot_arr.shape[0])
     plt.xticks(lat_range)
 
     min_lon = lon_lats[0].min()
     max_lon = lon_lats[0].max()
-    lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[1])
+    lon_range = np.linspace(min_lon, max_lon, plot_arr.shape[1])
     plt.yticks(lon_range)
 
     target_ax.set_title(feature_name)
