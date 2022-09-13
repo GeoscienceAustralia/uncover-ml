@@ -19,7 +19,7 @@ def shapley_cli(model_file, shapley_yaml):
 
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
-    feature_names = None
+    feature_names = shap_config.feature_names
     if shap_config.feature_path is not None:
         feature_names = []
         for s in config.feature_sets:

@@ -280,6 +280,21 @@ class ShapConfig:
         else:
             self.do_save = False
 
+        self.feature_names = None
+        self.set_feature_names(s, main_config)
+
+    def get_feature_names(self, yaml_file, config):
+        if 'feature_names' in yaml_file:
+            self.feature_names = yaml_file['feature_names']
+        elif self.feature_path is not None:
+            feature_names = []
+            for s in config.feature_sets:
+                for tif in s.files:
+                    new_string = tif.replace(self.feature_path, '').replace('.tif', '')
+                    feature_names.append(new_string)
+
+            self.feature_names = feature_names
+
 
 explainer_map = {
     'explainer': {'function': shap.Explainer,
