@@ -878,7 +878,7 @@ def select_subplot_grid_dims(num_subplots):
         size_fac = gen_factors(size)
         diff = [abs(i[0] - i[1]) for i in size_fac]
         min_diff_loc = np.argmin(diff)
-        if diff[min_diff_loc] < abs(n_rows[0] - n_cols[1]):
+        if diff[min_diff_loc] < abs(n_rows - n_cols):
             n_rows = min(size_fac[min_diff_loc])
             n_cols = max(size_fac[min_diff_loc])
 
