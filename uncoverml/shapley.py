@@ -67,7 +67,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         no_data = src.nodata
 
     data = out_image[0]
-    row, col = np.where(~np.isnan(data))
+    row, col = np.where(~np.isnan(data[0]))
     def rc2xy(r, c): return rasterio.transform.xy(out_transform, r, c, offset='center')
     v_func = np.vectorize(rc2xy)
     lon_lat = v_func(row, col)
@@ -223,7 +223,7 @@ def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
         window = rasterio.windows.Window(px - size // 2, py - size // 2, size, size)
         out_image = src.read(window=window)
         win_transform = rasterio.windows.transform(window, src.transform)
-        row, col = np.where(~np.isnan(out_image))
+        row, col = np.where(~np.isnan(out_image[0]))
         def rc2xy(r, c): return rasterio.transform.xy(win_transform, r, c, offset='center')
         v_func = np.vectorize(rc2xy)
         lon_lat = v_func(row, col)
