@@ -893,7 +893,7 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
     plot_width = 5 * n_cols
     plot_height = 5 * n_rows
     for fig_idx in range(num_fig):
-        fig, axs = plt.subplots(subplot_dim[0], subplot_dim[1], figsize=(plot_width, plot_height), dpi=250)
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=(plot_width, plot_height), dpi=250)
         if output_names is not None:
             current_output_name = output_names[fig_idx]
         else:
