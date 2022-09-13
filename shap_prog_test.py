@@ -20,12 +20,6 @@ def shapley_cli(model_file, shapley_yaml):
     print('loading config')
     shap_config = uncoverml.shapley.ShapConfig(shapley_yaml, config)
     feature_names = shap_config.feature_names
-    if shap_config.feature_path is not None:
-        feature_names = []
-        for s in config.feature_sets:
-            for tif in s.files:
-                new_string = tif.replace(shap_config.feature_path, '').replace('.tif', '')
-                feature_names.append(new_string)
 
     if shap_config.shapefile['type'] == 'points':
         print('Loading point data')

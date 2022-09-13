@@ -283,7 +283,7 @@ class ShapConfig:
         self.feature_names = None
         self.set_feature_names(s, main_config)
 
-    def get_feature_names(self, yaml_file, config):
+    def set_feature_names(self, yaml_file, config):
         if 'feature_names' in yaml_file:
             self.feature_names = yaml_file['feature_names']
         elif self.feature_path is not None:
