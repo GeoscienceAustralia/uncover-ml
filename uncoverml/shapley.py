@@ -689,13 +689,13 @@ def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
         plot_arr = np.reshape(plot_arr, (kwargs['size'], kwargs['size']))
     target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
-    max_lat = lon_lats[1][-1, -1]
-    min_lat = lon_lats[1][0, 0]
+    max_lat = lon_lats[1].max()
+    min_lat = lon_lats[1].min()
     lat_range = np.linspace(min_lat, max_lat, plot_vals.shape[1])
     plt.xticks(lat_range)
 
-    min_lon = lon_lats[0][-1, -1]
-    max_lon = lon_lats[0][0, 0]
+    min_lon = lon_lats[0].min()
+    max_lon = lon_lats[0].max()
     lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[0])
     plt.yticks(lon_range)
 
