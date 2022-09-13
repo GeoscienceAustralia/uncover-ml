@@ -2,7 +2,51 @@ explainer: explainer
 shapefile:
   dir: Shapley_ROI_small/Polygon_Shapley.shp
   type: polygon
-save:
-  name: shap_vals_poly_small
 masker:
         type: independent
+load_file: gbquantile/shap/shap_vals_poly_small.data
+output_names:
+  - prediction
+  - variance
+  - upper_quantile
+  - lower_quantile
+feature_path: /g/data/ge3/data/covariates/
+feature_names:
+  - TPI_1
+  - TPI_2
+  - TPI_3
+  - Bare_7plus1
+  - Bare_Clay
+  - Bare_green
+  - Bare_Ratio_3_1
+  - Bare_Ratio_5_4
+  - Bare_SWIR_1
+  - D_Ceno
+  - Leaching
+  - Mean_Rainfall
+  - Solar_rad
+  - D_Coast
+  - Elevation
+  - D_Meso
+  - MRVB
+  - WII
+  - Ratio_K_Th
+  - Relief_loc
+  - Relief_reg
+  - Sentinel_B1
+  - Sentinel_B3
+  - Wetness
+  - Geo_Si
+  - Slope
+  - Thorium
+  - TPI_300
+  - Tassel_W
+plots:
+  - plot_name: summary_test
+    type: summary
+    plot_title: test_summary
+  - plot_name: bar_test
+    type: bar
+    plot_title: test_bar
+  - plot_name: test_waterfall
+    type: waterfall

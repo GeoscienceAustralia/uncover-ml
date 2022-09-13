@@ -60,6 +60,14 @@ Properties for shap config
 
 
 def intersect_shp(single_row_df, image_source_dir, **kwargs):
+    # Intersect polygon or single point
+    # Inputs
+    #   single_row_df - single row from geopandas dataframe containing geometry to intersect
+    #   image_source_dir - file path to feature geotiff
+    #
+    # Outputs
+    #   out_image - numpy array with values for intersected pixels
+    #   lon_lats - numpy array of coordinates for intersected pixels
     geoms = single_row_df.geometry.values[0]
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
@@ -68,6 +76,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         no_data = src.nodata
 
     data = out_image[0]
+    shape = data.shape
     lon_lat = None
     if kwargs['type'] == 'poly':
         row, col = np.where(~np.isnan(data[0]))
@@ -75,25 +84,56 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         v_func = np.vectorize(rc2xy)
         lon_lat = v_func(row, col)
 
-    return out_image, lon_lat
+    return out_image, lon_lat, shape
 
 
 def get_data_points(loaded_shapefile, image_source):
+    '''
+    Intersect multiple points and combine the result
+    Inputs
+        loaded_shapefile - geopandas df with intersection geometries
+        image_source - path to feature geotiff
+
+    Outputs
+        res_list - numpy array of concatenated pixel values for points
+    '''
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, lon_lat) = intersect_shp(single_row_df, image_source, type='points')
+        (result, lon_lat, shape) = intersect_shp(single_row_df, image_source, type='points')
         res_list.append(result)
 
     return np.concatenate(res_list)
 
 
 def get_data_polygon(loaded_shapefile, image_source):
-    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source, type='poly')
-    return result, lon_lat
+    '''
+    Intersect single polygon
+    Inputs
+        loaded_shapefile - geopandas df with intersection geometries
+        image_source - path to feature geotiff
+
+    Outputs
+        result - numpy array of intersected pixel values for polygon
+        lon_lat - numpy array coordinates for intersected pixels
+        shape - shape of intersected numpy array in pixels
+    '''
+    (result, lon_lat, shape) = intersect_shp(loaded_shapefile, image_source, type='poly')
+    return result, lon_lat, shape
 
 
 def image_feature_sets_shap(shap_config, main_config):
+    '''
+    Perform geometry intersection for all features
+    Inputs
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        results - order dictionary of intersected numpy arrays for each feature
+        OPTIONAL name_list - list of point names for point calculation
+        OPTIONAL coords - dictionary of coordinate arrays for each intersected feature
+    '''
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = None
     if shap_config.shapefile['type'] == 'points':
@@ -108,12 +148,12 @@ def image_feature_sets_shap(shap_config, main_config):
             if shap_config.shapefile['type'] == 'points':
                 x = get_data_points(loaded_shapefile, name)
             else:
-                x, lon_lats = get_data_polygon(loaded_shapefile, name)
+                x, lon_lats, shape = get_data_polygon(loaded_shapefile, name)
                 coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
-                coords[coord_name] = lon_lats
+                coords[coord_name] = (lon_lats, shape)
 
             val_count = x.size
-            print(f'{tif}: {val_count}')
+            # print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
@@ -141,6 +181,17 @@ def image_feature_sets_shap(shap_config, main_config):
 
 
 def load_data_shap(shap_config, main_config):
+    '''
+        Intersect features, transform and return
+        Inputs
+            shap_config - shap calclation config
+            main_config - main uncoverml model config
+
+        Outputs
+            x_all - numpy array of transformed feature values
+            OPTIONAL name_list - list of point names for point calculation
+            OPTIONAL coords - dictionary of coordinate arrays for each intersected feature
+        '''
     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
     name_list = None
     coords = None
@@ -163,13 +214,23 @@ def load_data_shap(shap_config, main_config):
 
 
 def load_point_poly_data(shap_config, main_config):
+    '''
+    Loop through each named point and get the feature data for that point
+    Inputs
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        out_result - numpy array for intersected and expanded pixel window
+        out_coords - numpy array of coordinates for area in out_result
+    '''
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = loaded_shapefile['Name'].to_list()
 
     out_result = {}
     out_coords = {}
     for name in name_list:
-        print(f'Getting data for {name}')
+        log.info(f'Getting data for {name}')
         current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
         current_poly_data, current_coords = gen_poly_data(current_row, shap_config, main_config)
         out_result[name] = current_poly_data
@@ -179,6 +240,17 @@ def load_point_poly_data(shap_config, main_config):
 
 
 def gen_poly_data(single_row_df, shap_config, main_config):
+    '''
+    Get data and transform for a single named point
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        x_all - numpy array of intersected, expanded, transformed feature data
+        coords - numpy array of coords for area represented by x_all
+    '''
     size = shap_config.shapefile['size']
     image_chunk_sets, coords = gen_poly_from_point(single_row_df, main_config, size, shap_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
@@ -191,6 +263,19 @@ def gen_poly_data(single_row_df, shap_config, main_config):
 
 
 def gen_poly_from_point(single_row_df, main_config, size, shap_config):
+    '''
+    Loop through features, intersect point and create expanded area for a given
+    named point
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        main_config - main uncoverml model config
+        size - size for creation of size x size pixel grid area
+        shap_config - shap calclation config
+
+    Outputs
+        results - numpy array of intersected and expanded data
+        coords - coordinates representing area in results
+    '''
     results = []
     coords = {}
     for s in main_config.feature_sets:
@@ -226,6 +311,17 @@ def gen_poly_from_point(single_row_df, main_config, size, shap_config):
 
 
 def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
+    '''
+    Intersected point and expand grid around it
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        size - size for creation of size x size pixel grid area
+        image_source - path to feature geotiff
+
+    Outputs
+        out_image - numpy array with values for intersected pixels
+        lon_lats - numpy array of coordinates for intersected pixels
+    '''
     single_point = single_row_df.geometry.values[0]
     with rasterio.open(image_source_dir) as src:
         py, px = src.index(single_point.x, single_point.y)
@@ -241,29 +337,36 @@ def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
 
 
 class ShapConfig:
-    # REMEMBER, DATA AND FEATURE NAMES CAN BE ACCESSED FROM THE MAIN CONFIG
+    # Class that contains needed information for shap calculation and plotting
     def __init__(self, yaml_file, main_config):
+        # Load config YAML
         with open(yaml_file, 'r') as f:
             s = yaml.safe_load(f)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
+        # Get the explainer type
         if 'explainer' in s:
             self.explainer = s['explainer']
         else:
             self.explainer = None
             log.error('No explainer provided, cannot calculate Shapley values')
 
+        # Get the shapefile representing calculation region
         if 'shapefile' in s:
             self.shapefile = s['shapefile']
         else:
             self.shapefile = None
             log.error('No shapefile provided, calculation will fail')
 
+        # Additional explainer arguements
         self.explainer_kwargs = s['explainer_kwargs'] if 'explainer_kwargs' in s else None
+        # Start and end row for calculation
         self.calc_start_row = s['calc_start_row'] if 'calc_start_row' in s else None
         self.calc_end_row = s['calc_end_row'] if 'calc_end_row' in s else None
+        # Masker type
         self.masker = s['masker'] if 'masker' in s else None
 
+        # Get the output path for saving results
         if 'output_path' in s:
             self.output_path = s['output_path']
         elif hasattr(main_config, 'output_dir'):
@@ -272,6 +375,7 @@ class ShapConfig:
             self.output_path = None
             logging.error('No output path, exception will be thrown when saving')
 
+        # Get list of plot config, TO BE REMOVED
         self.plot_config_list = None
         if 'plots' in s:
             plot_configs = s['plots']
@@ -280,22 +384,32 @@ class ShapConfig:
             log.warning('No plots will be created')
             self.plot_config_list = None
 
+        # Names of model prediction outputs
         self.output_names = s['output_names'] if 'output_names' in s else None
+        # Path where feature files are saved
         self.feature_path = s['feature_path'] if 'feature_path' in s else None
+        # File from which pre-calculated shap values can be loaded
+        self.load_file = s['load_file'] if 'load_file' in s else None
 
+        # Options for saving calculated shap values
         if 'save' in s:
             self.do_save = True
             self.save_name = s['save']['name']
         else:
             self.do_save = False
 
+        # List of feature file names
         self.file_names = None
         self.set_file_names(main_config)
 
+        # List of short feature names
         self.feature_names = None
-        self.set_feature_names(s, main_config)
+        self.set_feature_names(s)
 
     def set_file_names(self, config):
+        # Use the info from the main config to get feature file names
+        # Inputs
+        #   config - Main UncoverML config
         file_names = []
         for s in config.feature_sets:
             for tif in s.files:
@@ -304,19 +418,24 @@ class ShapConfig:
 
         self.file_names = file_names
 
-    def set_feature_names(self, yaml_file, config):
+    def set_feature_names(self, yaml_file):
+        # Add short feature names into shap config
+        # Inputs
+        #   yaml_file - YAML file containing shap config info
         if 'feature_names' in yaml_file:
             self.feature_names = yaml_file['feature_names']
         elif self.feature_path is not None:
             self.feature_names = self.file_names
 
 
+# Dictionary mapping explainers by string
 explainer_map = {
     'explainer': {'function': shap.Explainer,
                   'requirements': ['masker'],
                   'allowed': ['independent', 'partition', 'data', 'list']}
 }
 
+# Dictionary mapping maskers by string
 masker_map = {
     'independent': shap.maskers.Independent,
     'partition': shap.maskers.Partition
@@ -324,7 +443,16 @@ masker_map = {
 
 
 def select_masker(mask_type, mask_data, mask_info=None):
-    # Might nest this into prepare_check_masker later
+    '''
+    Initialise a masker from provided information
+    Inputs
+        mask_type - string of masker type
+        mask_data - feature data to be used for masking
+        mask_info - OPTIONAL additional information for creating masker
+
+    Outputs
+        masker - masker object to be used with explainer
+    '''
     masker = None
     if mask_type in ['independent', 'partition']:
         if (mask_info is not None) and ('kwargs' in mask_info):
@@ -338,6 +466,15 @@ def select_masker(mask_type, mask_data, mask_info=None):
 
 
 def prepare_check_masker(shap_config, x_data):
+    '''
+    Extract and check masker info from shap config, use it to create a masker
+    Inputs
+        shap_config - shap config object
+        x_data - numpy array of feature data
+
+    Outputs
+        mask_var - shapley masker object
+    '''
     if shap_config.masker['type'] not in explainer_map[shap_config.explainer]['allowed']:
         log.error('Incompatible masker specified')
         return None
@@ -364,6 +501,16 @@ def prepare_check_masker(shap_config, x_data):
 
 
 def gather_explainer_req(shap_config, x_data):
+    '''
+    Gather required objects and variables to create required explainer
+    Inputs
+        shap_config - shap config object
+        x_data - numpy array of feature data
+
+    Outputs
+        ret_val - 0 list of requested requirements
+                  1 count of unfulfilled requirements
+    '''
     model_req = explainer_map[shap_config.explainer]['requirements']
     requirements = []
     reqs_fulfilled = len(model_req)
@@ -390,8 +537,19 @@ def gather_explainer_req(shap_config, x_data):
     return ret_val
 
 
-def calc_shap_vals(model, shap_config, x_data, num_proc=1):
+def calc_shap_vals(model, shap_config, x_data):
+    '''
+    Calculate shap vals
+    Inputs
+        model - UncoverML model object
+        shap_config - shap config object
+        x_data - feature data for calculation
+
+    Outputs
+        shap_vals - explanation object containing calculated shapley values
+    '''
     def shap_predict(x):
+        # Nested function tor eturn
         pred_vals = predict.predict(x, model)
         return pred_vals
 
@@ -474,108 +632,43 @@ common_x_text_map = {
 }
 
 
-def aggregate_subplot(plot_vals, plot_config, shap_config, **kwargs):
+def aggregate_subplot(plot_vals, plot_type, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
+    output_names = kwargs['output_names']
+    if output_names is None:
+        output_names = [str(i) for i in range(num_plots)]
+
     row_height = 0.4
     plot_height = (plot_vals.shape[1] * row_height) + 1.5
-    plot_width = 20 if plot_config.type == 'bar' else 16
+    plot_width = 20 if plot_type == 'bar' else 16
     fig, axs = plt.subplots(1, num_plots, dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, axs[idx], idx, **kwargs)
+        agg_sub_map[plot_type](current_plot_data, axs[idx], idx, **kwargs, output_name=output_names[idx])
 
     fig.set_size_inches(plot_width, plot_height, forward=True)
-    if plot_config.plot_name is not None:
-        plot_name = plot_config.plot_name
-    else:
-        plot_name = plot_config.type
-
-    common_x_text = common_x_text_map[plot_config.type]
+    common_x_text = common_x_text_map[plot_type]
     fig.text(0.5, 0.01, common_x_text, ha='center')
-    save_plot(fig, plot_name, shap_config)
+    save_plot(fig, plot_type, shap_config)
     plt.clf()
 
 
-def individual_subplot(plot_vals, plot_config, shap_config, **kwargs):
-    num_plots = plot_vals.shape[0]
-    output_dims = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
-
-    # 4 plots per figure, 2x2 grid
-    groups_of_four = divmod(num_plots, 4)
-    num_iter = groups_of_four[0] if groups_of_four[1] == 0 else (groups_of_four[0] + 1)
-    start_idx_list = [i * 4 for i in range(num_iter)]
-    for output_idx in range(output_dims):
-        for start_idx, fig_idx in zip(start_idx_list, list(range(num_iter))):
-            max_idx = plot_vals[:, :, output_idx].shape[0] - 1
-            end_idx = (start_idx + 3) if (start_idx + 3) < max_idx else max_idx
-            current_subplots_vals = plot_vals[start_idx:end_idx, :, output_idx]
-            current_subplots_vals.data = current_subplots_vals.data[start_idx:end_idx, :]
-            num_plots_current_fig = current_subplots_vals.shape[0]
-            nrow = 2 if num_plots_current_fig in [2, 3, 4] else 1
-            ncol = 2 if num_plots_current_fig in [3, 4] else 1
-
-            fig, axs = plt.subplots(nrow, ncol, figsize=(1.920, 1.080), dpi=100)
-            for val_idx in range(num_plots_current_fig):
-                current_plot_data = current_subplots_vals[val_idx]
-                current_plot_data.data = current_plot_data.data[val_idx, :]
-                val_num = start_idx + val_idx + 1
-                plotting_func_map[plot_config.type](current_plot_data, plot_config, np.ravel(axs)[val_idx], val_idx,
-                                                    **kwargs, subplot_idx=val_num)
-
-            if plot_config.plot_name is not None:
-                plot_name = f'{plot_config.plot_name}_output_{output_idx}_value_{fig_idx}'
-            else:
-                plot_name = f'{plot_config.type}_output_{output_idx}_value_{fig_idx}'
-
-            save_plot(fig, plot_name, shap_config)
-            plt.clf()
-
-
-def aggregate_separate(plot_vals, plot_config, shap_config, **kwargs):
+def aggregate_separate(plot_vals, plot_type, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
+    output_names = kwargs['output_names']
+    if output_names is None:
+        output_names = [str(i) for i in range(num_plots)]
+
     fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100, sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_config.type](current_plot_data, plot_config, ax, idx, **kwargs)
+        agg_sep_map[plot_type](current_plot_data, ax, idx, **kwargs, output_name=output_names[idx])
 
-        if plot_config.plot_name is not None:
-            plot_name = f'{plot_config.plot_name}_{idx}'
-        else:
-            plot_name = f'{plot_config.type}_{idx}'
-
-        save_plot(fig, plot_name, shap_config)
+        save_plot(fig, plot_type, shap_config)
         plt.clf()
 
 
-# def force_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
-#     plt.sca(target_ax)
-#     shap.force_plot(plot_data.base_values, shap_values=plot_data.values, features=plot_data.data,
-#                     feature_names=plot_data.feature_names, show=False, matplotlib=True)
-#     if plot_config.plot_title is not None:
-#         current_plot_title = plot_config.plot_title
-#         if 'subplot_idx' in kwargs:
-#             current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
-#
-#         target_ax.title.set_text(current_plot_title)
-#         target_ax.tick_params(axis='both', labelsize=5)
-
-
-def waterfall_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
-    plt.sca(target_ax)
-    shap.waterfall_plot(plot_data)
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'subplot_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['subplot_idx'])
-
-        if 'point_name' in kwargs:
-            current_plot_title = kwargs['point_name'] + '_' + str(kwargs['subplot_idx'])
-
-        target_ax.title.set_text(current_plot_title)
-        target_ax.tick_params(axis='both', labelsize=5)
-
-
-def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
+def summary_plot(plot_data, target_ax, plot_idx, **kwargs):
     plt.sca(target_ax)
     row_height = 0.4
     plot_height = (plot_data.shape[1] * row_height) + 1.5
@@ -590,17 +683,12 @@ def summary_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
         target_ax.axes.yaxis.set_visible(False)
 
     plt.gcf().axes[-1].remove()
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'output_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
-        else:
-            current_plot_title = f'{current_plot_title}_{plot_idx}'
-
-        target_ax.title.set_text(current_plot_title)
+    output_name = kwargs['output_name']
+    current_plot_title = f'Shap Correlation Output {output_name}'
+    target_ax.title.set_text(current_plot_title)
 
 
-def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
+def bar_plot(plot_data, target_ax, **kwargs):
     plt.sca(target_ax)
     shap.plots.bar(plot_data, show=False, max_display=plot_data.shape[1])
     # target_ax.tick_params(axis='both', labelsize=5)
@@ -608,17 +696,13 @@ def bar_plot(plot_data, plot_config, target_ax, plot_idx, **kwargs):
     x_label = x_axis.get_label()
     x_label.set_visible(False)
 
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'output_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
-        else:
-            current_plot_title = f'{current_plot_title}_{plot_idx}'
-
-        target_ax.title.set_text(current_plot_title)
+    target_ax.tick_params(axis='both', labelsize=5)
+    output_name = kwargs['output_name']
+    current_plot_title = f'Shap Correlation Output {output_name}'
+    target_ax.title.set_text(current_plot_title)
 
 
-def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
+def shap_corr_plot(plot_data, target_ax, **kwargs):
     if 'feature_names' in kwargs:
         feature_names = plot_data.feature_names
     else:
@@ -628,149 +712,112 @@ def shap_corr_plot(plot_data, plot_config, target_ax, **kwargs):
     corr_matrix = plot_dataframe.corr()
     sns.heatmap(corr_matrix, cmap='coolwarm', fmt='.1g', annot=False, ax=target_ax)
     target_ax.tick_params(axis='both', labelsize=5)
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'output_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
-
-        target_ax.title.set_text(current_plot_title)
+    output_name = kwargs['output_name']
+    current_plot_title = f'Shap Correlation Output {output_name}'
+    target_ax.title.set_text(current_plot_title)
 
 
-def decision_plot(plot_data, plot_config, target_ax, **kwargs):
-    # plt.sca(target_ax)
+def decision_plot(plot_data, target_ax, **kwargs):
     shap.decision_plot(plot_data.base_values[0], plot_data.values, feature_names=plot_data.feature_names)
     target_ax.tick_params(axis='both', labelsize=5)
-    if plot_config.plot_title is not None:
-        current_plot_title = plot_config.plot_title
-        if 'output_idx' in kwargs:
-            current_plot_title = current_plot_title + '_' + str(kwargs['output_idx'])
-
-        target_ax.title.set_text(current_plot_title)
+    output_name = kwargs['output_name']
+    current_plot_title = f'Polygon Decision {output_name}'
+    target_ax.title.set_text(current_plot_title)
 
 
-def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
-    if 'lon_lat' not in kwargs:
-        log.error('No lon-lat info, cannot plot')
-        return None
-
-    if 'feature_names' in kwargs:
-        feature_names = shap_vals.feature_names
-    else:
-        feature_names = [str(x) for x in range(shap_vals.shape[1])]
-
-    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) > 2 else 1
-    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
-    cm = plt.cm.get_cmap('cool')
-    lon_lat = kwargs['lon_lat']
-    for dim_idx in range(multi_output_dim):
-        for feat_idx in range(len(feature_names)):
-            plot_vals = shap_vals[:, feat_idx, dim_idx]
-            current_plot = ax.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=plot_vals, cmap=cm)
-            fig.colorbar(current_plot)
-
-            current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
-            add_on_string = f'_output_{dim_idx}_feature_{feature_names[feat_idx]}'
-            current_plot_title = current_plot_title + add_on_string
-            ax.title.set_text(current_plot_title)
-            ax.tick_params(axis='both', labelsize=5)
-
-            if plot_config.plot_name is not None:
-                plot_name = plot_config.plot_name
-            else:
-                plot_name = plot_config.type
-
-            save_plot(fig, plot_name, shap_config)
-            fig.clf()
+def to_scientific_notation(number):
+    a, b = '{:.4E}'.format(number).split('E')
+    return '{:.5f}E{:+03d}'.format(float(a)/10, int(b)+1)
 
 
-def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
+def spatial_plot(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     plot_arr = plot_vals.values
     if 'size' in kwargs:
         plot_arr = np.reshape(plot_arr, (kwargs['size'], kwargs['size']))
-    target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
+    im = target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
     max_lat = lon_lats[1].max()
     min_lat = lon_lats[1].min()
-    lat_range = np.linspace(min_lat, max_lat, plot_vals.shape[1])
-    plt.xticks(lat_range)
+    lat_range = np.linspace(min_lat, max_lat, 2*plot_arr.shape[0])
+    lat_range = list(lat_range)
+    x_tick_labels = [to_scientific_notation(lat) for lat in lat_range]
+    target_ax.set_xticklabels(x_tick_labels)
 
     min_lon = lon_lats[0].min()
     max_lon = lon_lats[0].max()
-    lon_range = np.linspace(min_lon, max_lon, plot_vals.shape[1])
-    plt.yticks(lon_range)
+    lon_range = np.linspace(min_lon, max_lon, 2*plot_arr.shape[1])
+    lon_range = list(lon_range)
+    y_tick_labels = [to_scientific_notation(lon) for lon in lon_range]
+    target_ax.set_yticklabels(y_tick_labels)
 
     target_ax.set_title(feature_name)
 
-
-def scatter_plot(shap_vals, plot_config, shap_config, **kwargs):
-    if 'feature_names' in kwargs:
-        feature_names = shap_vals.feature_names
-    else:
-        feature_names = [str(x) for x in range(shap_vals.shape[1])]
-
-    if plot_config.plot_features is None:
-        log.error('No plot features provided, cannot plot')
-        return None
-
-    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
-    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) else 1
-    for dim_idx in range(multi_output_dim):
-        for feat in plot_config.plot_features:
-            inter_feat = feat[1] if len(feat) == 2 else 'auto'
-            plot_vals = shap_vals[:, :, dim_idx]
-            shap.dependence_plot(feat[0], plot_vals.values, plot_vals.data, feature_names=feature_names,
-                                 interaction_index=inter_feat, show=False, ax=ax)
-
-            current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
-            add_on_string = f'_feature_{feature_names[feat_idx]}_output_{dim_idx}'
-            current_plot_title = current_plot_title + add_on_string
-            ax.title.set_text(current_plot_title)
-            ax.tick_params(axis='both', labelsize=5)
-
-            if plot_config.plot_name is not None:
-                plot_name = plot_config.plot_name
-            else:
-                plot_name = plot_config.type
-
-            save_plot(fig, plot_name, shap_config)
-            fig.clf()
+    return im
 
 
-plotting_func_map = {
+def aggregate_feature_subplots(shap_vals, plot_type, shap_config, lon_lats, **kwargs):
+    num_fig = shap_vals.shape[2] if len(shap_vals.shape) > 2 else 1
+
+    n_rows, n_cols = select_subplot_grid_dims(point_poly_vals.shape[1])
+    plot_width = 5 * n_cols
+    plot_height = 5 * n_rows
+    for fig_idx in range(num_fig):
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=(plot_width, plot_height), dpi=250)
+        if output_names is not None:
+            current_output_name = output_names[fig_idx]
+        else:
+            current_output_name = fig_idx
+
+        for feat_idx in range(shap_vals.shape[1]):
+            current_feature_name = shap_vals.feature_names[feat_idx]
+            current_plot_vals = shap_vals[:, feat_idx, fig_idx]
+            current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
+
+            if plot_type == 'spatial':
+                dependence_plot(current_feature_name, current_plot_vals, np.ravel(axs)[feat_idx], **kwargs)
+            elif plot_type == 'scatter':
+                spatial_plot(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
+                             **kwargs)
+
+        fig.suptitle(f'Polygon {plot_type} plot Output {current_output_name}')
+        plot_name = f'polygon_{plot_type}_{current_output_name}'
+        Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
+        plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
+        fig.tight_layout()
+        fig.savefig(plot_save_path, dpi=250)
+        plt.clf()
+
+
+agg_sub_map = {
     'summary': summary_plot,
-    'bar': bar_plot,
+    'bar': bar_plot
+}
+
+agg_sep_map = {
     'decision': decision_plot,
-    'shap_corr': shap_corr_plot,
-    'waterfall': waterfall_plot
-}
-
-plotting_type_map = {
-    'summary': aggregate_subplot,
-    'bar': aggregate_subplot,
-    'decision': aggregate_separate,
-    'shap_corr': aggregate_separate,
-    'spatial': spatial_plot,
-    'scatter': scatter_plot,
-    'waterfall': individual_subplot
+    'shap_corr': shap_corr_plot
 }
 
 
-def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
+def generate_plots_poly(shap_vals, shap_config, lon_lats, **kwargs):
     if kwargs['feature_names'] is None:
         log.warning('Feature names not provided, plots might be confusing')
     else:
         shap_vals.feature_names = kwargs['feature_names']
 
-    current_plot_idx = 1
-    for current_plot_config in plot_config_list:
-        progress_message = f'Generating plot {current_plot_idx} of {len(plot_config_list)}'
-        print(progress_message)
-        plot_vals = shap_vals
-        if current_plot_config.output_idx is not None:
-            plot_vals = shap_vals[:, :, current_plot_config.output_idx]
+    output_names = None
+    if len(shap_vals.shape) > 2:
+        if shap_config.output_names is not None:
+            output_names = shap_config.output_names
+        else:
+            output_names = [str(i) for i in range(shap_vals.shape[2])]
 
-        plotting_type_map[current_plot_config.type](plot_vals, current_plot_config, shap_config, **kwargs)
-        current_plot_idx += 1
+    aggregate_subplot(shap_vals, 'summary', shap_config, **kwargs, output_names=output_names)
+    aggregate_subplot(shap_vals, 'bar', shap_config, **kwargs, output_names=output_names)
+    aggregate_separate(shap_vals, 'decision', shap_config, **kwargs, output_names=output_names)
+    aggregate_separate(shap_vals, 'shap_corr', shap_config, **kwargs, output_names=output_names)
+    aggregate_feature_subplots(shap_vals, 'scatter', shap_config, lon_lats, **kwargs, output_names=output_names)
+    aggregate_feature_subplots(shap_vals, 'spatial', shap_config, lon_lats, **kwargs, output_names=output_names)
 
 
 def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, **kwargs):
@@ -783,14 +830,16 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
             val.feature_names = feature_names
 
     for idx, name in enumerate(name_list):
-        print(f'Generating plot {idx + 1} of {len(name_list)}')
+        print(f'Plotting point {idx + 1} of {len(name_list)}')
         current_point_poly_vals = shap_vals_dict[name]
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
         if 'lon_lats' in kwargs:
+            log.info(f'Creating spatial plot for {name}')
             current_lon_lats = kwargs['lon_lats'][name]
-            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config)
+            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config,
+                               output_names=kwargs['output_names'])
 
 
 def ax_tidy_point_poly(target_ax, plot_title, padding=None):
@@ -908,9 +957,10 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
             current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
             current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
             size = int(math.sqrt(current_plot_vals.shape[0]))
-            spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
+            im = spatial_plot(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
                              size=size)
 
+        fig.colorbar(im, ax=axs.ravel().tolist())
         fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')
         plot_name = f'spatial_poly_point_{name}_{current_output_name}'
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
