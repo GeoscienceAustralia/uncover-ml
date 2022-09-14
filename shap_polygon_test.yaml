@@ -6,3 +6,6 @@ save:
   name: shap_vals_poly_small
 masker:
         type: independent
+plots:
+  - placeholder
+load_file: gbquantile/shap/shap_vals_poly_small.data
