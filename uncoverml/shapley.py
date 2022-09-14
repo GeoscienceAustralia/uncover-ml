@@ -60,6 +60,14 @@ Properties for shap config
 
 
 def intersect_shp(single_row_df, image_source_dir, **kwargs):
+    # Intersect polygon or single point
+    # Inputs
+    #   single_row_df - single row from geopandas dataframe containing geometry to intersect
+    #   image_source_dir - file path to feature geotiff
+    #
+    # Outputs
+    #   out_image - numpy array with values for intersected pixels
+    #   lon_lats - numpy array of coordinates for intersected pixels
     geoms = single_row_df.geometry.values[0]
     geoms = [mapping(geoms)]
     # extract the raster values within the polygon
@@ -68,6 +76,7 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         no_data = src.nodata
 
     data = out_image[0]
+    shape = data.shape
     lon_lat = None
     if kwargs['type'] == 'poly':
         row, col = np.where(~np.isnan(data[0]))
@@ -75,22 +84,22 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
         v_func = np.vectorize(rc2xy)
         lon_lat = v_func(row, col)
 
-    return out_image, lon_lat
+    return out_image, lon_lat, shape
 
 
 def get_data_points(loaded_shapefile, image_source):
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
-        (result, lon_lat) = intersect_shp(single_row_df, image_source, type='points')
+        (result, lon_lat, shape) = intersect_shp(single_row_df, image_source, type='points')
         res_list.append(result)
 
     return np.concatenate(res_list)
 
 
 def get_data_polygon(loaded_shapefile, image_source):
-    (result, lon_lat) = intersect_shp(loaded_shapefile, image_source, type='poly')
-    return result, lon_lat
+    (result, lon_lat, shape) = intersect_shp(loaded_shapefile, image_source, type='poly')
+    return result, lon_lat, shape
 
 
 def image_feature_sets_shap(shap_config, main_config):
@@ -108,9 +117,9 @@ def image_feature_sets_shap(shap_config, main_config):
             if shap_config.shapefile['type'] == 'points':
                 x = get_data_points(loaded_shapefile, name)
             else:
-                x, lon_lats = get_data_polygon(loaded_shapefile, name)
+                x, lon_lats, shape = get_data_polygon(loaded_shapefile, name)
                 coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
-                coords[coord_name] = lon_lats
+                coords[coord_name] = (lon_lats, shape)
 
             val_count = x.size
             # print(f'{tif}: {val_count}')
@@ -577,7 +586,7 @@ def spatial_plot(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     plot_arr = plot_vals.values
     if 'size' in kwargs:
         plot_arr = np.reshape(plot_arr, (kwargs['size'], kwargs['size']))
-    target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
+    im = target_ax.imshow(plot_arr, interpolation='nearest', cmap=plt.cm.get_cmap('jet'))
 
     max_lat = lon_lats[1].max()
     min_lat = lon_lats[1].min()
@@ -595,12 +604,7 @@ def spatial_plot(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
 
     target_ax.set_title(feature_name)
 
-
-def dependence_plot(feature_name, plot_data, target_ax, **kwargs):
-    second_feature = kwargs['second_feature'] if 'second_feature' in kwargs else 'auto'
-    shap.dependence_plot(feature_name, plot_data.values, plot_data.data, feature_names=kwargs['feature_names'],
-                         interaction_index=second_feature, show=False, ax=target_ax)
-    target_ax.tick_params(axis='both', labelsize=5)
+    return im
 
 
 def aggregate_feature_subplots(shap_vals, plot_type, shap_config, lon_lats, **kwargs):
@@ -664,8 +668,8 @@ def generate_plots_poly(shap_vals, shap_config, lon_lats, **kwargs):
     aggregate_subplot(shap_vals, 'bar', shap_config, **kwargs, output_names=output_names)
     aggregate_separate(shap_vals, 'decision', shap_config, **kwargs, output_names=output_names)
     aggregate_separate(shap_vals, 'shap_corr', shap_config, **kwargs, output_names=output_names)
-    aggregate_feature_subplots(shap_vals, 'spatial', shap_config, lon_lats, **kwargs, output_names=output_names)
     aggregate_feature_subplots(shap_vals, 'scatter', shap_config, lon_lats, **kwargs, output_names=output_names)
+    aggregate_feature_subplots(shap_vals, 'spatial', shap_config, lon_lats, **kwargs, output_names=output_names)
 
 
 def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, **kwargs):
@@ -805,9 +809,10 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
             current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
             current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
             size = int(math.sqrt(current_plot_vals.shape[0]))
-            spatial_plot(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
+            im = spatial_plot(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
                              size=size)
 
+        fig.colorbar(im, ax=axs.ravel().tolist())
         fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')
         plot_name = f'spatial_poly_point_{name}_{current_output_name}'
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
