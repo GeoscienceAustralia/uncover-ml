@@ -113,7 +113,7 @@ def image_feature_sets_shap(shap_config, main_config):
                 coords[coord_name] = lon_lats
 
             val_count = x.size
-            print(f'{tif}: {val_count}')
+            # print(f'{tif}: {val_count}')
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
             # TODO this may hurt performance. Consider removal
@@ -169,7 +169,7 @@ def load_point_poly_data(shap_config, main_config):
     out_result = {}
     out_coords = {}
     for name in name_list:
-        print(f'Getting data for {name}')
+        log.info(f'Getting data for {name}')
         current_row = loaded_shapefile[loaded_shapefile['Name'] == name]
         current_poly_data, current_coords = gen_poly_data(current_row, shap_config, main_config)
         out_result[name] = current_poly_data
@@ -764,7 +764,7 @@ def generate_plots(plot_config_list, shap_vals, shap_config, **kwargs):
     current_plot_idx = 1
     for current_plot_config in plot_config_list:
         progress_message = f'Generating plot {current_plot_idx} of {len(plot_config_list)}'
-        print(progress_message)
+        log.info(progress_message)
         plot_vals = shap_vals
         if current_plot_config.output_idx is not None:
             plot_vals = shap_vals[:, :, current_plot_config.output_idx]
@@ -783,12 +783,13 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
             val.feature_names = feature_names
 
     for idx, name in enumerate(name_list):
-        print(f'Generating plot {idx + 1} of {len(name_list)}')
+        log.info(f'Plotting point {idx + 1} of {len(name_list)}')
         current_point_poly_vals = shap_vals_dict[name]
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
         if 'lon_lats' in kwargs:
+            log.info(f'Creating spatial plot for {name}')
             current_lon_lats = kwargs['lon_lats'][name]
             spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config)
 
