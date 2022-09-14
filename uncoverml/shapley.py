@@ -692,12 +692,16 @@ def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     max_lat = lon_lats[1].max()
     min_lat = lon_lats[1].min()
     lat_range = np.linspace(min_lat, max_lat, plot_arr.shape[0])
-    plt.xticks(lat_range)
+    lat_range = lat_range.to_list()
+    x_tick_labels = [str(lat) for lat in lat_range]
+    target_ax.set_xticklabels(x_tick_labels)
 
     min_lon = lon_lats[0].min()
     max_lon = lon_lats[0].max()
     lon_range = np.linspace(min_lon, max_lon, plot_arr.shape[1])
-    plt.yticks(lon_range)
+    lon_range = lon_range.to_list()
+    y_tick_labels = [str(lon) for lon in lon_range]
+    target_ax.set_yticklabels(y_tick_labels)
 
     target_ax.set_title(feature_name)
 
@@ -791,7 +795,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
         if 'lon_lats' in kwargs:
             log.info(f'Creating spatial plot for {name}')
             current_lon_lats = kwargs['lon_lats'][name]
-            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config)
+            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config, **kwargs)
 
 
 def ax_tidy_point_poly(target_ax, plot_title, padding=None):
