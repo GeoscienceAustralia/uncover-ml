@@ -404,7 +404,7 @@ class ShapConfig:
 
         # List of short feature names
         self.feature_names = None
-        self.set_feature_names(s, main_config)
+        self.set_feature_names(s)
 
     def set_file_names(self, config):
         # Use the info from the main config to get feature file names
@@ -549,6 +549,7 @@ def calc_shap_vals(model, shap_config, x_data):
         shap_vals - explanation object containing calculated shapley values
     '''
     def shap_predict(x):
+        # Nested function tor eturn
         pred_vals = predict.predict(x, model)
         return pred_vals
 
