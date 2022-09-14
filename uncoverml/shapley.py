@@ -635,8 +635,8 @@ def aggregate_feature_subplots(shap_vals, plot_type, shap_config, lon_lats, **kw
 
 
 def generate_plots_poly(shap_vals, shap_config, lon_lats, **kwargs):
-    if kwargs['feature_names'] is None:
-        log.warning('Feature names not provided, plots might be confusing')
+    if 'feature_names' not in kwargs:
+        shap_vals.feature_names = shap_config.feature_names
     else:
         shap_vals.feature_names = kwargs['feature_names']
 
