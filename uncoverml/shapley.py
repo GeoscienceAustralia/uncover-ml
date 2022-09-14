@@ -88,6 +88,15 @@ def intersect_shp(single_row_df, image_source_dir, **kwargs):
 
 
 def get_data_points(loaded_shapefile, image_source):
+    '''
+    Intersect multiple points and combine the result
+    Inputs
+        loaded_shapefile - geopandas df with intersection geometries
+        image_source - path to feature geotiff
+
+    Outputs
+        res_list - numpy array of concatenated pixel values for points
+    '''
     res_list = []
     for idx, row in loaded_shapefile.iterrows():
         single_row_df = loaded_shapefile.iloc[[idx]]
@@ -98,11 +107,33 @@ def get_data_points(loaded_shapefile, image_source):
 
 
 def get_data_polygon(loaded_shapefile, image_source):
+    '''
+    Intersect single polygon
+    Inputs
+        loaded_shapefile - geopandas df with intersection geometries
+        image_source - path to feature geotiff
+
+    Outputs
+        result - numpy array of intersected pixel values for polygon
+        lon_lat - numpy array coordinates for intersected pixels
+        shape - shape of intersected numpy array in pixels
+    '''
     (result, lon_lat, shape) = intersect_shp(loaded_shapefile, image_source, type='poly')
     return result, lon_lat, shape
 
 
 def image_feature_sets_shap(shap_config, main_config):
+    '''
+    Perform geometry intersection for all features
+    Inputs
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        results - order dictionary of intersected numpy arrays for each feature
+        OPTIONAL name_list - list of point names for point calculation
+        OPTIONAL coords - dictionary of coordinate arrays for each intersected feature
+    '''
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = None
     if shap_config.shapefile['type'] == 'points':
@@ -150,6 +181,17 @@ def image_feature_sets_shap(shap_config, main_config):
 
 
 def load_data_shap(shap_config, main_config):
+    '''
+        Intersect features, transform and return
+        Inputs
+            shap_config - shap calclation config
+            main_config - main uncoverml model config
+
+        Outputs
+            x_all - numpy array of transformed feature values
+            OPTIONAL name_list - list of point names for point calculation
+            OPTIONAL coords - dictionary of coordinate arrays for each intersected feature
+        '''
     image_chunk_sets = image_feature_sets_shap(shap_config, main_config)
     name_list = None
     coords = None
@@ -172,6 +214,16 @@ def load_data_shap(shap_config, main_config):
 
 
 def load_point_poly_data(shap_config, main_config):
+    '''
+    Loop through each named point and get the feature data for that point
+    Inputs
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        out_result - numpy array for intersected and expanded pixel window
+        out_coords - numpy array of coordinates for area in out_result
+    '''
     loaded_shapefile = gpd.read_file(shap_config.shapefile['dir'])
     name_list = loaded_shapefile['Name'].to_list()
 
@@ -188,6 +240,17 @@ def load_point_poly_data(shap_config, main_config):
 
 
 def gen_poly_data(single_row_df, shap_config, main_config):
+    '''
+    Get data and transform for a single named point
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        shap_config - shap calclation config
+        main_config - main uncoverml model config
+
+    Outputs
+        x_all - numpy array of intersected, expanded, transformed feature data
+        coords - numpy array of coords for area represented by x_all
+    '''
     size = shap_config.shapefile['size']
     image_chunk_sets, coords = gen_poly_from_point(single_row_df, main_config, size, shap_config)
     transform_sets = [k.transform_set for k in main_config.feature_sets]
@@ -200,6 +263,19 @@ def gen_poly_data(single_row_df, shap_config, main_config):
 
 
 def gen_poly_from_point(single_row_df, main_config, size, shap_config):
+    '''
+    Loop through features, intersect point and create expanded area for a given
+    named point
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        main_config - main uncoverml model config
+        size - size for creation of size x size pixel grid area
+        shap_config - shap calclation config
+
+    Outputs
+        results - numpy array of intersected and expanded data
+        coords - coordinates representing area in results
+    '''
     results = []
     coords = {}
     for s in main_config.feature_sets:
@@ -235,6 +311,17 @@ def gen_poly_from_point(single_row_df, main_config, size, shap_config):
 
 
 def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
+    '''
+    Intersected point and expand grid around it
+    Inputs
+        single_row_df - single row from geopandas dataframe representing single named point
+        size - size for creation of size x size pixel grid area
+        image_source - path to feature geotiff
+
+    Outputs
+        out_image - numpy array with values for intersected pixels
+        lon_lats - numpy array of coordinates for intersected pixels
+    '''
     single_point = single_row_df.geometry.values[0]
     with rasterio.open(image_source_dir) as src:
         py, px = src.index(single_point.x, single_point.y)
@@ -250,29 +337,36 @@ def intersect_point_neighbourhood(single_row_df, size, image_source_dir):
 
 
 class ShapConfig:
-    # REMEMBER, DATA AND FEATURE NAMES CAN BE ACCESSED FROM THE MAIN CONFIG
+    # Class that contains needed information for shap calculation and plotting
     def __init__(self, yaml_file, main_config):
+        # Load config YAML
         with open(yaml_file, 'r') as f:
             s = yaml.safe_load(f)
         self.name = path.basename(yaml_file).rsplit(".", 1)[0]
 
+        # Get the explainer type
         if 'explainer' in s:
             self.explainer = s['explainer']
         else:
             self.explainer = None
             log.error('No explainer provided, cannot calculate Shapley values')
 
+        # Get the shapefile representing calculation region
         if 'shapefile' in s:
             self.shapefile = s['shapefile']
         else:
             self.shapefile = None
             log.error('No shapefile provided, calculation will fail')
 
+        # Additional explainer arguements
         self.explainer_kwargs = s['explainer_kwargs'] if 'explainer_kwargs' in s else None
+        # Start and end row for calculation
         self.calc_start_row = s['calc_start_row'] if 'calc_start_row' in s else None
         self.calc_end_row = s['calc_end_row'] if 'calc_end_row' in s else None
+        # Masker type
         self.masker = s['masker'] if 'masker' in s else None
 
+        # Get the output path for saving results
         if 'output_path' in s:
             self.output_path = s['output_path']
         elif hasattr(main_config, 'output_dir'):
@@ -281,6 +375,7 @@ class ShapConfig:
             self.output_path = None
             logging.error('No output path, exception will be thrown when saving')
 
+        # Get list of plot config, TO BE REMOVED
         self.plot_config_list = None
         if 'plots' in s:
             plot_configs = s['plots']
@@ -289,23 +384,32 @@ class ShapConfig:
             log.warning('No plots will be created')
             self.plot_config_list = None
 
+        # Names of model prediction outputs
         self.output_names = s['output_names'] if 'output_names' in s else None
+        # Path where feature files are saved
         self.feature_path = s['feature_path'] if 'feature_path' in s else None
+        # File from which pre-calculated shap values can be loaded
         self.load_file = s['load_file'] if 'load_file' in s else None
 
+        # Options for saving calculated shap values
         if 'save' in s:
             self.do_save = True
             self.save_name = s['save']['name']
         else:
             self.do_save = False
 
+        # List of feature file names
         self.file_names = None
         self.set_file_names(main_config)
 
+        # List of short feature names
         self.feature_names = None
         self.set_feature_names(s, main_config)
 
     def set_file_names(self, config):
+        # Use the info from the main config to get feature file names
+        # Inputs
+        #   config - Main UncoverML config
         file_names = []
         for s in config.feature_sets:
             for tif in s.files:
@@ -314,19 +418,24 @@ class ShapConfig:
 
         self.file_names = file_names
 
-    def set_feature_names(self, yaml_file, config):
+    def set_feature_names(self, yaml_file):
+        # Add short feature names into shap config
+        # Inputs
+        #   yaml_file - YAML file containing shap config info
         if 'feature_names' in yaml_file:
             self.feature_names = yaml_file['feature_names']
         elif self.feature_path is not None:
             self.feature_names = self.file_names
 
 
+# Dictionary mapping explainers by string
 explainer_map = {
     'explainer': {'function': shap.Explainer,
                   'requirements': ['masker'],
                   'allowed': ['independent', 'partition', 'data', 'list']}
 }
 
+# Dictionary mapping maskers by string
 masker_map = {
     'independent': shap.maskers.Independent,
     'partition': shap.maskers.Partition
@@ -334,7 +443,16 @@ masker_map = {
 
 
 def select_masker(mask_type, mask_data, mask_info=None):
-    # Might nest this into prepare_check_masker later
+    '''
+    Initialise a masker from provided information
+    Inputs
+        mask_type - string of masker type
+        mask_data - feature data to be used for masking
+        mask_info - OPTIONAL additional information for creating masker
+
+    Outputs
+        masker - masker object to be used with explainer
+    '''
     masker = None
     if mask_type in ['independent', 'partition']:
         if (mask_info is not None) and ('kwargs' in mask_info):
@@ -348,6 +466,15 @@ def select_masker(mask_type, mask_data, mask_info=None):
 
 
 def prepare_check_masker(shap_config, x_data):
+    '''
+    Extract and check masker info from shap config, use it to create a masker
+    Inputs
+        shap_config - shap config object
+        x_data - numpy array of feature data
+
+    Outputs
+        mask_var - shapley masker object
+    '''
     if shap_config.masker['type'] not in explainer_map[shap_config.explainer]['allowed']:
         log.error('Incompatible masker specified')
         return None
@@ -374,6 +501,16 @@ def prepare_check_masker(shap_config, x_data):
 
 
 def gather_explainer_req(shap_config, x_data):
+    '''
+    Gather required objects and variables to create required explainer
+    Inputs
+        shap_config - shap config object
+        x_data - numpy array of feature data
+
+    Outputs
+        ret_val - 0 list of requested requirements
+                  1 count of unfulfilled requirements
+    '''
     model_req = explainer_map[shap_config.explainer]['requirements']
     requirements = []
     reqs_fulfilled = len(model_req)
@@ -400,7 +537,17 @@ def gather_explainer_req(shap_config, x_data):
     return ret_val
 
 
-def calc_shap_vals(model, shap_config, x_data, num_proc=1):
+def calc_shap_vals(model, shap_config, x_data):
+    '''
+    Calculate shap vals
+    Inputs
+        model - UncoverML model object
+        shap_config - shap config object
+        x_data - feature data for calculation
+
+    Outputs
+        shap_vals - explanation object containing calculated shapley values
+    '''
     def shap_predict(x):
         pred_vals = predict.predict(x, model)
         return pred_vals
