@@ -648,42 +648,12 @@ def decision_plot(plot_data, plot_config, target_ax, **kwargs):
         target_ax.title.set_text(current_plot_title)
 
 
-def spatial_plot(shap_vals, plot_config, shap_config, **kwargs):
-    if 'lon_lat' not in kwargs:
-        log.error('No lon-lat info, cannot plot')
-        return None
-
-    if 'feature_names' in kwargs:
-        feature_names = shap_vals.feature_names
-    else:
-        feature_names = [str(x) for x in range(shap_vals.shape[1])]
-
-    multi_output_dim = shap_vals.shape[2] if len(shap_vals.shape) > 2 else 1
-    fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100)
-    cm = plt.cm.get_cmap('cool')
-    lon_lat = kwargs['lon_lat']
-    for dim_idx in range(multi_output_dim):
-        for feat_idx in range(len(feature_names)):
-            plot_vals = shap_vals[:, feat_idx, dim_idx]
-            current_plot = ax.scatter(lon_lat[:, 0], lon_lat[:, 1], s=10, c=plot_vals, cmap=cm)
-            fig.colorbar(current_plot)
-
-            current_plot_title = plot_config.plot_title if plot_config.plot_title is not None else ''
-            add_on_string = f'_output_{dim_idx}_feature_{feature_names[feat_idx]}'
-            current_plot_title = current_plot_title + add_on_string
-            ax.title.set_text(current_plot_title)
-            ax.tick_params(axis='both', labelsize=5)
-
-            if plot_config.plot_name is not None:
-                plot_name = plot_config.plot_name
-            else:
-                plot_name = plot_config.type
-
-            save_plot(fig, plot_name, shap_config)
-            fig.clf()
+def to_scientific_notation(number):
+    a, b = '{:.4E}'.format(number).split('E')
+    return '{:.5f}E{:+03d}'.format(float(a)/10, int(b)+1)
 
 
-def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
+def spatial_plot(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     plot_arr = plot_vals.values
     if 'size' in kwargs:
         plot_arr = np.reshape(plot_arr, (kwargs['size'], kwargs['size']))
@@ -692,15 +662,15 @@ def spatial_plot_new(feature_name, target_ax, plot_vals, lon_lats, **kwargs):
     max_lat = lon_lats[1].max()
     min_lat = lon_lats[1].min()
     lat_range = np.linspace(min_lat, max_lat, plot_arr.shape[0])
-    lat_range = lat_range.to_list()
-    x_tick_labels = [str(lat) for lat in lat_range]
+    lat_range = list(lat_range)
+    x_tick_labels = [to_scientific_notation(lat) for lat in lat_range]
     target_ax.set_xticklabels(x_tick_labels)
 
     min_lon = lon_lats[0].min()
     max_lon = lon_lats[0].max()
     lon_range = np.linspace(min_lon, max_lon, plot_arr.shape[1])
-    lon_range = lon_range.to_list()
-    y_tick_labels = [str(lon) for lon in lon_range]
+    lon_range = list(lon_range)
+    y_tick_labels = [to_scientific_notation(lon) for lon in lon_range]
     target_ax.set_yticklabels(y_tick_labels)
 
     target_ax.set_title(feature_name)
@@ -914,7 +884,7 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
             current_plot_vals = point_poly_vals[:, feat_idx, fig_idx]
             current_lon_lats = lon_lats[shap_config.file_names[feat_idx]]
             size = int(math.sqrt(current_plot_vals.shape[0]))
-            spatial_plot_new(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
+            spatial_plot(current_feature_name, np.ravel(axs)[feat_idx], current_plot_vals, current_lon_lats,
                              size=size)
 
         fig.suptitle(f'Multiple Point Spatial Plot {name} Output {current_output_name}')
