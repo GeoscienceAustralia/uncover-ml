@@ -487,8 +487,7 @@ def aggregate_subplot(plot_vals, plot_type, shap_config, **kwargs):
     fig, axs = plt.subplots(1, num_plots, dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_type](current_plot_data, axs[idx], idx,
-                                            **kwargs, output_names=output_names)
+        agg_sub_map[plot_type](current_plot_data, axs[idx], idx, **kwargs, output_names=output_names)
 
     fig.set_size_inches(plot_width, plot_height, forward=True)
     common_x_text = common_x_text_map[plot_type]
@@ -502,7 +501,7 @@ def aggregate_separate(plot_vals, plot_type, shap_config, **kwargs):
     fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100, sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        plotting_func_map[plot_type](current_plot_data, ax, idx,
+        agg_sep_map[plot_type](current_plot_data, ax, idx,
                                      **kwargs, output_names=output_names)
 
         save_plot(fig, plot_type, shap_config)
@@ -632,6 +631,17 @@ def aggregate_feature_subplots(shap_vals, plot_type, shap_config, lon_lats, **kw
         fig.tight_layout()
         fig.savefig(plot_save_path, dpi=250)
         plt.clf()
+
+
+agg_sub_map = {
+    'summary': summary_plot,
+    'bar': bar_plot
+}
+
+agg_sep_map = {
+    'decision': decision_plot,
+    'shap_corr': shap_corr_plot
+}
 
 
 def generate_plots_poly(shap_vals, shap_config, lon_lats, **kwargs):

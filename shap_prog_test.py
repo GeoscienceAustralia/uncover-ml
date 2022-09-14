@@ -78,5 +78,11 @@ def shapley_cli(model_file, shapley_yaml):
 
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
+
+    # Poly
     shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_polygon_test.yaml'
     shapley_cli(model_config_file, shap_yaml)
+
+    # Point
+    # shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_point_test.yaml'
+    # shapley_cli(model_config_file, shap_yaml)
