@@ -487,7 +487,7 @@ def aggregate_subplot(plot_vals, plot_type, shap_config, **kwargs):
     fig, axs = plt.subplots(1, num_plots, dpi=100)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        agg_sub_map[plot_type](current_plot_data, axs[idx], idx, **kwargs, output_names=output_names)
+        agg_sub_map[plot_type](current_plot_data, axs[idx], idx, **kwargs, output_name=output_names[idx])
 
     fig.set_size_inches(plot_width, plot_height, forward=True)
     common_x_text = common_x_text_map[plot_type]
@@ -498,11 +498,14 @@ def aggregate_subplot(plot_vals, plot_type, shap_config, **kwargs):
 
 def aggregate_separate(plot_vals, plot_type, shap_config, **kwargs):
     num_plots = plot_vals.shape[2] if len(plot_vals.shape) > 2 else 1
+    output_names = kwargs['output_names']
+    if output_names is None:
+        output_names = [str(i) for i in range(num_plots)]
+
     fig, ax = plt.subplots(figsize=(1.920, 1.080), dpi=100, sharey=True)
     for idx in range(num_plots):
         current_plot_data = plot_vals[:, :, idx] if num_plots > 1 else plot_vals
-        agg_sep_map[plot_type](current_plot_data, ax, idx,
-                                     **kwargs, output_names=output_names)
+        agg_sep_map[plot_type](current_plot_data, ax, idx, **kwargs, output_name=output_names[idx])
 
         save_plot(fig, plot_type, shap_config)
         plt.clf()
