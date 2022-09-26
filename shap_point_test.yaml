@@ -27,7 +27,6 @@ feature_names:
   - Solar_rad
   - D_Coast
   - Elevation
-  - D_Meso
   - MRVB
   - WII
   - Ratio_K_Th
