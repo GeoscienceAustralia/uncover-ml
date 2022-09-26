@@ -3,7 +3,13 @@ import logging
 import numpy as np
 import scipy.spatial
 
+import matplotlib
+import matplotlib.pyplot as plt
+
+import rasterio
+
 from uncoverml import mpiops
+from uncoverml.shapley import select_subplot_grid_dims
 
 log = logging.getLogger(__name__)
 
@@ -507,5 +513,102 @@ def compute_n_classes(classes, config):
     k = mpiops.comm.allreduce(np.amax(classes), op=mpiops.MPI.MAX)
     k = int(max(k, config.n_classes))
     return k
+
+
+def extract_data_coords(image_source):
+    with rasterio.open(image_source) as src:
+        no_data = src.nodata
+        lon = []
+        lat = []
+        vals = []
+        for x, y in np.ndindex(src.shape):
+            if src[x, y] != no_data:
+                current_lon_lat = src.xy(x, y)
+                lon.append(current_lon_lat[0])
+                lat.append(current_lon_lat[1])
+                current_val = src[x, y]
+                vals.append(current_val)
+
+        vals = np.array(vals)
+        lon_lat = (np.array(lon), np.array(lat))
+        return vals, lon_lat
+
+
+def extract_features_lon_lat(main_config):
+    results = []
+    coords = {}
+
+    for s in main_config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            name = path.abspath(tif)
+            x, lon_lat = extract_data_coords(name)
+            coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
+            coords[coord_name] = lon_lat
+            val_count = x.size
+            x = np.reshape(x, (val_count, 1, 1, 1))
+            x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+        extracted_chunks = OrderedDict(sorted(
+            extracted_chunks.items(), key=lambda t: t[0]))
+
+        results.append(extracted_chunks)
+
+    return results, coords
+
+
+def center_dist_plot(dist_mat):
+    fig, ax = plt.subplots()
+    ax.matshow(dist_mat, cmap='seismic')
+
+    for (i, j), z in np.ndenumerate(dist_mat):
+        ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
+
+    # THEN SAVE THE PLOT
+
+
+def calc_cluster_dist(centres):
+    # This is not an efficient implementation
+    # Will change this to be better later
+    output_mat = np.zeros(centres.shape[0], centres.shape[0])
+    for iy, ix in np.ndindex(output_mat.shape):
+        cent_one = centres[iy, :]
+        cent_two = centres[ix, :]
+        current_dist = np.linalg.norm(cent_one - cent_two)
+        output_mat[iy, ix] = current_dist
+
+    return output_mat
+
+
+def spatial_clusters(lon_lat, classified):
+    fig, ax = plt.subplots()
+    ax.scatter(lon_lat[1], lon_lat[0], c=classified)
+    # THEN SAVE THE PLOT
+
+
+def feature_scatters(x_data, classified):
+    num_plots = x_data.shape[1]
+    n_row, n_col = select_subplot_grid_dims(num_plots)
+    plot_width = 5 * n_col
+    plot_height = 5 * n_row
+    fig, axs = plt.subplots(n_row, n_col, figsize=(plot_width, plot_height), dpi=250)
+    for feat_idx in range(num_plots):
+        current_plot_data = x_data[:, feat_idx]
+        current_ax = np.ravel(axs)[feat_idx]
+        current_ax.scatter(classified, current_plot_data, c=classified)
+
+    # Save plot and done
+
+
+def generate_save_plots(config, x_data, model, lon_lat):
+    output_path = config.output_dir
 
 

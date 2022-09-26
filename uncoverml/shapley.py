@@ -549,7 +549,7 @@ def calc_shap_vals(model, shap_config, x_data):
         shap_vals - explanation object containing calculated shapley values
     '''
     def shap_predict(x):
-        # Nested function tor eturn
+        # Nested function to return predictions
         pred_vals = predict.predict(x, model)
         return pred_vals
 
@@ -589,6 +589,7 @@ def calc_shap_vals(model, shap_config, x_data):
 
 
 class PlotConfig:
+    # Contains for plot info, to be removed
     def __init__(self, plot_dict):
         if 'plot_name' in plot_dict:
             self.plot_name = plot_dict['plot_name']
@@ -620,6 +621,7 @@ Types of plot:
 
 
 def save_plot(fig, plot_name, shap_config):
+    # Plot saving function
     Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
     plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
     plt.tight_layout(pad=3)
