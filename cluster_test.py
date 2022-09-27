@@ -5,7 +5,7 @@ from uncoverml import config
 
 from uncoverml.transforms import StandardiseTransform
 
-def kmeans(config_file):
+def kmeans(config_file, subsample_fraction):
     current_config = config.Config(config_file)
 
     for f in current_config.feature_sets:
@@ -41,4 +41,5 @@ def kmeans(config_file):
 
 if __name__ == '__main__':
     cluster_config = './cluster_test.yaml'
-    kmeans(cluster_config)
+    subsample_frac = 1
+    kmeans(cluster_config, subsample_frac)
