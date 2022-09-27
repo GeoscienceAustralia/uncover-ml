@@ -1,9 +1,15 @@
+import logging
+
 from uncoverml import cluster
 from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import config
 
 from uncoverml.transforms import StandardiseTransform
+
+
+log = logging.getLogger(__name__)
+
 
 def kmeans(config_file, subsample_fraction):
     current_config = config.Config(config_file)
