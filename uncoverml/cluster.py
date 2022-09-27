@@ -1,12 +1,12 @@
 import logging
-
 import numpy as np
 import scipy.spatial
-
 import matplotlib
 import matplotlib.pyplot as plt
-
 import rasterio
+import time
+
+from os import path
 
 from uncoverml import mpiops
 from uncoverml.shapley import select_subplot_grid_dims
@@ -522,11 +522,12 @@ def extract_data_coords(image_source):
         lat = []
         vals = []
         for x, y in np.ndindex(src.shape):
-            if src[x, y] != no_data:
+            src_vals = src.read()
+            if src_vals[x, y] != no_data:
                 current_lon_lat = src.xy(x, y)
                 lon.append(current_lon_lat[0])
                 lat.append(current_lon_lat[1])
-                current_val = src[x, y]
+                current_val = src_vals[x, y]
                 vals.append(current_val)
 
         vals = np.array(vals)
@@ -565,14 +566,16 @@ def extract_features_lon_lat(main_config):
     return results, coords
 
 
-def center_dist_plot(dist_mat):
+def center_dist_plot(dist_mat, config, current_time):
     fig, ax = plt.subplots()
     ax.matshow(dist_mat, cmap='seismic')
 
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 
-    # THEN SAVE THE PLOT
+    plot_name = f'cluster_center_distances_{current_time}.png'
+    full_save_path = path.join(config.output_dir, plot_name)
+    fig.savefig(full_save_path)
 
 
 def calc_cluster_dist(centres):
@@ -588,13 +591,15 @@ def calc_cluster_dist(centres):
     return output_mat
 
 
-def spatial_clusters(lon_lat, classified):
+def spatial_clusters(lon_lat, classified, config, current_time):
     fig, ax = plt.subplots()
     ax.scatter(lon_lat[1], lon_lat[0], c=classified)
-    # THEN SAVE THE PLOT
+    plot_name = f'cluster_spatial_plot_{current_time}.png'
+    full_save_path = path.join(config.output_dir, plot_name)
+    fig.savefig(full_save_path)
 
 
-def feature_scatters(x_data, classified):
+def feature_scatters(x_data, classified, config, current_time):
     num_plots = x_data.shape[1]
     n_row, n_col = select_subplot_grid_dims(num_plots)
     plot_width = 5 * n_col
@@ -605,10 +610,20 @@ def feature_scatters(x_data, classified):
         current_ax = np.ravel(axs)[feat_idx]
         current_ax.scatter(classified, current_plot_data, c=classified)
 
-    # Save plot and done
+    plot_name = f'cluster_feature_scatters_{current_time}.png'
+    full_save_path = path.join(config.output_dir, plot_name)
+    fig.savefig(full_save_path)
 
 
 def generate_save_plots(config, x_data, model, lon_lat):
-    output_path = config.output_dir
+    current_time = time.strftime("%Y%m%d-%H%M%S")
+    predicted_clusters = model.predict(x_data)
 
+    distance_mat = calc_cluster_dist(model.centres)
+    center_dist_plot(distance_mat, config, current_time)
 
+    spatial_clusters(lon_lat, predicted_clusters, config, current_time)
+
+    feature_scatters(x_data, predicted_clusters, config, current_time)
+
+    print('Plotting done')

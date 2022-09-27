@@ -1,0 +1,15 @@
+clustering:
+  n_classes: 5
+  oversample_factor: 5
+
+output:
+  directory: results
+
+features:
+  - name: my features
+    type: ordinal
+    files:
+      - list: ./features_small.txt
+    transforms:
+      - standardise
+    imputation: mean
