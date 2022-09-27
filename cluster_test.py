@@ -1,10 +1,11 @@
 from uncoverml import cluster
 from uncoverml import features
 from uncoverml import mpiops
+from uncoverml import config
 
 
 def kmeans(config_file):
-    current_config = ls.config.Config(config_file)
+    current_config = config.Config(config_file)
 
     for f in current_config.feature_sets:
         if not f.transform_set.global_transforms:
@@ -38,5 +39,5 @@ def kmeans(config_file):
 
 
 if __name__ == '__main__':
-    config = './cluster_test.yaml'
-    kmeans(config)
+    cluster_config = './cluster_test.yaml'
+    kmeans(cluster_config)
