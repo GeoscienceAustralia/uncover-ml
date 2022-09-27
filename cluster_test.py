@@ -3,6 +3,7 @@ from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import config
 
+from uncoverml.transforms import StandardiseTransform
 
 def kmeans(config_file):
     current_config = config.Config(config_file)
