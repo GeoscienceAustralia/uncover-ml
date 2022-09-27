@@ -522,11 +522,12 @@ def extract_data_coords(image_source):
         lat = []
         vals = []
         for x, y in np.ndindex(src.shape):
-            if src[x, y] != no_data:
+            src_vals = src.read()
+            if src_vals[x, y] != no_data:
                 current_lon_lat = src.xy(x, y)
                 lon.append(current_lon_lat[0])
                 lat.append(current_lon_lat[1])
-                current_val = src[x, y]
+                current_val = src_vals[x, y]
                 vals.append(current_val)
 
         vals = np.array(vals)
