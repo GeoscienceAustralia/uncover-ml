@@ -515,37 +515,27 @@ def compute_n_classes(classes, config):
     return k
 
 
-def extract_data_coords(image_source):
+def extract_data(image_source, coords_list):
     with rasterio.open(image_source) as src:
-        no_data = src.nodata
-        lon = []
-        lat = []
-        vals = []
-        for x, y in np.ndindex(src.shape):
-            src_vals = src.read()
-            if src_vals[x, y] != no_data:
-                current_lon_lat = src.xy(x, y)
-                lon.append(current_lon_lat[0])
-                lat.append(current_lon_lat[1])
-                current_val = src_vals[x, y]
-                vals.append(current_val)
-
+        vals = [sample[0] for sample in src.sample(coords_list)]
         vals = np.array(vals)
-        lon_lat = (np.array(lon), np.array(lat))
-        return vals, lon_lat
+
+    return vals
 
 
 def extract_features_lon_lat(main_config):
     results = []
-    coords = {}
 
+    sample_set = False
+    sample_coords = None
     for s in main_config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             name = path.abspath(tif)
-            x, lon_lat = extract_data_coords(name)
-            coord_name = tif.replace(shap_config.feature_path, '').replace('.tif', '')
-            coords[coord_name] = lon_lat
+            if not sample_set:
+                sample_coords = gen_sample_coords(name, main_config.subsample_fraction)
+
+            x = extract_data(name, sample_coords)
             val_count = x.size
             x = np.reshape(x, (val_count, 1, 1, 1))
             x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
@@ -563,7 +553,23 @@ def extract_features_lon_lat(main_config):
 
         results.append(extracted_chunks)
 
-    return results, coords
+    return results
+
+
+def gen_sample_coords(image_source, subsample_frac):
+    print('Generating sample coords')
+    with rasterio.open(image_source, r) as src:
+        no_data = src.nodata
+        current_data = src.read(1)
+        row, col = np.where(current_data != no_data)
+        num_samples = round(src.height * src.width * subsample_frac)
+        random_idx = np.random.choice(row.shape[0], num_samples, replace=False)
+        sample_row = list(row(random_idx))
+        sample_col = list(col(random_idx))
+        x_y_coords = list(zip(sample_col, sample_row))
+
+    print()
+    return x_y_coords
 
 
 def center_dist_plot(dist_mat, config, current_time):

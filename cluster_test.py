@@ -29,7 +29,7 @@ def kmeans(config_file, subsample_fraction):
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
-    image_chunk_sets, lon_lat = cluster.extract_features_lon_lat(current_config)
+    image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in current_config.feature_sets]
     current_features, _ = features.transform_features(image_chunk_sets,
                                                       transform_sets,

@@ -289,7 +289,7 @@ def unsupervised(config):
     config.algorithm = config.clustering_algorithm
     config.cubist = False
     # Get the image chunks and their associated transforms
-    image_chunk_sets, lon_lat = ls.cluster.extract_features_lon_lat(config)
+    image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
     features, _ = ls.features.transform_features(image_chunk_sets,
                                                  transform_sets,
