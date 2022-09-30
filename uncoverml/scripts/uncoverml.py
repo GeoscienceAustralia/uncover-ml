@@ -380,9 +380,6 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     if not hasattr(config, 'thumbnails'):
         config.thumbnails = 10
 
-    if not hasattr(config, 'quantiles'):
-        config.quantiles =
-
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
