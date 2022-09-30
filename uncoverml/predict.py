@@ -213,8 +213,12 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    y_star = predict(x, model, interval=config.quantiles,
-                     lon_lat=_get_lon_lat(subchunk, config))
+    if hasattr(config, 'quantiles'):
+        y_star = predict(x, model, interval=config.quantiles,
+                         lon_lat=_get_lon_lat(subchunk, config))
+    else:
+        y_star = predict(x, model, lon_lat=_get_lon_lat(subchunk, config))
+
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     # cluster_analysis(x, y_star, subchunk, config, feature_names)

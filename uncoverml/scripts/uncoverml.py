@@ -366,8 +366,19 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 
     outfile_tif = config.algorithm
     predict_tags = model.get_predict_tags()
-    if not config.outbands:
+
+    # 30/9 Quick hack to get around issue that I'm having - Adi
+    if hasattr(config, 'outbands'):
+        if not config.outbands:
+            config.outbands = len(predict_tags)
+    else:
         config.outbands = len(predict_tags)
+
+    if not hasattr(config, 'geotif_options'):
+        config.geotif_options = {}
+
+    if not hasattr(config, 'thumbnails'):
+        config.thumbnails = 10
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
