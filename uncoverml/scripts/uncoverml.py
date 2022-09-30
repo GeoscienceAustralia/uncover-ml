@@ -374,6 +374,12 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     else:
         config.outbands = len(predict_tags)
 
+    if not hasattr(config, 'geotif_options'):
+        config.geotif_options = {}
+
+    if not hasattr(config, 'thumbnails'):
+        config.thumbnails = 10
+
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
