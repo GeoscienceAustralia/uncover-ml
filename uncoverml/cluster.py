@@ -650,8 +650,10 @@ def get_min_max(data_src):
     max = None
     min = None
     for row in range(data_src.height):
-        print("{:.0%}".format(row/data_src.height))
+        print("{:.2%}".format(row/data_src.height))
         data = data_src.read(1, window=Window(0, row, data_src.width, 1))
+        data_present = np.where(data != data.src.nodata)
+        data = data[data_present]
 
         current_max = np.max(data)
         if (max is None) or (current_max > max):
@@ -685,7 +687,7 @@ def feature_scatter_render(feat_pair, config, current_time, plot_idx):
     win_width = pred_src.width
     win_col_offset = 0
     for row in range(pred_src.height):
-        print("Plotting: {:.0%}".format(row/pred_src.height))
+        print("Plotting: {:.2%}".format(row/pred_src.height))
         get_win = Window(win_col_offset, row, win_width, win_height)
         pred_data = pred_src.read(1, window=get_win)
         pred_data = pred_data.reshape(pred_data.size, 1)
