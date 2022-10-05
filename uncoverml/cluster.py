@@ -658,14 +658,14 @@ def get_min_max(data_src):
             data_present = np.where(data != data_src.nodata)
 
         data = data[data_present]
+        if data.size > 0:
+            current_max = np.max(data)
+            if (max is None) or (current_max > max):
+                max = current_max
 
-        current_max = np.max(data)
-        if (max is None) or (current_max > max):
-            max = current_max
-
-        current_min = np.min(data)
-        if (min is None) or (current_min < min):
-            min = current_min
+            current_min = np.min(data)
+            if (min is None) or (current_min < min):
+                min = current_min
 
     return min, max
 
