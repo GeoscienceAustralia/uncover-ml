@@ -637,7 +637,7 @@ def all_feature_scatters(config, current_time):
     feat_pairs = list(combinations(feat_list, 2))
     plot_idx = 0
     for pair in feat_pairs:
-        feature_scatter(pair, config, current_time, plot_idx)
+        feature_scatter_render(pair, config, current_time, plot_idx)
         plot_idx += 1
 
     print('Feature scatters complete')
@@ -651,6 +651,7 @@ def get_min_max(data_src):
     max = None
     min = None
     for row in range(data_src.height):
+        print(row/data_src.height)
         data = data_src.read(0, row, data_src.width, 1)
 
         current_max = np.max(data)
