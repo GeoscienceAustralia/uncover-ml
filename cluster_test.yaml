@@ -13,3 +13,8 @@ features:
     transforms:
       - standardise
     imputation: mean
+
+prediction:
+  quantiles: None
+  geotif: {}
+  thumbnails: 10
