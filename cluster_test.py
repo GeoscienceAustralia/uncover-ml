@@ -11,8 +11,9 @@ from uncoverml.transforms import StandardiseTransform
 log = logging.getLogger(__name__)
 
 
-def kmean_analysis(config):
-    cluster.generate_save_plots(config)
+def kmean_analysis(config_file):
+    current_config = config.Config(config_file)
+    cluster.generate_save_plots(current_config)
     print('Process complete')
 
 
