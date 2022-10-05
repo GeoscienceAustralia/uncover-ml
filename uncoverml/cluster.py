@@ -650,7 +650,7 @@ def get_min_max(data_src):
     max = None
     min = None
     for row in range(data_src.height):
-        print(row/data_src.height)
+        print("{:.0%}".format(row/data_src.height))
         data = data_src.read(1, window=Window(0, row, data_src.width, 1))
 
         current_max = np.max(data)
@@ -676,7 +676,7 @@ def feature_scatter_render(feat_pair, config, current_time, plot_idx):
     min_1, max_1 = get_min_max(feat_1_src)
 
     fig, ax = plt.subplots(facecolor='none', dpi=500, figsize=(24, 16))
-    ax.axis(min_0-1, max_0+1, min_1-1, max_1+1)
+    ax.axis([min_0-1.0, max_0+1.0, min_1-1.0, max_1+1.0])
     fig.canvas.draw()
     col = ax.scatter([5], [5], color=[0.1, 0.1, 0.1], alpha=0.3)
     num_class = config.n_classes
@@ -685,7 +685,7 @@ def feature_scatter_render(feat_pair, config, current_time, plot_idx):
     win_width = pred_src.width
     win_col_offset = 0
     for row in range(pred_src.height):
-        print(f'Calculating row {row+1} of {pred_src.height}')
+        print("Plotting: {:.0%}".format(row/pred_src.height))
         get_win = Window(win_col_offset, row, win_width, win_height)
         pred_data = pred_src.read(1, window=get_win)
         pred_data = pred_data.reshape(pred_data.size, 1)
