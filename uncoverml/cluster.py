@@ -681,6 +681,7 @@ def feature_scatter(feat_pair, config, current_time, plot_idx):
     plot_name = f'feature_scatter_{plot_idx}_{current_time}.png'
     full_save_path = path.join(config.output_dir, plot_name)
     fig.savefig(full_save_path)
+    fig.clf()
 
 
 def generate_save_plots(config):
