@@ -18,3 +18,5 @@ def kmean_analysis(config):
 
 if __name__ == '__main__':
     cluster_config = './cluster_test.yaml'
+    kmean_analysis(cluster_config)
+
