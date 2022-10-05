@@ -651,7 +651,7 @@ def get_min_max(data_src):
     min = None
     for row in range(data_src.height):
         print(row/data_src.height)
-        data = data_src.read(0, row, data_src.width, 1)
+        data = data_src.read(1, window=Window(0, row, data_src.width, 1))
 
         current_max = np.max(data)
         if (current_max > max) or (max is None):
