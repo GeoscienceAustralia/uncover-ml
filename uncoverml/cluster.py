@@ -652,7 +652,7 @@ def get_min_max(data_src):
     for row in range(data_src.height):
         print("{:.2%}".format(row/data_src.height))
         data = data_src.read(1, window=Window(0, row, data_src.width, 1))
-        data_present = np.where(data != data.src.nodata)
+        data_present = np.where(data != data_src.nodata)
         data = data[data_present]
 
         current_max = np.max(data)
