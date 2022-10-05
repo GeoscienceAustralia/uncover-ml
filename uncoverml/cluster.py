@@ -712,7 +712,7 @@ def feature_scatter_render(feat_pair, config, current_time, plot_idx):
             current_0 = feat_0_data[class_idx]
             current_1 = feat_1_data[class_idx]
             for i in range(current_0.shape[0]):
-                col.set_offsets(current_0[i], current_1[i])
+                col.set_offsets((current_0[i], current_1[i]))
                 col.set_color(colour_list[clust])
                 ax.draw_artist(col)
 
