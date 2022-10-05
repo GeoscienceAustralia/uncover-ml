@@ -626,7 +626,7 @@ def feature_scatters(x_data, classified, config, current_time):
 
 def all_feature_scatters(config, current_time):
     feat_list = []
-    for s in main_config.feature_sets:
+    for s in config.feature_sets:
         for tif in s.files:
             name = path.abspath(tif)
             feat_list.append(name)
