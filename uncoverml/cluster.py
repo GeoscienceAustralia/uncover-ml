@@ -654,11 +654,11 @@ def get_min_max(data_src):
         data = data_src.read(1, window=Window(0, row, data_src.width, 1))
 
         current_max = np.max(data)
-        if (current_max > max) or (max is None):
+        if (max is None) or (current_max > max):
             max = current_max
 
         current_min = np.min(data)
-        if (current_min < min) or (min is None):
+        if (min is None) or (current_min < min):
             min = current_min
 
     return min, max
