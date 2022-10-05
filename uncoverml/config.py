@@ -178,6 +178,10 @@ class Config:
         else:
             self.pickle = False
 
+        if 'features' in s:
+            if 'short_names' in s['features']:
+                config.short_names = s['features']['short_names']
+
         self.rawcovariates = False
         self.train_data_pk = False
         if self.pickle:
