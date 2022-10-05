@@ -680,7 +680,6 @@ def feature_scatter_render(feat_pair, config, current_time, plot_idx):
     feat_1_src = rasterio.open(feat_pair[1])
     min_1, max_1 = get_min_max(feat_1_src)
     bound_list = [min_0-1.0, max_0+1.0, min_1-1.0, max_1+1.0]
-    print(bound_list)
 
     fig, ax = plt.subplots(facecolor='none', dpi=500, figsize=(24, 16))
     ax.axis(bound_list)
