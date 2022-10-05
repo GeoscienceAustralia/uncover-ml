@@ -676,7 +676,7 @@ def feature_scatter(feat_pair, config, current_time, plot_idx):
 
         for clust in range(num_class):
             class_idx = np.where(pred_data == float(clust))
-            ax.scatter(feat_0_data[class_idx], feat_1_data[class_idx], c=colour_list[clust])
+            ax.scatter(feat_0_data[class_idx], feat_1_data[class_idx], color=colour_list[clust])
 
     plot_name = f'feature_scatter_{plot_idx}_{current_time}.png'
     full_save_path = path.join(config.output_dir, plot_name)
