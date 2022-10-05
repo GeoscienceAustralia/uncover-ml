@@ -7,7 +7,6 @@ import rasterio
 import time
 
 from matplotlib import _png
-from itertools import izip
 
 from os import path
 from rasterio.windows import Window
