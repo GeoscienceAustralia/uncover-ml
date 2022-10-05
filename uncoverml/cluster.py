@@ -6,7 +6,12 @@ import matplotlib.pyplot as plt
 import rasterio
 import time
 
+from matplotlib import _png
+
 from os import path
+from rasterio.windows import Window
+from itertools import combinations
+from matplotlib.cm import cool
 
 from uncoverml import mpiops
 from uncoverml.shapley import select_subplot_grid_dims
@@ -621,15 +626,158 @@ def feature_scatters(x_data, classified, config, current_time):
     fig.savefig(full_save_path)
 
 
-def generate_save_plots(config, x_data, model, lon_lat):
+def all_feature_scatters(config, current_time):
+    feat_list = []
+    for s in config.feature_sets:
+        for tif in s.files:
+            name = path.abspath(tif)
+            feat_list.append(name)
+
+    feat_pairs = list(combinations(feat_list, 2))
+    plot_idx = 0
+    for pair in feat_pairs:
+        feature_scatter_render(pair, config, current_time, plot_idx)
+        plot_idx += 1
+
+    print('Feature scatters complete')
+
+
+def get_n_colours(n):
+    return [cool(float(i) / n) for i in range(n)]
+
+
+def get_min_max(data_src):
+    max = None
+    min = None
+    for row in range(data_src.height):
+        print("{:.2%}".format(row/data_src.height))
+        data = data_src.read(1, window=Window(0, row, data_src.width, 1))
+        if np.isnan(data_src.nodata):
+            data_present = np.where(~np.isnan(data))
+        else:
+            data_present = np.where(data != data_src.nodata)
+
+        data = data[data_present]
+        if data.size > 0:
+            current_max = np.max(data)
+            if (max is None) or (current_max > max):
+                max = current_max
+
+            current_min = np.min(data)
+            if (min is None) or (current_min < min):
+                min = current_min
+
+    return min, max
+
+
+def feature_scatter_render(feat_pair, config, current_time, plot_idx):
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+    pred_no_data = pred_src.nodata
+
+    feat_0_src = rasterio.open(feat_pair[0])
+    min_0, max_0 = get_min_max(feat_0_src)
+    feat_1_src = rasterio.open(feat_pair[1])
+    min_1, max_1 = get_min_max(feat_1_src)
+    bound_list = [min_0-1.0, max_0+1.0, min_1-1.0, max_1+1.0]
+    print(bound_list)
+
+    fig, ax = plt.subplots(facecolor='none', dpi=500, figsize=(24, 16))
+    ax.axis(bound_list)
+    fig.canvas.draw()
+    col = ax.scatter([5], [5], color=[0.1, 0.1, 0.1], alpha=0.3)
+    num_class = config.n_classes
+    colour_list = get_n_colours(num_class)
+    win_height = 1
+    win_width = pred_src.width
+    win_col_offset = 0
+    for row in range(pred_src.height):
+        print("Plotting: {:.2%}".format(row/pred_src.height))
+        get_win = Window(win_col_offset, row, win_width, win_height)
+        pred_data = pred_src.read(1, window=get_win)
+        pred_data = pred_data.reshape(pred_data.size, 1)
+        data_idx = np.where(pred_data != pred_no_data)
+        pred_data = pred_data[data_idx]
+
+        feat_0_data = feat_0_src.read(1, window=get_win)
+        feat_0_data = feat_0_data.reshape(feat_0_data.size, 1)
+        feat_0_data = feat_0_data[data_idx]
+
+        feat_1_data = feat_1_src.read(1, window=get_win)
+        feat_1_data = feat_1_data.reshape(feat_1_data.size, 1)
+        feat_1_data = feat_1_data[data_idx]
+
+        for clust in range(num_class):
+            class_idx = np.where(pred_data == float(clust))
+            current_0 = feat_0_data[class_idx]
+            current_1 = feat_1_data[class_idx]
+            for i in range(current_0.shape[0]):
+                col.set_offsets((current_0[i], current_1[i]))
+                col.set_color(colour_list[clust])
+                ax.draw_artist(col)
+
+    print('Done, now saving')
+    plot_name = f'feature_scatter_{plot_idx}_{current_time}.png'
+    full_save_path = path.join(config.output_dir, plot_name)
+    save_scatter(fig, full_save_path)
+    fig.clf()
+
+
+def save_scatter(fig, filename):
+    """We have to work around `fig.canvas.print_png`, etc calling `draw`."""
+    renderer = fig.canvas.renderer
+    with open(filename, 'w') as outfile:
+        _png.write_png(renderer._renderer.buffer_rgba(),
+                       renderer.width, renderer.height,
+                       outfile, fig.dpi)
+
+
+def feature_scatter(feat_pair, config, current_time, plot_idx):
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+    pred_no_data = pred_src.nodata
+    feat_0_src = rasterio.open(feat_pair[0])
+    feat_1_src = rasterio.open(feat_pair[1])
+
+    # Let's assume shape match, but will add a check in
+    fig, ax = plt.subplots()
+    num_class = config.n_classes
+    colour_list = get_n_colours(num_class)
+    win_height = 1
+    win_width = pred_src.width
+    win_col_offset = 0
+    for row in range(pred_src.height):
+        print(f'Calculating row {row+1} of {pred_src.height}')
+        get_win = Window(win_col_offset, row, win_width, win_height)
+        pred_data = pred_src.read(1, window=get_win)
+        pred_data = pred_data.reshape(pred_data.size, 1)
+        data_idx = np.where(pred_data != pred_no_data)
+        pred_data = pred_data[data_idx]
+
+        feat_0_data = feat_0_src.read(1, window=get_win)
+        feat_0_data = feat_0_data.reshape(feat_0_data.size, 1)
+        feat_0_data = feat_0_data[data_idx]
+
+        feat_1_data = feat_1_src.read(1, window=get_win)
+        feat_1_data = feat_1_data.reshape(feat_1_data.size, 1)
+        feat_1_data = feat_1_data[data_idx]
+
+        for clust in range(num_class):
+            class_idx = np.where(pred_data == float(clust))
+            ax.scatter(feat_0_data[class_idx], feat_1_data[class_idx], color=colour_list[clust])
+
+    plot_name = f'feature_scatter_{plot_idx}_{current_time}.png'
+    full_save_path = path.join(config.output_dir, plot_name)
+    fig.savefig(full_save_path)
+    fig.clf()
+
+
+def generate_save_plots(config):
     current_time = time.strftime("%Y%m%d-%H%M%S")
-    predicted_clusters = model.predict(x_data)
 
-    distance_mat = calc_cluster_dist(model.centres)
-    center_dist_plot(distance_mat, config, current_time)
+    # distance_mat = calc_cluster_dist(model.centres)
+    # center_dist_plot(distance_mat, config, current_time)
 
-    spatial_clusters(lon_lat, predicted_clusters, config, current_time)
-
-    feature_scatters(x_data, predicted_clusters, config, current_time)
+    all_feature_scatters(config, current_time)
 
     print('Plotting done')
