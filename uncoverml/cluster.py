@@ -634,7 +634,7 @@ def training_data_boxplot(model_file, training_data_file):
     else:
         feat_list = []
         feat_num = 0
-        for s in main_config.feature_sets:
+        for s in config.feature_sets:
             for tif in s.files:
                 feat_list.append(str(feat_num))
                 feat_num += 1
