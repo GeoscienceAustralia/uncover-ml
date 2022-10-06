@@ -614,9 +614,16 @@ def split_all_feat_data(config):
 
             feat_num += 1
 
+    work_units = []
     for feat_idx, current_feat_src in enumerate(feat_src_list):
-        # split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
-        split_save_clusters_conc(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+        work_units.append(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(split_save_helper, work_units)
+
+
+def split_save_helper(input):
+    split_save_feat_clusters(*input)
 
 
 def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
@@ -640,46 +647,6 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
         for clust_num in range(n_classes):
             cluster_data_loc = np.where(pred_data == float(clust_num))
             np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
-
-
-def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_classes):
-    csv_names = [path.join(main_config.output_dir, f'feat_{feat_name}_clust_{clust}.csv') for clust in range(n_classes)]
-    csv_files = [open(name, 'a') for name in csv_names]
-    no_data = pred_src.nodata
-
-    tiff_read_lock = threading.Lock()
-    csv_write_lock = threading.Lock()
-
-    def get_data_worker(data_window):
-        with tiff_read_lock:
-            pred_data = pred_src.read(1, window=data_window)
-
-        if np.isnan(no_data):
-            valid_data = np.where(~isnan(pred_data))
-        else:
-            valid_data = np.where(pred_data != no_data)
-
-        pred_data = pred_data[valid_data]
-        with tiff_read_lock:
-            feat_data = feat_src.read(1, window=data_window)
-
-        feat_data = feat_data[valid_data]
-        for clust_idx in range(n_classes):
-            cluster_data_loc = np.where(pred_data == float(clust_idx))
-            with csv_write_lock:
-                np.savetxt(csv_files[clust_idx], np.ravel(feat_data[cluster_data_loc]))
-
-    window_col_offset = 0
-    window_width = pred_src.width
-    window_height = 1
-    work_units = []
-    for row in range(pred_src.height):
-        work_units.append(Window(window_col_offset, row, window_width, window_height))
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(tqdm(executor.map(get_data_worker, work_units), total=len(work_units)))
-
-    return results
 
 
 def training_data_boxplot(model_file, training_data_file):
