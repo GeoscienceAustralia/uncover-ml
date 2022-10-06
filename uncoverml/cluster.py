@@ -679,7 +679,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
     work_units = []
     for row in range(pred_src.height):
         for clust in range(n_classes):
-            work_units.append(Window(window_col_offset, row, window_width, window_height), clust, csv_files[clust])
+            work_units.append((Window(window_col_offset, row, window_width, window_height), clust, csv_files[clust]))
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(tqdm(executor.map(get_data_worker_tuple, work_units), total=len(work_units)))
