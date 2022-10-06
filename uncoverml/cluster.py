@@ -646,6 +646,10 @@ def training_data_boxplot(model_file, training_data_file):
         for clust in range(n_classes):
             clust_rows = np.where(predictions == float(clust))
             clust_feat_data = feat_data[clust_rows]
+            clust_feat_data = np.sort(clust_feat_data)
+            rows_to_remove = round(0.01*clust_feat_data.shape[0])
+            clust_feat_data = clust_feat_data[rows_to_remove:]
+            clust_feat_data = clust_feat_data[:-rows_to_remove]
             feat_clust_stats = cbook.boxplot_stats(clust_feat_data, labels=[str(clust)])
             feat_boxplot_stats.extend(feat_clust_stats)
 
