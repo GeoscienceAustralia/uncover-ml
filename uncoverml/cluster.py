@@ -652,7 +652,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
 
     def get_data_worker(data_window, clust_num, write_file):
         with tiff_read_lock:
-            pred_data = pred_src.read(1, data_window)
+            pred_data = pred_src.read(1, window=data_window)
 
         if np.isnan(no_data):
             valid_data = np.where(~isnan(pred_data))
@@ -661,7 +661,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
 
         pred_data = pred_data[valid_data]
         with tiff_read_lock:
-            feat_data = feat_src.read(1, data_window)
+            feat_data = feat_src.read(1, window=data_window)
 
         feat_data = feat_data[valid_data]
         cluster_data_loc = np.where(pred_data == float(clust_num))
