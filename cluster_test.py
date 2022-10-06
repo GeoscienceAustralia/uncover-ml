@@ -15,8 +15,8 @@ def training_data_plot(model_file, training_data_file):
     cluster.training_data_boxplot(model_file, training_data_file)
 
 
-def prediction_data_plot(config):
-    current_config = config.Config(config)
+def prediction_data_plot(main_config):
+    current_config = config.Config(main_config)
     cluster.all_feat_boxplot(current_config)
 
 
