@@ -21,8 +21,8 @@ def prediction_data_plot(main_config):
 
 
 if __name__ == '__main__':
-    config = './cluster_test.yaml'
-    prediction_data_plot(config)
+    config_file = './cluster_test.yaml'
+    prediction_data_plot(config_file)
 
     # model_file = './results/test_cluster.cluster'
     # training_data = './results/training_data.data'
