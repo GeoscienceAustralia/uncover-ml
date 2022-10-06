@@ -669,10 +669,6 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
             with csv_write_lock:
                 np.savetxt(csv_files[clust_idx], np.ravel(feat_data[cluster_data_loc]))
 
-    def get_data_worker_tuple(work_unit):
-        get_data_worker(*work_unit)
-        return 'Done'
-
     window_col_offset = 0
     window_width = pred_src.width
     window_height = 1
@@ -681,7 +677,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
         work_units.append(Window(window_col_offset, row, window_width, window_height))
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(tqdm(executor.map(get_data_worker_tuple, work_units), total=len(work_units)))
+        results = list(tqdm(executor.map(get_data_worker, work_units), total=len(work_units)))
 
     return results
 
