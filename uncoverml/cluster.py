@@ -12,6 +12,7 @@ from os import path
 from rasterio.windows import Window
 from itertools import combinations
 from matplotlib.cm import cool
+from tqdm import tqdm
 
 from uncoverml import mpiops
 from uncoverml.shapley import select_subplot_grid_dims
@@ -594,7 +595,7 @@ def feat_clust_boxplot_data(pred_src, feat_src, clust_num):
     window_width = pred_src.width
     window_height = 1
     output_data = None
-    for row in range(pred_src.height):
+    for row in tqdm(range(pred_src.height)):
         read_window = Window(window_col_offset, row, window_width, window_height)
         pred_data = pred_src.read(1, window=read_window)
         cluster_data_loc = np.where(pred_data == float(clust_num))
@@ -614,10 +615,39 @@ def feat_boxplot(target_ax, pred_src, feat_src, n_classes, feat_name):
     # Use feat name later
     stat_list = []
     for clust in range(n_classes):
+        print(f'Creating box plot for feature {feat_name}')
         clust_stats = feat_clust_boxplot_data(pred_src, feat_src, clust)
         stat_list.extend(clust_stats)
 
     target_ax.bxp(stat_list)
+
+
+def all_feat_boxplot(config):
+    n_classes = config.n_classes
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+
+    feat_src_list = []
+    feat_list = []
+    feat_num = 0
+    for s in config.feature_sets:
+        for tif in s.files:
+            name = path.abspath(tif)
+            feat_src_list.append(rasterio.open(name))
+
+            if hasattr(config, 'short_names'):
+                feat_list.append(config.short_names[feat_num])
+            else:
+                feat_list.append(str(feat_num))
+
+            feat_num += 1
+
+    fig, axs = plt.subplots(len(feat_list), 1)
+    for feat_idx, current_feat_src in enumerate(feat_src_list):
+        feat_boxplot(np.ravel(axs)[feat_idx], pred_src, current_feat_src, n_classes, feat_list[feat_idx])
+
+    fig_save_path = path.join(config.output_dir, 'prediction_data_boxplots.png')
+    fig.savefig(fig_save_path)
 
 
 def training_data_boxplot(model_file, training_data_file):
@@ -655,5 +685,5 @@ def training_data_boxplot(model_file, training_data_file):
 
         np.ravel(axs)[feat_idx].bxp(feat_boxplot_stats)
 
-    fig_save_path = path.join(config.output_dir, 'traning_data_boxplots.png')
+    fig_save_path = path.join(config.output_dir, 'training_data_boxplots.png')
     fig.savefig(fig_save_path)
