@@ -14,6 +14,10 @@ from itertools import combinations
 from matplotlib.cm import cool
 from tqdm import tqdm
 
+import concurrent.futures
+import multiprocessing
+import threading
+
 from uncoverml import mpiops
 from uncoverml.shapley import select_subplot_grid_dims
 
@@ -590,39 +594,7 @@ def calc_cluster_dist(centres):
     return output_mat
 
 
-def feat_clust_boxplot_data(pred_src, feat_src, clust_num):
-    window_col_offset = 0
-    window_width = pred_src.width
-    window_height = 1
-    output_data = None
-    for row in tqdm(range(pred_src.height)):
-        read_window = Window(window_col_offset, row, window_width, window_height)
-        pred_data = pred_src.read(1, window=read_window)
-        cluster_data_loc = np.where(pred_data == float(clust_num))
-        feat_data = feat_src.read(1, window=read_window)
-        feat_cluster_data = feat_data[cluster_data_loc]
-        if output_data is None:
-            output_data = np.ravel(feat_cluster_data)
-        else:
-            output_data = np.concatenate([output_data, np.ravel(feat_cluster_data)])
-
-    print('Data gather, calculating stats')
-    feat_stats = cbook.boxplot_stats(output_data, labels=[str(clust_num)])
-    return feat_stats
-
-
-def feat_boxplot(target_ax, pred_src, feat_src, n_classes, feat_name):
-    # Use feat name later
-    stat_list = []
-    for clust in range(n_classes):
-        print(f'Creating box plot for feature {feat_name}')
-        clust_stats = feat_clust_boxplot_data(pred_src, feat_src, clust)
-        stat_list.extend(clust_stats)
-
-    target_ax.bxp(stat_list)
-
-
-def all_feat_boxplot(config):
+def split_all_feat_data(config):
     n_classes = config.n_classes
     pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
     pred_src = rasterio.open(pred_file_path)
@@ -642,12 +614,33 @@ def all_feat_boxplot(config):
 
             feat_num += 1
 
-    fig, axs = plt.subplots(len(feat_list), 1)
+    work_units = []
     for feat_idx, current_feat_src in enumerate(feat_src_list):
-        feat_boxplot(np.ravel(axs)[feat_idx], pred_src, current_feat_src, n_classes, feat_list[feat_idx])
+        split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
-    fig_save_path = path.join(config.output_dir, 'prediction_data_boxplots.png')
-    fig.savefig(fig_save_path)
+
+def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
+    csv_names = [path.join(main_config.output_dir, f'feat_{feat_name}_clust_{clust}.csv') for clust in range(n_classes)]
+    csv_files = [open(name, 'a') for name in csv_names]
+
+    window_col_offset = 0
+    window_width = pred_src.width
+    window_height = 1
+    # data_storage = [None] * n_classes
+    for row in tqdm(range(pred_src.height)):
+        read_window = Window(window_col_offset, row, window_width, window_height)
+        pred_data = pred_src.read(1, window=read_window)
+        if np.isnan(pred_src.nodata):
+            valid_data = np.where(~np.isnan(pred_data))
+        else:
+            valid_data = np.where(pred_data != pred_src.nodata)
+
+        pred_data = pred_data[valid_data]
+        feat_data = feat_src.read(1, window=read_window)
+        feat_data = feat_data[valid_data]
+        for clust_num in range(n_classes):
+            cluster_data_loc = np.where(pred_data == float(clust_num))
+            np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
 
 
 def training_data_boxplot(model_file, training_data_file):
