@@ -684,7 +684,14 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
     for row in tqdm(range(pred_src.height)):
         read_window = Window(window_col_offset, row, window_width, window_height)
         pred_data = pred_src.read(1, window=read_window)
+        if np.isnan(pred_src.nodata):
+            valid_data = np.where(~np.isnan(pred_data))
+        else:
+            valid_data = np.where(pred_data != src.nodata)
+
+        pred_data = pred_data[valid_data]
         feat_data = feat_src.read(1, window=read_window)
+        feat_data = feat_data[valid_data]
         for clust_num in range(n_classes):
             cluster_data_loc = np.where(pred_data == float(clust_num))
             np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
