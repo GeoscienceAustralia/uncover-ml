@@ -650,7 +650,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
     tiff_read_lock = threading.Lock()
     csv_write_lock = threading.Lock()
 
-    def get_data_worker(data_window, clust_num, write_file):
+    def get_data_worker(data_window):
         with tiff_read_lock:
             pred_data = pred_src.read(1, window=data_window)
 
@@ -664,10 +664,10 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
             feat_data = feat_src.read(1, window=data_window)
 
         feat_data = feat_data[valid_data]
-        cluster_data_loc = np.where(pred_data == float(clust_num))
-
-        with csv_write_lock:
-            np.savetxt(write_file, np.ravel(feat_data[cluster_data_loc]))
+        for clust_idx in range(n_classes):
+            cluster_data_loc = np.where(pred_data == float(clust_idx))
+            with csv_write_lock:
+                np.savetxt(csv_files[clust_idx], np.ravel(feat_data[cluster_data_loc]))
 
     def get_data_worker_tuple(work_unit):
         get_data_worker(*work_unit)
@@ -678,8 +678,7 @@ def split_save_clusters_conc(main_config, feat_src, pred_src, feat_name, n_class
     window_height = 1
     work_units = []
     for row in range(pred_src.height):
-        for clust in range(n_classes):
-            work_units.append((Window(window_col_offset, row, window_width, window_height), clust, csv_files[clust]))
+        work_units.append(Window(window_col_offset, row, window_width, window_height))
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(tqdm(executor.map(get_data_worker_tuple, work_units), total=len(work_units)))
