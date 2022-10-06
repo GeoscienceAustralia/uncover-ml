@@ -616,7 +616,7 @@ def split_all_feat_data(config):
 
     work_units = []
     for feat_idx, current_feat_src in enumerate(feat_src_list):
-        work_units.append(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+        work_units.append((config, current_feat_src, pred_src, feat_list[feat_idx], n_classes))
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(split_save_helper, work_units)
