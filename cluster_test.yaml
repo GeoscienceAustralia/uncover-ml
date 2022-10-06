@@ -13,3 +13,7 @@ features:
     transforms:
       - standardise
     imputation: mean
+  - short_names:
+      - climate
+      - ruggedness
+      - weathering_intensity

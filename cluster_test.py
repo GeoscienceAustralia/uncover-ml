@@ -11,13 +11,12 @@ from uncoverml.transforms import StandardiseTransform
 log = logging.getLogger(__name__)
 
 
-def kmean_analysis(config_file):
-    current_config = config.Config(config_file)
-    cluster.generate_save_plots(current_config)
-    print('Process complete')
+def kmean_analysis(model_file, training_data_file):
+    cluster.training_data_boxplot(model_file, training_data_file)
 
 
 if __name__ == '__main__':
-    cluster_config = './cluster_test.yaml'
-    kmean_analysis(cluster_config)
+    model_file = './results/test_cluster.cluster'
+    training_data = './results/training_data.data'
+    kmean_analysis(model_file, training_data)
 

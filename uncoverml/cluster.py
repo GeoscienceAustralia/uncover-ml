@@ -3,8 +3,10 @@ import numpy as np
 import scipy.spatial
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.cbook as cbook
 import rasterio
 import time
+import joblib
 
 from os import path
 from rasterio.windows import Window
@@ -30,6 +32,7 @@ def sum_axis_0(x, y, dtype):
     s = np.sum(np.vstack((x, y)), axis=0)
     return s
 
+
 """
 MPI reduce operation for summing over axis 0
 """
@@ -50,6 +53,7 @@ class TrainingData:
         length N int array of the class values at locations specified by
         indices
     """
+
     def __init__(self, indices, classes):
         self.indices = indices
         self.classes = classes
@@ -75,6 +79,7 @@ class KMeans:
     Vattani, Ravi Kumar, and Sergei Vassilvitskii. "Scalable k-means++."
     Proceedings of the VLDB Endowment 5, no. 7 (2012): 622-633.
     """
+
     def __init__(self, k, oversample_factor):
         self.k = k
         self.oversample_factor = oversample_factor
@@ -138,7 +143,7 @@ def kmean_distance2(x, C):
         (n,) length array of distances from each x to the nearest centre
     """
     # To save memory we partition the computation
-    nsplits = max(1, int(x.shape[0]/distance_partition_size))
+    nsplits = max(1, int(x.shape[0] / distance_partition_size))
     splits = np.array_split(x, nsplits)
     d2_x = np.empty(x.shape[0])
     idx = 0
@@ -165,14 +170,14 @@ def compute_weights(x, C):
     weights : ndarray
         (k,) length array giving number of x closest to each c in C
     """
-    nsplits = max(1, int(x.shape[0]/distance_partition_size))
+    nsplits = max(1, int(x.shape[0] / distance_partition_size))
     splits = np.array_split(x, nsplits)
     closests = np.empty(x.shape[0], dtype=int)
     idx = 0
     for x_i in splits:
         n_i = x_i.shape[0]
         D2_x = scipy.spatial.distance.cdist(x_i, C, metric='sqeuclidean')
-        closests[idx: idx+n_i] = np.argmin(D2_x, axis=1)
+        closests[idx: idx + n_i] = np.argmin(D2_x, axis=1)
         idx += n_i
     weights = np.bincount(closests, minlength=C.shape[0])
     return weights
@@ -223,7 +228,7 @@ def weighted_starting_candidates(X, k, l):
         phi_x_c_local = np.sum(d2_x)
         # note the oversample factor increasing the probabilities of
         # points being drawn
-        probs = (l*d2_x/phi_x_c_local if phi_x_c_local > 0
+        probs = (l * d2_x / phi_x_c_local if phi_x_c_local > 0
                  else np.ones(d2_x.shape[0]) / float(d2_x.shape[0]))
         draws = np.random.rand(probs.shape[0])
         hits = draws <= probs
@@ -262,7 +267,7 @@ def compute_class(X, C, training_data=None):
         distance of all points to their assigned centre
     """
     # we split up X into partitions to use memory more effectively
-    nsplits = max(1, int(X.shape[0]/distance_partition_size))
+    nsplits = max(1, int(X.shape[0] / distance_partition_size))
     splits = np.array_split(X, nsplits)
     classes = np.empty(X.shape[0], dtype=int)
     idx = 0
@@ -271,7 +276,7 @@ def compute_class(X, C, training_data=None):
         n_i = x_i.shape[0]
         D2_x = scipy.spatial.distance.cdist(x_i, C, metric='sqeuclidean')
         classes_i = np.argmin(D2_x, axis=1)
-        classes[idx:idx+n_i] = classes_i
+        classes[idx:idx + n_i] = classes_i
         x_indices = np.arange(classes_i.shape[0])
         local_cost += np.mean(D2_x[x_indices, classes_i])
         idx += n_i
@@ -338,7 +343,7 @@ def reseed_point(X, C, index):
         d-dimensional point for replacing the empty cluster centre.
     """
     log.info("Reseeding class with no members")
-    nsplits = max(1, int(X.shape[0]/distance_partition_size))
+    nsplits = max(1, int(X.shape[0] / distance_partition_size))
     splits = np.array_split(X, nsplits)
     empty_index = np.ones(C.shape[0], dtype=bool)
     empty_index[index] = False
@@ -559,22 +564,6 @@ def extract_features_lon_lat(main_config):
     return results
 
 
-def gen_sample_coords(image_source, subsample_frac):
-    print('Generating sample coords')
-    with rasterio.open(image_source, r) as src:
-        no_data = src.nodata
-        current_data = src.read(1)
-        row, col = np.where(current_data != no_data)
-        num_samples = round(src.height * src.width * subsample_frac)
-        random_idx = np.random.choice(row.shape[0], num_samples, replace=False)
-        sample_row = list(row(random_idx))
-        sample_col = list(col(random_idx))
-        x_y_coords = list(zip(sample_col, sample_row))
-
-    print()
-    return x_y_coords
-
-
 def center_dist_plot(dist_mat, config, current_time):
     fig, ax = plt.subplots()
     ax.matshow(dist_mat, cmap='seismic')
@@ -600,52 +589,67 @@ def calc_cluster_dist(centres):
     return output_mat
 
 
-def feature_scatter(feat_pair, config, current_time, plot_idx):
-    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
-    pred_src = rasterio.open(pred_file_path)
-    pred_no_data = pred_src.nodata
-    feat_0_src = rasterio.open(feat_pair[0])
-    feat_1_src = rasterio.open(feat_pair[1])
-
-    # Let's assume shape match, but will add a check in
-    fig, ax = plt.subplots()
-    num_class = config.n_classes
-    colour_list = get_n_colours(num_class)
-    win_height = 1
-    win_width = pred_src.width
-    win_col_offset = 0
+def feat_clust_boxplot_data(pred_src, feat_src, clust_num):
+    window_col_offset = 0
+    window_width = pred_src.width
+    window_height = 1
+    output_data = None
     for row in range(pred_src.height):
-        print(f'Calculating row {row+1} of {pred_src.height}')
-        get_win = Window(win_col_offset, row, win_width, win_height)
-        pred_data = pred_src.read(1, window=get_win)
-        pred_data = pred_data.reshape(pred_data.size, 1)
-        data_idx = np.where(pred_data != pred_no_data)
-        pred_data = pred_data[data_idx]
+        read_window = Window(window_col_offset, row, window_width, window_height)
+        pred_data = pred_src.read(1, window=read_window)
+        cluster_data_loc = np.where(pred_data == float(clust_num))
+        feat_data = feat_src.read(1, window=read_window)
+        feat_cluster_data = feat_data[cluster_data_loc]
+        if output_data is None:
+            output_data = np.ravel(feat_cluster_data)
+        else:
+            output_data = np.concatenate([output_data, np.ravel(feat_cluster_data)])
 
-        feat_0_data = feat_0_src.read(1, window=get_win)
-        feat_0_data = feat_0_data.reshape(feat_0_data.size, 1)
-        feat_0_data = feat_0_data[data_idx]
-
-        feat_1_data = feat_1_src.read(1, window=get_win)
-        feat_1_data = feat_1_data.reshape(feat_1_data.size, 1)
-        feat_1_data = feat_1_data[data_idx]
-
-        for clust in range(num_class):
-            class_idx = np.where(pred_data == float(clust))
-            ax.scatter(feat_0_data[class_idx], feat_1_data[class_idx], color=colour_list[clust])
-
-    plot_name = f'feature_scatter_{plot_idx}_{current_time}.png'
-    full_save_path = path.join(config.output_dir, plot_name)
-    fig.savefig(full_save_path)
-    fig.clf()
+    print('Data gather, calculating stats')
+    feat_stats = cbook.boxplot_stats(output_data, labels=[str(clust_num)])
+    return feat_stats
 
 
-def generate_save_plots(config):
-    current_time = time.strftime("%Y%m%d-%H%M%S")
+def feat_boxplot(target_ax, pred_src, feat_src, n_classes, feat_name):
+    # Use feat name later
+    stat_list = []
+    for clust in range(n_classes):
+        clust_stats = feat_clust_boxplot_data(pred_src, feat_src, clust)
+        stat_list.extend(clust_stats)
 
-    # distance_mat = calc_cluster_dist(model.centres)
-    # center_dist_plot(distance_mat, config, current_time)
+    target_ax.bxp(stat_list)
 
-    all_feature_scatters(config, current_time)
 
-    print('Plotting done')
+def training_data_boxplot(model_file, training_data_file):
+    state_dict = joblib.load(model_file)
+    model = state_dict['model']
+    config = state_dict['config']
+    training_data = joblib.load(training_data_file)
+    predictions = model.predict(training_data)
+
+    n_classes = config.n_classes
+
+    if hasattr(config, 'short_names'):
+        feat_list = config.short_names
+    else:
+        feat_list = []
+        feat_num = 0
+        for s in main_config.feature_sets:
+            for tif in s.files:
+                feat_list.append(str(feat_num))
+                feat_num += 1
+
+    fig, axs = plt.subplots(len(feat_list), 1)
+    for feat_idx, feat_name in enumerate(feat_list):
+        feat_boxplot_stats = []
+        feat_data = training_data[:, feat_idx]
+        for clust in range(n_classes):
+            clust_rows = np.where(predictions == float(clust))
+            clust_feat_data = feat_data[clust_rows]
+            feat_clust_stats = cbook.boxplot_stats(clust_feat_data, labels=[str(clust)])
+            feat_boxplot_stats.extend(feat_clust_stats)
+
+        np.ravel(axs)[feat_idx].bxp(feat_boxplot_stats)
+
+    fig_save_path = path.join(config.output_dir, 'traning_data_boxplots.png')
+    fig.savefig(fig_save_path)
