@@ -616,14 +616,7 @@ def split_all_feat_data(config):
 
     work_units = []
     for feat_idx, current_feat_src in enumerate(feat_src_list):
-        work_units.append((config, current_feat_src, pred_src, feat_list[feat_idx], n_classes))
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(split_save_helper, work_units)
-
-
-def split_save_helper(input):
-    split_save_feat_clusters(*input)
+        split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
 
 def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
@@ -633,6 +626,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
     window_col_offset = 0
     window_width = pred_src.width
     window_height = 1
+    # data_storage = [None] * n_classes
     for row in tqdm(range(pred_src.height)):
         read_window = Window(window_col_offset, row, window_width, window_height)
         pred_data = pred_src.read(1, window=read_window)
