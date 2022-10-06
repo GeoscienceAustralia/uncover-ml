@@ -20,9 +20,14 @@ def prediction_data_plot(main_config):
     cluster.all_feat_boxplot(current_config)
 
 
+def feat_data_split_save(main_config):
+    current_config = config.Config(main_config)
+    cluster.split_all_feat_data(current_config)
+
+
 if __name__ == '__main__':
     config_file = './cluster_test.yaml'
-    prediction_data_plot(config_file)
+    feat_data_split_save(config_file)
 
     # model_file = './results/test_cluster.cluster'
     # training_data = './results/training_data.data'

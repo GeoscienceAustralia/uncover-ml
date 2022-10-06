@@ -650,6 +650,46 @@ def all_feat_boxplot(config):
     fig.savefig(fig_save_path)
 
 
+def split_all_feat_data(config):
+    n_classes = config.n_classes
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+
+    feat_src_list = []
+    feat_list = []
+    feat_num = 0
+    for s in config.feature_sets:
+        for tif in s.files:
+            name = path.abspath(tif)
+            feat_src_list.append(rasterio.open(name))
+
+            if hasattr(config, 'short_names'):
+                feat_list.append(config.short_names[feat_num])
+            else:
+                feat_list.append(str(feat_num))
+
+            feat_num += 1
+
+    for feat_idx, current_feat_src in enumerate(feat_src_list):
+        split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+
+
+def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
+    csv_names = [path.join(main_config.output_dir, f'feat_{feat_name}_clust_{clust}.csv') for clust in range(n_classes)]
+    csv_files = [open(name, 'a') for name in csv_names]
+
+    window_col_offset = 0
+    window_width = pred_src.width
+    window_height = 1
+    for row in tqdm(range(pred_src.height)):
+        read_window = Window(window_col_offset, row, window_width, window_height)
+        pred_data = pred_src.read(1, window=read_window)
+        feat_data = feat_src.read(1, window=read_window)
+        for clust_num in range(n_classes):
+            cluster_data_loc = np.where(pred_data == float(clust_num))
+            np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
+
+
 def training_data_boxplot(model_file, training_data_file):
     state_dict = joblib.load(model_file)
     model = state_dict['model']
