@@ -687,7 +687,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
         if np.isnan(pred_src.nodata):
             valid_data = np.where(~np.isnan(pred_data))
         else:
-            valid_data = np.where(pred_data != src.nodata)
+            valid_data = np.where(pred_data != pred_src.nodata)
 
         pred_data = pred_data[valid_data]
         feat_data = feat_src.read(1, window=read_window)
