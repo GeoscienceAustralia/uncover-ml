@@ -616,7 +616,7 @@ def split_all_feat_data(config):
 
     for feat_idx, current_feat_src in enumerate(feat_src_list):
         # split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
-        split_save_feat_clusters_conc(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+        split_save_clusters_conc(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
 
 def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
