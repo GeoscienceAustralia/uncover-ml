@@ -689,7 +689,7 @@ def split_pred_parallel(config):
                 write_file_list.append(write_file)
 
         pred_data_list = [pred_data] * len(clust_list)
-        no_data_list = [no_data]  * len(clust_list)
+        no_data_list = [no_data] * len(clust_list)
         with concurrent.futures.ProcessPoolExecutor() as executor:
             executor.map(process_and_save_data, feat_data_list, pred_data_list, write_file_list,
                          clust_list, no_data_list)
