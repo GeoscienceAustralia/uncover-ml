@@ -664,7 +664,7 @@ def split_pred_parallel(config):
 
     csv_dict = {}
     for feat_name in feat_list:
-        csv_names = [path.join(main_config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
+        csv_names = [path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
                      for clust_num in range(n_classes)]
         csv_files = [open(name, 'a') for name in csv_names]
         csv_dict[feat_name] = csv_files
