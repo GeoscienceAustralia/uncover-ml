@@ -614,7 +614,6 @@ def split_all_feat_data(config):
 
             feat_num += 1
 
-    work_units = []
     for feat_idx, current_feat_src in enumerate(feat_src_list):
         split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
@@ -641,6 +640,75 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
         for clust_num in range(n_classes):
             cluster_data_loc = np.where(pred_data == float(clust_num))
             np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
+
+
+def split_pred_parallel(config):
+    n_classes = config.n_classes
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+
+    feat_src_list = []
+    feat_list = []
+    feat_num = 0
+    for s in config.feature_sets:
+        for tif in s.files:
+            name = path.abspath(tif)
+            feat_src_list.append(rasterio.open(name))
+
+            if hasattr(config, 'short_names'):
+                feat_list.append(config.short_names[feat_num])
+            else:
+                feat_list.append(str(feat_num))
+
+            feat_num += 1
+
+    csv_dict = {}
+    for feat_name in feat_list:
+        csv_names = [path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
+                     for clust_num in range(n_classes)]
+        csv_files = [open(name, 'a') for name in csv_names]
+        csv_dict[feat_name] = csv_files
+
+    window_col_offset = 0
+    window_width = pred_src.width
+    window_height = 1
+    no_data = pred_src.nodata
+    for row in tqdm(range(pred_src.height)):
+        read_window = Window(window_col_offset, row, window_width, window_height)
+        pred_data = pred_src.read(1, window=read_window)
+
+        feat_data_list = []
+        clust_list = []
+        write_file_list = []
+        for feat_idx, feat_name in enumerate(feat_list):
+            feat_data = feat_src_list[feat_idx].read(1, window=read_window)
+            for clust_num in range(n_classes):
+                write_file = csv_dict[feat_name][clust_num]
+                feat_data_list.append(feat_data)
+                clust_list.append(clust_num)
+                write_file_list.append(write_file)
+
+        pred_data_list = [pred_data] * len(clust_list)
+        no_data_list = [no_data] * len(clust_list)
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(process_and_save_data, feat_data_list, pred_data_list, write_file_list,
+                         clust_list, no_data_list)
+
+    print('Completed')
+
+
+def process_and_save_data(feat_data, pred_data, out_file, clust_num, no_data_val):
+    if np.isnan(no_data_val):
+        valid_data = np.where(~np.isnan(pred_data))
+    else:
+        valid_data = np.where(pred_data != no_data_val)
+
+    pred_data = pred_data[valid_data]
+    feat_data = feat_data[valid_data]
+    cluster_data_loc = np.where(pred_data == float(clust_num))
+    np.savetxt(out_file, np.ravel(feat_data[cluster_data_loc]))
+
+    return 'Done'
 
 
 def training_data_boxplot(model_file, training_data_file):
