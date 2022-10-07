@@ -22,7 +22,7 @@ def prediction_data_plot(main_config):
 
 def feat_data_split_save(main_config):
     current_config = config.Config(main_config)
-    cluster.split_pred_parallel(current_config)
+    cluster.split_all_feat_data(current_config)
 
 
 if __name__ == '__main__':
