@@ -41,6 +41,7 @@ from uncoverml import patch
 from uncoverml.transforms.transformset import missing_percentage
 
 log = logging.getLogger(__name__)
+matplotlib.use('agg')
 
 '''
 Properties for shap config
