@@ -528,14 +528,14 @@ def compute_n_classes(classes, config):
     return k
 
 
-def center_dist_plot(dist_mat, config, current_time):
+def center_dist_plot(dist_mat, config):
     fig, ax = plt.subplots()
     ax.matshow(dist_mat, cmap='seismic')
 
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 
-    plot_name = f'cluster_center_distances_{current_time}.png'
+    plot_name = f'cluster_center_distances.png'
     full_save_path = path.join(config.output_dir, plot_name)
     fig.savefig(full_save_path)
 
@@ -601,10 +601,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
 
 
-def data_boxplot(model_file, training_data_file=None, tail_removal_pct=0.01):
-    state_dict = joblib.load(model_file)
-    model = state_dict['model']
-    config = state_dict['config']
+def gather_plot_data(model, config, training_data_file=None, tail_removal_pct=0.01, n_bins=20):
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -623,9 +620,11 @@ def data_boxplot(model_file, training_data_file=None, tail_removal_pct=0.01):
         training_data = joblib.load(training_data_file)
         predictions = model.predict(training_data)
 
-    feat_stats = {}
+    bxp_stats = {}
+    hist_stats = {}
     for feat_idx, feat_name in enumerate(feat_list):
-        feat_boxplot_stats = []
+        feat_bxp_stats = []
+        feat_hist_stats = []
         for clust in tqdm(range(n_classes)):
             if training_data_file is not None:
                 current_data = training_data_filter(training_data, predictions, feat_idx, clust)
@@ -633,17 +632,39 @@ def data_boxplot(model_file, training_data_file=None, tail_removal_pct=0.01):
                 current_data = prediction_data_filter(feat_name, clust, config)
 
             if tail_removal_pct is not None:
-                current_data = np.sort(current_data)
-                rows_to_remove = round(tail_removal_pct*current_data.shape[0])
-                current_data = current_data[rows_to_remove:]
-                current_data = current_data[:-rows_to_remove]
+                current_data = trim_tail(current_data, tail_removal_pct)
 
+            feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
+            feat_hist_stats.append(feat_clust_binned_vals)
             feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
-            feat_boxplot_stats.extend(feat_clust_stats)
+            feat_bxp_stats.extend(feat_clust_stats)
 
-        feat_stats[feat_name] = feat_boxplot_stats
+        hist_stats[feat_name] = feat_hist_stats
+        bxp_stats[feat_name] = feat_bxp_stats
 
-    return feat_stats
+    return hist_stats, bxp_stats
+
+
+def gen_hist_stats(data, n_bins):
+    data_min = data.min()
+    bin_start = round(data_min)
+    data_max = data.max()
+    bin_end = round(data_max) + 1.0
+
+    bin_list = np.linspace(bin_start, bin_end, n_bins)
+    binned_vals = np.digitize(data, bin_list)
+    bin_count = np.bincount(binned_vals)
+    sum = np.sum(bin_count)
+    bin_count = bin_count/sum
+    return bin_list, bin_count
+
+
+def trim_tail(data, removal_pct):
+    data = np.sort(data)
+    rows_to_remove = round(removal_pct * data.shape[0])
+    data = data[rows_to_remove:]
+    data = data[:-rows_to_remove]
+    return data
 
 
 def training_data_filter(data, pred, feat_idx, clust_num):
@@ -659,7 +680,7 @@ def prediction_data_filter(feat_name, clust_num, config):
     return current_data
 
 
-def boxplot_from_stats(stats_dict, data_type, config, feat_labels=None):
+def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     num_plots = len(stats_dict.keys())
     fig, axs = plt.subplots(num_plots, 1, sharex=True)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
@@ -674,3 +695,49 @@ def boxplot_from_stats(stats_dict, data_type, config, feat_labels=None):
 
     plot_to_save = path.join(config.output_dir, f'{data_type}_boxplot.png')
     fig.savefig(plot_to_save)
+    plt.clf()
+    plt.close(fig)
+
+
+def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
+    first_key = stats_dict.keys()[0]
+    num_fig = len(stats_dict[first_key])
+    num_subplots = len(stats_dict.keys())
+    for clust in tqdm(range(num_fig)):
+        fig, axs = plt.subplots(num_subplots, 1)
+        for feat in range(num_subplots):
+            plot_data = stats_dict.values()[feat][clust]
+            bins = plot_data[0]
+            weights = plot_data[1]
+            target_ax = np.ravel(axs)[feat]
+            target_ax.bar(bins, weights)
+            if feat_labels is not None:
+                current_title = feat_labels[feat]
+            else:
+                current_title = stats_dict.keys()[feat]
+
+            target_ax.title.set_text(current_title)
+
+        fig.suptitle(f'{data_type}_clust_{clust}')
+        plot_to_save = path.join(config.output_dir, f'{data_type}_clust_{clust}_histogram.png')
+        fig.savefig(plot_to_save)
+        plt.clf()
+        plt.close(fig)
+
+
+def generate_plots(model_file, training_data_file):
+    state_dict = joblib.load(model_file)
+    model = state_dict['model']
+    config = state_dict['config']
+
+    print('Plotting training data')
+    train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
+    hist_plot_from_stats(train_hist, 'training', config)
+    box_plot_from_stats(train_bxp, 'training', config)
+
+    print('Plotting prediction data')
+    pred_hist, pred_bxp = gather_plot_data(model, config)
+    hist_plot_from_stats(pred_hist, 'prediction', config)
+    box_plot_from_stats(pred_bxp, 'prediction', config)
+
+    print('done')

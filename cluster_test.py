@@ -25,11 +25,11 @@ def feat_data_split_save(main_config):
     cluster.split_all_feat_data(current_config)
 
 
+def all_plots(model_file, training_data_file):
+    cluster.generate_plots(model_file, training_data_file)
+
+
 if __name__ == '__main__':
-    config_file = './cluster_test.yaml'
-    feat_data_split_save(config_file)
-
-    # model_file = './results/test_cluster.cluster'
-    # training_data = './results/training_data.data'
-    # training_data_plot(model_file, training_data)
-
+    model_file = './results/test_cluster.cluster'
+    training_data = './results/training_data.data'
+    all_plots(model_file, training_data)
