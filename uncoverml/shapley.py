@@ -799,11 +799,11 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
         current_point_vals = shap_vals_point[idx, :, :]
         current_point_vals.data = current_point_vals.data[idx, :]
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
-        if 'lon_lats' in kwargs:
-            log.info(f'Creating spatial plot for {name}')
-            current_lon_lats = kwargs['lon_lats'][name]
-            spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config,
-                               output_names=kwargs['output_names'])
+        # if 'lon_lats' in kwargs:
+        #     log.info(f'Creating spatial plot for {name}')
+        #     current_lon_lats = kwargs['lon_lats'][name]
+        #     spatial_point_poly(name, current_point_poly_vals, current_lon_lats, shap_config,
+        #                        output_names=kwargs['output_names'])
 
 
 def ax_tidy_point_poly(target_ax, plot_title, padding=None):
