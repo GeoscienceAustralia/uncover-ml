@@ -706,7 +706,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     for clust in tqdm(range(num_fig)):
         fig, axs = plt.subplots(num_subplots, 1)
         for feat in range(num_subplots):
-            plot_data = stats_dict.values()[feat][clust]
+            plot_data = list(stats_dict.values())[feat][clust]
             bins = plot_data[0]
             weights = plot_data[1]
             target_ax = np.ravel(axs)[feat]
