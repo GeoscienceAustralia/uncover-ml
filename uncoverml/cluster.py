@@ -653,7 +653,13 @@ def gen_hist_stats(data, n_bins):
 
     bin_list = np.linspace(bin_start, bin_end, n_bins)
     binned_vals = np.digitize(data, bin_list)
-    bin_count = np.bincount(binned_vals, minLength=bin_list.shape[0])
+    # bin_count = np.bincount(binned_vals, minLength=bin_list.shape[0])
+    bin_count = []
+    for bin_num in range(1, n_bins+1):
+        in_bin = binned_vals == bin_num
+        bin_count.append(in_bin)
+
+    bin_count = np.array(bin_count)
     sum = np.sum(bin_count)
     bin_count = bin_count/sum
     return bin_list, bin_count
