@@ -19,7 +19,7 @@ def shap(model_file, shap_yaml):
 
     log.info('Loading shap config')
     shap_config = uncoverml.shapley.ShapConfig(shap_yaml, config)
-    shap_point_poly(config, shap_config, model)
+    shap_point_poly(config, model, shap_config)
 
 
 def shap_point_poly(config, model, shap_config):
@@ -38,7 +38,7 @@ def shap_point_poly(config, model, shap_config):
 
     joblib.dump(shap_vals_dict, 'point_poly_shap_vals.shap')
 
-    if shap_config.do_plot:
+    if shap_config.do_plots:
         log.info('Plotting shap values')
         uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
                                                     output_names=shap_config.output_names, lon_lats=x_poly_coords)
