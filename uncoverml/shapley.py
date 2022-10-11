@@ -2,6 +2,7 @@ import math
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
