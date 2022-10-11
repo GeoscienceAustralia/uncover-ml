@@ -356,6 +356,8 @@ class ShapConfig:
         # Get the shapefile representing calculation region
         if 'shapefile' in s:
             self.shapefile = s['shapefile']
+            if 'size' not in self.shapefile:
+                self.shapefile['size'] = 1
         else:
             self.shapefile = None
             log.error('No shapefile provided, calculation will fail')

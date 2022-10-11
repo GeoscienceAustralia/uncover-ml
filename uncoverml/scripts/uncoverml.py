@@ -478,7 +478,7 @@ def shap_point_poly(config, model, shap_config):
     shap_vals_point = uncoverml.shapley.calc_shap_vals(model, shap_config, x_data_point)
     joblib.dump(shap_vals_point, os.path.join(config.output_dir, 'point_shap_vals.shap'))
 
-    log.info('Generating point regions and calculating shaplvaues')
+    log.info('Generating point regions and calculating shap values')
     x_data_poly_point, x_poly_coords = uncoverml.shapley.load_point_poly_data(shap_config, config)
     shap_vals_dict = {}
     for name in name_list:
