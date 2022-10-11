@@ -468,25 +468,30 @@ def shap(model_file, shap_yaml):
     config = state_dict["config"]
 
     log.info('Loading shap config')
-    shap_config = ls.shapley.ShapConfig(shap_yaml, config)
-    shap_point_poly(config, shap_config, model)
+    shap_config = uncoverml.shapley.ShapConfig(shap_yaml, config)
+    shap_point_poly(config, model, shap_config)
 
 
 def shap_point_poly(config, model, shap_config):
-    x_data_point, name_list = ls.shapley.load_data_shap(shap_config, config)
-    shap_vals_point = ls.shapley.calc_shap_vals(model, shap_config, x_data_point)
+    log.info('Calculating point shap values')
+    x_data_point, name_list = uncoverml.shapley.load_data_shap(shap_config, config)
+    shap_vals_point = uncoverml.shapley.calc_shap_vals(model, shap_config, x_data_point)
     joblib.dump(shap_vals_point, os.path.join(config.output_dir, 'point_shap_vals.shap'))
 
-    x_data_poly_point, x_poly_coords = ls.shapley.load_point_poly_data(shap_config, config)
+    log.info('Generating point regions and calculating shaplvaues')
+    x_data_poly_point, x_poly_coords = uncoverml.shapley.load_point_poly_data(shap_config, config)
     shap_vals_dict = {}
     for name in name_list:
         current_data = x_data_poly_point[name]
-        current_shap_vals = ls.shapley.calc_shap_vals(model, shap_config, current_data)
+        current_shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, current_data)
         shap_vals_dict[name] = current_shap_vals
 
     joblib.dump(shap_vals_dict, 'point_poly_shap_vals.shap')
-    if shap_config.do_plot:
-        ls.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, output_names=shap_config.output_names, lon_lats=x_poly_coords)
+
+    if shap_config.do_plots:
+        log.info('Plotting shap values')
+        uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
+                                                    output_names=shap_config.output_names, lon_lats=x_poly_coords)
 
 
 def __validate_pca_config(config):

@@ -857,14 +857,14 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         # Single prediction decision
         plt.sca(axs[0, 2])
         shap.decision_plot(current_points_vals.base_values, current_points_vals.values,
-                           feature_names=current_points_vals.feature_names, auto_size_plot=False)
+                           feature_names=current_points_vals.feature_names, auto_size_plot=False, show=False)
         current_plot_title = f'Single Prediction Decision'
         ax_tidy_point_poly(axs[0, 2], current_plot_title)
 
         # Multi prediction decision
         plt.sca(axs[1, 2])
         shap.decision_plot(current_point_poly_vals.base_values[0], current_point_poly_vals.values,
-                           feature_names=current_point_poly_vals.feature_names, auto_size_plot=False)
+                           feature_names=current_point_poly_vals.feature_names, auto_size_plot=False, show=False)
         current_plot_title = f'Multi-Prediction Decision'
         ax_tidy_point_poly(axs[1, 2], current_plot_title)
 
