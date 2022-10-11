@@ -461,7 +461,7 @@ def pca(pipeline_file, partitions, mask, retain):
 @click.argument('model_file')
 @click.argument('shap_yaml')
 def shap(model_file, shap_yaml):
-    with open(model_or_cluster_file, 'rb') as f:
+    with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
 
     model = state_dict["model"]
