@@ -809,7 +809,10 @@ def ax_tidy_point_poly(target_ax, plot_title, padding=None):
     current_plot_title = '\n'.join(wrap(plot_title, 30))
     target_ax.set_title(current_plot_title, fontsize=7)
     target_ax.tick_params(axis='both', labelsize=5)
-    target_ax.set_yticklabels(target_ax.get_yticklabels(), rotation=45)
+    # target_ax.set_yticklabels(target_ax.get_yticklabels(), rotation=45)
+    ticks_loc = target_ax.get_yticks_tolist()
+    target_ax.yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
+    target_ax.set_yticklabels(ticks_loc, rotation=45)
     target_ax.xaxis.get_label().set_fontsize(7)
     if padding is not None:
         target_ax.tick_params(axis='y', pad=padding)
@@ -873,8 +876,7 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
         plot_name = f'poly_point_{name}_{current_output_name}'
         Path(shap_config.output_path).mkdir(parents=True, exist_ok=True)
         plot_save_path = path.join(shap_config.output_path, plot_name + '.png')
-        fig.tight_layout()
-        fig.savefig(plot_save_path, dpi=250)
+        fig.savefig(plot_save_path, dpi=250, bbox_inches='tight')
         plt.clf()
 
 
