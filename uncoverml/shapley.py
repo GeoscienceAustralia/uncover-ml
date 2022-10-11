@@ -810,7 +810,7 @@ def ax_tidy_point_poly(target_ax, plot_title, padding=None):
     target_ax.set_title(current_plot_title, fontsize=7)
     target_ax.tick_params(axis='both', labelsize=5)
     # target_ax.set_yticklabels(target_ax.get_yticklabels(), rotation=45)
-    ticks_loc = target_ax.get_yticks_tolist()
+    ticks_loc = target_ax.get_yticks().tolist()
     target_ax.yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
     target_ax.set_yticklabels(ticks_loc, rotation=45)
     target_ax.xaxis.get_label().set_fontsize(7)
