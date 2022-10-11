@@ -682,7 +682,7 @@ def training_data_filter(data, pred, feat_idx, clust_num):
 
 def prediction_data_filter(feat_name, clust_num, config):
     read_file_name = path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
-    current_data = np.genfromtxt(read_file_name)
+    current_data = np.loadtxt(read_file_name)
     return current_data
 
 
