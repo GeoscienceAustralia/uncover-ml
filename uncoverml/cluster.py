@@ -699,6 +699,7 @@ def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
 
     data = np.fromiter(iter_func(), dtype=dtype)
     data = data.reshape((-1, iter_loadtxt.rowlength))
+    data = data[~np.isnan(data)]
     return data
 
 
