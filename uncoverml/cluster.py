@@ -681,7 +681,7 @@ def prediction_data_filter(feat_name, clust_num, config):
 
 
 def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
-    num_plots = len(stats_dict.keys())
+    num_plots = len(list(stats_dict.keys()))
     fig, axs = plt.subplots(num_plots, 1, sharex=True)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
@@ -700,9 +700,9 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
 
 
 def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
-    first_key = stats_dict.keys()[0]
+    first_key = list(stats_dict.keys())[0]
     num_fig = len(stats_dict[first_key])
-    num_subplots = len(stats_dict.keys())
+    num_subplots = len(list(stats_dict.keys()))
     for clust in tqdm(range(num_fig)):
         fig, axs = plt.subplots(num_subplots, 1)
         for feat in range(num_subplots):
@@ -714,7 +714,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
             if feat_labels is not None:
                 current_title = feat_labels[feat]
             else:
-                current_title = stats_dict.keys()[feat]
+                current_title = list(stats_dict.keys())[feat]
 
             target_ax.title.set_text(current_title)
 
