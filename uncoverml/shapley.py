@@ -935,3 +935,4 @@ def spatial_point_poly(name, point_poly_vals, lon_lats, shap_config, **kwargs):
         fig.tight_layout()
         fig.savefig(plot_save_path, dpi=250)
         plt.clf()
+        plt.close(fig)
