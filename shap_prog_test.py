@@ -6,7 +6,35 @@ import os
 import uncoverml.config
 import uncoverml.shapley
 
-from uncoverml.scripts import uncoverml as uncli
+
+def shap(model_file, shap_yaml):
+    with open(model_file, 'rb') as f:
+        state_dict = joblib.load(f)
+
+    model = state_dict["model"]
+    config = state_dict["config"]
+
+    log.info('Loading shap config')
+    shap_config = uncoverml.shapley.ShapConfig(shap_yaml, config)
+    shap_point_poly(config, shap_config, model)
+
+
+def shap_point_poly(config, model, shap_config):
+    x_data_point, name_list = uncoverml.shapley.load_data_shap(shap_config, config)
+    shap_vals_point = uncoverml.shapley.calc_shap_vals(model, shap_config, x_data_point)
+    joblib.dump(shap_vals_point, os.path.join(config.output_dir, 'point_shap_vals.shap'))
+
+    x_data_poly_point, x_poly_coords = uncoverml.shapley.load_point_poly_data(shap_config, config)
+    shap_vals_dict = {}
+    for name in name_list:
+        current_data = x_data_poly_point[name]
+        current_shap_vals = uncoverml.shapley.calc_shap_vals(model, shap_config, current_data)
+        shap_vals_dict[name] = current_shap_vals
+
+    joblib.dump(shap_vals_dict, 'point_poly_shap_vals.shap')
+    if shap_config.do_plot:
+        uncoverml.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config,
+                                                    output_names=shap_config.output_names, lon_lats=x_poly_coords)
 
 
 def shapley_cli(model_file, shapley_yaml):
@@ -79,10 +107,6 @@ def shapley_cli(model_file, shapley_yaml):
 if __name__ == '__main__':
     model_config_file = 'gbquantile/gbquantiles.model'
 
-    # Poly
-    # shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_polygon_test.yaml'
-    # shapley_cli(model_config_file, shap_yaml)
-
     # Point
     shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_point_test.yaml'
-    shapley_cli(model_config_file, shap_yaml)
+    shap(model_config_file, shap_yaml)

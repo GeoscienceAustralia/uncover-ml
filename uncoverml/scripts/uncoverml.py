@@ -457,6 +457,38 @@ def pca(pipeline_file, partitions, mask, retain):
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
+@cli.command()
+@click.argument('model_or_cluster_file')
+@click.argument('shap config')
+def shap(model_file, shap_yaml):
+    with open(model_file, 'rb') as f:
+        state_dict = joblib.load(f)
+
+    model = state_dict["model"]
+    config = state_dict["config"]
+
+    log.info('Loading shap config')
+    shap_config = ls.shapley.ShapConfig(shap_yaml, config)
+    shap_point_poly(config, shap_config, model)
+
+
+def shap_point_poly(config, model, shap_config):
+    x_data_point, name_list = ls.shapley.load_data_shap(shap_config, config)
+    shap_vals_point = ls.shapley.calc_shap_vals(model, shap_config, x_data_point)
+    joblib.dump(shap_vals_point, os.path.join(config.output_dir, 'point_shap_vals.shap'))
+
+    x_data_poly_point, x_poly_coords = ls.shapley.load_point_poly_data(shap_config, config)
+    shap_vals_dict = {}
+    for name in name_list:
+        current_data = x_data_poly_point[name]
+        current_shap_vals = ls.shapley.calc_shap_vals(model, shap_config, current_data)
+        shap_vals_dict[name] = current_shap_vals
+
+    joblib.dump(shap_vals_dict, 'point_poly_shap_vals.shap')
+    if shap_config.do_plot:
+        ls.shapley.generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_config, output_names=shap_config.output_names, lon_lats=x_poly_coords)
+
+
 def __validate_pca_config(config):
     transform_sets = [k.transform_set for k in config.feature_sets]
     for t in transform_sets:

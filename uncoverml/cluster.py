@@ -528,47 +528,6 @@ def compute_n_classes(classes, config):
     return k
 
 
-def extract_data(image_source, coords_list):
-    with rasterio.open(image_source) as src:
-        vals = [sample[0] for sample in src.sample(coords_list)]
-        vals = np.array(vals)
-
-    return vals
-
-
-def extract_features_lon_lat(main_config):
-    results = []
-
-    sample_set = False
-    sample_coords = None
-    for s in main_config.feature_sets:
-        extracted_chunks = {}
-        for tif in s.files:
-            name = path.abspath(tif)
-            if not sample_set:
-                sample_coords = gen_sample_coords(name, main_config.subsample_fraction)
-
-            x = extract_data(name, sample_coords)
-            val_count = x.size
-            x = np.reshape(x, (val_count, 1, 1, 1))
-            x = ma.array(x, mask=np.zeros([val_count, 1, 1, 1]))
-            # TODO this may hurt performance. Consider removal
-            if type(x) is np.ma.MaskedArray:
-                count = mpiops.count(x)
-                missing_percent = missing_percentage(x)
-                t_missing = mpiops.comm.allreduce(
-                    missing_percent) / mpiops.chunks
-                log.info("{}: {}px {:2.2f}% missing".format(
-                    name, count, t_missing))
-            extracted_chunks[name] = x
-        extracted_chunks = OrderedDict(sorted(
-            extracted_chunks.items(), key=lambda t: t[0]))
-
-        results.append(extracted_chunks)
-
-    return results
-
-
 def center_dist_plot(dist_mat, config, current_time):
     fig, ax = plt.subplots()
     ax.matshow(dist_mat, cmap='seismic')
@@ -642,82 +601,10 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
 
 
-def split_pred_parallel(config):
-    n_classes = config.n_classes
-    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
-    pred_src = rasterio.open(pred_file_path)
-
-    feat_src_list = []
-    feat_list = []
-    feat_num = 0
-    for s in config.feature_sets:
-        for tif in s.files:
-            name = path.abspath(tif)
-            feat_src_list.append(rasterio.open(name))
-
-            if hasattr(config, 'short_names'):
-                feat_list.append(config.short_names[feat_num])
-            else:
-                feat_list.append(str(feat_num))
-
-            feat_num += 1
-
-    csv_dict = {}
-    for feat_name in feat_list:
-        csv_names = [path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
-                     for clust_num in range(n_classes)]
-        csv_files = [open(name, 'a') for name in csv_names]
-        csv_dict[feat_name] = csv_files
-
-    window_col_offset = 0
-    window_width = pred_src.width
-    window_height = 1
-    no_data = pred_src.nodata
-    for row in tqdm(range(pred_src.height)):
-        read_window = Window(window_col_offset, row, window_width, window_height)
-        pred_data = pred_src.read(1, window=read_window)
-
-        feat_data_list = []
-        clust_list = []
-        write_file_list = []
-        for feat_idx, feat_name in enumerate(feat_list):
-            feat_data = feat_src_list[feat_idx].read(1, window=read_window)
-            for clust_num in range(n_classes):
-                write_file = csv_dict[feat_name][clust_num]
-                feat_data_list.append(feat_data)
-                clust_list.append(clust_num)
-                write_file_list.append(write_file)
-
-        pred_data_list = [pred_data] * len(clust_list)
-        no_data_list = [no_data] * len(clust_list)
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.map(process_and_save_data, feat_data_list, pred_data_list, write_file_list,
-                         clust_list, no_data_list)
-
-    print('Completed')
-
-
-def process_and_save_data(feat_data, pred_data, out_file, clust_num, no_data_val):
-    if np.isnan(no_data_val):
-        valid_data = np.where(~np.isnan(pred_data))
-    else:
-        valid_data = np.where(pred_data != no_data_val)
-
-    pred_data = pred_data[valid_data]
-    feat_data = feat_data[valid_data]
-    cluster_data_loc = np.where(pred_data == float(clust_num))
-    np.savetxt(out_file, np.ravel(feat_data[cluster_data_loc]))
-
-    return 'Done'
-
-
-def training_data_boxplot(model_file, training_data_file):
+def data_boxplot(model_file, training_data_file=None, tail_removal_pct=0.01):
     state_dict = joblib.load(model_file)
     model = state_dict['model']
     config = state_dict['config']
-    training_data = joblib.load(training_data_file)
-    predictions = model.predict(training_data)
-
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -730,21 +617,60 @@ def training_data_boxplot(model_file, training_data_file):
                 feat_list.append(str(feat_num))
                 feat_num += 1
 
-    fig, axs = plt.subplots(len(feat_list), 1)
+    training_data = None
+    predictions = None
+    if training_data_file is not None:
+        training_data = joblib.load(training_data_file)
+        predictions = model.predict(training_data)
+
+    feat_stats = {}
     for feat_idx, feat_name in enumerate(feat_list):
         feat_boxplot_stats = []
-        feat_data = training_data[:, feat_idx]
-        for clust in range(n_classes):
-            clust_rows = np.where(predictions == float(clust))
-            clust_feat_data = feat_data[clust_rows]
-            clust_feat_data = np.sort(clust_feat_data)
-            rows_to_remove = round(0.01*clust_feat_data.shape[0])
-            clust_feat_data = clust_feat_data[rows_to_remove:]
-            clust_feat_data = clust_feat_data[:-rows_to_remove]
-            feat_clust_stats = cbook.boxplot_stats(clust_feat_data, labels=[str(clust)])
+        for clust in tqdm(range(n_classes)):
+            if training_data_file is not None:
+                current_data = training_data_filter(training_data, predictions, feat_idx, clust)
+            else:
+                current_data = prediction_data_filter(feat_name, clust, config)
+
+            if tail_removal_pct is not None:
+                current_data = np.sort(current_data)
+                rows_to_remove = round(tail_removal_pct*current_data.shape[0])
+                current_data = current_data[rows_to_remove:]
+                current_data = current_data[:-rows_to_remove]
+
+            feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
             feat_boxplot_stats.extend(feat_clust_stats)
 
-        np.ravel(axs)[feat_idx].bxp(feat_boxplot_stats)
+        feat_stats[feat_name] = feat_boxplot_stats
 
-    fig_save_path = path.join(config.output_dir, 'training_data_boxplots.png')
-    fig.savefig(fig_save_path)
+    return feat_stats
+
+
+def training_data_filter(data, pred, feat_idx, clust_num):
+    current_feat_data = data[:, feat_idx]
+    clust_loc = np.where(pred == float(clust_num))
+    relevant_feat_data = current_feat_data[clust_loc]
+    return relevant_feat_data
+
+
+def prediction_data_filter(feat_name, clust_num, config):
+    read_file_name = path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
+    current_data = np.genfromtxt(read_file_name)
+    return current_data
+
+
+def boxplot_from_stats(stats_dict, data_type, config, feat_labels=None):
+    num_plots = len(stats_dict.keys())
+    fig, axs = plt.subplots(num_plots, 1, sharex=True)
+    for idx, (feat, stat) in enumerate(stats_dict.items()):
+        target_ax = np.ravel(axs)[idx]
+        target_ax.bxp(stat)
+        if feat_labels is not None:
+            current_label = feat_labels[idx]
+        else:
+            current_label = feat
+
+        target_ax.set_ylabel(current_label)
+
+    plot_to_save = path.join(config.output_dir, f'{data_type}_boxplot.png')
+    fig.savefig(plot_to_save)

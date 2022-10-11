@@ -91,6 +91,7 @@ class FeatureSetConfig:
 
         # get list of all the files
         files = []
+        files = []
         for source in d['files']:
             key = next(iter(source.keys()))
             if key == 'path':
