@@ -682,8 +682,24 @@ def training_data_filter(data, pred, feat_idx, clust_num):
 
 def prediction_data_filter(feat_name, clust_num, config):
     read_file_name = path.join(config.output_dir, f'feat_{feat_name}_clust_{clust_num}.csv')
-    current_data = np.loadtxt(read_file_name)
+    current_data = iter_loadtxt(read_file_name)
     return current_data
+
+
+def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
+    def iter_func():
+        with open(filename, 'r') as infile:
+            for _ in range(skiprows):
+                next(infile)
+            for line in tqdm(infile):
+                line = line.rstrip().split(delimiter)
+                for item in line:
+                    yield dtype(item)
+        iter_loadtxt.rowlength = len(line)
+
+    data = np.fromiter(iter_func(), dtype=dtype)
+    data = data.reshape((-1, iter_loadtxt.rowlength))
+    return data
 
 
 def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
