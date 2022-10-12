@@ -1145,10 +1145,10 @@ The ``masker`` block specifies the method for masking out data as part of calcul
 
 The ``output_names`` block is used to specify the number of outputs produced when predict is called on the trained model
 
-The ``feature_path``(OPTIONAL) block is used to create feature names from feature file paths if short names are
+The ``feature_path`` (OPTIONAL) block is used to create feature names from feature file paths if short names are
 not supplied beforehand
 
-The ``feature_names``(OPTIONAL) block is used to specify short feature names to be used for plots
+The ``feature_names`` (OPTIONAL) block is used to specify short feature names to be used for plots
     - It is recommended to have this block, to enhance plot readability
     - The feature names must be in the same order as the feature files are provided to the learn/predict YAML file
 
