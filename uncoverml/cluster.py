@@ -715,7 +715,10 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
             current_label = feat
 
         target_ax.set_ylabel(current_label)
+        if idx == (len(stats_dict.items())-1):
+            target_ax.set_xlabel('cluster')
 
+    fig.suptitle(f'{data_type}_boxplot')
     plot_to_save = path.join(config.output_dir, f'{data_type}_boxplot.png')
     fig.savefig(plot_to_save)
     plt.clf()
@@ -739,7 +742,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
             else:
                 current_title = list(stats_dict.keys())[feat]
 
-            target_ax.title.set_text(current_title)
+            target_ax.set_title(current_title)
 
         fig.suptitle(f'{data_type}_clust_{clust}')
         plot_to_save = path.join(config.output_dir, f'{data_type}_clust_{clust}_histogram.png')
