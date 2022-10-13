@@ -13,6 +13,7 @@ from rasterio.windows import Window
 from itertools import combinations
 from matplotlib.cm import cool
 from tqdm import tqdm
+from itertools import combinations
 
 import concurrent.futures
 import multiprocessing
@@ -749,6 +750,24 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         fig.savefig(plot_to_save)
         plt.clf()
         plt.close(fig)
+
+
+# def training_data_scatter(training_data, model, feat_labels=None):
+#     predicted = model.predict(training_data)
+#     centers = model.centres
+#
+#     feat_names = feat_labels
+#     if feat_names is None:
+#         feat_names = [str(num) for num in range(training_data.shape[1])]
+#
+#     feat_idxs = list(range(training_data.shape[1]))
+#     feat_idx_pairs = list(combinations(feat_idxs, 2))
+#     feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
+#     for i, feat_idx in enumerate(feat_idx_pairs):
+        
+
+
+
 
 
 def generate_plots(model_file, training_data_file):
