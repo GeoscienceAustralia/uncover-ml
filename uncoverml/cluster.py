@@ -585,7 +585,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
     window_col_offset = 0
     window_width = pred_src.width
     window_height = 1
-    # data_storage = [None] * n_classes
+    data_storage = [None] * n_classes
     for row in tqdm(range(pred_src.height)):
         read_window = Window(window_col_offset, row, window_width, window_height)
         pred_data = pred_src.read(1, window=read_window)
@@ -599,7 +599,18 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
         feat_data = feat_data[valid_data]
         for clust_num in range(n_classes):
             cluster_data_loc = np.where(pred_data == float(clust_num))
-            np.savetxt(csv_files[clust_num], np.ravel(feat_data[cluster_data_loc]))
+            if data_storage[clust_num] is None:
+                data_storage[clust_num] = np.ravel(feat_data[cluster_data_loc])
+            else:
+                data_storage[clust_num] = np.concatenate([data_storage[clust_num],
+                                                          np.ravel(feat_data[cluster_data_loc])])
+
+        size_check = sum(arr.size for arr in data_storage)
+        if size_check >= 1000000:
+            for clust_num in range(n_classes):
+                np.savetxt(csv_files[clust_num], data_storage[clust_num])
+
+            data_storage = [None] * n_classes
 
 
 def gather_plot_data(model, config, training_data_file=None, tail_removal_pct=0.01, n_bins=20):
