@@ -606,7 +606,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
                                                           np.ravel(feat_data[cluster_data_loc])])
 
         size_check = sum(arr.size for arr in data_storage)
-        if size_check >= 1000000:
+        if size_check >= 10000000:
             for clust_num in range(n_classes):
                 np.savetxt(csv_files[clust_num], data_storage[clust_num])
 
