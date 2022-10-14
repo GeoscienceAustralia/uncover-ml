@@ -30,5 +30,5 @@ def all_plots(model_file, training_data_file):
 
 
 if __name__ == '__main__':
-    current_conf = ''
+    current_conf = 'cluster_test.yaml'
     feat_data_split_save(current_conf)
