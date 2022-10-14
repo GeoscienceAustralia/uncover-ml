@@ -30,6 +30,5 @@ def all_plots(model_file, training_data_file):
 
 
 if __name__ == '__main__':
-    model_file = './results/test_cluster.cluster'
-    training_data = './results/training_data.data'
-    all_plots(model_file, training_data)
+    current_conf = ''
+    feat_data_split_save(current_conf)
