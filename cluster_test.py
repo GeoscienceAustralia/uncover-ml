@@ -30,6 +30,6 @@ def all_plots(model_file, training_data_file):
 
 
 if __name__ == '__main__':
-    current_model_file = './test_cluster.cluster'
-    current_train_data = './training_data.data'
+    current_model_file = './results/test_cluster.cluster'
+    current_train_data = './results/training_data.data'
     all_plots(current_model_file, current_train_data)
