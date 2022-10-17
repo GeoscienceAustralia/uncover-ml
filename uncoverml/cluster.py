@@ -606,7 +606,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
                                                           np.ravel(feat_data[cluster_data_loc])])
 
         size_check = sum(arr.size for arr in data_storage)
-        if size_check >= 10000000:
+        if size_check >= 100000000:
             for clust_num in range(n_classes):
                 np.savetxt(csv_files[clust_num], data_storage[clust_num])
 
@@ -777,10 +777,6 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
 #     feat_idx_pairs = list(combinations(feat_idxs, 2))
 #     feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
 #     for i, feat_idx in enumerate(feat_idx_pairs):
-        
-
-
-
 
 
 def generate_plots(model_file, training_data_file):
@@ -790,12 +786,12 @@ def generate_plots(model_file, training_data_file):
 
     print('Plotting training data')
     train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
-    hist_plot_from_stats(train_hist, 'training', config)
-    box_plot_from_stats(train_bxp, 'training', config)
+    hist_plot_from_stats(train_hist, 'training', config, config.short_names)
+    box_plot_from_stats(train_bxp, 'training', config, config.short_names)
 
     print('Plotting prediction data')
     pred_hist, pred_bxp = gather_plot_data(model, config)
-    hist_plot_from_stats(pred_hist, 'prediction', config)
-    box_plot_from_stats(pred_bxp, 'prediction', config)
+    hist_plot_from_stats(pred_hist, 'prediction', config, config.short_names)
+    box_plot_from_stats(pred_bxp, 'prediction', config, config.short_names)
 
     print('done')
