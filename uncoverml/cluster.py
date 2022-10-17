@@ -784,14 +784,16 @@ def generate_plots(model_file, training_data_file):
     model = state_dict['model']
     config = state_dict['config']
 
+    short_names = ['climate', 'ruggedness', 'weathering_intensity']
+
     print('Plotting training data')
     train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
-    hist_plot_from_stats(train_hist, 'training', config, config.short_names)
-    box_plot_from_stats(train_bxp, 'training', config, config.short_names)
+    hist_plot_from_stats(train_hist, 'training', config, short_names)
+    box_plot_from_stats(train_bxp, 'training', config, short_names)
 
     print('Plotting prediction data')
     pred_hist, pred_bxp = gather_plot_data(model, config)
-    hist_plot_from_stats(pred_hist, 'prediction', config, config.short_names)
-    box_plot_from_stats(pred_bxp, 'prediction', config, config.short_names)
+    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
     print('done')
