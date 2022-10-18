@@ -531,7 +531,7 @@ def compute_n_classes(classes, config):
 
 def center_dist_plot(dist_mat, config):
     fig, ax = plt.subplots()
-    ax.matshow(dist_mat, cmap='seismic')
+    ax.matshow(dist_mat, cmap='viridis')
 
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
@@ -786,7 +786,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None):
         y_data_name = feat_name_pairs[i][1]
         ax.scatter(x_data, y_data, c=predicted, cmap='viridis')
 
-        ax.scatter(centers[feat_idx[0]], centers[feat_idx[1]], c='black', s=200, alpha=0.5)
+        ax.scatter(centers[:, feat_idx[0]], centers[:, feat_idx[1]], c='black', s=200, alpha=0.5)
         fig.suptitle(f'{x_data_name}, {y_data_name}, Clusters')
         plt.xlabel(x_data_name)
         plt.ylabel(y_data_name)
