@@ -536,6 +536,19 @@ def center_dist_plot(dist_mat, config):
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 
+    n_classes = config.n_classes
+    # Major ticks
+    ax.set_xticks(np.arange(0, n_classes, 1))
+    ax.set_yticks(np.arange(0, n_classes, 1))
+
+    # Labels for major ticks
+    ax.set_xticklabels(np.arange(1, n_classes+1, 1))
+    ax.set_yticklabels(np.arange(1, n_classes+1, 1))
+
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, n_classes, 1), minor=True)
+    ax.set_yticks(np.arange(-.5, n_classes, 1), minor=True)
+
     fig.suptitle('cluster_centre_dist_plot')
     plot_name = f'cluster_center_distances.png'
     full_save_path = path.join(config.output_dir, plot_name)
@@ -815,8 +828,8 @@ def generate_plots(model_file, training_data_file):
     # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    training_data = joblib.load(training_data_file)
-    training_data_scatter(training_data, model, config, short_names)
+    # training_data = joblib.load(training_data_file)
+    # training_data_scatter(training_data, model, config, short_names)
 
     center_dists = calc_cluster_dist(model.centres)
     center_dist_plot(center_dists, config)
