@@ -735,7 +735,7 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     fig, axs = plt.subplots(num_plots, 1, sharex=True)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
-        target_ax.bxp(stat)
+        target_ax.bxp(stat, flierprops={'marker': 'o', 'markersize': 1, 'markerfacecolor': 'black'})
         if feat_labels is not None:
             current_label = feat_labels[idx]
         else:
