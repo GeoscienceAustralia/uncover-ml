@@ -536,6 +536,7 @@ def center_dist_plot(dist_mat, config):
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 
+    fig.suptitle('cluster_centre_dist_plot')
     plot_name = f'cluster_center_distances.png'
     full_save_path = path.join(config.output_dir, plot_name)
     fig.savefig(full_save_path)
@@ -765,18 +766,35 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         plt.close(fig)
 
 
-# def training_data_scatter(training_data, model, feat_labels=None):
-#     predicted = model.predict(training_data)
-#     centers = model.centres
-#
-#     feat_names = feat_labels
-#     if feat_names is None:
-#         feat_names = [str(num) for num in range(training_data.shape[1])]
-#
-#     feat_idxs = list(range(training_data.shape[1]))
-#     feat_idx_pairs = list(combinations(feat_idxs, 2))
-#     feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
-#     for i, feat_idx in enumerate(feat_idx_pairs):
+def training_data_scatter(training_data, model, config, feat_labels=None):
+    predicted = model.predict(training_data)
+    centers = model.centres
+
+    feat_names = feat_labels
+    if feat_names is None:
+        feat_names = [str(num) for num in range(training_data.shape[1])]
+
+    feat_idxs = list(range(training_data.shape[1]))
+    feat_idx_pairs = list(combinations(feat_idxs, 2))
+    feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
+    for i, feat_idx in tqdm(enumerate(feat_idx_pairs)):
+        fig, ax = plt.subplots()
+        x_data = training_data[:, feat_idx[0]]
+        x_data_name = feat_name_pairs[i][0]
+        y_data = training_data[:, feat_idx[1]]
+        y_data_name = feat_name_pairs[i][1]
+        ax.scatter(x_data, y_data, c=predicted, cmap='viridis')
+
+        ax.scatter(centers[feat_idx[0]], centers[feat_idx[1]], c='black', s=200, alpha=0.5)
+        fig.suptitle(f'{x_data_name}, {y_data_name}, Clusters')
+        plt.xlabel(x_data_name)
+        plt.ylabel(y_data_name)
+
+        plt.tight_layout()
+        plot_to_save = path.join(config.output_dir, f'{x_data_name}_{y_data_name}_scatter.png')
+        fig.savefig(plot_to_save)
+        plt.clf()
+        plt.close()
 
 
 def generate_plots(model_file, training_data_file):
@@ -786,14 +804,20 @@ def generate_plots(model_file, training_data_file):
 
     short_names = ['climate', 'ruggedness', 'weathering_intensity']
 
-    print('Plotting training data')
-    train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
-    hist_plot_from_stats(train_hist, 'training', config, short_names)
-    box_plot_from_stats(train_bxp, 'training', config, short_names)
+    # print('Plotting training data')
+    # train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
+    # hist_plot_from_stats(train_hist, 'training', config, short_names)
+    # box_plot_from_stats(train_bxp, 'training', config, short_names)
+    #
+    # print('Plotting prediction data')
+    # pred_hist, pred_bxp = gather_plot_data(model, config)
+    # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    print('Plotting prediction data')
-    pred_hist, pred_bxp = gather_plot_data(model, config)
-    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
-    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
+    training_data = joblib.load(training_data_file)
+    training_data_scatter(training_data, model, config, short_names)
+
+    center_dists = calc_cluster_dist(model.centres)
+    center_dist_plot(center_dists, config)
 
     print('done')
