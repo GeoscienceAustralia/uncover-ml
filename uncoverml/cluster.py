@@ -805,7 +805,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None):
         plt.ylabel(y_data_name)
 
         plt.tight_layout()
-        plot_to_save = path.join(config.output_dir, f'{x_data_name}_{y_data_name}_scatter.png')
+        plot_to_save = path.join(config.output_dir, f'{x_data_name}_{y_data_name}_scatter_training.png')
         fig.savefig(plot_to_save)
         plt.clf()
         plt.close()
