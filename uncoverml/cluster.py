@@ -787,7 +787,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None):
         ax.scatter(x_data, y_data, c=predicted, cmap='viridis', s=2)
 
         ax.scatter(centers[:, feat_idx[0]], centers[:, feat_idx[1]], c='black', s=200, alpha=0.5)
-        fig.suptitle(f'{x_data_name}, {y_data_name}, Clusters')
+        fig.suptitle(f'{x_data_name}_{y_data_name} Clusters')
         plt.xlabel(x_data_name)
         plt.ylabel(y_data_name)
 
