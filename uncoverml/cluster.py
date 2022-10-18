@@ -777,7 +777,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None):
     feat_idxs = list(range(training_data.shape[1]))
     feat_idx_pairs = list(combinations(feat_idxs, 2))
     feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
-    for i, feat_idx in tqdm(enumerate(feat_idx_pairs)):
+    for i, feat_idx in enumerate(tqdm(feat_idx_pairs)):
         fig, ax = plt.subplots()
         x_data = training_data[:, feat_idx[0]]
         x_data_name = feat_name_pairs[i][0]
