@@ -815,8 +815,8 @@ def generate_plots(model_file, training_data_file):
     # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    # training_data = joblib.load(training_data_file)
-    # training_data_scatter(training_data, model, config, short_names)
+    training_data = joblib.load(training_data_file)
+    training_data_scatter(training_data, model, config, short_names)
 
     center_dists = calc_cluster_dist(model.centres)
     center_dist_plot(center_dists, config)
