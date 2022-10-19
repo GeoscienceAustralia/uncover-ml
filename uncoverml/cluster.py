@@ -531,7 +531,7 @@ def compute_n_classes(classes, config):
 
 def center_dist_plot(dist_mat, config):
     fig, ax = plt.subplots()
-    ax.matshow(dist_mat, cmap='viridis')
+    ax.matshow(dist_mat, cmap='jet')
 
     for (i, j), z in np.ndenumerate(dist_mat):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
@@ -628,7 +628,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             data_storage = [None] * n_classes
 
 
-def gather_plot_data(model, config, training_data_file=None, tail_removal_pct=0.01, n_bins=20):
+def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=20, tail_removal_pct=0.01):
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -641,10 +641,7 @@ def gather_plot_data(model, config, training_data_file=None, tail_removal_pct=0.
                 feat_list.append(str(feat_num))
                 feat_num += 1
 
-    training_data = None
-    predictions = None
-    if training_data_file is not None:
-        training_data = joblib.load(training_data_file)
+    if (training_data is not None) and (predictions is None):
         predictions = model.predict(training_data)
 
     bxp_stats = {}
@@ -735,7 +732,11 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     fig, axs = plt.subplots(num_plots, 1, sharex=True)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
-        target_ax.bxp(stat, flierprops={'marker': 'o', 'markersize': 1, 'markerfacecolor': 'black'})
+        if config.plot_outliers:
+            target_ax.bxp(stat, flierprops={'marker': 'o', 'markersize': 1, 'markerfacecolor': 'black'})
+        else:
+            target_ax.bxp(stat, showfliers=False)
+
         if feat_labels is not None:
             current_label = feat_labels[idx]
         else:
@@ -780,9 +781,10 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         plt.close(fig)
 
 
-def training_data_scatter(training_data, model, config, feat_labels=None):
-    predicted = model.predict(training_data)
-    centers = model.centres
+def training_data_scatter(training_data, model, config, feat_labels=None, predicted=None):
+    centres = model.centres
+    if predicted is None:
+        predicted = model.predict(training_data)
 
     feat_names = feat_labels
     if feat_names is None:
@@ -797,9 +799,15 @@ def training_data_scatter(training_data, model, config, feat_labels=None):
         x_data_name = feat_name_pairs[i][0]
         y_data = training_data[:, feat_idx[1]]
         y_data_name = feat_name_pairs[i][1]
-        ax.scatter(x_data, y_data, c=predicted, cmap='viridis', s=2)
+        ax.scatter(x_data, y_data, c=predicted, cmap='jet', s=2)
 
-        ax.scatter(centers[:, feat_idx[0]], centers[:, feat_idx[1]], c='black', s=200, alpha=0.5)
+        centres_x = centres[:, feat_idx[0]]
+        centres_y = centres[:, feat_idx[1]]
+        ax.scatter(centres_x, centres_y, c='black', s=200, alpha=0.5)
+        clust_labels = [i for i in range(config.n_classes)]
+        for idx, label in enumerate(clust_labels):
+            ax.annotate(label, (centres_x[idx], centres_y[idx]))
+
         fig.suptitle(f'{x_data_name}_{y_data_name} Clusters')
         plt.xlabel(x_data_name)
         plt.ylabel(y_data_name)
@@ -815,21 +823,22 @@ def generate_plots(model_file, training_data_file):
     state_dict = joblib.load(model_file)
     model = state_dict['model']
     config = state_dict['config']
+    training_data = joblib.load(training_data_file)
+    predictions = model.predict(training_data)
 
     short_names = ['climate', 'ruggedness', 'weathering_intensity']
 
-    # print('Plotting training data')
-    # train_hist, train_bxp = gather_plot_data(model, config, training_data_file)
-    # hist_plot_from_stats(train_hist, 'training', config, short_names)
-    # box_plot_from_stats(train_bxp, 'training', config, short_names)
-    #
+    print('Plotting training data')
+    train_hist, train_bxp = gather_plot_data(model, config, training_data)
+    hist_plot_from_stats(train_hist, 'training', config, short_names)
+    box_plot_from_stats(train_bxp, 'training', config, short_names)
+
     # print('Plotting prediction data')
     # pred_hist, pred_bxp = gather_plot_data(model, config)
     # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    # training_data = joblib.load(training_data_file)
-    # training_data_scatter(training_data, model, config, short_names)
+    training_data_scatter(training_data, model, config, short_names, predictions)
 
     center_dists = calc_cluster_dist(model.centres)
     center_dist_plot(center_dists, config)

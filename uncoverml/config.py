@@ -382,6 +382,9 @@ class Config:
                 self.class_property = s['clustering']['property']
             else:
                 self.semi_supervised = False
+
+            self.plot_outliers = s['plot_outliers'] if 'plot_outliers' in s else False
+            self.histogram_bins = s['histogram_bins'] if 'histogram_bins' in s else False
             if 'cluster_analysis' in s['clustering']:
                 self.cluster_analysis = s['clustering']['cluster_analysis']
 
