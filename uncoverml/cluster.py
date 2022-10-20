@@ -733,7 +733,7 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     fig, axs = plt.subplots(num_plots, 1, sharex=True)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
-        if hasattr(config, plot_outliers) and config.plot_outliers:
+        if hasattr(config, 'plot_outliers') and config.plot_outliers:
             target_ax.bxp(stat, flierprops={'marker': 'o', 'markersize': 1, 'markerfacecolor': 'black'})
         else:
             target_ax.bxp(stat, showfliers=False)
