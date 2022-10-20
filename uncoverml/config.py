@@ -112,6 +112,7 @@ class FeatureSetConfig:
                     files.append(path.abspath(f))
 
         self.files = sorted(files, key=str.lower)
+        self.files_unsorted = files
         n_files = len(self.files)
         if 'transforms' not in d:
             d['transforms'] = None
