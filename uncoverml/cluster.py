@@ -578,7 +578,7 @@ def split_all_feat_data(config):
     feat_list = []
     feat_num = 0
     for s in config.feature_sets:
-        for tif in s.files_unsorted:
+        for tif in s.files:
             name = path.abspath(tif)
             feat_src_list.append(rasterio.open(name))
 
