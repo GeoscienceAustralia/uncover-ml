@@ -583,7 +583,8 @@ def split_all_feat_data(config):
             feat_src_list.append(rasterio.open(name))
 
             if hasattr(config, 'short_names'):
-                feat_list.append(config.short_names[feat_num])
+                # feat_list.append(config.short_names[feat_num])
+                feat_list.append(str(feat_num))
             else:
                 feat_list.append(str(feat_num))
 

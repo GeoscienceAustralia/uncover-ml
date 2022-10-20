@@ -11,15 +11,6 @@ from uncoverml.transforms import StandardiseTransform
 log = logging.getLogger(__name__)
 
 
-def training_data_plot(model_file, training_data_file):
-    cluster.training_data_boxplot(model_file, training_data_file)
-
-
-def prediction_data_plot(main_config):
-    current_config = config.Config(main_config)
-    cluster.all_feat_boxplot(current_config)
-
-
 def feat_data_split_save(main_config):
     current_config = config.Config(main_config)
     cluster.split_all_feat_data(current_config)
