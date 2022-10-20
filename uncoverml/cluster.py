@@ -651,7 +651,7 @@ def gather_plot_data(model, config, training_data=None, predictions=None, n_bins
         feat_bxp_stats = []
         feat_hist_stats = []
         for clust in tqdm(range(n_classes)):
-            if training_data_file is not None:
+            if training_data is not None:
                 current_data = training_data_filter(training_data, predictions, feat_idx, clust)
             else:
                 current_data = prediction_data_filter(feat_name, clust, config)
