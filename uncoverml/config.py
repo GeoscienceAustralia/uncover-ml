@@ -111,8 +111,9 @@ class FeatureSetConfig:
                 for f in tifs:
                     files.append(path.abspath(f))
 
-        self.files = sorted(files, key=str.lower)
-        self.files_unsorted = files
+        # self.files = sorted(files, key=str.lower)
+        # self.files_unsorted = files
+        self.files = files
         n_files = len(self.files)
         if 'transforms' not in d:
             d['transforms'] = None
