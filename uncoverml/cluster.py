@@ -804,7 +804,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
 
         centres_x = centres[:, feat_idx[0]]
         centres_y = centres[:, feat_idx[1]]
-        ax.scatter(centres_x, centres_y, c='black', s=200, alpha=0.5)
+        ax.scatter(centres_x, centres_y, c='black', s=10, alpha=0.5)
         clust_labels = [i for i in range(config.n_classes)]
         for idx, label in enumerate(clust_labels):
             ax.annotate(label, (centres_x[idx], centres_y[idx]))
