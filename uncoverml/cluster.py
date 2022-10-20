@@ -542,8 +542,8 @@ def center_dist_plot(dist_mat, config):
     ax.set_yticks(np.arange(0, n_classes, 1))
 
     # Labels for major ticks
-    ax.set_xticklabels(np.arange(1, n_classes+1, 1))
-    ax.set_yticklabels(np.arange(1, n_classes+1, 1))
+    ax.set_xticklabels(np.arange(0, n_classes, 1))
+    ax.set_yticklabels(np.arange(0, n_classes, 1))
 
     # Minor ticks
     ax.set_xticks(np.arange(-.5, n_classes, 1), minor=True)
@@ -629,7 +629,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             data_storage = [None] * n_classes
 
 
-def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=100, tail_removal_pct=0.01):
+def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=10000, tail_removal_pct=0.01):
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -804,7 +804,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
 
         centres_x = centres[:, feat_idx[0]]
         centres_y = centres[:, feat_idx[1]]
-        ax.scatter(centres_x, centres_y, c='black', s=10, alpha=0.5)
+        ax.scatter(centres_x, centres_y, c='black', s=5, alpha=0.5)
         clust_labels = [i for i in range(config.n_classes)]
         for idx, label in enumerate(clust_labels):
             ax.annotate(label, (centres_x[idx], centres_y[idx]))
