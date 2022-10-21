@@ -530,7 +530,7 @@ def compute_n_classes(classes, config):
 
 
 def center_dist_plot(dist_mat, config):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(dpi=250)
     ax.matshow(dist_mat, cmap='jet')
 
     for (i, j), z in np.ndenumerate(dist_mat):
@@ -552,7 +552,7 @@ def center_dist_plot(dist_mat, config):
     fig.suptitle('cluster_centre_dist_plot')
     plot_name = f'cluster_center_distances.png'
     full_save_path = path.join(config.output_dir, plot_name)
-    fig.savefig(full_save_path)
+    fig.savefig(full_save_path, dpi=250)
 
 
 def calc_cluster_dist(centres):
@@ -583,8 +583,7 @@ def split_all_feat_data(config):
             feat_src_list.append(rasterio.open(name))
 
             if hasattr(config, 'short_names'):
-                # feat_list.append(config.short_names[feat_num])
-                feat_list.append(str(feat_num))
+                feat_list.append(config.short_names[feat_num])
             else:
                 feat_list.append(str(feat_num))
 
@@ -629,7 +628,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             data_storage = [None] * n_classes
 
 
-def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=10000, tail_removal_pct=0.01):
+def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=100, tail_removal_pct=0.01):
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -730,7 +729,7 @@ def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
 
 def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     num_plots = len(list(stats_dict.keys()))
-    fig, axs = plt.subplots(num_plots, 1, sharex=True)
+    fig, axs = plt.subplots(num_plots, 1, sharex=True, dpi=250)
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
         if hasattr(config, 'plot_outliers') and config.plot_outliers:
@@ -750,7 +749,7 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     fig.suptitle(f'{data_type}_boxplot')
     plt.tight_layout()
     plot_to_save = path.join(config.output_dir, f'{data_type}_boxplot.png')
-    fig.savefig(plot_to_save)
+    fig.savefig(plot_to_save, dpi=250)
     plt.clf()
     plt.close(fig)
 
@@ -760,7 +759,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     num_fig = len(stats_dict[first_key])
     num_subplots = len(list(stats_dict.keys()))
     for clust in tqdm(range(num_fig)):
-        fig, axs = plt.subplots(num_subplots, 1)
+        fig, axs = plt.subplots(num_subplots, 1, dpi=250)
         for feat in range(num_subplots):
             plot_data = list(stats_dict.values())[feat][clust]
             bins = plot_data[0]
@@ -777,7 +776,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         fig.suptitle(f'{data_type}_clust_{clust}')
         plt.tight_layout()
         plot_to_save = path.join(config.output_dir, f'{data_type}_clust_{clust}_histogram.png')
-        fig.savefig(plot_to_save)
+        fig.savefig(plot_to_save, dpi=250)
         plt.clf()
         plt.close(fig)
 
@@ -795,7 +794,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
     feat_idx_pairs = list(combinations(feat_idxs, 2))
     feat_name_pairs = [(feat_names[a], feat_names[b]) for a,b in feat_idx_pairs]
     for i, feat_idx in enumerate(tqdm(feat_idx_pairs)):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=250)
         x_data = training_data[:, feat_idx[0]]
         x_data_name = feat_name_pairs[i][0]
         y_data = training_data[:, feat_idx[1]]
@@ -815,7 +814,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
 
         plt.tight_layout()
         plot_to_save = path.join(config.output_dir, f'{x_data_name}_{y_data_name}_scatter_training.png')
-        fig.savefig(plot_to_save)
+        fig.savefig(plot_to_save, dpi=250)
         plt.clf()
         plt.close()
 
