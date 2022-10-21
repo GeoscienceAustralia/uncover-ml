@@ -833,10 +833,10 @@ def generate_plots(model_file, training_data_file):
     hist_plot_from_stats(train_hist, 'training', config, short_names)
     box_plot_from_stats(train_bxp, 'training', config, short_names)
 
-    # print('Plotting prediction data')
-    # pred_hist, pred_bxp = gather_plot_data(model, config)
-    # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
-    # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
+    print('Plotting prediction data')
+    pred_hist, pred_bxp = gather_plot_data(model, config)
+    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
     training_data_scatter(training_data, model, config, short_names, predictions)
 
