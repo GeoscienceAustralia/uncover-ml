@@ -26,4 +26,4 @@ if __name__ == '__main__':
     # all_plots(current_model_file, current_train_data)
 
     config_file = '/g/data/ge3/as6887/projects/uncoverml_models/cluster-test/cluster_test.yaml'
-    feat_data_split_save(config_file)
+    partial_split(config_file)
