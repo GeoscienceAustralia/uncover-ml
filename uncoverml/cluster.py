@@ -856,7 +856,7 @@ def generate_plots(model_file, training_data_file):
     training_data = joblib.load(training_data_file)
     predictions = model.predict(training_data)
 
-    short_names = ['climate', 'ruggedness', 'weathering_intensity']
+    short_names = ['climate', 'dem_fill', 'wetness',  'ruggedness', 'weathering_intensity']
 
     print('Plotting training data')
     train_hist, train_bxp = gather_plot_data(model, config, training_data)
