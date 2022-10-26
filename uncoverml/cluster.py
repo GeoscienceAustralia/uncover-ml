@@ -652,6 +652,11 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
 
             data_storage = [None] * n_classes
 
+    size_check = sum(arr.size for arr in data_storage)
+    if size_check > 0:
+        for clust_num in range(n_classes):
+            np.savetxt(csv_files[clust_num], data_storage[clust_num])
+
 
 def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=100, tail_removal_pct=0.01):
     n_classes = config.n_classes
