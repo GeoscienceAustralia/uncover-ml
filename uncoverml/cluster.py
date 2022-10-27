@@ -838,7 +838,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
         for idx, label in enumerate(clust_labels):
             ax.annotate(label, (centres_x[idx], centres_y[idx]), ha='center', va='center', c='white')
 
-        plt.legend()
+        ax.legend()
         fig.suptitle(f'{x_data_name}_{y_data_name} Clusters')
         plt.xlabel(x_data_name)
         plt.ylabel(y_data_name)
