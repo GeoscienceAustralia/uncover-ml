@@ -593,29 +593,29 @@ def split_all_feat_data(config):
         split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
 
-def partial_split(config):
-    n_classes = config.n_classes
-    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
-    pred_src = rasterio.open(pred_file_path)
-
-    feat_src_list = []
-    feat_list = []
-    feat_num = 0
-    for s in config.feature_sets:
-        for tif in s.files:
-            name = path.abspath(tif)
-            feat_src_list.append(rasterio.open(name))
-
-            if hasattr(config, 'short_names'):
-                feat_list.append(config.short_names[feat_num])
-            else:
-                feat_list.append(str(feat_num))
-
-            feat_num += 1
-
-    for feat_idx, current_feat_src in enumerate(feat_src_list):
-        if feat_idx in [3, 4]:
-            split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
+# def partial_split(config):
+#     n_classes = config.n_classes
+#     pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+#     pred_src = rasterio.open(pred_file_path)
+#
+#     feat_src_list = []
+#     feat_list = []
+#     feat_num = 0
+#     for s in config.feature_sets:
+#         for tif in s.files:
+#             name = path.abspath(tif)
+#             feat_src_list.append(rasterio.open(name))
+#
+#             if hasattr(config, 'short_names'):
+#                 feat_list.append(config.short_names[feat_num])
+#             else:
+#                 feat_list.append(str(feat_num))
+#
+#             feat_num += 1
+#
+#     for feat_idx, current_feat_src in enumerate(feat_src_list):
+#         if feat_idx in [3, 4]:
+#             split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
 
 def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
@@ -838,6 +838,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
         for idx, label in enumerate(clust_labels):
             ax.annotate(label, (centres_x[idx], centres_y[idx]), ha='center', va='center', c='white')
 
+        plt.legend()
         fig.suptitle(f'{x_data_name}_{y_data_name} Clusters')
         plt.xlabel(x_data_name)
         plt.ylabel(y_data_name)
@@ -858,19 +859,19 @@ def generate_plots(model_file, training_data_file):
 
     short_names = ['climate', 'dem_fill', 'wetness',  'ruggedness', 'weathering_intensity']
 
-    print('Plotting training data')
-    train_hist, train_bxp = gather_plot_data(model, config, training_data)
-    hist_plot_from_stats(train_hist, 'training', config, short_names)
-    box_plot_from_stats(train_bxp, 'training', config, short_names)
-
-    print('Plotting prediction data')
-    pred_hist, pred_bxp = gather_plot_data(model, config)
-    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
-    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
+    # print('Plotting training data')
+    # train_hist, train_bxp = gather_plot_data(model, config, training_data)
+    # hist_plot_from_stats(train_hist, 'training', config, short_names)
+    # box_plot_from_stats(train_bxp, 'training', config, short_names)
+    #
+    # print('Plotting prediction data')
+    # pred_hist, pred_bxp = gather_plot_data(model, config)
+    # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
     training_data_scatter(training_data, model, config, short_names, predictions)
 
-    center_dists = calc_cluster_dist(model.centres)
-    center_dist_plot(center_dists, config)
+    # center_dists = calc_cluster_dist(model.centres)
+    # center_dist_plot(center_dists, config)
 
     print('done')
