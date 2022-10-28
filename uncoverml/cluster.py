@@ -814,7 +814,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
 def training_data_scatter(training_data, model, config, feat_labels=None, predicted=None):
     centres = model.centres
     if predicted is None:
-        predicted = model.predict(training_data)
+        log.error('Need predictions to make plots')
 
     feat_names = feat_labels
     if feat_names is None:
@@ -849,7 +849,7 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
         plt.close()
 
 
-def generate_plots(model_file, training_data_file):
+def generate_plots(model_file, training_data_file, raw_training_data):
     state_dict = joblib.load(model_file)
     model = state_dict['model']
     config = state_dict['config']

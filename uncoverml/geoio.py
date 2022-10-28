@@ -468,6 +468,34 @@ def _iterate_sources(f, config):
     return results
 
 
+def unordered_iterate_sources(f, config):
+
+    results = []
+    for s in config.feature_sets:
+        extracted_chunks = {}
+        for tif in s.files:
+            print(tif)
+            name = os.path.abspath(tif)
+            image_source = RasterioImageSource(tif)
+            x = f(image_source)
+            # TODO this may hurt performance. Consider removal
+            if type(x) is np.ma.MaskedArray:
+                count = mpiops.count(x)
+                # if not np.all(count > 0):
+                #     s = ("{} has no data in at least one band.".format(name) +
+                #          " Valid_pixel_count: {}".format(count))
+                #     raise ValueError(s)
+                missing_percent = missing_percentage(x)
+                t_missing = mpiops.comm.allreduce(
+                    missing_percent) / mpiops.chunks
+                log.info("{}: {}px {:2.2f}% missing".format(
+                    name, count, t_missing))
+            extracted_chunks[name] = x
+
+        results.append(extracted_chunks)
+    return results
+
+
 def image_resolutions(config):
     def f(image_source):
         r = image_source._full_res
@@ -541,6 +569,22 @@ def unsupervised_feature_sets(config):
             r = r[np.random.rand(r.shape[0]) < frac]
         return r
     result = _iterate_sources(f, config)
+    return result
+
+
+def unsupervised_feature_sets_raw(config):
+    frac = config.subsample_fraction
+
+    def f(image_source):
+        r = features.extract_subchunks(image_source, subchunk_index=0,
+                                       n_subchunks=1,
+                                       patchsize=config.patchsize)
+        if frac < 1.0:
+            np.random.seed(1)
+            r = r[np.random.rand(r.shape[0]) < frac]
+        return r
+
+    result = unordered_iterate_sources(f, config)
     return result
 
 

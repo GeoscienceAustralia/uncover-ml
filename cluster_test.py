@@ -4,6 +4,7 @@ from uncoverml import cluster
 from uncoverml import features
 from uncoverml import mpiops
 from uncoverml import config
+from uncoverml import geoio as gio
 
 from uncoverml.transforms import StandardiseTransform
 
@@ -18,6 +19,12 @@ def feat_data_split_save(main_config):
 
 def all_plots(model_file, training_data_file):
     cluster.generate_plots(model_file, training_data_file)
+
+
+def raw_training_data(main_config, model_file, transformed_training_data_file):
+    current_config = config.Config(main_config)
+    raw_training_data = gio.unsupervised_feature_sets_raw(current_config)
+    cluster.generate_plots(model_file, training_data_file, raw_training_data)
 
 
 if __name__ == '__main__':
