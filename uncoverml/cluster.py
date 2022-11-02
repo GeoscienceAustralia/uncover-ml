@@ -8,6 +8,7 @@ import rasterio
 import time
 import joblib
 
+from sklearn import cluster
 from os import path
 from rasterio.windows import Window
 from itertools import combinations
@@ -591,31 +592,6 @@ def split_all_feat_data(config):
 
     for feat_idx, current_feat_src in enumerate(feat_src_list):
         split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
-
-
-# def partial_split(config):
-#     n_classes = config.n_classes
-#     pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
-#     pred_src = rasterio.open(pred_file_path)
-#
-#     feat_src_list = []
-#     feat_list = []
-#     feat_num = 0
-#     for s in config.feature_sets:
-#         for tif in s.files:
-#             name = path.abspath(tif)
-#             feat_src_list.append(rasterio.open(name))
-#
-#             if hasattr(config, 'short_names'):
-#                 feat_list.append(config.short_names[feat_num])
-#             else:
-#                 feat_list.append(str(feat_num))
-#
-#             feat_num += 1
-#
-#     for feat_idx, current_feat_src in enumerate(feat_src_list):
-#         if feat_idx in [3, 4]:
-#             split_save_feat_clusters(config, current_feat_src, pred_src, feat_list[feat_idx], n_classes)
 
 
 def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_classes):
