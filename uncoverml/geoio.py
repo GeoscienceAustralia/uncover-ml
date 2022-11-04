@@ -442,7 +442,7 @@ def _iterate_sources(f, config):
 
     results = []
     for s in config.feature_sets:
-        extracted_chunks = {}
+        extracted_chunks = OrderedDict()
         for tif in s.files:
             print(tif)
             name = os.path.abspath(tif)
@@ -461,8 +461,9 @@ def _iterate_sources(f, config):
                 log.info("{}: {}px {:2.2f}% missing".format(
                     name, count, t_missing))
             extracted_chunks[name] = x
-        extracted_chunks = OrderedDict(sorted(
-            extracted_chunks.items(), key=lambda t: t[0]))
+
+        # extracted_chunks = OrderedDict(sorted(
+        #     extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
     return results

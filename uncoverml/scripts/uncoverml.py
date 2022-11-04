@@ -303,6 +303,9 @@ def unsupervised(config):
     model.learn(features)
     ls.mpiops.run_once(ls.geoio.export_cluster_model, model, config)
 
+    raw_save_path = os.path.join(config.output_dir, 'raw_features.data')
+    joblib.dump(image_chunk_sets, raw_save_path)
+
     features_save_path = os.path.join(config.output_dir, 'training_data.data')
     joblib.dump(features, features_save_path)
 

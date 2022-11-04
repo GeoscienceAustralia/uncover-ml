@@ -15,6 +15,7 @@ from itertools import combinations
 from matplotlib.cm import cool
 from tqdm import tqdm
 from itertools import combinations
+from collections import OrderedDict
 
 import concurrent.futures
 import multiprocessing
@@ -550,7 +551,7 @@ def center_dist_plot(dist_mat, config):
     ax.set_xticks(np.arange(-.5, n_classes, 1), minor=True)
     ax.set_yticks(np.arange(-.5, n_classes, 1), minor=True)
 
-    fig.suptitle('cluster_centre_dist_plot')
+    fig.suptitle('Euclidean Norm Distance Between Cluster Centres')
     plot_name = f'cluster_center_distances.png'
     full_save_path = path.join(config.output_dir, plot_name)
     fig.savefig(full_save_path, dpi=250)
@@ -748,7 +749,8 @@ def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         else:
             current_label = feat
 
-        target_ax.set_ylabel(current_label)
+        # target_ax.set_ylabel(current_label)
+        target_ax.set_title(current_label)
         if idx == (len(stats_dict.items())-1):
             target_ax.set_xlabel('cluster')
 
@@ -825,28 +827,42 @@ def training_data_scatter(training_data, model, config, feat_labels=None, predic
         plt.close()
 
 
-def generate_plots(model_file, training_data_file, raw_training_data):
-    state_dict = joblib.load(model_file)
-    model = state_dict['model']
-    config = state_dict['config']
+def prepare_raw_data(model, training_data_file, raw_data_file):
     training_data = joblib.load(training_data_file)
     predictions = model.predict(training_data)
 
-    short_names = ['climate', 'dem_fill', 'wetness',  'ruggedness', 'weathering_intensity']
+    raw_data = joblib.load(raw_data_file)
+    scatter_data = []
+    for data_dict in raw_data:
+        for key, val in data_dict.items():
+            scatter_data.append(val)
 
-    # print('Plotting training data')
-    # train_hist, train_bxp = gather_plot_data(model, config, training_data)
-    # hist_plot_from_stats(train_hist, 'training', config, short_names)
-    # box_plot_from_stats(train_bxp, 'training', config, short_names)
-    #
+    scatter_data = np.concatenate(scatter_data, axis=1)
+    return scatter_data, predictions
+
+
+def generate_plots(model_file, training_data_file, raw_feature_data_file):
+    state_dict = joblib.load(model_file)
+    model = state_dict['model']
+    config = state_dict['config']
+    scatter_data, predictions = prepare_raw_data(model, training_data_file, raw_feature_data_file)
+    short_names = config.short_names
+    if short_names is None:
+        short_names = [f'feat_{num}' for num in range(scatter_data.shape[1])]
+
+    print('Plotting training data')
+    train_hist, train_bxp = gather_plot_data(model, config, scatter_data)
+    hist_plot_from_stats(train_hist, 'training', config, short_names)
+    box_plot_from_stats(train_bxp, 'training', config, short_names)
+
     # print('Plotting prediction data')
     # pred_hist, pred_bxp = gather_plot_data(model, config)
     # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    training_data_scatter(training_data, model, config, short_names, predictions)
+    training_data_scatter(scatter_data, model, config, short_names, predictions)
 
-    # center_dists = calc_cluster_dist(model.centres)
-    # center_dist_plot(center_dists, config)
+    center_dists = calc_cluster_dist(model.centres)
+    center_dist_plot(center_dists, config)
 
     print('done')
