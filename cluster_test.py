@@ -22,9 +22,10 @@ def all_plots(model_file, training_data_file):
 
 
 if __name__ == '__main__':
-    # current_model_file = './results/test_cluster.cluster'
-    # current_train_data = './results/training_data.data'
-    # all_plots(current_model_file, current_train_data)
+    current_model_file = './results/test_cluster.cluster'
+    current_train_data = './results/training_data.data'
+    current_raw_training = './results/raw_features.data'
+    all_plots(current_model_file, current_train_data)
 
-    config_file = '/g/data/ge3/as6887/projects/uncoverml_models/cluster-test/cluster_test.yaml'
-    feat_data_split_save(config_file)
+    # config_file = '/g/data/ge3/as6887/projects/uncoverml_models/cluster-test/cluster_test.yaml'
+    # feat_data_split_save(config_file)
