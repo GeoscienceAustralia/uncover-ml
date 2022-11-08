@@ -17,15 +17,15 @@ def feat_data_split_save(main_config):
     cluster.split_all_feat_data(current_config)
 
 
-def all_plots(model_file, training_data_file):
-    cluster.generate_plots(model_file, training_data_file)
+def all_plots(model_file, training_data_file, raw_data_file):
+    cluster.generate_plots(model_file, training_data_file, raw_data_file)
 
 
 if __name__ == '__main__':
     current_model_file = './results/test_cluster.cluster'
     current_train_data = './results/training_data.data'
     current_raw_training = './results/raw_features.data'
-    all_plots(current_model_file, current_train_data)
+    all_plots(current_model_file, current_train_data, current_raw_training)
 
     # config_file = '/g/data/ge3/as6887/projects/uncoverml_models/cluster-test/cluster_test.yaml'
     # feat_data_split_save(config_file)
