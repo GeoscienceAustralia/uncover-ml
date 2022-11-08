@@ -832,21 +832,23 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
 
     raw_data = joblib.load(raw_data_file)
     scatter_data = []
+    un_stand_data = []
     for data_dict in raw_data:
         for key, val in data_dict.items():
+            scatter_data.append(np.reshape(val, (val.size, 1)))
             unmasked_data = val.data
             unmasked_data = unmasked_data[~np.isnan(unmasked_data)]
             unmasked_data = np.reshape(unmasked_data, (unmasked_data.size, 1))
-            scatter_data.append(unmasked_data)
+            un_stand_data.append(unmasked_data)
 
-    scatter_data = np.hstack(scatter_data)
-    raw_centres = un_standardise_centres(model.centres, scatter_data)
+    scatter_data = np.ma.hstack(scatter_data)
+    raw_centres = un_standardise_centres(model.centres, un_stand_data)
     return scatter_data, predictions, raw_centres
 
 
 def un_standardise_centres(model_centres, raw_data):
-    for feat_idx in range(raw_data.shape[1]):
-        feat_data = raw_data[:, feat_idx]
+    for feat_idx in range(len(raw_data)):
+        feat_data = raw_data[feat_idx]
         current_mean = np.nanmean(feat_data)
         current_std = np.nanstd(feat_data)
 
