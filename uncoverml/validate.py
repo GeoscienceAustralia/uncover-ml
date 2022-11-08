@@ -372,14 +372,16 @@ def setup_validation_data(X, targets_all, cv_folds, random_state=None):
                                        random_state=random_state)
 
     rows_with_at_least_one_masked = ~ np.any(X.mask, axis=1)
-    X = X[rows_with_at_least_one_masked, :]
-    w = w[rows_with_at_least_one_masked]
-    y = y[rows_with_at_least_one_masked]
-    lon_lat = lon_lat[rows_with_at_least_one_masked, :]
-    groups = groups[rows_with_at_least_one_masked]
+    finite_X = np.isfinite(X.data).sum(axis=1) == X.shape[1]
+    valid_rows = rows_with_at_least_one_masked & finite_X
+    X = X[valid_rows, :]
+    w = w[valid_rows]
+    y = y[valid_rows]
+    lon_lat = lon_lat[valid_rows, :]
+    groups = groups[valid_rows]
 
     for (f, v), a in zip(targets_all.fields.items(), arrays):
-        targets_all.fields[f] = a[rows_with_at_least_one_masked]
+        targets_all.fields[f] = a[valid_rows]
 
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
