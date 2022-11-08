@@ -677,9 +677,9 @@ def gather_plot_data(model, config, training_data=None, predictions=None, n_bins
 
 
 def gen_hist_stats(data, n_bins):
-    data_min = data.min()
+    data_min = np.nanmin(data)
     bin_start = round(data_min)
-    data_max = data.max()
+    data_max = np.nanmax(data)
     bin_end = round(data_max) + 1.0
 
     bin_list = np.linspace(bin_start, bin_end, n_bins)
