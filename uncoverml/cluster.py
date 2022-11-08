@@ -851,7 +851,7 @@ def generate_plots(model_file, training_data_file, raw_feature_data_file):
         short_names = [f'feat_{num}' for num in range(scatter_data.shape[1])]
 
     print('Plotting training data')
-    train_hist, train_bxp = gather_plot_data(model, config, scatter_data)
+    train_hist, train_bxp = gather_plot_data(model, config, scatter_data, predictions)
     hist_plot_from_stats(train_hist, 'training', config, short_names)
     box_plot_from_stats(train_bxp, 'training', config, short_names)
 
