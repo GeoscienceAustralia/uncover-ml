@@ -834,7 +834,7 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
     scatter_data = []
     for data_dict in raw_data:
         for key, val in data_dict.items():
-            scatter_data.append(np.ravel(val))
+            scatter_data.append(np.reshape(val, (val.size, 1)))
 
     scatter_data = np.concatenate(scatter_data)
     raw_centres = un_standardise_centres(model.centres, scatter_data)
