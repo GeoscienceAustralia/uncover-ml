@@ -849,7 +849,7 @@ def un_standardise_centres(model_centres, raw_data):
 
         current_centres = model_centres[:, feat_idx]
         current_centres = (current_centres * current_std) + current_mean
-        model_centres[: feat_idx] = current_centres
+        model_centres[:, feat_idx] = current_centres
 
     return model_centres
 
