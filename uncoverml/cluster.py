@@ -844,8 +844,8 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
 def un_standardise_centres(model_centres, raw_data):
     for feat_idx in range(raw_data.shape[1]):
         feat_data = raw_data[:, feat_idx]
-        current_mean = np.mean(feat_data)
-        current_std = np.std(feat_data)
+        current_mean = np.nanmean(feat_data)
+        current_std = np.nanstd(feat_data)
 
         current_centres = model_centres[:, feat_idx]
         current_centres = (current_centres * current_std) + current_mean
