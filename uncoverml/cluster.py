@@ -789,8 +789,7 @@ def hist_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
         plt.close(fig)
 
 
-def training_data_scatter(training_data, model, config, feat_labels=None, predicted=None):
-    centres = model.centres
+def training_data_scatter(training_data, centres, config, feat_labels=None, predicted=None):
     if predicted is None:
         log.error('Need predictions to make plots')
 
@@ -838,14 +837,28 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
             scatter_data.append(val)
 
     scatter_data = np.concatenate(scatter_data, axis=1)
-    return np.squeeze(scatter_data), predictions
+    raw_centres = un_standardise_centres(model.centres, scatter_data)
+    return np.squeeze(scatter_data), predictions, raw_centres
+
+
+def un_standardise_centres(model_centres, raw_data):
+    for feat_idx in range(raw_data.shape[1]):
+        feat_data = raw_data[:, feat_idx]
+        current_mean = np.mean(feat_data)
+        current_std = np.std(feat_data)
+
+        current_centres = model_centres[:, feat_idx]
+        current_centres = (current_centres * current_std) + current_mean
+        model_centres[: feat_idx] = current_centres
+
+    return model_centres
 
 
 def generate_plots(model_file, training_data_file, raw_feature_data_file):
     state_dict = joblib.load(model_file)
     model = state_dict['model']
     config = state_dict['config']
-    scatter_data, predictions = prepare_raw_data(model, training_data_file, raw_feature_data_file)
+    scatter_data, predictions, raw_centres = prepare_raw_data(model, training_data_file, raw_feature_data_file)
     short_names = config.short_names
     if short_names is None:
         short_names = [f'feat_{num}' for num in range(scatter_data.shape[1])]
@@ -860,9 +873,9 @@ def generate_plots(model_file, training_data_file, raw_feature_data_file):
     # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
-    training_data_scatter(scatter_data, model, config, short_names, predictions)
+    training_data_scatter(scatter_data, raw_centres, config, short_names, predictions)
 
-    center_dists = calc_cluster_dist(model.centres)
+    center_dists = calc_cluster_dist(raw_centres)
     center_dist_plot(center_dists, config)
 
     print('done')
