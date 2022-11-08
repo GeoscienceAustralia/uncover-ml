@@ -834,9 +834,9 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
     scatter_data = []
     for data_dict in raw_data:
         for key, val in data_dict.items():
-            masked_data = np.reshape(val, (val.size, 1))
-            unmasked_data = masked_data.data
+            unmasked_data = val.data
             unmasked_data = unmasked_data[~np.isnan(unmasked_data)]
+            unmasked_data = np.reshape(unmasked_data, (unmasked_data.size, 1))
             scatter_data.append(unmasked_data)
 
     scatter_data = np.hstack(scatter_data)
