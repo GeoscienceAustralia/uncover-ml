@@ -838,7 +838,7 @@ def prepare_raw_data(model, training_data_file, raw_data_file):
             scatter_data.append(val)
 
     scatter_data = np.concatenate(scatter_data, axis=1)
-    return scatter_data, predictions
+    return np.squeeze(scatter_data), predictions
 
 
 def generate_plots(model_file, training_data_file, raw_feature_data_file):
