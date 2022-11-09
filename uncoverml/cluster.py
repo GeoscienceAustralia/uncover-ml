@@ -536,7 +536,7 @@ def center_dist_plot(dist_mat, config):
     ax.matshow(dist_mat, cmap='jet')
 
     for (i, j), z in np.ndenumerate(dist_mat):
-        ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center', size=2)
+        ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center', size=4)
 
     n_classes = config.n_classes
     # Major ticks
