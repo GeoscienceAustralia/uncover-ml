@@ -7,8 +7,10 @@ import matplotlib.cbook as cbook
 import rasterio
 import time
 import joblib
+import hdbscan
 
 from sklearn import cluster
+from sklearn.metrics.pairwise import pairwise_distances
 from os import path
 from rasterio.windows import Window
 from itertools import combinations
@@ -529,6 +531,52 @@ def compute_n_classes(classes, config):
     k = mpiops.comm.allreduce(np.amax(classes), op=mpiops.MPI.MAX)
     k = int(max(k, config.n_classes))
     return k
+
+
+class HDBScan:
+    def __init__(self, **kwargs):
+        self.model = hdbscan.HDBSCAN(**kwargs)
+
+    @staticmethod
+    def get_predict_tags():
+        tags = ['class']
+        return tags
+
+    def learn(self, x):
+        self.model.fit(x)
+
+    def predict(self, x):
+        y_new, prob = hdbscan.approximate_predict(self.model, x)
+        return y_new
+
+
+class DBScan:
+    def __init__(self, **kwargs):
+        self.model = sklearn.cluster.DBSCAN(**kwargs)
+
+    @staticmethod
+    def get_predict_tags():
+        tags = ['class']
+        return tags
+
+    def learn(self, x):
+        self.model.fit(x)
+
+    def predict(self, x):
+        # Result is noise by default
+        y_new = np.ones(shape=len(x), dtype=int) * -1
+        model_metric = self.model.get_params()['metric']
+
+        # Iterate all input samples for a label
+        for j, x_new in enumerate(x):
+            # Find a core sample closer than EPS
+            for i, x_core in enumerate(self.model.components_):
+                if pairwise_distances(x_new, x_core, metric=model_metric) < self.model.eps:
+                    # Assign label of x_core to x_new
+                    y_new[j] = self.model.labels_[self.model.core_sample_indices_[i]]
+                    break
+
+        return y_new
 
 
 def center_dist_plot(dist_mat, config):
