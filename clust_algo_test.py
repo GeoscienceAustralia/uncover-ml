@@ -144,7 +144,7 @@ if __name__ == '__main__':
         {'type': 'dbscan', 'out_dir': './results/dbscan'},
         {'type': 'hdbscan', 'out_dir': './results/hdbscan'}
     ]
-    current_config_file = './cluster_test.yaml'
+    current_config_file = './cluster-test.yaml'
     subsample_frac = 0.1
     parts = 200
     train_predict_models(mod_list, current_config_file, subsample_frac, parts)
