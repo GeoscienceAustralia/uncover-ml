@@ -70,7 +70,7 @@ def model_train(model_type, main_config, x_train):
 
 
 def model_predict(model, algo_type_string, main_config, partitions=1, mask=None, retain=None):
-    main_config.clustering = True
+    main_config.cluster = True
     main_config.mask = mask if mask else main_config.mask
     if main_config.mask:
         main_config.retain = retain if retain else main_config.retain
@@ -139,13 +139,13 @@ def train_predict_models(model_list, config_file, subsample_frac, partitions=1, 
         print(f'train-predict started for {current_model["type"]}')
         main_config.output_dir = current_model['out_dir']
         trained_model = model_train(current_model['type'], main_config, x_train)
-        model_predict(trained_model, current_model['type'], partitions, mask, retain)
+        model_predict(trained_model, current_model['type'], main_config, partitions, mask, retain)
         print(f'train-predict completed for {current_model["type"]}')
 
 
 if __name__ == '__main__':
     mod_list = [
-        {'type': 'kmeans', 'out_dir': './results/kmeans'},
+        # {'type': 'kmeans', 'out_dir': './results/kmeans'},
         {'type': 'dbscan', 'out_dir': './results/dbscan'},
         {'type': 'hdbscan', 'out_dir': './results/hdbscan'}
     ]
