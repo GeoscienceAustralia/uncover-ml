@@ -149,6 +149,6 @@ if __name__ == '__main__':
         {'type': 'kmeans', 'out_dir': './results/kmeans'},
     ]
     current_config_file = './cluster-test.yaml'
-    subsample_frac = 0.01
+    subsample_frac = 0.001
     parts = 200
     train_predict_models(mod_list, current_config_file, subsample_frac, parts)
