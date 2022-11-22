@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def prep_data(current_config, subsample_frac):
-    for f in config.feature_sets:
+    for f in current_config.feature_sets:
         if not f.transform_set.global_transforms:
             raise ValueError('Standardise transform must be used for kmeans')
         for t in f.transform_set.global_transforms:
@@ -18,30 +18,30 @@ def prep_data(current_config, subsample_frac):
                 raise ValueError('Only standardise transform is '
                                  'allowed for kmeans')
 
-    config.subsample_fraction = subsample_frac
-    if config.subsample_fraction < 1:
+    current_config.subsample_fraction = subsample_frac
+    if current_config.subsample_fraction < 1:
         log.info("Memory contstraint: using {:2.2f}%"
-                 " of pixels".format(config.subsample_fraction * 100))
+                 " of pixels".format(current_config.subsample_fraction * 100))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
-    current_config.algorithm = config.clustering_algorithm
+    current_config.algorithm = current_config.clustering_algorithm
     current_config.cubist = False
 
-    image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
+    image_chunk_sets = ls.geoio.unsupervised_feature_sets(current_config)
 
-    transform_sets = [k.transform_set for k in config.feature_sets]
+    transform_sets = [k.transform_set for k in current_config.feature_sets]
     features, _ = ls.features.transform_features(image_chunk_sets,
                                                  transform_sets,
-                                                 config.final_transform,
-                                                 config)
+                                                 current_config.final_transform,
+                                                 current_config)
 
     features, _ = ls.features.remove_missing(features)
 
-    raw_save_path = os.path.join(config.output_dir, 'raw_features.data')
+    raw_save_path = os.path.join(current_config.output_dir, 'raw_features.data')
     joblib.dump(image_chunk_sets, raw_save_path)
 
-    features_save_path = os.path.join(config.output_dir, 'training_data.data')
+    features_save_path = os.path.join(current_config.output_dir, 'training_data.data')
     joblib.dump(features, features_save_path)
 
     return features
