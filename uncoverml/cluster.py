@@ -545,7 +545,7 @@ class HDBScan:
     def learn(self, x):
         self.model.fit(x)
 
-    def predict(self, x):
+    def predict(self, x, *args, **kwargs):
         y_new, prob = hdbscan.approximate_predict(self.model, x)
         return y_new
 
@@ -562,7 +562,7 @@ class DBScan:
     def learn(self, x):
         self.model.fit(x)
 
-    def predict(self, x):
+    def predict(self, x, *args, **kwargs):
         # Result is noise by default
         y_new = np.ones(shape=len(x), dtype=int) * -1
         model_metric = self.model.get_params()['metric']
