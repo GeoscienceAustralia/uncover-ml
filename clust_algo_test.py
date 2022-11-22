@@ -145,11 +145,10 @@ def train_predict_models(model_list, config_file, subsample_frac, partitions=1, 
 
 if __name__ == '__main__':
     mod_list = [
-        # {'type': 'kmeans', 'out_dir': './results/kmeans'},
-        # {'type': 'dbscan', 'out_dir': './results/dbscan'},
-        {'type': 'hdbscan', 'out_dir': './results/hdbscan'}
+        {'type': 'hdbscan', 'out_dir': './results/hdbscan'},
+        {'type': 'kmeans', 'out_dir': './results/kmeans'},
     ]
     current_config_file = './cluster-test.yaml'
-    subsample_frac = 0.001
+    subsample_frac = 0.10
     parts = 200
     train_predict_models(mod_list, current_config_file, subsample_frac, parts)
