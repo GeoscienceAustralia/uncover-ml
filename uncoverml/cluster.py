@@ -535,7 +535,7 @@ def compute_n_classes(classes, config):
 
 class HDBScan:
     def __init__(self, **kwargs):
-        self.model = hdbscan.HDBSCAN(**kwargs)
+        self.model = hdbscan.HDBSCAN(**kwargs, prediction_data=True)
 
     @staticmethod
     def get_predict_tags():
