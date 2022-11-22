@@ -8,8 +8,8 @@ import rasterio
 import time
 import joblib
 import hdbscan
+import sklearn
 
-from sklearn import cluster
 from sklearn.metrics.pairwise import pairwise_distances
 from os import path
 from rasterio.windows import Window
