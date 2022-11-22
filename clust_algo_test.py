@@ -5,6 +5,7 @@ from uncoverml import config
 from uncoverml import geoio
 from uncoverml import predict
 from uncoverml import mpiops
+from uncoverml import features
 
 from uncoverml.transforms import StandardiseTransform
 
@@ -30,23 +31,23 @@ def prep_data(current_config, subsample_frac):
     current_config.algorithm = current_config.clustering_algorithm
     current_config.cubist = False
 
-    image_chunk_sets = ls.geoio.unsupervised_feature_sets(current_config)
+    image_chunk_sets = geoio.unsupervised_feature_sets(current_config)
 
     transform_sets = [k.transform_set for k in current_config.feature_sets]
-    features, _ = ls.features.transform_features(image_chunk_sets,
-                                                 transform_sets,
-                                                 current_config.final_transform,
-                                                 current_config)
+    current_features, _ = features.transform_features(image_chunk_sets,
+                                                      transform_sets,
+                                                      current_config.final_transform,
+                                                      current_config)
 
-    features, _ = ls.features.remove_missing(features)
+    current_features, _ = features.remove_missing(current_features)
 
     raw_save_path = os.path.join(current_config.output_dir, 'raw_features.data')
     joblib.dump(image_chunk_sets, raw_save_path)
 
     features_save_path = os.path.join(current_config.output_dir, 'training_data.data')
-    joblib.dump(features, features_save_path)
+    joblib.dump(current_features, features_save_path)
 
-    return features
+    return current_features
 
 
 def model_train(model_type, main_config, x_train):
@@ -117,9 +118,9 @@ def model_predict(model, algo_type_string, main_config, partitions=1, mask=None,
     image_out.close()
 
     if main_config.cluster and main_config.cluster_analysis:
-        if ls.mpiops.chunk_index == 0:
-            ls.predict.final_cluster_analysis(main_config.n_classes,
-                                              main_config.n_subchunks)
+        if mpiops.chunk_index == 0:
+            predict.final_cluster_analysis(main_config.n_classes,
+                                           main_config.n_subchunks)
 
     # ls.predict.final_cluster_analysis(config.n_classes,
     #                                   config.n_subchunks)
