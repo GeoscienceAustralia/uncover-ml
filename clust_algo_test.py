@@ -6,6 +6,8 @@ from uncoverml import geoio
 from uncoverml import predict
 from uncoverml import mpiops
 
+from uncoverml.transforms import StandardiseTransform
+
 log = logging.getLogger(__name__)
 
 
