@@ -70,7 +70,7 @@ def model_train(model_type, main_config, x_train):
 
 
 def model_predict(model, algo_type_string, main_config, partitions=1, mask=None, retain=None):
-    main_config.cluster = True
+    main_config.clustering = True
     main_config.mask = mask if mask else main_config.mask
     if main_config.mask:
         main_config.retain = retain if retain else main_config.retain
