@@ -25,10 +25,10 @@ def prep_data(current_config, subsample_frac):
 
     current_config.subsample_fraction = subsample_frac
     if current_config.subsample_fraction < 1:
-        log.info("Memory contstraint: using {:2.2f}%"
+        print("Memory contstraint: using {:2.2f}%"
                  " of pixels".format(current_config.subsample_fraction * 100))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
+        print("Using memory aggressively: dividing all data between nodes")
 
     current_config.algorithm = current_config.clustering_algorithm
     current_config.cubist = False
@@ -77,15 +77,15 @@ def model_predict(model, algo_type_string, main_config, partitions=1, mask=None,
 
         if not isfile(main_config.mask):
             main_config.mask = ''
-            log.info('A mask was provided, but the file does not exist on '
+            print('A mask was provided, but the file does not exist on '
                      'disc or is not a file.')
 
     main_config.n_subchunks = partitions
     if main_config.n_subchunks > 1:
-        log.info("Memory contstraint forcing {} iterations "
+        print("Memory contstraint forcing {} iterations "
                  "through data".format(main_config.n_subchunks))
     else:
-        log.info("Using memory aggressively: dividing all data between nodes")
+        print("Using memory aggressively: dividing all data between nodes")
 
     image_shape, image_bbox, image_crs = geoio.get_image_spec(model, main_config)
 
@@ -113,7 +113,7 @@ def model_predict(model, algo_type_string, main_config, partitions=1, mask=None,
                                   **main_config.geotif_options)
 
     for i in range(main_config.n_subchunks):
-        log.info("starting to render partition {}".format(i + 1))
+        print("starting to render partition {}".format(i + 1))
         predict.render_partition(model, i, image_out, main_config)
 
     # explicitly close output rasters
@@ -129,18 +129,18 @@ def model_predict(model, algo_type_string, main_config, partitions=1, mask=None,
 
     if main_config.thumbnails:
         image_out.output_thumbnails(main_config.thumbnails)
-    log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+    print("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
 def train_predict_models(model_list, config_file, subsample_frac, partitions=1, mask=None, retain=None):
     main_config = config.Config(config_file)
     x_train = prep_data(main_config, subsample_frac)
     for current_model in model_list:
-        log.info(f'train-predict started for {current_model["type"]}')
+        print(f'train-predict started for {current_model["type"]}')
         main_config.output_dir = current_model['out_dir']
         trained_model = model_train(current_model['type'], main_config, x_train)
         model_predict(trained_model, current_model['type'], partitions, mask, retain)
-        log.info(f'train-predict completed for {current_model["type"]}')
+        print(f'train-predict completed for {current_model["type"]}')
 
 
 if __name__ == '__main__':
