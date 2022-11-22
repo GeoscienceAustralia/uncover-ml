@@ -75,7 +75,7 @@ def model_predict(model, algo_type_string, main_config, partitions=1, mask=None,
     if main_config.mask:
         main_config.retain = retain if retain else main_config.retain
 
-        if not isfile(main_config.mask):
+        if not os.path.isfile(main_config.mask):
             main_config.mask = ''
             print('A mask was provided, but the file does not exist on '
                      'disc or is not a file.')
