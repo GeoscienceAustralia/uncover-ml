@@ -146,7 +146,7 @@ def train_predict_models(model_list, config_file, subsample_frac, partitions=1, 
 if __name__ == '__main__':
     mod_list = [
         # {'type': 'kmeans', 'out_dir': './results/kmeans'},
-        {'type': 'dbscan', 'out_dir': './results/dbscan'},
+        # {'type': 'dbscan', 'out_dir': './results/dbscan'},
         {'type': 'hdbscan', 'out_dir': './results/hdbscan'}
     ]
     current_config_file = './cluster-test.yaml'
