@@ -27,16 +27,17 @@ def _parallel_read(r: Path):
             m['pixsize_y'] = -t[4]
             m['top_left_y'] = t[5]
             raster.mask = raster.mask | mask_raster.mask  # we are not interested in masked areas
+            # print(raster)
             m['all_finite'] = np.all(np.isfinite(raster))
             m['any_nan'] = np.any(np.isnan(raster))
             m['any_large'] = np.any(np.abs(raster) > 1e10)
             m['min'] = np.ma.min(raster)
+            m['mean'] = np.ma.mean(raster)
+            m['median'] = np.ma.median(raster)
             m['max'] = np.ma.max(raster)
             m['std'] = np.ma.std(raster)
-            m['valid_percent'] = 100 - np.sum(raster.mask) / raster.size * 100
-            print("=" * 50)
-            print(r, m['valid_percent'])
-            subprocess.run(f"gdalinfo {r.as_posix()} -stats | grep -i valid_", shell=True)
+            m['skew'] = 3 * (m['mean'] - m['median']) / m['std']
+            # subprocess.run(f"gdalinfo {r.as_posix()} -stats", shell=True, capture_output=True)
             # raster_attrs[r.stem] = m
         return m
     except Exception as e:
@@ -46,11 +47,15 @@ def _parallel_read(r: Path):
 
 
 rets = Parallel(
-    n_jobs=-1,
+    n_jobs=1,
     verbose=100,
-)(delayed(_parallel_read)(r) for r in Path(dir).glob("*.tif"))
+)(delayed(_parallel_read)(r) for r in Path(dir).glob("**/*.tif"))
 
-raster_attrs = {r.stem: v for r, v in zip(Path(dir).glob("*.tif"), rets)}
+import pickle
+with open("rets.pk", 'wb') as f:
+    pickle.dump(rets, f)
+
+raster_attrs = {r.stem: v for r, v in zip(Path(dir).glob("**/*.tif",), rets)}
 
 df = pd.DataFrame.from_dict(raster_attrs)
 df.to_csv("quality.csv")
