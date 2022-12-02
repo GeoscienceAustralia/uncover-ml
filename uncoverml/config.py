@@ -286,6 +286,7 @@ class Config:
                 self.split_oos_fraction = s['targets']['split']['oos_fraction']
                 self.train_shapefile = Path(self.output_dir).joinpath(s['output']['train_shapefile'])
                 self.oos_shapefile = Path(self.output_dir).joinpath(s['output']['oos_shapefile'])
+            self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
 
         self.mask = None
         if 'mask' in s:
@@ -380,7 +381,6 @@ class Config:
             else self.name + ('.cluster' if self.clustering else '.model')
 
         self.model_file = Path(self.output_dir).joinpath(output_model)
-        self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
         self.optimisation_output_skopt = Path(self.output_dir).joinpath(self.name + '_optimisation_skopt.csv')
         self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")

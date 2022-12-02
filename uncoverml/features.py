@@ -170,9 +170,15 @@ def cull_all_null_rows(feature_sets):
 
     bool_transformed_vectors = np.concatenate([t.mask for t in
                                                transformed_vectors], axis=1)
-    covaraiates = bool_transformed_vectors.shape[1]
-    rows_to_keep = np.sum(bool_transformed_vectors, axis=1) != covaraiates
-    return rows_to_keep
+    data_transformed_vectors = np.concatenate([t.data for t in
+                                               transformed_vectors], axis=1)
+    num_covariates = bool_transformed_vectors.shape[1]
+
+    rows_with_at_least_one_cov_unmasked = np.sum(bool_transformed_vectors, axis=1) != num_covariates
+    # good rows are any covariate unmasked and all finite covariates
+    rows_with_all_finite_covariates = np.isfinite(data_transformed_vectors).sum(axis=1) == num_covariates
+    good_rows = rows_with_all_finite_covariates &  rows_with_at_least_one_cov_unmasked
+    return good_rows
 
 
 def gather_features(x, node=None):
