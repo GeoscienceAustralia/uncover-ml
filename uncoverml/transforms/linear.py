@@ -1,7 +1,8 @@
-
+import logging
 import numpy as np
 
 from uncoverml import mpiops
+log = logging.getLogger(__name__)
 
 
 class CentreTransform:
@@ -96,6 +97,9 @@ class WhitenTransform:
         x = x.astype(float)
         if self.mean is None or self.eigvals is None or self.eigvecs is None:
             self.mean = mpiops.mean(x)
+            num_points = np.sum(mpiops.comm.gather(x.shape[0]))
+            num_covariates = x.shape[1]
+            log.info(f"Matrix for eigenvalue decomposition has shape {num_points, num_covariates}")
             self.eigvals, self.eigvecs = mpiops.eigen_decomposition(x)
             ndims = x.shape[1]
             # make sure 1 <= keepdims <= ndims
