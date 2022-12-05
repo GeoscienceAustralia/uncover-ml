@@ -298,6 +298,8 @@ class Config:
             preprocessing_transforms = s['preprocessing']['transforms']
             if 'n_components' in preprocessing_transforms[0]['whiten']:
                 self.n_components = preprocessing_transforms[0]['whiten']['n_components']
+            elif 'keep_fraction' in preprocessing_transforms[0]['whiten']:
+                self.keep_fraction = preprocessing_transforms[0]['whiten']['keep_fraction']
             else:
                 self.n_components = None
             if 'geotif' not in s['pca']:

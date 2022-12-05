@@ -90,7 +90,7 @@ class WhitenTransform:
         if keep_fraction is None:
             assert n_components is not None
         assert (keep_fraction is None) or (n_components is None)
-        self.explained_ratio = None
+        self.explained_ratio = {}
 
     def __call__(self, x):
         x = x.astype(float)

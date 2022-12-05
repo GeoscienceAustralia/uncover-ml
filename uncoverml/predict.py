@@ -13,6 +13,7 @@ from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.krige import krig_dict
 from uncoverml import transforms
 from uncoverml.config import Config
+from uncoverml.hyopt import NpEncoder
 
 log = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
@@ -217,17 +218,19 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
 
 def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
     x, _ = _get_data(subchunk, config)
-    mpiops.run_once(export_pca_fractions, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     log.info("Extracting PCAs....")
+    # reverse x along columns which are eigen vectors so that the eigenvector corresponding to the largest eigenvalue
+    # is the first PC. This will hopefully remove some ambiguity
     image_out.write(np.flip(x, axis=1), subchunk)
 
 
-def export_pca_fractions(config):
+def export_pca_fractions(config: Config):
     whiten_transform = config.final_transform.global_transforms[0]
     with open(config.pca_json, 'w') as output_file:
-        json.dump(whiten_transform.explained_ratio, output_file, sort_keys=True, indent=4)
+        json.dump(whiten_transform.__dict__, output_file, sort_keys=True, indent=4, cls=NpEncoder)
+    log.info(f"wrote pc contributions/whiten transform stats in {config.pca_json}")
 
 
 def cluster_analysis(x, y, partition_no, config, feature_names):
