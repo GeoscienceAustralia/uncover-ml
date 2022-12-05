@@ -423,10 +423,12 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
     image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
     transform_sets = [k.transform_set for k in config.feature_sets]
 
-    _ = ls.features.transform_features(image_chunk_sets,
+    features, _ = ls.features.transform_features(image_chunk_sets,
                                          transform_sets,
                                          config.final_transform,
                                          config)
+    log.info(f"Extracting the top {features.shape[1]} PCs from a random sampling of"
+             f" {features.shape[0]} points from the rasters")
     log.info(f"Done whiten tranform with {subsample_fraction*100}% of all data")
     ls.mpiops.run_once(ls.geoio.export_cluster_model, "dummy_model", config)
     ls.mpiops.run_once(ls.predict.export_pca_fractions, config)

@@ -537,8 +537,9 @@ def unsupervised_feature_sets(config):
                                        patchsize=config.patchsize)
         if frac < 1.0:
             np.random.seed(1)
-            r = r[np.random.rand(r.shape[0]) < frac]
-        return r
+            rr = r[np.random.rand(r.shape[0]) < frac]
+            log.info(f"sampled {rr.shape[0]} from max possible {r.shape[0]}")
+        return rr
     result = _iterate_sources(f, config)
     return result
 
