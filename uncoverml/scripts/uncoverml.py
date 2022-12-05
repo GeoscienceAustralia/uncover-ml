@@ -442,7 +442,7 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=[f'_pc_{n}' for n in range(1, config.n_components+1)],
+                                     band_tags=[f'_pc_{n}' for n in range(1, whiten_transform.keepdims+1)],
                                      **config.geotif_options)
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))

@@ -18,8 +18,9 @@ features:
 preprocessing:
   transforms:
     - whiten:
-        n_components: 2
-#        keep_fraction: 0.2  # one of keep fraction or n_components allowed
+#        n_components: 2
+#        keep_fraction: 0.2  # one of keep fraction or n_components or variation_fraction allowed
+        variation_fraction: 0.98
 
 pca:
   geotif:
