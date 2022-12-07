@@ -907,10 +907,7 @@ def un_standardise_centres(model_centres, raw_data):
     return model_centres
 
 
-def generate_plots(model_file, training_data_file, raw_feature_data_file):
-    state_dict = joblib.load(model_file)
-    model = state_dict['model']
-    config = state_dict['config']
+def generate_plots(model, config, training_data_file, raw_feature_data_file):
     scatter_data, predictions, raw_centres = prepare_raw_data(model, training_data_file, raw_feature_data_file)
     short_names = config.short_names
     if short_names is None:
@@ -921,10 +918,10 @@ def generate_plots(model_file, training_data_file, raw_feature_data_file):
     hist_plot_from_stats(train_hist, 'training', config, short_names)
     box_plot_from_stats(train_bxp, 'training', config, short_names)
 
-    # print('Plotting prediction data')
-    # pred_hist, pred_bxp = gather_plot_data(model, config)
-    # hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
-    # box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
+    print('Plotting prediction data')
+    pred_hist, pred_bxp = gather_plot_data(model, config)
+    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
     training_data_scatter(scatter_data, raw_centres, config, short_names, predictions)
 

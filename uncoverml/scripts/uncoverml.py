@@ -311,6 +311,19 @@ def unsupervised(config):
 
 
 @cli.command()
+@click.argument('cluster_model_file')
+@click.argument('standardised_training_data_file')
+@click.argument('raw_training_data_file')
+def unsupervised_cluster_analysis(model_file, stand_training_data_file, raw_training_data_file):
+    state_dict = joblib.load(model_file)
+    model = state_dict['model']
+    config = state_dict['config']
+
+    ls.cluster.split_all_feat_data(config)
+    ls.cluster.generate_plots(model, config, stand_training_data_file, raw_training_data_file)
+
+
+@cli.command()
 @click.argument('pipeline_file')
 @click.argument('model_or_cluster_file')
 @click.option('-p', '--partitions', type=int, default=1,
