@@ -414,8 +414,7 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
-        log.info("Memory contstraint forcing {} iterations "
-                 "through data".format(config.n_subchunks))
+        log.info("Memory contstraint forcing {} iterations through data".format(config.n_subchunks))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
@@ -427,7 +426,7 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
                                          transform_sets,
                                          config.final_transform,
                                          config)
-    print(f"process {ls.mpiops.chunk_index} has {features.shape[0]} samples")
+    features, _ = ls.features.remove_missing(features)
     num_samples = np.sum(ls.mpiops.comm.gather(features.shape[0]))
     log.info(f"Extracting the top {features.shape[1]} PCs from a random sampling of"
              f" {num_samples} points from the rasters")
@@ -442,7 +441,7 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=[f'_pc_{n}' for n in range(1, whiten_transform.keepdims+1)],
+                                     band_tags=[f'pc_{n}' for n in range(1, whiten_transform.keepdims+1)],
                                      **config.geotif_options)
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))

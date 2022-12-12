@@ -87,7 +87,9 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         if mpiops.chunk_index == 0 and config.pickle:
             log.info('Saving featurevec for reuse')
             pickle.dump(feature_vec, open(config.featurevec, 'wb'))
-
+    if mpiops.chunk_index == 0:
+        for i, f in enumerate(feature_sets[0].keys()):
+            log.debug(f"Using feature num {i} from: {f}")
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if config.cubist or config.multicubist or config.krige:
         log.warning("{}: Ignoring preprocessing "

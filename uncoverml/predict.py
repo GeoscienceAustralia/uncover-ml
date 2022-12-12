@@ -223,7 +223,8 @@ def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
     log.info("Extracting PCAs....")
     # reverse x along columns which are eigen vectors so that the eigenvector corresponding to the largest eigenvalue
     # is the first PC. This will hopefully remove some ambiguity
-    image_out.write(np.flip(x, axis=1), subchunk)
+    x = apply_masked(lambda _x: _x, np.flip(x, axis=1))
+    image_out.write(x, subchunk)
 
 
 def export_pca_fractions(config: Config):
