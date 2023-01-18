@@ -5,6 +5,7 @@ import logging
 import copy
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import GroupKFold, KFold, cross_validate
 from sklearn.metrics import (explained_variance_score, r2_score,
@@ -16,6 +17,7 @@ from revrand.metrics import lins_ccc, mll, smse
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from uncoverml.geoio import CrossvalInfo
 from uncoverml.models import apply_multiple_masked
@@ -28,14 +30,12 @@ from uncoverml.transforms.target import Identity
 from uncoverml.learn import all_modelmaps as modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
 
-
 log = logging.getLogger(__name__)
-
 
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': lambda y, py, vy, ws, y_t, py_t, vy_t:  r2_score(y, py, sample_weight=ws),
+    'r2_score': lambda y, py, vy, ws, y_t, py_t, vy_t: r2_score(y, py, sample_weight=ws),
     'expvar': lambda y, py, vy, ws, y_t, py_t, vy_t:
     explained_variance_score(y, py, sample_weight=ws),
     'smse': lambda y, py, vy, ws, y_t, py_t, vy_t: smse(y, py),
@@ -43,7 +43,6 @@ regression_metrics = {
     'mll': lambda y, py, vy, ws, y_t, py_t, vy_t: mll(y, py, vy),
     "mse": lambda y, py, vy, ws, y_t, py_t, vy_t: mean_squared_error(y, py, sample_weight=ws)
 }
-
 
 transformed_regression_metrics = {
     'r2_score_transformed': lambda y, py, vy, ws, y_t, py_t, vy_t:
@@ -370,9 +369,9 @@ def setup_validation_data(X, targets_all, cv_folds, random_state=None):
     lon_lat = targets_all.positions
     groups = targets_all.groups
 
-    X, y, lon_lat, groups, w, * arrays = shuffle(X, y, lon_lat, groups, w,
-                                       * [v for v in targets_all.fields.values()],
-                                       random_state=random_state)
+    X, y, lon_lat, groups, w, *arrays = shuffle(X, y, lon_lat, groups, w,
+                                                *[v for v in targets_all.fields.values()],
+                                                random_state=random_state)
 
     rows_with_at_least_one_masked = ~ np.any(X.mask, axis=1)
     X = X[rows_with_at_least_one_masked, :]
@@ -470,9 +469,9 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         # Train on this fold
         x_train = x_all[train_mask]
         apply_multiple_masked(model.fit, data=(x_train, y_k_train),
-                              ** {'fields': fields_train,
-                                  'sample_weight': w_k_train,
-                                  'lon_lat': lon_lat_train})
+                              **{'fields': fields_train,
+                                 'sample_weight': w_k_train,
+                                 'lon_lat': lon_lat_train})
 
         # Testing
         y_k_pred = predict.predict(x_all[test_mask], model,
@@ -564,6 +563,21 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
                 score)).as_posix()
         df_picv.to_csv(csv, index=False)
 
+        x = np.arange(len(df_picv.index))
+        width = 0.35
+        fig, ax = plt.subplots()
+        ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
+        ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
+        ax.set_ylabel('Scores')
+        ax.set_title('Feature Importance Weight and Std')
+        ax.set_xticks(x, df_picv['feature'].values)
+        ax.legend()
+
+        fig.tight_layout()
+        save_path = Path(config.output_dir).joinpath(config.name + "_permutation_importance_bars_{}.png".format(score))\
+            .as_posix()
+        fig.savefig(save_path)
+
 
 # def plot_():
 #
@@ -602,6 +616,14 @@ def oos_validate(targets_all, x_all, model, config):
                    fmt='%.8e',
                    header=','.join(cols),
                    comments='')
+
+        real_and_pred = pd.DataFrame(to_text)
+        real_and_pred.columns = cols
+        target_col = 'Prediction' if 'Prediction' in tags else tags[0]
+        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', hue='kind', fill=True)
+        density_fig = density_scatter.get_figure()
+        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "real_vs_pred_density_scatter.png"))
+
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
         for metric, score in scores.items():
@@ -610,20 +632,36 @@ def oos_validate(targets_all, x_all, model, config):
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
 
+        model_residuals = apply_multiple_masked(lambda obs, pred: obs - pred, (observations, predictions))
+        max_resid = model_residuals.max()
+        min_resid = model_residuals.min()
+        bins = np.linspace(min_resid, max_resid, 20)
+        hist_data, hist_edges = np.histogram(model_residuals, bins)
+        fig, (resid_ax, hist_ax) = plt.subplots(1, 2, width_ratios=[3, 1], sharey=True)
+        sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
+        hist_ax.barh(bins, hist_data, align='center')
+        fig.suptitle('Residuals Plot')
+        resid_ax.set_ylabel('Residual')
+        resid_ax.set_xlabel('Predicted')
+        hist_ax.set_xlabel('Percentage')
+        fig.tight_layout()
+        save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
+            .as_posix()
+        fig.savefig(save_path)
 
-def calc_shap(x_vals, model, config, mask_vals=None):
+        feat_correlations = np.corrcoef(x_all)
+        fig, corr_ax = plt.subplots()
+        tri_mask = np.triu(np.ones_like(feat_correlations, dtype=bool))
+        cmap = sns.diverging_palette(230, 20, as_cmap=True)
+        if config.short_names:
+            ax_labels = config.short_names
+        else:
+            ax_labels = list(range(x_all.shape[1]))
 
-    # Define function to return predictions needed for Shapley calcuation
-    def shap_predict(x): return predict.predict(x, model)
-
-    # Create masker, explainer and calculate Shapley values
-    val_for_mask = mask_vals if mask_vals is not None else x_vals
-    current_masker = shap.maskers.Independent(val_for_mask)
-    explainer = shap.Explainer(shap_predict, current_masker)
-    shap_vals = explainer(x_vals)
-
-    # Create beeswarm plot and save to output
-    shap.plots.beeswarm(shap_vals, show=False)
-    save_name = Path(config.output_dir).joinpath(config.name + "_shap_waterfall.svg")
-    plt.savefig(save_name)
-    log.info('SHAP calculation completed')
+        sns.heatmap(corr, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+                    square=True, linewidths=.5, cbar_kws={"shrink": .5},
+                    xticklables=ax_labels, yticklables=ax_labels)
+        fig.tight_layout()
+        save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
+            .as_posix()
+        fig.savefig(save_path)
