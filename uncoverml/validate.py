@@ -617,10 +617,12 @@ def oos_validate(targets_all, x_all, model, config):
                    header=','.join(cols),
                    comments='')
 
-        real_and_pred = pd.DataFrame(to_text)
-        real_and_pred.columns = cols
+        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
+        real_and_pred_cols = tags + ['y_true']
+        real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
+        real_and_pred.columns = real_and_pred_cols
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
-        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', hue='kind', fill=True)
+        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True)
         density_fig = density_scatter.get_figure()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "real_vs_pred_density_scatter.png"))
 
@@ -632,14 +634,14 @@ def oos_validate(targets_all, x_all, model, config):
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
 
-        model_residuals = apply_multiple_masked(lambda obs, pred: obs - pred, (observations, predictions))
+        model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
         max_resid = model_residuals.max()
         min_resid = model_residuals.min()
         bins = np.linspace(min_resid, max_resid, 20)
         hist_data, hist_edges = np.histogram(model_residuals, bins)
-        fig, (resid_ax, hist_ax) = plt.subplots(1, 2, width_ratios=[3, 1], sharey=True)
+        fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
         sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
-        hist_ax.barh(bins, hist_data, align='center')
+        hist_ax.barh(bins, hist_edges, align='center')
         fig.suptitle('Residuals Plot')
         resid_ax.set_ylabel('Residual')
         resid_ax.set_xlabel('Predicted')
@@ -649,7 +651,7 @@ def oos_validate(targets_all, x_all, model, config):
             .as_posix()
         fig.savefig(save_path)
 
-        feat_correlations = np.corrcoef(x_all)
+        feat_correlations = np.corrcoef(x_all, rowvar=False)
         fig, corr_ax = plt.subplots()
         tri_mask = np.triu(np.ones_like(feat_correlations, dtype=bool))
         cmap = sns.diverging_palette(230, 20, as_cmap=True)
@@ -658,9 +660,9 @@ def oos_validate(targets_all, x_all, model, config):
         else:
             ax_labels = list(range(x_all.shape[1]))
 
-        sns.heatmap(corr, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+        sns.heatmap(feat_correlations, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
                     square=True, linewidths=.5, cbar_kws={"shrink": .5},
-                    xticklables=ax_labels, yticklables=ax_labels)
+                    xticklabels=ax_labels, yticklabels=ax_labels,)
         fig.tight_layout()
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
             .as_posix()
