@@ -18,13 +18,13 @@ def val_test(config_file, model_file, partitions=1):
 
     model = state_dict["model"]
 
-    config = uml_conf.Config(config_file)
-    config.pickle_load = False
-    config.target_file = config.oos_validation_file
-    config.target_property = config.oos_validation_property
+    current_config = uml_conf.Config(config_file)
+    # current_config.pickle_load = False
+    # current_config.target_file = current_config.oos_validation_file
+    # current_config.target_property = current_config.oos_validation_property
 
-    targets_all, x_all = _load_data(config, partitions)
-    uml_val.oos_validate(targets_all, x_all, model, config)
+    targets_all, x_all = _load_data(current_config, partitions)
+    uml_val.oos_validate(targets_all, x_all, model, current_config)
 
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
