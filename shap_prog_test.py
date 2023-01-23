@@ -112,8 +112,8 @@ def shapley_cli(model_file, shapley_yaml):
 
 
 if __name__ == '__main__':
-    model_config_file = 'gbquantile/gbquantiles.model'
+    model_config_file = 'iron_oxide/xgboost_fine_tune.model'
 
     # Point
-    shap_yaml = '/g/data/ge3/as6887/working-folder/uncover-ml/shap_point_test.yaml'
+    shap_yaml = 'shap_point_test.yaml'
     shap(model_config_file, shap_yaml)
