@@ -834,7 +834,7 @@ def generate_plots_poly_point(name_list, shap_vals_dict, shap_vals_point, shap_c
     for idx, name in enumerate(name_list):
         print(f'Plotting point {idx + 1} of {len(name_list)}')
         current_point_poly_vals = shap_vals_dict[name]
-        current_point_vals = shap_vals_point[idx, :, :]
+        current_point_vals = shap_vals_point[idx]
         current_point_vals.data = current_point_vals.data[idx, :]
         point_poly_subplots(name, current_point_poly_vals, current_point_vals, shap_config, **kwargs)
         if 'lon_lats' in kwargs:
