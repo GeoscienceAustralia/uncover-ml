@@ -828,8 +828,12 @@ def point_poly_subplots(name, point_poly_vals, point_vals, shap_config, **kwargs
     for plot_idx in range(num_plots):
         fig, axs = plt.subplots(2, 3, figsize=(plot_width, plot_height), dpi=250)
         current_output_name = output_names[plot_idx] if output_names is not None else plot_idx
-        current_points_vals = point_vals[:, plot_idx]
-        current_point_poly_vals = point_poly_vals[:, :, plot_idx]
+
+        current_points_vals = point_vals
+        current_point_poly_vals = point_poly_vals
+        if num_plots > 1:
+            current_points_vals = current_points_vals[:, plot_idx]
+            current_point_poly_vals = current_point_poly_vals[:, :, plot_idx]
 
         # Single prediction waterfall
         plt.sca(axs[0, 0])
