@@ -660,7 +660,7 @@ def oos_validate(targets_all, x_all, model, config):
         else:
             ax_labels = list(range(x_all.shape[1]))
 
-        sns.heatmap(corr, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+        sns.heatmap(feat_correlations, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
                     square=True, linewidths=.5, cbar_kws={"shrink": .5},
                     xticklables=ax_labels, yticklables=ax_labels)
         fig.tight_layout()
