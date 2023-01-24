@@ -575,7 +575,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
             ax.set_ylabel('Scores')
             ax.set_title('Feature Importance Weight and Std')
-            ax.set_xticks(x, df_picv['feature'].values)
+            ax.set_xticks(df_picv['feature'].values)
             ax.legend()
 
             fig.tight_layout()
