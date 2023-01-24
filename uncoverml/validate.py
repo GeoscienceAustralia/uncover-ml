@@ -641,6 +641,7 @@ def oos_validate(targets_all, x_all, model, config):
         min_resid = model_residuals.min()
         bins = np.linspace(min_resid, max_resid, 20)
         hist_data, hist_edges = np.histogram(model_residuals, bins)
+        hist_data = hist_data/hist_data.sum()
         fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
         sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
         hist_ax.barh(bins, hist_edges, align='center')
