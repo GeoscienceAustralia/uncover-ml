@@ -579,7 +579,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             ax.legend()
 
             fig.tight_layout()
-            save_path = Path(conf.output_dir).joinpath(conf.name + "_permutation_importance_bars_{}.png".format(score))\
+            save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
                 .as_posix()
             fig.savefig(save_path)
 
