@@ -563,8 +563,8 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             feature_names = geoio.feature_names(conf)
             df_picv = eli5.explain_weights_df(
                 pi_cv, feature_names=feature_names, top=100)
-            csv = Path(config.output_dir).joinpath(
-                config.name + "_permutation_importance_{}.csv".format(
+            csv = Path(conf.output_dir).joinpath(
+                conf.name + "_permutation_importance_{}.csv".format(
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
 
@@ -579,7 +579,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             ax.legend()
 
             fig.tight_layout()
-            save_path = Path(config.output_dir).joinpath(config.name + "_permutation_importance_bars_{}.png".format(score))\
+            save_path = Path(conf.output_dir).joinpath(conf.name + "_permutation_importance_bars_{}.png".format(score))\
                 .as_posix()
             fig.savefig(save_path)
 
