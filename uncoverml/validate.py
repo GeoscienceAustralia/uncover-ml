@@ -660,9 +660,10 @@ def oos_validate(targets_all, x_all, model, config):
         else:
             ax_labels = list(range(x_all.shape[1]))
 
-        sns.heatmap(feat_correlations, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .5},
-                    xticklables=ax_labels, yticklables=ax_labels)
+        corr_df = pd.DataFrame(feat_correlations)
+        corr_df.columns = ax_labels
+        sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+                    square=True, linewidths=.5, cbar_kws={"shrink": .5})
         fig.tight_layout()
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
             .as_posix()
