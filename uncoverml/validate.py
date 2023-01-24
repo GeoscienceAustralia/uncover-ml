@@ -649,7 +649,7 @@ def oos_validate(targets_all, x_all, model, config):
         # hist_data = hist_data/hist_data.sum()
         fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
         sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
-        hist_ax.hist(model_residuals, bins='Auto', density=True, orientation='horizontal')
+        hist_ax.hist(model_residuals, bins='auto', density=True, orientation='horizontal')
         fig.suptitle('Residuals Plot')
         resid_ax.set_ylabel('Residual')
         resid_ax.set_xlabel('Predicted')
