@@ -624,7 +624,9 @@ def oos_validate(targets_all, x_all, model, config):
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True)
         density_fig = density_scatter.get_figure()
-        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "real_vs_pred_density_scatter.png"))
+        density_fig.suptitle('Real vs Predicted Density Scatter')
+        density_fig.tight_layout()
+        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
 
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
@@ -660,9 +662,14 @@ def oos_validate(targets_all, x_all, model, config):
         else:
             ax_labels = list(range(x_all.shape[1]))
 
-        sns.heatmap(feat_correlations, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .5},
-                    xticklabels=ax_labels, yticklabels=ax_labels,)
+        corr_df = pd.DataFrame(feat_correlations)
+        corr_df.columns = ax_labels
+        # sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+        #             square=True, linewidths=.5, cbar_kws={"shrink": .5},
+        #             xticklabels=ax_labels, yticklabels=ax_labels)
+        sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+                    square=True, linewidths=.5, cbar_kws={"shrink": .5})
+        fig.suptitle('Feature Correlations')
         fig.tight_layout()
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
             .as_posix()
