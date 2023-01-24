@@ -617,7 +617,7 @@ def oos_validate(targets_all, x_all, model, config):
                    header=','.join(cols),
                    comments='')
 
-        real_and_pred = [to_text[0], to_text[1]]
+        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
         real_and_pred_cols = tags + ['y_true']
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
         real_and_pred.columns = real_and_pred_cols
@@ -634,7 +634,7 @@ def oos_validate(targets_all, x_all, model, config):
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
 
-        model_residuals = apply_multiple_masked(lambda obs, pred: obs - pred, (observations, predictions))
+        model_residuals = observations - predictions
         max_resid = model_residuals.max()
         min_resid = model_residuals.min()
         bins = np.linspace(min_resid, max_resid, 20)
