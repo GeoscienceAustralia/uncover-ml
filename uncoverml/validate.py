@@ -548,35 +548,40 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
     classification = hasattr(model, 'predict_proba')
 
     if not classification:
-        pi_cv = apply_multiple_masked(
-            PermutationImportance(model, scoring=score,
-                                  cv='prefit', n_iter=10,
-                                  refit=False).fit,
-            data=(x_all, y),
-            model=model
-        )
-        feature_names = geoio.feature_names(conf)
-        df_picv = eli5.explain_weights_df(
-            pi_cv, feature_names=feature_names, top=100)
-        csv = Path(config.output_dir).joinpath(
-            config.name + "_permutation_importance_{}.csv".format(
-                score)).as_posix()
-        df_picv.to_csv(csv, index=False)
+        score_list = ['explained_variance',
+                      'r2',
+                      'neg_mean_absolute_error',
+                      'neg_mean_squared_error']
+        for score in score_list:
+            pi_cv = apply_multiple_masked(
+                PermutationImportance(model, scoring=score,
+                                      cv='prefit', n_iter=10,
+                                      refit=False).fit,
+                data=(x_all, y),
+                model=model
+            )
+            feature_names = geoio.feature_names(conf)
+            df_picv = eli5.explain_weights_df(
+                pi_cv, feature_names=feature_names, top=100)
+            csv = Path(config.output_dir).joinpath(
+                config.name + "_permutation_importance_{}.csv".format(
+                    score)).as_posix()
+            df_picv.to_csv(csv, index=False)
 
-        x = np.arange(len(df_picv.index))
-        width = 0.35
-        fig, ax = plt.subplots()
-        ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
-        ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
-        ax.set_ylabel('Scores')
-        ax.set_title('Feature Importance Weight and Std')
-        ax.set_xticks(x, df_picv['feature'].values)
-        ax.legend()
+            x = np.arange(len(df_picv.index))
+            width = 0.35
+            fig, ax = plt.subplots()
+            ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
+            ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
+            ax.set_ylabel('Scores')
+            ax.set_title('Feature Importance Weight and Std')
+            ax.set_xticks(x, df_picv['feature'].values)
+            ax.legend()
 
-        fig.tight_layout()
-        save_path = Path(config.output_dir).joinpath(config.name + "_permutation_importance_bars_{}.png".format(score))\
-            .as_posix()
-        fig.savefig(save_path)
+            fig.tight_layout()
+            save_path = Path(config.output_dir).joinpath(config.name + "_permutation_importance_bars_{}.png".format(score))\
+                .as_posix()
+            fig.savefig(save_path)
 
 
 # def plot_():
