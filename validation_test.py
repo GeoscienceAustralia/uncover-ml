@@ -24,8 +24,8 @@ def val_test(config_file, model_file, partitions=1):
     # current_config.target_property = current_config.oos_validation_property
 
     targets_all, x_all = _load_data(current_config, partitions)
-    uml_val.plot_feature_importance(model, x_all, targets_all, current_config)
     uml_val.oos_validate(targets_all, x_all, model, current_config)
+    uml_val.plot_feature_importance(model, x_all, targets_all, current_config)
 
 
 if __name__ == '__main__':
