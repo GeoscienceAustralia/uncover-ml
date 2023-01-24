@@ -548,35 +548,40 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
     classification = hasattr(model, 'predict_proba')
 
     if not classification:
-        pi_cv = apply_multiple_masked(
-            PermutationImportance(model, scoring=score,
-                                  cv='prefit', n_iter=10,
-                                  refit=False).fit,
-            data=(x_all, y),
-            model=model
-        )
-        feature_names = geoio.feature_names(conf)
-        df_picv = eli5.explain_weights_df(
-            pi_cv, feature_names=feature_names, top=100)
-        csv = Path(config.output_dir).joinpath(
-            config.name + "_permutation_importance_{}.csv".format(
-                score)).as_posix()
-        df_picv.to_csv(csv, index=False)
+        score_list = ['explained_variance',
+                      'r2',
+                      'neg_mean_absolute_error',
+                      'neg_mean_squared_error']
+        for score in score_list:
+            pi_cv = apply_multiple_masked(
+                PermutationImportance(model, scoring=score,
+                                      cv='prefit', n_iter=10,
+                                      refit=False).fit,
+                data=(x_all, y),
+                model=model
+            )
+            feature_names = geoio.feature_names(conf)
+            df_picv = eli5.explain_weights_df(
+                pi_cv, feature_names=feature_names, top=100)
+            csv = Path(conf.output_dir).joinpath(
+                conf.name + "_permutation_importance_{}.csv".format(
+                    score)).as_posix()
+            df_picv.to_csv(csv, index=False)
 
-        x = np.arange(len(df_picv.index))
-        width = 0.35
-        fig, ax = plt.subplots()
-        ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
-        ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
-        ax.set_ylabel('Scores')
-        ax.set_title('Feature Importance Weight and Std')
-        ax.set_xticks(x, df_picv['feature'].values)
-        ax.legend()
+            x = np.arange(len(df_picv.index))
+            width = 0.35
+            fig, ax = plt.subplots()
+            ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
+            ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
+            ax.set_ylabel('Scores')
+            ax.set_title('Feature Importance Weight and Std')
+            ax.set_xticks(x)
+            ax.legend()
 
-        fig.tight_layout()
-        save_path = Path(config.output_dir).joinpath(config.name + "_permutation_importance_bars_{}.png".format(score))\
-            .as_posix()
-        fig.savefig(save_path)
+            fig.tight_layout()
+            save_path = Path(conf.output_dir).joinpath(conf.name + "_permutation_importance_bars_{}.png".format(score))\
+                .as_posix()
+            fig.savefig(save_path)
 
 
 # def plot_():
@@ -624,7 +629,9 @@ def oos_validate(targets_all, x_all, model, config):
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True)
         density_fig = density_scatter.get_figure()
-        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "real_vs_pred_density_scatter.png"))
+        density_fig.suptitle('Real vs Predicted Density Scatter')
+        density_fig.tight_layout()
+        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
 
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
@@ -637,11 +644,12 @@ def oos_validate(targets_all, x_all, model, config):
         model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
         max_resid = model_residuals.max()
         min_resid = model_residuals.min()
-        bins = np.linspace(min_resid, max_resid, 20)
-        hist_data, hist_edges = np.histogram(model_residuals, bins)
+        # bins = np.linspace(min_resid, max_resid, 20)
+        # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
+        # hist_data = hist_data/hist_data.sum()
         fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
         sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
-        hist_ax.barh(bins, hist_edges, align='center')
+        hist_ax.hist(model_residuals, bins='auto', density=True, orientation='horizontal')
         fig.suptitle('Residuals Plot')
         resid_ax.set_ylabel('Residual')
         resid_ax.set_xlabel('Predicted')
@@ -660,9 +668,14 @@ def oos_validate(targets_all, x_all, model, config):
         else:
             ax_labels = list(range(x_all.shape[1]))
 
-        sns.heatmap(feat_correlations, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .5},
-                    xticklabels=ax_labels, yticklabels=ax_labels,)
+        corr_df = pd.DataFrame(feat_correlations)
+        corr_df.columns = ax_labels
+        # sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+        #             square=True, linewidths=.5, cbar_kws={"shrink": .5},
+        #             xticklabels=ax_labels, yticklabels=ax_labels)
+        sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
+                    square=True, linewidths=.5, cbar_kws={"shrink": .5})
+        fig.suptitle('Feature Correlations')
         fig.tight_layout()
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
             .as_posix()
