@@ -617,7 +617,7 @@ def oos_validate(targets_all, x_all, model, config):
                    header=','.join(cols),
                    comments='')
 
-        real_and_pred = pd.DataFrame(to_text)
+        real_and_pred = pd.DataFrame(np.concatenate(to_text))
         real_and_pred.columns = cols
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', hue='kind', fill=True)
