@@ -26,8 +26,6 @@ def val_test(config_file, model_file, partitions=1):
     targets_all, x_all = _load_data(current_config, partitions)
     uml_val.oos_validate(targets_all, x_all, model, current_config)
 
-    log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
-
 
 if __name__ == '__main__':
     current_config_file = 'xgboost_fine_tune.yaml'

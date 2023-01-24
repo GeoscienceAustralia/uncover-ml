@@ -651,7 +651,7 @@ def oos_validate(targets_all, x_all, model, config):
             .as_posix()
         fig.savefig(save_path)
 
-        feat_correlations = np.corrcoef(x_all)
+        feat_correlations = np.corrcoef(x_all, rowvar=False)
         fig, corr_ax = plt.subplots()
         tri_mask = np.triu(np.ones_like(feat_correlations, dtype=bool))
         cmap = sns.diverging_palette(230, 20, as_cmap=True)
