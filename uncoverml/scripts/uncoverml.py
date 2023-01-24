@@ -326,6 +326,7 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
     targets_all, x_all = _load_data(config, partitions)
 
     ls.validate.oos_validate(targets_all, x_all, model, config)
+    ls.validate.plot_feature_importance(model, x_all, targets_all, config)
 
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
