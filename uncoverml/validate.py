@@ -634,7 +634,7 @@ def oos_validate(targets_all, x_all, model, config):
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
 
-        model_residuals = observations - predictions
+        model_residuals = np.ma.filled(observations) - np.ma.filled(predictions)
         max_resid = model_residuals.max()
         min_resid = model_residuals.min()
         bins = np.linspace(min_resid, max_resid, 20)
