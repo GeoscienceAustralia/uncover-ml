@@ -548,10 +548,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
     classification = hasattr(model, 'predict_proba')
 
     if not classification:
-        score_list = ['explained_variance',
-                      'r2',
-                      'neg_mean_absolute_error',
-                      'neg_mean_squared_error']
+        score_list = ['r2']
         for score in score_list:
             pi_cv = apply_multiple_masked(
                 PermutationImportance(model, scoring=score,
@@ -571,8 +568,8 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             x = np.arange(len(df_picv.index))
             width = 0.35
             fig, ax = plt.subplots()
-            ax.bar(x - width / 2, df_picv['weight'].values, width, label='Weight')
-            ax.bar(x + width / 2, df_picv['std'].values, width, label='Std')
+            ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
+            ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
             ax.set_ylabel('Scores')
             ax.set_title('Feature Importance Weight and Std')
             ax.set_xticks(x)
@@ -627,8 +624,18 @@ def oos_validate(targets_all, x_all, model, config):
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
         real_and_pred.columns = real_and_pred_cols
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
-        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True)
-        density_fig = density_scatter.get_figure()
+        density_fig, density_ax = plt.subplots()
+        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax)
+        lims = [
+            np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
+            np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
+        ]
+        density_ax.plot(lims, lims)
+        density_ax.set_xlim(lims)
+        density_ax.set_ylim(lims)
+        density_ax.plot(np.unique(predictions),
+                        np.poly1d(np.polyfit(predictions, observations, 1))(np.unique(predictions)))
+
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
