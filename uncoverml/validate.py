@@ -649,8 +649,6 @@ def oos_validate(targets_all, x_all, model, config):
         log.info(score_string)
 
         model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
-        max_resid = model_residuals.max()
-        min_resid = model_residuals.min()
         # bins = np.linspace(min_resid, max_resid, 20)
         # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
         # hist_data = hist_data/hist_data.sum()
