@@ -650,8 +650,9 @@ def oos_validate(targets_all, x_all, model, config):
                         np.poly1d(fitted_line)(np.unique(pred_vals)),
                         'k:', label='BestFit')
         density_ax.legend(loc='lower right')
-        r2_string = f'R2 Score: {scores["r2_score"]}'
-        density_ax.text(0, 1, r2_string)
+        r2_val = '{0:.2f}'.format(r2_score)
+        r2_string = f'R2 Score: {r2_val}'
+        density_ax.text(1, 0, r2_string)
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
