@@ -631,7 +631,7 @@ def oos_validate(targets_all, x_all, model, config):
             np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
             np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
         ]
-        density_ax.plot(lims, lims, 'k--' label='1-to-1')
+        density_ax.plot(lims, lims, 'k--', label='1-to-1')
         density_ax.set_xlim(lims)
         density_ax.set_ylim(lims)
         pred_vals = real_and_pred[target_col].values
