@@ -619,6 +619,14 @@ def oos_validate(targets_all, x_all, model, config):
                    header=','.join(cols),
                    comments='')
 
+        scores = regression_validation_scores(observations, predictions, weights, model)
+        score_string = "OOS Validation Scores:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+
+        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
+        log.info(score_string)
+
         real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
         real_and_pred_cols = tags + ['y_true']
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
@@ -642,17 +650,11 @@ def oos_validate(targets_all, x_all, model, config):
                         np.poly1d(fitted_line)(np.unique(pred_vals)),
                         'k:', label='BestFit')
         density_ax.legend(loc='lower right')
+        r2_string = f'R2 Score: {scores["r2_score"]}'
+        density_ax.text(0, 1, r2_string)
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
-
-        scores = regression_validation_scores(observations, predictions, weights, model)
-        score_string = "OOS Validation Scores:\n"
-        for metric, score in scores.items():
-            score_string += "{}\t= {}\n".format(metric, score)
-
-        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
-        log.info(score_string)
 
         model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
         # bins = np.linspace(min_resid, max_resid, 20)
