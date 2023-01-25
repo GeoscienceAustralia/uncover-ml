@@ -626,12 +626,12 @@ def oos_validate(targets_all, x_all, model, config):
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         density_fig, density_ax = plt.subplots()
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
-                                      cmap='coolwarm')
+                                      cmap='spectral')
         lims = [
             np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
             np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
         ]
-        density_ax.plot(lims, lims)
+        density_ax.plot(lims, lims, 'k--')
         density_ax.set_xlim(lims)
         density_ax.set_ylim(lims)
         pred_vals = real_and_pred[target_col].values
@@ -639,7 +639,8 @@ def oos_validate(targets_all, x_all, model, config):
         fitted_line = np.polyfit(pred_vals, real_vals, 1)
         pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
         density_ax.plot(np.unique(pred_vals),
-                        np.poly1d(fitted_line)(np.unique(pred_vals)))
+                        np.poly1d(fitted_line)(np.unique(pred_vals)),
+                        'k:')
 
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
