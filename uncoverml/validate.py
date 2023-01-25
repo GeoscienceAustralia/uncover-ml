@@ -635,8 +635,10 @@ def oos_validate(targets_all, x_all, model, config):
         density_ax.set_ylim(lims)
         pred_vals = real_and_pred[target_col].values
         real_vals = real_and_pred['y_true'].values
+        fitted_line = np.polyfit(pred_vals, real_vals, 1)
+        pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
         density_ax.plot(np.unique(pred_vals),
-                        np.poly1d(np.polyfit(pred_vals, real_vals, 1))(np.unique(pred_vals)))
+                        np.poly1d(fitted_line)(np.unique(pred_vals)))
 
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
