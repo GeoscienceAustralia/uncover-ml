@@ -626,7 +626,7 @@ def oos_validate(targets_all, x_all, model, config):
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         density_fig, density_ax = plt.subplots()
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
-                                      cmap='spectral')
+                                      cmap='Spectral')
         lims = [
             np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
             np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
