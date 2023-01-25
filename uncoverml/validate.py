@@ -619,27 +619,6 @@ def oos_validate(targets_all, x_all, model, config):
                    header=','.join(cols),
                    comments='')
 
-        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
-        real_and_pred_cols = tags + ['y_true']
-        real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
-        real_and_pred.columns = real_and_pred_cols
-        target_col = 'Prediction' if 'Prediction' in tags else tags[0]
-        density_fig, density_ax = plt.subplots()
-        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax)
-        lims = [
-            np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
-            np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
-        ]
-        density_ax.plot(lims, lims)
-        density_ax.set_xlim(lims)
-        density_ax.set_ylim(lims)
-        density_ax.plot(np.unique(predictions),
-                        np.poly1d(np.polyfit(predictions, observations, 1))(np.unique(predictions)))
-
-        density_fig.suptitle('Real vs Predicted Density Scatter')
-        density_fig.tight_layout()
-        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
-
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
         for metric, score in scores.items():
@@ -648,9 +627,37 @@ def oos_validate(targets_all, x_all, model, config):
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
 
+        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
+        real_and_pred_cols = tags + ['y_true']
+        real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
+        real_and_pred.columns = real_and_pred_cols
+        target_col = 'Prediction' if 'Prediction' in tags else tags[0]
+        density_fig, density_ax = plt.subplots()
+        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
+                                      cmap='Spectral', levels=20)
+        lims = [
+            np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
+            np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
+        ]
+        density_ax.plot(lims, lims, 'k--', label='1-to-1')
+        density_ax.set_xlim(lims)
+        density_ax.set_ylim(lims)
+        pred_vals = real_and_pred[target_col].values
+        real_vals = real_and_pred['y_true'].values
+        fitted_line = np.polyfit(pred_vals, real_vals, 1)
+        pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
+        density_ax.plot(np.unique(pred_vals),
+                        np.poly1d(fitted_line)(np.unique(pred_vals)),
+                        'k:', label='BestFit')
+        density_ax.legend(loc='lower right')
+        r2_val = '{:.2f}'.format(scores['r2_score'])
+        r2_string = f'R2 Score: {r2_val}'
+        density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=ax.transAxes)
+        density_fig.suptitle('Real vs Predicted Density Scatter')
+        density_fig.tight_layout()
+        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+
         model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
-        max_resid = model_residuals.max()
-        min_resid = model_residuals.min()
         # bins = np.linspace(min_resid, max_resid, 20)
         # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
         # hist_data = hist_data/hist_data.sum()
