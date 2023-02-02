@@ -164,14 +164,17 @@ class Config:
         self.krige = self.algorithm == 'krige'
 
         if 'prediction' in s:
-            self.quantiles = s['prediction']['quantiles']
-            self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-                s['prediction'] else {}
+            prediction = s["prediction"]
+            self.quantiles = prediction['quantiles']
+            self.geotif_options = prediction['geotif'] if 'geotif' in prediction else {}
             self.outbands = None
-            if 'outbands' in s['prediction']:
-                self.outbands = s['prediction']['outbands']
-            self.thumbnails = s['prediction']['thumbnails'] \
+            if 'outbands' in prediction:
+                self.outbands = prediction['outbands']
+            self.thumbnails = prediction['thumbnails'] \
                 if 'thumbnails' in s['prediction'] else 10
+
+            self.prediction_template = prediction["prediction_template"] \
+                if "prediction_template" in prediction else None
 
         if 'features' in s:
             self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')

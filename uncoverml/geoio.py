@@ -284,14 +284,17 @@ def load_targets(shapefile, targetfield, conf: Config):
     return targets
 
 
-def get_image_spec(model, config):
+def get_image_spec(model, config: Config):
     # temp workaround, we should have an image spec to check against
     nchannels = len(model.get_predict_tags())
     return get_image_spec_from_nchannels(nchannels, config)
 
 
-def get_image_spec_from_nchannels(nchannels, config):
-    imagelike = config.feature_sets[0].files[0]
+def get_image_spec_from_nchannels(nchannels, config: Config):
+    if config.prediction_template:
+        imagelike = Path(config.prediction_template).absolute()
+    else:
+        imagelike = config.feature_sets[0].files[0]
     template_image = image.Image(RasterioImageSource(imagelike))
     eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
     eff_bbox = template_image.patched_bbox(config.patchsize)
@@ -476,9 +479,11 @@ def image_resolutions(config):
     return result
 
 
-def image_subchunks(subchunk_index, config):
+def image_subchunks(subchunk_index, config: Config):
+    """This is used in prediction only"""
 
     def f(image_source):
+        # pred_image_source =
         r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize)
         return r
     result = _iterate_sources(f, config)

@@ -71,6 +71,7 @@ learning:
 
 
 prediction:
+#  prediction_template: configs/data/sirsam/dem_foc2.tif
   quantiles: 0.95
   outbands: 4
 

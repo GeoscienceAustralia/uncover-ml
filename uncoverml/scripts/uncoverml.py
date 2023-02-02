@@ -326,7 +326,9 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
               help='mask file used to limit prediction area')
 @click.option('-r', '--retain', type=int, default=None,
               help='mask values where to predict')
-def predict(model_or_cluster_file, partitions, mask, retain):
+@click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
+              help='mask values where to predict')
+def predict(model_or_cluster_file, partitions, mask, retain, prediction_template):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -336,6 +338,7 @@ def predict(model_or_cluster_file, partitions, mask, retain):
     config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
         else False
     config.mask = mask if mask else config.mask
+    config.prediction_template = prediction_template if prediction_template else config.prediction_template
     if config.mask:
         config.retain = retain if retain else config.retain
 
