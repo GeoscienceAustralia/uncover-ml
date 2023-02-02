@@ -208,7 +208,7 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
         y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
     except ValueError as v:
         log.warning(v)
-        x = _fix_for_corrupt_data(x, features_names)
+        x = _fix_for_corrupt_data(x, feature_names)
         y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
