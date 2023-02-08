@@ -1,4 +1,5 @@
 from __future__ import division
+from typing import Optional
 import joblib
 import os.path
 from pathlib import Path
@@ -78,12 +79,17 @@ class ImageSource:
 
 class RasterioImageSource(ImageSource):
 
-    def __init__(self, filename):
+    def __init__(self, filename, template_filename: Optional[str] = None):
 
         self.filename = filename
+        self.template = template_filename
         assert os.path.isfile(filename), '{} does not exist'.format(filename)
+
+        template_geotif = rasterio.open(template_filename, 'r') if self.template else None
+
         with rasterio.open(self.filename, 'r') as geotiff:
-            self._full_res = (geotiff.width, geotiff.height, geotiff.count)
+            self._full_res = (geotiff.width, geotiff.height, geotiff.count) if template_geotif is None else \
+                (template_geotif.width, template_geotif.height, template_geotif.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
             for d in geotiff.dtypes[1:]:
@@ -93,7 +99,7 @@ class RasterioImageSource(ImageSource):
             self._dtype = np.dtype(geotiff.dtypes[0])
             self._crs = geotiff.crs
 
-            A = geotiff.transform
+            A = geotiff.transform if template_geotif is None else template_geotif.transform
             # No shearing or rotation allowed!!
             if not ((A[1] == 0) and (A[3] == 0)):
                 raise RuntimeError("Transform to pixel coordinates"
@@ -428,7 +434,7 @@ class ImageWriter:
             resample(f, output_tif=thumbnail, ratio=ratio)
 
 
-def feature_names(config):
+def feature_names(config: Config):
 
     results = []
     for s in config.feature_sets:
@@ -444,30 +450,35 @@ def feature_names(config):
 def _iterate_sources(f, config):
 
     results = []
+    template_tif = config.prediction_template
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             name = os.path.abspath(tif)
-            image_source = RasterioImageSource(tif)
+            image_source = RasterioImageSource(tif, template_filename=template_tif)
             x = f(image_source)
-            # TODO this may hurt performance. Consider removal
-            if type(x) is np.ma.MaskedArray:
-                count = mpiops.count(x)
-                # if not np.all(count > 0):
-                #     s = ("{} has no data in at least one band.".format(name) +
-                #          " Valid_pixel_count: {}".format(count))
-                #     raise ValueError(s)
-                missing_percent = missing_percentage(x)
-                t_missing = mpiops.comm.allreduce(
-                    missing_percent) / mpiops.chunks
-                log.info("{}: {}px {:2.2f}% missing".format(
-                    name, count, t_missing))
+            log_missing_percentage(name, x)
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
     return results
+
+
+def log_missing_percentage(name, x):
+    # TODO this may hurt performance. Consider removal
+    if type(x) is np.ma.MaskedArray:
+        count = mpiops.count(x)
+        # if not np.all(count > 0):
+        #     s = ("{} has no data in at least one band.".format(name) +
+        #          " Valid_pixel_count: {}".format(count))
+        #     raise ValueError(s)
+        missing_percent = missing_percentage(x)
+        t_missing = mpiops.comm.allreduce(
+            missing_percent) / mpiops.chunks
+        log.info("{}: {}px {:2.2f}% missing".format(
+            name, count, t_missing))
 
 
 def image_resolutions(config):
@@ -482,8 +493,7 @@ def image_resolutions(config):
 def image_subchunks(subchunk_index, config: Config):
     """This is used in prediction only"""
 
-    def f(image_source):
-        # pred_image_source =
+    def f(image_source: RasterioImageSource):
         r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize)
         return r
     result = _iterate_sources(f, config)

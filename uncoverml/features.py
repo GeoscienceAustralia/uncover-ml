@@ -11,11 +11,12 @@ from uncoverml.targets import Targets
 from uncoverml import patch
 from uncoverml import transforms
 from uncoverml.config import Config
+from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
 
-def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
+def extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
     image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize)
