@@ -336,6 +336,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
 
     model = state_dict["model"]
     config = state_dict["config"]
+    config.is_prediction = True
     config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
         else False
     config.mask = mask if mask else config.mask

@@ -176,6 +176,8 @@ class Config:
             self.prediction_template = prediction["prediction_template"] \
                 if "prediction_template" in prediction else None
 
+        self.is_prediction = False
+
         if 'features' in s:
             self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
         else:

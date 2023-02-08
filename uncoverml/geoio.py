@@ -82,14 +82,14 @@ class RasterioImageSource(ImageSource):
     def __init__(self, filename, template_filename: Optional[str] = None):
 
         self.filename = filename
-        self.template = template_filename
         assert os.path.isfile(filename), '{} does not exist'.format(filename)
 
-        template_geotif = rasterio.open(template_filename, 'r') if self.template else None
+        template_geotiff = rasterio.open(template_filename, 'r') if template_filename else None
 
         with rasterio.open(self.filename, 'r') as geotiff:
-            self._full_res = (geotiff.width, geotiff.height, geotiff.count) if template_geotif is None else \
-                (template_geotif.width, template_geotif.height, template_geotif.count)
+            tiff = geotiff if template_geotiff is None else template_geotiff
+
+            self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
             for d in geotiff.dtypes[1:]:
@@ -99,7 +99,7 @@ class RasterioImageSource(ImageSource):
             self._dtype = np.dtype(geotiff.dtypes[0])
             self._crs = geotiff.crs
 
-            A = geotiff.transform if template_geotif is None else template_geotif.transform
+            A = tiff.transform
             # No shearing or rotation allowed!!
             if not ((A[1] == 0) and (A[3] == 0)):
                 raise RuntimeError("Transform to pixel coordinates"
@@ -450,7 +450,7 @@ def feature_names(config: Config):
 def _iterate_sources(f, config):
 
     results = []
-    template_tif = config.prediction_template
+    template_tif = config.prediction_template if config.is_prediction else None
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
