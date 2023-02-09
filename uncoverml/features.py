@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from collections import OrderedDict
 import numpy as np
 import pickle
@@ -16,10 +17,11 @@ from uncoverml.geoio import RasterioImageSource
 log = logging.getLogger(__name__)
 
 
-def extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize):
+def extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize,
+                      template_source: Optional[RasterioImageSource] = None):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
-    image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize)
+    image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize, template_source)
     x = patch.all_patches(image, patchsize)
     return x
 

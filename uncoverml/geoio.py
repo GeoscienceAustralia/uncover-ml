@@ -79,15 +79,12 @@ class ImageSource:
 
 class RasterioImageSource(ImageSource):
 
-    def __init__(self, filename, template_filename: Optional[str] = None):
+    def __init__(self, filename):
 
         self.filename = filename
         assert os.path.isfile(filename), '{} does not exist'.format(filename)
 
-        template_geotiff = rasterio.open(template_filename, 'r') if template_filename else None
-
         with rasterio.open(self.filename, 'r') as geotiff:
-            tiff = geotiff if template_geotiff is None else template_geotiff
 
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
@@ -99,7 +96,7 @@ class RasterioImageSource(ImageSource):
             self._dtype = np.dtype(geotiff.dtypes[0])
             self._crs = geotiff.crs
 
-            A = tiff.transform
+            A = geotiff.transform
             # No shearing or rotation allowed!!
             if not ((A[1] == 0) and (A[3] == 0)):
                 raise RuntimeError("Transform to pixel coordinates"
@@ -297,7 +294,7 @@ def get_image_spec(model, config: Config):
 
 
 def get_image_spec_from_nchannels(nchannels, config: Config):
-    if config.prediction_template:
+    if config.prediction_template and config.is_prediction:
         imagelike = Path(config.prediction_template).absolute()
     else:
         imagelike = config.feature_sets[0].files[0]
@@ -447,15 +444,17 @@ def feature_names(config: Config):
     return results
 
 
-def _iterate_sources(f, config):
+def _iterate_sources(f, config: Config):
 
     results = []
     template_tif = config.prediction_template if config.is_prediction else None
+    if config.is_prediction:
+        log.info(f"Using prediction template {config.prediction_template}")
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
             name = os.path.abspath(tif)
-            image_source = RasterioImageSource(tif, template_filename=template_tif)
+            image_source = RasterioImageSource(tif)
             x = f(image_source)
             log_missing_percentage(name, x)
             extracted_chunks[name] = x
@@ -494,7 +493,12 @@ def image_subchunks(subchunk_index, config: Config):
     """This is used in prediction only"""
 
     def f(image_source: RasterioImageSource):
-        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize)
+        if config.is_prediction and config.prediction_template is not None:
+            template_source = RasterioImageSource(config.prediction_template)
+        else:
+            template_source = None
+        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize,
+                                       template_source=template_source)
         return r
     result = _iterate_sources(f, config)
     return result
