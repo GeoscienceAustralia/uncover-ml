@@ -319,9 +319,9 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
     model = state_dict["model"]
 
     config = ls.config.Config(pipeline_file)
-    config.pickle_load = False
-    config.target_file = config.oos_validation_file
-    config.target_property = config.oos_validation_property
+    # config.pickle_load = False
+    # config.target_file = config.oos_validation_file
+    # config.target_property = config.oos_validation_property
 
     targets_all, x_all = _load_data(config, partitions)
 

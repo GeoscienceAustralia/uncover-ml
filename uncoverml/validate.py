@@ -652,7 +652,7 @@ def oos_validate(targets_all, x_all, model, config):
         density_ax.legend(loc='lower right')
         r2_val = '{:.2f}'.format(scores['r2_score'])
         r2_string = f'R2 Score: {r2_val}'
-        density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=ax.transAxes)
+        density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=density_ax.transAxes)
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
