@@ -314,8 +314,8 @@ def unsupervised(config):
 @click.argument('cluster_model_file')
 @click.argument('standardised_training_data_file')
 @click.argument('raw_training_data_file')
-def unsupervised_cluster_analysis(model_file, stand_training_data_file, raw_training_data_file):
-    state_dict = joblib.load(model_file)
+def unsupervised_cluster_analysis(cluster_model_file, stand_training_data_file, raw_training_data_file):
+    state_dict = joblib.load(cluster_model_file)
     model = state_dict['model']
     config = state_dict['config']
 
