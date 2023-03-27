@@ -929,3 +929,70 @@ def generate_plots(model, config, training_data_file, raw_feature_data_file):
     center_dist_plot(center_dists, config)
 
     print('done')
+
+
+def generate_plots_small_data(model, config, training_data_file, raw_feature_data_file):
+    scatter_data, predictions, raw_centres = prepare_raw_data(model, training_data_file, raw_feature_data_file)
+    short_names = config.short_names
+    if short_names is None:
+        short_names = [f'feat_{num}' for num in range(scatter_data.shape[1])]
+
+    train_hist, train_bxp = gather_plot_data(model, config, scatter_data, predictions)
+    hist_plot_from_stats(train_hist, 'training', config, short_names)
+    box_plot_from_stats(train_bxp, 'training', config, short_names)
+
+    pred_hist, pred_bxp = gather_plot_data_small_pred(config)
+    hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
+    box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
+
+    training_data_scatter(scatter_data, raw_centres, config, short_names, predictions)
+
+    center_dists = calc_cluster_dist(raw_centres)
+    center_dist_plot(center_dists, config)
+
+    print('done')
+
+
+def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
+    n_classes = config.n_classes
+    feat_src_list = []
+    for s in config.feature_sets:
+        for tif in s.files:
+            name = path.abspath(tif)
+            feat_src_list.append(rasterio.open(name))
+
+    if hasattr(config, 'short_names'):
+        feat_list = config.short_names
+    else:
+        feat_list = []
+        feat_num = 0
+        for s in config.feature_sets:
+            for tif in s.files:
+                feat_list.append(str(feat_num))
+                feat_num += 1
+
+    pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
+    pred_src = rasterio.open(pred_file_path)
+    pred_data = pred_src.read(1)
+
+    bxp_stats = {}
+    hist_stats = {}
+    for feat_idx, feat_name in enumerate(feat_list):
+        feat_bxp_stats = []
+        feat_hist_stats = []
+        current_feat_src = feat_src_list[feat_idx]
+        current_feat_data = current_feat_src.read(1)
+        for clust in tqdm(range(n_classes)):
+            current_data = np.ravel(current_feat_data(np.where(pred_data == float(clust))))
+            if tail_removal_pct is not None:
+                current_data = trim_tail(current_data, tail_removal_pct)
+
+            feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
+            feat_hist_stats.append(feat_clust_binned_vals)
+            feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
+            feat_bxp_stats.extend(feat_clust_stats)
+
+        hist_stats[feat_name] = feat_hist_stats
+        bxp_stats[feat_name] = feat_bxp_stats
+
+    return hist_stats, bxp_stats
