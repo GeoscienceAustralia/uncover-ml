@@ -983,7 +983,7 @@ def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
         current_feat_src = feat_src_list[feat_idx]
         current_feat_data = current_feat_src.read(1)
         for clust in tqdm(range(n_classes)):
-            current_data = np.ravel(current_feat_data(np.where(pred_data == float(clust))))
+            current_data = np.ravel(current_feat_data[np.where(pred_data == float(clust))])
             if tail_removal_pct is not None:
                 current_data = trim_tail(current_data, tail_removal_pct)
 
