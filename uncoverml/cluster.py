@@ -683,7 +683,7 @@ def split_save_feat_clusters(main_config, feat_src, pred_src, feat_name, n_class
             np.savetxt(csv_files[clust_num], data_storage[clust_num])
 
 
-def gather_plot_data(model, config, training_data=None, predictions=None, n_bins=100, tail_removal_pct=0.01):
+def gather_plot_data(model, config, clust_list=None, training_data=None, predictions=None, n_bins=100, tail_removal_pct=0.01):
     n_classes = config.n_classes
 
     if hasattr(config, 'short_names'):
@@ -705,18 +705,19 @@ def gather_plot_data(model, config, training_data=None, predictions=None, n_bins
         feat_bxp_stats = []
         feat_hist_stats = []
         for clust in tqdm(range(n_classes)):
-            if training_data is not None:
-                current_data = training_data_filter(training_data, predictions, feat_idx, clust)
-            else:
-                current_data = prediction_data_filter(feat_name, clust, config)
+            if clust_list and (clust in clust_list):
+                if training_data is not None:
+                    current_data = training_data_filter(training_data, predictions, feat_idx, clust)
+                else:
+                    current_data = prediction_data_filter(feat_name, clust, config)
 
-            if tail_removal_pct is not None:
-                current_data = trim_tail(current_data, tail_removal_pct)
+                if tail_removal_pct is not None:
+                    current_data = trim_tail(current_data, tail_removal_pct)
 
-            feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
-            feat_hist_stats.append(feat_clust_binned_vals)
-            feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
-            feat_bxp_stats.extend(feat_clust_stats)
+                feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
+                feat_hist_stats.append(feat_clust_binned_vals)
+                feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
+                feat_bxp_stats.extend(feat_clust_stats)
 
         hist_stats[feat_name] = feat_hist_stats
         bxp_stats[feat_name] = feat_bxp_stats
@@ -931,17 +932,17 @@ def generate_plots(model, config, training_data_file, raw_feature_data_file):
     print('done')
 
 
-def generate_plots_small_data(model, config, training_data_file, raw_feature_data_file):
+def generate_plots_small_data(model, config, training_data_file, raw_feature_data_file, clust_list=None):
     scatter_data, predictions, raw_centres = prepare_raw_data(model, training_data_file, raw_feature_data_file)
     short_names = config.short_names
     if short_names is None:
         short_names = [f'feat_{num}' for num in range(scatter_data.shape[1])]
 
-    train_hist, train_bxp = gather_plot_data(model, config, scatter_data, predictions)
+    train_hist, train_bxp = gather_plot_data(model, config, clust_list, scatter_data, predictions)
     hist_plot_from_stats(train_hist, 'training', config, short_names)
     box_plot_from_stats(train_bxp, 'training', config, short_names)
 
-    pred_hist, pred_bxp = gather_plot_data_small_pred(config)
+    pred_hist, pred_bxp = gather_plot_data_small_pred(config, clust_list)
     hist_plot_from_stats(pred_hist, 'prediction', config, short_names)
     box_plot_from_stats(pred_bxp, 'prediction', config, short_names)
 
@@ -953,7 +954,7 @@ def generate_plots_small_data(model, config, training_data_file, raw_feature_dat
     print('done')
 
 
-def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
+def gather_plot_data_small_pred(config, clust_list=None, n_bins=100, tail_removal_pct=0.01):
     n_classes = config.n_classes
     feat_src_list = []
     for s in config.feature_sets:
@@ -990,14 +991,15 @@ def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
         current_feat_data = current_feat_src.read(1)
         current_feat_data = current_feat_data[valid_data]
         for clust in tqdm(range(n_classes)):
-            current_data = np.ravel(current_feat_data[np.where(pred_data == float(clust))])
-            if tail_removal_pct is not None:
-                current_data = trim_tail(current_data, tail_removal_pct)
+            if clust_list and (clust in clust_list):
+                current_data = np.ravel(current_feat_data[np.where(pred_data == float(clust))])
+                if tail_removal_pct is not None:
+                    current_data = trim_tail(current_data, tail_removal_pct)
 
-            feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
-            feat_hist_stats.append(feat_clust_binned_vals)
-            feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
-            feat_bxp_stats.extend(feat_clust_stats)
+                feat_clust_binned_vals = gen_hist_stats(current_data, n_bins)
+                feat_hist_stats.append(feat_clust_binned_vals)
+                feat_clust_stats = cbook.boxplot_stats(current_data, labels=[str(clust)])
+                feat_bxp_stats.extend(feat_clust_stats)
 
         hist_stats[feat_name] = feat_hist_stats
         bxp_stats[feat_name] = feat_bxp_stats
