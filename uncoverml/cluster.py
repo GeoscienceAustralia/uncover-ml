@@ -974,6 +974,12 @@ def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
     pred_file_path = path.join(config.output_dir, 'kmeans_class.tif')
     pred_src = rasterio.open(pred_file_path)
     pred_data = pred_src.read(1)
+    if np.isnan(pred_src.nodata):
+        valid_data = np.where(~np.isnan(pred_data))
+    else:
+        valid_data = np.where(pred_data != pred_src.nodata)
+
+    pred_data = pred_data[valid_data]
 
     bxp_stats = {}
     hist_stats = {}
@@ -982,6 +988,7 @@ def gather_plot_data_small_pred(config, n_bins=100, tail_removal_pct=0.01):
         feat_hist_stats = []
         current_feat_src = feat_src_list[feat_idx]
         current_feat_data = current_feat_src.read(1)
+        current_feat_data = current_feat_data[valid_data]
         for clust in tqdm(range(n_classes)):
             current_data = np.ravel(current_feat_data[np.where(pred_data == float(clust))])
             if tail_removal_pct is not None:
