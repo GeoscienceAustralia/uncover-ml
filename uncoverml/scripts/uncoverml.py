@@ -321,7 +321,7 @@ def unsupervised_cluster_analysis(cluster_model_file, stand_training_data_file, 
 
     # ls.cluster.split_all_feat_data(config)
     # ls.cluster.generate_plots(model, config, stand_training_data_file, raw_training_data_file)
-    ls.cluster.generate_plots_small_data(model, config, stand_training_data_file, raw_training_data_file)
+    ls.cluster.generate_plots_small_data(model, config, stand_training_data_file, raw_training_data_file, [0, 8, 10])
 
 
 @cli.command()
