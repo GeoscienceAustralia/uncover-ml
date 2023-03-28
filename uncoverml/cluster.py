@@ -785,7 +785,7 @@ def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
 
 def box_plot_from_stats(stats_dict, data_type, config, feat_labels=None):
     num_plots = len(list(stats_dict.keys()))
-    fig, axs = plt.subplots(num_plots, 1, sharex=True, figsize=(16, 3*numplots))
+    fig, axs = plt.subplots(num_plots, 1, sharex=True, figsize=(16, 3*num_plots))
     for idx, (feat, stat) in enumerate(stats_dict.items()):
         target_ax = np.ravel(axs)[idx]
         if hasattr(config, 'plot_outliers') and config.plot_outliers:
