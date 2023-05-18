@@ -5,6 +5,7 @@ import logging
 
 import numpy as np
 import skimage
+from uncoverml.image import Image
 
 
 log = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def point_patches(image, pwidth, points):
     return output
 
 
-def _image_to_data(image):
+def _image_to_data(image: Image):
     """
     breaks up an image object into arrays suitable for sending to the
     patching functions
@@ -92,7 +93,7 @@ def _image_to_data(image):
     return data, mask, data_dtype
 
 
-def all_patches(image, patchsize):
+def all_patches(image: Image, patchsize):
     data, mask, data_dtype = _image_to_data(image)
     patches = grid_patches(data, patchsize)
     patch_mask = grid_patches(mask, patchsize)

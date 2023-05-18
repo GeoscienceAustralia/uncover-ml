@@ -14,6 +14,10 @@ from os.path import isfile, splitext, exists
 from pathlib import Path
 import warnings
 
+warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+warnings.filterwarnings(action='ignore', category=Warning)
+
 import click
 import numpy as np
 import matplotlib
@@ -39,9 +43,6 @@ from uncoverml.scripts import superlearn_cli
 
 log = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
-warnings.filterwarnings(action='ignore', category=FutureWarning)
-warnings.filterwarnings(action='ignore', category=DeprecationWarning)
-warnings.filterwarnings(action='ignore', category=Warning)
 
 
 @click.group()
@@ -339,16 +340,20 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
               help='mask file used to limit prediction area')
 @click.option('-r', '--retain', type=int, default=None,
               help='mask values where to predict')
-def predict(model_or_cluster_file, partitions, mask, retain):
+@click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
+              help='mask values where to predict')
+def predict(model_or_cluster_file, partitions, mask, retain, prediction_template):
 
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
+    config.is_prediction = True
     config.cluster = True if splitext(model_or_cluster_file)[1] == '.cluster' \
         else False
     config.mask = mask if mask else config.mask
+    config.prediction_template = prediction_template if prediction_template else config.prediction_template
     if config.mask:
         config.retain = retain if retain else config.retain
 
@@ -414,14 +419,20 @@ def predict(model_or_cluster_file, partitions, mask, retain):
 @click.argument('pipeline_file')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
+@click.option('-s', '--subsample_fraction', type=float, default=1.0,
+              help='only use this fraction of the data for learning classes')
 @click.option('-m', '--mask', type=str, default='',
               help='mask file used to limit prediction area')
 @click.option('-r', '--retain', type=int, default=None,
               help='mask values where to predict')
-def pca(pipeline_file, partitions, mask, retain):
+def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
     config = ls.config.Config(pipeline_file)
+
+    __validate_pca_config(config)  # no other transforms other than whiten
     assert config.pca, "Not a pca analysis. Please include the pca block in your yaml!!"
     config.mask = mask if mask else config.mask
+
+    config.subsample_fraction = subsample_fraction
     if config.mask:
         config.retain = retain if retain else config.retain
 
@@ -432,24 +443,37 @@ def pca(pipeline_file, partitions, mask, retain):
 
     config.n_subchunks = partitions
     if config.n_subchunks > 1:
-        log.info("Memory contstraint forcing {} iterations "
-                 "through data".format(config.n_subchunks))
+        log.info("Memory contstraint forcing {} iterations through data".format(config.n_subchunks))
     else:
         log.info("Using memory aggressively: dividing all data between nodes")
 
-    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec_from_nchannels(config.n_components, config)
-    tr_whiten = __validate_pca_config(config)
+    # Get the image chunks and their associated transforms
+    image_chunk_sets = ls.geoio.unsupervised_feature_sets(config)
+    transform_sets = [k.transform_set for k in config.feature_sets]
+
+    features, _ = ls.features.transform_features(image_chunk_sets,
+                                         transform_sets,
+                                         config.final_transform,
+                                         config)
+    features, _ = ls.features.remove_missing(features)
+    num_samples = np.sum(ls.mpiops.comm.gather(features.shape[0]))
+    log.info(f"Extracting the top {features.shape[1]} PCs from a random sampling of"
+             f" {num_samples} points from the rasters")
+    log.info(f"Done whiten tranform with {subsample_fraction*100}% of all data")
+    ls.mpiops.run_once(ls.geoio.export_cluster_model, "dummy_model", config)
+    ls.mpiops.run_once(ls.predict.export_pca_fractions, config)
+
+    whiten_transform = config.final_transform.global_transforms[0]
+    image_shape, image_bbox, image_crs = ls.geoio.get_image_spec_from_nchannels(whiten_transform.keepdims, config)
     outfile_tif = config.name + "_pca"
 
     image_out = ls.geoio.ImageWriter(image_shape, image_bbox, image_crs,
                                      outfile_tif,
                                      config.n_subchunks, config.output_dir,
-                                     band_tags=[f'_pc_{n}' for n in range(1, config.n_components+1)],
+                                     band_tags=[f'pc_{n}' for n in range(1, whiten_transform.keepdims+1)],
                                      **config.geotif_options)
-
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
-        # TODO: ideally want to take a random sample of each covariate and compute whiten stats
         ls.predict.export_pca(i, image_out, config)
 
     # explicitly close output rasters
@@ -459,6 +483,7 @@ def pca(pipeline_file, partitions, mask, retain):
 
 
 def __validate_pca_config(config):
+    # assert no other transforms other than whiten
     transform_sets = [k.transform_set for k in config.feature_sets]
     for t in transform_sets:
         assert len(t.image_transforms) == 0  # validation that there are no image or global transforms

@@ -1,4 +1,5 @@
 from __future__ import division
+from typing import Optional
 import joblib
 import os.path
 from pathlib import Path
@@ -82,7 +83,9 @@ class RasterioImageSource(ImageSource):
 
         self.filename = filename
         assert os.path.isfile(filename), '{} does not exist'.format(filename)
+
         with rasterio.open(self.filename, 'r') as geotiff:
+
             self._full_res = (geotiff.width, geotiff.height, geotiff.count)
             self._nodata_value = geotiff.meta['nodata']
             # we don't support different channels with different dtypes
@@ -284,14 +287,17 @@ def load_targets(shapefile, targetfield, conf: Config):
     return targets
 
 
-def get_image_spec(model, config):
+def get_image_spec(model, config: Config):
     # temp workaround, we should have an image spec to check against
     nchannels = len(model.get_predict_tags())
     return get_image_spec_from_nchannels(nchannels, config)
 
 
-def get_image_spec_from_nchannels(nchannels, config):
-    imagelike = config.feature_sets[0].files[0]
+def get_image_spec_from_nchannels(nchannels, config: Config):
+    if config.prediction_template and config.is_prediction:
+        imagelike = Path(config.prediction_template).absolute()
+    else:
+        imagelike = config.feature_sets[0].files[0]
     template_image = image.Image(RasterioImageSource(imagelike))
     eff_shape = template_image.patched_shape(config.patchsize) + (nchannels,)
     eff_bbox = template_image.patched_bbox(config.patchsize)
@@ -425,7 +431,7 @@ class ImageWriter:
             resample(f, output_tif=thumbnail, ratio=ratio)
 
 
-def feature_names(config):
+def feature_names(config: Config):
 
     results = []
     for s in config.feature_sets:
@@ -438,9 +444,12 @@ def feature_names(config):
     return results
 
 
-def _iterate_sources(f, config):
+def _iterate_sources(f, config: Config):
 
     results = []
+    template_tif = config.prediction_template if config.is_prediction else None
+    if config.is_prediction:
+        log.info(f"Using prediction template {config.prediction_template}")
     for s in config.feature_sets:
         extracted_chunks = {}
         for tif in s.files:
@@ -448,24 +457,28 @@ def _iterate_sources(f, config):
             name = os.path.abspath(tif)
             image_source = RasterioImageSource(tif)
             x = f(image_source)
-            # TODO this may hurt performance. Consider removal
-            if type(x) is np.ma.MaskedArray:
-                count = mpiops.count(x)
-                # if not np.all(count > 0):
-                #     s = ("{} has no data in at least one band.".format(name) +
-                #          " Valid_pixel_count: {}".format(count))
-                #     raise ValueError(s)
-                missing_percent = missing_percentage(x)
-                t_missing = mpiops.comm.allreduce(
-                    missing_percent) / mpiops.chunks
-                log.info("{}: {}px {:2.2f}% missing".format(
-                    name, count, t_missing))
+            log_missing_percentage(name, x)
             extracted_chunks[name] = x
         extracted_chunks = OrderedDict(sorted(
             extracted_chunks.items(), key=lambda t: t[0]))
 
         results.append(extracted_chunks)
     return results
+
+
+def log_missing_percentage(name, x):
+    # TODO this may hurt performance. Consider removal
+    if type(x) is np.ma.MaskedArray:
+        count = mpiops.count(x)
+        # if not np.all(count > 0):
+        #     s = ("{} has no data in at least one band.".format(name) +
+        #          " Valid_pixel_count: {}".format(count))
+        #     raise ValueError(s)
+        missing_percent = missing_percentage(x)
+        t_missing = mpiops.comm.allreduce(
+            missing_percent) / mpiops.chunks
+        log.info("{}: {}px {:2.2f}% missing".format(
+            name, count, t_missing))
 
 
 def image_resolutions(config):
@@ -477,10 +490,16 @@ def image_resolutions(config):
     return result
 
 
-def image_subchunks(subchunk_index, config):
+def image_subchunks(subchunk_index, config: Config):
+    """This is used in prediction only"""
 
-    def f(image_source):
-        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize)
+    def f(image_source: RasterioImageSource):
+        if config.is_prediction and config.prediction_template is not None:
+            template_source = RasterioImageSource(config.prediction_template)
+        else:
+            template_source = None
+        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize,
+                                       template_source=template_source)
         return r
     result = _iterate_sources(f, config)
     return result
@@ -538,8 +557,9 @@ def unsupervised_feature_sets(config):
                                        patchsize=config.patchsize)
         if frac < 1.0:
             np.random.seed(1)
-            r = r[np.random.rand(r.shape[0]) < frac]
-        return r
+            rr = r[np.random.rand(r.shape[0]) < frac]
+            log.info(f"sampled {rr.shape[0]} from max possible {r.shape[0]}")
+        return rr
     result = _iterate_sources(f, config)
     return result
 

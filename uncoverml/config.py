@@ -164,14 +164,19 @@ class Config:
         self.krige = self.algorithm == 'krige'
 
         if 'prediction' in s:
-            self.quantiles = s['prediction']['quantiles']
-            self.geotif_options = s['prediction']['geotif'] if 'geotif' in \
-                s['prediction'] else {}
+            prediction = s["prediction"]
+            self.quantiles = prediction['quantiles']
+            self.geotif_options = prediction['geotif'] if 'geotif' in prediction else {}
             self.outbands = None
-            if 'outbands' in s['prediction']:
-                self.outbands = s['prediction']['outbands']
-            self.thumbnails = s['prediction']['thumbnails'] \
+            if 'outbands' in prediction:
+                self.outbands = prediction['outbands']
+            self.thumbnails = prediction['thumbnails'] \
                 if 'thumbnails' in s['prediction'] else 10
+
+            self.prediction_template = prediction["prediction_template"] \
+                if "prediction_template" in prediction else None
+
+        self.is_prediction = False
 
         if 'features' in s:
             self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
@@ -292,6 +297,7 @@ class Config:
                 self.split_oos_fraction = s['targets']['split']['oos_fraction']
                 self.train_shapefile = Path(self.output_dir).joinpath(s['output']['train_shapefile'])
                 self.oos_shapefile = Path(self.output_dir).joinpath(s['output']['oos_shapefile'])
+            self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
 
         self.mask = None
         if 'mask' in s:
@@ -303,6 +309,10 @@ class Config:
             preprocessing_transforms = s['preprocessing']['transforms']
             if 'n_components' in preprocessing_transforms[0]['whiten']:
                 self.n_components = preprocessing_transforms[0]['whiten']['n_components']
+            elif 'keep_fraction' in preprocessing_transforms[0]['whiten']:
+                self.keep_fraction = preprocessing_transforms[0]['whiten']['keep_fraction']
+            elif 'variation_fraction' in preprocessing_transforms[0]['whiten']:
+                self.variation_fraction = preprocessing_transforms[0]['whiten']['variation_fraction']
             else:
                 self.n_components = None
             if 'geotif' not in s['pca']:
@@ -388,14 +398,12 @@ class Config:
             else self.name + ('.cluster' if self.clustering else '.model')
 
         self.model_file = Path(self.output_dir).joinpath(output_model)
-        if self.optimised_model:
-            self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
-            self.optimisation_output_skopt = Path(self.output_dir).joinpath(self.name + '_optimisation_skopt.csv')
-            self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
-            self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
-            self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")
-            self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_optimised_scores.json")
-            self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_optimised_scores.json")
+        self.optimisation_output_skopt = Path(self.output_dir).joinpath(self.name + '_optimisation_skopt.csv')
+        self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
+        self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
+        self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")
+        self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_optimised_scores.json")
+        self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_optimised_scores.json")
 
 
 class ConfigException(Exception):

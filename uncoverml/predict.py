@@ -13,6 +13,7 @@ from uncoverml.optimise.models import transformed_modelmaps
 from uncoverml.krige import krig_dict
 from uncoverml import transforms
 from uncoverml.config import Config
+from uncoverml.hyopt import NpEncoder
 
 log = logging.getLogger(__name__)
 float32finfo = np.finfo(dtype=np.float32)
@@ -128,8 +129,7 @@ def _fix_for_corrupt_data(x, feature_names):
         x.data[min_mask] = float32finfo.min
         x.data[max_mask] = float32finfo.max
         x.mask += min_mask + max_mask
-        problem_feature_names = \
-            list(compress(feature_names, ~isfinite.all(axis=0)))
+        problem_feature_names = list(compress(feature_names, ~isfinite.all(axis=0)))
 
         print("Warning: Float64 data was truncated to float32 max/min values."
               "Check your covariates for possible nodatavalue, datatype, "
@@ -144,31 +144,22 @@ def _get_data(subchunk, config):
 
     # NOTE: This returns an *untransformed* x,
     # which is ok as we just need dummies here
-    if config.mask:
-        mask_x = _mask(subchunk, config)
-        all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
-        if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
-            x = np.ma.zeros((mask_x.shape[0], len(features_names)),
-                            dtype=np.bool)
-            x.mask = True
-            log.info('Partition {} covariates are not loaded as '
-                     'the partition is entirely masked.'.format(subchunk + 1))
-            return x, features_names
+    # if config.mask:
+    #     mask_x = _mask(subchunk, config)
+    #     all_mask_x = np.ma.vstack(mpiops.comm.allgather(mask_x))
+    #     if all_mask_x.shape[0] == np.sum(all_mask_x.mask):
+    #         x = np.ma.zeros((mask_x.shape[0], len(features_names)),
+    #                         dtype=np.bool)
+    #         x.mask = True
+    #         log.info('Partition {} covariates are not loaded as '
+    #                  'the partition is entirely masked.'.format(subchunk + 1))
+    #         return x, features_names
 
     transform_sets = [k.transform_set for k in config.feature_sets]
     extracted_chunk_sets = geoio.image_subchunks(subchunk, config)
     log.info("Applying feature transforms")
     x = features.transform_features(extracted_chunk_sets, transform_sets, config.final_transform, config)[0]
 
-    # only check/correct float32 conversion for Ensemble models
-    if config.pca:
-        x = _fix_for_corrupt_data(x, features_names)
-        return _mask_rows(x, subchunk, config), features_names
-
-    if not config.clustering:
-        if (isinstance(modelmaps[config.algorithm](), BaseEnsemble) or
-                config.multirandomforest):
-            x = _fix_for_corrupt_data(x, features_names)
     return _mask_rows(x, subchunk, config), features_names
 
 
@@ -213,12 +204,12 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     alg = config.algorithm
     log.info("Predicting targets for {}.".format(alg))
-    if hasattr(config, 'quantiles'):
-        y_star = predict(x, model, interval=config.quantiles,
-                         lon_lat=_get_lon_lat(subchunk, config))
-    else:
-        y_star = predict(x, model, lon_lat=_get_lon_lat(subchunk, config))
-
+    try:
+        y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
+    except ValueError as v:
+        log.warning(v)
+        x = _fix_for_corrupt_data(x, feature_names)
+        y_star = predict(x, model, interval=config.quantiles, lon_lat=_get_lon_lat(subchunk, config))
     if config.cluster and config.cluster_analysis:
         cluster_analysis(x, y_star, subchunk, config, feature_names)
     # cluster_analysis(x, y_star, subchunk, config, feature_names)
@@ -227,17 +218,20 @@ def render_partition(model, subchunk, image_out: geoio.ImageWriter, config: Conf
 
 def export_pca(subchunk, image_out: geoio.ImageWriter, config: Config):
     x, _ = _get_data(subchunk, config)
-    mpiops.run_once(export_pca_fractions, config)
     total_gb = mpiops.comm.allreduce(x.nbytes / 1e9)
     log.info("Loaded {:2.4f}GB of image data".format(total_gb))
     log.info("Extracting PCAs....")
-    image_out.write(np.flip(x, axis=1), subchunk)
+    # reverse x along columns which are eigen vectors so that the eigenvector corresponding to the largest eigenvalue
+    # is the first PC. This will hopefully remove some ambiguity
+    x = apply_masked(lambda _x: _x, np.flip(x, axis=1))
+    image_out.write(x, subchunk)
 
 
-def export_pca_fractions(config):
+def export_pca_fractions(config: Config):
     whiten_transform = config.final_transform.global_transforms[0]
     with open(config.pca_json, 'w') as output_file:
-        json.dump(whiten_transform.explained_ratio, output_file, sort_keys=True, indent=4)
+        json.dump(whiten_transform.__dict__, output_file, sort_keys=True, indent=4, cls=NpEncoder)
+    log.info(f"wrote pc contributions/whiten transform stats in {config.pca_json}")
 
 
 def cluster_analysis(x, y, partition_no, config, feature_names):

@@ -14,19 +14,19 @@ features:
       - path: configs/data/sirsam/k_15v5.tif
       - path: configs/data/sirsam/relief_apsect.tif
     transforms:
-      - standardise
-      - whiten:
-          keep_fraction: 0.8
+#      - standardise
+#      - whiten:
+#          keep_fraction: 0.8
     imputation: none
 
 preprocessing:
   imputation: none
   transforms:
-    - whiten:
-        keep_fraction: 0.8
+#    - whiten:
+#        keep_fraction: 0.8
 
 targets:
-  file: configs/data/geochem_sites.shp
+  file: configs/data/geochem_sites_cropped.shp
   property: K_ppm_imp
 #  group_targets:
 #    groups_eps: 0.09
@@ -39,22 +39,39 @@ learning:
     random_state: 1
     max_depth: 20
   optimisation:
-    searchcv_params:
-      n_iter: 6
+    hyperopt_params:
+      max_evals: 5
+      step: 2
       cv: 2
-      verbose: 1000
-      n_points: 3
-      n_jobs: 6
-    params_space:
-      'max_depth': Integer(1, 15)
-      'n_estimators': Integer(10, 100)
-      'max_features': Categorical(['auto', 'sqrt', 'log2'])
-      'min_samples_split': Integer(2, 50)
-      'min_samples_leaf': Integer(1, 50)
-      'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
+      verbose: true
+      random_state: 3
+      scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
+      algo: bayes   # bayes, or anneal
+    hp_params_space:
+      max_depth: randint('max_depth', 1, 15)
+      n_estimators: randint('n_estimators', 5, 25)
+      max_features: choice('max_features', ['auto', 'sqrt', 'log2'])
+      min_samples_split: randint('min_samples_split', 2, 50)
+      min_samples_leaf: randint('min_samples_leaf', 1, 50)
+      min_weight_fraction_leaf: uniform('min_weight_fraction_leaf', 0.0, 0.5)
+      max_leaf_nodes: randint('max_leaf_nodes', 10, 50)
+#    searchcv_params:
+#      n_iter: 6
+#      cv: 2
+#      verbose: 1000
+#      n_points: 3
+#      n_jobs: 6
+#    params_space:
+#      'max_depth': Integer(1, 15)
+#      'n_estimators': Integer(10, 100)
+#      'max_features': Categorical(['auto', 'sqrt', 'log2'])
+#      'min_samples_split': Integer(2, 50)
+#      'min_samples_leaf': Integer(1, 50)
+#      'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
 
 
 prediction:
+  prediction_template: configs/data/sirsam/dem_foc2.tif
   quantiles: 0.95
   outbands: 4
 

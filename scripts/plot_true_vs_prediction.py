@@ -99,3 +99,25 @@ plt.legend()
 plt.show()
 
 
+
+
+xx = line.d
+y_test = line.Prediction
+y_lower = line['Lower_quan']
+y_upper = line['Upper_quan']
+plt.plot(xx, line.y_true, "b.", markersize=10, label="Observed log10(conductivity)")
+plt.plot(xx, line.out, "g", markersize=10, linestyle='-',
+         label="Kriged log10(conductivity)")
+plt.plot(xx, y_test, color='orange', linestyle='-',
+         # marker='o',
+         label="Predicted median")
+plt.plot(xx, y_upper, "k-")
+plt.plot(xx, y_lower, "k-")
+plt.fill_between(
+    # (95362.213934-line.d).ravel()
+    (line.d).ravel(),
+    y_lower, y_upper, alpha=0.4, label='Predicted 90% interval'
+)
+plt.legend(loc='upper left')
+plt.ylabel('log10(conductivity)')
+plt.xlabel('Distance along flight line (meters)')

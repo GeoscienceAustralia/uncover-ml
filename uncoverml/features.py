@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from collections import OrderedDict
 import numpy as np
 import pickle
@@ -11,14 +12,16 @@ from uncoverml.targets import Targets
 from uncoverml import patch
 from uncoverml import transforms
 from uncoverml.config import Config
+from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
 
-def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize):
+def extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize,
+                      template_source: Optional[RasterioImageSource] = None):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
-    image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize)
+    image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize, template_source)
     x = patch.all_patches(image, patchsize)
     return x
 
@@ -87,7 +90,9 @@ def transform_features(feature_sets, transform_sets, final_transform, config):
         if mpiops.chunk_index == 0 and config.pickle:
             log.info('Saving featurevec for reuse')
             pickle.dump(feature_vec, open(config.featurevec, 'wb'))
-
+    if mpiops.chunk_index == 0:
+        for i, f in enumerate(feature_sets[0].keys()):
+            log.debug(f"Using feature num {i} from: {f}")
     x = np.ma.concatenate(transformed_vectors, axis=1)
     if config.cubist or config.multicubist or config.krige:
         log.warning("{}: Ignoring preprocessing "
@@ -170,9 +175,15 @@ def cull_all_null_rows(feature_sets):
 
     bool_transformed_vectors = np.concatenate([t.mask for t in
                                                transformed_vectors], axis=1)
-    covaraiates = bool_transformed_vectors.shape[1]
-    rows_to_keep = np.sum(bool_transformed_vectors, axis=1) != covaraiates
-    return rows_to_keep
+    data_transformed_vectors = np.concatenate([t.data for t in
+                                               transformed_vectors], axis=1)
+    num_covariates = bool_transformed_vectors.shape[1]
+
+    rows_with_at_least_one_cov_unmasked = np.sum(bool_transformed_vectors, axis=1) != num_covariates
+    # good rows are any covariate unmasked and all finite covariates
+    rows_with_all_finite_covariates = np.isfinite(data_transformed_vectors).sum(axis=1) == num_covariates
+    good_rows = rows_with_all_finite_covariates &  rows_with_at_least_one_cov_unmasked
+    return good_rows
 
 
 def gather_features(x, node=None):

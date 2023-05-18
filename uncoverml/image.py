@@ -1,7 +1,9 @@
+from typing import Optional
 import numpy as np
 import logging
 
 from affine import Affine
+from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +29,10 @@ def construct_splits(npixels, nchunks, overlap=0):
 
 
 class Image:
-    def __init__(self, source, chunk_idx=0, nchunks=1, overlap=0):
+    def __init__(self, source: RasterioImageSource,
+                 chunk_idx=0, nchunks=1, overlap=0,
+                 t_source: Optional[RasterioImageSource] = None,
+                 ):
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
         if nchunks == 1 and overlap != 0:
@@ -48,6 +53,10 @@ class Image:
         self.pixsize_x = source.pixsize_x
         self.pixsize_y = source.pixsize_y
         self.crs = source.crs
+        log.debug(f"Image full resolution : {source.full_resolution}")
+        log.debug(f"Image origin longitude : {source.origin_longitude}")
+        log.debug(f"Image origin latitude : {source.origin_latitude}")
+
         assert self.pixsize_x > 0
         assert self.pixsize_y > 0
 
@@ -64,21 +73,29 @@ class Image:
         self._pix_y_to_coords = dict(zip(pix_y, coords_y))
 
         # exclusive y range of this chunk in full image
-        ymin, ymax = construct_splits(self._full_res[1], nchunks, overlap)[chunk_idx]
-        self._offset = np.array([0, ymin], dtype=int)
-        # exclusive x range of this chunk (same for all chunks)
-        xmin, xmax = 0, self._full_res[0]
+        if t_source:
+            self._t_full_res = t_source.full_resolution
+            self._t_start_lon = t_source.origin_longitude
+            self._t_start_lat = t_source.origin_latitude
+            self._t_pixsize_x = t_source.pixsize_x
+            self._t_pixsize_y = t_source.pixsize_y
+            tymin, tymax = construct_splits(self._t_full_res[1], nchunks, overlap)[chunk_idx]
+            t_x_offset = np.searchsorted(self._coords_x, self._t_start_lon)
+            t_y_offset = np.searchsorted(self._coords_y, self._t_start_lat)
+            xmin, xmax = t_x_offset, t_x_offset + self._t_full_res[0]
+            ymin, ymax = t_y_offset + tymin, t_y_offset + tymax
+            self.resolution = (xmax-xmin, ymax - ymin, self._t_full_res[2])
+        else:
+            # exclusive x range of this chunk (same for all chunks)
+            xmin, xmax = 0, self._full_res[0]
+            ymin, ymax = construct_splits(self._full_res[1], nchunks, overlap)[chunk_idx]
+            self.resolution = (xmax - xmin, ymax - ymin, self._full_res[2])
 
+        self._offset = np.array([xmin, ymin], dtype=int)
         assert(xmin < xmax)
         assert(ymin < ymax)
 
-        # get resolution of this chunk
-        xres = self._full_res[0]
-        yres = ymax - ymin
-
         # Calculate the new values for resolution and bounding box
-        self.resolution = (xres, yres, self._full_res[2])
-
         start_bound_x, start_bound_y = self._global_pix2lonlat(
             np.array([[xmin, ymin]]))[0]
         # one past the last pixel

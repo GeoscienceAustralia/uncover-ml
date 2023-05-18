@@ -146,7 +146,11 @@ def outer(x):
     out = comm.allreduce(x_outer_local)
     still_masked = np.ma.count_masked(out)
     if still_masked != 0:
-        log.info('Reported out: ' + ', '.join([str(s) for s in out]))
+        log.info("=========still_masked =================")
+        if chunk_index == 0:
+            for s in out:
+                log.info(s)
+        # log.info('Reported out: ' + ', '.join([str(s) for s in out]))
         raise ValueError("Can't compute outer product:"
                          " completely missing columns!")
     if hasattr(out, 'mask'):
@@ -161,6 +165,7 @@ def covariance(x):
 
 
 def eigen_decomposition(x):
+    log.info(f"Eigenvalue matrix shape in process {chunk_index}: {x.shape}")
     eigvals, eigvecs = np.linalg.eigh(covariance(x))
     return eigvals, eigvecs
 
