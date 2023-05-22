@@ -1,6 +1,7 @@
 import logging
 
 from uncoverml import mpiops
+from uncoverml.config import Config
 from uncoverml.krige import krig_dict
 from uncoverml.models import modelmaps, apply_multiple_masked
 from uncoverml.targets import Targets
@@ -11,10 +12,10 @@ log = logging.getLogger(__name__)
 all_modelmaps = {**transformed_modelmaps, **modelmaps, **krig_dict}
 
 
-def local_learn_model(x_all, targets_all: Targets, config):
+def local_learn_model(x_all, targets_all: Targets, config: Config):
 
     model = None
-    if config.multicubist or config.multirandomforest:
+    if config.multicubist or config.multirandomforest or config.multisvr:
         y = targets_all.observations
         weights = targets_all.weights
         model = all_modelmaps[config.algorithm](**config.algorithm_args)

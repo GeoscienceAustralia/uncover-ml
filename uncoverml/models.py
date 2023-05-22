@@ -2,6 +2,7 @@
 
 import os
 import pickle
+import random
 import warnings
 import logging
 from itertools import chain
@@ -579,6 +580,80 @@ class RandomForestRegressorMulti():
     def predict(self, x):
         return self.predict_dist(x)[0]
 
+
+class PseudoProbabilisticSVR():
+
+    def __init__(self,
+                 outdir='.',
+                 parallel=True,
+                 n_models=9,
+                 random_state=1,
+                 **kwargs):
+        # self.forests = forests
+        self.n_models = n_models
+        self.parallel = parallel
+        self.kwargs = kwargs
+        self.random_state = random_state
+        self._trained = False
+        assert isdir(abspath(outdir)), 'Make sure the outdir exists ' \
+                                       'and writeable'
+        self.temp_dir = join(abspath(outdir), 'results')
+        os.makedirs(self.temp_dir, exist_ok=True)
+
+    def fit(self, x, y, *args, **kwargs):
+
+        if self.parallel:
+            process_svrs = np.array_split(range(self.n_models), mpiops.chunks)[mpiops.chunk_index]
+        else:
+            process_svrs = range(self.n_models)
+        for i, t in enumerate(process_svrs):
+            # set a different random seed for each thread
+            np.random.seed(self.random_state + mpiops.chunk_index + i)
+            print('=================>>>>>>>>>>>>>training svr {} using process {}'.format(t, mpiops.chunk_index))
+            # change random state in each svr model
+            # self.kwargs['random_state'] = np.random.randint(0, 10000)
+            rf = SVRTransformed(**self.kwargs)
+            random_indices = np.random.choice(range(len(y)), size=int(len(y)*.8), replace=False)
+            rf.fit(x[random_indices, :], y[random_indices])
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir, 'svr_model_{}.pk'.format(t))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir, 'svr_model_{}_{}.pk'.format(t, mpiops.chunk_index))
+            with open(pk_f, 'wb') as fp:
+                pickle.dump(rf, fp)
+        if self.parallel:
+            mpiops.comm.barrier()
+        # Mark that we are now trained
+        self._trained = True
+
+    def predict_dist(self, x, interval=0.95, *args, **kwargs):
+
+        # We can't make predictions until we have trained the model
+        if not self._trained:
+            print('Train first')
+            return
+
+        y_pred = np.zeros((x.shape[0], self.n_models))
+
+        for i in range(self.n_models):
+            if self.parallel:  # used in training
+                pk_f = join(self.temp_dir, 'svr_model_{}.pk'.format(i))
+            else:  # used when parallel is false, i.e., during x-val
+                pk_f = join(self.temp_dir, 'svr_model_{}_{}.pk'.format(i, mpiops.chunk_index))
+            with open(pk_f, 'rb') as fp:
+                f = pickle.load(fp)
+                y_pred[:, i] = f.predict(x)
+        y_mean = np.mean(y_pred, axis=1)
+        y_var = np.var(y_pred, axis=1)
+
+        # Determine quantiles
+        ql, qu = norm.interval(interval, loc=y_mean, scale=np.sqrt(y_var))
+
+        return y_mean, y_var, ql, qu
+
+    def predict(self, x):
+        return self.predict_dist(x)[0]
+
 #
 # Approximate large scale kernel classifier factory
 #
@@ -915,6 +990,18 @@ class MultiRandomForestTransformed(
     pass
 
 
+class MultiPseudoProbabilisticSVR(
+    transform_targets(PseudoProbabilisticSVR), TagsMixin):
+    """
+    MPI implementation of Random forest regression with forest grown on
+    many CPUS.
+
+    http://scikit-learn.org/dev/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor
+    """
+    pass
+
+
+
 class ApproxGPTransformed(transform_targets(ApproxGP), TagsMixin):
     """
     Approximate Gaussian process.
@@ -1144,6 +1231,7 @@ regressors = {
     'approxgp': ApproxGPTransformed,
     'sgdapproxgp': SGDApproxGPTransformed,
     'svr': SVRTransformed,
+    'svrmulti': MultiPseudoProbabilisticSVR,
     'ardregression': ARDRegressionTransformed,
     'decisiontree': DecisionTreeTransformed,
     'extratree': ExtraTreeTransformed,

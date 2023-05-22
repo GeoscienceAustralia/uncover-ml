@@ -161,6 +161,7 @@ class Config:
         self.cubist = self.algorithm == 'cubist'
         self.multicubist = self.algorithm == 'multicubist'
         self.multirandomforest = self.algorithm == 'multirandomforest'
+        self.multisvr = self.algorithm == 'svrmulti'
         self.krige = self.algorithm == 'krige'
 
         if 'prediction' in s:

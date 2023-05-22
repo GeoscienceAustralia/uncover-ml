@@ -416,7 +416,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         on the unseen data subset.
     """
     # run cross validation in parallel, but one thread for each fold
-    if config.multicubist or config.multirandomforest:
+    if config.multicubist or config.multirandomforest or config.multisvr:
         config.algorithm_args['parallel'] = False
 
     if (mpiops.chunk_index != 0) and (not config.parallel_validate):
@@ -530,7 +530,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         result = CrossvalInfo(scores, y_true, y_pred_dict, weight, lon_lat, classification)
 
     # change back to parallel
-    if config.multicubist or config.multirandomforest:
+    if config.multicubist or config.multirandomforest or config.multisvr:
         config.algorithm_args['parallel'] = True
 
     return result
