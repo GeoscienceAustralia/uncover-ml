@@ -56,7 +56,6 @@ with rio.open(smooth_dem.joinpath("smooth_elevation_small_masked_ref_2p3.tif"), 
     update_dataset.write(ele_mod, 1)
 
 
-# import IPython; IPython.embed(); import sys; sys.exit()
 # flat_ele = interp2d(x1, y1, z1)
 #    (np.arange(ele_mod.shape[0]), np.arange(ele_mod.shape[1]))
 
