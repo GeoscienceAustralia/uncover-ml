@@ -328,7 +328,7 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
 @click.option('-r', '--retain', type=int, default=None,
               help='mask values where to predict')
 @click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
-              help='mask values where to predict')
+              help='the raster for representing the prediction area')
 def predict(model_or_cluster_file, partitions, mask, retain, prediction_template):
 
     with open(model_or_cluster_file, 'rb') as f:

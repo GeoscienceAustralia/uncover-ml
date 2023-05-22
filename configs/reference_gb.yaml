@@ -91,9 +91,6 @@ learning:
 
 
 prediction:
-#  corner_coordinates:
-#    upper_left: ( 119.9670000, -26.9553333)
-#    lower_right: ( 121.5253333, -28.0170000)
   quantiles: 0.95
   outbands: 1
 

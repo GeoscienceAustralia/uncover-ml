@@ -589,41 +589,42 @@ class PseudoProbabilisticSVR():
                  n_models=9,
                  random_state=1,
                  **kwargs):
-        # self.forests = forests
         self.n_models = n_models
         self.parallel = parallel
         self.kwargs = kwargs
         self.random_state = random_state
         self._trained = False
-        assert isdir(abspath(outdir)), 'Make sure the outdir exists ' \
-                                       'and writeable'
+        assert isdir(abspath(outdir)), 'Make sure the outdir exists and writeable'
         self.temp_dir = join(abspath(outdir), 'results')
         os.makedirs(self.temp_dir, exist_ok=True)
 
+    # The code fits SVR models to the given data
     def fit(self, x, y, *args, **kwargs):
-
+        # Checks if running in parallel, if yes, then splits the models into multiple chunks
+        # to be processed by different processes
         if self.parallel:
             process_svrs = np.array_split(range(self.n_models), mpiops.chunks)[mpiops.chunk_index]
+            print(f"Current process index: {mpiops.chunk_index}. Processing SVRs: {process_svrs}")
         else:
             process_svrs = range(self.n_models)
+         # Trains each SVR model
         for i, t in enumerate(process_svrs):
-            # set a different random seed for each thread
+            # Sets the random seed for each process
             np.random.seed(self.random_state + mpiops.chunk_index + i)
-            print('=================>>>>>>>>>>>>>training svr {} using process {}'.format(t, mpiops.chunk_index))
-            # change random state in each svr model
-            # self.kwargs['random_state'] = np.random.randint(0, 10000)
+             # Trains the SVR model using random indices
             rf = SVRTransformed(**self.kwargs)
             random_indices = np.random.choice(range(len(y)), size=int(len(y)*.8), replace=False)
             rf.fit(x[random_indices, :], y[random_indices])
-            if self.parallel:  # used in training
+             # Saves the trained model in a pickle file
+            if self.parallel:
                 pk_f = join(self.temp_dir, 'svr_model_{}.pk'.format(t))
-            else:  # used when parallel is false, i.e., during x-val
+            else:
                 pk_f = join(self.temp_dir, 'svr_model_{}_{}.pk'.format(t, mpiops.chunk_index))
             with open(pk_f, 'wb') as fp:
                 pickle.dump(rf, fp)
+         # Waits for all processes to complete training before setting the trained flag to True
         if self.parallel:
             mpiops.comm.barrier()
-        # Mark that we are now trained
         self._trained = True
 
     def predict_dist(self, x, interval=0.95, *args, **kwargs):

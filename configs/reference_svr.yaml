@@ -58,43 +58,9 @@ learning:
   algorithm: svrmulti
   arguments:
     target_transform: identity
-#    parallel: true
-#    loss: 'ls'
-#    max_depth: 20
-#    learning_rate: 0.1
-#    n_estimators: 200
-#    subsample: 0.9
-#    min_samples_split: 2
-#    min_samples_leaf: 2
-#    min_weight_fraction_leaf: 0.0
-#    max_features: "auto"
-#    alpha: 0.95
-#    random_state: 3
-#  optimisation:
-#    hyperopt_params:
-#      max_evals: 5
-#      step: 2
-#      cv: 2
-#      verbose: true
-#      random_state: 3
-#      scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
-#      algo: bayes   # bayes, or anneal
-#    hp_params_space:
-#      max_depth: randint('max_depth', 1, 15)
-#      learning_rate: loguniform('learning_rate', -5, 0)
-#      n_estimators: randint('n_estimators', 5, 25)
-#      subsample: uniform('subsample', 0.01, 1.0)
-#      max_features: choice('max_features', ['auto', 'sqrt', 'log2'])
-#      min_samples_split: randint('min_samples_split', 2, 50)
-#      min_samples_leaf: randint('min_samples_leaf', 1, 50)
-#      min_weight_fraction_leaf: uniform('min_weight_fraction_leaf', 0.0, 0.5)
-#      max_leaf_nodes: randint('max_leaf_nodes', 10, 50)
 
 
 prediction:
-#  corner_coordinates:
-#    upper_left: ( 119.9670000, -26.9553333)
-#    lower_right: ( 121.5253333, -28.0170000)
   quantiles: 0.95
   outbands: 4
 
