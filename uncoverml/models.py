@@ -588,9 +588,11 @@ class PseudoProbabilisticSVR():
                  parallel=True,
                  n_models=9,
                  random_state=1,
+                 sampling_fraction=0.8,
                  **kwargs):
         self.n_models = n_models
         self.parallel = parallel
+        self.sampling_fraction = sampling_fraction
         self.kwargs = kwargs
         self.random_state = random_state
         self._trained = False
@@ -613,7 +615,7 @@ class PseudoProbabilisticSVR():
             np.random.seed(self.random_state + mpiops.chunk_index + i)
              # Trains the SVR model using random indices
             rf = SVRTransformed(**self.kwargs)
-            random_indices = np.random.choice(range(len(y)), size=int(len(y)*.8), replace=False)
+            random_indices = np.random.choice(range(len(y)), size=int(len(y)*self.sampling_fraction), replace=False)
             rf.fit(x[random_indices, :], y[random_indices])
              # Saves the trained model in a pickle file
             if self.parallel:

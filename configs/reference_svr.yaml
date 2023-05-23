@@ -58,6 +58,7 @@ learning:
   algorithm: svrmulti
   arguments:
     target_transform: identity
+    sampling_fraction: 0.8
 
 
 prediction:
