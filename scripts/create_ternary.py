@@ -1,5 +1,7 @@
 import numpy as np
 import rasterio
+from rasterio.windows import Window
+
 
 band_mapping = {
     1: "BCMAD_20m",
@@ -60,12 +62,13 @@ band2 = (band2 - band2.min()) / (band2.max() - band2.min()) * 255
 band3 = (band3 - band3.min()) / (band3.max() - band3.min()) * 255
 
 # Combine the bands into a single NumPy array.
+image = np.zeros(shape=(band1.shape[0], band1.shape[1], 3), dtype=np.int8)
 image = np.dstack([band1, band2, band3])
 
 albers_crs = "EPSG:3577"  # Australian Albers
 # write out
 with rasterio.open(f'ternary_image_{bands[0]}_{bands[1]}_{bands[2]}.tif', 'w', driver='GTiff', width=image.shape[1],
                    height=image.shape[0], count=3,
-                   dtype=image.dtype, crs=albers_crs) as dst:
-    for i, b in enumerate([band1, band2, band3]):
-        dst.write_band(b, i + 1)
+                   dtype=image.dtype, crs=albers_crs, nodata=0, tiled=True, compress='lzw') as dst:
+    for i in range(3):
+        dst.write_band(image[:, :, i], i + 1)
