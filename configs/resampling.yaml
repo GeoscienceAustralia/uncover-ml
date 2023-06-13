@@ -15,10 +15,10 @@ targets:
       undersample: false
       bins: 10
       bootstrap: False
-      output_samples: 100
+      output_samples: 900  # approximate
       interval: percentile
       validation: True
-      validation_points: 10
+      validation_points: 100   # approximate
 
 output:
   directory: ./resampling_out
