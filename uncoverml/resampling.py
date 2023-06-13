@@ -150,6 +150,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
 def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
                        undersample=False,
                        fields_to_keep: Optional[List[str]] = None, bootstrap=True, output_samples=Optional[int],
+                       validation = False,
                        validation_points=100):
     """
     Parameters
@@ -179,6 +180,9 @@ def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
 
     """
     log.info("Resampling shapefile by using spatial binning")
+    if bootstrap and validation:
+        raise ValueError('bootstrapping should not be use while'
+                         'creating a validation shapefile.')
 
     gdf_out = prepapre_dataframe(input_shapefile, target_field, fields_to_keep)
 
@@ -215,7 +219,11 @@ def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
         else:
             log.debug('{}th {} does not contain any sample'.format(i, p))
     output_gdf = pd.concat(df_to_concat)
-    return output_gdf
+    if validation:
+        validation_df = pd.concat(validation_dfs_to_concat)
+        return output_gdf, validation_df
+    else:
+        return output_gdf
 
 
 def create_grouping_polygons_from_geo_df(rows, cols, gdf_out):

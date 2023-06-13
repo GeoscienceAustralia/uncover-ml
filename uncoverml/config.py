@@ -293,6 +293,8 @@ class Config:
                 self.train_shapefile = Path(self.output_dir).joinpath(s['output']['train_shapefile'])
                 self.oos_shapefile = Path(self.output_dir).joinpath(s['output']['oos_shapefile'])
             self.resampled_output = Path(self.output_dir).joinpath(Path(self.target_file).stem + '_resampled.shp')
+            self.resampled_validation_output = Path(self.output_dir).joinpath(
+                Path(self.target_file).stem + '_resampled_validation.shp')
 
         self.mask = None
         if 'mask' in s:

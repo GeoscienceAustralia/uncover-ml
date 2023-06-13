@@ -28,13 +28,16 @@ def cli(pipeline_file, verbosity):
         transforms.append((ls.resampling.resample_spatially, config.spatial_resampling_args))
     input_shapefile = config.target_file
     output_shapefile = config.resampled_output
+    output_validation_shapefile = config.resampled_validation_output
     target_field = config.target_property
 
     gdf = None
+    val_gdf = None
 
     for i, (func, kwargs) in enumerate(transforms):
-        gdf = func(input_shapefile, target_field, **kwargs)
+        gdf, val_gdf = func(input_shapefile, target_field, **kwargs)
 
     gdf.to_file(output_shapefile)
+    val_gdf.to_file(output_validation_shapefile)
 
     log.info("Resampling complete. Resampled targets saved to '{}'".format(output_shapefile))

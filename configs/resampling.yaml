@@ -5,18 +5,20 @@ targets:
   file: configs/data/sirsam/out_resampled/geochem_sites.shp
   property: K_ppm_imp
   resample:
-    spatial:
-      undersample: false
-      rows: 10
-      cols: 10
-      bootstrap: True
-      output_samples: 4000
+#    spatial:
+#      undersample: false
+#      rows: 10
+#      cols: 10
+#      bootstrap: True
+#      output_samples: 4000
     value:
       undersample: false
-      bins: 20
-      bootstrap: True
-      output_samples: 4000
+      bins: 10
+      bootstrap: False
+      output_samples: 100
       interval: percentile
+      validation: True
+      validation_points: 10
 
 output:
   directory: ./resampling_out
