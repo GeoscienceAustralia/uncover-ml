@@ -2,6 +2,7 @@ from __future__ import division
 from typing import Optional
 import joblib
 import os.path
+from subprocess import run
 from pathlib import Path
 import logging
 from abc import ABCMeta, abstractmethod
@@ -725,7 +726,7 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
         plt.savefig(true_vs_pred_plot)
 
 
-def resample(input_tif, output_tif, ratio, resampling=5):
+def resample(input_tif, output_tif, ratio, resampling="average"):
     """
     Parameters
     ----------
@@ -754,35 +755,8 @@ def resample(input_tif, output_tif, ratio, resampling=5):
     """
 
     src = rasterio.open(input_tif, mode='r')
-
-    nodatavals = src.get_nodatavals()
-    new_shape = round(src.height / ratio), round(src.width / ratio)
-    # adjust the new affine transform to the smaller cell size
-    aff = src.get_transform()
-
-    # c, a, b, f, d, e, works on rasterio versions >=1.0
-    # newaff = Affine(aff.a * ratio, aff.b, aff.c,
-    #                 aff.d, aff.e * ratio, aff.f)
-    #
-    newaff = Affine(aff[0] * ratio, aff[1], aff[2],
-                    aff[3], aff[4] * ratio, aff[5])
-
-    dest = rasterio.open(output_tif, 'w', driver='GTiff',
-                         height=new_shape[0], width=new_shape[1],
-                         count=src.count, dtype=rasterio.float32,
-                         crs=src.crs, transform=newaff,
-                         nodata=nodatavals[0])
-    for b in range(src.count):
-        arr = src.read(b+1)
-        new_arr = np.empty(shape=new_shape, dtype=arr.dtype)
-        reproject(arr, new_arr,
-                  src_transform=aff,
-                  dst_transform=newaff,
-                  src_crs=src.crs,
-                  src_nodata=nodatavals[b],
-                  dst_crs=src.crs,
-                  dst_nodata=nodatavals[b],
-                  resample=resampling)
-        dest.write(new_arr, b + 1)
     src.close()
-    dest.close()
+    run(
+        f"gdalwarp {input_tif} {output_tif} -tr {src.res[0]*ratio} {src.res[1]*ratio} -r {resampling} -overwrite",
+        shell=True
+    )
