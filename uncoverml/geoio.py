@@ -757,6 +757,7 @@ def resample(input_tif, output_tif, ratio, resampling="average"):
     src = rasterio.open(input_tif, mode='r')
     src.close()
     run(
-        f"gdalwarp {input_tif} {output_tif} -tr {src.res[0]*ratio} {src.res[1]*ratio} -r {resampling} -overwrite",
+        f"gdalwarp {input_tif} {output_tif} -tr {src.res[0]*ratio} {src.res[1]*ratio} "
+        f"-wm 5000 -r {resampling} -overwrite",
         shell=True
     )
