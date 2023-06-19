@@ -416,3 +416,9 @@ class Config:
 
 class ConfigException(Exception):
     pass
+
+
+if __name__ == '__main__':
+    current_config_file = '/g/data/jl14/jobs/1234/config.yaml'
+    current_config = Config(current_config_file)
+    print('config created')
