@@ -758,6 +758,6 @@ def resample(input_tif, output_tif, ratio, resampling="average"):
     src.close()
     run(
         f"gdalwarp {input_tif} {output_tif} -tr {src.res[0]*ratio} {src.res[1]*ratio} "
-        f"-wm 5000 -r {resampling} -overwrite",
+        f"-wm 2034 -r {resampling} -overwrite",
         shell=True
     )
