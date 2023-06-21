@@ -612,6 +612,71 @@ class LGBMReg(TagsMixin):
         return self.model.fit(X, y_t, sample_weight=kwargs['sample_weight'])
 
 
+class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
+    def __init__(self, target_transform='identity',
+                 alpha=0.5, upper_alpha=0.95, lower_alpha=0.05,
+                 **kwargs
+                 ):
+        if "objective" in kwargs:
+            assert objective == "quantile", "for quantile regression objective must be quantile"
+        if "metric" in kwargs:
+            assert metric in 'quantile', "for quantile regression metric must be quantile"
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        self.target_transform = target_transform
+        # loss = 'quantile'  # use quantile loss for median
+        # alpha = 0.5  # median
+        self.median_quantile_params ={'objective': 'quantile', "metric": "quantile", 'alpha': 0.5}
+        self.upper_quantile_params = {'objective': 'quantile', "metric": "quantile", 'alpha': upper_alpha}
+        self.lower_quantile_params = {'objective': 'quantile', "metric": "quantile", 'alpha': lower_alpha}
+
+        self.gb = LGBMReg(
+            **kwargs,
+            **self.median_quantile_params
+        )
+        self.gb_quantile_upper = LGBMReg(
+            **kwargs,
+            **self.upper_quantile_params
+        )
+        self.gb_quantile_lower = LGBMReg(
+            **kwargs,
+            **self.lower_quantile_params
+        )
+        self.upper_alpha = upper_alpha
+        self.lower_alpha = lower_alpha
+
+    @staticmethod
+    def collect_prediction(regressor, X_test):
+        y_pred = regressor.predict(X_test)
+        return y_pred
+
+    def fit(self, X, y, *args, **kwargs):
+        log.info('Fitting lightgbm base model')
+        self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
+        log.info('Fitting lightgbm upper quantile model')
+        self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
+        log.info('Fitting lightgbm lower quantile model')
+        self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
+    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
+        Ey = self.gb.predict(X)
+
+        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
+        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
+        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
+        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
+
+        # to make gbm quantile model consistent with other quantile based models
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+
+        return Ey, Vy, ql, qu
+
+
 class GBMReg(GradientBoostingRegressor, TagsMixin):
     def __init__(self, target_transform='identity', loss='quantile', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
@@ -810,6 +875,7 @@ no_test_support = {
     'gradientboost': GBMReg,
     'catboost': CatBoostWrapper,
     'lgbm': LGBMReg,
+    'quantilelgbm': QuantileLGBM,
 }
 
 test_support = {
