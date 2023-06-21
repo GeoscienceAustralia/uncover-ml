@@ -1,5 +1,6 @@
 import logging
 from functools import partial
+from typing import Union, Callable, Optional, Dict
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
@@ -14,6 +15,7 @@ from sklearn.svm import SVR
 from sklearn.ensemble import GradientBoostingRegressor
 from xgboost.sklearn import XGBRegressor
 from catboost import CatBoostRegressor
+from lightgbm import LGBMRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
@@ -539,6 +541,77 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         return Ey, Vy, ql, qu
 
 
+class LGBMReg(TagsMixin):
+    def __init__(
+            self,
+            target_transform='identity',
+            boosting_type: str = 'gbdt',
+            num_leaves: int = 31,
+            max_depth: int = -1,
+            learning_rate: float = 0.1,
+            n_estimators: int = 100,
+            subsample_for_bin: int = 200000,
+            objective: Optional[Union[str, Callable]] = 'quantile',
+            metric: Optional[Union[str, Callable]] = 'quantile',
+            alpha: float =0.5,
+            class_weight: Optional[Union[Dict, str]] = None,
+            min_split_gain: float = 0.,
+            min_child_weight: float = 1e-3,
+            min_child_samples: int = 20,
+            subsample: float = 1.,
+            subsample_freq: int = 0,
+            colsample_bytree: float = 1.,
+            reg_alpha: float = 0.,
+            reg_lambda: float = 0.,
+            random_state: Optional[Union[int, np.random.RandomState]] = None,
+            n_jobs: int = -1,
+            silent: Union[bool, str] = 'warn',
+            importance_type: str = 'split',
+            **kwargs
+        ):
+
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+        self.model = LGBMRegressor(
+            boosting_type=boosting_type,
+            num_leaves=num_leaves,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
+            subsample_for_bin=subsample_for_bin,
+            objective=objective,
+            metric=metric,
+            alpha=alpha,
+            class_weight=class_weight,
+            min_split_gain=min_split_gain,
+            min_child_weight=min_child_weight,
+            min_child_samples=min_child_samples,
+            subsample=subsample,
+            subsample_freq=subsample_freq,
+            colsample_bytree=colsample_bytree,
+            reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            silent=silent,
+            importance_type=importance_type,
+        )
+
+    def predict(self, X, *args, **kwargs):
+        Ey_t = self._notransform_predict(X, *args, **kwargs)
+        return self.target_transform.itransform(Ey_t)
+
+    def _notransform_predict(self, X, *args, **kwargs):
+        Ey_t = self.model.predict(X)
+        return Ey_t
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y=y)
+        y_t = self.target_transform.transform(y)
+        return self.model.fit(X, y_t, sample_weight=kwargs['sample_weight'])
+
+
 class GBMReg(GradientBoostingRegressor, TagsMixin):
     def __init__(self, target_transform='identity', loss='quantile', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
@@ -736,6 +809,7 @@ no_test_support = {
     'quantilegb': QuantileGradientBoosting,
     'gradientboost': GBMReg,
     'catboost': CatBoostWrapper,
+    'lgbm': LGBMReg,
 }
 
 test_support = {
