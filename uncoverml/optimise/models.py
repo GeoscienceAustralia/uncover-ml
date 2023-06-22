@@ -541,10 +541,10 @@ class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
         return Ey, Vy, ql, qu
 
 
-class LGBMReg(TagsMixin):
+class LGBMReg(LGBMRegressor, TagsMixin):
     def __init__(
             self,
-            target_transform='identity',
+            # target_transform='identity',
             boosting_type: str = 'gbdt',
             num_leaves: int = 31,
             max_depth: int = -1,
@@ -570,10 +570,10 @@ class LGBMReg(TagsMixin):
             **kwargs
         ):
 
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-        self.target_transform = target_transform
-        self.model = LGBMRegressor(
+        # if isinstance(target_transform, str):
+        #     target_transform = transforms.transforms[target_transform]()
+        # self.target_transform = target_transform
+        super().__init__(
             boosting_type=boosting_type,
             num_leaves=num_leaves,
             max_depth=max_depth,
@@ -599,17 +599,11 @@ class LGBMReg(TagsMixin):
         )
 
     def predict(self, X, *args, **kwargs):
-        Ey_t = self._notransform_predict(X, *args, **kwargs)
-        return self.target_transform.itransform(Ey_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = self.model.predict(X)
+        Ey_t = super().predict(X)
         return Ey_t
 
     def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y=y)
-        y_t = self.target_transform.transform(y)
-        return self.model.fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        return super().fit(X, y, sample_weight=kwargs['sample_weight'])
 
 
 class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
