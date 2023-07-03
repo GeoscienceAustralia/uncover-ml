@@ -14,9 +14,6 @@ import numpy as np
 from shapely.geometry import Polygon
 from fiona.errors import DriverError
 
-import uncoverml as ls
-import uncoverml.targets
-
 BIN = 'bin'
 GEOMETRY = 'geometry'
 log = logging.getLogger(__name__)
@@ -243,7 +240,7 @@ def create_grouping_polygons_from_geo_df(rows, cols, gdf_out):
     return polygons
 
 
-def _sample_without_replacement(df, training_points, validation_points):
+def _sample_without_replacement(df: pd.DataFrame, training_points, validation_points):
     """
     Parameters
     ----------
@@ -261,6 +258,7 @@ def _sample_without_replacement(df, training_points, validation_points):
         # if enough points take the number of samples
         # the second df returned makes up the validation shapefile
         # _df = df.sample(n=samples_per_group + 1, replace=False)
+        df = df.sample(frac=1)
         return df[:training_points], df[training_points:]
     else:
         # else take everything, this will lead to uncertain number of
