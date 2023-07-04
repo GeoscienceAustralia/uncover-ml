@@ -36,7 +36,7 @@ import uncoverml.validate
 import uncoverml.targets
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
-from uncoverml import optimisation, hyopt
+from uncoverml import optimisation, hyopt, optuna_opt
 # from uncoverml.mllog import warn_with_traceback
 
 
@@ -206,8 +206,11 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
     targets_all, x_all = _load_data(config, partitions)
     if ls.mpiops.chunk_index == 0:
         if config.hpopt:
-            log.info("Using hyperopt package to optimise model params")
+            log.info("Using Hyperopt package to optimise model params")
             hyopt.optimise_model(x_all, targets_all, config)
+        elif config.optuna:
+            log.info("Using Optuna package to optimise model params")
+            optuna_opt.optimise_model(x_all, targets_all, config)
         else:
             log.info("Using scikit-optimise package to optimise model params")
             optimisation.bayesian_optimisation(x_all, targets_all, config)

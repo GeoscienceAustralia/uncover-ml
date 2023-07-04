@@ -35,32 +35,53 @@ learning:
   algorithm: lgbm
   arguments:
     n_estimators: 10
-    target_transform: identity
     random_state: 1
     max_depth: 20
   optimisation:
-    hyperopt_params:
-      max_evals: 5
+    optuna_params:
+      n_trials: 100
       step: 2
       cv: 2
-      verbose: true
-      random_state: 3
+      verbose: 1000
+      random_state: 1
       scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
-      algo: bayes   # bayes, or anneal
-    hp_params_space:
-      max_depth: randint('max_depth', 1, 15)
-      n_estimators: randint('n_estimators', 5, 25)
-      learning_rate: loguniform('learning_rate', -5, 0)
-      num_leaves: randint('num_leaves', 5, 100)
-      subsample_for_bin: randint('subsample_for_bin', 5, 1000000)
-      colsample_bytree: uniform('colsample_bytree', 0.01, 1.0)
-      min_child_weight: uniform('min_child_weight', 0, 10)
-      min_child_samples: randint("min_child_samples", 2, 100)
-      min_gain_to_split: loguniform('min_gain_to_split', -5, 0)
-      min_data_in_leaf: randint("min_data_in_leaf", 200, 10000)
-      feature_fraction: uniform("feature_fraction", 0.2, 0.95)
-      reg_alpha: uniform("reg_lambda", 0, 1)
-      reg_lambda: uniform("reg_lambda", 0, 1)
+      n_jobs: -1
+      enable_pruning: false
+    optuna_params_space:
+      max_depth: IntDistribution(1, 15)
+      n_estimators: IntDistribution(5, 25)
+      learning_rate: FloatDistribution(0.0001, 10, log=True)
+      num_leaves: IntDistribution(2, 256)
+      subsample_for_bin: IntDistribution(10, 1000000, step=10)
+      colsample_bytree: FloatDistribution(0.01, 1.0, log=True)
+      reg_alpha: FloatDistribution(1e-8, 10, log=True)
+      reg_lambda: FloatDistribution(1e-8, 10, log=True)
+      min_child_samples: IntDistribution(2, 100)
+      min_child_weight: FloatDistribution(0, 10)
+      min_split_gain: FloatDistribution(1e-8, 1, log=True)
+#    hyperopt_params:
+#      max_evals: 5
+#      step: 2
+#      cv: 2
+#      verbose: true
+#      random_state: 3
+#      scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
+#      algo: bayes   # bayes, or anneal
+#    hp_params_space:
+#      max_depth: randint('max_depth', 1, 15)
+#      n_estimators: randint('n_estimators', 5, 25)
+#      learning_rate: loguniform('learning_rate', -5, 0)
+#      num_leaves: randint('num_leaves', 5, 100)
+#      subsample_for_bin: randint('subsample_for_bin', 5, 1000000)
+#      colsample_bytree: uniform('colsample_bytree', 0.01, 1.0)
+#      min_child_weight: uniform('min_child_weight', 0, 10)
+#      min_child_samples: randint("min_child_samples", 2, 100)
+#      min_gain_to_split: loguniform('min_gain_to_split', -5, 0)
+#      min_data_in_leaf: randint("min_data_in_leaf", 200, 10000)
+#      feature_fraction: uniform("feature_fraction", 0.2, 0.95)
+#      reg_alpha: uniform("reg_lambda", 0, 1)
+#      reg_lambda: uniform("reg_lambda", 0, 1)
+
 
 #      max_features: choice('max_features', ['auto', 'sqrt', 'log2'])
 #      min_samples_split: randint('min_samples_split', 2, 50)

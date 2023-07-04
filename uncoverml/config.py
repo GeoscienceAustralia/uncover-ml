@@ -359,6 +359,7 @@ class Config:
         if 'learning' in s:
             self.hpopt = False
             self.skopt = False
+            self.optuna = False
             if 'optimisation' in s['learning']:
                 if 'searchcv_params' in s['learning']['optimisation']:
                     self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
@@ -369,8 +370,14 @@ class Config:
                     self.hp_params_space = s['learning']['optimisation']['hp_params_space']
                     self.hpopt = True
 
-                if self.skopt and self.hpopt:
-                    raise ConfigException("Only one of searchcv_params or hyperopt_params can be specified")
+                if 'optuna_params' in s['learning']['optimisation']:
+                    self.optuna_params = s['learning']['optimisation']['optuna_params']
+                    self.optuna_params_space = s['learning']['optimisation']['optuna_params_space']
+                    self.optuna = True
+                assert self.skopt + self.hpopt + self.optuna == 1, "at least one of searchcv, hyperopt, " \
+                                                                   "or optuna must be specified"
+                if self.skopt + self.hpopt + self.optuna > 1:
+                    raise ConfigException("Only one of searchcv, hyperopt, or optuna can be specified")
 
         self.cluster_analysis = False
         self.clustering = False
@@ -395,6 +402,7 @@ class Config:
         self.model_file = Path(self.output_dir).joinpath(output_model)
         self.optimisation_output_skopt = Path(self.output_dir).joinpath(self.name + '_optimisation_skopt.csv')
         self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
+        self.optimisation_output_optuna = Path(self.output_dir).joinpath(self.name + '_optimisation_optuna.csv')
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_optimised_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_optimised.model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_optimised_scores.json")
