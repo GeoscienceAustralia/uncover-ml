@@ -109,6 +109,7 @@ setup(
         'Pillow >= 8.1.2',
         "PyWavelets==1.2.0",
         "imageio==2.9.0",
+        "optuna==3.2.0",
     ],
     extras_require={
         'kmz': [

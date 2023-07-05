@@ -596,6 +596,7 @@ class LGBMReg(LGBMRegressor, TagsMixin):
             n_jobs=n_jobs,
             silent=silent,
             importance_type=importance_type,
+            **kwargs
         )
 
     def predict(self, X, *args, **kwargs):

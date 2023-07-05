@@ -72,7 +72,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
         param_distributions=search_space,
         scoring=scorer,
         cv=cv,
-        error_score=np.nan,
+        error_score='raise',
         random_state=rstate,
         return_train_score=True,
         ** conf.optuna_params
