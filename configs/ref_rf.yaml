@@ -26,7 +26,7 @@ preprocessing:
 #        keep_fraction: 0.8
 
 targets:
-  file: configs/data/geochem_sites_cropped.shp
+  file: configs/data/geochem_sites.shp
   property: K_ppm_imp
 #  group_targets:
 #    groups_eps: 0.09
