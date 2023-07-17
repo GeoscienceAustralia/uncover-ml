@@ -403,7 +403,7 @@ class ImageWriter:
                     yend = self.sub_ends[subindex]  # this is Y
                     if node != 0:
                         data = np.zeros(shape=(self.shape[0], yend - ystart, self.shape[-1]), dtype=np.float32)
-                        mask = np.ones(shape=(self.shape[0], yend - ystart, self.shape[-1]), dtype=np.bool)
+                        mask = np.ones(shape=(self.shape[0], yend - ystart, self.shape[-1]), dtype=bool)
                         mpiops.comm.Recv(data, source=node, tag=1)
                         mpiops.comm.Recv(mask, source=node, tag=2)
                         data = np.ma.masked_array(data=data, mask=mask, dtype=np.float32, fill_value=self.nodata_value)

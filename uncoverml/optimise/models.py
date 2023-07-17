@@ -174,7 +174,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
     def __init__(self,
                  target_transform='identity',
                  n_estimators=10,
-                 criterion="mse",
+                 criterion='squared_error',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -565,7 +565,6 @@ class LGBMReg(LGBMRegressor, TagsMixin):
             reg_lambda: float = 0.,
             random_state: Optional[Union[int, np.random.RandomState]] = None,
             n_jobs: int = -1,
-            silent: Union[bool, str] = 'warn',
             importance_type: str = 'split',
             **kwargs
         ):
@@ -594,7 +593,6 @@ class LGBMReg(LGBMRegressor, TagsMixin):
             reg_lambda=reg_lambda,
             random_state=random_state,
             n_jobs=n_jobs,
-            silent=silent,
             importance_type=importance_type,
             **kwargs
         )
