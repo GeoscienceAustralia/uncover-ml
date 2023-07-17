@@ -720,7 +720,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None, random_state=None,
+                 init=None, random_state=None,
                  max_features=None, verbose=0, max_leaf_nodes=None,
                  warm_start=False,
                  validation_fraction=0.1,
@@ -747,7 +747,6 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         self.subsample = subsample
         self.max_features = max_features
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
@@ -766,7 +765,6 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             max_depth=max_depth, subsample=subsample,
             max_features=max_features,
             min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
@@ -781,7 +779,6 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             max_depth=max_depth, subsample=subsample,
             max_features=max_features,
             min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
@@ -796,7 +793,6 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
             max_depth=max_depth, subsample=subsample,
             max_features=max_features,
             min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
