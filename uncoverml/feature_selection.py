@@ -8,7 +8,7 @@ from uncoverml import config, models
 
 
 # Covariate location and processing information
-base_covariates_path = Path('/g/data/jl14/80m_covarites')
+base_covariates_path = Path('/g/data/jl14/80m_covarite_thumblnails')
 themes_path_dict = {
     'climate': 'climate',
     'gamma': 'geophysics/gamma',
