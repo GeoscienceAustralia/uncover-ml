@@ -87,7 +87,7 @@ def generate_covariate_list(theme, out_dir):
             f.write(f'{file}\n')
 
 
-def feature_rank_resursive(theme, config_yaml, partitions=1, n_features=None, step=1):
+def feature_rank_recursive(theme, config_yaml, partitions=1, n_features=None, step=1):
     current_config = config.Config(config_yaml)
     # We'll start off assuming that partitioning of data is not needed
     targets_all, x_all = _load_data(current_config, partitions)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         print(theme)
         generate_covariate_list(theme, out_dir)
         current_yaml = generate_yaml(theme, target_file_path, target_file_label, out_dir)
-        current_result = feature_rank_resursive(theme, current_yaml)
+        current_result = feature_rank_recursive(theme, current_yaml)
         result_list.append(current_result)
 
     [print(result) for result in result_list]
