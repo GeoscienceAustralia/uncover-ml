@@ -57,7 +57,8 @@ def generate_yaml(theme, target_file, target_label, out_dir):
     final_yaml_dict = {
         'learning': base_learning_dict,
         'features': [feature_config],
-        'targets': targets_config
+        'targets': targets_config,
+        'output': {'directory': '/g/data/jl14/feature_selection'}
     }
     yaml_save_path = Path(out_dir) / f'{theme}.yaml'
     with open(yaml_save_path, 'w') as yaml_file:
