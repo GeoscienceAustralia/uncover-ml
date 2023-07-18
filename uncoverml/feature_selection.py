@@ -101,11 +101,12 @@ if __name__ == '__main__':
     target_file_path = './GeoChem_test.shp'
     target_file_label = 'CaO_pct'
     out_dir = './theme_configs/'
-    # result_list = []
+    result_list = []
     for theme in list(themes_path_dict.keys()):
         print(theme)
         generate_covariate_list(theme, out_dir)
         current_yaml = generate_yaml(theme, target_file_path, target_file_label, out_dir)
-        # feature_rank_resursive(theme, current_yaml)
+        current_result = feature_rank_resursive(theme, current_yaml)
+        result_list.append(current_result)
 
-    # [print(result) for result in result_list]
+    [print(result) for result in result_list]
