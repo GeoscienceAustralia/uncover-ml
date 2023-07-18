@@ -91,7 +91,7 @@ def feature_rank_recursive(theme, config_yaml, partitions=1, n_features=None, st
     current_config = config.Config(config_yaml)
     # We'll start off assuming that partitioning of data is not needed
     targets_all, x_all = _load_data(current_config, partitions)
-    current_model = models.modelmaps[config.algorithm](**config.algorithm_args)
+    current_model = models.modelmaps[current_config.algorithm](**current_config.algorithm_args)
     selector = RFE(current_model, n_features, step)
     selector.fit(x_all, targets_all)
     # Just return for now, we'll save down the results later
