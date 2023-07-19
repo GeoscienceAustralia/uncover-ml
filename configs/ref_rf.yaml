@@ -17,7 +17,7 @@ features:
 #      - standardise
 #      - whiten:
 #          keep_fraction: 0.8
-    imputation: none
+    imputation: mean
 
 preprocessing:
   imputation: none
