@@ -424,12 +424,14 @@ class ImageWriter:
         mpiops.comm.barrier()
 
     def output_thumbnails(self, ratio=10):
-        this_chunk_files = np.array_split(self.file_names,
-                                          mpiops.chunks)[mpiops.chunk_index]
-        for f in this_chunk_files:
-            thumbnails = os.path.splitext(f)
-            thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
-            resample(f, output_tif=thumbnail, ratio=ratio)
+        # this_chunk_files = np.array_split(self.file_names,
+        #                                   mpiops.chunks)[mpiops.chunk_index]
+        # we are having trouble generating thumbnails in parallel
+        if mpiops.chunk_index == 0:
+            for f in self.file_names:
+                thumbnails = os.path.splitext(f)
+                thumbnail = thumbnails[0] + '_thumbnail' + thumbnails[1]
+                resample(f, output_tif=thumbnail, ratio=ratio)
 
 
 def feature_names(config: Config):
