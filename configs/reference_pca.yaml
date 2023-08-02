@@ -29,7 +29,7 @@ mask:
   retain: 1
 
 pca:
-  geotif:
+  geotif_options:
     TILED: YES
     BLOCKXSIZE: 256
     BLOCKYSIZE: 256

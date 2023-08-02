@@ -176,6 +176,7 @@ class Config:
 
             self.prediction_template = prediction["prediction_template"] \
                 if "prediction_template" in prediction else None
+            self.geotif_options = prediction['geotif_options'] if 'geotif_options' in prediction else {}
 
         self.is_prediction = False
 
@@ -312,11 +313,7 @@ class Config:
                 self.variation_fraction = preprocessing_transforms[0]['whiten']['variation_fraction']
             else:
                 self.n_components = None
-            if 'geotif' not in s['pca']:
-                tif_opts = {}
-            else:
-                tif_opts = s['pca']['geotif'] if s['pca']['geotif'] is not None else {}
-            self.geotif_options = tif_opts
+            self.geotif_options = prediction['geotif_options'] if 'geotif_options' in prediction else {}
             self.pca_json = path.join(self.output_dir, s['output']['pca_json'])
         else:
             self.pca = False
