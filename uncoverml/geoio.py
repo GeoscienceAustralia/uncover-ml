@@ -340,9 +340,9 @@ class ImageWriter:
         file_names = []
 
         if mpiops.chunk_index == 0:
+            driver = kwargs.pop('driver') if 'driver' in kwargs else 'GTiff'
             for band in range(self.outbands):
                 output_filename = os.path.join(outputdir, name + "_" + file_tags[band] + ".tif")
-                driver = kwargs.pop('driver') if 'driver' in kwargs else 'GTiff'
                 f = rasterio.open(output_filename, 'w', driver=driver,
                                   width=self.shape[0], height=self.shape[1],
                                   dtype=np.float32, count=1,

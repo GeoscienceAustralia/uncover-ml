@@ -75,9 +75,9 @@ prediction:
   quantiles: 0.95
   outbands: 4
   geotif_options:
-    TILED: YES
-    BLOCKXSIZE: 256
-    BLOCKYSIZE: 256
+#    TILED: YES
+#    BLOCKXSIZE: 256
+#    BLOCKYSIZE: 256
     driver: COG
 
 validation:
