@@ -11,8 +11,9 @@ from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
                                   ElasticNet, SGDRegressor)
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
+from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVR
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from xgboost.sklearn import XGBRegressor
 from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor
@@ -866,6 +867,52 @@ no_test_support = {
     'quantilelgbm': QuantileLGBM,
 }
 
+
+class RandomForestClassifier(RandomForestClassifier, TagsMixin):
+    """
+    Random Forest for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    def __init__(self,
+                 target_transform='identity',
+                 n_estimators=10,
+                 **kwargs
+                 ):
+        super(RandomForestClassifier, self).__init__(
+            n_estimators=n_estimators,
+            **kwargs
+        )
+
+        # training uses str
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+
+        # used during optimisation
+        self.target_transform = target_transform
+        self.le = LabelEncoder()
+
+    def fit(self, X, y, **kwargs):
+        y_t = self.le.fit_transform(y)
+        super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+
+    def predict_proba(self, X, **kwargs):
+        p = super().predict_proba(X)
+        y = np.argmax(p, axis=1)  # Also return hard labels
+        return y, p
+
+    def get_classes(self):
+        tags = ["most_likely"]
+        tags += ["{}_{}".format(c, i)
+                 for i, c in enumerate(self.le.classes_)]
+        return tags
+
+
+no_test_support_classifiers = {
+    'transformedforestclassifier': RandomForestClassifier,
+}
+
+
 test_support = {
     'transformedrandomforest': TransformedForestRegressor,
     'transformedgp': TransformedGPRegressor,
@@ -876,7 +923,7 @@ test_support = {
     'huber': Huber,
 }
 
-transformed_modelmaps = {** test_support, ** no_test_support}
+transformed_modelmaps = {** test_support, ** no_test_support, ** no_test_support_classifiers}
 
 # scikit-learn kernels
 kernels = {'rbf': RBF,

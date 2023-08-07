@@ -3,15 +3,21 @@
 # patchsize: 0
 
 features:
-- name: continuous
-  type: ordinal
-  files:
-  - directory: /home/sudiptra/Documents/GA-cover2/covariates
-  # transforms are performed in order
-  transforms:
-  - centre
-  - standardise
-  imputation: none
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
+    transforms:
+    #      - standardise
+    #      - whiten:
+    #          keep_fraction: 0.8
+    imputation: mean
+
 
 preprocessing:
   imputation: none
@@ -24,29 +30,13 @@ preprocessing:
   # keep_fraction: 0.8
 
 targets:
-  file: /home/sudiptra/Documents/GA-cover2/sirsam.shp
+  file: configs/data/geochem_sites.shp
   property: Na_cats
 
 learning:
-  # algorithm: svc
-  # arguments:
-  #     probability: True
-
-  # algorithm: boostedtrees
-  # arguments:
-  #     n_estimators: 50
-
-   algorithm: forestclassifier
-   arguments:
-       n_estimators: 20
-
-#  algorithm: logisticrbf
-#  arguments:
-#    gamma: 0.005
-#    n_components: 300
-#    multi_class: multinomial
-#    solver: lbfgs
-    # class_weight: balanced
+  algorithm: transformedforestclassifier
+  arguments:
+    n_estimators: 20
 
 prediction:
   quantiles: 0.95
