@@ -9,7 +9,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
-                                  ElasticNet, SGDRegressor)
+                                  ElasticNet, SGDRegressor,
+                                  LogisticRegression)
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVR
@@ -856,40 +857,10 @@ class CatBoostWrapper(CatBoostRegressor, TagsMixin):
         return Ey, Vy, ql, qu
 
 
-no_test_support = {
-    'xgboost': XGBoost,
-    'xgbquantileregressor': XGBQuantileRegressor,
-    'xgbquantile': QuantileXGB,
-    'quantilegb': QuantileGradientBoosting,
-    'gradientboost': GBMReg,
-    'catboost': CatBoostWrapper,
-    'lgbm': LGBMReg,
-    'quantilelgbm': QuantileLGBM,
-}
+class EncodedClassifierMixin():
 
-
-class RandomForestClassifier(RandomForestClassifier, TagsMixin):
-    """
-    Random Forest for muli-class classification.
-
-    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
-    """
-    def __init__(self,
-                 target_transform='identity',
-                 n_estimators=10,
-                 **kwargs
-                 ):
-        super(RandomForestClassifier, self).__init__(
-            n_estimators=n_estimators,
-            **kwargs
-        )
-
-        # training uses str
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-
-        # used during optimisation
-        self.target_transform = target_transform
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.le = LabelEncoder()
 
     def fit(self, X, y, **kwargs):
@@ -908,8 +879,55 @@ class RandomForestClassifier(RandomForestClassifier, TagsMixin):
         return tags
 
 
+class RandomForestClassifier(EncodedClassifierMixin, RandomForestClassifier, TagsMixin):
+    """
+    Random Forest for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    def __init__(self,
+                 n_estimators=10,
+                 **kwargs
+                 ):
+        super(EncodedClassifierMixin, self).__init__()
+        super().__init__(
+            n_estimators=n_estimators,
+            **kwargs
+        )
+
+
+
+class LogisticClassifier(EncodedClassifierMixin, LogisticRegression, TagsMixin):
+    """
+    Logistic Regression for muli-class classification.
+
+    http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
+    def __init__(self,
+                 max_iter=1000,
+                 **kwargs
+                 ):
+        super(EncodedClassifierMixin, self).__init__()
+        super().__init__(
+            max_iter=max_iter,
+            **kwargs
+        )
+
+
+no_test_support = {
+    'xgboost': XGBoost,
+    'xgbquantileregressor': XGBQuantileRegressor,
+    'xgbquantile': QuantileXGB,
+    'quantilegb': QuantileGradientBoosting,
+    'gradientboost': GBMReg,
+    'catboost': CatBoostWrapper,
+    'lgbm': LGBMReg,
+    'quantilelgbm': QuantileLGBM,
+}
+
 no_test_support_classifiers = {
     'transformedforestclassifier': RandomForestClassifier,
+    'transformedlogistic': LogisticClassifier,
 }
 
 

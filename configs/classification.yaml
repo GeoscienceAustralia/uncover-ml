@@ -34,9 +34,15 @@ targets:
   property: Na_cats
 
 learning:
+#  algorithm: transformedlogistic
+#  arguments:
+#    max_iter: 20000
+#    random_state: 1
   algorithm: transformedforestclassifier
   arguments:
     n_estimators: 20
+    random_state: 1
+
 
 prediction:
   quantiles: 0.95
@@ -48,4 +54,4 @@ validation:
     random_seed: 1
 
 output:
-  directory: scratch/
+  directory: logistic/
