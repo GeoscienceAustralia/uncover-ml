@@ -1,67 +1,57 @@
-from pathlib import Path
 import numpy as np
-import geopandas as gpd
-
-
-# from sklearn.neighbors import BallTree
-#
-data_dir = Path("/home/sudipta/Documents/nci/Ceno_test")
-# shapefile = gpd.read_file(data_dir.joinpath("ceno_polygon_stats.shp"))
-# polygons = shapefile["geometry"]
-# print(polygons)
-#
-# index = BallTree(polygons)
-
-
-# import numpy as np
-# from sklearn.neighbors import KDTree, BallTree
-#
-# polygons = np.array([
-#     [0, 0],
-#     [1, 0],
-#     [1, 1],
-#     [0, 1]
-# ])
-#
-# query_point = np.array([0.5, 0.5])
-#
-# kdtree = KDTree(polygons)
-# distances, indices = kdtree.query(query_point, k=3)
-#
-# print(distances)
-# print(indices)
-
 import rasterio as rio
+near_rough = "/g/data/jl14/new_ceno_inputs/KD_8000_80m.tif"
+far_smooth = "/g/data/jl14/new_ceno_inputs/KD_32000_80m.tif"
+scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
 
-smoothed = "spline_p1_sm.tif"
-ceno = "euc_geo.tif"
+src = rio.open(far_smooth)
+far = rio.open(far_smooth).read(masked=True)
+near = rio.open(near_rough).read(masked=True)
+Z = rio.open(scale).read(masked=True)
+mask = far.mask
 
-# import IPython; IPython.embed(); import sys; sys.exit()
-src = rio.open(data_dir.joinpath(smoothed))
-X = rio.open(data_dir.joinpath(smoothed)).read(masked=True)
-Y = rio.open(data_dir.joinpath(ceno)).read(masked=True)
-# W = rio.open(data_dir.joinpath(ceno)).read(masked=True)
-
-# _, rows, cols = X.shape
-
-mask = X.mask
-
-greater = Y > 40000
-less = Y < 20000
-W = (40000 - Y)/20000
+greater = Z > 0.43
+less = Z < 0.05
+W = (0.43 - Z)/(0.43 - 0.05)
 W[greater] = 0
 W[less] = 1
-W = np.ma.MaskedArray(data=W, mask=X.mask)
+W = np.ma.MaskedArray(data=W, mask=far.mask)
 
-output = X * (1-W**2) + Y*W**2
+output = far * (1 - W ** 2) + near * W ** 2
 
 profile = src.profile
-profile.update({
-    'driver': 'COG'
-})
+profile.update({'driver': 'COG', 'BIGTIFF': 'YES'})
 
-with rio.open(f'weighted_average_quadratic.tif', 'w', ** profile, compress='lzw') as dst:
+with rio.open(f'kd_8000_32000_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
     dst.write(output)
 
 
-# output = X * W**2 + Y*(1-W**2)
+near_rough = "/g/data/jl14/80m_covarites/terrain/T_DEM_S.tif"
+far_smooth = "/g/data/jl14/new_ceno_inputs/Spline_DEM_80.tif"
+scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
+
+src = rio.open(far_smooth)
+far = rio.open(far_smooth).read(masked=True)
+near = rio.open(near_rough).read(masked=True)
+Z = rio.open(scale).read(masked=True)
+mask = far.mask
+
+greater = Z > 0.15
+less = Z < 0.01
+W = (0.15 - Z)/(0.15 - 0.01)
+W[greater] = 0
+W[less] = 1
+W = np.ma.MaskedArray(data=W, mask=far.mask)
+
+output = far * (1 - W ** 2) + near * W ** 2
+
+profile = src.profile
+profile.update({'driver': 'COG', 'BIGTIFF': 'YES'})
+
+with rio.open(f'dem_s_spline_dem_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
+    dst.write(output)
+
+
+# for the DEM use /g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif to determing the weights and transition to combine the two DEM grids.
+# Use the values 0.01 to 0.15 i.e. < 0.01 100% grid 1 and > 0.15 100% of grid 2
+# grid 1 == /g/data/jl14/80m_covarites/terrain/T_DEM_S.tif and grid 2 == /g/data/jl14/new_ceno_inputs/Spline_DEM_80.tif
