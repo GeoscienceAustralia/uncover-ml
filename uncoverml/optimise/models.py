@@ -623,7 +623,7 @@ class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
         self.target_transform = target_transform
         # loss = 'quantile'  # use quantile loss for median
         # alpha = 0.5  # median
-        self.median_quantile_params ={'objective': 'quantile', "metric": "quantile", 'alpha': 0.5}
+        self.median_quantile_params ={'objective': 'quantile', "metric": "quantile", 'alpha': alpha}
         self.upper_quantile_params = {'objective': 'quantile', "metric": "quantile", 'alpha': upper_alpha}
         self.lower_quantile_params = {'objective': 'quantile', "metric": "quantile", 'alpha': lower_alpha}
 
@@ -639,6 +639,7 @@ class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
             **kwargs,
             **self.lower_quantile_params
         )
+        self.alpha = alpha
         self.upper_alpha = upper_alpha
         self.lower_alpha = lower_alpha
 

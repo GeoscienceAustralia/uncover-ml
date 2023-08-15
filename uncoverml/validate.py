@@ -423,7 +423,6 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
         return
 
     log.info("Validating with {} folds".format(config.folds))
-    print(config.algorithm_args)
     model = modelmaps[config.algorithm](**config.algorithm_args)
     classification = hasattr(model, 'predict_proba')
     groups = targets_all.groups
