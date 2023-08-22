@@ -1,7 +1,7 @@
 import numpy as np
 import rasterio as rio
 near_rough = "/g/data/jl14/new_ceno_inputs/KD_8000_80m.tif"
-far_smooth = "/g/data/jl14/new_ceno_inputs/KD_32000_80m.tif"
+far_smooth = "/g/data/jl14/new_ceno_inputs/KD_3500_80m.tif"
 scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
 
 src = rio.open(far_smooth)
@@ -22,12 +22,15 @@ output = far * (1 - W ** 2) + near * W ** 2
 profile = src.profile
 profile.update({'driver': 'COG', 'BIGTIFF': 'YES'})
 
-with rio.open(f'kd_8000_32000_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
+with rio.open(f'kd_8000_3500_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
     dst.write(output)
 
 
+
+import numpy as np
+import rasterio as rio
 near_rough = "/g/data/jl14/80m_covarites/terrain/T_DEM_S.tif"
-far_smooth = "/g/data/jl14/new_ceno_inputs/Spline_DEM_80.tif"
+far_smooth = "/g/data/jl14/new_ceno_inputs/80m_DEM_smooth_new.tif"
 scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
 
 src = rio.open(far_smooth)
@@ -36,9 +39,12 @@ near = rio.open(near_rough).read(masked=True)
 Z = rio.open(scale).read(masked=True)
 mask = far.mask
 
-greater = Z > 0.15
-less = Z < 0.01
-W = (0.15 - Z)/(0.15 - 0.01)
+lower_end = 0.01
+higher_end = 0.08
+
+greater = Z > higher_end
+less = Z < lower_end
+W = (higher_end - Z)/(higher_end - lower_end)
 W[greater] = 0
 W[less] = 1
 W = np.ma.MaskedArray(data=W, mask=far.mask)
@@ -48,7 +54,7 @@ output = far * (1 - W ** 2) + near * W ** 2
 profile = src.profile
 profile.update({'driver': 'COG', 'BIGTIFF': 'YES'})
 
-with rio.open(f'dem_s_spline_dem_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
+with rio.open(f'dem_s_DEM_smooth_new_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile, compress='lzw') as dst:
     dst.write(output)
 
 
