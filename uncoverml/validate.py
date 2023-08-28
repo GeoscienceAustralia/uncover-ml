@@ -572,7 +572,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             fig, ax = plt.subplots()
             ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
             ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
-            ax.set_ylabel('Scores')
+            ax.set_ylabel('Covariate')
             ax.set_title('Feature Importance Weight and Std')
             ax.set_xticks(x)
             num_cov = np.arange(len(df_picv.index))
@@ -581,6 +581,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             else:
                 ax.set_yticks(num_cov)
 
+            ax.set_xlabel('Score')
             ax.legend()
 
             fig.tight_layout()
