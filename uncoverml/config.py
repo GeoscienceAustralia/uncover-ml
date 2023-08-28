@@ -185,7 +185,9 @@ class Config:
 
         if 'features' in s:
             if 'short_names' in s['features']:
-                config.short_names = s['features']['short_names']
+                self.short_names = s['features']['short_names']
+            else:
+                self.short_names = None
 
         self.rawcovariates = False
         self.train_data_pk = False

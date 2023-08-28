@@ -659,12 +659,16 @@ def oos_validate(targets_all, x_all, model, config):
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
 
-        model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(predictions))
+        residual_predictions = predictions
+        if len(predictions.shape) > 1:
+            residual_predictions = residual_predictions[:, 0]
+
+        model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(residual_predictions))
         # bins = np.linspace(min_resid, max_resid, 20)
         # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
         # hist_data = hist_data/hist_data.sum()
         fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
-        sns.residplot(x=predictions, y=model_residuals, ax=resid_ax)
+        sns.residplot(x=residual_predictions, y=model_residuals, ax=resid_ax)
         hist_ax.hist(model_residuals, bins='auto', density=True, orientation='horizontal')
         fig.suptitle('Residuals Plot')
         resid_ax.set_ylabel('Residual')
