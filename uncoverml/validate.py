@@ -634,6 +634,11 @@ def oos_validate(targets_all, x_all, model, config):
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
         real_and_pred.columns = real_and_pred_cols
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
+        # Hard coding this quantile filter for now, will make it an input parameter in the future - Adi 28/8/2023
+        upper_lim_point25 = real_and_pred[target_col].quantile(0.975)
+        lower_lim_point25 = real_and_pred[target_col].quantile(0.025)
+        real_and_pred = real_and_pred[(real_and_pred[target_col] < upper_lim_point25) &
+                                      (real_and_pred[target_col] > lower_lim_point25)]
         density_fig, density_ax = plt.subplots()
         density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
                                       cmap='Spectral', levels=20)
