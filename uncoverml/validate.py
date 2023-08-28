@@ -574,10 +574,12 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
             ax.set_ylabel('Scores')
             ax.set_title('Feature Importance Weight and Std')
+            ax.set_xticks(x)
+            num_cov = np.arange(len(df_picv.index))
             if conf.short_names:
-                ax.set_xticks(x, conf.short_names)
+                ax.set_yticks(num_cov, labels=conf.short_names)
             else:
-                ax.set_xticks(x)
+                ax.set_yticks(num_cov)
 
             ax.legend()
 
