@@ -180,14 +180,21 @@ class Config:
 
         if 'features' in s:
             self.pickle = any(True for d in s['features'] if d['type'] == 'pickle')
+            short_names = []
+            set_count = 0
+            short_name_count = 0
+            for feat_set in s['features']:
+                set_count += 1
+                if 'short_names' in feat_set:
+                    short_name_count += 1
+                    short_names = short_names + feat_set['short_names']
+
+            self.short_names = None
+            if short_names and (short_name_count == set_count):
+                self.short_names = short_names
+
         else:
             self.pickle = False
-
-        if 'features' in s:
-            if 'short_names' in s['features']:
-                self.short_names = s['features']['short_names']
-            else:
-                self.short_names = None
 
         self.rawcovariates = False
         self.train_data_pk = False
