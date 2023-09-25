@@ -713,12 +713,19 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
         plt.scatter(y_true, prediction, label='True vs Prediction')
         plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
                  color='r', linewidth=2, label='One to One Line')
-        plt.legend(loc='upper left')
+
+        #obtain m (slope) and b(intercept) of linear regression line
+        m, b = np.polyfit(y_true, prediction, 1)
+
+        #use red as color for regression line
+        plt.plot(y_true, m*y_true + b, color='m', label="Best fit")
+
+        plt.legend(loc='lower right')
 
         plt.title('true vs prediction')
         plt.xlabel('True')
         plt.ylabel('Prediction')
-        display_score = ['r2_score', 'lins_ccc']
+        display_score = ['r2_score', 'lins_ccc', 'mse', 'smse']
         score_sring = ''
         for k in display_score:
             score_sring += '{}={:0.2f}\n'.format(k, scores[k])
