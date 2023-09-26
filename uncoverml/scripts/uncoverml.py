@@ -97,7 +97,7 @@ def learn(pipeline_file, param_json, partitions):
     write_progress_to_file('train', 'Learning full model', config)
 
     progress_file = Path(config.output_dir) / 'train_progress.txt'
-    sys.stdout = open(str(progress_file))
+    sys.stdout = open(str(progress_file), 'a')
     model = ls.learn.local_learn_model(x_all, targets_all, config)
     sys.stdout.close()
     write_progress_to_file('train', 'Model learning complete', config)

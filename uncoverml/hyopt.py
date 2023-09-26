@@ -119,7 +119,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     opt_model = modelmaps[conf.algorithm](** all_params)
 
     progress_file = Path(conf.output_dir) / 'opt_progress.txt'
-    sys.stdout = open(str(progress_file), 'w')
+    sys.stdout = open(str(progress_file), 'a')
     opt_model.fit(X, y, sample_weight=w)
     sys.stdout.close()
     write_progress_to_file('opt', 'Optimised model trained, now export', conf)
