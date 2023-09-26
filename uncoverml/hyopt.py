@@ -1,3 +1,4 @@
+import sys
 import json
 import logging
 import pickle
@@ -17,6 +18,7 @@ from uncoverml.optimise.models import transformed_modelmaps as modelmaps
 from uncoverml.validate import setup_validation_data
 from uncoverml.targets import Targets
 from uncoverml import geoio
+from uncoverml.log_progress import write_progress_to_file
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +59,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     scoring = conf.hyperopt_params.pop('scoring')
     scorer = check_scoring(reg(** conf.algorithm_args), scoring=scoring)
 
+    write_progress_to_file('opt', 'Setting up optimisation', conf)
     X, y, lon_lat, groups, w, cv = setup_validation_data(X, targets_all, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X, y=y):
@@ -84,7 +87,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     max_evals = conf.hyperopt_params.pop('max_evals') if 'max_evals' in conf.hyperopt_params else 50
 
     log.info(f"Optimising params using Hyperopt {algo}")
-
+    write_progress_to_file(f'Begin pptimising params using Hyperopt {algo}', conf)
     for i in range(1, max_evals + 1, step):
         # fmin runs until the trials object has max_evals elements in it, so it can do evaluations in chunks like this
         best = fmin(
@@ -105,16 +108,25 @@ def optimise_model(X, targets_all: Targets, conf: Config):
         # you can save it to reload later in case of a crash, or you decide to kill the script
         pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
         save_optimal(best, random_state, trials, objective, conf)
+        opt_progress = float(i)/float(max_evals+1)
+        write_progress_to_file('opt', f'Optimisation progress: {opt_progress:.2%}', conf)
 
+    write_progress_to_file('opt', 'Finished optimisation, now training optimised model', conf)
     log.info(f"Finished param optimisation using Hyperopt")
     all_params = {** conf.algorithm_args}
     all_params.update(best)
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** all_params)
+
+    progress_file = Path(conf.output_dir) / 'opt_progress.txt'
+    sys.stdout = open(str(progress_file), 'w')
     opt_model.fit(X, y, sample_weight=w)
+    sys.stdout.close()
+    write_progress_to_file('opt', 'Optimised model trained, now export', conf)
 
     conf.optimised_model = True
     geoio.export_model(opt_model, conf, False)
+    write_progress_to_file('opt', 'Optimisation complete, model exported', conf)
 
 
 def save_optimal(best, random_state, trials, objective, conf: Config):

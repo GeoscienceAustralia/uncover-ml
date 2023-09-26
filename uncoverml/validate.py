@@ -29,6 +29,7 @@ from uncoverml.config import Config
 from uncoverml.transforms.target import Identity
 from uncoverml.learn import all_modelmaps as modelmaps
 from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.log_progress import write_progress_to_file
 
 log = logging.getLogger(__name__)
 
@@ -538,8 +539,9 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     return result
 
 
-def plot_feature_importance(model, x_all, targets_all, conf: Config):
+def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_process=None):
     log.info("Computing permutation importance!!")
+    write_progress_to_file(calling_process, 'Computing permutation importance', conf)
     if conf.algorithm not in transformed_modelmaps.keys():
         raise AttributeError("Only the following can be used for permutation "
                              "importance {}".format(
@@ -566,7 +568,9 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
                 conf.name + "_permutation_importance_{}.csv".format(
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
+            write_progress_to_file(calling_process, 'Permutation importance, computed', conf)
 
+            write_progress_to_file(calling_process, 'Plotting permutation importance', conf)
             x = np.arange(len(df_picv.index))
             width = 0.35
             fig, ax = plt.subplots()
@@ -588,6 +592,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
                 .as_posix()
             fig.savefig(save_path)
+            write_progress_to_file(calling_process, 'Permutation importance plot generated and saved', conf)
 
 
 # def plot_():
@@ -611,7 +616,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
 #     plt.xlabel("Xgboost Feature Importance")
 
 
-def oos_validate(targets_all, x_all, model, config):
+def oos_validate(targets_all, x_all, model, config, calling_process=None):
     lon_lat = targets_all.positions
     weights = targets_all.weights
     observations = targets_all.observations
@@ -621,6 +626,7 @@ def oos_validate(targets_all, x_all, model, config):
         y_true = targets_all.observations
         to_text = [predictions, y_true[:, np.newaxis], lon_lat]
 
+        write_progress_to_file(calling_process, 'Generating model scores', config)
         true_vs_pred = Path(config.output_dir).joinpath(config.name + "_oos_validation.csv")
         cols = tags + ['y_true', 'lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
@@ -635,7 +641,9 @@ def oos_validate(targets_all, x_all, model, config):
 
         geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
         log.info(score_string)
+        write_progress_to_file(calling_process, 'Score generated', config)
 
+        write_progress_to_file(calling_process, 'Plotting real vs predicted', config)
         real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
         real_and_pred_cols = tags + ['y_true']
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
@@ -670,7 +678,9 @@ def oos_validate(targets_all, x_all, model, config):
         density_fig.suptitle('Real vs Predicted Density Scatter')
         density_fig.tight_layout()
         density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+        write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
+        write_progress_to_file(calling_process, 'Generating residual plot', config)
         residual_predictions = predictions
         if len(predictions.shape) > 1:
             residual_predictions = residual_predictions[:, 0]
@@ -690,7 +700,9 @@ def oos_validate(targets_all, x_all, model, config):
         save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
             .as_posix()
         fig.savefig(save_path)
+        write_progress_to_file(calling_process, 'Residual plot generated and saved', config)
 
+        write_progress_to_file(calling_process, 'Plotting feature correlations', config)
         feat_correlations = np.corrcoef(x_all, rowvar=False)
         fig, corr_ax = plt.subplots()
         tri_mask = np.triu(np.ones_like(feat_correlations, dtype=bool))
@@ -712,3 +724,4 @@ def oos_validate(targets_all, x_all, model, config):
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
             .as_posix()
         fig.savefig(save_path)
+        write_progress_to_file(calling_process, 'Feature correlation plot generated and saved', config)

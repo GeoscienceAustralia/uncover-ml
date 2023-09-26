@@ -6,6 +6,7 @@ Run the uncoverml pipeline for clustering, supervised learning and prediction.
 
 import logging
 import os
+import sys
 
 import joblib
 import resource
@@ -39,6 +40,7 @@ from uncoverml.transforms import StandardiseTransform
 from uncoverml import optimisation, hyopt
 # from uncoverml.mllog import warn_with_traceback
 from uncoverml.scripts import superlearn_cli
+from uncoverml.log_progress import write_progress_to_file
 
 
 log = logging.getLogger(__name__)
@@ -81,15 +83,28 @@ def learn(pipeline_file, param_json, partitions):
 
     log.info(f"{param_str}")
 
+    write_progress_to_file('train', 'Loading targets', config)
     targets_all, x_all = _load_data(config, partitions)
+    write_progress_to_file('train', 'Targets loaded', config)
 
     if config.cross_validate:
+        write_progress_to_file('train', 'Running cross validation', config)
         run_crossval(x_all, targets_all, config)
 
+    # Yes I know, log messages have been doubled up, will clean this up once
+    # Everything works
     log.info("Learning full {} model".format(config.algorithm))
-    model = ls.learn.local_learn_model(x_all, targets_all, config)
+    write_progress_to_file('train', 'Learning full model', config)
 
+    progress_file = Path(config.output_dir) / 'train_progress.txt'
+    sys.stdout = open(str(progress_file))
+    model = ls.learn.local_learn_model(x_all, targets_all, config)
+    sys.stdout.close()
+    write_progress_to_file('train', 'Model learning complete', config)
+
+    write_progress_to_file('train', 'Exporting model', config)
     ls.mpiops.run_once(ls.geoio.export_model, model, config)
+    write_progress_to_file('train', 'Model exported', config)
 
     # use trained model
     if config.permutation_importance:
@@ -101,6 +116,7 @@ def learn(pipeline_file, param_json, partitions):
     #     ls.mpiops.run_once(ls.validate.plot_feature_importance, model, x_all,
     #                        targets_all, config)
 
+    write_progress_to_file('train', 'Process complete, validating...', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
@@ -210,13 +226,20 @@ def optimise(pipeline_file: str, param_json: str, partitions: int) -> None:
         config.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
 
     param_str = f'Optimising {config.algorithm} model with the following base params:\n'
+    write_progress_to_file('opt', 'Starting optimisation', config)
     for param, value in config.algorithm_args.items():
         param_str += "{}\t= {}\n".format(param, value)
     log.info(param_str)
+
+    write_progress_to_file('opt', 'Loading targets', config)
     targets_all, x_all = _load_data(config, partitions)
+    write_progress_to_file('opt', 'Targets loaded', config)
+
     if ls.mpiops.chunk_index == 0:
         if config.hpopt:
             log.info("Using hyperopt package to optimise model params")
+            write_progress_to_file('opt', 'Optimising model params '
+                                          'using the hyperopt package', config)
             hyopt.optimise_model(x_all, targets_all, config)
         else:
             log.info("Using scikit-optimise package to optimise model params")
@@ -310,9 +333,10 @@ def unsupervised(config):
 @cli.command()
 @click.argument('pipeline_file')
 @click.argument('model_or_cluster_file')
+@click.argument('calling_process')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def validate(pipeline_file, model_or_cluster_file, partitions):
+def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
     """Validate a model with out of sample shapefile."""
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -323,11 +347,14 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
     # config.pickle_load = False
     # config.target_file = config.oos_validation_file
     # config.target_property = config.oos_validation_property
-
+    write_progress_to_file(calling_process, 'Loading targgets', config)
     targets_all, x_all = _load_data(config, partitions)
+    write_progress_to_file(calling_process, 'Targets loaded', config)
 
-    ls.validate.oos_validate(targets_all, x_all, model, config)
-    ls.validate.plot_feature_importance(model, x_all, targets_all, config)
+    write_progress_to_file(calling_process, 'Beginning model validation', config)
+    ls.validate.oos_validate(targets_all, x_all, model, config, calling_process)
+    ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
+    write_progress_to_file(calling_process, 'Model validated', config)
 
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
@@ -343,7 +370,6 @@ def validate(pipeline_file, model_or_cluster_file, partitions):
 @click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
               help='mask values where to predict')
 def predict(model_or_cluster_file, partitions, mask, retain, prediction_template):
-
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
@@ -398,6 +424,8 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
     for i in range(config.n_subchunks):
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
+        prediction_pct = float(i) / float(config.n_subchunks)
+        write_progress_to_file('train', f'Prediction: {prediction_pct: .2%} Rendered', config)
 
     # explicitly close output rasters
     image_out.close()
@@ -412,6 +440,8 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
+
+    write_progress_to_file('train', 'Prediction complete, preparing and uploading results...', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
