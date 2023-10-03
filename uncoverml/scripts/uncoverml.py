@@ -533,3 +533,8 @@ def _total_gb():
     total_usage = ls.mpiops.comm.allreduce(my_usage)
     return total_usage
 
+
+if __name__ == '__main__':
+    test_config = '/g/data/jl14/jobs/testjob_20231003152254/config.yaml'
+    test_model = '/g/data/jl14/jobs/testjob_20231003152254/results/config_optimised.model'
+    validate(test_config, test_model, 'opt', 10)
