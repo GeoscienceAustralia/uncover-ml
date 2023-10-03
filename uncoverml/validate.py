@@ -580,10 +580,9 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_pro
             ax.set_title('Feature Importance Weight and Std')
             ax.set_xticks(x)
             num_cov = np.arange(len(feature_names))
+            ax.set_yticks(num_cov)
             if conf.short_names:
-                ax.set_yticks(num_cov, labels=conf.short_names)
-            else:
-                ax.set_yticks(num_cov)
+                ax.set_yticklabels(conf.short_names)
 
             ax.set_xlabel('Score')
             ax.legend()
@@ -718,7 +717,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         #             square=True, linewidths=.5, cbar_kws={"shrink": .5},
         #             xticklabels=ax_labels, yticklabels=ax_labels)
         sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .5}, xtickslabels=ax_labels, yticklabels=ax_labels)
+                    square=True, linewidths=.5, cbar_kws={"shrink": .5})
         fig.suptitle('Feature Correlations')
         fig.tight_layout()
         save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
