@@ -87,7 +87,7 @@ def optimise_model(X, targets_all: Targets, conf: Config):
     max_evals = conf.hyperopt_params.pop('max_evals') if 'max_evals' in conf.hyperopt_params else 50
 
     log.info(f"Optimising params using Hyperopt {algo}")
-    write_progress_to_file(f'Begin pptimising params using Hyperopt {algo}', conf)
+    write_progress_to_file('opt', f'Begin pptimising params using Hyperopt {algo}', conf)
     for i in range(1, max_evals + 1, step):
         # fmin runs until the trials object has max_evals elements in it, so it can do evaluations in chunks like this
         best = fmin(
