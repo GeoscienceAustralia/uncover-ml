@@ -356,6 +356,9 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
     ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
+    if calling_process == 'opt':
+        write_progress_to_file(calling_process, 'Full Process Completed', config)
+
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
 
@@ -441,7 +444,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    write_progress_to_file('train', 'Prediction complete, preparing and uploading results...', config)
+    write_progress_to_file('train', 'Full Process Complete', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
