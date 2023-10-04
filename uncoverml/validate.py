@@ -679,7 +679,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         # density_fig.suptitle('Real vs Predicted Density Scatter')
         # density_fig.tight_layout()
         # density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
-        validation_scatter(config, targets_all, predictions)
+        validation_scatter(config, np.ma.filled(y_true[:, np.newaxis]), np.ma.filled(predictions))
         write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
         write_progress_to_file(calling_process, 'Generating residual plot', config)
@@ -708,10 +708,7 @@ def plot_feature_correlation_matrix(config: Config, x_all):
     fig.savefig(save_path)
 
 
-def validation_scatter(config: Config, targets_all, predictions):
-    lon_lat = targets_all.positions
-    y_true = targets_all.observations
-
+def validation_scatter(config: Config, y_true, predictions):
     scores_file = os.path.join(config.output_dir, config.name + "_oos_validation_scores.json")
     with open(scores_file, 'r') as f:
         scores = json.load(f)
