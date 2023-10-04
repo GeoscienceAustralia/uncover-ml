@@ -347,7 +347,7 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
     # config.pickle_load = False
     # config.target_file = config.oos_validation_file
     # config.target_property = config.oos_validation_property
-    write_progress_to_file(calling_process, 'Loading targgets', config)
+    write_progress_to_file(calling_process, 'Loading targets', config)
     targets_all, x_all = _load_data(config, partitions)
     write_progress_to_file(calling_process, 'Targets loaded', config)
 
