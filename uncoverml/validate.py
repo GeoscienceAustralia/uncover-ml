@@ -693,7 +693,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
 
 def plot_feature_correlation_matrix(config: Config, x_all):
     fig, corr_ax = plt.subplots()
-    features = [Path(f).stem for f in feature_names(config)]
+    features = [Path(f).stem for f in geoio.feature_names(config)]
     corr_df = pd.DataFrame(x_all)
     corr_df.columns = features
     sns.heatmap(corr_df.corr(),
