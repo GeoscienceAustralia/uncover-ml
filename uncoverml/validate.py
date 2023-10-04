@@ -645,11 +645,11 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         write_progress_to_file(calling_process, 'Score generated', config)
 
         write_progress_to_file(calling_process, 'Plotting real vs predicted', config)
-        # real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
-        # real_and_pred_cols = tags + ['y_true']
-        # real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
-        # real_and_pred.columns = real_and_pred_cols
-        # target_col = 'Prediction' if 'Prediction' in tags else tags[0]
+        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
+        real_and_pred_cols = tags + ['y_true']
+        real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
+        real_and_pred.columns = real_and_pred_cols
+        target_col = 'Prediction' if 'Prediction' in tags else tags[0]
         # # Hard coding this quantile filter for now, will make it an input parameter in the future - Adi 28/8/2023
         # upper_lim_point25 = real_and_pred[target_col].quantile(0.975)
         # lower_lim_point25 = real_and_pred[target_col].quantile(0.025)
@@ -679,7 +679,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         # density_fig.suptitle('Real vs Predicted Density Scatter')
         # density_fig.tight_layout()
         # density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
-        validation_scatter(config, np.ma.filled(y_true[:, np.newaxis]), np.ma.filled(predictions))
+        validation_scatter(config, real_and_pred['y_true'].values, real_and_pred[target_col].values)
         write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
         write_progress_to_file(calling_process, 'Generating residual plot', config)
