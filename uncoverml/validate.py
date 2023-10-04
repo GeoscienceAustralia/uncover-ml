@@ -575,7 +575,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_pro
             write_progress_to_file(calling_process, 'Permutation importance, computed', conf)
 
             write_progress_to_file(calling_process, 'Plotting permutation importance', conf)
-            plot_permutation_feature_importance(model, x_all, targets_all, config, score)
+            plot_permutation_feature_importance(model, x_all, targets_all, conf, score)
             write_progress_to_file(calling_process, 'Permutation importance plot generated and saved', conf)
 
 
@@ -781,7 +781,8 @@ def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config,
         ax.set_title('Permutation Feature Importance Weight and Std')
         ax.set_xticks(x)
         num_cov = np.arange(len(feature_names))
-        ax.set_yticks(num_cov, labels=feature_names)
+        ax.set_yticks(num_cov)
+        ax.set_yticklabels(feature_names)
         ax.set_xlabel('Score')
         ax.legend()
 
