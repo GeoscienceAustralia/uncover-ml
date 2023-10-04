@@ -3,6 +3,7 @@
 from __future__ import division
 import logging
 import copy
+import os
 import json
 from pathlib import Path
 import numpy as np
@@ -711,7 +712,7 @@ def validation_scatter(config: Config, targets_all, predictions):
     lon_lat = targets_all.positions
     y_true = targets_all.observations
 
-    scores_file = os.path.join(config.output_dir, config.name + "_scores.json")
+    scores_file = os.path.join(config.output_dir, config.name + "_oos_validation_scores.json")
     with open(scores_file, 'r') as f:
         scores = json.load(f)
 
