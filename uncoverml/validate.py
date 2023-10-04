@@ -3,6 +3,7 @@
 from __future__ import division
 import logging
 import copy
+import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -643,84 +644,121 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         write_progress_to_file(calling_process, 'Score generated', config)
 
         write_progress_to_file(calling_process, 'Plotting real vs predicted', config)
-        real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
-        real_and_pred_cols = tags + ['y_true']
-        real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
-        real_and_pred.columns = real_and_pred_cols
-        target_col = 'Prediction' if 'Prediction' in tags else tags[0]
-        # Hard coding this quantile filter for now, will make it an input parameter in the future - Adi 28/8/2023
-        upper_lim_point25 = real_and_pred[target_col].quantile(0.975)
-        lower_lim_point25 = real_and_pred[target_col].quantile(0.025)
-        real_and_pred = real_and_pred[(real_and_pred[target_col] < upper_lim_point25) &
-                                      (real_and_pred[target_col] > lower_lim_point25)]
-        density_fig, density_ax = plt.subplots()
-        density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
-                                      cmap='Spectral', levels=20)
-        lims = [
-            np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
-            np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
-        ]
-        density_ax.plot(lims, lims, 'k--', label='1-to-1')
-        density_ax.set_xlim(lims)
-        density_ax.set_ylim(lims)
-        pred_vals = real_and_pred[target_col].values
-        real_vals = real_and_pred['y_true'].values
-        fitted_line = np.polyfit(pred_vals, real_vals, 1)
-        pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
-        density_ax.plot(np.unique(pred_vals),
-                        np.poly1d(fitted_line)(np.unique(pred_vals)),
-                        'k:', label='BestFit')
-        density_ax.legend(loc='lower right')
-        r2_val = '{:.2f}'.format(scores['r2_score'])
-        r2_string = f'R2 Score: {r2_val}'
-        density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=density_ax.transAxes)
-        density_fig.suptitle('Real vs Predicted Density Scatter')
-        density_fig.tight_layout()
-        density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+        # real_and_pred = [np.ma.filled(to_text[0]), np.ma.filled(to_text[1])]
+        # real_and_pred_cols = tags + ['y_true']
+        # real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
+        # real_and_pred.columns = real_and_pred_cols
+        # target_col = 'Prediction' if 'Prediction' in tags else tags[0]
+        # # Hard coding this quantile filter for now, will make it an input parameter in the future - Adi 28/8/2023
+        # upper_lim_point25 = real_and_pred[target_col].quantile(0.975)
+        # lower_lim_point25 = real_and_pred[target_col].quantile(0.025)
+        # real_and_pred = real_and_pred[(real_and_pred[target_col] < upper_lim_point25) &
+        #                               (real_and_pred[target_col] > lower_lim_point25)]
+        # density_fig, density_ax = plt.subplots()
+        # density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
+        #                               cmap='Spectral', levels=20)
+        # lims = [
+        #     np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
+        #     np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
+        # ]
+        # density_ax.plot(lims, lims, 'k--', label='1-to-1')
+        # density_ax.set_xlim(lims)
+        # density_ax.set_ylim(lims)
+        # pred_vals = real_and_pred[target_col].values
+        # real_vals = real_and_pred['y_true'].values
+        # fitted_line = np.polyfit(pred_vals, real_vals, 1)
+        # pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
+        # density_ax.plot(np.unique(pred_vals),
+        #                 np.poly1d(fitted_line)(np.unique(pred_vals)),
+        #                 'k:', label='BestFit')
+        # density_ax.legend(loc='lower right')
+        # r2_val = '{:.2f}'.format(scores['r2_score'])
+        # r2_string = f'R2 Score: {r2_val}'
+        # density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=density_ax.transAxes)
+        # density_fig.suptitle('Real vs Predicted Density Scatter')
+        # density_fig.tight_layout()
+        # density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+        validation_scatter(config, targets_all, predictions)
         write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
         write_progress_to_file(calling_process, 'Generating residual plot', config)
-        residual_predictions = predictions
-        if len(predictions.shape) > 1:
-            residual_predictions = residual_predictions[:, 0]
-
-        model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(residual_predictions))
-        # bins = np.linspace(min_resid, max_resid, 20)
-        # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
-        # hist_data = hist_data/hist_data.sum()
-        fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
-        sns.residplot(x=residual_predictions, y=model_residuals, ax=resid_ax)
-        hist_ax.hist(model_residuals, bins='auto', density=True, orientation='horizontal')
-        fig.suptitle('Residuals Plot')
-        resid_ax.set_ylabel('Residual')
-        resid_ax.set_xlabel('Predicted')
-        hist_ax.set_xlabel('Percentage')
-        fig.tight_layout()
-        save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
-            .as_posix()
-        fig.savefig(save_path)
+        residual_plot(config, predictions)
         write_progress_to_file(calling_process, 'Residual plot generated and saved', config)
 
         write_progress_to_file(calling_process, 'Plotting feature correlations', config)
-        feat_correlations = np.corrcoef(x_all, rowvar=False)
-        fig, corr_ax = plt.subplots()
-        tri_mask = np.triu(np.ones_like(feat_correlations, dtype=bool))
-        cmap = sns.diverging_palette(230, 20, as_cmap=True)
-        if config.short_names:
-            ax_labels = config.short_names
-        else:
-            ax_labels = list(range(x_all.shape[1]))
-
-        corr_df = pd.DataFrame(feat_correlations)
-        corr_df.columns = ax_labels
-        # sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-        #             square=True, linewidths=.5, cbar_kws={"shrink": .5},
-        #             xticklabels=ax_labels, yticklabels=ax_labels)
-        sns.heatmap(corr_df, mask=tri_mask, cmap=cmap, vmax=.3, center=0, ax=corr_ax,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .5})
-        fig.suptitle('Feature Correlations')
-        fig.tight_layout()
-        save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
-            .as_posix()
-        fig.savefig(save_path)
+        plot_feature_correlation_matrix(config, x_all)
         write_progress_to_file(calling_process, 'Feature correlation plot generated and saved', config)
+
+
+def plot_feature_correlation_matrix(config: Config, x_all):
+    fig, corr_ax = plt.subplots()
+    features = [Path(f).stem for f in feature_names(config)]
+    corr_df = pd.DataFrame(x_all)
+    corr_df.columns = features
+    sns.heatmap(corr_df.corr(),
+                vmin=-1, vmax=1, annot=True,
+                square=True, linewidths=.5, cbar_kws={"shrink": .5},
+                cmap='BrBG',
+                )
+    fig.suptitle('Feature Correlations')
+    fig.tight_layout()
+    save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
+        .as_posix()
+    fig.savefig(save_path)
+
+
+def validation_scatter(config: Config, targets_all, predictions):
+    lon_lat = targets_all.positions
+    y_true = targets_all.observations
+
+    scores_file = os.path.join(config.output_dir, config.name + "_scores.json")
+    with open(scores_file, 'r') as f:
+        scores = json.load(f)
+
+    plt.figure()
+    plt.scatter(y_true, predictions, label='True vs Prediction')
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()],
+             color='r', linewidth=2, label='One to One Line')
+
+    # obtain m (slope) and b(intercept) of linear regression line
+    m, b = np.polyfit(y_true, predictions, 1)
+
+    # use red as color for regression line
+    plt.plot(y_true, m * y_true + b, color='m', label="Best fit")
+
+    plt.legend(loc='lower right')
+
+    plt.title('true vs prediction')
+    plt.xlabel('True')
+    plt.ylabel('Prediction')
+    display_score = ['r2_score', 'lins_ccc', 'mse', 'smse']
+    score_sring = ''
+    for k in display_score:
+        score_sring += '{}={:0.2f}\n'.format(k, scores[k])
+
+    plt.text(y_true.min() + (y_true.max() - y_true.min()) / 20,
+             y_true.min() + (y_true.max() - y_true.min()) * 3 / 4,
+             score_sring)
+    plt.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+
+
+def residual_plot(config: Config, predictions, observations):
+    residual_predictions = predictions
+    if len(predictions.shape) > 1:
+        residual_predictions = residual_predictions[:, 0]
+
+    model_residuals = np.ma.filled(observations) - np.ravel(np.ma.filled(residual_predictions))
+    # bins = np.linspace(min_resid, max_resid, 20)
+    # hist_data, hist_edges = np.histogram(model_residuals, 'auto', density=True)
+    # hist_data = hist_data/hist_data.sum()
+    fig, (resid_ax, hist_ax) = plt.subplots(1, 2, sharey=True, gridspec_kw={'width_ratios': [3, 1]})
+    sns.residplot(x=residual_predictions, y=model_residuals, ax=resid_ax)
+    hist_ax.hist(model_residuals, bins='auto', density=True, orientation='horizontal')
+    fig.suptitle('Residuals Plot')
+    resid_ax.set_ylabel('Residual')
+    resid_ax.set_xlabel('Predicted')
+    hist_ax.set_xlabel('Percentage')
+    fig.tight_layout()
+    save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
+        .as_posix()
+    fig.savefig(save_path)
