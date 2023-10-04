@@ -10,9 +10,12 @@ from sklearn.model_selection import GroupKFold, KFold, cross_validate
 from sklearn.metrics import (explained_variance_score, r2_score,
                              accuracy_score, log_loss, roc_auc_score, mean_squared_error,
                              confusion_matrix)
+import pandas as pd
 import eli5
 from eli5.sklearn import PermutationImportance
 from revrand.metrics import lins_ccc, mll, smse
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from uncoverml.geoio import CrossvalInfo
 from uncoverml.models import apply_multiple_masked
@@ -32,7 +35,7 @@ log = logging.getLogger(__name__)
 MINPROB = 1e-5  # Numerical guard for log-loss evaluation
 
 regression_metrics = {
-    'r2_score': lambda y, py, vy, ws, y_t, py_t, vy_t:  r2_score(y, py, sample_weight=ws),
+    'r2_score': lambda y, py, vy, ws, y_t, py_t, vy_t: r2_score(y, py, sample_weight=ws),
     'expvar': lambda y, py, vy, ws, y_t, py_t, vy_t:
     explained_variance_score(y, py, sample_weight=ws),
     'smse': lambda y, py, vy, ws, y_t, py_t, vy_t: smse(y, py),
@@ -271,6 +274,7 @@ def permutation_importance(model, x_all, targets_all, config: Config):
                 config.name + "_permutation_importance_{}.csv".format(
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
+            plot_permutation_feature_importance(model, x_all, targets_all, config, score)
 
 
 def local_rank_features(image_chunk_sets, transform_sets, targets, config):
@@ -536,7 +540,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     return result
 
 
-def plot_feature_importance(model, x_all, targets_all, conf: Config):
+def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config, score: str):
     log.info("Computing permutation importance!!")
     if conf.algorithm not in transformed_modelmaps.keys():
         raise AttributeError("Only the following can be used for permutation "
@@ -555,13 +559,31 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config):
             data=(x_all, y),
             model=model
         )
-        feature_names = geoio.feature_names(conf)
+        feature_names = [Path(f).stem for f in geoio.feature_names(conf)]
         df_picv = eli5.explain_weights_df(
             pi_cv, feature_names=feature_names, top=100)
-        csv = Path(config.output_dir).joinpath(
-            config.name + "_permutation_importance_{}.csv".format(
+        csv = Path(conf.output_dir).joinpath(
+            conf.name + "_permutation_importance_{}.csv".format(
                 score)).as_posix()
         df_picv.to_csv(csv, index=False)
+
+        x = np.arange(len(df_picv.index))
+        width = 0.35
+        fig, ax = plt.subplots()
+        ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
+        ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
+        ax.set_ylabel('Covariate')
+        ax.set_title('Permutation Feature Importance Weight and Std')
+        ax.set_xticks(x)
+        num_cov = np.arange(len(feature_names))
+        ax.set_yticks(num_cov, labels=feature_names)
+        ax.set_xlabel('Score')
+        ax.legend()
+
+        fig.tight_layout()
+        save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
+            .as_posix()
+        fig.savefig(save_path)
 
 
 # def plot_():
@@ -601,6 +623,7 @@ def oos_validate(targets_all, x_all, model, config):
                    fmt='%.8e',
                    header=','.join(cols),
                    comments='')
+
         scores = regression_validation_scores(observations, predictions, weights, model)
         score_string = "OOS Validation Scores:\n"
         for metric, score in scores.items():

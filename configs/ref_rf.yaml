@@ -82,6 +82,7 @@ prediction:
 
 validation:
   #- feature_rank
+  - permutation_importance
   - parallel
   - k-fold:
       folds: 5
