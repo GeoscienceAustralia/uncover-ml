@@ -683,7 +683,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
         write_progress_to_file(calling_process, 'Generating residual plot', config)
-        residual_plot(config, predictions)
+        residual_plot(config, predictions, observations)
         write_progress_to_file(calling_process, 'Residual plot generated and saved', config)
 
         write_progress_to_file(calling_process, 'Plotting feature correlations', config)
