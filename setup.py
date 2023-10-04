@@ -110,6 +110,7 @@ setup(
         "PyWavelets==1.2.0",
         "imageio==2.9.0",
         "optuna==3.2.0",
+        "seaborn==0.13.0",
     ],
     extras_require={
         'kmz': [
