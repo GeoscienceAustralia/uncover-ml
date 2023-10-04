@@ -554,14 +554,16 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_pro
     classification = hasattr(model, 'predict_proba')
 
     if not classification:
-        score_list = ['r2']
+        score_list = ['explained_variance',
+                      'r2',
+                      'neg_mean_absolute_error',
+                      'neg_mean_squared_error']
         for score in score_list:
             pi_cv = apply_multiple_masked(
                 PermutationImportance(model, scoring=score,
                                       cv='prefit', n_iter=10,
                                       refit=False).fit,
-                data=(x_all, y),
-                model=model
+                data=(x_all, y)
             )
             feature_names = geoio.feature_names(conf)
             df_picv = eli5.explain_weights_df(
@@ -573,26 +575,7 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_pro
             write_progress_to_file(calling_process, 'Permutation importance, computed', conf)
 
             write_progress_to_file(calling_process, 'Plotting permutation importance', conf)
-            x = np.arange(len(df_picv.index))
-            width = 0.35
-            fig, ax = plt.subplots()
-            ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
-            ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
-            ax.set_ylabel('Covariate')
-            ax.set_title('Feature Importance Weight and Std')
-            ax.set_xticks(x)
-            num_cov = np.arange(len(feature_names))
-            ax.set_yticks(num_cov)
-            if conf.short_names:
-                ax.set_yticklabels(conf.short_names)
-
-            ax.set_xlabel('Score')
-            ax.legend()
-
-            fig.tight_layout()
-            save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
-                .as_posix()
-            fig.savefig(save_path)
+            plot_permutation_feature_importance(model, x_all, targets_all, config, score)
             write_progress_to_file(calling_process, 'Permutation importance plot generated and saved', conf)
 
 
@@ -760,3 +743,49 @@ def residual_plot(config: Config, predictions, observations):
     save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
         .as_posix()
     fig.savefig(save_path)
+
+
+def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config, score: str):
+    log.info("Computing permutation importance!!")
+    if conf.algorithm not in transformed_modelmaps.keys():
+        raise AttributeError("Only the following can be used for permutation "
+                             "importance {}".format(
+            list(transformed_modelmaps.keys())))
+
+    y = targets_all.observations
+
+    classification = hasattr(model, 'predict_proba')
+
+    if not classification:
+        pi_cv = apply_multiple_masked(
+            PermutationImportance(model, scoring=score,
+                                  cv='prefit', n_iter=10,
+                                  refit=False).fit,
+            data=(x_all, y),
+            model=model
+        )
+        feature_names = [Path(f).stem for f in geoio.feature_names(conf)]
+        df_picv = eli5.explain_weights_df(
+            pi_cv, feature_names=feature_names, top=100)
+        csv = Path(conf.output_dir).joinpath(
+            conf.name + "_permutation_importance_{}.csv".format(
+                score)).as_posix()
+        df_picv.to_csv(csv, index=False)
+
+        x = np.arange(len(df_picv.index))
+        width = 0.35
+        fig, ax = plt.subplots()
+        ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
+        ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
+        ax.set_ylabel('Covariate')
+        ax.set_title('Permutation Feature Importance Weight and Std')
+        ax.set_xticks(x)
+        num_cov = np.arange(len(feature_names))
+        ax.set_yticks(num_cov, labels=feature_names)
+        ax.set_xlabel('Score')
+        ax.legend()
+
+        fig.tight_layout()
+        save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
+            .as_posix()
+        fig.savefig(save_path)
