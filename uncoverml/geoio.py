@@ -12,6 +12,7 @@ import json
 from typing import Union
 import pickle
 import matplotlib.pyplot as plt
+import seaborn as sns
 import rasterio
 from rasterio.warp import reproject
 from rasterio.windows import Window
@@ -734,6 +735,23 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
                  y_true.min() + (y_true.max() - y_true.min())*3/4,
                  score_sring)
         plt.savefig(true_vs_pred_plot)
+
+
+def plot_feature_correlation_matrix(config: Config, x_all):
+    fig, corr_ax = plt.subplots()
+    features = [Path(f).stem for f in feature_names(config)]
+    corr_df = pd.DataFrame(x_all)
+    corr_df.columns = features
+    sns.heatmap(corr_df.corr(),
+                vmin=-1, vmax=1, annot=True,
+                square=True, linewidths=.5, cbar_kws={"shrink": .5},
+                cmap='BrBG',
+                )
+    fig.suptitle('Feature Correlations')
+    fig.tight_layout()
+    save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
+        .as_posix()
+    fig.savefig(save_path)
 
 
 def resample(input_tif, output_tif, ratio, resampling="average"):

@@ -83,6 +83,7 @@ prediction:
 validation:
   #- feature_rank
   - permutation_importance
+  # TODO: - feature_importance  # only works for tree based models
   - parallel
   - k-fold:
       folds: 5
