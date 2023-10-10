@@ -147,7 +147,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
         validation_df = pd.concat(validation_dfs_to_concat)
         return output_gdf, validation_df
     else:
-        return output_gdf
+        return output_gdf, pd.DataFrame()
 
 
 def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
@@ -226,7 +226,7 @@ def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
         validation_df = pd.concat(validation_dfs_to_concat)
         return output_gdf, validation_df
     else:
-        return output_gdf
+        return output_gdf, pd.DataFrame()
 
 
 def create_grouping_polygons_from_geo_df(rows, cols, gdf_out):
