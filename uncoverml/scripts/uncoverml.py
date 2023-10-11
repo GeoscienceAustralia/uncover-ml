@@ -428,7 +428,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
         log.info("starting to render partition {}".format(i+1))
         ls.predict.render_partition(model, i, image_out, config)
         prediction_pct = float(i) / float(config.n_subchunks)
-        write_progress_to_file('train', f'Prediction: {prediction_pct: .2%} Rendered', config)
+        write_progress_to_file('pred', f'Prediction: {prediction_pct: .2%} Rendered', config)
 
     # explicitly close output rasters
     image_out.close()
@@ -444,7 +444,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
 
-    write_progress_to_file('train', 'Full Process Complete', config)
+    write_progress_to_file('pred', 'Full Process Complete', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
