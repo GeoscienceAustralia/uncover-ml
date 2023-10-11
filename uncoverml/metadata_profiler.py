@@ -111,7 +111,7 @@ class MetadataSummary():
             outf.write("Version = %s\n"%self.version)
             outf.write("Datetime = %s \n"%self.datetime)
 
-            outf.write("\n\n############ Performance Matrics ###########\n\n")
+            outf.write("\n\n############ Performance Metrics ###########\n\n")
             if self.model_performance_metrics:
                 for keys, values in self.model_performance_metrics.items():
                     outf.write("%s = %s\n"%(keys, values))
