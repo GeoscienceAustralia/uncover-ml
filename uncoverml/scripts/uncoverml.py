@@ -116,7 +116,7 @@ def learn(pipeline_file, param_json, partitions):
     #     ls.mpiops.run_once(ls.validate.plot_feature_importance, model, x_all,
     #                        targets_all, config)
 
-    write_progress_to_file('train', 'Full Process Complete', config)
+    write_progress_to_file('train', 'Process complete, validating...', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
@@ -337,7 +337,7 @@ def unsupervised(config):
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
 def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
-    """Validate a model with out of sample shapefile."""
+    """Validate a model with out-of-sample shapefile."""
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
@@ -356,9 +356,7 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
     ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
-    if calling_process == 'opt':
-        write_progress_to_file(calling_process, 'Full Process Complete', config)
-
+    write_progress_to_file(calling_process, 'Full Process Complete', config)
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
 
