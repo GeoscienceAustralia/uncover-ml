@@ -116,7 +116,7 @@ def learn(pipeline_file, param_json, partitions):
     #     ls.mpiops.run_once(ls.validate.plot_feature_importance, model, x_all,
     #                        targets_all, config)
 
-    write_progress_to_file('train', 'Process complete, validating...', config)
+    write_progress_to_file('train', 'Full Process Complete', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
 
 
