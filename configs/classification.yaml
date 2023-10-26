@@ -42,6 +42,23 @@ learning:
   arguments:
     n_estimators: 20
     random_state: 1
+  optimisation:
+    hyperopt_params:
+      max_evals: 5
+      step: 2
+      cv: 3
+      verbose: true
+      random_state: 3
+      scoring: accuracy  # r2, neg_mean_absolute_error, etc..see note above
+      algo: bayes   # bayes, or anneal
+    hp_params_space:
+      max_depth: randint('max_depth', 1, 15)
+      n_estimators: randint('n_estimators', 5, 25)
+      max_features: choice('max_features', ['auto', 'sqrt', 'log2'])
+      min_samples_split: randint('min_samples_split', 2, 50)
+      min_samples_leaf: randint('min_samples_leaf', 1, 50)
+      min_weight_fraction_leaf: uniform('min_weight_fraction_leaf', 0.0, 0.5)
+      max_leaf_nodes: randint('max_leaf_nodes', 10, 50)
 
 
 prediction:
@@ -54,4 +71,4 @@ validation:
     random_seed: 1
 
 output:
-  directory: logistic/
+  directory: rfc/

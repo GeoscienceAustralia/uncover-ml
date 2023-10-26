@@ -1,10 +1,12 @@
 """ Scripts for validation """
 
 from __future__ import division
+from typing import Union
 import logging
 import copy
 from pathlib import Path
 import numpy as np
+from xgboost import XGBRegressor, XGBClassifier
 from sklearn.utils import shuffle
 from sklearn.model_selection import GroupKFold, KFold, cross_validate
 from sklearn.metrics import (explained_variance_score, r2_score,
@@ -243,6 +245,18 @@ def regression_validation_scores(y, ey, ws, model):
         scores[k] = apply_multiple_masked(m, (y, py, vy, ws, y_t, py_t, vy_t))
 
     return scores
+
+
+def plot_feature_importance(model: Union[XGBRegressor, XGBClassifier], X, y, config: Config):
+    assert isinstance(model, XGBRegressor) or isinstance(model, XGBClassifier), \
+        "Only xgboost models are support for now"
+    all_cols = model.feature_importances_
+    non_zero_indices = model.feature_importances_ >= 0.001
+    non_zero_cols = X.columns[non_zero_indices]
+    non_zero_importances = model.feature_importances_[non_zero_indices]
+    sorted_non_zero_indices = non_zero_importances.argsort()
+    plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+    plt.xlabel("Xgboost Feature Importance")
 
 
 def permutation_importance(model, x_all, targets_all, config: Config):
