@@ -110,6 +110,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
 
     result = pd.core.reshape.tile._bins_to_cuts(target, bin_edges,
                                                 labels=False,
+                                                duplicates='drop',
                                                 include_lowest=True)
 
     # add to output df for sampling
