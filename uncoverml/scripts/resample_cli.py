@@ -38,6 +38,7 @@ def cli(pipeline_file, verbosity):
         gdf, val_gdf = func(input_shapefile, target_field, **kwargs)
 
     gdf.to_file(output_shapefile)
-    val_gdf.to_file(output_validation_shapefile)
+    if val_gdf.shape[0]:
+        val_gdf.to_file(output_validation_shapefile)
 
     log.info("Resampling complete. Resampled targets saved to '{}'".format(output_shapefile))
