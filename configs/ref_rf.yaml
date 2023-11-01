@@ -79,6 +79,7 @@ prediction:
 #    BLOCKXSIZE: 256
 #    BLOCKYSIZE: 256
     driver: COG
+    'BIGTIFF': 'YES'
 
 validation:
   #- feature_rank

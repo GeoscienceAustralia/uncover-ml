@@ -14,10 +14,10 @@ from sklearn.linear_model import (HuberRegressor,
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVR
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from xgboost.sklearn import XGBRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier, GradientBoostingClassifier
+from xgboost.sklearn import XGBRegressor, XGBClassifier
 from catboost import CatBoostRegressor
-from lightgbm import LGBMRegressor
+from lightgbm import LGBMRegressor, LGBMClassifier
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
     _normpdf, TagsMixin, SGDApproxGP
 from uncoverml.transforms import target as transforms
@@ -896,6 +896,19 @@ class RandomForestClassifier(EncodedClassifierMixin, RandomForestClassifier, Tag
             **kwargs
         )
 
+class GradientBoostingClassifier(EncodedClassifierMixin, GradientBoostingClassifier, TagsMixin):
+    def __init__(self,
+                 n_estimators=10,
+                 **kwargs
+                 ):
+        print("Inside class")
+        super(EncodedClassifierMixin, self).__init__()
+        print("Inside class after EncodedClassifierMixin")
+        super().__init__(
+            n_estimators=n_estimators,
+            **kwargs
+        )
+        print("After class")
 
 
 class LogisticClassifier(EncodedClassifierMixin, LogisticRegression, TagsMixin):
@@ -929,6 +942,7 @@ no_test_support = {
 no_test_support_classifiers = {
     'transformedforestclassifier': RandomForestClassifier,
     'transformedlogistic': LogisticClassifier,
+    'gradientboostingclassifier': GradientBoostingClassifier,
 }
 
 
