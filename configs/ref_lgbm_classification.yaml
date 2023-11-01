@@ -38,10 +38,9 @@ learning:
 #  arguments:
 #    max_iter: 20000
 #    random_state: 1
-  algorithm: gradientboostingclassifier
+  algorithm: lgbmclassifier
   arguments:
-    n_estimators: 20
-    random_state: 1
+    n_estimators: 200
   optimisation:
     hyperopt_params:
       max_evals: 5
@@ -71,4 +70,4 @@ validation:
     random_seed: 1
 
 output:
-  directory: gbc/
+  directory: lgbmc/

@@ -901,14 +901,36 @@ class GradientBoostingClassifier(EncodedClassifierMixin, GradientBoostingClassif
                  n_estimators=10,
                  **kwargs
                  ):
-        print("Inside class")
         super(EncodedClassifierMixin, self).__init__()
-        print("Inside class after EncodedClassifierMixin")
-        super().__init__(
+        super(GradientBoostingClassifier, self).__init__(
             n_estimators=n_estimators,
             **kwargs
         )
-        print("After class")
+
+
+class XGBClassifier(EncodedClassifierMixin, XGBClassifier, TagsMixin):
+    def __init__(self,
+                 n_estimators=10,
+                 **kwargs
+                 ):
+        super(EncodedClassifierMixin, self).__init__()
+        super(XGBClassifier, self).__init__(
+            n_estimators=n_estimators,
+            **kwargs
+        )
+
+
+
+class LGBMClassifier(EncodedClassifierMixin, LGBMClassifier, TagsMixin):
+    def __init__(self,
+                 n_estimators=10,
+                 **kwargs
+                 ):
+        super(EncodedClassifierMixin, self).__init__()
+        super(LGBMClassifier, self).__init__(
+            n_estimators=n_estimators,
+            **kwargs
+        )
 
 
 class LogisticClassifier(EncodedClassifierMixin, LogisticRegression, TagsMixin):
@@ -943,6 +965,8 @@ no_test_support_classifiers = {
     'transformedforestclassifier': RandomForestClassifier,
     'transformedlogistic': LogisticClassifier,
     'gradientboostingclassifier': GradientBoostingClassifier,
+    # 'lgbmclassifier': LGBMClassifier,
+    # 'xgbclassifier': XGBClassifier,
 }
 
 
