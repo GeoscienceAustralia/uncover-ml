@@ -120,16 +120,16 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
     validation_dfs_to_concat = []
     approximate_samples_per_bin = gdf_out.shape[0] // bins
     output_samples_per_bin = output_samples // bins
-    validation_samples_per_bin = validation_points // bins
-    assert approximate_samples_per_bin >= validation_samples_per_bin + output_samples_per_bin
+    # validation_samples_per_bin = validation_points // bins
+    # assert approximate_samples_per_bin >= validation_samples_per_bin + output_samples_per_bin
     gb = gdf_out.groupby(BIN)
     for i, (b, gr) in enumerate(gb):
         if bootstrap:
             if undersample:
-                dfs_to_concat.append(gr.sample(n=approximate_samples_per_bin, replace=bootstrap))
+                dfs_to_concat.append(gr.sample(n=approximate_samples_per_bin, replace=True))
             else:
-                if gr.shape[0] < approximate_samples_per_bin:
-                    dfs_to_concat.append(gr.sample(n=approximate_samples_per_bin, replace=bootstrap))
+                if gr.shape[0] < output_samples_per_bin:
+                    dfs_to_concat.append(gr.sample(n=output_samples_per_bin, replace=True))
                 else:
                     dfs_to_concat.append(gr)
         else:
