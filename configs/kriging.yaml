@@ -50,16 +50,15 @@ learning:
   arguments:
     method: ordinary  # ordinary or universal
     variogram_model: spherical  # linear, power, gaussian, spherical, exponential
-    variogram_parameters: [0, 1, 0.1]   # [sill, range, nugget] for gaussian, spherical, exponential
+    variogram_parameters: [0.0, 1, 0.1]   # [sill, range, nugget] for gaussian, spherical, exponential
     verbose: False
-
-
-optimisation:
-  algorithm: krige
-  hyperparameters:
-    method: [ordinary, universal]
-    variogram_model: [linear, power, gaussian, spherical, exponential]
-  optimisation_output: optimisation.csv
+    exact_values: False
+#  optimisation:
+#    algorithm: krige
+#    hyperparameters:
+#      method: [ordinary, universal]
+#      variogram_model: [linear, power, gaussian, spherical, exponential]
+#    optimisation_output: optimisation.csv
 
 # outbands: number of output bands desired.
 # Bands (1:5): ['Prediction', 'Variance', 'Lower quantile',

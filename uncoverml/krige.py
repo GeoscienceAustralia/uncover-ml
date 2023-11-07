@@ -97,6 +97,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
                  nlags=6,
                  weight=False,
                  n_closest_points=10,
+                 exact_values=False,
                  verbose=False
                  ):
         if method not in krige_methods.keys():
@@ -110,6 +111,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
         self.n_closest_points = n_closest_points
         self.model = None  # not trained
         self.method = method
+        self.exact_values = exact_values
 
     def fit(self, x, y, *args, **kwargs):
         """
@@ -132,6 +134,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
             verbose=self.verbose,
             nlags=self.nlags,
             weight=self.weight,
+            exact_values=self.exact_values,
         )
 
     def predict(self, x, *args, **kwargs):
