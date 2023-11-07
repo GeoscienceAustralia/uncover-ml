@@ -99,7 +99,7 @@ setup(
         'PyYAML >= 3.11',
         'pandas >= 1.2.5',
         'matplotlib >= 3.4.0',
-        'PyKrige==1.3.0',
+        'PyKrige==1.7.0',
         'xgboost>=1.4.2',
         'setuptools>=30.0.0',
         'eli5>=0.8.2',

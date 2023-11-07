@@ -1,25 +1,25 @@
 # basic kriging setup
 features:
-  - name: my pickle files
-    type: pickle
-    files:
-      covariates: features.pk
-      targets: targets.pk
+#  - name: my pickle files
+#    type: pickle
+#    files:
+#      covariates: features.pk
+#      targets: targets.pk
   - name: my features 1
     type: ordinal
     files:
-      - path: /path/to/GA_data/GA-cover2/LATITUDE_GRID1.tif
-      - path: /path/to/GA_data/GA-cover2/LONGITUDE_GRID1.tif
+      - path: configs/data/sirsam/LATITUDE_GRID1.tif
+      - path: configs/data/sirsam/LONGITUDE_GRID1.tif
     # transforms are performed in order
     transforms:
-      - centre
-      - standardise
+#      - centre
+#      - standardise
     imputation: nn
 
 # only used during prediction
-mask:
-  file: /path/to/GA_data/mask/old_mask_test.tif
-  retain: 1
+#mask:
+#  file: /path/to/GA_data/mask/old_mask_test.tif
+#  retain: 1
 
 
 # resample: choice (value, spatial)
@@ -29,7 +29,7 @@ mask:
 # rows and cols: for spatial resampling, sample from rows X cols tiles
 # resampling is performed in sequence. The order of spatial/value is important.
 targets:
-  file: /path/to/GA_data/GA-cover2/geochem_sites.shp
+  file: configs/data/sirsam/out_resampled/geochem_sites.shp
   property: K_ppm_imp_
 #  resample:
 #    - spatial:
@@ -50,6 +50,7 @@ learning:
   arguments:
     method: ordinary  # ordinary or universal
     variogram_model: spherical  # linear, power, gaussian, spherical, exponential
+    variogram_parameters: [0, 1, 0.1]   # [sill, range, nugget] for gaussian, spherical, exponential
     verbose: False
 
 
@@ -74,4 +75,4 @@ validation:
       random_seed: 1
 
 output:
-  directory: .
+  directory: krige

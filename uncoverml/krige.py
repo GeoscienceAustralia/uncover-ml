@@ -93,6 +93,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
     def __init__(self,
                  method='ordinary',
                  variogram_model='linear',
+                 variogram_parameters=None,
                  nlags=6,
                  weight=False,
                  n_closest_points=10,
@@ -102,6 +103,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
             raise ConfigException('Kirging method must be '
                                   'one of {}'.format(krige_methods.keys()))
         self.variogram_model = variogram_model
+        self.variogram_parameters = variogram_parameters
         self.verbose = verbose
         self.nlags = nlags
         self.weight = weight
@@ -126,6 +128,7 @@ class Krige(TagsMixin, RegressorMixin, BaseEstimator, KrigePredictDistMixin):
             y=x[:, 1],
             z=y,
             variogram_model=self.variogram_model,
+            variogram_parameters=self.variogram_parameters,
             verbose=self.verbose,
             nlags=self.nlags,
             weight=self.weight,
