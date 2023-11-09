@@ -140,7 +140,7 @@ def _fix_for_corrupt_data(x, feature_names):
 
 
 def _get_data(subchunk, config):
-    features_names = geoio.feature_names(config)
+    features_names = features.feature_names(config)
 
     # NOTE: This returns an *untransformed* x,
     # which is ok as we just need dummies here

@@ -281,7 +281,7 @@ def permutation_importance(model, x_all, targets_all, config: Config):
                                       refit=False).fit,
                 data=(x_all, y)
             )
-            feature_names = geoio.feature_names(config)
+            feature_names = feat.feature_names(config)
             df_picv = eli5.explain_weights_df(
                 pi_cv, feature_names=feature_names, top=100)
             csv = Path(config.output_dir).joinpath(
@@ -573,7 +573,7 @@ def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config,
             data=(x_all, y),
             model=model
         )
-        feature_names = [Path(f).stem for f in geoio.feature_names(conf)]
+        feature_names = [Path(f).stem for f in feat.feature_names(conf)]
         df_picv = eli5.explain_weights_df(
             pi_cv, feature_names=feature_names, top=100)
         csv = Path(conf.output_dir).joinpath(

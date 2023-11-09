@@ -1,5 +1,4 @@
 from __future__ import division
-from typing import Optional
 import joblib
 import os.path
 from subprocess import run
@@ -14,11 +13,8 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 import rasterio
-from rasterio.warp import reproject
 from rasterio.windows import Window
-from xgboost import XGBRegressor
 from sklearn.cluster import DBSCAN
-from affine import Affine
 import numpy as np
 import shapefile
 import tables as hdf
@@ -27,7 +23,7 @@ import geopandas as gpd
 
 from uncoverml import mpiops
 from uncoverml import image
-from uncoverml import features
+from uncoverml import features as feat
 from uncoverml.config import Config
 from uncoverml.transforms import missing_percentage
 from uncoverml.targets import Targets
@@ -436,19 +432,6 @@ class ImageWriter:
                 resample(f, output_tif=thumbnail, ratio=ratio)
 
 
-def feature_names(config: Config):
-
-    results = []
-    for s in config.feature_sets:
-        feats = []
-        for tif in s.files:
-            name = os.path.basename(tif)
-            feats.append(name)
-        feats.sort()
-        results += feats
-    return results
-
-
 def _iterate_sources(f, config: Config):
 
     results = []
@@ -502,7 +485,7 @@ def image_subchunks(subchunk_index, config: Config):
             template_source = RasterioImageSource(config.prediction_template)
         else:
             template_source = None
-        r = features.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize,
+        r = feat.extract_subchunks(image_source, subchunk_index, config.n_subchunks, config.patchsize,
                                        template_source=template_source)
         return r
     result = _iterate_sources(f, config)
@@ -522,7 +505,7 @@ def image_feature_sets(targets, config: Config):
         if config.intersected_features:
             r = extract_intersected_features(image_source, targets, config)
         else:
-            r = features.extract_features(image_source, targets,
+            r = feat.extract_features(image_source, targets,
                                           config.n_subchunks, config.patchsize)
         return r
     result = _iterate_sources(f, config)
@@ -534,9 +517,9 @@ def semisupervised_feature_sets(targets, config: Config):
     frac = config.subsample_fraction
 
     def f(image_source):
-        r_t = features.extract_features(image_source, targets, n_subchunks=1,
+        r_t = feat.extract_features(image_source, targets, n_subchunks=1,
                                         patchsize=config.patchsize)
-        r_a = features.extract_subchunks(image_source, subchunk_index=0,
+        r_a = feat.extract_subchunks(image_source, subchunk_index=0,
                                          n_subchunks=1,
                                          patchsize=config.patchsize)
         if frac < 1.0:
@@ -556,7 +539,7 @@ def unsupervised_feature_sets(config):
     frac = config.subsample_fraction
 
     def f(image_source):
-        r = features.extract_subchunks(image_source, subchunk_index=0,
+        r = feat.extract_subchunks(image_source, subchunk_index=0,
                                        n_subchunks=1,
                                        patchsize=config.patchsize)
         if frac < 1.0:
@@ -739,7 +722,7 @@ def export_validation_scatter_plot_and_validation_csv(outfile_results, config: C
 
 def plot_feature_correlation_matrix(config: Config, x_all):
     fig, corr_ax = plt.subplots()
-    features = [Path(f).stem for f in feature_names(config)]
+    features = [Path(f).stem for f in feat.feature_names(config)]
     corr_df = pd.DataFrame(x_all)
     corr_df.columns = features
     sns.heatmap(corr_df.corr(),

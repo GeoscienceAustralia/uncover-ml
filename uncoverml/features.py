@@ -1,3 +1,5 @@
+from __future__ import division
+
 import logging
 from typing import Optional
 from collections import OrderedDict
@@ -12,13 +14,15 @@ from uncoverml.targets import Targets
 from uncoverml import patch
 from uncoverml import transforms
 from uncoverml.config import Config
-from uncoverml.geoio import RasterioImageSource
+# from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
 
-def extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize,
-                      template_source: Optional[RasterioImageSource] = None):
+def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize,
+                      template_source):
+    # extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize,
+    #                 template_source: Optional[RasterioImageSource] = None):
     equiv_chunks = n_subchunks * mpiops.chunks
     equiv_chunk_index = mpiops.chunks*subchunk_index + mpiops.chunk_index
     image = Image(image_source, equiv_chunk_index, equiv_chunks, patchsize, template_source)
@@ -71,7 +75,10 @@ def extract_features(image_source, targets, n_subchunks, patchsize):
 
 def transform_features(feature_sets, transform_sets, final_transform, config):
     # apply feature transforms
+    features = feature_names(config)
+    log.info(f"features are sorted as: \n {features}")
     transformed_vectors = [t(c) for c, t in zip(feature_sets, transform_sets)]
+
     # TODO remove this when cubist gets removed
     if config.cubist or config.multicubist:
         feature_vec = OrderedDict()
@@ -211,3 +218,14 @@ def remove_missing(x, targets=None):
     return x, classes
 
 
+def feature_names(config: Config):
+
+    results = []
+    for s in config.feature_sets:
+        feats = []
+        for tif in s.files:
+            name = basename(tif)
+            feats.append(name)
+        feats.sort()
+        results += feats
+    return results
