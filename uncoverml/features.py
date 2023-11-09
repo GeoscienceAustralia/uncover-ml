@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def extract_subchunks(image_source, subchunk_index, n_subchunks, patchsize,
-                      template_source):
+                      template_source=None):
     # extract_subchunks(image_source: RasterioImageSource, subchunk_index, n_subchunks, patchsize,
     #                 template_source: Optional[RasterioImageSource] = None):
     equiv_chunks = n_subchunks * mpiops.chunks
