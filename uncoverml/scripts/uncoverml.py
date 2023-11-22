@@ -35,6 +35,7 @@ import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
+import uncoveml.interface_utils
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
 from uncoverml import optimisation, hyopt
@@ -336,7 +337,8 @@ def unsupervised(config):
 @click.argument('calling_process')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
+@click.option('-i', '--interface_job', type=bool, default=False)
+def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, interface_job):
     """Validate a model with out-of-sample shapefile."""
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
@@ -356,6 +358,10 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
     ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
+    if interface_job:
+        write_progress_to_file(calling_process, 'Uploading files to AWS', config)
+        uncoverml.interface_utils.read_presigned_urls_and_upload(config, calling_process)
+
     write_progress_to_file(calling_process, 'Full Process Complete', config)
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
@@ -370,7 +376,8 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions):
               help='mask values where to predict')
 @click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
               help='mask values where to predict')
-def predict(model_or_cluster_file, partitions, mask, retain, prediction_template):
+@click.option('-i', '--interface_job', type=bool, default=False)
+def predict(model_or_cluster_file, partitions, mask, retain, prediction_template, interface_job):
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
@@ -441,6 +448,16 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
 
     if config.thumbnails:
         image_out.output_thumbnails(config.thumbnails)
+
+    if interface_job:
+        write_progress_to_file('pred', 'Preparing results for upload', config)
+        uncoverml.interface_utils.rename_files_before_upload(config)
+        uncoverml.interface_utils.create_thumbnail('prediction', config)
+        uncoverml.interface_utils.calc_std(config)
+        uncoverml.interface_utils.create_thumbnail('std', config)
+        uncoverml.interface_utils.create_results_zip(config)
+        uncoverml.interface_utils.read_presigned_urls_and_upload(config, 'pred')
+        write_progress_to_file('pred', 'Uploading results to AWS', config)
 
     write_progress_to_file('pred', 'Full Process Complete', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
