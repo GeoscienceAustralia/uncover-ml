@@ -73,7 +73,7 @@ def create_thumbnail(config, res_type):
 def create_results_zip(config):
     res_dir = Path(config.output_dir)
 
-    tmp_out_dir = Path(res_dir.parts[:-1])
+    tmp_out_dir = res_dir.parent
     out_file = f'{tmp_out_dir.as_posix()}/full_results.zip'
     with zipfile.ZipFile(out_file, 'w', zipfile.ZIP_DEFLATED) as zip_ref:
         for fi in res_dir.iterdir():
@@ -88,10 +88,10 @@ def create_results_zip(config):
 # The interface side code needs to also upload
 def read_presigned_urls_and_upload(config, job_type):
     res_dir = Path(config.output_dir)
-    parent_dir = Path(res_dir.parts[:-1])
+    parent_dir = res_dir.parent
     json_file_name = 'upload_urls_pred.json' if job_type == 'pred' else 'upload_urls.json'
     upload_urls_file = parent_dir / json_file_name
-    upload_urls_info = json.loads(upload_urls_file)
+    upload_urls_info = json.load(upload_urls_file)
 
     files_uploaded = 0
     for url_info in upload_urls_info:
