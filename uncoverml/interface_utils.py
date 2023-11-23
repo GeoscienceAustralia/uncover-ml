@@ -9,7 +9,7 @@ import json
 import numpy as np
 
 from pathlib import Path
-from PIL import image
+from PIL import Image
 
 
 def rename_files_before_upload(config):
