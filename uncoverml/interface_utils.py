@@ -97,7 +97,7 @@ def read_presigned_urls_and_upload(config, job_type):
     files_uploaded = 0
     for url_info in upload_urls_info:
         # Get the name of the file to upload for the AWS key
-        current_file_key = url['fields']['key']
+        current_file_key = url_info['fields']['key']
         key_parts = current_file_key.split('/')
         upload_file_name = key_parts[-1]
 
