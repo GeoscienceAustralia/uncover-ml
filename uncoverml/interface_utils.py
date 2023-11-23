@@ -13,7 +13,7 @@ from PIL import Image
 
 
 def rename_files_before_upload(config):
-    job_results_dir = config.output_dir
+    job_results_dir = Path(config.output_dir)
     all_paths = job_results_dir.glob('**/*')
     all_files = [f for f in all_paths if f.is_file()]
     all_files_ex_model = [f for f in all_files if f.name != 'config.model']
