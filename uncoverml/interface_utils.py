@@ -91,7 +91,8 @@ def read_presigned_urls_and_upload(config, job_type):
     parent_dir = res_dir.parent
     json_file_name = 'upload_urls_pred.json' if job_type == 'pred' else 'upload_urls.json'
     upload_urls_file = parent_dir / json_file_name
-    upload_urls_info = json.load(upload_urls_file)
+    with open(str(upload_urls_file)) as json_urls:
+        upload_urls_info = json.load(json_urls)
 
     files_uploaded = 0
     for url_info in upload_urls_info:
