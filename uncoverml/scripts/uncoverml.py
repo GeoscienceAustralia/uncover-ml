@@ -337,7 +337,8 @@ def unsupervised(config):
 @click.argument('calling_process')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-@click.option('-i', '--interface_job', type=bool, default=False)
+@click.option('-i', '--interface_job', is_flag=True,
+              help='Flag that the call is coming from an interface job')
 def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, interface_job):
     """Validate a model with out-of-sample shapefile."""
     with open(model_or_cluster_file, 'rb') as f:
@@ -376,7 +377,8 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, 
               help='mask values where to predict')
 @click.option('-t', '--prediction_template', type=click.Path(exists=True), default=None,
               help='mask values where to predict')
-@click.option('-i', '--interface_job', type=bool, default=False)
+@click.option('-i', '--interface_job', is_flag=True,
+              help='Flag that the call is coming from an interface job')
 def predict(model_or_cluster_file, partitions, mask, retain, prediction_template, interface_job):
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
