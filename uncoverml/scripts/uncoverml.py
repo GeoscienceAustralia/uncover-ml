@@ -454,9 +454,9 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
     if interface_job:
         write_progress_to_file('pred', 'Preparing results for upload', config)
         uncoverml.interface_utils.rename_files_before_upload(config)
-        uncoverml.interface_utils.create_thumbnail('prediction', config)
+        uncoverml.interface_utils.create_thumbnail(config, 'prediction')
         uncoverml.interface_utils.calc_std(config)
-        uncoverml.interface_utils.create_thumbnail('std', config)
+        uncoverml.interface_utils.create_thumbnail(config, 'std')
         uncoverml.interface_utils.create_results_zip(config)
         uncoverml.interface_utils.read_presigned_urls_and_upload(config, 'pred')
         write_progress_to_file('pred', 'Uploading results to AWS', config)
