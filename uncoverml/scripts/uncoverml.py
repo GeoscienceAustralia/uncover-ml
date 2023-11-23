@@ -35,7 +35,7 @@ import uncoverml.mpiops
 import uncoverml.predict
 import uncoverml.validate
 import uncoverml.targets
-import uncoveml.interface_utils
+import uncoverml.interface_utils
 from uncoverml.transforms.linear import WhitenTransform
 from uncoverml.transforms import StandardiseTransform
 from uncoverml import optimisation, hyopt
