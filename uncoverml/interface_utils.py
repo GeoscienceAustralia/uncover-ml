@@ -103,7 +103,7 @@ def read_presigned_urls_and_upload(config, job_type):
 
         local_upload_file = res_dir / upload_file_name
         with open(str(local_upload_file), 'rb') as file_to_upload:
-            upload_files = {'file': (local_upload_file, file_to_upload)}
+            upload_files = {'file': (str(local_upload_file), file_to_upload)}
             upload_resp = requests.post(url_info['url'], data=url_info['fields'],
                                         files=upload_files)
 
