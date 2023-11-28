@@ -359,10 +359,6 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, 
     ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
-    if interface_job:
-        write_progress_to_file(calling_process, 'Uploading files to AWS', config)
-        uncoverml.interface_utils.read_presigned_urls_and_upload(config, calling_process)
-
     write_progress_to_file(calling_process, 'Full Process Complete', config)
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
@@ -458,8 +454,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
         uncoverml.interface_utils.calc_std(config)
         uncoverml.interface_utils.create_thumbnail(config, 'std')
         uncoverml.interface_utils.create_results_zip(config)
-        uncoverml.interface_utils.read_presigned_urls_and_upload(config, 'pred')
-        write_progress_to_file('pred', 'Uploading results to AWS', config)
+        write_progress_to_file('pred', 'Results Prepared', config)
 
     write_progress_to_file('pred', 'Full Process Complete', config)
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
@@ -530,6 +525,16 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
     image_out.close()
 
     log.info("Finished! Total mem = {:.1f} GB".format(_total_gb()))
+
+
+@cli.command()
+@click.argument('config_file')
+@click.argument('job_type')
+def upload(config_file, job_type):
+    config = ls.config.Config(config_file)
+    write_progress_to_file(job_type, 'Uploading results to AWS', config)
+    uncoverml.interface_utils.read_presigned_urls_and_upload(config, job_type)
+    write_progress_to_file(job_type, 'Upload to AWS complete', config)
 
 
 def __validate_pca_config(config):
