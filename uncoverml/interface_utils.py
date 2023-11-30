@@ -63,7 +63,7 @@ def create_thumbnail(config, res_type):
         data = src.read(1)
 
     stretched_data = stretch_raster(data)
-    out_image = Image.fromarray(stretched_data.astype('unit8'), 'L')
+    out_image = Image.fromarray(stretched_data.astype('uint8'), 'L')
     out_file = res_dir / f'{res_type}_thumbnail.png'
     out_image.save(str(out_file))
     print(str(out_file))
