@@ -42,29 +42,28 @@ def calc_std(config):
         dst.write(std_data, 1)
 
 
-def normalize(arr):
-    '''
-    Linear normalization
-    http://en.wikipedia.org/wiki/Normalization_%28image_processing%29
-    '''
-    arr = arr.astype('float')
-    # Do not touch the alpha channel
-    for i in range(3):
-        min_val = arr[..., i].min()
-        max_val = arr[..., i].max()
-        if min_val != max_val:
-            arr[..., i] -= min_val
-            arr[..., i] *= (255.0/(max_val-min_val))
-    return arr
+def stretch_raster(data, pct_lims=[5, 95]):
+    percentiles = np.nanpercentile(np.ravel(data), pct_lims)
+    percentiles = percentiles.tolist()
+    lower_pct = percentiles[0]
+    upper_pct = percentiles[1]
+
+    data = data.astype(float)
+    data = (data - lower_pct) / (upper_pct - lower_pct)
+    data[np.isnan(data)] = 0
+    data = np.maximum(np.minimum(data * 255, 255), 0)
+    return data
 
 
 def create_thumbnail(config, res_type):
     res_dir = Path(config.output_dir)
     in_file = res_dir / f'{res_type}.tif'
-    img = Image.open(str(in_file)).convert('RGBA')
+    with rasterio.open(str(in_file), 'r+') as src:
+        src.nodata = np.nan
+        data = src.read(1)
 
-    arr = np.array(img)
-    out_image = Image.fromarray(normalize(arr).astype('uint8'), 'RGBA')
+    stretched_data = stretch_raster(data)
+    out_image = Image.fromarray(stretched_data.astype('unit8'), 'L')
     out_file = res_dir / f'{res_type}_thumbnail.png'
     out_image.save(str(out_file))
     print(str(out_file))
