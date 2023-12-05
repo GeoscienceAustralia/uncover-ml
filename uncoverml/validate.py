@@ -611,7 +611,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         to_text = [predictions, y_true[:, np.newaxis], lon_lat]
 
         write_progress_to_file(calling_process, 'Generating model scores', config)
-        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_oos_validation.csv")
+        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_validation.csv")
         cols = tags + ['y_true', 'lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
                    fmt='%.8e',
@@ -623,7 +623,7 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         for metric, score in scores.items():
             score_string += "{}\t= {}\n".format(metric, score)
 
-        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_oos_validation_scores.json"))
+        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_validation_scores.json"))
         log.info(score_string)
         write_progress_to_file(calling_process, 'Score generated', config)
 
@@ -694,7 +694,7 @@ def plot_feature_correlation_matrix(config: Config, x_all):
 
 
 def validation_scatter(config: Config, y_true, predictions):
-    scores_file = os.path.join(config.output_dir, config.name + "_oos_validation_scores.json")
+    scores_file = os.path.join(config.output_dir, config.name + "_validation_scores.json")
     with open(scores_file, 'r') as f:
         scores = json.load(f)
 
