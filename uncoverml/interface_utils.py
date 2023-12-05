@@ -42,6 +42,27 @@ def calc_std(config):
         dst.write(std_data, 1)
 
 
+def calc_uncert(config):
+    res_path = Path(config.output_dir)
+    pred_file = res_path / 'prediction.tif'
+    with rasterio.open(pred_file, 'r') as pred_src:
+        pred_data = pred_src.read(1, masked=True)
+        pred_profile = pred_src.profile
+
+    res_path = Path(config.output_dir)
+    var_file = res_path / 'variance.tif'
+    with rasterio.open(var_file, 'r') as var_src:
+        var_data = var_src.read(1, masked=True)
+
+    pred_data = pred_data.filled(np.nan)
+    var_data = var_data.filled(np.nan)
+    out_data = (4*np.sqrt(var_data))/pred_data
+
+    out_file = res_path / 'uncert.tif'
+    with rasterio.open(out_file, 'w', **pred_profile) as dst:
+        dst.write(out_data, 1)
+
+
 def stretch_raster(data, pct_lims=[5, 95]):
     percentiles = np.nanpercentile(np.ravel(data), pct_lims)
     percentiles = percentiles.tolist()

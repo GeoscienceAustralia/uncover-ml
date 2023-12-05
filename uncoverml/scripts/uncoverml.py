@@ -451,8 +451,8 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
         write_progress_to_file('pred', 'Preparing results for upload', config)
         uncoverml.interface_utils.rename_files_before_upload(config)
         uncoverml.interface_utils.create_thumbnail(config, 'prediction')
-        uncoverml.interface_utils.calc_std(config)
-        uncoverml.interface_utils.create_thumbnail(config, 'std')
+        uncoverml.interface_utils.calc_uncert(config)
+        uncoverml.interface_utils.create_thumbnail(config, 'uncert')
         uncoverml.interface_utils.create_results_zip(config)
         write_progress_to_file('pred', 'Results Prepared', config)
 
