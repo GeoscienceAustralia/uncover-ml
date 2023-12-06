@@ -387,7 +387,7 @@ class ShapConfig:
         # Names of model prediction outputs
         self.output_names = s['output_names'] if 'output_names' in s else None
         # Path where feature files are saved
-        self.feature_path = s['feature_path'] if 'feature_path' in s else None
+        # self.feature_path = s['feature_path'] if 'feature_path' in s else None
         # File from which pre-calculated shap values can be loaded
         self.load_file = s['load_file'] if 'load_file' in s else None
 
@@ -413,7 +413,8 @@ class ShapConfig:
         file_names = []
         for s in config.feature_sets:
             for tif in s.files:
-                new_string = tif.replace(self.feature_path, '').replace('.tif', '')
+                current_feat = Path(tif)
+                new_string = current_feat.name
                 file_names.append(new_string)
 
         self.file_names = file_names
