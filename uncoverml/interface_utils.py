@@ -7,6 +7,7 @@ import requests
 import json
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pathlib import Path
 from PIL import Image
@@ -84,9 +85,12 @@ def create_thumbnail(config, res_type):
         data = src.read(1)
 
     stretched_data = stretch_raster(data)
-    out_image = Image.fromarray(stretched_data.astype('uint8'), 'L')
+    fig, ax = plt.subplots()
+    plt.imshow(stretched_data)
+    plt.colorbar()
     out_file = res_dir / f'{res_type}_thumbnail.png'
-    out_image.save(str(out_file))
+    fig.tight_layout()
+    fig.savefig(out_file)
     print(str(out_file))
 
 
