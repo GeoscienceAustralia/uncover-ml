@@ -541,7 +541,7 @@ def local_crossval(x_all, targets_all: targ.Targets, config: Config):
     return result
 
 
-def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_process=None):
+def plot_feature_importance(model, x_all, targets_all, conf: Config, oos_val, calling_process=None):
     log.info("Computing permutation importance!!")
     write_progress_to_file(calling_process, 'Computing permutation importance', conf)
     if conf.algorithm not in transformed_modelmaps.keys():
@@ -568,39 +568,18 @@ def plot_feature_importance(model, x_all, targets_all, conf: Config, calling_pro
             feature_names = geoio.feature_names(conf)
             df_picv = eli5.explain_weights_df(
                 pi_cv, feature_names=feature_names, top=100)
+            out_csv_name = f'permutation_importance_oos_{score}' if oos_val else f'permutation_importance_{score}'
             csv = Path(conf.output_dir).joinpath(
-                conf.name + "_permutation_importance_{}.csv".format(
-                    score)).as_posix()
+                conf.name + f"_{out_csv_name}.csv").as_posix()
             df_picv.to_csv(csv, index=False)
             write_progress_to_file(calling_process, 'Permutation importance, computed', conf)
 
             write_progress_to_file(calling_process, 'Plotting permutation importance', conf)
-            plot_permutation_feature_importance(model, x_all, targets_all, conf, score)
+            plot_permutation_feature_importance(model, x_all, targets_all, conf, score, oos_val)
             write_progress_to_file(calling_process, 'Permutation importance plot generated and saved', conf)
 
 
-# def plot_():
-#
-#     non_zero_indices = model.feature_importances_ >= 0.001
-#     non_zero_cols = X_all.columns[non_zero_indices]
-#     non_zero_importances = xgb_model.feature_importances_[non_zero_indices]
-#     sorted_non_zero_indices = non_zero_importances.argsort()
-#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
-#     plt.xlabel("Xgboost Feature Importance")
-#
-#
-# def plot_feature_importance_(X, y, model):
-#     import matplotlib.pyplot as plt
-#     all_cols = model.feature_importances_
-#     non_zero_indices = model.feature_importances_ >= 0.001
-#     non_zero_cols = X.columns[non_zero_indices]
-#     non_zero_importances = model.feature_importances_[non_zero_indices]
-#     sorted_non_zero_indices = non_zero_importances.argsort()
-#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
-#     plt.xlabel("Xgboost Feature Importance")
-
-
-def oos_validate(targets_all, x_all, model, config, calling_process=None):
+def oos_validate(targets_all, x_all, model, config, oos_validate, calling_process=None):
     lon_lat = targets_all.positions
     weights = targets_all.weights
     observations = targets_all.observations
@@ -611,7 +590,8 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         to_text = [predictions, y_true[:, np.newaxis], lon_lat]
 
         write_progress_to_file(calling_process, 'Generating model scores', config)
-        true_vs_pred = Path(config.output_dir).joinpath(config.name + "_validation.csv")
+        text_file_name = 'validation_oos' if oos_validate else 'validation'
+        true_vs_pred = Path(config.output_dir).joinpath(config.name + f"_{text_file_name}.csv")
         cols = tags + ['y_true', 'lon', 'lat']
         np.savetxt(true_vs_pred, X=np.hstack(to_text), delimiter=',',
                    fmt='%.8e',
@@ -623,7 +603,8 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         for metric, score in scores.items():
             score_string += "{}\t= {}\n".format(metric, score)
 
-        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + "_validation_scores.json"))
+        json_file_name = 'validation_scores_oos' if oos_validate else 'validation_scores'
+        geoio.output_json(scores, Path(config.output_dir).joinpath(config.name + f"_{json_file_name}.json"))
         log.info(score_string)
         write_progress_to_file(calling_process, 'Score generated', config)
 
@@ -633,48 +614,19 @@ def oos_validate(targets_all, x_all, model, config, calling_process=None):
         real_and_pred = pd.DataFrame(np.concatenate(real_and_pred, axis=1))
         real_and_pred.columns = real_and_pred_cols
         target_col = 'Prediction' if 'Prediction' in tags else tags[0]
-        # # Hard coding this quantile filter for now, will make it an input parameter in the future - Adi 28/8/2023
-        # upper_lim_point25 = real_and_pred[target_col].quantile(0.975)
-        # lower_lim_point25 = real_and_pred[target_col].quantile(0.025)
-        # real_and_pred = real_and_pred[(real_and_pred[target_col] < upper_lim_point25) &
-        #                               (real_and_pred[target_col] > lower_lim_point25)]
-        # density_fig, density_ax = plt.subplots()
-        # density_scatter = sns.kdeplot(data=real_and_pred, x=target_col, y='y_true', fill=True, ax=density_ax,
-        #                               cmap='Spectral', levels=20)
-        # lims = [
-        #     np.min([density_ax.get_xlim(), density_ax.get_ylim()]),  # min of both axes
-        #     np.max([density_ax.get_xlim(), density_ax.get_ylim()]),  # max of both axes
-        # ]
-        # density_ax.plot(lims, lims, 'k--', label='1-to-1')
-        # density_ax.set_xlim(lims)
-        # density_ax.set_ylim(lims)
-        # pred_vals = real_and_pred[target_col].values
-        # real_vals = real_and_pred['y_true'].values
-        # fitted_line = np.polyfit(pred_vals, real_vals, 1)
-        # pred_vals = np.append(pred_vals, [np.min(density_ax.get_xlim()), np.max(density_ax.get_xlim())])
-        # density_ax.plot(np.unique(pred_vals),
-        #                 np.poly1d(fitted_line)(np.unique(pred_vals)),
-        #                 'k:', label='BestFit')
-        # density_ax.legend(loc='lower right')
-        # r2_val = '{:.2f}'.format(scores['r2_score'])
-        # r2_string = f'R2 Score: {r2_val}'
-        # density_ax.text(.01, .99, r2_string, ha='left', va='top', transform=density_ax.transAxes)
-        # density_fig.suptitle('Real vs Predicted Density Scatter')
-        # density_fig.tight_layout()
-        # density_fig.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
-        validation_scatter(config, real_and_pred['y_true'].values, real_and_pred[target_col].values)
+        validation_scatter(config, real_and_pred['y_true'].values, real_and_pred[target_col].values, oos_validate)
         write_progress_to_file(calling_process, 'Real vs predicted plot generated and saved}', config)
 
         write_progress_to_file(calling_process, 'Generating residual plot', config)
-        residual_plot(config, predictions, observations)
+        residual_plot(config, predictions, observations, oos_validate)
         write_progress_to_file(calling_process, 'Residual plot generated and saved', config)
 
         write_progress_to_file(calling_process, 'Plotting feature correlations', config)
-        plot_feature_correlation_matrix(config, x_all)
+        plot_feature_correlation_matrix(config, x_all, oos_validate)
         write_progress_to_file(calling_process, 'Feature correlation plot generated and saved', config)
 
 
-def plot_feature_correlation_matrix(config: Config, x_all):
+def plot_feature_correlation_matrix(config: Config, x_all, oos_val):
     fig, corr_ax = plt.subplots()
     features = [Path(f).stem for f in geoio.feature_names(config)]
     corr_df = pd.DataFrame(x_all)
@@ -688,12 +640,13 @@ def plot_feature_correlation_matrix(config: Config, x_all):
     plt.xticks(fontsize=5)
     plt.yticks(fontsize=5)
     fig.tight_layout()
-    save_path = Path(config.output_dir).joinpath(config.name + "_feature_correlation.png") \
+    out_plot_name = 'feature_correlation_oos' if oos_val else 'feature_correlation'
+    save_path = Path(config.output_dir).joinpath(config.name + f"_{out_plot_name}.png") \
         .as_posix()
     fig.savefig(save_path)
 
 
-def validation_scatter(config: Config, y_true, predictions):
+def validation_scatter(config: Config, y_true, predictions, oos_val):
     scores_file = os.path.join(config.output_dir, config.name + "_validation_scores.json")
     with open(scores_file, 'r') as f:
         scores = json.load(f)
@@ -722,10 +675,11 @@ def validation_scatter(config: Config, y_true, predictions):
     plt.text(y_true.min() + (y_true.max() - y_true.min()) / 20,
              y_true.min() + (y_true.max() - y_true.min()) * 3 / 4,
              score_sring)
-    plt.savefig(Path(config.output_dir).joinpath(config.name + "_real_vs_pred_density_scatter.png"))
+    out_plot_name = 'real_vs_pred_density_scatter_oos' if oos_val else 'real_vs_pred_density_scatter'
+    plt.savefig(Path(config.output_dir).joinpath(config.name + f"_{out_plot_name}.png"))
 
 
-def residual_plot(config: Config, predictions, observations):
+def residual_plot(config: Config, predictions, observations, oos_val):
     residual_predictions = predictions
     if len(predictions.shape) > 1:
         residual_predictions = residual_predictions[:, 0]
@@ -742,12 +696,12 @@ def residual_plot(config: Config, predictions, observations):
     resid_ax.set_xlabel('Predicted')
     hist_ax.set_xlabel('Percentage')
     fig.tight_layout()
-    save_path = Path(config.output_dir).joinpath(config.name + "_residuals.png") \
-        .as_posix()
+    out_plot_name = 'residuals_oos' if oos_val else 'residuals'
+    save_path = Path(config.output_dir).joinpath(config.name + f"_{out_plot_name}.png").as_posix()
     fig.savefig(save_path)
 
 
-def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config, score: str):
+def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config, score: str, oos_val):
     log.info("Computing permutation importance!!")
     if conf.algorithm not in transformed_modelmaps.keys():
         raise AttributeError("Only the following can be used for permutation "
@@ -769,30 +723,16 @@ def plot_permutation_feature_importance(model, x_all, targets_all, conf: Config,
         feature_names = [Path(f).stem for f in geoio.feature_names(conf)]
         df_picv = eli5.explain_weights_df(
             pi_cv, feature_names=feature_names, top=100)
+        out_csv_name = f'permutation_importance_oos_{score}' if oos_val else f'permutation_importance_{score}'
         csv = Path(conf.output_dir).joinpath(
-            conf.name + "_permutation_importance_{}.csv".format(
-                score)).as_posix()
+            conf.name + f"_{out_csv_name}.csv").as_posix()
         df_picv.to_csv(csv, index=False)
-
-        # x = np.arange(len(df_picv.index))
-        # width = 0.35
-        # fig, ax = plt.subplots()
-        # ax.barh(x - width / 2, df_picv['weight'].values, width, label='Weight')
-        # ax.barh(x + width / 2, df_picv['std'].values, width, label='Std')
-        # ax.set_ylabel('Covariate')
-        # ax.set_title('Permutation Feature Importance Weight and Std')
-        # ax.set_xticks(x)
-        # num_cov = np.arange(len(feature_names))
-        # ax.set_yticks(num_cov)
-        # ax.set_yticklabels(feature_names)
-        # ax.set_xlabel('Score')
-        # ax.legend()
 
         fig, ax = plt.subplots()
         sns.barplot(data=df_picv, x='weight', y='feature', orient='h')
         fig.suptitle('Permutation Importance')
         plt.yticks(fontsize=5)
         fig.tight_layout()
-        save_path = Path(conf.output_dir).joinpath(conf.name + "_feature_importance_bars_{}.png".format(score))\
-            .as_posix()
+        out_plot_name = f'feature_importance_bars_oos_{score}' if oos_val else f'feature_importance_bars_{score}'
+        save_path = Path(conf.output_dir).joinpath(conf.name + f"_{out_plot_name}.png").as_posix()
         fig.savefig(save_path)

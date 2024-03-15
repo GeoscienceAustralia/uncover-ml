@@ -337,26 +337,27 @@ def unsupervised(config):
 @click.argument('calling_process')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-@click.option('-i', '--interface_job', is_flag=True,
-              help='Flag that the call is coming from an interface job')
-def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, interface_job):
+@click.option('-o', '--oos', is_flag=True,
+              help='Flag that validation needs to be done out-of-sample')
+def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, oos_validate):
     """Validate a model with out-of-sample shapefile."""
     with open(model_or_cluster_file, 'rb') as f:
         state_dict = joblib.load(f)
 
     model = state_dict["model"]
-
     config = ls.config.Config(pipeline_file)
-    # config.pickle_load = False
-    # config.target_file = config.oos_validation_file
-    # config.target_property = config.oos_validation_property
+    if oos_validate:  # Change the target data if doing oos validation
+        config.pickle_load = False
+        config.target_file = config.oos_validation_file
+        config.target_property = config.oos_validation_property
+
     write_progress_to_file(calling_process, 'Loading targets', config)
     targets_all, x_all = _load_data(config, partitions)
     write_progress_to_file(calling_process, 'Targets loaded', config)
 
     write_progress_to_file(calling_process, 'Beginning model validation', config)
-    ls.validate.oos_validate(targets_all, x_all, model, config, calling_process)
-    ls.validate.plot_feature_importance(model, x_all, targets_all, config, calling_process)
+    ls.validate.oos_validate(targets_all, x_all, model, config, oos_validate, calling_process)
+    ls.validate.plot_feature_importance(model, x_all, targets_all, config, oos_validate, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
     write_progress_to_file(calling_process, 'Full Process Complete', config)
