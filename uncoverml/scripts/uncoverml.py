@@ -337,7 +337,7 @@ def unsupervised(config):
 @click.argument('calling_process')
 @click.option('-p', '--partitions', type=int, default=1,
               help='divide each node\'s data into this many partitions')
-@click.option('-o', '--oos', is_flag=True,
+@click.option('-o', '--oos_validate', is_flag=True,
               help='Flag that validation needs to be done out-of-sample')
 def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, oos_validate):
     """Validate a model with out-of-sample shapefile."""
