@@ -360,7 +360,11 @@ def validate(pipeline_file, model_or_cluster_file, calling_process, partitions, 
     ls.validate.plot_feature_importance(model, x_all, targets_all, config, oos_validate, calling_process)
     write_progress_to_file(calling_process, 'Model validated', config)
 
-    write_progress_to_file(calling_process, 'Full Process Complete', config)
+    if oos_validate:
+        write_progress_to_file(calling_process, 'Full Process Complete', config)
+    else:
+        write_progress_to_file(calling_process, 'Validation on training complete, validating OOS...', config)
+
     log.info("Finished OOS validation job! Total mem = {:.1f} GB".format(_total_gb()))
 
 
