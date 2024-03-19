@@ -664,7 +664,12 @@ def validation_scatter(config: Config, y_true, predictions, oos_val):
 
     plt.legend(loc='lower right')
 
-    plt.title('true vs prediction')
+    title_text = 'True vs Predicted Scatter'
+    if oos_val:
+        title_text = f'{title_text} OUT-OF-SAMPLE'
+
+    plt.title(title_text)
+
     plt.xlabel('True')
     plt.ylabel('Prediction')
     display_score = ['r2_score', 'lins_ccc', 'mse', 'smse']
