@@ -36,3 +36,7 @@ Bugs & Feedback
 
 For bugs, questions and discussions, please use 
 `Github Issues <https://github.com/GeoscienceAustralia/uncover-ml/issues>`_.
+
+
+## Python 3.7
+- last graphviz 0.20.0 used here
