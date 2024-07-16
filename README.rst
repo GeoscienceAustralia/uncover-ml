@@ -42,3 +42,4 @@ For bugs, questions and discussions, please use
 - last graphviz 0.20.0 used here
 - jinja2 2.8?
 - eli5 pip?
+- markupsafe 2.0.0
