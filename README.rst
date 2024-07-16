@@ -41,3 +41,4 @@ For bugs, questions and discussions, please use
 ## Python 3.7
 - last graphviz 0.20.0 used here
 - jinja2 2.8?
+- eli5 pip?
