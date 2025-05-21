@@ -2,58 +2,38 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.7
-
-    working_directory: /home/circleci/uncover-ml
-
+    - image: circleci/python:3.5-stretch
+    working_directory: ~/uncover-ml
     steps:
-      - checkout
+    - checkout
+    - restore_cache: # restores saved dependency cache if the Branch key template or requirements.txt files have not changed since the previous run
+        key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+    - run: mkdir -p test_output/pytest test_output/flake8 test_output/coverage
+    - run: cubist/makecubist .
+    - run:  # some systems may need `sudo apt-get install python3-dev python3-tk`
+        command: |
+          sudo apt-get install gdal-bin libgdal-dev
+          sudo apt-get install libblas-dev liblapack-dev
+          sudo apt-get install libatlas-dev libatlas-base-dev
+          sudo apt-get install gfortran libproj-dev openmpi-bin libopenmpi-dev
 
-      - restore_cache:  
-          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
-
-      - run:
-          name: Set up environment variables
-          command: |
-            echo 'export UNCOVERML_SRC=$CIRCLE_WORKING_DIRECTORY' >> $BASH_ENV
-
-      - run:
-          name: Install uncoverml 
-          command: |
-            cubist/makecubist .
-            sudo apt-get update
-            sudo apt-get install gdal-bin libgdal-dev
-            sudo apt-get install libblas-dev liblapack-dev
-            sudo apt-get install libatlas-base-dev
-            sudo apt-get install gfortran libproj-dev openmpi-bin libopenmpi-dev
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements.txt
-            pip install --no-build-isolation .[dev]
-
-      - run:
-         name: Run tests and generate coverage report
-         command: | 
-           . venv/bin/activate
-           make coverage
-           codecov
-
-      - run:
-          name: Run hardware tests
-          command: |
-              . venv/bin/activate
-              make partition_test
-
-      - run: 
-         name: Deploy docs
-         command: |
-           if [ "$CIRCLE_BRANCH" = "master" ]; then
-             . venv/bin/activate
-             make ghp
-           fi
- 
-      - save_cache: 
-          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
-          paths:
-            - "venv"
+    - run: # install and activate virtual environment with pip
+        command: |
+          python3 -m venv venv
+          . venv/bin/activate
+          pip3 install -U pip numpy cython
+          pip3 install .[dev]
+    - save_cache: # special step to save dependency cache
+        key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+        paths:
+        - "venv"
+    # - run: make lint
+    - run: # run tests
+        command: |
+          . venv/bin/activate
+          make coverage
+    - store_artifacts:
+        path: test_output/coverage
+        destination: reports
+    - store_test_results:
+        path: test_output/
