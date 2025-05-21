@@ -30,7 +30,7 @@ jobs:
             . venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
-            pip install .[dev]
+            pip install --no-build-isolation .[dev]
 
       - run:
          name: Run tests and generate coverage report
