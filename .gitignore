@@ -2,6 +2,10 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+data/*
+client_cmd
+optimisation_out/*
+*.tif.aux.xml
 
 # C extensions
 *.so
@@ -24,6 +28,7 @@ docs/generated/
 *.egg-info/
 .installed.cfg
 *.egg
+results/
 
 # Installer logs
 pip-log.txt
@@ -37,6 +42,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+test-results/
 
 # Translations
 *.mo
@@ -59,9 +65,7 @@ output/
 
 # Data
 *.hdf5
-*.tif
 *.bin
-data/
 
 # HDF5 install (Arch workaround
 hdf5-1.8.*
@@ -74,3 +78,5 @@ cubist/
 
 # pycharm
 .idea/
+venv/*
+xgboost_out/*

@@ -20,7 +20,7 @@ def build_feature_vector(image_chunks, is_categorical):
 
 def missing_percentage(x):
     x_n = np.sum(mpiops.count(x))
-    x_full_local = np.product(x.shape)
+    x_full_local = np.prod(x.shape)
     x_full = mpiops.comm.allreduce(x_full_local)
     missing = (1.0 - x_n / x_full) * 100.0
     return missing

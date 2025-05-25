@@ -99,7 +99,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
     # pd.qcut does not work for cases when it result in non-unique bin edges
     target = gdf_out[target_field].values
     if interval == 'percentile':
-        bin_edges = algos.quantile(target, np.linspace(0, 1, bins + 1))
+        bin_edges = np.quantile(target, np.linspace(0, 1, bins + 1))
     elif interval == 'linear':
         bin_edges = np.linspace(np.min(target), np.max(target), bins + 1)
 

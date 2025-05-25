@@ -1,48 +1,79 @@
+"""
+12-05-2020 15:50:35 AEST - brenainn.moushall@ga.gov.au
+
+.. note:: 
+
+    Only some models are compatible with optimisation. This is because
+    models must be structued in a way compatible with scikit-learn's
+    GridSearchCV. This involves:
+
+    - having all arguments explicitly listed in the ``__init__`` signature (no varargs)
+    - having the expected functions (``fit``, ``predict``, etc.)
+    - implemeting the ``get_params`` and ``set_params`` functions
+      defined by `Base Estimator <https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html>`_
+
+
+# TODO: refactor all models to have an interface compatible with GCV
+# and consolidate to a single module.
+"""
 import logging
-from functools import partial
+import inspect
+
 import numpy as np
 from scipy.integrate import fixed_quad
 from scipy.stats import norm, gamma
-from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
 from sklearn.linear_model import (HuberRegressor,
                                   LinearRegression,
-                                  ElasticNet, SGDRegressor)
-from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
+                                  ElasticNet,
+                                  SGDRegressor)
 from sklearn.svm import SVR
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import r2_score
 from xgboost.sklearn import XGBRegressor
-from catboost import CatBoostRegressor
+# from catboost import CatBoostRegressor
 from uncoverml.models import RandomForestRegressor, QUADORDER, \
-    _normpdf, TagsMixin, SGDApproxGP
+    _normpdf, TagsMixin, SGDApproxGP, PredictDistMixin, \
+    MutualInfoMixin
+from revrand.slm import StandardLinearModel
+from revrand.basis_functions import LinearBasis
+from revrand.btypes import Parameter, Positive
 from uncoverml.transforms import target as transforms
-
+# import copy as cp
 log = logging.getLogger(__name__)
 
+# from sklearn.linear_model._stochastic_gradient
+DEFAULT_EPSILON = 0.1
 
-class TransformPredictMixin:
+class TransformMixin:
+
+    def fit(self, X, y, *args, **kwargs):
+        self.target_transform.fit(y=y)
+        y_t = self.target_transform.transform(y)
+        # Hack to check if we can apply sample weights
+        if 'sample_weight' in inspect.signature(super().fit).parameters.keys() \
+                and 'sample_weight' in kwargs.keys():
+            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
+        else:
+            return super().fit(X, y_t)
 
     def predict(self, X, *args, **kwargs):
+
+        if 'return_std' in kwargs:
+            return_std = kwargs.pop('return_std')
+            if return_std:
+                Ey_t, std_t = super().predict(X, return_std=return_std)
+
+                return self.target_transform.itransform(Ey_t), \
+                    self.target_transform.itransform(std_t)
+
         Ey_t = self._notransform_predict(X, *args, **kwargs)
         return self.target_transform.itransform(Ey_t)
 
     def _notransform_predict(self, X, *args, **kwargs):
         Ey_t = super().predict(X)
         return Ey_t
-
-
-class TransformMixin(TransformPredictMixin):
-
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y=y)
-        y_t = self.target_transform.transform(y)
-        try:
-            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            return super().fit(X, y_t)
-
 
 
 class TransformPredictDistMixin(TransformMixin):
@@ -101,7 +132,7 @@ class TransformedSGDRegressor(TransformPredictDistMixin, SGDRegressor, TagsMixin
     Stochastic Gradient Descent (SGD).
     """
 
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squared_error", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=5, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
@@ -132,8 +163,7 @@ class TransformedSGDRegressor(TransformPredictDistMixin, SGDRegressor, TagsMixin
         self.target_transform = target_transform
 
 
-class TransformedGPRegressor(TransformPredictDistMixin, GaussianProcessRegressor,
-                             TagsMixin):
+class TransformedGPRegressor(TransformPredictDistMixin, GaussianProcessRegressor, TagsMixin):
 
     def __init__(self,
                  target_transform='identity',
@@ -177,7 +207,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
     def __init__(self,
                  target_transform='identity',
                  n_estimators=10,
-                 criterion="friedman_mse",
+                 criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -218,9 +248,46 @@ class TransformedForestRegressor(TransformPredictDistMixin,
         self.target_transform = target_transform
 
 
+class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
+                               TagsMixin):
+
+    def __init__(self,
+                 target_transform='identity',
+                 loss='ls', learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 max_depth=3, min_impurity_decrease=1e-7, init=None,
+                 random_state=None,
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
+
+        super(TransformedGradientBoost, self).__init__(
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
+            subsample=subsample,
+            criterion=criterion,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth,
+            min_impurity_decrease=min_impurity_decrease,
+            init=init,
+            random_state=random_state,
+            max_features=max_features,
+            alpha=alpha,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start,
+        )
+        if isinstance(target_transform, str):
+            target_transform = transforms.transforms[target_transform]()
+        self.target_transform = target_transform
+
+
 class TransformedSVR(TransformMixin, SVR, TagsMixin):
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+    def __init__(self, kernel='rbf', degree=3, gamma='scale', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1,
                  target_transform='identity'):
@@ -279,14 +346,13 @@ class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
     OLS. Suitable for small learning jobs.
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+    def __init__(self, fit_intercept=True, copy_X=True,
                  n_jobs=1, target_transform='identity'):
         # used in training
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
         super(TransformedOLS, self).__init__(fit_intercept=fit_intercept,
-                                             normalize=normalize,
                                              copy_X=copy_X,
                                              n_jobs=n_jobs)
 
@@ -298,7 +364,7 @@ class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
     """
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, precompute=False, max_iter=1000,
+                 precompute=False, max_iter=1000,
                  copy_X=True, tol=0.0001, warm_start=False, positive=False,
                  random_state=None, selection='cyclic',
                  target_transform='identity'):
@@ -309,7 +375,7 @@ class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
 
         super(TransformedElasticNet, self).__init__(
             alpha=alpha, l1_ratio=l1_ratio, fit_intercept=fit_intercept,
-            normalize=normalize, precompute=precompute, max_iter=max_iter,
+            precompute=precompute, max_iter=max_iter,
             copy_X=copy_X, tol=tol, warm_start=warm_start, positive=positive,
             random_state=random_state, selection=selection
             )
@@ -333,458 +399,56 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
             )
 
 
-class XGBoost(XGBRegressor, TagsMixin):
+class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
 
-    def __init__(self,
-                 target_transform='identity',
-                 max_depth=None,
-                 learning_rate=None,
-                 n_estimators=100,
-                 verbosity=None,
-                 objective=None,
-                 booster=None,
-                 tree_method=None,
-                 n_jobs=None,
-                 gamma=None,
-                 min_child_weight=None,
-                 max_delta_step=None,
-                 subsample=None,
-                 colsample_bytree=None,
-                 colsample_bylevel=None,
-                 colsample_bynode=None,
-                 reg_alpha=None,
-                 reg_lambda=None,
-                 scale_pos_weight=None,
-                 base_score=None,
-                 random_state=None,
-                 missing=np.nan,
-                 num_parallel_tree=None,
-                 monotone_constraints=None,
-                 interaction_constraints=None,
-                 importance_type="gain",
-                 gpu_id=None,
-                 validate_parameters=None,
-                 ):
+    def __init__(self, target_transform='identity',
+                 max_depth=3, learning_rate=0.1, n_estimators=100,
+                 verbosity=0, objective="reg:linear",
+                 nthread=None, min_child_weight=1,
+                 max_delta_step=0,
+                 subsample=1, colsample_bytree=1, colsample_bylevel=1,
+                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=1,
+                 base_score=0.5, random_state=1, missing=None,eval_metric='rmse',tree_method='auto'):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
 
-        super().__init__(
-            n_estimators=n_estimators,
-            objective=objective,
-            max_depth=max_depth,
-            learning_rate=learning_rate,
-            verbosity=verbosity,
-            booster=booster,
-            tree_method=tree_method,
-            gamma=gamma,
-            min_child_weight=min_child_weight,
-            max_delta_step=max_delta_step,
-            subsample=subsample,
-            colsample_bytree=colsample_bytree,
-            colsample_bylevel=colsample_bylevel,
-            colsample_bynode=colsample_bynode,
-            reg_alpha=reg_alpha,
-            reg_lambda=reg_lambda,
-            scale_pos_weight=scale_pos_weight,
-            base_score=base_score,
-            missing=missing,
-            num_parallel_tree=num_parallel_tree,
-            random_state=random_state,
-            n_jobs=n_jobs,
-            monotone_constraints=monotone_constraints,
-            interaction_constraints=interaction_constraints,
-            importance_type=importance_type,
-            gpu_id=gpu_id,
-            validate_parameters=validate_parameters
-        )
-
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y=y)
-        y_t = self.target_transform.transform(y)
-        try:
-            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            return super().fit(X, y_t)
-
-    def predict(self, X, *args, **kwargs):
-        Ey_t = self._notransform_predict(X, *args, **kwargs)
-        return self.target_transform.itransform(Ey_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X, *args)
-        return Ey_t
+        super(XGBoost, self).__init__(max_depth=max_depth,
+                                      learning_rate=learning_rate,
+                                      n_estimators=n_estimators,
+                                      verbosity=verbosity,
+                                      objective=objective,
+                                      # nthread=nthread,
+                                      gamma=gamma,
+                                      min_child_weight=min_child_weight,
+                                      max_delta_step=max_delta_step,
+                                      subsample=subsample,
+                                      colsample_bytree=colsample_bytree,
+                                      colsample_bylevel=colsample_bylevel,
+                                      reg_alpha=reg_alpha,
+                                      reg_lambda=reg_lambda,
+                                      scale_pos_weight=scale_pos_weight,
+                                      base_score=base_score,
+                                      random_state=random_state,
+                                      missing=missing,
+                                      n_jobs=n_jobs,
+                                      eval_metric=eval_metric,
+                                      tree_method=tree_method)
+        self.nthread = n_jobs
 
 
-class XGBQuantileRegressor(XGBRegressor, TagsMixin):
-
-    def __init__(self,
-                 target_transform='identity',
-                 alpha=0.95, delta=1.0, thresh=1.0, variance=1.0,
-                 **kwargs
-                 ):
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-        self.target_transform = target_transform
-        self.alpha = alpha
-        self.delta = delta
-        self.thresh = thresh
-        self.variance = variance
-        if 'objective' in kwargs:
-            kwargs.pop('objective')
-        super().__init__(**kwargs)
-
-    def fit(self, X, y, * args, **kwargs):
-        quantile_loss_obj = partial(self.quantile_loss,
-                                    alpha=self.alpha,
-                                    delta=self.delta,
-                                    threshold=self.thresh,
-                                    var=self.variance)
-
-        super().set_params(objective=quantile_loss_obj)
-        self.target_transform.fit(y=y)
-        y_t = self.target_transform.transform(y)
-        try:
-            super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            super().fit(X, y_t)
-        return self
-
-    def predict(self, X, *args, **kwargs):
-        Ey_t = self._notransform_predict(X, *args, **kwargs)
-        return self.target_transform.itransform(Ey_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X, *args)
-        return Ey_t
-
-    @staticmethod
-    def quantile_loss(y_true, y_pred, alpha, delta, threshold, var):
-        x = y_true - y_pred
-        grad = (x < (alpha - 1.0) * delta) * (1.0 - alpha) - \
-               ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) * x / delta - \
-               alpha * (x > alpha * delta)
-        hess = ((x >= (alpha - 1.0) * delta) & (x < alpha * delta)) / delta
-
-        grad = (np.abs(x) < threshold) * grad - (np.abs(x) >= threshold) * (
-                2 * np.random.randint(2, size=len(y_true)) - 1.0) * var
-        hess = (np.abs(x) < threshold) * hess + (np.abs(x) >= threshold)
-        return grad, hess
-
-    # def score(self, X, y, **kwargs):
-    #     y_pred = super().predict(X)
-    #     score = self.quantile_score(y, y_pred, self.alpha)
-    #     score = 1. / score
-    #     return score
-    #
-    # @staticmethod
-    # def quantile_score(y_true, y_pred, alpha):
-    #     score = XGBQuantileRegressor.quantile_cost(x=y_true - y_pred, alpha=alpha)
-    #     score = np.sum(score)
-    #     return score
-    #
-    # @staticmethod
-    # def quantile_cost(x, alpha):
-    #     return (alpha - 1.0) * x * (x < 0) + alpha * x * (x >= 0)
-    #
-    # @staticmethod
-    # def get_split_gain(gradient, hessian, l=1):
-    #     split_gain = list()
-    #     for i in range(gradient.shape[0]):
-    #         split_gain.append(np.sum(gradient[:i]) / (np.sum(hessian[:i]) + l) + np.sum(gradient[i:]) / (
-    #                 np.sum(hessian[i:]) + l) - np.sum(gradient) / (np.sum(hessian) + l))
-    #
-    #     return np.array(split_gain)
-
-
-class QuantileXGB(TagsMixin, BaseEstimator, RegressorMixin):
-    def __init__(
-            self,
-            mean_model_params={},
-            upper_quantile_params={'alpha': 0.95, 'delta': 1.0, 'thresh': 1.0, 'variance': 1.0},
-            lower_quantile_params={'alpha': 0.05, 'delta': 1.0, 'thresh': 1.0, 'variance': 1.0}
-    ):
-        self.mean_model_params = mean_model_params
-        self.upper_quantile_params = upper_quantile_params
-        self.lower_quantile_params = lower_quantile_params
-        self.gb = XGBRegressor(**mean_model_params)
-        mean_model_params.pop('alpha', None)
-        upper_quantile_params_combined = {**mean_model_params}
-        upper_quantile_params_combined.update(upper_quantile_params)
-        lower_quantile_params_combiled = {**mean_model_params}
-        lower_quantile_params_combiled.update(lower_quantile_params)
-        self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params_combined)
-        self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params_combiled)
-        self.upper_alpha = upper_quantile_params['alpha']
-        self.lower_alpha = lower_quantile_params['alpha']
-
-    @staticmethod
-    def collect_prediction(regressor, X_test):
-        y_pred = regressor.predict(X_test)
-        return y_pred
-
-    def fit(self, X, y, **kwargs):
-        log.info('Fitting xgb base model')
-        try:
-            self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
-            log.info('Fitting xgb upper quantile model')
-            self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
-            log.info('Fitting xgb lower quantile model')
-            self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            self.gb.fit(X, y) 
-            log.info('Fitting xgb upper quantile model')
-            self.gb_quantile_upper.fit(X, y)
-            log.info('Fitting xgb lower quantile model')
-            self.gb_quantile_lower.fit(X, y)
-
-    def predict(self, X, *args, **kwargs):
-        return self.predict_dist(X, *args, **kwargs)[0]
-
-    def predict_dist(self, X, interval=0.95, *args, **kwargs):
-        Ey = self.gb.predict(X)
-
-        ql_ = self.collect_prediction(self.gb_quantile_lower, X)  # upper quantile model prediction
-        qu_ = self.collect_prediction(self.gb_quantile_upper, X)  # lower quantile model prediction
-        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
-        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
-
-        # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
-
-
-class GBMReg(GradientBoostingRegressor, TagsMixin):
-    def __init__(self, target_transform='identity', loss='quantile', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, alpha=0.5, verbose=0, max_leaf_nodes=None,
-                 warm_start=False,
-                 validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
-
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-        self.target_transform = target_transform
-
-        super().__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha
-        )
-
-    def predict(self, X, *args, **kwargs):
-        Ey_t = self._notransform_predict(X, *args, **kwargs)
-        return self.target_transform.itransform(Ey_t)
-
-    def _notransform_predict(self, X, *args, **kwargs):
-        Ey_t = super().predict(X)
-        return Ey_t
-
-    def fit(self, X, y, *args, **kwargs):
-        self.target_transform.fit(y=y)
-        y_t = self.target_transform.transform(y)
-        try:
-            return super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            return super().fit(X, y_t)
-
-
-class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
-    def __init__(self, target_transform='identity', loss='quantile',
-                 alpha=0.5, upper_alpha=0.95, lower_alpha=0.05,
-                 learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, verbose=0, max_leaf_nodes=None,
-                 warm_start=False,
-                 validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0
-                 ):
-        log.warn(f"Supplied loss: {loss} and alpha {alpha} are not going to be used")
-        if isinstance(target_transform, str):
-            target_transform = transforms.transforms[target_transform]()
-
-        self.target_transform = target_transform
-        # loss = 'quantile'  # use quantile loss for median
-        # alpha = 0.5  # median
-        self.median_quantile_params ={'loss': 'quantile', 'alpha': 0.5}
-        self.upper_quantile_params = {'loss': 'quantile', 'alpha': upper_alpha}
-        self.lower_quantile_params = {'loss': 'quantile', 'alpha': lower_alpha}
-        self.loss = loss
-        self.learning_rate = learning_rate
-        self.n_estimators = n_estimators
-        self.criterion = criterion
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_depth = max_depth
-        self.subsample = subsample
-        self.max_features = max_features
-        self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
-        self.random_state = random_state
-        self.alpha = alpha
-        self.verbose = verbose
-        self.max_leaf_nodes = max_leaf_nodes
-        self.warm_start = warm_start
-        self.validation_fraction = validation_fraction
-        self.n_iter_no_change = n_iter_no_change
-        self.tol = tol
-        self.ccp_alpha = ccp_alpha
-
-        self.gb = GradientBoostingRegressor(
-            learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            **self.median_quantile_params
-        )
-        self.gb_quantile_upper = GradientBoostingRegressor(
-            learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            **self.upper_quantile_params
-        )
-        self.gb_quantile_lower = GradientBoostingRegressor(
-            learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            **self.lower_quantile_params
-        )
-        self.upper_alpha = upper_alpha
-        self.lower_alpha = lower_alpha
-
-    @staticmethod
-    def collect_prediction(regressor, X_test):
-        y_pred = regressor.predict(X_test)
-        return y_pred
-
-    def fit(self, X, y, *args, **kwargs):
-        log.info('Fitting gb base model')
-        try:
-            self.gb.fit(X, y, sample_weight=kwargs['sample_weight'])
-            log.info('Fitting gb upper quantile model')
-            self.gb_quantile_upper.fit(X, y, sample_weight=kwargs['sample_weight'])
-            log.info('Fitting gb lower quantile model')
-            self.gb_quantile_lower.fit(X, y, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            self.gb.fit(X, y)
-            log.info('Fitting gb upper quantile model')
-            self.gb_quantile_upper.fit(X, y)
-            log.info('Fitting gb lower quantile model')
-            self.gb_quantile_lower.fit(X, y)
-
-    def predict(self, X, *args, **kwargs):
-        return self.predict_dist(X, *args, **kwargs)[0]
-
-    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
-        Ey = self.gb.predict(X)
-
-        ql_ = self.collect_prediction(self.gb_quantile_lower, X)
-        qu_ = self.collect_prediction(self.gb_quantile_upper, X)
-        # divide qu - ql by the normal distribution Z value diff between the quantiles, square for variance
-        Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
-
-        # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
-
-
-class CatBoostWrapper(CatBoostRegressor, TagsMixin):
-
-    def __init__(self,  **kwargs):
-        if 'loss_function' in kwargs:
-            kwargs.pop('loss_function')
-            log.warn("For uncertainty estimation we are going to use 'RMSEWithUncertainty' loss!\n"
-                     "Supplied loss function was not used!!!")
-        super(CatBoostWrapper, self).__init__(**kwargs, loss_function='RMSEWithUncertainty')
-
-    def fit(self, X, y, **kwargs):
-        try:
-            super().fit(X, y_t, sample_weight=kwargs['sample_weight'])
-        except (TypeError, KeyError) as _e:
-            # if sample_weight not one of the learner's arguments
-            super().fit(X, y_t)
-
-    def predict(self, X, *args, **kwargs):
-        return self.predict_dist(X, *args, **kwargs)[0]
-
-    def predict_dist(self, X, interval=0.95, **kwargs):
-        pred = super().predict(X)
-        Ey = pred[:, 0]
-        Vy = pred[:, 1]
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-        return Ey, Vy, ql, qu
-
-
-no_test_support = {
-    'xgboost': XGBoost,
-    'xgbquantileregressor': XGBQuantileRegressor,
-    'xgbquantile': QuantileXGB,
-    'quantilegb': QuantileGradientBoosting,
-    'gradientboost': GBMReg,
-    'catboost': CatBoostWrapper,
-}
-
-test_support = {
+transformed_modelmaps = {
     'transformedrandomforest': TransformedForestRegressor,
+    'gradientboost': TransformedGradientBoost,
     'transformedgp': TransformedGPRegressor,
     'sgdregressor': TransformedSGDRegressor,
     'transformedsvr': TransformedSVR,
     'ols': TransformedOLS,
     'elasticnet': TransformedElasticNet,
     'huber': Huber,
+    'xgboost': XGBoost
 }
-
-transformed_modelmaps = {** test_support, ** no_test_support}
 
 # scikit-learn kernels
 kernels = {'rbf': RBF,

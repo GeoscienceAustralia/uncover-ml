@@ -79,7 +79,6 @@ def setup_pipeline(config):
     estimator = GridSearchCV(pipe,
                              param_dict,
                              n_jobs=config.n_jobs,
-                             iid=False,
                              pre_dispatch='2*n_jobs',
                              verbose=True,
                              cv=5,
