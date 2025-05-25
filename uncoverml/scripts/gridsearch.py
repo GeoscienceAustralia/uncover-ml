@@ -81,6 +81,7 @@ def setup_pipeline(config):
                              n_jobs=config.n_jobs,
                              pre_dispatch='2*n_jobs',
                              verbose=True,
+                             error_score='raise',
                              cv=5,
                              )
 

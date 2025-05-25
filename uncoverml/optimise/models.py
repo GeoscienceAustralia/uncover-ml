@@ -207,7 +207,7 @@ class TransformedForestRegressor(TransformPredictDistMixin,
     def __init__(self,
                  target_transform='identity',
                  n_estimators=10,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -253,7 +253,7 @@ class TransformedGradientBoost(TransformMixin, GradientBoostingRegressor,
 
     def __init__(self,
                  target_transform='identity',
-                 loss='ls', learning_rate=0.1, n_estimators=100,
+                 loss='squared_error', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=1e-7, init=None,
@@ -399,16 +399,30 @@ class Huber(TransformMixin, TagsMixin, HuberRegressor):
             )
 
 
-class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
+class XGBoost(TransformMixin, XGBRegressor, TagsMixin):
 
-    def __init__(self, target_transform='identity',
-                 max_depth=3, learning_rate=0.1, n_estimators=100,
-                 verbosity=0, objective="reg:linear",
-                 nthread=None, min_child_weight=1,
+    def __init__(self, 
+                 target_transform='identity',
+                 max_depth=3,
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 verbosity=0,
+                 objective="reg:linear",
+                 min_child_weight=1,
                  max_delta_step=0,
-                 subsample=1, colsample_bytree=1, colsample_bylevel=1,
-                 reg_alpha=0, reg_lambda=1, scale_pos_weight=1, n_jobs=1,
-                 base_score=0.5, random_state=1, missing=None,eval_metric='rmse',tree_method='auto'):
+                 subsample=1,
+                 colsample_bytree=1,
+                 colsample_bylevel=1,
+                 reg_alpha=0,
+                 reg_lambda=1,
+                 scale_pos_weight=1,
+                 n_jobs=1,
+                 base_score=0.5,
+                 random_state=1,
+                 missing=np.nan,
+                 eval_metric='rmse',
+                 tree_method='auto',
+                 **kwargs):
 
         if isinstance(target_transform, str):
             target_transform = transforms.transforms[target_transform]()
@@ -420,7 +434,7 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       verbosity=verbosity,
                                       objective=objective,
                                       # nthread=nthread,
-                                      gamma=gamma,
+                                      # gamma=gamma,
                                       min_child_weight=min_child_weight,
                                       max_delta_step=max_delta_step,
                                       subsample=subsample,
@@ -434,7 +448,7 @@ class XGBoost(TransformMixin, TagsMixin, XGBRegressor):
                                       missing=missing,
                                       n_jobs=n_jobs,
                                       eval_metric=eval_metric,
-                                      tree_method=tree_method)
+                                      tree_method=tree_method, **kwargs)
         self.nthread = n_jobs
 
 
@@ -455,3 +469,22 @@ kernels = {'rbf': RBF,
            'matern': Matern,
            'quadratic': RationalQuadratic,
            }
+
+# test support models used in test_optimisation.py
+test_support = {
+    'transformedrandomforest': TransformedForestRegressor,
+    'gradientboost': TransformedGradientBoost,
+    'transformedgp': TransformedGPRegressor,
+    'sgdregressor': TransformedSGDRegressor,
+    'transformedsvr': TransformedSVR,
+    'ols': TransformedOLS,
+    'elasticnet': TransformedElasticNet,
+    'huber': Huber,
+    'xgboost': XGBoost
+}
+
+# models excluded from general param testing (special handling)
+no_test_support = {
+    'xgbquantile': XGBoost,
+    'xgbquantileregressor': XGBoost  # replace if you have a different variant
+}

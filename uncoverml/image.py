@@ -3,7 +3,7 @@ import numpy as np
 import logging
 
 from affine import Affine
-from uncoverml.geoio import RasterioImageSource
+# from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
@@ -29,11 +29,10 @@ def construct_splits(npixels, nchunks, overlap=0):
 
 
 class Image:
-    def __init__(self, source: RasterioImageSource,
-                 chunk_idx=0, nchunks=1, overlap=0,
-                 t_source: Optional[RasterioImageSource] = None,
-                 ):
-        assert chunk_idx >= 0 and chunk_idx < nchunks
+    def __init__(self, source, chunk_idx=0, nchunks=1, overlap=0,
+                 t_source: Optional[object] = None):
+        from uncoverml.geoio import ImageSource
+        assert isinstance(source, ImageSource)
 
         if nchunks == 1 and overlap != 0:
             log.warning("Ignoring overlap when 1 chunk present")

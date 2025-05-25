@@ -8,6 +8,8 @@ from sklearn.pipeline import Pipeline
 from uncoverml.krige import krige_methods, Krige, krig_dict
 from uncoverml.optimise.models import kernels
 from uncoverml.optimise.models import transformed_modelmaps, test_support, no_test_support
+
+
 from uncoverml.transforms import target as transforms
 
 
@@ -63,6 +65,7 @@ def test_pipeline(get_models, get_transform, get_kernel):
                              pre_dispatch=2,
                              verbose=True,
                              return_train_score=True,
+                             error_score='raise',
                              cv=3,
                              )
     np.random.seed(10)
@@ -82,6 +85,7 @@ def test_xgbquantile_pipeline():
                                  pre_dispatch=2,
                                  verbose=True,
                                  return_train_score=True,
+                                 error_score='raise',
                                  cv=3
                                  )
         np.random.seed(1)
@@ -101,6 +105,7 @@ def test_svr_pipeline(get_transform, get_svr_kernel):
                              pre_dispatch=2,
                              verbose=True,
                              return_train_score=True,
+                             error_score='raise',
                              )
     np.random.seed(1)
     estimator.fit(X=1 + np.random.rand(10, 5), y=1. + np.random.rand(10))
@@ -128,6 +133,7 @@ def test_krige_pipeline(get_krige_method, get_variogram_model):
                              pre_dispatch=2,
                              verbose=True,
                              return_train_score=True,
+                             error_score='raise',
                             )
     np.random.seed(1)
     X = np.random.randint(1, 400, size=(20, 2)).astype(float)
