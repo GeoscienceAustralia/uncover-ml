@@ -33,8 +33,6 @@ pytest \
   --cov-report=term \
   --cov-report=xml:test-results/results.xml \
   -o junit_family=legacy \
-  --ignore=tests/test_scripts.py \
-  --ignore=tests/test_optimisation.py
 
 # make coverage
 # codecov
