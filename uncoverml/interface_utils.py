@@ -57,7 +57,8 @@ def calc_uncert(config):
 
     pred_data = pred_data.filled(np.nan)
     var_data = var_data.filled(np.nan)
-    out_data = (4*np.sqrt(var_data))/pred_data
+    # out_data = (4*np.sqrt(var_data))/pred_data
+    out_data = (np.sqrt(var_data))/pred_data
 
     out_file = res_path / 'uncert.tif'
     with rasterio.open(out_file, 'w', **pred_profile) as dst:
@@ -87,7 +88,7 @@ def create_thumbnail(config, res_type):
     stretched_data = stretch_raster(data)
     fig, ax = plt.subplots()
     plt.imshow(stretched_data)
-    plt.colorbar()
+    # plt.colorbar()
     out_file = res_dir / f'{res_type}_thumbnail.png'
     fig.tight_layout()
     fig.savefig(out_file)
