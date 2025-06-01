@@ -116,7 +116,8 @@ setup(
         'boto3==1.34.67',
         'requests==2.31.0',
         'vecstack==0.4.0',
-        'mlens==0.2.3'
+        'mlens==0.2.3',
+        'fiona==1.10.1'
     ],
     extras_require={
         'kmz': [

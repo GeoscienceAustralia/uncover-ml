@@ -11,6 +11,7 @@ import sys
 import joblib
 import resource
 import json
+import pickle
 from os.path import isfile, splitext, exists
 from pathlib import Path
 import warnings
@@ -43,6 +44,8 @@ from uncoverml import optimisation, hyopt
 from uncoverml.scripts import superlearn_cli
 from uncoverml.log_progress import write_progress_to_file
 
+import fiona
+from osgeo import gdal
 
 log = logging.getLogger(__name__)
 # warnings.showwarning = warn_with_traceback
@@ -541,6 +544,62 @@ def upload(config_file, job_type):
     uncoverml.interface_utils.read_presigned_urls_and_upload(config, job_type)
     write_progress_to_file(job_type, 'Upload to AWS complete', config)
 
+@cli.command()
+@click.argument('config_file')
+@click.argument('job_type')
+def clip(config_file, job_type):
+    config = ls.config.Config(config_file)
+    write_progress_to_file(job_type, 'Clipping covariates to selected train/predict area.', config)
+
+    train_shp_file_path = config.target_file
+    train_shp_parent = str(Path(train_shp_file_path).parent)
+    train_shp_name = Path(train_shp_file_path).name
+
+    dataset = fiona.open(train_shp_file_path)
+    dataset = dataset.bounds
+    
+    dataset_0 = dataset[0]
+    dataset_1 = dataset[1]
+    dataset_2 = dataset[2]
+    dataset_3 = dataset[3]    
+    
+    dataset_0 -= abs(dataset[0]) * 1/100
+    dataset_1 -= abs(dataset[1]) * 1/100
+    dataset_2 += abs(dataset[2]) * 1/100
+    dataset_3 += abs(dataset[3]) * 1/100
+
+    clip_file_paths = []
+    for feature_set in config.feature_sets:
+        for file in feature_set.files:
+            file_name = Path(file).name
+            ds = gdal.Open(file)
+            write_progress_to_file(job_type, f'Clipping covariates file: {file}', config)
+            covariate_file_path_clip = f"{train_shp_parent}/{str(file_name).replace('.tif', '.tif')}" 
+            ds = gdal.Translate(covariate_file_path_clip, ds, projWin = [dataset_0, dataset_3, dataset_2, dataset_1])
+            ds = None  
+            clip_file_paths.append(covariate_file_path_clip)  
+
+    # Update covariates.txt file, replacing tifs with clipped tifs.
+    write_progress_to_file(job_type, 'Clipping covariates updating covariates.txt with new file paths', config)
+    covariates_file_path = f'{train_shp_parent}/covariates.txt'
+    with open(covariates_file_path, 'w') as covariates_file:
+        for clip_file_path in clip_file_paths:
+            covariates_file.write(f'{clip_file_path}\n')
+
+    # Update covariates.pkl file, replacing tif file paths with clipped tifs.
+    write_progress_to_file(job_type, 'Clipping covariates updating covariates.pkl with new file paths', config)
+    covariate_list = []
+    covariates_file_path_pickle = f'{train_shp_parent}/covariate_list.pkl'
+    with open(covariates_file_path_pickle, 'rb') as in_file:
+        covariate_list = pickle.load(in_file)
+        for covariate in covariate_list:
+            covariate_name = Path(covariate['nci_path']).name
+            covariate['nci_path'] = f'{train_shp_parent}/{covariate_name}'
+        
+    with open(covariates_file_path_pickle, 'wb') as out_file:
+        pickle.dump(covariate_list, out_file)
+
+    write_progress_to_file(job_type, 'Clipping covariates completed', config)
 
 def __validate_pca_config(config):
     # assert no other transforms other than whiten
