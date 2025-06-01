@@ -94,7 +94,7 @@ tomli==2.2.1
 tqdm==4.67.1
 typing_extensions==4.13.2
 tzdata==2025.2
-uncover-ml==0.1.0
+uncover-ml==0.5.0
 urllib3==1.26.20
 vecstack==0.4.0
 xgboost==2.1.4
