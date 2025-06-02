@@ -17,15 +17,15 @@ Note that on NCI it appears python is compiled against gcc anyway.
 
 1. Load the modules requried for installation and running:
 ```bash
-$ module load python3/3.9.2 gdal/3.0.2 openmpi/4.0.2
+$ module load python3/3.10.4 gdal/3.5.0 openmpi/4.1.5
 ```
 (Alternatively, you may wish to add the above lines to your ~/.profile)
 
 2. Now add the following lines to the end of your ~/.profile:
 ```bash
 export PATH=$HOME/.local/bin:$PATH
-export PYTHONPATH=$HOME/.local/lib/python3.9/site-packages:$PYTHONPATH
-export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.9.2/bin/python3
+export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PYTHONPATH
+export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.10.4/bin/python3
 export LC_ALL=en_AU.UTF-8
 export LANG=en_AU.UTF-8
 source $HOME/.local/bin/virtualenvwrapper.sh 
@@ -83,7 +83,7 @@ To update the code, first make sure you are in the `uncoverml` virtual environme
 ```bash
 $ workon uncoverml
 ```
-Next, pull the latest commit from the master branch, and install:
+Next, pull the latest commit from the main branch, and install:
 ```bash
 $ cd ~/uncover-ml
 $ git pull origin

@@ -50,7 +50,7 @@ fi
 
 ls -l $GDALINST
 
-if [ "$GDALVERSION" = "master" ]; then
+if [ "$GDALVERSION" = "main" ]; then
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
     cd $GDALBUILD
     git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION

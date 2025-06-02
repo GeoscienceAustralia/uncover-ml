@@ -31,13 +31,12 @@ jobs:
               -t $CODECOV_TOKEN \
               -f test-results/results.xml \
               -F unittests \
-              -B master
+              -B main
 
       - run: 
          name: Deploy docs
          command: |
-           if [ "$CIRCLE_BRANCH" = "master" ]; then
-             . venv/bin/activate
+           if [ "$CIRCLE_BRANCH" = "main" ]; then
              make ghp
            fi
  
