@@ -114,7 +114,7 @@ setup(
         'colorama==0.4.6',
         'shap==0.45.0',
         'boto3==1.34.67',
-        'requests==2.31.0',
+        'requests==2.32.2',
         'vecstack==0.4.0',
         'mlens==0.2.3',
         'fiona==1.10.1'
