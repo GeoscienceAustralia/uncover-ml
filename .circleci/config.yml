@@ -33,12 +33,12 @@ jobs:
               -F unittests \
               -B main
 
-      - run: 
-         name: Deploy docs
-         command: |
-           if [ "$CIRCLE_BRANCH" = "main" ]; then
-             make ghp
-           fi
+      # - run: 
+      #    name: Deploy docs
+      #    command: |
+      #      if [ "$CIRCLE_BRANCH" = "main" ]; then
+      #        make ghp  # TODO: Ensure docs are updated with merge to main
+      #      fi
  
       - save_cache: 
           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
