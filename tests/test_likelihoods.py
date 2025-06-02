@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from revrand.btypes import Parameter, Positive
-from uncoverml.likelihoods import Switching, UnifGauss  # adjust `your_module` accordingly
+from uncoverml.likelihoods import Switching, UnifGauss
 
 
 @pytest.fixture
