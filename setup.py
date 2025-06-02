@@ -92,7 +92,7 @@ setup(
         'revrand >= 0.9.10',
         'mpi4py >= 3.1.3',
         'scipy >= 1.6.2',
-        'scikit-learn == 1.2.2',
+        'scikit-learn == 1.5.1',
         'scikit-image==0.19.1',
         'scikit-optimize == 0.9.0',
         'wheel >= 0.29.0',
