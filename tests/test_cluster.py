@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 from unittest import mock
 
-from uncoverml.cluster.kmeans import KMeans
-from uncoverml.cluster import kmeans_step, \
+from uncoverml.cluster import KMeans, kmeans_step, \
     initialise_centres, \
         compute_n_classes, \
             extract_data, calc_cluster_dist
