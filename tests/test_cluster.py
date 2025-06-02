@@ -5,7 +5,7 @@ from unittest import mock
 from uncoverml.cluster import KMeans, kmeans_step, \
     initialise_centres, \
         compute_n_classes, \
-            extract_data, calc_cluster_dist
+            extract_data, calc_cluster_dist, run_kmeans
 
 from numpy.testing import assert_allclose
 from unittest.mock import patch
@@ -66,7 +66,7 @@ def test_kmeans_step_basic():
     classes = np.array([0, 0, 1])
     expected = np.array([[5], [20]])
 
-    with patch("your_module.mpiops.comm.allreduce", side_effect=lambda x, op=None: x):
+    with patch("uncoverml.mpiops.comm.allreduce", side_effect=lambda x, op=None: x):
         result = kmeans_step(X, C, classes)
         assert_allclose(result, expected)
 
@@ -76,15 +76,15 @@ def test_run_kmeans_converges():
     C = np.array([[0], [10]])
     k = 2
 
-    with patch("your_module.mpiops.comm.allreduce", side_effect=lambda x, op=None: x):
+    with patch("uncoverml.mpiops.comm.allreduce", side_effect=lambda x, op=None: x):
         C_final, classes = run_kmeans(X, C, k)
         assert C_final.shape == (2, 1)
         assert set(classes) == {0, 1}
 
 
-@patch("your_module.weighted_starting_candidates")
-@patch("your_module.run_kmeans")
-@patch("your_module.mpiops.comm.bcast")
+@patch("uncoverml.weighted_starting_candidates")
+@patch("uncoverml.run_kmeans")
+@patch("uncoverml.mpiops.comm.bcast")
 def test_initialise_centres(mock_bcast, mock_run_kmeans, mock_weighted_starting):
     X = np.random.rand(10, 2)
     C = np.random.rand(20, 2)
@@ -101,13 +101,13 @@ def test_compute_n_classes_respects_training():
         n_classes = 3
 
     classes = np.array([0, 1, 2, 3])
-    with patch("your_module.mpiops.comm.allreduce", return_value=3):
-        with patch("your_module.mpiops.MPI.MAX", new=None):
+    with patch("uncoverml.mpiops.comm.allreduce", return_value=3):
+        with patch("uncoverml.mpiops.MPI.MAX", new=None):
             result = compute_n_classes(classes, Config())
             assert result == 3
 
 
-@patch("your_module.rasterio.open")
+@patch("uncoverml.rasterio.open")
 def test_extract_data(mock_open):
     class DummySrc:
         def sample(self, coords):
