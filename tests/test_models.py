@@ -36,7 +36,7 @@ def test_modeltags(get_models):
             assert len(tags) == 5
 
         if hasattr(model, 'krige_residual'):
-            assert len(tags) == 5
+            assert len(tags) == 6
 
     elif hasattr(model, 'predict_proba'):
         assert len(tags) == 4
