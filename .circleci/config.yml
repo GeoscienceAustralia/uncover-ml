@@ -31,7 +31,7 @@ jobs:
               -t $CODECOV_TOKEN \
               -f test-results/results.xml \
               -F unittests \
-              -B master
+              -B main
 
       - run: 
          name: Deploy docs
