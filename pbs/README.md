@@ -83,7 +83,7 @@ To update the code, first make sure you are in the `uncoverml` virtual environme
 ```bash
 $ workon uncoverml
 ```
-Next, pull the latest commit from the master branch, and install:
+Next, pull the latest commit from the main branch, and install:
 ```bash
 $ cd ~/uncover-ml
 $ git pull origin

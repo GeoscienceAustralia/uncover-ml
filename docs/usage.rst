@@ -43,4 +43,4 @@ See also:
 
 Running on NCI
 --------------
-Please see `The PBS Readme <https://github.com/GeoscienceAustralia/uncover-ml/blob/master/pbs/README.md>`_ .
+Please see `The PBS Readme <https://github.com/GeoscienceAustralia/uncover-ml/blob/main/pbs/README.md>`_ .

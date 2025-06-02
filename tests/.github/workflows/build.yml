@@ -3,7 +3,7 @@ name: uncoverml CI
 on:
   pull_request:
     branches:
-      - 'master'
+      - 'main'
   push:
     branches:
       - '**'
@@ -17,8 +17,8 @@ jobs:
       matrix:
         include:
           - build: 1
-            python-version: "3.7"
-            GDALVERSION: "3.0.2"
+            python-version: "3.10"
+            GDALVERSION: "3.5.0"
             PROJVERSION: "6.2.1"
     env:
       PIP_WHEEL_DIR: "/home/runner/.cache/pip/wheels"
@@ -49,10 +49,10 @@ jobs:
           sudo apt upgrade
           python -m pip install -U pip wheel
       - name: Install packages including openmpi
-        if: env.PYTHONVERSION != '3.9'
+        if: env.PYTHONVERSION != '3.10'
         run: sudo apt install libhdf5-serial-dev libnetcdf13 libatlas-base-dev gfortran openmpi-bin libopenmpi-dev
       - name: Install packages except openmpi libraries
-        if: env.PYTHONVERSION == '3.9'
+        if: env.PYTHONVERSION == '3.10'
         run: sudo apt install libhdf5-serial-dev libnetcdf13 libatlas-base-dev gfortran
       - name: Install proj ${{matrix.PROJVERSION}}
         run: |
@@ -66,13 +66,13 @@ jobs:
           echo "LDFLAGS=-L$GDALINST/gdal-$GDALVERSION/lib -Wl,-rpath,$GDALINST/gdal-$GDALVERSION/lib" >> $GITHUB_ENV
           source ./scripts/ci_gdal_install.sh
       - name: Python ${{ matrix.python-version }} with MPI
-        if: env.PYTHONVERSION != '3.9'
+        if: env.PYTHONVERSION != '3.10'
         run: |
           pip install numpy==1.17.2 cython==0.29.13
           pip install -e .[dev]
           rm -rf uncover_ml.egg-info  # remove the local egg
           echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
       - name: Test uncoverml in Python ${{ matrix.python-version }} with MPI
-        if: env.PYTHONVERSION != '3.9'
+        if: env.PYTHONVERSION != '3.10'
         run: |
           make test
