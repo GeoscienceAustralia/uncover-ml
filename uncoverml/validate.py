@@ -94,8 +94,8 @@ def split_cfold(nsamples, k=5, seed=None):
 
     """
     rnd = np.random.RandomState(seed)
-    pindeces = rnd.permutation(nsamples)
-    cvinds = np.array_split(pindeces, k)
+    pindices = rnd.permutation(nsamples)
+    cvinds = np.array_split(pindices, k)
 
     cvassigns = np.zeros(nsamples, dtype=int)
     for n, inds in enumerate(cvinds):
@@ -242,7 +242,7 @@ class CrossvalInfo:
         if os.path.exists(config.raw_covariates) and os.path.exists(config.raw_covariates_mask):
             # Also add prediction values to rawcovariates.csv - yes this file 
             # is very overloaded and we need to fix the output situation.
-            # Get indicies sorted by location so we can insert the 
+            # Get indices sorted by location so we can insert the 
             # prediction in the correct row.
             inds = np.lexsort(self.positions.T)
             sorted_predictions = self.y_pred['Prediction'][inds]
@@ -330,11 +330,11 @@ def permutation_importance(model, x_all, targets_all, config):
                     score)).as_posix()
             df_picv.to_csv(csv, index=False)
 
-def out_of_sample_validation(model, targets, features, config):
+def out_of_sample_validation(model, targets, features, config, gridsearch=False):
     _logger.info(
         f"Performing out-of-sample validation with {targets.observations.shape[0]} targets...")
     mpiops.comm.barrier()
-    if mpiops.chunk_index != 0:
+    if gridsearch and mpiops.chunk_index != 0:
         with open(config.model_file, 'rb') as f:
             model, _, _ = pickle.load(f)
     model = mpiops.comm.bcast(model, root=0)
@@ -344,9 +344,7 @@ def out_of_sample_validation(model, targets, features, config):
     for k, v in targets.fields.items():
         fields[k] = np.array_split(v, mpiops.chunks)[mpiops.chunk_index]
     features = np.array_split(features, mpiops.chunks)[mpiops.chunk_index]
-    pred = predict.predict(features, model,
-                           fields=fields,
-                           lon_lat=pos)
+    pred = predict.predict(features, model, fields=fields, lon_lat=pos)
 
     pred = mpiops.comm.gather(pred, root=0)
     if mpiops.chunk_index == 0:
@@ -364,10 +362,11 @@ def out_of_sample_validation(model, targets, features, config):
         result_tags = model.get_predict_tags()
         y_pred_dict = dict(zip(result_tags, pred.T))
         if hasattr(model, '_notransform_predict'):
-            y_pred_dict['transformedpredict'] = \
-                model.target_transform.transform(pred[:, 0])
-        
-        return OOSInfo(scores, targets.observations, y_pred_dict, classification, targets.positions)
+            y_pred_dict['transformedpredict'] = model.target_transform.transform(pred[:, 0])
+        if gridsearch:
+            return scores
+        else:
+            OOSInfo(scores, targets.observations, y_pred_dict, classification, targets.positions)
     else:
         return None
 
