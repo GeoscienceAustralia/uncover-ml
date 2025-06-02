@@ -63,7 +63,7 @@ should be able to use the cubist regressor in the pipeline file.
 Running 
 -------
 
-See the `usage <http://GeoscienceAustralia.github.io/uncover-ml/usage.html>`_ documentation.
+See the `Documentation <https://geoscienceaustralia.github.io/uncover-ml/>` page.
 
 Running on NCI
 --------------
@@ -88,6 +88,8 @@ Documentation
 Issue tracking
     https://github.com/GeoscienceAustralia/uncover-ml/issues
 
+
+Note: We are currently developing a Web UI to interface with the uncoverML code. Will keep everyone posted.
 
 Bugs & Feedback
 ---------------

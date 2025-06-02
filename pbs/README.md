@@ -19,9 +19,9 @@ Note that on NCI it appears python is compiled against gcc anyway.
 ```bash
 $ module load python3/3.10.4 gdal/3.5.0 openmpi/4.1.5
 ```
-(Alternatively, you may wish to add the above lines to your ~/.profile)
+(Alternatively, you may wish to add the above lines to your `~/.bashrc`)
 
-2. Now add the following lines to the end of your ~/.profile:
+2. Now add the following lines to the end of your `~/.bashrc`:
 ```bash
 export PATH=$HOME/.local/bin:$PATH
 export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PYTHONPATH
@@ -31,13 +31,7 @@ export LANG=en_AU.UTF-8
 source $HOME/.local/bin/virtualenvwrapper.sh 
 ``` 
 
-3. Install virtualenv and virtualenvwrapper by running the following command
-on the terminal:
-```bash
-$ pip3 install  --user virtualenv virtualenvwrapper
-```
-
-5. Refresh your environment by reloading your profile:
+3. Refresh your environment by reloading your profile:
 ```bash
 $ source ~/.bashrc
 ```
@@ -46,28 +40,24 @@ $ source ~/.bashrc
 
 1. Create a new virtualenv for uncoverml:
 ```bash
-$ mkvirtualenv --system-site-packages uncoverml
+$ python3 -m venv VENV/uncover-ml-env
 ```
 
-2. Make sure the virtualenv is activated:
+2. Activate the environment:
 ```bash
-$ workon uncoverml
+$ source VENV/uncover-ml-env/bin/activate
 ```
 
 3. Clone the uncoverml repo into your home directory:
 ```bash
 $ cd ~
 $ git clone git@github.com:GeoscienceAustralia/uncover-ml.git
+$ cd uncover-ml/
 ```
 
-4. Install mpi4py
+4. Install uncoverml and dependancies
 ```bash 
-$ pip install --no-cache-dir mpi4py==3.1.3 --no-binary=mpi4py
-```
-
-5. Install uncoverml:
-```bash
-$ cd uncover-ml
+$ pip install .
 $ python setup.py install
 ```
 
@@ -75,7 +65,7 @@ $ python setup.py install
 has gone correctly:
 ```bash
 $ pip install pytest
-$ py.test ~/uncover-ml/tests/
+$ pytest ~/uncover-ml/tests/
 ```
 
 ## Updating the Code
