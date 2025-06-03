@@ -76,7 +76,7 @@ dependencies:
       - Mako==1.3.10
       - MarkupSafe==3.0.2
       - matplotlib==3.10.3
-      - mlens==0.2.3
+      - mlens==0.3.4
       - msgpack==1.1.0
       - narwhals==1.41.0
       - ndindex==1.10.0
