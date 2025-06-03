@@ -150,6 +150,7 @@ dependencies:
       - typing-extensions==4.13.2
       - tzdata==2025.2
       - urllib3==2.4.0
+      - vecstack==0.4.0
       - wcwidth==0.2.13
       - xgboost==2.1.4
       - zipp==3.21.0
