@@ -1,16 +1,24 @@
 import copy
 import numpy as np
 import pytest
+
+from unittest.mock import MagicMock, patch
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
 from uncoverml.krige import krige_methods, Krige, krig_dict
 from uncoverml.optimise.models import kernels
-from uncoverml.optimise.models import transformed_modelmaps, test_support, no_test_support
+from uncoverml.optimise.models import (transformed_modelmaps, 
+                                       test_support, 
+                                       no_test_support)
 
-
+from sklearn.linear_model import LinearRegression
 from uncoverml.transforms import target as transforms
+from uncoverml.optimisation import (score_model, 
+                                    r2_score, 
+                                    regression_metrics, 
+                                    bayesian_optimisation)
 
 
 modelmaps = {**krig_dict, **test_support}
@@ -149,3 +157,85 @@ def test_gp_std(get_kernel):
 
     sklearn_gp.fit(X=1+np.random.rand(10, 3), y=1 + np.random.rand(10))
     p, v, uq, lq = sklearn_gp.predict_dist(X=1+np.random.rand(5, 3))
+
+
+@pytest.fixture
+def dummy_config(tmp_path):
+    return MagicMock(
+        algorithm="linear",
+        algorithm_args={},
+        opt_params_space={
+            "fit_intercept": "Categorical([True, False])"
+        },
+        opt_searchcv_params={
+            "n_iter": 2,
+            "random_state": 42
+        },
+        optimised_model_params=str(tmp_path / "params.json"),
+        optimisation_output_skopt=str(tmp_path / "optimisation.csv")
+    )
+
+
+@pytest.fixture
+def dummy_targets():
+    class DummyTargets:
+        def __init__(self):
+            self.observations = np.random.rand(20)
+            self.groups = np.tile(np.arange(5), 4)
+
+    return DummyTargets()
+
+
+@pytest.fixture
+def dummy_data():
+    return np.random.rand(20, 5)
+
+
+@pytest.fixture
+def patch_modelmaps():
+    with patch("uncoverml.optimisation.modelmaps", {"linear": LinearRegression}):
+        yield
+
+
+@pytest.fixture
+def patch_geoio_export():
+    with patch("uncoverml.optimisation.geoio.export_model") as mock_export:
+        yield mock_export
+
+
+@pytest.fixture
+def patch_bayessearchcv():
+    with patch("uncoverml.optimisation.BayesSearchCV") as mock_cls:
+        instance = MagicMock()
+        instance.best_params_ = {"fit_intercept": True}
+        instance.best_score_ = 0.99
+        instance.cv_results_ = {
+            "rank_test_score": [1],
+            "params": [{"fit_intercept": True}],
+            "mean_test_score": [0.99]
+        }
+        mock_cls.return_value = instance
+        yield instance
+
+
+def test_bayesian_optimisation_runs(
+    dummy_data, 
+    dummy_targets, 
+    dummy_config,
+    patch_modelmaps, 
+    patch_geoio_export, 
+    patch_bayessearchcv):
+    bayesian_optimisation(dummy_data, dummy_targets, dummy_config)
+    patch_bayessearchcv.fit.assert_called_once()
+    patch_geoio_export.assert_called_once()
+    assert dummy_config.optimised_model is True
+
+
+def test_score_model_correct():
+    model = LinearRegression()
+    X = np.random.rand(10, 2)
+    y = 3 * X[:, 0] + 2 * X[:, 1] + 1
+    model.fit(X, y)
+    scores = score_model(model, X, y)
+    assert all(k in scores for k in regression_metrics)
+    assert np.isclose(scores["r2_score"], 1.0, atol=1e-6)

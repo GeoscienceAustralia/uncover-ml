@@ -21,8 +21,8 @@ jobs:
           name: Build and run test environment
           command: |
             cubist/makecubist .
-            chmod +x tests/pipelines-tests.sh
-            bash tests/pipelines-tests.sh
+            chmod +x tests/_run-tests.sh
+            bash tests/_run-tests.sh
 
       - run:
           name: Upload test results to Codecov
