@@ -117,7 +117,7 @@ def resample_by_magnitude(input_data, target_field, bins=10, interval='linear', 
     total_samples = output_samples if output_samples else gdf_out.shape[0]
     samples_per_bin = total_samples // bins
 
-    validate_array = np.ones(bins, dtype=np.bool)
+    validate_array = np.ones(bins, dtype=np.bool_)
     if validation and bins > validation_points:
         validate_array[validation_points:] = False
         np.random.shuffle(validate_array)
@@ -190,7 +190,7 @@ def resample_spatially(input_shapefile, target_field, rows=10, cols=10,
     total_samples = output_samples if output_samples else gdf_out.shape[0]
     samples_per_group = total_samples // len(polygons)
 
-    validate_array = np.ones(len(polygons), dtype=np.bool)
+    validate_array = np.ones(len(polygons), dtype=np.bool_)
     if len(polygons) > validation_points:
         validate_array[validation_points:] = False
         np.random.shuffle(validate_array)

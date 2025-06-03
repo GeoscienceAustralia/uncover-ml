@@ -9,6 +9,8 @@ import joblib
 from unittest import mock
 import rasterio
 from rasterio.windows import Window
+from rasterio.transform import from_origin
+from types import SimpleNamespace
 import concurrent.futures
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
@@ -18,7 +20,6 @@ from uncoverml.cluster import (
     split_all_feat_data, split_save_feat_clusters, split_pred_parallel,
     process_and_save_data, training_data_boxplot
 )
-
 
 
 def test_kmeans_learn_basic_clustering():
@@ -69,7 +70,7 @@ def test_process_and_save_data():
     feat_data = np.array([[10, 20], [30, 40]])
     pred_data = np.array([[0, 1], [0, 1]])
     clust_num = 0
-    no_data_val = -9999  # or np.nan
+    no_data_val = -9999
 
     with tempfile.NamedTemporaryFile(delete=False, mode='w+') as tmpfile:
         process_and_save_data(feat_data, pred_data, tmpfile, clust_num, no_data_val)
@@ -77,34 +78,58 @@ def test_process_and_save_data():
         lines = tmpfile.readlines()
 
     os.remove(tmpfile.name)
-    assert len(lines) == 2  # Two values for cluster 0
+    assert len(lines) == 2
 
 
 def test_split_save_feat_clusters():
+    # Dummy data
+    feat_data = np.array([[10, 20], [30, 40]], dtype=np.int32)
+    pred_data = np.array([[0, 1], [1, 0]], dtype=np.int32)
+    n_classes = 2
+    feat_name = "testfeat"
+    no_data_val = -9999
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        pred_data = np.array([[0, 1], [1, 0]])
-        feat_data = np.array([[10, 20], [30, 40]])
+        feat_path = os.path.join(tmpdir, "features.tif")
+        pred_path = os.path.join(tmpdir, "predictions.tif")
 
-        class DummySrc:
-            def __init__(self, data):
-                self.data = data
-                self.width = data.shape[1]
-                self.height = data.shape[0]
-                self.nodata = -9999
-            def read(self, band, window=None):
-                return self.data[window.row_off:window.row_off+window.height,
-                                 window.col_off:window.col_off+window.width]
+        transform = from_origin(0, 2, 1, 1)
 
-        config = mock.Mock()
-        config.output_dir = tmpdir
+        with rasterio.open(
+            feat_path, 'w',
+            driver='GTiff',
+            height=feat_data.shape[0],
+            width=feat_data.shape[1],
+            count=1,
+            dtype=feat_data.dtype,
+            nodata=no_data_val,
+            transform=transform
+        ) as dst:
+            dst.write(feat_data, 1)
 
-        split_save_feat_clusters(config, DummySrc(feat_data), DummySrc(pred_data), 'testfeat', 2)
+        with rasterio.open(
+            pred_path, 'w',
+            driver='GTiff',
+            height=pred_data.shape[0],
+            width=pred_data.shape[1],
+            count=1,
+            dtype=pred_data.dtype,
+            nodata=no_data_val,
+            transform=transform
+        ) as dst:
+            dst.write(pred_data, 1)
 
-        out0 = np.loadtxt(f"{tmpdir}/feat_testfeat_clust_0.csv")
-        out1 = np.loadtxt(f"{tmpdir}/feat_testfeat_clust_1.csv")
+        main_config = SimpleNamespace(output_dir=tmpdir)
 
-        assert out0.size > 0
-        assert out1.size > 0
+        with rasterio.open(feat_path) as feat_ds, rasterio.open(pred_path) as pred_ds:
+            split_save_feat_clusters(main_config, feat_ds, pred_ds, feat_name, n_classes)
+
+        for i in range(n_classes):
+            out_csv = os.path.join(tmpdir, f"feat_{feat_name}_clust_{i}.csv")
+            assert os.path.exists(out_csv), f"Missing output: {out_csv}"
+            with open(out_csv) as f:
+                lines = f.readlines()
+                assert len(lines) > 0, f"Output file {out_csv} is empty"
 
 
 def test_split_all_feat_data():
@@ -190,21 +215,32 @@ def test_process_and_save_data_cluster_match():
         os.remove(out.name)
 
 
+class DummyModel:
+    def predict(self, data):
+        return np.array([0, 1, 0, 1])
+
+class DummyFeatureSet:
+    def __init__(self, files):
+        self.files = files
+
+class DummyConfig:
+    def __init__(self, output_dir):
+        self.n_classes = 2
+        self.output_dir = output_dir
+        self.feature_sets = [DummyFeatureSet(files=['dummy1', 'dummy2'])]
+        self.short_names = ['f1', 'f2']
+
 def test_training_data_boxplot_creates_file():
     with tempfile.TemporaryDirectory() as tmpdir:
-        model = mock.Mock()
-        model.predict.return_value = np.array([0, 1, 0, 1])
-        config = mock.Mock()
-        config.n_classes = 2
-        config.output_dir = tmpdir
-        config.feature_sets = [mock.Mock(files=['dummy1', 'dummy2'])]
-        config.short_names = ['f1', 'f2']
+        model = DummyModel()
+        config = DummyConfig(tmpdir)
         training_data = np.array([
             [1, 10],
             [2, 20],
             [1.5, 12],
             [2.5, 22]
         ])
+
         model_path = path.join(tmpdir, 'model.joblib')
         training_path = path.join(tmpdir, 'training.joblib')
 
