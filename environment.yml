@@ -4,19 +4,17 @@ channels:
   - defaults
 dependencies:
   - blas=*=openblas
-  - blosc=1.21.6
   - bzip2=1.0.8
   - freexl=2.0.0
   - gdal=3.11.0
   - geos=3.13.1
-  - joblib=1.4.2
   - krb5=1.21.3
   - lerc=4.0.0
   - lz4-c=1.10.0
   - lzo=2.10
   - minizip=4.0.10
   - muparser=2.3.5
-  - mpi4py=3.1.4
+  - mpi4py=4.0.3
   - numpy<1.23.0
   - openmpi>=4.1.6
   - openssl=3.5.0
@@ -28,7 +26,6 @@ dependencies:
   - six=1.17.0
   - snappy=1.2.1
   - sqlite=3.49.2
-  - threadpoolctl=3.5.0
   - tk=8.6.13
   - uriparser=0.9.8
   - wheel=0.45.1
@@ -64,7 +61,6 @@ dependencies:
       - fiona==1.10.1
       - fonttools==4.58.1
       - future==1.0.0
-      - GDAL==3.5.0
       - geopandas==1.0.1
       - graphviz==0.20.3
       - greenlet==3.2.2
@@ -81,14 +77,12 @@ dependencies:
       - MarkupSafe==3.0.2
       - matplotlib==3.10.3
       - mlens==0.2.3
-      - mpi4py==4.0.3
       - msgpack==1.1.0
       - narwhals==1.41.0
       - ndindex==1.10.0
       - networkx==2.5.1
       - numba==0.61.2
       - numexpr==2.10.2
-      - numpy==1.25.1
       - nvidia-nccl-cu12==2.26.5
       - optuna==3.2.0
       - packaging==25.0
@@ -121,7 +115,6 @@ dependencies:
       - seaborn==0.13.0
       - shap==0.45.0
       - shapely==2.1.1
-      - six==1.17.0
       - slicer==0.0.7
       - snuggs==1.4.7
       - SQLAlchemy==2.0.41
