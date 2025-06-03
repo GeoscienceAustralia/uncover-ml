@@ -584,13 +584,12 @@ def center_dist_plot(dist_mat, config, current_time):
 def calc_cluster_dist(centres):
     # This is not an efficient implementation
     # Will change this to be better later
-    output_mat = np.zeros(centres.shape[0], centres.shape[0])
+    output_mat = np.zeros((centres.shape[0], centres.shape[0]))
     for iy, ix in np.ndindex(output_mat.shape):
         cent_one = centres[iy, :]
         cent_two = centres[ix, :]
         current_dist = np.linalg.norm(cent_one - cent_two)
         output_mat[iy, ix] = current_dist
-
     return output_mat
 
 
