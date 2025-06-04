@@ -32,11 +32,7 @@ sed -i 's|from collections import Sequence|from collections.abc import Sequence|
 
 echo "Running tests…"
 mkdir -p test-results
-pytest \
-  --cov=uncoverml \
-  --cov-report=term \
-  --cov-report=xml:test-results/results.xml \
-  -o junit_family=legacy \
+pytest .
 
 # make coverage
 # codecov
