@@ -6,7 +6,6 @@ from shapely.geometry import Point
 from uncoverml import resampling
 
 
-# Fixture for creating a dummy GeoDataFrame
 @pytest.fixture
 def dummy_gdf():
     np.random.seed(42)

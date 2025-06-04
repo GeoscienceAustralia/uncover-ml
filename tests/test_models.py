@@ -18,19 +18,17 @@ def get_models(request):
 
 
 def test_modeltags(get_models):
-
     model = get_models()
 
-    # Patch classifiers since they only get their tags when "fit" called
     if hasattr(model, 'predict_proba'):
         model.le.classes_ = ('a', 'b', 'c')
 
     tags = model.get_predict_tags()
 
-    assert len(tags) >= 1  # at least a predict function for regression
+    assert len(tags) >= 1
 
     if hasattr(model, 'predict_dist'):
-        assert len(tags) >= 4  # at least predict, var and upper & lower quant
+        assert len(tags) >= 4
 
         if hasattr(model, 'entropy_reduction'):
             assert len(tags) == 5
@@ -44,24 +42,17 @@ def test_modeltags(get_models):
 
 
 def test_modelmap(get_models):
-
     mod = get_models()
-
     assert hasattr(mod, 'fit')
     assert hasattr(mod, 'predict')
 
 
 def test_modelpickle(get_models):
     mod = get_models()
-
-    # don't test picking for multirandomforest as pickling is handled by
-    # the individual randomforest jobs downstream
     if isinstance(mod, models['multirandomforest']):
         return
     mod_str = pickle.dumps(mod)
     mod_pic = pickle.loads(mod_str)
-
-    # Make sure all the keys survive the pickle, even if the objects differ
     assert mod.__dict__.keys() == mod_pic.__dict__.keys()
 
 
@@ -71,9 +62,7 @@ def get_krige_method(request):
 
 
 def test_krige(linear_data, get_krige_method):
-
     yt, Xt, ys, Xs = linear_data()
-
     mod = Krige(method=get_krige_method)
     mod.fit(np.tile(Xt, (1, 2)), yt)
     Ey = mod.predict(np.tile(Xs, (1, 2)))
@@ -86,9 +75,6 @@ def get_transformed_model(request):
 
 
 def test_trasnsformed_model_attr(get_transformed_model):
-    """
-    make sure all optimise.models classes have the required attributes
-    """
     assert np.all([hasattr(get_transformed_model(), a) for a in
                    ['score', 'fit', 'predict']])
 
@@ -108,16 +94,11 @@ def models_supported(request):
 
 
 def test_mlkrige(models_supported, get_krige_method):
-    """
-    tests algos that can be used with MLKrige
-    """
     mlk = MLKrige(ml_method=models_supported, method=get_krige_method)
     assert hasattr(mlk, 'fit')
     assert hasattr(mlk, 'predict')
-
     mod_str = pickle.dumps(mlk)
     mod_pic = pickle.loads(mod_str)
-    # Make sure all the keys survive the pickle, even if the objects differ
     assert mlk.__dict__.keys() == mod_pic.__dict__.keys()
 
 
