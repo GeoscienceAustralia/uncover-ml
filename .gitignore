@@ -80,3 +80,7 @@ cubist/
 .idea/
 venv/*
 xgboost_out/*
+git_hash.py
+uncoverml/git_hash.py
+algA.yml
+algB.yml

@@ -4,7 +4,6 @@ from sklearn.metrics import r2_score
 
 from uncoverml.cubist import Cubist, MultiCubist
 
-# Declare some test data taken from the boston houses dataset
 x = np.array([
         [0.006, 18.00, 2.310, 0.5380, 6.5750, 65.20, 4.0900, 1, 296.0, 15.30],
         [0.027, 0.00, 7.070, 0.4690, 6.4210, 78.90, 4.9671, 2, 242.0, 17.80],
@@ -28,30 +27,19 @@ y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
 
 def test_correct_range():
 
-    # Fit the data
     predictor = Cubist(print_output=False,
                        sampling=90, seed=0, committee_members=2)
     predictor.fit(x, y)
-
-    # Predict the output
     y_pred = predictor.predict(x)
-
-    # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
     assert 0.68 < score < 0.8
 
 
 def test_correct_range_with_sampling():
-
-    # Fit the data
     predictor = Cubist(print_output=False,
                        sampling=90, seed=10, committee_members=2)
     predictor.fit(x, y)
-
-    # Predict the output
     y_pred = predictor.predict(x)
-
-    # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
     assert 0.68 < score < 0.73
 
@@ -63,11 +51,7 @@ def test_multicubist():
                             seed=1,
                             neighbors=1)
     predictor.fit(x, y)
-
-    # Predict the output
     y_pred = predictor.predict(x)
-
-    # Assert that the true y is similar to the prediction
     score = r2_score(y, y_pred)
     assert 0.5 < score < 0.8
 
@@ -78,7 +62,6 @@ def test_multicibist_mpi(mpisync):
     "mpirun -np 4 py.test ../tests/test_cubist.py::test_multicubist_mpi"
 
     """
-
     predictor = MultiCubist(trees=10,
                             sampling=60,
                             seed=1,
@@ -86,10 +69,6 @@ def test_multicibist_mpi(mpisync):
                             committee_members=5,
                             parallel=True)
     predictor.fit(x, y)
-
-    # Predict the output
     y_pred_p = predictor.predict(x)
-
     score = r2_score(y, y_pred_p)
-
     assert 0.5 < score < 0.8
