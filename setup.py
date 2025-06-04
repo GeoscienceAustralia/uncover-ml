@@ -52,7 +52,7 @@ setup(
     cmdclass={'install': CustomInstall,
               'develop': CustomDevelop},
     name='uncover-ml',
-    version='0.5.0',
+    version='0.6.0',
     description='Machine learning tools for the Geoscience Australia uncover '
                 'project',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,

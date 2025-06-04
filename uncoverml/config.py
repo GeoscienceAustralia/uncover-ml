@@ -31,44 +31,29 @@ _global_transforms = {'centre': transforms.CentreTransform,
 
 
 def _parse_transform_set(transform_dict, imputer_string, n_images=None):
-    """Parse a dictionary read from yaml into a TransformSet object
-
-    Parameters
-    ----------
-    transform_dict : dictionary
-        The dictionary as read from the yaml config file containing config
-        key-value pairs
-    imputer_string : string
-        The name of the imputer (could be None)
-    n_images : int > 0
-        The number of images being read in. Required because we need to create
-        a new image transform for each image
-
-    Returns
-    -------
-    image_transforms : list
-        A list of image Transform objects
-    imputer : Imputer
-        An Imputer object
-    global_transforms : list
-        A list of global Transform objects
-    """
     image_transforms = []
     global_transforms = []
+
     if imputer_string in _imputers:
         imputer = _imputers[imputer_string]()
     else:
         imputer = None
+
     if transform_dict is not None:
         for t in transform_dict:
-            if type(t) is str:
+            if isinstance(t, str):
                 t = {t: {}}
             key, params = list(t.items())[0]
+
             if key in _image_transforms:
-                image_transforms.append([_image_transforms[key](**params)
-                                         for k in range(n_images)])
+                orig_cls = _image_transforms[key]
+                dyn_cls = getattr(transforms, orig_cls.__name__)
+                image_transforms.append([dyn_cls(**params) for _ in range(n_images)])
             elif key in _global_transforms:
-                global_transforms.append(_global_transforms[key](**params))
+                orig_cls = _global_transforms[key]
+                dyn_cls = getattr(transforms, orig_cls.__name__)
+                global_transforms.append(dyn_cls(**params))
+
     return image_transforms, imputer, global_transforms
 
 
