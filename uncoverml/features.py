@@ -113,60 +113,90 @@ def save_intersected_features_and_targets(feature_sets, transform_sets, targets,
     This function saves raw covariates values at the target locations, i.e.,
     after the targets have been intersected.
 
-    This will save the following two files if they are provided in the
-    config file:
-        a) rawcovariates.csv: the covariate values in csv
-        b) rawcovariates_mask.csv: the corresponding mask in csv
-    This function will also optionally output intersected covariates scatter
-    plot.
+    It writes two CSVs:
+      - rawcovariates.csv: the covariate values (data)
+      - rawcovariates_mask.csv: the corresponding mask (0/1)
     """
-    transform_sets_mod = []
-    names = ['{}_{}'.format(b, basename(k))
-             for ec in feature_sets
-             for k in ec
-             for b in range(ec[k].shape[3])]
+    # Build column names: one name per band in each feature in feature_sets
+    names = [
+        f"{b}_{basename(k)}"
+        for ec in feature_sets
+        for k in ec
+        for b in range(ec[k].shape[3])
+    ]
+    names += ["X", "Y", f"{config.target_property}(target)"]
+    header = ", ".join(names)
 
-    names += ["X", "Y", config.target_property + "(target)"]
-    header = ', '.join(names)
+    # Create a list of ImageTransformSet instances (one per transform_set)
+    transform_sets_mod = [
+        transforms.ImageTransformSet(
+            image_transforms=None,
+            imputer=None,
+            global_transforms=None,
+            is_categorical=t.is_categorical,
+        )
+        for t in transform_sets
+    ]
 
-    for t in transform_sets:
-        dummy_transform = transforms.ImageTransformSet(
-            image_transforms=None, imputer=None,
-            global_transforms=None, is_categorical=t.is_categorical)
-        transform_sets_mod.append(dummy_transform)
+    # Apply each transform to its corresponding feature‐set dictionary
+    transformed_vectors = [
+        ts(c) for c, ts in zip(feature_sets, transform_sets_mod)
+    ]
 
-    transformed_vectors = [t(c) for c, t in zip(feature_sets,
-                                                transform_sets_mod)]
-
+    # Concatenate along columns (axis=1)
     x = np.ma.concatenate(transformed_vectors, axis=1)
+
+    # Gather all feature rows to rank‐0
     x_all = gather_features(x, node=0)
 
+    # Gather all X,Y positions and all target values to rank‐0
     all_xy = mpiops.comm.gather(targets.positions, root=0)
     all_targets = mpiops.comm.gather(targets.observations, root=0)
 
     if mpiops.chunk_index == 0:
+        # Concatenate lists into full arrays
         all_xy = np.ma.concatenate(all_xy, axis=0)
         all_targets = np.ma.concatenate(all_targets, axis=0)
+
+        # Build arrays: XY is shape (N,2), t is shape (N,1)
         xy = np.atleast_2d(all_xy)
         t = np.atleast_2d(all_targets).T
+
+        # Stack: [ feature_data | X | Y | target ]
         data = np.hstack((x_all.data, xy, t))
-        np.savetxt(config.rawcovariates, X=data, delimiter=',',
-                   fmt='%.4e',
-                   header=header, comments='')
-        mask = np.hstack((x_all.mask.astype(int), np.zeros_like(t)))
-        np.savetxt(config.rawcovariates_mask, X=mask,
-                   delimiter=',', fmt='%d', header=header, comments='')
+        np.savetxt(
+            config.rawcovariates,
+            X=data,
+            delimiter=",",
+            fmt="%.4e",
+            header=header,
+            comments="",
+        )
+
+        # Build mask: feature_mask and zeros for X,Y,target
+        mask_cols = x_all.mask.astype(int)
+        zeros_xy_t = np.zeros((mask_cols.shape[0], 3), dtype=int)
+        mask = np.hstack((mask_cols, zeros_xy_t))
+        np.savetxt(
+            config.rawcovariates_mask,
+            X=mask,
+            delimiter=",",
+            fmt="%d",
+            header=header,
+            comments="",
+        )
+
+        # Optionally plot each covariate separately
         if config.plot_covariates:
             import matplotlib.pyplot as plt
-            for i, name in enumerate(names[:-3]):
-                log.info('plotting {}'.format(name))
+            for i, name in enumerate(names[:-3]):  # skip X,Y,target
+                log.info(f'plotting {name}')
                 plt.figure()
                 vals = x_all[:, i]
                 vals_no_mask = vals[~vals.mask].data
-                plt.scatter(x=list(range(vals_no_mask.shape[0])),
-                            y=vals_no_mask.data)
+                plt.scatter(x=list(range(vals_no_mask.shape[0])), y=vals_no_mask)
                 plt.title(name)
-                plt.savefig(name.rstrip('.tif') + '.png')
+                plt.savefig(name.rstrip(".tif") + ".png")
                 plt.close()
 
 
