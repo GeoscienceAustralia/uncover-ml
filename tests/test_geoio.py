@@ -1,9 +1,17 @@
 import pytest
-from affine import Affine
 import numpy as np
-
+import rasterio
+import os
+import tempfile
+from unittest.mock import MagicMock, patch
+from affine import Affine
+from types import SimpleNamespace
+from collections import OrderedDict
+from rasterio.transform import from_origin
 from uncoverml import geoio
 from uncoverml.image import Image
+from uncoverml.geoio import RasterioImageSource, ImageWriter
+
 
 crs = "EPSG:4326"
 
@@ -35,6 +43,33 @@ def num_chunks(request):
 @pytest.fixture(params=['start', 'middle', 'end'])
 def chunk_position(request):
     return request.param
+
+
+@pytest.fixture
+def make_geotiff(tmp_path):
+    width, height = 10, 20
+    count = 1
+    dtype = 'float32'
+    nodata = -9999.0
+    transform = from_origin(0, 100, 1, 1)
+
+    filepath = tmp_path / 'test.tif'
+    data = np.arange(width * height, dtype=dtype).reshape((height, width))
+
+    with rasterio.open(
+        filepath, 'w',
+        driver='GTiff',
+        height=height,
+        width=width,
+        count=count,
+        dtype=dtype,
+        crs='EPSG:4326',
+        transform=transform,
+        nodata=nodata
+    ) as dst:
+        dst.write(data, 1)
+
+    return str(filepath), data, nodata, (width, height)
 
 
 def make_image(pix_size_single, origin_point,
@@ -243,3 +278,244 @@ def test_Image_split_overlap(array_image_src, num_chunks, overlap_pixels):
     Irecon = np.hstack(Ichunks)
     assert I.shape == Irecon.shape
     assert np.all(I == Irecon)
+
+
+@patch('uncoverml.geoio.plt')
+@patch('uncoverml.geoio.log')
+def test_add_groups_with_grouping(mock_log, mock_plt):
+    lonlat = np.array([[10.0, -20.0], [10.1, -20.1], [10.2, -20.2]])
+    grouping_data = np.array(['A', 'A', 'B'])
+    conf = MagicMock()
+    conf.group_col = 'region'
+    conf.target_groups_file = '/tmp/test_groups.png'
+    mock_plt.rcParams = {
+        'axes.prop_cycle': MagicMock(by_key=MagicMock(return_value={'color': ['#ff0000', '#00ff00', '#0000ff']}))
+    }
+
+    groups = geoio.add_groups(lonlat, grouping_data, conf)
+    assert isinstance(groups, np.ndarray)
+    assert set(groups) == {0, 1}
+    mock_plt.savefig.assert_called_once()
+
+
+@patch('uncoverml.geoio.plt')
+@patch('uncoverml.geoio.DBSCAN')
+@patch('uncoverml.geoio.log')
+def test_add_groups_without_grouping(mock_log, mock_dbscan, mock_plt):
+    lonlat = np.random.rand(10, 2)
+    conf = MagicMock()
+    conf.group_col = None
+    conf.groups_eps = 0.5
+    conf.target_groups_file = '/tmp/test_groups_dbscan.png'
+
+    mock_dbscan_instance = MagicMock()
+    mock_dbscan_instance.labels_ = np.array([0] * 5 + [1] * 5)
+    mock_dbscan.return_value = mock_dbscan_instance
+    mock_plt.rcParams = {
+        'axes.prop_cycle': MagicMock(
+            by_key=MagicMock(return_value={'color': ['#ff0000', '#00ff00', '#0000ff']})
+        )
+    }
+
+    groups = geoio.add_groups(lonlat, None, conf)
+    assert set(groups) == {0, 1}
+    mock_plt.scatter.assert_called_once()
+
+
+@patch('uncoverml.geoio.load_shapefile')
+@patch('uncoverml.geoio.add_groups')
+@patch('uncoverml.geoio.mpiops')
+@patch('uncoverml.geoio.log')
+def test_load_targets(mock_log, mock_mpiops, mock_add_groups, mock_load_shapefile):
+    conf = MagicMock()
+    conf.group_targets = True
+    conf.group_col = 'group_id'
+    conf.weighted_model = False
+    lonlat = np.array([[1.0, 2.0], [3.0, 4.0]])
+    values = np.array([5, 6])
+    other = {'group_id': np.array(['A', 'B'])}
+    mock_load_shapefile.return_value = (lonlat, values, other)
+    mock_add_groups.return_value = np.array([0, 1])
+    mock_comm = MagicMock()
+    mock_comm.scatter.side_effect = lambda x, root=0: np.array(x[0]) if isinstance(x, list) else x
+    mock_mpiops.comm = mock_comm
+    mock_mpiops.chunk_index = 0
+    mock_mpiops.chunks = 1
+
+    targets = geoio.load_targets('fake.shp', 'val', conf)
+    assert targets.groups.shape == (2,)
+    assert targets.weights.shape == (2,)
+
+
+@patch('uncoverml.geoio.image.Image')
+@patch('uncoverml.geoio.RasterioImageSource.__init__', return_value=None)
+def test_get_image_spec_from_nchannels(mock_rio_init, mock_image):
+    config = MagicMock()
+    config.prediction_template = None
+    config.is_prediction = False
+    config.feature_sets = [MagicMock(files=['fake.tif'])]
+    mock_image_instance = MagicMock()
+    mock_image_instance.patched_shape.return_value = (100, 100)
+    mock_image_instance.patched_bbox.return_value = ((0, 0), (1, 1))
+    mock_image_instance.crs = 'EPSG:4326'
+    mock_image.return_value = mock_image_instance
+
+    shape, bbox, crs = geoio.get_image_spec_from_nchannels(2, config)
+
+    assert shape == (100, 100, 2)
+    assert bbox == ((0, 0), (1, 1))
+    assert crs == 'EPSG:4326'
+
+
+@patch('uncoverml.geoio.get_image_spec_from_nchannels')
+def test_get_image_spec(mock_get_spec):
+    config = MagicMock()
+    model = MagicMock()
+    model.get_predict_tags.return_value = ['a', 'b', 'c']
+    mock_get_spec.return_value = ((10, 10, 3), ((0, 0), (1, 1)), 'EPSG:4326')
+
+    result = geoio.get_image_spec(model, config)
+
+    assert result[0] == (10, 10, 3)
+    mock_get_spec.assert_called_once_with(3, config)
+
+
+def test_rasterio_image_source_init(make_geotiff):
+    filepath, _, nodata, (width, height) = make_geotiff
+    src = RasterioImageSource(filepath)
+
+    assert src.filename == filepath
+    assert src.nodata_value == nodata
+    assert src.full_resolution == (width, height, 1)
+    assert src.pixsize_x > 0
+    assert src.pixsize_y > 0
+    assert src.origin_longitude == 0
+    assert src.origin_latitude == 80
+
+
+def test_rasterio_image_source_data_shape(make_geotiff):
+    filepath, data, _, _ = make_geotiff
+    src = RasterioImageSource(filepath)
+
+    out = src.data(0, 5, 0, 10)
+    assert out.shape == (5, 10, 1)
+    assert isinstance(out, np.ma.MaskedArray)
+
+
+@patch('uncoverml.geoio.mpiops')
+@patch('uncoverml.geoio.rasterio.open')
+def test_imagewriter(mock_rasterio_open, mock_mpiops):
+    mock_mpiops.chunk_index = 0
+    mock_mpiops.chunks = 1
+    mock_mpiops.comm.bcast = lambda x, root=0: x
+    mock_raster = MagicMock()
+    mock_rasterio_open.return_value = mock_raster
+    shape = (10, 10)
+    bbox = np.array([[0, 0], [1, 1]])
+    crs = 'EPSG:4326'
+    band_tags = ['Band1']
+    outputdir = tempfile.mkdtemp()
+    writer = ImageWriter(shape, bbox, crs, 'test', 1, outputdir, band_tags=band_tags)
+    assert writer.outbands == 1
+    assert os.path.basename(writer.file_names[0]) == 'test_band1.tif'
+    mock_raster.update_tags.assert_called_once_with(1, image_type='Band1')
+
+
+@patch('uncoverml.geoio.mpiops')
+@patch('uncoverml.geoio.rasterio.open')
+def test_imagewriter_write_and_close(mock_rasterio_open, mock_mpiops):
+    mock_mpiops.chunk_index = 0
+    mock_mpiops.chunks = 1
+    mock_mpiops.comm.bcast = lambda x, root=0: x
+    mock_mpiops.comm.barrier = MagicMock()
+    mock_raster = MagicMock()
+    mock_rasterio_open.return_value = mock_raster
+    shape = (4, 4)
+    bbox = np.array([[0, 0], [1, 1]])
+    crs = 'EPSG:4326'
+    band_tags = ['Band1']
+    outputdir = tempfile.mkdtemp()
+    writer = ImageWriter(shape, bbox, crs, 'test', 1, outputdir, band_tags=band_tags)
+    data = np.ma.masked_array(
+        data=np.random.rand(4 * 4, 1).astype(np.float32),
+        mask=np.zeros((4 * 4, 1), dtype=bool)
+    )
+    writer.write(data, subchunk_index=0)
+    writer.close()
+    assert mock_raster.write.call_count == 1
+    mock_raster.close.assert_called_once()
+
+@patch('uncoverml.geoio.resample')
+@patch('uncoverml.geoio.mpiops')
+def test_output_thumbnails(mock_mpiops, mock_resample):
+    mock_mpiops.chunk_index = 0
+    mock_mpiops.chunks = 1
+    dummy_file = '/tmp/fake_output_band1.tif'
+    writer = ImageWriter.__new__(ImageWriter)
+    writer.file_names = [dummy_file]
+    writer.output_thumbnails(ratio=20)
+    mock_resample.assert_called_with(dummy_file, output_tif='/tmp/fake_output_band1_thumbnail.tif', ratio=20)
+
+
+def test_feature_names():
+    config = SimpleNamespace()
+    config.feature_sets = [
+        SimpleNamespace(files=['/some/path/file3.tif', '/some/path/file1.tif']),
+        SimpleNamespace(files=['/some/path/file2.tif'])
+    ]
+    result = geoio.feature_names(config)
+    assert result == ['file1.tif', 'file3.tif', 'file2.tif']
+
+
+@patch('uncoverml.geoio.log_missing_percentage')
+@patch('uncoverml.geoio.RasterioImageSource')
+def test_iterate_sources(mock_raster_src, mock_log_missing):
+    f = lambda src: 'dummy_result'
+    config = SimpleNamespace()
+    config.is_prediction = False
+    config.feature_sets = [SimpleNamespace(files=['/fake/file1.tif', '/fake/file2.tif'])]
+
+    mock_raster_src.return_value = MagicMock()
+
+    result = geoio._iterate_sources(f, config)
+    assert isinstance(result, list)
+    assert isinstance(result[0], OrderedDict)
+    assert list(result[0].values()) == ['dummy_result', 'dummy_result']
+
+
+@patch('uncoverml.geoio.mpiops')
+@patch('uncoverml.geoio.log')
+def test_log_missing_percentage(mock_log, mock_mpiops):
+    mock_mpiops.count.return_value = 100
+    mock_mpiops.comm.allreduce.return_value = 20
+    mock_mpiops.chunks = 2
+    x = np.ma.masked_array(data=np.ones((10, 10)), mask=np.zeros((10, 10)))
+    geoio.log_missing_percentage('dummy.tif', x)
+    mock_log.info.assert_called()
+
+
+@patch('uncoverml.geoio._iterate_sources')
+def test_image_resolutions(mock_iter):
+    mock_iter.return_value = ['res']
+    result = geoio.image_resolutions(SimpleNamespace())
+    assert result == ['res']
+
+
+@patch('uncoverml.geoio.features.extract_subchunks')
+@patch('uncoverml.geoio._iterate_sources')
+def test_image_subchunks(mock_iter, mock_extract):
+    mock_extract.return_value = 'chunks'
+    mock_iter.side_effect = lambda f, conf: [f(MagicMock())]
+    conf = SimpleNamespace(is_prediction=False, prediction_template=None,
+                           n_subchunks=1, patchsize=3)
+    assert geoio.image_subchunks(0, conf) == ['chunks']
+
+
+def test_extract_intersected_features():
+    targets = MagicMock()
+    targets.fields = {'img.tif': np.array([1, 2, 3])}
+    config = SimpleNamespace(intersected_features={'img.tif': 'img.tif'})
+    img = MagicMock()
+    img.filename = '/path/img.tif'
+    result = geoio.extract_intersected_features(img, targets, config)
+    assert result.shape == (3, 1, 1, 1)
