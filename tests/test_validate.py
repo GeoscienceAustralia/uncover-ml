@@ -7,12 +7,13 @@ import pytest
 from sklearn.model_selection import GroupKFold, KFold
 
 from uncoverml.validate import (
+    _join_dicts,
     split_cfold,
     split_gfold,
     classification_validation_scores,
     regression_validation_scores,
+    setup_validation_data,
 )
-
 
 class DummyIdentityTransform:
     def transform(self, x):
@@ -25,6 +26,16 @@ class DummyRegressionModel:
 
     def get_predict_tags(self):
         return ["Prediction"]
+
+class DummyTargets:
+    def __init__(self):
+        self.observations = np.array([1.0, 2.0, 3.0, 4.0])
+        self.weights = np.array([1.0, 1.0, 1.0, 1.0])
+        self.positions = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])
+        self.groups = np.array([0, 0, 1, 1])
+        self.fields = {
+            'soil_type': np.array([0, 1, 0, 1])
+        }
 
 
 def test_split_cfold_basic():
@@ -150,3 +161,30 @@ def test_regression_validation_scores_transformed_model(tmp_path):
     assert 'mll' not in scores
     assert 'lins_ccc' in scores
     assert 'smse' in scores
+
+
+def test_join_dicts():
+    input_dicts = [
+        {'a': 1, 'b': 2},
+        {'c': 3, 'd': 4}
+    ]
+    expected = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+    result = _join_dicts(input_dicts)
+    assert result == expected
+
+
+def test_setup_validation_data_returns_cleaned_and_split_data():
+    targets = DummyTargets()
+    data = np.array([[1.0, 2.0],
+                     [np.nan, np.nan],
+                     [3.0, 4.0],
+                     [5.0, 6.0]])
+    mask = np.isnan(data)
+    X = np.ma.masked_array(data, mask=mask)
+    cleaned_X, y, lon_lat, groups, w, cv = setup_validation_data(X, targets, cv_folds=2, random_state=42)
+    assert cleaned_X.shape[0] == 3
+    assert y.shape == (3,)
+    assert lon_lat.shape == (3, 2)
+    assert groups.shape == (3,)
+    assert w.shape == (3,)
+    assert isinstance(cv, GroupKFold)

@@ -16,10 +16,19 @@ import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 from os import path
 from uncoverml.cluster import (
-    KMeans, kmeans_step, run_kmeans, calc_cluster_dist,
-    split_all_feat_data, split_save_feat_clusters, split_pred_parallel,
-    process_and_save_data, training_data_boxplot
-)
+    sum_axis_0, KMeans, kmeans_step, run_kmeans, calc_cluster_dist, compute_n_classes,
+    extract_data, center_dist_plot, split_all_feat_data, split_save_feat_clusters,
+    split_pred_parallel, process_and_save_data, training_data_boxplot
+    )
+
+
+def test_sum_axis_0_basic():
+    x = np.array([1, 2, 3])
+    y = np.array([4, 5, 6])
+    dtype = np.float64
+    expected = np.array([5, 7, 9])
+    result = sum_axis_0(x, y, dtype)
+    np.testing.assert_array_equal(result, expected)
 
 
 def test_kmeans_learn_basic_clustering():
@@ -28,6 +37,21 @@ def test_kmeans_learn_basic_clustering():
     kmeans = KMeans(k=2, oversample_factor=2)
     kmeans.learn(x)
     assert kmeans.centres.shape == (2, 2)
+
+
+def test_kmeans_predict():
+    x = np.array([[1, 2], [10, 2]])
+    kmeans = KMeans(k=2, oversample_factor=2)
+    kmeans.centres = np.array([[1, 2], [10, 2]])
+    y_pred = kmeans.predict(x)
+    assert y_pred.dtype == float
+
+
+def test_kmeans_get_predict_tags_returns_class():
+    kmeans = KMeans(k=3, oversample_factor=1)
+    tags = kmeans.get_predict_tags()
+    assert isinstance(tags, list)
+    assert tags == ['class']
 
 
 def test_kmeans_step_basic():
@@ -130,6 +154,57 @@ def test_split_save_feat_clusters():
             with open(out_csv) as f:
                 lines = f.readlines()
                 assert len(lines) > 0, f"Output file {out_csv} is empty"
+
+def test_compute_n_classes():
+    class DummyConfig:
+        def __init__(self, n_classes):
+            self.n_classes = n_classes
+
+    classes = np.array([0, 1, 2])
+    config = DummyConfig(n_classes=4)
+    result = compute_n_classes(classes, config)
+    assert result == 4
+
+
+def test_extract_data():
+    test_data = np.array([[10, 20], [30, 40]]).astype('int32')
+    coords = [(0.5, 1.5), (1.5, 0.5)]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        raster_path = os.path.join(tmpdir, 'test.tif')
+        transform = from_origin(0, 2, 1, 1)
+        with rasterio.open(
+            raster_path, 'w',
+            driver='GTiff',
+            height=test_data.shape[0],
+            width=test_data.shape[1],
+            count=1,
+            dtype=test_data.dtype,
+            transform=transform
+        ) as dst:
+            dst.write(test_data, 1)
+
+        values = extract_data(raster_path, coords)
+        assert values.shape == (2,)
+
+
+def test_center_dist_plot_creates_image():
+    matrix = np.array([[0.0, 1.0], [1.0, 0.0]])
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config = SimpleNamespace(output_dir=tmpdir)
+        center_dist_plot(matrix, config, current_time='1')
+        expected_path = os.path.join(tmpdir, 'cluster_center_distances_1.png')
+        assert os.path.exists(expected_path)
+
+
+def test_calc_cluster_dist():
+    centres = np.array([[0, 0], [3, 4]])
+    dist_mat = calc_cluster_dist(centres)
+    assert dist_mat.shape == (2, 2)
+    assert np.isclose(dist_mat[0, 1], 5.0)
+    assert np.isclose(dist_mat[1, 0], 5.0)
+    assert np.isclose(dist_mat[0, 0], 0.0)
+    assert np.isclose(dist_mat[1, 1], 0.0)
 
 
 def test_split_all_feat_data():

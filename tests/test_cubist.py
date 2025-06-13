@@ -1,8 +1,13 @@
-
+import os
+import tempfile
+import csv
 import numpy as np
+from unittest.mock import patch, mock_open
 from sklearn.metrics import r2_score
-
-from uncoverml.cubist import Cubist, MultiCubist
+from uncoverml.cubist import (
+    Cubist, MultiCubist, write_dict, mean,
+    variance_with_mean, cond_line,parse_float_array
+)
 
 x = np.array([
         [0.006, 18.00, 2.310, 0.5380, 6.5750, 65.20, 4.0900, 1, 296.0, 15.30],
@@ -23,6 +28,38 @@ x = np.array([
 
 y = np.array([24.00, 21.60, 34.70, 33.40, 36.20, 28.70, 22.90, 27.10,
                   16.50, 18.90, 15.00, 18.90, 21.70, 20.40, 18.2])
+
+
+def test_cond_line(): 
+    assert cond_line('conds') == 1
+    assert cond_line('abc') == 0
+
+
+@patch('builtins.open', new_callable=mock_open)
+def test_write_dict(mock_file):
+    input_dict = {'a': 1, 'b': 2}
+    write_dict('mock.csv', input_dict)
+    mock_file.assert_called_once_with('mock.csv', 'w')
+
+
+def test_mean(): 
+    numbers = {1,2,3,4}
+    result = mean(numbers) 
+    assert result == 2.5
+
+
+def test_variance_with_mean():
+    numbers = [1, 2, 3, 4]
+    mean_value = sum(numbers) / len(numbers)
+    var_func = variance_with_mean(mean_value)
+    assert var_func(numbers) == 5.0
+
+
+def test_parse_float_array():
+    input_string = '1.0,2.0,3.0,4'
+    expected = [1.0, 2.0, 3.0, 4.0]
+    result = parse_float_array(input_string)
+    assert result == expected
 
 
 def test_correct_range():
@@ -72,3 +109,24 @@ def test_multicibist_mpi(mpisync):
     y_pred_p = predictor.predict(x)
     score = r2_score(y, y_pred_p)
     assert 0.5 < score < 0.8
+
+@patch('glob.glob')
+@patch('os.path.getctime')
+@patch('builtins.open', new_callable=mock_open, read_data="""
+
+
+feat1.tif_0     10     20
+feat2.tif_0     5      15
+""")
+@patch('uncoverml.cubist.write_dict')
+def test_calculate_usage(mock_write, mock_open_fn, mock_ctime, mock_glob):
+    temp_dir = tempfile.mkdtemp()
+    feature_type = {'feat1.tif': 0, 'feat2.tif': 0}
+    mock_usg_file = os.path.join(temp_dir, 'temp_0_0.usg')
+    mock_glob.return_value = [mock_usg_file]
+    mock_ctime.return_value = 0
+    predictor = MultiCubist(outdir=temp_dir, trees=1, calc_usage=True)
+    predictor.feature_type = feature_type
+    predictor.temp_dir = temp_dir
+    predictor.calculate_usage()
+    assert mock_write.call_count == 2
