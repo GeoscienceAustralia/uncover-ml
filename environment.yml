@@ -83,7 +83,7 @@ dependencies:
       - networkx==2.8
       - numba==0.61.2
       - numexpr==2.10.2
-      # - nvidia-nccl-cu12==2.26.5
+      - nvidia-nccl-cu12==2.26.5
       - optuna==3.2.0
       - packaging==25.0
       - pandas==2.2.3
