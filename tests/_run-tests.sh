@@ -28,7 +28,7 @@ conda activate uncover-ml-env
 
 echo "Patching mlens..."
 sed -i 's|from collections import Sequence|from collections.abc import Sequence|g' \
-    ../miniconda/envs/uncover-ml-env/lib/python3.10/site-packages/mlens/externals/sklearn/type_of_target.py
+    ../miniconda/envs/uncover-ml-env/lib/python3.12/site-packages/mlens/externals/sklearn/type_of_target.py
 
 echo "Running tests…"
 mkdir -p test-results

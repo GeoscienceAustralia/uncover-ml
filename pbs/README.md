@@ -24,8 +24,8 @@ $ module load python3/3.10.4 gdal/3.5.0 openmpi/4.1.5
 2. Now add the following lines to the end of your `~/.bashrc`:
 ```bash
 export PATH=$HOME/.local/bin:$PATH
-export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PYTHONPATH
-export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.10.4/bin/python3
+export PYTHONPATH=$HOME/.local/lib/python3.12/site-packages:$PYTHONPATH
+export VIRTUALENVWRAPPER_PYTHON=/apps/python3/3.12.13/bin/python3
 export LC_ALL=en_AU.UTF-8
 export LANG=en_AU.UTF-8
 source $HOME/.local/bin/virtualenvwrapper.sh 
