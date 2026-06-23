@@ -43,7 +43,7 @@ MarkupSafe==3.0.2
 matplotlib==3.9.4
 mlens==0.2.3
 mpi4py==4.0.3
-msgpack==1.1.0
+msgpack==1.2.1
 narwhals==1.40.0
 ndindex==1.10.0
 networkx==2.5.1
